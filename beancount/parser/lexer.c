@@ -1,4 +1,4 @@
-#line 1 "beancount/parser/lexer.c"
+#line 2 "beancount/parser/lexer.c"
 
 #include "parser.h"
 
@@ -10,7 +10,7 @@ void yylex_initialize(const char* filename, int firstline, const char* encoding,
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
-#line 13 "beancount/parser/lexer.c"
+#line 14 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1098,12 +1098,12 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
-#line 1101 "beancount/parser/lexer.c"
+#line 1102 "beancount/parser/lexer.c"
 /* A start condition for chomping an invalid token. */
 
 /* Exclusive start condition for parsing escape sequences in string literals. */
 
-#line 1106 "beancount/parser/lexer.c"
+#line 1107 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1392,7 +1392,7 @@ YY_DECL
 
 #line 193 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1395 "beancount/parser/lexer.c"
+#line 1396 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1955,7 +1955,7 @@ YY_RULE_SETUP
 #line 463 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1958 "beancount/parser/lexer.c"
+#line 1959 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{

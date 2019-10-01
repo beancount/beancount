@@ -33,6 +33,7 @@ PyDoc_STRVAR(parser_doc,
              "intantiate and store parsing results. This class is not intended to be\n"
              "used directly. See the beancount.parser moduel instead.");
 
+/* Allocate a new Parser instance. */
 static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
     Parser* self;
@@ -52,12 +53,17 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     return (PyObject*)self;
 }
 
+/* Constructor for Parser instances.
+ *
+ * Args:
+ *   builder: An instance of a Builder object.
+*/
 static int parser_init(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"builder", NULL};
+    static char* kwlist[] = {"builder", "debug", NULL};
     PyObject* builder;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &builder)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p", kwlist, &builder, &yydebug)) {
         return -1;
     }
 
@@ -68,11 +74,16 @@ static int parser_init(Parser* self, PyObject* args, PyObject* kwds)
     return 0;
 }
 
+/* Destructor. */
 static void parser_dealloc(Parser* self)
 {
+    /* Free the builder. */
     Py_XDECREF(self->builder);
+
+    /* Finalize the scanner state. */
     yylex_finalize(self->scanner);
     yylex_destroy(self->scanner);
+
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -101,6 +112,8 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
+    /* If we are provided a buffer object, try to get the filename from the
+     * '.name' attribute. */
     if (!filename) {
         PyObject* p = PyObject_GetAttrString(file, "name");
         if (p) {
@@ -113,9 +126,11 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
         PyErr_Clear();
     }
 
+    /* Initialize the scanner state. */
     yylex_initialize(filename, lineno, encoding, self->scanner);
     yyset_in((void*)file, self->scanner);
 
+    /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
 
     /* Signal if an exception has been raised */
@@ -155,9 +170,13 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
     int lineno = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ziz", kwlist,
-                                     &file, &filename, &lineno, &encoding))
+                                     &file, &filename, &lineno, &encoding)) {
         return NULL;
+    }
 
+    /* If we are provided a buffer object, try to get the filename from the
+     * '.name' attribute. */
+    /* TODO(blais): Refactor this block. */
     if (!filename) {
         PyObject* p = PyObject_GetAttrString(file, "name");
         if (p) {
@@ -170,6 +189,7 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
         PyErr_Clear();
     }
 
+    /* Initialize the scanner state. */
     yylex_initialize(filename, lineno, encoding, self->scanner);
     yyset_in((void*)file, self->scanner);
 
@@ -177,6 +197,7 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
     return (PyObject*)self;
 }
 
+/* Implement iterator protocol on the Parser. */
 static PyObject* parser_iternext(Parser* self)
 {
     const char* name;
@@ -185,11 +206,13 @@ static PyObject* parser_iternext(Parser* self)
     int token;
     PyObject* obj;
 
+    /* Ensure the scanner has been initialized. */
     if (!yyget_in(self->scanner)) {
         PyErr_SetString(PyExc_ValueError, "Parser not initialized");
         return NULL;
     }
 
+    /* Get one token. */
     token = yylex(&yylval, &yylloc, self->scanner, self->builder);
     if (PyErr_Occurred() || token == 0) {
         return NULL;
@@ -210,8 +233,9 @@ static PyObject* parser_iternext(Parser* self)
         obj = Py_None;
     }
 
+    /* Yield a tuple that contains the token name, line, matched string, and
+     * token value. */
     name = getTokenName(token);
-
     return Py_BuildValue("(sis#O)",
                          name,
                          yylloc.first_line,
@@ -366,4 +390,4 @@ error:
     return NULL;
 }
 
-/* FIXME: Finalize too, unrefing the constants. {48414425cf78} */
+/* TODO(blais): Finalize the module too, releasing the globals. {48414425cf78} */

@@ -10,9 +10,11 @@
  * the headers in the right order. */
 typedef void* yyscan_t;
 
+/* Lexer interface required by Bison. */
 #define YY_DECL int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param, \
                           yyscan_t yyscanner, PyObject* builder)
 
+/* A global constant pointing to the special 'MISSING' object. */
 extern PyObject* missing_obj;
 
 /* #define DO_TRACE_ERRORS   1 */
