@@ -124,6 +124,13 @@ class TestParserInputs(unittest.TestCase):
         with self.assertRaises(TypeError):
             entries, errors, _ = parser.parse_file(None)
 
+    # Exceptions raised while reading the input file are propagated.
+    def test_parse_file_readerror(self):
+        class Mock(io.BytesIO):
+            def readinto(self, b):
+                raise IOError("mock error");
+        with self.assertRaises(IOError):
+            entries, errors, _ = parser.parse_file(Mock())
 
 class TestUnicodeErrors(unittest.TestCase):
 
