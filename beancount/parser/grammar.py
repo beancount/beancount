@@ -235,7 +235,8 @@ class Builder(lexer.LexBuilder):
             assert not isinstance(exc_value, str)
             strings = traceback.format_exception_only(exc_type, exc_value)
             tblist = traceback.extract_tb(exc_traceback)
-            filename, lineno, _, __ = tblist[0]
+            if tblist:
+                filename, lineno, _, __ = tblist[0]
             message = '{} ({}:{})'.format(strings[0], filename, lineno)
         else:
             message = str(exc_value)

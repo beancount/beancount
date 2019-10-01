@@ -15,211 +15,269 @@ extern YY_DECL;
 
 extern const char* getTokenName(int token);
 
-yyscan_t _scanner;
+/* Placeolder object for missing cost specifications. */
+PyObject* missing;
 
-/* The current builder during parsing (as a global variable for now). */
-PyObject* builder = 0;
+PyDoc_STRVAR(parser_doc, "");
 
-/* A reference to a Python-defined constant object used as a placeholder for
-   missing cost specifications. */
-PyObject* missing_obj = 0;
-
-
-PyDoc_STRVAR(parse_file_doc,
-"Parse the filename, calling back methods on the builder.\n\
-Your builder is responsible to accumulating results.\n\
-If you pass in '-' for filename, stdin is parsed.");
-
-/* Handle the result of yyparse() {459018e2905c}. */
-PyObject* handle_yyparse_result(int result)
+static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-    /* Check for internal errors during parsing (which would be the result of
-     * calling YYABORT, which we don't call), and this should raise an
-     * exception. */
-    if ( result == 1 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parser aborted (internal error)");
-    }
-    else if ( result == 2 ) {
-        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
-    }
-    assert(result == 0);
-    Py_RETURN_NONE;
-}
+    Parser* self;
 
-PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
-{
-    const char* report_filename = NULL;
-    const char* encoding = NULL;
-    int report_firstline = 0;
-    PyObject* name = NULL;
-    extern int yydebug;
-    PyObject* file;
-    int rv;
+    self = (Parser*)type->tp_alloc(type, 0);
+    if (!self)
+        return NULL;
 
-    /* Unpack and validate arguments */
-    static char* kwlist[] = {"file", "builder",
-                             "report_filename", "report_firstline",
-                             "encoding", "yydebug", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                      &file, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug)) {
+    yylex_init(&self->scanner);
+    yylex_initialize(self->scanner);
+    yyset_in(NULL, self->scanner);
+
+    self->encoding = "utf-8";
+    self->builder = NULL;
+    self->line = 0;
+    self->filename = PyUnicode_FromString("");
+    if (!self->filename) {
+        Py_DECREF(self);
         return NULL;
     }
 
-    if (!report_filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            name = PyObject_Str(p);
-            if (name)
-                report_filename = PyUnicode_AS_DATA(name);
-        }
-        PyErr_Clear();
-        Py_XDECREF(p);
-    }
-
-    /* Initialize the lexer. */
-    yylex_init(&_scanner);
-    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
-    yyset_in((void*)file, _scanner);
-
-    /* Parse! This will call back methods on the builder instance. */
-    rv = yyparse(_scanner);
-
-    /* Finalize the parser. */
-    /* Noop. */
-
-    /* Finalize the lexer. */
-    yylex_finalize(_scanner);
-    yylex_destroy(_scanner);
-
-    Py_XDECREF(name);
-    builder = NULL;
-
-    return handle_yyparse_result(rv);
+    return (PyObject*)self;
 }
 
-PyObject* get_yyfilename(PyObject *self, PyObject *args)
+static int parser___init__(Parser* self, PyObject* args, PyObject* kwds)
 {
-    return PyUnicode_FromString(yyget_filename(_scanner));
-}
+    static char* kwlist[] = {"builder", NULL};
+    PyObject* builder;
 
-PyObject* get_yylineno(PyObject *self, PyObject *args)
-{
-    return PyLong_FromLong(yyget_lineno(_scanner) + yyget_firstline(_scanner));
-}
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &builder))
+        return -1;
 
-/* Inititalize the lexer to start running in debug mode. */
-PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
-{
-    const char* report_filename = NULL;
-    const char* encoding = NULL;
-    int report_firstline = 0;
-    PyObject* name = NULL;
-    extern int yydebug;
-    PyObject* file;
-
-    /* Unpack and validate arguments */
-    static char* kwlist[] = {"file", "builder",
-                             "report_filename", "report_firstline",
-                             "encoding", "yydebug", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                      &file, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug)) {
-        return NULL;
-    }
-
-    if (!report_filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            name = PyObject_Str(p);
-            if (name)
-                report_filename = PyUnicode_AS_DATA(name);
-        }
-        PyErr_Clear();
-        Py_XDECREF(p);
-    }
-
-    /* Initialize the lexer. */
-    yylex_init(&_scanner);
-    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
-    yyset_in((void*)file, _scanner);
-
-    /* We need to keep those objects alive after we live this function. */
-    Py_INCREF(file);
+    Py_XDECREF(self->builder);
+    self->builder = builder;
     Py_INCREF(builder);
 
-    Py_RETURN_NONE;
+    /* The builder need to know about the parser to report parsing
+     * location in some circumstances. However storing a reference to
+     * the parser in the builder creates a circular reference. We
+     * ignore this issue for the moment as it is probably better
+     * solved removing the need for the builder to call into the
+     * parser. This can be achieved passing the parser location when
+     * calling methods of the builder as it is already done in some
+     * cases. */
+    PyObject_SetAttrString(builder, "parser", (PyObject*)self);
+
+    return 0;
 }
 
-/* Inititalize the lexer to start running in debug mode. */
-PyObject* lexer_finalize(PyObject *self, PyObject *args)
+static void parser_dealloc(Parser* self)
 {
-    /* Now we can let those objects go. */
-    Py_XDECREF((void*)yyget_in(_scanner));
-    Py_XDECREF(builder);
-
-    /* Finalize the lexer. */
-    yylex_finalize(_scanner);
-    yylex_destroy(_scanner);
-
-    Py_RETURN_NONE;
+    yylex_finalize(self->scanner);
+    yylex_destroy(self->scanner);
+    Py_XDECREF(self->builder);
+    Py_XDECREF(self->filename);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
-/* Get the next token; return None if complete. */
-PyObject* lexer_next(PyObject *self, PyObject *args)
+PyDoc_STRVAR(parser_location_doc, "");
+
+static PyObject* parser_location(Parser* self)
 {
-    const char* tokenName = NULL;
+    return Py_BuildValue("Oi",
+                         self->filename,
+                         self->line + yyget_lineno(self->scanner));
+}
+
+static PyGetSetDef parser_getsetters[] = {
+    {"location", (getter)parser_location, NULL, parser_location_doc, NULL},
+    {NULL}
+};
+
+PyDoc_STRVAR(parser_parse_doc, "");
+
+static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
+{
+    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    PyObject* filename = NULL;
+    PyObject* file;
+    int ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
+                                     &file, &filename, &self->line, &self->encoding))
+        return NULL;
+
+    if (!filename) {
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename)
+            PyErr_Clear();
+    }
+
+    if (filename && (filename != Py_None)) {
+        Py_XDECREF(self->filename);
+        self->filename = filename;
+        Py_INCREF(filename);
+    }
+
+    yyset_in((void*)file, self->scanner);
+    ret = yyparse(self->scanner, (PyObject*)self, self->builder);
+
+    /* Signal if an exception has been raised */
+    if (PyErr_Occurred())
+        return NULL;
+
+    /* Check for internal errors during parsing. */
+    switch (ret) {
+    case 0:
+        Py_RETURN_NONE;
+    case 1:
+        return PyErr_Format(PyExc_RuntimeError, "Parser internal error");
+    case 2:
+        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
+    default:
+        return PyErr_Format(PyExc_ValueError, "Unexpected yyparse() return value: %d", ret);
+    }
+}
+
+static PyObject* parser_lex(Parser *self, PyObject* args, PyObject* kwds)
+{
+    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    PyObject* filename = NULL;
+    PyObject* file;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
+                                     &file, &filename, &self->line, &self->encoding))
+        return NULL;
+
+    if (!filename) {
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename)
+            PyErr_Clear();
+    }
+
+    if (filename) {
+        Py_XDECREF(self->filename);
+        self->filename = filename;
+        Py_INCREF(filename);
+    }
+
+    yyset_in((void*)file, self->scanner);
+
+    Py_INCREF(self);
+    return (PyObject*)self;
+}
+
+static PyObject* parser_iternext(Parser* self)
+{
+    const char* name;
     YYSTYPE yylval;
     YYLTYPE yylloc;
-    int token;
+    int token = 0;
     PyObject* obj;
 
-    /* Run the lexer. */
-    token = yylex(&yylval, &yylloc, _scanner);
-    if ( token == 0 ) {
-        Py_RETURN_NONE;
+    if (!yyget_in(self->scanner)) {
+        PyErr_SetString(PyExc_ValueError, "Parser is not initialized");
+        return NULL;
     }
 
-    obj = Py_None;
-    if (token == DATE ||
-        token == ACCOUNT ||
-        token == CURRENCY ||
-        token == STRING ||
-        token == NUMBER ||
-        token == TAG ||
-        token == LINK ||
-        token == KEY) {
+    token = yylex(&yylval, &yylloc, self->scanner, (PyObject*)self, self->builder);
+    if (token == 0)
+        return NULL;
 
+    switch (token) {
+    case DATE:
+    case ACCOUNT:
+    case CURRENCY:
+    case STRING:
+    case NUMBER:
+    case TAG:
+    case LINK:
+    case KEY:
         obj = yylval.pyobj;
+        break;
+    default:
+        obj = Py_None;
     }
 
-    tokenName = getTokenName(token);
-    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yyget_text(_scanner), (Py_ssize_t)yyget_leng(_scanner), obj);
+    name = getTokenName(token);
+
+    return Py_BuildValue("(sis#O)",
+                         name,
+                         yylloc.first_line,
+                         yyget_text(self->scanner),
+                         (Py_ssize_t)yyget_leng(self->scanner),
+                         obj);
 }
 
+static PyMethodDef parser_methods[] = {
+    {"parse", (PyCFunction)parser_parse, METH_VARARGS | METH_KEYWORDS, parser_parse_doc},
+    {"lex", (PyCFunction)parser_lex, METH_VARARGS | METH_KEYWORDS, parser_parse_doc},
+    {NULL, NULL}
+};
+
+PyTypeObject Parser_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "_parser.Parser",                         /* tp_name*/
+    sizeof(Parser),                           /* tp_basicsize*/
+    0,                                        /* tp_itemsize*/
+    (destructor)parser_dealloc,               /* tp_dealloc*/
+    0,                                        /* tp_print*/
+    0,                                        /* tp_getattr*/
+    0,                                        /* tp_setattr*/
+    0,                                        /* tp_compare */
+    0,                                        /* tp_repr*/
+    0,                                        /* tp_as_number */
+    0,                                        /* tp_as_sequence */
+    0,                                        /* tp_as_mapping */
+    0,                                        /* tp_hash */
+    0,                                        /* tp_call */
+    0,                                        /* tp_str */
+    0,                                        /* tp_getattro */
+    0,                                        /* tp_setattro */
+    0,                                        /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+    parser_doc,                               /* tp_doc */
+    0,                                        /* tp_traverse */
+    0,                                        /* tp_clear */
+    0,                                        /* tp_richcompare */
+    0,                                        /* tp_weaklistoffset */
+    PyObject_SelfIter,                        /* tp_iter */
+    (iternextfunc)parser_iternext,            /* tp_iternext */
+    parser_methods,                           /* tp_methods */
+    0,                                        /* tp_members */
+    parser_getsetters,                        /* tp_getset */
+    0,                                        /* tp_base */
+    0,                                        /* tp_dict */
+    0,                                        /* tp_descr_get */
+    0,                                        /* tp_descr_set */
+    0,                                        /* tp_dictoffset */
+    (initproc)parser___init__,                /* tp_init */
+    0,                                        /* tp_alloc */
+    parser_new,                               /* tp_new */
+    0,                                        /* tp_free */
+    0,                                        /* tp_is_gc */
+    0,                                        /* tp_bases */
+    0,                                        /* tp_mro */
+    0,                                        /* tp_cache */
+    0,                                        /* tp_subclasses */
+    0,                                        /* tp_weaklist */
+    0,                                        /* tp_del */
+    0,                                        /* tp_version_tag */
+    0, /* tp_finalize */
+};
 
 static PyMethodDef module_functions[] = {
-    {"parse_file", (PyCFunction)parse_file, METH_VARARGS|METH_KEYWORDS, parse_file_doc},
-    {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
-    {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
-    {"lexer_initialize", (PyCFunction)lexer_initialize, METH_VARARGS|METH_KEYWORDS, NULL},
-    {"lexer_next", lexer_next, METH_VARARGS, NULL},
-    {"lexer_finalize", lexer_finalize, METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL} /* Sentinel */
+    {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "_parser",                            /* m_name */
-    "Beancount parser extension module",  /* m_doc */
-    -1,                                   /* m_size */
-    module_functions,                     /* m_methods */
-    NULL,                                 /* m_reload */
-    NULL,                                 /* m_traverse */
-    NULL,                                 /* m_clear */
-    NULL,                                 /* m_free */
+    "_parser",                           /* m_name */
+    "Beancount parser extension module", /* m_doc */
+    -1,                                  /* m_size */
+    module_functions,                    /* m_methods */
+    NULL,                                /* m_reload */
+    NULL,                                /* m_traverse */
+    NULL,                                /* m_clear */
+    NULL,                                /* m_free */
 };
 
 void initialize_metadata(PyObject* module) {
@@ -260,24 +318,34 @@ void initialize_metadata(PyObject* module) {
 
 PyMODINIT_FUNC PyInit__parser(void)
 {
+    Py_INCREF(&Parser_Type);
+
     PyObject* module = PyModule_Create(&moduledef);
-    if ( module == NULL ) {
-        Py_RETURN_NONE;
-    }
+    if (!module)
+        goto error;
 
     initialize_metadata(module);
 
     /* Import the module that defines the missing object constant. */
     PyObject* number_module = PyImport_ImportModule("beancount.core.number");
-    if ( number_module == NULL ) {
-        Py_RETURN_NONE;
-    }
-    missing_obj = PyObject_GetAttrString(number_module, "MISSING");
-    if ( missing_obj == NULL ) {
-        Py_RETURN_NONE;
-    }
+    if (!number_module)
+        goto error;
+
+    missing = PyObject_GetAttrString(number_module, "MISSING");
+    if (!missing)
+        goto error;
+
+    if (PyType_Ready(&Parser_Type) < 0)
+        goto error;
+    if (PyModule_AddObject(module, "Parser", (PyObject *)&Parser_Type) < 0)
+        goto error;
 
     return module;
+
+error:
+    Py_DECREF(&Parser_Type);
+    Py_DECREF(module);
+    return NULL;
 }
 
 /* FIXME: Finalize too, unrefing the constants. {48414425cf78} */

@@ -144,6 +144,6 @@ struct YYLTYPE
 
 
 
-int yyparse (yyscan_t scanner);
+int yyparse (yyscan_t scanner, PyObject* parser, PyObject* builder);
 
 #endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */

@@ -23,14 +23,10 @@
 typedef struct _yyextra_t yyextra_t;
 
 /* Initialize scanner private data. */
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+void yylex_initialize(yyscan_t yyscanner);
 
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
-
-const char* yyget_filename(yyscan_t *scanner);
-
-int yyget_firstline(yyscan_t *scanner);
 
 }
 
@@ -56,12 +52,6 @@ struct _yyextra_t {
     int n_eof;
     /* Number of tokens since the beginning of the line. */
     int n_line_tokens;
-    /* The filename being tokenized. */
-    const char* filename;
-    /* Reporting line offset. This is used like the #line cpp macro */
-    int line;
-    /* The encoding to use for converting strings. */
-    const char* encoding;
     /* Variable size buffer used to accumulate string data. */
     struct buffer str;
 };
@@ -105,16 +95,16 @@ static inline void buffer_begin(struct buffer* b)
 #define strbuf &yyget_extra(yyscanner)->str
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
-#define yy_filename yyget_extra(yyscanner)->filename
-#define yy_firstline yyget_extra(yyscanner)->line
-#define yy_encoding yyget_extra(yyscanner)->encoding
+#define yy_filename ((Parser*)parser)->filename
+#define yy_firstline ((Parser*)parser)->line
+#define yy_encoding ((Parser*)parser)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length);
+void build_lexer_error(PyObject* builder, const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(void);
+void build_lexer_error_from_exception(PyObject* builder);
 
 int PyFile_Read(PyObject *file, char *buf, size_t max_size);
 
@@ -126,13 +116,13 @@ int PyFile_Read(PyObject *file, char *buf, size_t max_size);
     yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
     /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
     if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception();                                              \
+       build_lexer_error_from_exception(builder);                                       \
        return LEX_ERROR;                                                                \
     }                                                                                   \
     /* Lexer builder methods should never return None, check for it. */                 \
     else if (yylval->pyobj == Py_None) {                                                \
         Py_DECREF(Py_None);                                                             \
-        build_lexer_error("Unexpected None result from lexer", 34);                     \
+        build_lexer_error(builder, "Unexpected None result from lexer", 34);            \
         return LEX_ERROR;                                                               \
     }
 
@@ -379,7 +369,7 @@ NULL		{
         PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
                                          yy_encoding, "ignore");
         if (!str) {
-            build_lexer_error_from_exception();
+            build_lexer_error_from_exception(builder);
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
             return LEX_ERROR;
@@ -450,7 +440,7 @@ NULL		{
 <INVALID>[^ \t\n\r]+     {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(buffer, length);
+    build_lexer_error(builder, buffer, length);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -458,15 +448,11 @@ NULL		{
 
 %% /* User Code */
 
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner)
+void yylex_initialize(yyscan_t yyscanner)
 {
     yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
-
     yy_eof_times = 0;
     yy_line_tokens = 0;
-    yy_filename = filename ?: "";
-    yy_firstline = firstline;
-    yy_encoding = encoding ?: "utf-8";
     buffer_init(strbuf, 1024);
 }
 
@@ -474,16 +460,6 @@ void yylex_finalize(yyscan_t yyscanner)
 {
     buffer_free(strbuf);
     free(yyget_extra(yyscanner));
-}
-
-const char* yyget_filename(yyscan_t *scanner)
-{
-    return yyget_extra(scanner)->filename;
-}
-
-int yyget_firstline(yyscan_t *scanner)
-{
-    return yyget_extra(scanner)->line;
 }
 
 static void buffer_init(struct buffer* b, size_t size)
@@ -529,7 +505,7 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length)
+void build_lexer_error(PyObject* builder, const char* string, size_t length)
 {
     TRACE_ERROR("Invalid Token");
 
@@ -543,7 +519,7 @@ void build_lexer_error(const char* string, size_t length)
     Py_XDECREF(rv);
 }
 
-void build_lexer_error_from_exception()
+void build_lexer_error_from_exception(PyObject* builder)
 {
     TRACE_ERROR("Lexer Builder Exception");
 

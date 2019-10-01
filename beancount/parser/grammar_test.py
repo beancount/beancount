@@ -293,7 +293,7 @@ class TestUglyBugs(unittest.TestCase):
             ';; End of file',
         ])
 
-        entries, errors, _ = parser.parse_string(input_, yydebug=0)
+        entries, errors, _ = parser.parse_string(input_)
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
