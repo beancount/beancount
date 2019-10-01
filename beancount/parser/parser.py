@@ -180,12 +180,12 @@ def is_entry_incomplete(entry):
     return False
 
 
-def parse_file(file, report_filename=None, **kw):
+def parse_file(file, report_filename=None, report_firstline=0, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      filename: the name of the file to be parsed.
+      file: file object or path of the file to be parsed.
       kw: a dict of keywords to be applied to the C parser.
     Returns:
       A tuple of (
@@ -198,7 +198,8 @@ def parse_file(file, report_filename=None, **kw):
     elif not isinstance(file, io.IOBase):
         file = open(file, 'rb')
     builder = grammar.Builder(report_filename)
-    _parser.parse_file(file, builder, report_filename=report_filename, **kw)
+    parser = _parser.Parser(builder)
+    parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
     return builder.finalize()
 
 

@@ -9,16 +9,12 @@
 typedef struct _yyextra_t yyextra_t;
 
 /* Initialize scanner private data. */
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+void yylex_initialize(yyscan_t yyscanner);
 
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
-const char* yyget_filename(yyscan_t *scanner);
-
-int yyget_firstline(yyscan_t *scanner);
-
-#line 21 "beancount/parser/lexer.h"
+#line 17 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -532,9 +528,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 460 "beancount/parser/lexer.l"
+#line 450 "beancount/parser/lexer.l"
 
 
-#line 538 "beancount/parser/lexer.h"
+#line 534 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
