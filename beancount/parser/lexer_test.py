@@ -767,7 +767,7 @@ class TestLexerMisc(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertEqual([
-            ('NUMBER', 1, '452,34.00', D('45234.00')),
+            ('LEX_ERROR', 1, '452,34.00', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
