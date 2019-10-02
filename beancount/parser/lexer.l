@@ -112,11 +112,11 @@ static inline void buffer_beginning(struct buffer* b)
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(PyObject* builder, const char* format, ...);
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(PyObject* builder);
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
 
 int PyFile_Read(PyObject *file, char *buf, size_t max_size);
 
@@ -125,14 +125,14 @@ int PyFile_Read(PyObject *file, char *buf, size_t max_size);
 
 /* Callback call site with error handling. */
 #define BUILD(method_name, format, ...)                                 \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);  \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__); \
     if (yylval->pyobj == NULL) {                                        \
-        build_lexer_error_from_exception(builder);                      \
+        build_lexer_error_from_exception(yylloc, builder);              \
         return LEX_ERROR;                                               \
     }                                                                   \
     if (yylval->pyobj == Py_None) {                                     \
-        Py_DECREF(Py_None);                                             \
-        build_lexer_error(builder,                                      \
+        Py_DECREF(yylval->pyobj);                                       \
+        build_lexer_error(yylloc, builder,                              \
                           "ValueError: None return value from %s.%s",   \
                           Py_TYPE(builder)->tp_name, method_name);      \
         return LEX_ERROR;                                               \
@@ -393,7 +393,7 @@ NULL		{
         PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
                                          yy_encoding, "ignore");
         if (!str) {
-            build_lexer_error_from_exception(builder);
+            build_lexer_error_from_exception(yylloc, builder);
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
             return LEX_ERROR;
@@ -463,7 +463,7 @@ NULL		{
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    build_lexer_error(builder, "Invalid token: '%s'", yytext);
+    build_lexer_error(yylloc, builder, "Invalid token: '%s'", yytext);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -605,7 +605,7 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(PyObject* builder, const char* format, ...)
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
 {
     PyObject* error = NULL;
     PyObject* rv = NULL;
@@ -619,13 +619,14 @@ void build_lexer_error(PyObject* builder, const char* format, ...)
         return;
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    rv = PyObject_CallMethod(builder, "build_lexer_error", "(O)", error);
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
+                             loc->file_name, loc->first_line, error);
 
     Py_XDECREF(error);
     Py_XDECREF(rv);
 }
 
-void build_lexer_error_from_exception(PyObject* builder)
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
     PyObject* ptraceback = NULL;
     PyObject* pvalue = NULL;
@@ -641,7 +642,8 @@ void build_lexer_error_from_exception(PyObject* builder)
 
     if (pvalue)
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        rv = PyObject_CallMethod(builder, "build_lexer_error", "OO", pvalue, ptype);
+        rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
+                                 loc->file_name, loc->first_line, pvalue, ptype);
     else
         PyErr_SetString(PyExc_RuntimeError, "No exception");
 

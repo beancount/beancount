@@ -11,6 +11,7 @@ import tempfile
 from decimal import Decimal
 
 from beancount.core import data
+from beancount.core.data import new_metadata
 from beancount.core import account
 from beancount.parser import _parser
 
@@ -35,13 +36,16 @@ class LexBuilder:
         # A regexp for valid account names.
         self.account_regexp = re.compile(account.ACCOUNT_RE)
 
+        # A regexp for valid numbers.
+        self.number_regexp = re.compile(r'\d{0,3}(,\d{3})+(\.\d+)?$')
+
         # A set of all the commodities that we have seen in the file.
         self.commodities = set()
 
         # Errors that occurred during lexing and parsing.
         self.errors = []
 
-        # Default number of lines as threshold to warn over long strings.
+        # Default number of lines in string literals.
         self.long_string_maxlines_default = 64
 
     def get_invalid_account(self):
@@ -61,7 +65,7 @@ class LexBuilder:
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, message, exc_type=None): # {0e31aeca3363}
+    def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}
         """Build a lexer error and appends it to the list of pending errors.
 
         Args:
@@ -73,7 +77,7 @@ class LexBuilder:
         if exc_type is not None:
             message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(self.get_lexer_location(), message, None))
+            LexerError(new_metadata(filename, lineno), message, None))
 
 
     def DATE(self, year, month, day):
@@ -133,12 +137,7 @@ class LexBuilder:
         if '\n' in string:
             num_lines = string.count('\n') + 1
             if num_lines > self.long_string_maxlines_default:
-                # This is just a warning; accept the string anyhow.
-                self.errors.append(
-                    LexerError(
-                        self.get_lexer_location(),
-                        "String too long ({} lines); possible error".format(num_lines),
-                        None))
+                raise ValueError("String too long ({} lines)".format(num_lines))
         return string
 
     def NUMBER(self, number):
@@ -152,24 +151,10 @@ class LexBuilder:
         # Note: We don't use D() for efficiency here.
         # The lexer will only yield valid number strings.
         if ',' in number:
-            # Extract the integer part and check the commas match the
-            # locale-aware formatted version. This
-            match = re.match(r"([\d,]*)(\.\d*)?$", number)
-            if not match:
-                # This path is never taken because the lexer will parse a comma
-                # in the fractional part as two NUMBERs with a COMMA token in
-                # between.
-                self.errors.append(
-                    LexerError(self.get_lexer_location(),
-                               "Invalid number format: '{}'".format(number), None))
-            else:
-                int_string, float_string = match.groups()
-                reformatted_number = r"{:,.0f}".format(int(int_string.replace(",", "")))
-                if int_string != reformatted_number:
-                    self.errors.append(
-                        LexerError(self.get_lexer_location(),
-                                   "Invalid commas: '{}'".format(number), None))
-
+            # Check for a number with commas as thousands separator.
+            if not self.number_regexp.match(number):
+                raise ValueError("Invalid number format: '{}'".format(number))
+            # Remove commas.
             number = number.replace(',', '')
         return Decimal(number)
 
