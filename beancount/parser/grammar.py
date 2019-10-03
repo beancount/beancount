@@ -136,12 +136,12 @@ class Builder(lexer.LexBuilder):
 
         # A display context builder.
         self.dcontext = display_context.DisplayContext()
-        self._dcupdate = self.dcontext.update
+        self.display_context_update = self.dcontext.update
 
-    def dcupdate(self, number, currency):
+    def _dcupdate(self, number, currency):
         """Update the display context."""
         if isinstance(number, Decimal) and currency and currency is not MISSING:
-            self._dcupdate(number, currency)
+            self.display_context_update(number, currency)
 
     def finalize(self):
         """Finalize the parser, check for final errors and return the triple.
@@ -211,7 +211,7 @@ class Builder(lexer.LexBuilder):
         """See base class."""
         return self.options['long_string_maxlines']
 
-    def store_result(self, entries):
+    def store_result(self, filename, lineno, entries):
         """Start rule stores the final result here.
 
         Args:
@@ -257,7 +257,7 @@ class Builder(lexer.LexBuilder):
         self.errors.append(
             ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
 
-    def pushtag(self, tag):
+    def pushtag(self, filename, lineno, tag):
         """Push a tag on the current set of tags.
 
         Note that this does not need to be stack ordered.
@@ -267,7 +267,7 @@ class Builder(lexer.LexBuilder):
         """
         self.tags.append(tag)
 
-    def poptag(self, tag):
+    def poptag(self, filename, lineno, tag):
         """Pop a tag off the current set of stacks.
 
         Args:
@@ -276,19 +276,20 @@ class Builder(lexer.LexBuilder):
         try:
             self.tags.remove(tag)
         except ValueError:
-            meta = new_metadata(self.options['filename'], 0)
+            meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
 
-    def pushmeta(self, key, value):
+    def pushmeta(self, filename, lineno, key_value):
         """Set a metadata field on the current key-value pairs to be added to transactions.
 
         Args:
           key_value: A KeyValue instance, to be added to the dict of metadata.
         """
+        key, value = key_value
         self.meta[key].append(value)
 
-    def popmeta(self, key):
+    def popmeta(self, filename, lineno, key):
         """Removed a key off the current set of stacks.
 
         Args:
@@ -302,7 +303,7 @@ class Builder(lexer.LexBuilder):
             if not value_list:
                 self.meta.pop(key)
         except IndexError:
-            meta = new_metadata(self.options['filename'], 0)
+            meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta,
                             "Attempting to pop absent metadata key: '{}'".format(key),
@@ -410,7 +411,7 @@ class Builder(lexer.LexBuilder):
         """
         self.options['plugin'].append((plugin_name, plugin_config))
 
-    def amount(self, number, currency):
+    def amount(self, filename, lineno, number, currency):
         """Process an amount grammar rule.
 
         Args:
@@ -421,10 +422,10 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number, currency)
+        self._dcupdate(number, currency)
         return Amount(number, currency)
 
-    def compound_amount(self, number_per, number_total, currency):
+    def compound_amount(self, filename, lineno, number_per, number_total, currency):
         """Process an amount grammar rule.
 
         Args:
@@ -437,18 +438,18 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number_per, currency)
-        self.dcupdate(number_total, currency)
+        self._dcupdate(number_per, currency)
+        self._dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
         # here because we only get the number of units in the full lot spec.
         return CompoundAmount(number_per, number_total, currency)
 
-    def cost_merge(self, _):
+    def cost_merge(self, filename, lineno, _):
         """Create a 'merge cost' token."""
         return MERGE_COST
 
-    def cost_spec(self, cost_comp_list, is_total):
+    def cost_spec(self, filename, lineno, cost_comp_list, is_total):
         """Process a cost_spec grammar rule.
 
         Args:
@@ -476,7 +477,7 @@ class Builder(lexer.LexBuilder):
                     compound_cost = comp
                 else:
                     self.errors.append(
-                        ParserError(self.get_lexer_location(),
+                        ParserError(new_metadata(filename, lineno),
                                     "Duplicate cost: '{}'.".format(comp), None))
 
             elif isinstance(comp, date):
@@ -484,18 +485,18 @@ class Builder(lexer.LexBuilder):
                     date_ = comp
                 else:
                     self.errors.append(
-                        ParserError(self.get_lexer_location(),
+                        ParserError(new_metadata(filename, lineno),
                                     "Duplicate date: '{}'.".format(comp), None))
 
             elif comp is MERGE_COST:
                 if merge is None:
                     merge = True
                     self.errors.append(
-                        ParserError(self.get_lexer_location(),
+                        ParserError(new_metadata(filename, lineno),
                                     "Cost merging is not supported yet", None))
                 else:
                     self.errors.append(
-                        ParserError(self.get_lexer_location(),
+                        ParserError(new_metadata(filename, lineno),
                                     "Duplicate merge-cost spec", None))
 
             else:
@@ -505,7 +506,7 @@ class Builder(lexer.LexBuilder):
                     label = comp
                 else:
                     self.errors.append(
-                        ParserError(self.get_lexer_location(),
+                        ParserError(new_metadata(filename, lineno),
                                     "Duplicate label: '{}'.".format(comp), None))
 
         # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
@@ -519,7 +520,7 @@ class Builder(lexer.LexBuilder):
                 if number_total is not None:
                     self.errors.append(
                         ParserError(
-                            self.get_lexer_location(),
+                            new_metadata(filename, lineno),
                             ("Per-unit cost may not be specified using total cost "
                              "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
                             None))
@@ -535,7 +536,7 @@ class Builder(lexer.LexBuilder):
 
         return CostSpec(number_per, number_total, currency, date_, label, merge)
 
-    def handle_list(self, object_list, new_object):
+    def handle_list(self, filename, lineno, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
 
         Args:
@@ -736,7 +737,7 @@ class Builder(lexer.LexBuilder):
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-        tags, links = self.finalize_tags_links(tags_links.tags, tags_links.links)
+        tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
 
     def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
@@ -755,7 +756,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Custom(meta, date, dir_type, custom_values)
 
-    def custom_value(self, value, dtype=None):
+    def custom_value(self, filename, lineno, value, dtype=None):
         """Create a custom value object, along with its type.
 
         Args:
@@ -768,7 +769,7 @@ class Builder(lexer.LexBuilder):
             dtype = type(value)
         return ValueType(value, dtype)
 
-    def key_value(self, key, value):
+    def key_value(self, filename, lineno, key, value):
         """Process a document directive.
 
         Args:
@@ -843,7 +844,7 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, _):
+    def tag_link_new(self, filename, lineno, _):
         """Create a new TagsLinks instance.
 
         Returns:
@@ -851,7 +852,7 @@ class Builder(lexer.LexBuilder):
         """
         return TagsLinks(set(), set())
 
-    def tag_link_TAG(self, tags_links, tag):
+    def tag_link_TAG(self, filename, lineno, tags_links, tag):
         """Add a tag to the TagsLinks accumulator.
 
         Args:
@@ -863,7 +864,7 @@ class Builder(lexer.LexBuilder):
         tags_links.tags.add(tag)
         return tags_links
 
-    def tag_link_LINK(self, tags_links, link):
+    def tag_link_LINK(self, filename, lineno, tags_links, link):
         """Add a link to the TagsLinks accumulator.
 
         Args:
@@ -875,7 +876,7 @@ class Builder(lexer.LexBuilder):
         tags_links.links.add(link)
         return tags_links
 
-    def tag_link_STRING(self, tags_links, string):
+    def tag_link_STRING(self, filename, lineno, tags_links, string):
         """Add a string to the TagsLinks accumulator.
 
         Args:
@@ -887,7 +888,7 @@ class Builder(lexer.LexBuilder):
         tags_links.strings.append(string)
         return tags_links
 
-    def unpack_txn_strings(self, txn_strings, meta):
+    def _unpack_txn_strings(self, txn_strings, meta):
         """Unpack a tags_links accumulator to its payee and narration fields.
 
         Args:
@@ -912,7 +913,7 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def finalize_tags_links(self, tags, links):
+    def _finalize_tags_links(self, tags, links):
         """Finally amend tags and links and return final objects to be inserted.
 
         Args:
@@ -993,7 +994,7 @@ class Builder(lexer.LexBuilder):
                                     posting_or_kv), None))
 
         # Freeze the tags & links or set to default empty values.
-        tags, links = self.finalize_tags_links(tags, links)
+        tags, links = self._finalize_tags_links(tags, links)
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
@@ -1005,7 +1006,7 @@ class Builder(lexer.LexBuilder):
             meta.update(explicit_meta)
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_strings, meta)
+        payee_narration = self._unpack_txn_strings(txn_strings, meta)
         if payee_narration is None:
             return None
         payee, narration = payee_narration
