@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.4.  */
+/* A Bison parser, made by GNU Bison 3.4.1.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -48,7 +48,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.4"
+#define YYBISON_VERSION "3.4.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -101,9 +101,9 @@ void build_grammar_error_from_exception(void)
     TRACE_ERROR("Grammar Builder Exception");
 
     /* Get the exception context. */
-    PyObject* ptype;
-    PyObject* pvalue;
-    PyObject* ptraceback;
+    PyObject* ptype = NULL;
+    PyObject* pvalue = NULL;
+    PyObject* ptraceback = NULL;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
 
@@ -114,10 +114,10 @@ void build_grammar_error_from_exception(void)
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
                                            yy_filename, yylineno + yy_firstline,
-                                           pvalue, ptype, ptraceback);
-        Py_DECREF(ptype);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptraceback);
+                                           pvalue, ptype, ptraceback ?: Py_None);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
 
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
