@@ -44,6 +44,9 @@ typedef struct YYLTYPE {
         }                                                               \
     } while (0)
 
+/* Get a printable version of a token name. */
+const char* token_to_string(int token);
+
 }
 
 %{
@@ -125,10 +128,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
         Py_XDECREF(rv);
     }
 }
-
-/* Get a printable version of a token name. */
-const char* getTokenName(int token);
-
 
 /* Macros to clean up memory for temporaries in rule reductions. */
 #define DECREF1(x1)                        Py_DECREF(x1);
@@ -887,59 +886,8 @@ file : declarations
 /* Epilogue */
 %%
 
-/* A function that will convert a token name to a string, used in debugging. */
-const char* getTokenName(int token)
+/* Get a printable version of a token name. */
+const char* token_to_string(int token)
 {
-    switch ( token ) {
-        case LEX_ERROR : return "LEX_ERROR";
-        case INDENT    : return "INDENT";
-        case EOL       : return "EOL";
-        case COMMENT   : return "COMMENT";
-        case SKIPPED   : return "SKIPPED";
-        case PIPE      : return "PIPE";
-        case ATAT      : return "ATAT";
-        case AT        : return "AT";
-        case LCURL     : return "LCURL";
-        case RCURL     : return "RCURL";
-        case EQUAL     : return "EQUAL";
-        case COMMA     : return "COMMA";
-        case TILDE     : return "TILDE";
-        case HASH      : return "HASH";
-        case PLUS      : return "PLUS";
-        case MINUS     : return "MINUS";
-        case ASTERISK  : return "ASTERISK";
-        case SLASH     : return "SLASH";
-        case COLON     : return "COLON";
-        case LPAREN    : return "LPAREN";
-        case RPAREN    : return "RPAREN";
-        case FLAG      : return "FLAG";
-        case TXN       : return "TXN";
-        case BALANCE   : return "BALANCE";
-        case OPEN      : return "OPEN";
-        case CLOSE     : return "CLOSE";
-        case PAD       : return "PAD";
-        case EVENT     : return "EVENT";
-        case QUERY     : return "QUERY";
-        case CUSTOM    : return "CUSTOM";
-        case PRICE     : return "PRICE";
-        case NOTE      : return "NOTE";
-        case DOCUMENT  : return "DOCUMENT";
-        case PUSHTAG   : return "PUSHTAG";
-        case POPTAG    : return "POPTAG";
-        case PUSHMETA  : return "PUSHMETA";
-        case POPMETA   : return "POPMETA";
-        case OPTION    : return "OPTION";
-        case PLUGIN    : return "PLUGIN";
-        case DATE      : return "DATE";
-        case ACCOUNT   : return "ACCOUNT";
-        case CURRENCY  : return "CURRENCY";
-        case STRING    : return "STRING";
-        case NUMBER    : return "NUMBER";
-        case TAG       : return "TAG";
-        case LINK      : return "LINK";
-        case KEY       : return "KEY";
-        case BOOL      : return "BOOL";
-        case NONE      : return "NULL";
-    }
-    return "<NO_STRING_TRANSLATION>";
+    return yytname[YYTRANSLATE(token)];
 }

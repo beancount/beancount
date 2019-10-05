@@ -412,8 +412,6 @@ class TestLexer(unittest.TestCase):
         '''
         popmeta location:
         '''
-        # Note that this test contains an _actual_ newline, not an escape one as
-        # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('EOL', 2, '\n', None),
             ('POPMETA', 2, 'popmeta', None),
@@ -429,13 +427,11 @@ class TestLexer(unittest.TestCase):
         '''
         TRUE FALSE NULL
         '''
-        # Note that this test contains an _actual_ newline, not an escape one as
-        # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('EOL', 2, '\n', None),
             ('BOOL', 2, 'TRUE', None),
             ('BOOL', 2, 'FALSE', None),
-            ('NULL', 2, 'NULL', None),
+            ('NONE', 2, 'NULL', None),
             ('EOL', 3, '\n', None),
             ('EOL', 3, '\x00', None),
         ], tokens)
