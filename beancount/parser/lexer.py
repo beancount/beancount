@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import collections
 import datetime
+import io
 import re
 import tempfile
 from decimal import Decimal
@@ -218,13 +219,11 @@ def lex_iter(file, builder=None, encoding=None):
       Tuples of the token (a string), the matched text (a string), and the line
       no (an integer).
     """
-    if isinstance(file, str):
-        filename = file
-    else:
-        filename = file.name
+    if not isinstance(file, io.IOBase):
+        file = open(file, 'rb')
     if builder is None:
         builder = LexBuilder()
-    _parser.lexer_initialize(filename, builder, encoding)
+    _parser.lexer_initialize(file, builder, encoding=encoding)
     try:
         while 1:
             token_tuple = _parser.lexer_next()
@@ -246,8 +245,7 @@ def lex_iter_string(string, builder=None, encoding=None):
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
-    tmp_file = tempfile.NamedTemporaryFile('w' if isinstance(string, str) else 'wb')
-    tmp_file.write(string)
-    tmp_file.flush()
-    # Note: We pass in the file object in order to keep it alive during parsing.
-    return lex_iter(tmp_file, builder, encoding)
+    if isinstance(string, str):
+        string = string.encode('utf-8')
+    file = io.BytesIO(string)
+    return lex_iter(file, builder, encoding)

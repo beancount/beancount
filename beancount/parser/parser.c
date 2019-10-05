@@ -31,11 +31,6 @@ PyDoc_STRVAR(parse_file_doc,
 Your builder is responsible to accumulating results.\n\
 If you pass in '-' for filename, stdin is parsed.");
 
-PyDoc_STRVAR(parse_string_doc,
-"Parse the given string, calling back methods on the builder.\n\
-Your builder is responsible to accumulating results.");
-
-
 /* Handle the result of yyparse() {459018e2905c}. */
 PyObject* handle_yyparse_result(int result)
 {
@@ -54,92 +49,45 @@ PyObject* handle_yyparse_result(int result)
 
 PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 {
-    FILE* fp = NULL;
-    int result;
+    const char* report_filename = NULL;
+    const char* encoding = NULL;
+    int report_firstline = 0;
+    PyObject* name = NULL;
+    extern int yydebug;
+    PyObject* file;
+    int rv;
 
     /* Unpack and validate arguments */
-    const char* filename = 0;
-    const char* report_filename = 0;
-    int report_firstline = 0;
-    extern int yydebug;
-    const char* encoding = 0;
-    static char *kwlist[] = {"filename", "builder",
+    static char* kwlist[] = {"file", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|zizp", kwlist,
-                                      &filename, &builder,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
+                                      &file, &builder,
                                       &report_filename, &report_firstline,
-                                      &encoding, &yydebug) ) {
+                                      &encoding, &yydebug)) {
         return NULL;
     }
 
-    /* Open the file. */
-    if ( strcmp(filename, "-") == 0 ) {
-      fp = stdin;
-    }
-    else {
-      fp = fopen(filename, "r");
-      if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
-      }
+    if (!report_filename) {
+        PyObject* p = PyObject_GetAttrString(file, "name");
+        if (p) {
+            name = PyObject_Str(p);
+            if (name)
+                report_filename = PyUnicode_AS_DATA(name);
+        }
+        PyErr_Clear();
+        Py_XDECREF(p);
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(report_filename != NULL ? report_filename : filename,
-                     encoding);
-    yyin = fp;
+    yylex_initialize(report_filename ?: "", encoding);
+    yyset_in((void*)file);
 
     /* Initialize the parser. */
     yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
-    result = yyparse();
-
-    /* Finalize the parser. */
-    /* Noop. */
-
-    /* Finalize the lexer. */
-    if ( fp != NULL ) {
-        fclose(fp);
-    }
-    yylex_finalize();
-
-    builder = 0;
-
-    return handle_yyparse_result(result);
-}
-
-PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
-{
-    int result;
-
-    /* Unpack and validate arguments */
-    const char* input_string = 0;
-    Py_ssize_t input_length = 0;
-    const char* report_filename = 0;
-    const char* encoding = 0;
-    int report_firstline = 0;
-    extern int yydebug;
-    static char *kwlist[] = {"input_string", "builder",
-                             "report_filename", "report_firstline",
-                             "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|zizp", kwlist,
-                                      &input_string, &input_length, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug) ) {
-        return NULL;
-    }
-
-    /* Initialize the lexer. */
-    yylex_initialize(report_filename != NULL ? report_filename : "<string>",
-                     encoding);
-    yy_switch_to_buffer(yy_scan_string(input_string));
-
-    /* Initialize the parser. */
-    yy_firstline = report_firstline;
-
-    /* Parse! This will call back methods on the builder instance. */
-    result = yyparse();
+    rv = yyparse();
 
     /* Finalize the parser. */
     /* Noop. */
@@ -147,9 +95,10 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     /* Finalize the lexer. */
     yylex_finalize();
 
-    builder = 0;
+    Py_XDECREF(name);
+    builder = NULL;
 
-    return handle_yyparse_result(result);
+    return handle_yyparse_result(rv);
 }
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
@@ -162,30 +111,48 @@ PyObject* get_yylineno(PyObject *self, PyObject *args)
     return PyLong_FromLong(yylineno + yy_firstline);
 }
 
-
-
 /* Inititalize the lexer to start running in debug mode. */
-PyObject* lexer_initialize(PyObject *self, PyObject *args)
+PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    FILE* fp = NULL;
+    const char* report_filename = NULL;
+    const char* encoding = NULL;
+    int report_firstline = 0;
+    PyObject* name = NULL;
+    extern int yydebug;
+    PyObject* file;
 
     /* Unpack and validate arguments */
-    const char* filename = NULL;
-    const char* encoding = NULL;
-    if ( !PyArg_ParseTuple(args, "sOz", &filename, &builder, &encoding) ) {
+    static char* kwlist[] = {"file", "builder",
+                             "report_filename", "report_firstline",
+                             "encoding", "yydebug", NULL};
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
+                                      &file, &builder,
+                                      &report_filename, &report_firstline,
+                                      &encoding, &yydebug)) {
         return NULL;
     }
-    Py_XINCREF(builder);
 
-    /* Open the file. */
-    fp = fopen(filename, "r");
-    if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
+    if (!report_filename) {
+        PyObject* p = PyObject_GetAttrString(file, "name");
+        if (p) {
+            name = PyObject_Str(p);
+            if (name)
+                report_filename = PyUnicode_AS_DATA(name);
+        }
+        PyErr_Clear();
+        Py_XDECREF(p);
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(filename, encoding);
-    yyin = fp;
+    yylex_initialize(report_filename ?: "", encoding);
+    yyset_in((void*)file);
+
+    /* Initialize the parser. */
+    yy_firstline = report_firstline;
+
+    /* We need to keep those objects alive after we live this function. */
+    Py_INCREF(file);
+    Py_INCREF(builder);
 
     Py_RETURN_NONE;
 }
@@ -193,13 +160,12 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args)
 /* Inititalize the lexer to start running in debug mode. */
 PyObject* lexer_finalize(PyObject *self, PyObject *args)
 {
+    /* Now we can let those objects go. */
+    Py_XDECREF((void*)yyget_in());
+    Py_XDECREF(builder);
+
     /* Finalize the lexer. */
     yylex_finalize();
-
-    /* /\* Close the file. *\/ */
-    /* if ( fclose(yyin) != 0 ) { */
-    /*     return PyErr_Format(PyExc_IOError, "Cannot close lexer file"); */
-    /* } */
 
     Py_RETURN_NONE;
 }
@@ -240,10 +206,9 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 static PyMethodDef module_functions[] = {
     {"parse_file", (PyCFunction)parse_file, METH_VARARGS|METH_KEYWORDS, parse_file_doc},
-    {"parse_string", (PyCFunction)parse_string, METH_VARARGS|METH_KEYWORDS, parse_string_doc},
     {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
     {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
-    {"lexer_initialize", lexer_initialize, METH_VARARGS, NULL},
+    {"lexer_initialize", (PyCFunction)lexer_initialize, METH_VARARGS|METH_KEYWORDS, NULL},
     {"lexer_next", lexer_next, METH_VARARGS, NULL},
     {"lexer_finalize", lexer_finalize, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
