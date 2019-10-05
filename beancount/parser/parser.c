@@ -13,8 +13,6 @@ extern YY_DECL;
 #define XSTRINGIFY(s) STRINGIFY(s)
 #define STRINGIFY(s) #s
 
-extern const char* getTokenName(int token);
-
 /* Placeolder object for missing cost specifications. */
 PyObject* missing;
 
@@ -113,7 +111,6 @@ static PyObject* parser_lex(Parser *self, PyObject* args, PyObject* kwds)
 
 static PyObject* parser_iternext(Parser* self)
 {
-    const char* name;
     YYSTYPE yylval;
     YYLTYPE yylloc;
     int token = 0;
@@ -146,10 +143,8 @@ static PyObject* parser_iternext(Parser* self)
         obj = Py_None;
     }
 
-    name = getTokenName(token);
-
     return Py_BuildValue("(sis#O)",
-                         name,
+                         token_to_string(token),
                          yylloc.first_line,
                          yyget_text(self->scanner),
                          (Py_ssize_t)yyget_leng(self->scanner),

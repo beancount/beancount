@@ -80,8 +80,11 @@ typedef struct YYLTYPE {
         }                                                               \
     } while (0)
 
+/* Get a printable version of a token name. */
+const char* token_to_string(int token);
 
-#line 85 "beancount/parser/grammar.h"
+
+#line 88 "beancount/parser/grammar.h"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -149,7 +152,7 @@ typedef struct YYLTYPE {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 148 "beancount/parser/grammar.y"
+#line 147 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -159,7 +162,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 163 "beancount/parser/grammar.h"
+#line 166 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
