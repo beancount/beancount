@@ -60,9 +60,6 @@ class LexBuilder:
         """
         return 'Equity:InvalidAccountName'
 
-    def get_lexer_location(self):
-        return data.new_metadata(*self.parser.location)
-
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
     def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}

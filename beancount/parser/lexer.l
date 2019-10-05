@@ -33,9 +33,6 @@ yyscan_t* yylex_free(yyscan_t scanner);
 /* Initialize scanner private data and reset scanner state. */
 void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int line, const char* encoding);
 
-PyObject* yyget_filename(yyscan_t scanner);
-int yyget_firstline(yyscan_t scanner);
-
 }
 
 /* Definitions. */
@@ -548,18 +545,6 @@ void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int 
     extra->n_line_tokens = 0;
 
     buffer_beginning(&extra->str);
-}
-
-PyObject* yyget_filename(yyscan_t scanner)
-{
-    yyextra_t* extra = yyget_extra(scanner);
-    return extra->filename;
-}
-
-int yyget_firstline(yyscan_t scanner)
-{
-    yyextra_t* extra = yyget_extra(scanner);
-    return extra->line;
 }
 
 static void buffer_init(struct buffer* b, size_t size)

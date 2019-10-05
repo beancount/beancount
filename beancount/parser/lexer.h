@@ -19,10 +19,7 @@ yyscan_t* yylex_free(yyscan_t scanner);
 /* Initialize scanner private data and reset scanner state. */
 void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int line, const char* encoding);
 
-PyObject* yyget_filename(yyscan_t scanner);
-int yyget_firstline(yyscan_t scanner);
-
-#line 25 "beancount/parser/lexer.h"
+#line 22 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -536,9 +533,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 473 "beancount/parser/lexer.l"
+#line 470 "beancount/parser/lexer.l"
 
 
-#line 542 "beancount/parser/lexer.h"
+#line 539 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

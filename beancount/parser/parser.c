@@ -50,16 +50,6 @@ static int parser___init__(Parser* self, PyObject* args, PyObject* kwds)
     self->builder = builder;
     Py_INCREF(builder);
 
-    /* The builder need to know about the parser to report parsing
-     * location in some circumstances. However storing a reference to
-     * the parser in the builder creates a circular reference. We
-     * ignore this issue for the moment as it is probably better
-     * solved removing the need for the builder to call into the
-     * parser. This can be achieved passing the parser location when
-     * calling methods of the builder as it is already done in some
-     * cases. */
-    PyObject_SetAttrString(builder, "parser", (PyObject*)self);
-
     return 0;
 }
 
@@ -69,20 +59,6 @@ static void parser_dealloc(Parser* self)
     yylex_free(self->scanner);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
-
-PyDoc_STRVAR(parser_location_doc, "");
-
-static PyObject* parser_location(Parser* self)
-{
-    return Py_BuildValue("Oi",
-                         yyget_filename(self->scanner),
-                         yyget_firstline(self->scanner) + yyget_lineno(self->scanner));
-}
-
-static PyGetSetDef parser_getsetters[] = {
-    {"location", (getter)parser_location, NULL, parser_location_doc, NULL},
-    {NULL}
-};
 
 PyDoc_STRVAR(parser_parse_doc, "");
 
@@ -216,7 +192,7 @@ PyTypeObject Parser_Type = {
     (iternextfunc)parser_iternext,            /* tp_iternext */
     parser_methods,                           /* tp_methods */
     0,                                        /* tp_members */
-    parser_getsetters,                        /* tp_getset */
+    0,                                        /* tp_getset */
     0,                                        /* tp_base */
     0,                                        /* tp_dict */
     0,                                        /* tp_descr_get */
