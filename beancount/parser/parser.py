@@ -197,7 +197,7 @@ def parse_file(file, report_filename=None, report_firstline=0, **kw):
         file = sys.stdin.buffer
     elif not isinstance(file, io.IOBase):
         file = open(file, 'rb')
-    builder = grammar.Builder(report_filename)
+    builder = grammar.Builder()
     parser = _parser.Parser(builder)
     parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
     return builder.finalize()
