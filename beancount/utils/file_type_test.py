@@ -9,7 +9,7 @@ from beancount.utils import file_type
 
 class TestFileType(unittest.TestCase):
 
-    DATA_DIR = path.join(path.dirname(__file__), 'file_type')
+    DATA_DIR = path.join(path.dirname(__file__), 'file_type_testdata')
 
     def check_mime_type(self, example_file, expected_mime_types):
         if not isinstance(expected_mime_types, list):

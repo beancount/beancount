@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-10-10
+
+ - Moved test data for b.utils.file_type for Bazel support. It otherwise assumes
+   file_type.py is a package.
+
+
 2019-08-21
 
  - Fixed bug in split_expenses plugin.
