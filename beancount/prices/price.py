@@ -282,7 +282,7 @@ def process_args():
     parser.add_argument('-i', '--inactive', action='store_true', help=(
         "Select all commodities from input files, not just the ones active on the date"))
 
-    parser.add_argument('-u', '--undeclared', action='store', help=(
+    parser.add_argument('-u', '--undeclared', action='store_true', help=(
         "Include commodities viewed in the file even without a "
         "corresponding Commodity directive, from this default source. "
         "The currency name itself is used as the lookup symbol in this default source."))
@@ -324,6 +324,9 @@ def process_args():
                       2: logging.DEBUG}
     logging.basicConfig(level=verbose_levels[args.verbose],
                         format='%(levelname)-8s: %(message)s')
+
+    if args.undeclared:
+        args.undeclared = DEFAULT_SOURCE
 
     if args.all:
         args.inactive = args.clobber = True
