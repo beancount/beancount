@@ -381,4 +381,4 @@ class TestBalancePrecision(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

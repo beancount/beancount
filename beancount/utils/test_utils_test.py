@@ -161,4 +161,4 @@ def test_not_really():
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

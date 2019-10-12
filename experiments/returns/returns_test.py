@@ -894,4 +894,4 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

@@ -232,4 +232,4 @@ __incomplete__ = True
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

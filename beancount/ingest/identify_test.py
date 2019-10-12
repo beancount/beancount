@@ -134,4 +134,4 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

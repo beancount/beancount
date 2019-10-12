@@ -976,4 +976,4 @@ class TestExecuteFlatten(QueryBase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

@@ -38,4 +38,4 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

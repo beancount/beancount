@@ -20,4 +20,4 @@ class TestImporter(regtest.ImporterTestBase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

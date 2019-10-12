@@ -188,4 +188,4 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

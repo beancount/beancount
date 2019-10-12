@@ -143,4 +143,4 @@ class TestTable(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

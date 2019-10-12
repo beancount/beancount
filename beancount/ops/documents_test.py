@@ -214,4 +214,4 @@ class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()
