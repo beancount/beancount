@@ -257,7 +257,7 @@ setup(
                           '*.css',
                           'third_party/*.js'],
         'beancount.reports': ['*.html'],
-        'beancount.utils.file_type': ['*'],
+        'beancount.utils.file_type_testdata': ['*'],
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
