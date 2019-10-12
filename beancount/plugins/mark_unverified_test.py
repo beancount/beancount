@@ -75,3 +75,7 @@ class TestMarkUnverified(cmptest.TestCase):
             for expect_posting, posting in zip(expect_entry.postings, entry.postings):
                 self.assertEqual(expect_posting.meta.get('unverified'),
                                  posting.meta.get('unverified'))
+
+
+if __name__ == '__main__':
+    main()

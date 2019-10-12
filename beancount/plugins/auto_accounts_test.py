@@ -37,3 +37,7 @@ class TestAutoInsertOpen(cmptest.TestCase):
           Equity:Something           -100 USD
 
         """, new_entries)
+
+
+if __name__ == '__main__':
+    main()

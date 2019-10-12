@@ -189,3 +189,7 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertTrue(isinstance(entry, data.Transaction))
+
+
+if __name__ == '__main__':
+    main()

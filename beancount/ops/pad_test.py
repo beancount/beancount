@@ -568,3 +568,7 @@ class TestPadding(cmptest.TestCase):
         # self.assertEqual(1, len(errors))
         # self.assertRegex(errors[0].message, "Balance failed")
         # self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+
+if __name__ == '__main__':
+    main()

@@ -48,3 +48,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         _, valid_errors = unique_prices.validate_unique_prices(new_entries, options_map)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
         self.assertRegex(valid_errors[0].message, 'Disagreeing price ent')
+
+
+if __name__ == '__main__':
+    main()

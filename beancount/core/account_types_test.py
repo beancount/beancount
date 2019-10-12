@@ -120,3 +120,7 @@ class TestAccountTypes(unittest.TestCase):
                 ("Expenses:Toys:Computer", +1),
         ]:
             self.assertEqual(expected, account_types.get_account_sign(account_name))
+
+
+if __name__ == '__main__':
+    main()

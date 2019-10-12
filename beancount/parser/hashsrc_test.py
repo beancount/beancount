@@ -16,3 +16,7 @@ class TestHashSource(unittest.TestCase):
 
     def test_check_parser_source_files(self):
         hashsrc.check_parser_source_files()
+
+
+if __name__ == '__main__':
+    main()

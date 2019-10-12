@@ -161,3 +161,7 @@ class TestScriptPositions(test_utils.TestCase):
         self.assertRegex(output, 'OFXHEADER:100')
         self.assertRegex(output, '<SIGNONMSGSRSV1>')
         self.assertRegex(output, '</OFX>')
+
+
+if __name__ == '__main__':
+    main()

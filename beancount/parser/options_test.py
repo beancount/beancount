@@ -103,3 +103,7 @@ class TestValidateOptions(unittest.TestCase):
           option "plugin_processing_mode" "i-dont-exist"
         """
         self.assertTrue(errors)
+
+
+if __name__ == '__main__':
+    main()

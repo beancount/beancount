@@ -39,3 +39,7 @@ class TestScriptCheck(test_utils.TestCase):
         self.assertEqual(1, result)
         self.assertRegex(stderr.getvalue(), "Balance failed")
         self.assertRegex(stderr.getvalue(), "Assets:Cash")
+
+
+if __name__ == '__main__':
+    main()

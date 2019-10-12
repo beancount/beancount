@@ -166,3 +166,7 @@ class TestSetup(test_utils.TestCase):
 
         # Check that all the expected files are present.
         self.assertLessEqual(exp_filenames, tar_filenames)
+
+
+if __name__ == '__main__':
+    main()

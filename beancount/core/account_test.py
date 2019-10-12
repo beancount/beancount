@@ -218,3 +218,7 @@ class TestAccountTransformer(unittest.TestCase):
         acc = 'Assets:US:BofA:Checking'
         self.assertEqual(acc, xfr.render(acc))
         self.assertEqual(acc, xfr.parse(acc))
+
+
+if __name__ == '__main__':
+    main()

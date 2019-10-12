@@ -407,3 +407,7 @@ class TestValidateTolerances(cmptest.TestCase):
     #       Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
     #     """
     #     self.assertFalse(errors)
+
+
+if __name__ == '__main__':
+    main()

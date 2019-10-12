@@ -21,3 +21,7 @@ class TestScriptExample(test_utils.TestCase):
             file_contents,
             extra_validations=validation.HARDCORE_VALIDATIONS)
         self.assertFalse(errors)
+
+
+if __name__ == '__main__':
+    main()

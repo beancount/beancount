@@ -209,3 +209,7 @@ class TestCSVImporter(cmptest.TestCase):
 # TODO: Add balances every month or week.
 # TODO: Test ascending and descending orders.
 # TODO: Add a test for all the supported fields, e.g. NARRATION2.
+
+
+if __name__ == '__main__':
+    main()

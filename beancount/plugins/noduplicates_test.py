@@ -111,3 +111,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         # Note! This is different. We allow exact duplicates of price directive
         # on purpose. They may be common, and they won't hurt anything.
         self.assertEqual([], list(map(type, valid_errors)))
+
+
+if __name__ == '__main__':
+    main()

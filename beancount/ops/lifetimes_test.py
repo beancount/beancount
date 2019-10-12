@@ -215,3 +215,7 @@ class TestLifetimeDateIterators(test_utils.TestCase):
                           (datetime.date(2014, 6, 20), 'AAPL', 'USD'),
                           (datetime.date(2014, 6, 27), 'AAPL', 'USD')],
                          required_prices)
+
+
+if __name__ == '__main__':
+    main()

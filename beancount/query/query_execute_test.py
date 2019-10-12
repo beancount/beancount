@@ -973,3 +973,7 @@ class TestExecuteFlatten(QueryBase):
                 ('Assets:Something',
                  inventory.from_string("5.00 USD, 2.00 CAD, 4 HOOL {531.20 USD}")),
                 ])
+
+
+if __name__ == '__main__':
+    main()

@@ -315,3 +315,7 @@ class TestMarketValue(unittest.TestCase):
         market_value = balances.reduce(convert.get_value, self.price_map,
                                        datetime.date(2013, 6, 6))
         self.assertEqual(inventory.from_string('2 MSFT'), market_value)
+
+
+if __name__ == '__main__':
+    main()

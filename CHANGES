@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-10-11
+
+ - Added __main__ block to all tests because ongoing port to Bazel build
+   requires it.
+
+
 2019-10-10
 
  - Moved test data for b.utils.file_type for Bazel support. It otherwise assumes

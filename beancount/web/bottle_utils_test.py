@@ -24,3 +24,7 @@ class TestAttrMapper(unittest.TestCase):
     def test_AttrMapper_build(self):
         self.assertTrue(self.mapper.build('a'), 'the_a')
         self.assertTrue(self.mapper.build('b'), 'the_b')
+
+
+if __name__ == '__main__':
+    main()

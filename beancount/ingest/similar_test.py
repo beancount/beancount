@@ -169,3 +169,7 @@ class TestSimilarityComparator(cmptest.TestCase):
         compare(False, 'base', 'out-bounds')
         compare(False, 'base', 'too-late')
         compare(False, 'base', 'non-accounts')
+
+
+if __name__ == '__main__':
+    main()

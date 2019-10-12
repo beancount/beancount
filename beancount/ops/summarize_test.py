@@ -1296,3 +1296,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
+
+
+if __name__ == '__main__':
+    main()

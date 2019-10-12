@@ -229,3 +229,7 @@ class TestShell(test_utils.TestCase):
 
 
 __incomplete__ = True
+
+
+if __name__ == '__main__':
+    main()

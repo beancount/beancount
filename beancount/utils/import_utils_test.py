@@ -15,3 +15,7 @@ class TestImportSymbol(unittest.TestCase):
             import_utils.import_symbol('beancount.core.data.i_dont_exist')
         func = import_utils.import_symbol('beancount.core.account.join')
         self.assertIs(account.join, func)
+
+
+if __name__ == '__main__':
+    main()

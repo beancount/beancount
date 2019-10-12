@@ -95,3 +95,7 @@ class TestContext(test_utils.TestCase):
         """), str_context)
 
     maxDiff = 8192
+
+
+if __name__ == '__main__':
+    main()

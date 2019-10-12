@@ -280,3 +280,7 @@ __incomplete__ = True
 #             Equity:Opening-Balances     -2505 USD
 #         """
 #         self.assertEqual(D('-2505'), entries[-1].postings[-1].units.number)
+
+
+if __name__ == '__main__':
+    main()

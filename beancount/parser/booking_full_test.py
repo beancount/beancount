@@ -2991,3 +2991,7 @@ class TestBook(unittest.TestCase):
                 None, None, None),
             data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
             ], postings)
+
+
+if __name__ == '__main__':
+    main()

@@ -163,3 +163,7 @@ class TestEncryptedFilesCheck(unittest.TestCase):
             file.write(b'\n\n\n')
             file.flush()
             self.assertTrue(encryption.is_encrypted_file(file.name))
+
+
+if __name__ == '__main__':
+    main()

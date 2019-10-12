@@ -112,3 +112,7 @@ class TestMergeMeta(cmptest.TestCase):
             topfile.flush()
             entries, errors, options_map = loader.load_file(topfile.name)
             self.assertEqual(1, len(errors))
+
+
+if __name__ == '__main__':
+    main()

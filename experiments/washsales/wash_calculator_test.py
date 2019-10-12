@@ -138,3 +138,7 @@ class TestBookPosition(unittest.TestCase):
             wash_calculator.book_position(
                 inv, DD('2014-02-10'),
                 position.from_string('-13 HOOL {500 USD / 2014-02-11}'))
+
+
+if __name__ == '__main__':
+    main()

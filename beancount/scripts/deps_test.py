@@ -14,3 +14,7 @@ class TestCheckDeps(unittest.TestCase):
         dependencies = deps.check_dependencies()
         self.assertTrue(dependencies)
         self.assertTrue(isinstance(dependencies, list))
+
+
+if __name__ == '__main__':
+    main()

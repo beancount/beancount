@@ -268,3 +268,7 @@ class TestScriptArchive(TestScriptBake):
                     outfile = path.join(tmpdir, archive_name)
                     test_utils.run_with_args(bake.main,
                                              self.get_args() + [filename, outfile])
+
+
+if __name__ == '__main__':
+    main()

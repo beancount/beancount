@@ -265,3 +265,7 @@ class TestBookingValidation(cmptest.TestCase):
         """
         validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
+
+
+if __name__ == '__main__':
+    main()

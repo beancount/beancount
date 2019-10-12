@@ -250,3 +250,7 @@ class TestScriptContextualCommands(cmptest.TestCase):
         self.assertRegex(stdout.getvalue(), 'Oranges')
         self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
                                                  stdout.getvalue()))))
+
+
+if __name__ == '__main__':
+    main()

@@ -287,3 +287,7 @@ class TestLineFileProxy(unittest.TestCase):
         fileobj.write('e\n')
         self.assertEqual([' abc', ' de'], output)
         fileobj.close()
+
+
+if __name__ == '__main__':
+    main()

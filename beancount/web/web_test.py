@@ -60,3 +60,7 @@ class TestWeb(unittest.TestCase):
     # find some way to enable this on demand.
     def __test_scrape_example(self):
         self.scrape('example.beancount')
+
+
+if __name__ == '__main__':
+    main()

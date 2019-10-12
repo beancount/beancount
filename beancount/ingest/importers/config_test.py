@@ -49,3 +49,7 @@ class TestConfigMixin(unittest.TestCase):
         config['asset_other'] = 'Assets:Other'
         with self.assertRaises(ValueError):
             SimpleTestImporter(config)
+
+
+if __name__ == '__main__':
+    main()

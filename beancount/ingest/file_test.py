@@ -357,3 +357,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
                                                 'bank.csv',
                                                 'readme.txt',
                                                 'testimport.py']))
+
+
+if __name__ == '__main__':
+    main()

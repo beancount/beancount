@@ -520,3 +520,7 @@ class TestTreeify(TestTreeifyBase):
              |-- Income
              `-- Liabilities
         """, False)
+
+
+if __name__ == '__main__':
+    main()

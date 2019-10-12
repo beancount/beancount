@@ -80,3 +80,7 @@ class TestDivertExpenses(cmptest.TestCase):
           Expenses:Pharmacy              45.38 USD
             divert: FALSE
         """, entries)
+
+
+if __name__ == '__main__':
+    main()

@@ -125,3 +125,7 @@ class TestMerge(cmptest.TestCase):
             ! Expenses:Restaurant    1.11 USD
 
         """, [merged_entry])
+
+
+if __name__ == '__main__':
+    main()

@@ -79,8 +79,8 @@ class TestCachingArgsParsing(unittest.TestCase):
             self.assertEqual(cachedir, dirname)
 
 
+# FIXME: Also check the open tickets related to the cache.
+
 
 if __name__ == '__main__':
     main()
-
-# FIXME: Also check the open tickets related to the cache.

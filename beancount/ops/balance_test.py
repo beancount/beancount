@@ -378,3 +378,7 @@ class TestBalancePrecision(unittest.TestCase):
         self.assertEqual(2, len(errors))
         self.assertRegex(errors[0].message, '23.022')
         self.assertRegex(errors[1].message, '23.026')
+
+
+if __name__ == '__main__':
+    main()

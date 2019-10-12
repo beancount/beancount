@@ -331,3 +331,7 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(("AAPL", "USD"),
                          Position(A('100 AAPL'),
                                   Cost('43.23', 'USD', None, None)).currency_pair())
+
+
+if __name__ == '__main__':
+    main()

@@ -123,3 +123,7 @@ class TestCompare(unittest.TestCase):
         excludes, extra = compare.excludes_entries(entries1[0:4], entries2[4:])
         self.assertTrue(excludes)
         self.assertFalse(extra)
+
+
+if __name__ == '__main__':
+    main()

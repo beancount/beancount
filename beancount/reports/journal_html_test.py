@@ -111,3 +111,7 @@ class TestJournalRender(unittest.TestCase):
         html = journal_html.render_links({'132333b32eab', '6e3ac126f337'})
         self.assertRegex(html, '132333b32eab')
         self.assertRegex(html, '6e3ac126f337')
+
+
+if __name__ == '__main__':
+    main()

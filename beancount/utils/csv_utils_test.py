@@ -197,3 +197,7 @@ class TestLineUtils(unittest.TestCase):
         expected = [['Title1\n', 'A,B,C\n', 'D,E,F\n'],
                     ['Title2\n', 'G,H\n', 'I,J\n', ',K,L\n']]
         self.assertEqual(expected, linearize(csv_utils.iter_sections(sio)))
+
+
+if __name__ == '__main__':
+    main()

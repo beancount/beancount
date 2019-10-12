@@ -603,3 +603,7 @@ class TestQuantize(unittest.TestCase):
         self.assertEqual(
             D('100.123123123'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+
+
+if __name__ == '__main__':
+    main()

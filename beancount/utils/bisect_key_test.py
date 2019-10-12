@@ -40,3 +40,7 @@ class TestBisectWithKey(unittest.TestCase):
         index = bisect_key.bisect_left_with_key(data, 4, key=lambda x: x[1])
         self.assertEqual(index, 4)
         self.assertEqual(data[index][0], 'e')
+
+
+if __name__ == '__main__':
+    main()

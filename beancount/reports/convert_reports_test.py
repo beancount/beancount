@@ -298,3 +298,7 @@ class TestHLedgerConversion(test_utils.TestCase):
                     result = test_utils.run_with_args(
                         report.main, [beanfile.name, '-o', lgrfile.name, 'hledger'])
                 self.assertEqual(0, result)
+
+
+if __name__ == '__main__':
+    main()

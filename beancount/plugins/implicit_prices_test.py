@@ -308,3 +308,7 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-01 price HOOL 530 USD
 
         """, new_entries)
+
+
+if __name__ == '__main__':
+    main()

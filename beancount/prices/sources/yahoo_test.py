@@ -155,3 +155,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
             '{"quoteResponse": {"error": "Non-zero error", "result": [{}]}}')
         with self.assertRaises(yahoo.YahooError):
             yahoo.parse_response(response)
+
+
+if __name__ == '__main__':
+    main()

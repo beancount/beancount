@@ -93,3 +93,7 @@ class TestSansCost(unittest.TestCase):
 
         # FIXME: Try with multiple flagged legs.
         # FIXME: Try without a leg that has a position at cost.
+
+
+if __name__ == '__main__':
+    main()

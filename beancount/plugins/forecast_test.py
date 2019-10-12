@@ -61,3 +61,7 @@ class TestExampleForecast(cmptest.TestCase):
               Expenses:Restaurant           50.02 USD
               Assets:Cash                  -50.02 USD
         """, entries)
+
+
+if __name__ == '__main__':
+    main()

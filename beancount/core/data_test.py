@@ -317,3 +317,7 @@ class TestPickle(unittest.TestCase):
         pickled_str = pickle.dumps(txn1)
         txn2 = pickle.loads(pickled_str)
         self.assertEqual(txn1, txn2)
+
+
+if __name__ == '__main__':
+    main()

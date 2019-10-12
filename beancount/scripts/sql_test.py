@@ -65,3 +65,7 @@ class TestScriptSQL(test_utils.TestCase):
         root_dir = test_utils.find_repository_root(__file__)
         filename = path.join(root_dir, 'examples/example.beancount')
         self.convert_to_sql(filename)
+
+
+if __name__ == '__main__':
+    main()

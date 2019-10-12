@@ -197,3 +197,7 @@ class TestTestCase(cmptest.TestCase):
                 Expenses:Books                            12.74 USD
 
             """, entries)
+
+
+if __name__ == '__main__':
+    main()

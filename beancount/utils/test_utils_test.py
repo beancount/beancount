@@ -158,3 +158,7 @@ class TestSkipIfRaises(unittest.TestCase):
 @test_utils.nottest
 def test_not_really():
     assert False
+
+
+if __name__ == '__main__':
+    main()

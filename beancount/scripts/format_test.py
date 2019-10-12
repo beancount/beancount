@@ -238,3 +238,7 @@ class TestScriptFormat(test_utils.TestCase):
           Assets:Test
 
         """), stdout.getvalue())
+
+
+if __name__ == '__main__':
+    main()

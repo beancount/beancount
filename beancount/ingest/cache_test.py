@@ -46,3 +46,7 @@ class TestFileMemo(unittest.TestCase):
 
             mimetype = wrap.convert(cache.mimetype)
             self.assertRegex(mimetype, r'text/x-(python|c\+\+)')
+
+
+if __name__ == '__main__':
+    main()

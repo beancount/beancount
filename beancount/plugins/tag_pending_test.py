@@ -37,3 +37,7 @@ class TestExampleTrackPending(test_utils.TestCase):
         self.assertEqual(data.EMPTY_SET, entries[4].tags)
         self.assertEqual(set(['PENDING']), entries[5].tags)
         self.assertEqual(data.EMPTY_SET, entries[6].tags)
+
+
+if __name__ == '__main__':
+    main()

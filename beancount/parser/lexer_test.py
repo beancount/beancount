@@ -788,3 +788,7 @@ class TestLexerMisc(unittest.TestCase):
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None)
         ], tokens)
+
+
+if __name__ == '__main__':
+    main()

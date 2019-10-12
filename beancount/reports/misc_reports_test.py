@@ -33,3 +33,7 @@ class TestMiscReports(unittest.TestCase):
             report_.render_text(entries, errors, options_map, oss)
         with io.StringIO() as oss:
             report_.render_htmldiv(entries, errors, options_map, oss)
+
+
+if __name__ == '__main__':
+    main()

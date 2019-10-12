@@ -102,3 +102,7 @@ class TestIraContributions(cmptest.TestCase):
         2013-02-17 price SE2030                             17.834 USD
 
         """, entries)
+
+
+if __name__ == '__main__':
+    main()

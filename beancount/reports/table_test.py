@@ -140,3 +140,7 @@ class TestTable(unittest.TestCase):
         oss = io.StringIO()
         table.render_table(table_object, oss, 'html')
         self.assertTrue(oss.getvalue())
+
+
+if __name__ == '__main__':
+    main()

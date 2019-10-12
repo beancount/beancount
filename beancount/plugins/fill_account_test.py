@@ -80,3 +80,7 @@ class TestFillAccountOpen(cmptest.TestCase):
           Assets:Cash         -10123.00 USD
 
         """, new_entries)
+
+
+if __name__ == '__main__':
+    main()

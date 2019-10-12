@@ -17,3 +17,7 @@ IMPORTER = acme_pdf.Importer("Assets:US:AcmeBank")
 @regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass
+
+
+if __name__ == '__main__':
+    main()

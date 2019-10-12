@@ -177,3 +177,7 @@ class TestReportFunctions(unittest.TestCase):
         self.assertTrue(template)
         self.assertRegex(template, '{title}')
         self.assertRegex(template, '{body}')
+
+
+if __name__ == '__main__':
+    main()

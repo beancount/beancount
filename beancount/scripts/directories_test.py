@@ -62,3 +62,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
 
         # The parent directory Liabilities:US should not trigger an error here.
         self.assertEqual([], errors)
+
+
+if __name__ == '__main__':
+    main()

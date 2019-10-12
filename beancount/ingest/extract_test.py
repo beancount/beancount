@@ -389,3 +389,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
 
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')
+
+
+if __name__ == '__main__':
+    main()

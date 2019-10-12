@@ -25,3 +25,7 @@ class TestTutorial(test_utils.TestCase):
             self.assertLess(20, len(output_files))
         finally:
             shutil.rmtree(temp_output_dir)
+
+
+if __name__ == '__main__':
+    main()

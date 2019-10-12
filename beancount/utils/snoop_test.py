@@ -51,3 +51,7 @@ class TestSaver(unittest.TestCase):
         save = snoop.save
         if save(re.match(r'(\d+)', 'bla277232bla')):
             self.assertEqual('277232', save.value)
+
+
+if __name__ == '__main__':
+    main()

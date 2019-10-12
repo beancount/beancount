@@ -242,3 +242,7 @@ class TestCurrencyTradingAccounts(cmptest.TestCase):
             Equity:CurrencyAccounts:USD  0.0009539 USD   ;; Ouch!
 
         """, entries)
+
+
+if __name__ == '__main__':
+    main()

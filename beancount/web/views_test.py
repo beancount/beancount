@@ -160,3 +160,7 @@ class TestViews(unittest.TestCase):
         self.assertNotEqual(self.empty_realization, view.real_accounts)
         self.assertEqual(self.empty_realization, view.opening_real_accounts)
         self.assertNotEqual(self.empty_realization, view.closing_real_accounts)
+
+
+if __name__ == '__main__':
+    main()

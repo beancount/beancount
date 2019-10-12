@@ -257,3 +257,7 @@ class TestDisplayContextQuantize(unittest.TestCase):
         dcontext.update(Decimal('1.2302'), 'USD')
         self.assertEqual(Decimal('3.2325'),
                          dcontext.quantize(Decimal('3.23253343'), 'USD'))
+
+
+if __name__ == '__main__':
+    main()

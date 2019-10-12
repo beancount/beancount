@@ -149,3 +149,7 @@ class TestBasicOpsOther(unittest.TestCase):
                          basicops.get_common_accounts([entries[0], entries[2]]))
         self.assertEqual(set(),
                          basicops.get_common_accounts([entries[0], entries[3]]))
+
+
+if __name__ == '__main__':
+    main()

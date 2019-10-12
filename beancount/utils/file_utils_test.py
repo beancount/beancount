@@ -79,3 +79,7 @@ class TestMiscFileUtils(unittest.TestCase):
         with file_utils.chdir(tempfile.gettempdir()) as tmpdir:
             self.assertIsInstance(tmpdir, str)
             self.assertEqual(path.realpath(tempfile.gettempdir()), os.getcwd())
+
+
+if __name__ == '__main__':
+    main()

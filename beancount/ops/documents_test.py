@@ -211,3 +211,7 @@ class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
             self.root, '/tmp/input.beancount', {'Assets:US:Bank'}, False)
         self.assertEqual(0, len(errors))
         self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+
+if __name__ == '__main__':
+    main()

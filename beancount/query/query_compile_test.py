@@ -753,3 +753,7 @@ class TestCompilePrint(CompileSelectBase):
             qc.EvalFrom(qc.EvalEqual(qe.YearEntryColumn(), qc.EvalConstant(2014)),
                         None, None, None)
             ), "PRINT FROM year = 2014;")
+
+
+if __name__ == '__main__':
+    main()

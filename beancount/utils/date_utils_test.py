@@ -54,3 +54,7 @@ class TestDateUtils(unittest.TestCase):
         self.assertNotEqual(now_nyc, now_berlin)
         self.assertNotEqual(now_berlin, now_tokyo)
         self.assertNotEqual(now_tokyo, now_nyc)
+
+
+if __name__ == '__main__':
+    main()

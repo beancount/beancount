@@ -2537,3 +2537,7 @@ class TestDocument(unittest.TestCase):
         """
         check_list(self, entries, [data.Document])
         self.assertEqual({'something'}, entries[0].links)
+
+
+if __name__ == '__main__':
+    main()

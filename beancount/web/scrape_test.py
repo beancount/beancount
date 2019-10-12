@@ -135,3 +135,7 @@ class TestScrapeVerification(test_utils.TestCase):
             missing, empty = scrape.validate_local_links(filename)
             self.assertTrue(empty)
             self.assertFalse(missing)
+
+
+if __name__ == '__main__':
+    main()

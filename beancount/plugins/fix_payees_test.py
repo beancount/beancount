@@ -69,3 +69,7 @@ class TestFixPayees(cmptest.TestCase):
         ]""")
         self.assertFalse(errors)
         self.assertEqualEntries(entries, self.in_entries)
+
+
+if __name__ == '__main__':
+    main()

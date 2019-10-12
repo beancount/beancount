@@ -10,3 +10,7 @@ __license__ = "GNU GPLv2"
 
 # pylint: disable=unused-import
 from beancount.parser import booking_method as bm
+
+
+if __name__ == '__main__':
+    main()

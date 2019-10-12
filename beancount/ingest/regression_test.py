@@ -185,3 +185,7 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
             # Test with a filename.
             tests = list(regression.compare_sample_files(importer, filename))
             self.assertEqual(1, len(tests))
+
+
+if __name__ == '__main__':
+    main()

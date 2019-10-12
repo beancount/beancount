@@ -83,3 +83,7 @@ class TestFileType(unittest.TestCase):
     @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     def test_bz2(self):
         self.check_mime_type('example.bz2', 'application/x-bzip2')
+
+
+if __name__ == '__main__':
+    main()

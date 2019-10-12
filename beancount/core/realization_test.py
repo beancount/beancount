@@ -726,3 +726,7 @@ class TestComputeBalance(unittest.TestCase):
                                                   datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)
+
+
+if __name__ == '__main__':
+    main()

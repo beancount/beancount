@@ -47,3 +47,7 @@ class TestCheckClosing(cmptest.TestCase):
           2018-02-17 balance Assets:US:Brokerage:Main:Options  0 QQQ180216C160
 
         """, new_entries)
+
+
+if __name__ == '__main__':
+    main()

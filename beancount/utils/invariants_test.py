@@ -26,3 +26,7 @@ class TestInvariants(unittest.TestCase):
         dummy = Dummy()
         dummy.do_something()
         self.assertEqual(2, dummy.counter)
+
+
+if __name__ == '__main__':
+    main()

@@ -303,3 +303,7 @@ class TestExtractTradesScript(unittest.TestCase):
         2.000000       BTC            USD  2015-09-05     260.00  2015-09-22      330.00  140.00
         --------  --------  -------------  ----------  ---------  ----------  ----------  ------
         """), stdout.getvalue())
+
+
+if __name__ == '__main__':
+    main()
