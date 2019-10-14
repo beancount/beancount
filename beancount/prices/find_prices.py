@@ -53,7 +53,7 @@ def format_dated_price_str(dprice):
     Returns:
       The string for a DatedPrice instance.
     """
-    psstrs = ['{}({}{})'.format(psource.module.__name__,
+    psstrs = ['{}({}{})'.format(psource.module.__name__ if psource.module is not None else 'None',
                                 '1/' if psource.invert else '',
                                 psource.symbol)
               for psource in dprice.sources]
