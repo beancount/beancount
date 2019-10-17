@@ -23,7 +23,7 @@ extern YY_DECL;
  * in the handler. Always run the code to clean the references provided by the
  * reduced rule. {05bb0fb60e86}
  */
-#define BUILDY(clean, target, method_name, format, ...)                         \
+#define BUILD(clean, target, method_name, format, ...)                          \
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
     clean;                                                                      \
     if (target == NULL) {                                                       \
@@ -37,59 +37,52 @@ extern YY_DECL;
 /* Build a grammar error from the exception context. */
 void build_grammar_error_from_exception(yyscan_t scanner, PyObject* parser, PyObject* builder)
 {
-    TRACE_ERROR("Grammar Builder Exception");
+    PyObject* traceback = NULL;
+    PyObject* value = NULL;
+    PyObject* type = NULL;
+    PyObject* rv = NULL;
 
     /* Get the exception context. */
-    PyObject* ptype = NULL;
-    PyObject* pvalue = NULL;
-    PyObject* ptraceback = NULL;
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
-    /* Clear the exception. */
-    PyErr_Clear();
+    if (value) {
+        /* traceback can be NULL. This is the case for exceptions
+         * raised in C code for example. Replace NULL with Py_None to
+         * keep PyObject_CallMethod() happy. */
+        traceback = traceback ? traceback : Py_None;
 
-    if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
-                                           ((Parser*)parser)->filename,
-                                           yyget_lineno(scanner) + ((Parser*)parser)->line,
-                                           pvalue, ptype, ptraceback ?: Py_None);
-        if (rv == NULL) {
-            /* Note: Leave the internal error trickling up its detail. */
-            /* PyErr_SetString(PyExc_RuntimeError, */
-            /*                 "Internal error: While building exception"); */
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: No exception");
+        rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
+                                 ((Parser*)parser)->filename,
+                                 yyget_lineno(scanner) + ((Parser*)parser)->line,
+                                 value, type, traceback);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "No exception");
     }
 
-    Py_XDECREF(ptype);
-    Py_XDECREF(pvalue);
-    Py_XDECREF(ptraceback);
+    Py_XDECREF(rv);
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
 }
 
 /* Error-handling function. {ca6aab8b9748} */
 void yyerror(YYLTYPE *locp, yyscan_t scanner, PyObject* parser, PyObject* builder, char const* message)
 {
+    PyObject* rv = NULL;
+
     /* Skip lex errors: they have already been registered the lexer itself. */
-    if (strstr(message, "LEX_ERROR") != NULL) {
+    if (strstr(message, "LEX_ERROR"))
         return;
-    }
-    else {
-        /* Register a syntax error with the builder. */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
-                                           ((Parser*)parser)->filename,
-                                           yyget_lineno(scanner) + ((Parser*)parser)->line,
-                                           message);
-        if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: Building exception from yyerror()");
-        }
-        Py_XDECREF(rv);
-    }
+
+    /* Register a syntax error with the builder. */
+    rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
+                             ((Parser*)parser)->filename,
+                             yyget_lineno(scanner) + ((Parser*)parser)->line,
+                             message);
+
+    Py_XDECREF(rv);
 }
 
 /* Get a printable version of a token name. */
@@ -334,12 +327,12 @@ txn_strings : empty
             }
             | txn_strings STRING
             {
-                BUILDY(DECREF2($1, $2),
+                BUILD(DECREF2($1, $2),
                        $$, "handle_list", "OO", $1, $2);
             }
             | txn_strings PIPE
             {
-                BUILDY(,
+                BUILD(,
                        $$, "pipe_deprecated_error", "Oi", FILENAME, LINENO);
                 $$ = $1;
             }
@@ -349,23 +342,23 @@ tags_links : empty
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
                 * case. */
-               BUILDY(,
+               BUILD(,
                       $$, "tag_link_new", "O", Py_None);
            }
            | tags_links LINK
            {
-               BUILDY(DECREF2($1, $2),
+               BUILD(DECREF2($1, $2),
                       $$, "tag_link_LINK", "OO", $1, $2);
            }
            | tags_links TAG
            {
-               BUILDY(DECREF2($1, $2),
+               BUILD(DECREF2($1, $2),
                       $$, "tag_link_TAG", "OO", $1, $2);
            }
 
 transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
             {
-                BUILDY(DECREF4($1, $3, $4, $6),
+                BUILD(DECREF4($1, $3, $4, $6),
                        $$, "transaction", "OiObOOO", FILENAME, LINENO, $1, $2, $3, $4, $6);
             }
 
@@ -390,28 +383,28 @@ price_annotation : incomplete_amount
 
 posting : INDENT optflag ACCOUNT incomplete_amount cost_spec eol
         {
-            BUILDY(DECREF3($3, $4, $5),
+            BUILD(DECREF3($3, $4, $5),
                    $$, "posting", "OiOOOOOb", FILENAME, LINENO, $3, $4, $5, Py_None, Py_False, $2);
         }
         | INDENT optflag ACCOUNT incomplete_amount cost_spec AT price_annotation eol
         {
-            BUILDY(DECREF4($3, $4, $5, $7),
+            BUILD(DECREF4($3, $4, $5, $7),
                    $$, "posting", "OiOOOOOb", FILENAME, LINENO, $3, $4, $5, $7, Py_False, $2);
         }
         | INDENT optflag ACCOUNT incomplete_amount cost_spec ATAT price_annotation eol
         {
-            BUILDY(DECREF4($3, $4, $5, $7),
+            BUILD(DECREF4($3, $4, $5, $7),
                    $$, "posting", "OiOOOOOb", FILENAME, LINENO, $3, $4, $5, $7, Py_True, $2);
         }
         | INDENT optflag ACCOUNT eol
         {
-            BUILDY(DECREF1($3),
+            BUILD(DECREF1($3),
                    $$, "posting", "OiOOOOOb", FILENAME, LINENO, $3, missing, Py_None, Py_None, Py_False, $2);
         }
 
 key_value : KEY COLON key_value_value
           {
-              BUILDY(DECREF2($2, $3),
+              BUILD(DECREF2($2, $3),
                      $$, "key_value", "OO", $2, $3);
           }
 
@@ -449,17 +442,17 @@ posting_or_kv_list : empty
                    }
                    | posting_or_kv_list INDENT tags_links EOL
                    {
-                       BUILDY(DECREF2($1, $3),
+                       BUILD(DECREF2($1, $3),
                               $$, "handle_list", "OO", $1, $3);
                    }
                    | posting_or_kv_list key_value_line
                    {
-                       BUILDY(DECREF2($1, $2),
+                       BUILD(DECREF2($1, $2),
                               $$, "handle_list", "OO", $1, $2);
                    }
                    | posting_or_kv_list posting
                    {
-                       BUILDY(DECREF2($1, $2),
+                       BUILD(DECREF2($1, $2),
                               $$, "handle_list", "OO", $1, $2);
                    }
 
@@ -470,7 +463,7 @@ key_value_list : empty
                }
                | key_value_list key_value_line
                {
-                   BUILDY(DECREF2($1, $2),
+                   BUILD(DECREF2($1, $2),
                           $$, "handle_list", "OO", $1, $2);
                }
 
@@ -481,24 +474,24 @@ currency_list : empty
               }
               | CURRENCY
               {
-                  BUILDY(DECREF1($1),
+                  BUILD(DECREF1($1),
                          $$, "handle_list", "OO", Py_None, $1);
               }
               | currency_list COMMA CURRENCY
               {
-                  BUILDY(DECREF2($1, $3),
+                  BUILD(DECREF2($1, $3),
                          $$, "handle_list", "OO", $1, $3);
               }
 
 pushtag : PUSHTAG TAG eol
          {
-             BUILDY(DECREF1($2),
+             BUILD(DECREF1($2),
                     $$, "pushtag", "O", $2);
          }
 
 poptag : POPTAG TAG eol
        {
-           BUILDY(DECREF1($2),
+           BUILD(DECREF1($2),
                   $$, "poptag", "O", $2);
        }
 
@@ -507,19 +500,19 @@ pushmeta : PUSHMETA key_value eol
              /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
               * within a tuple, so expand in the method (it receives two
               * objects). See https://docs.python.org/3.4/c-api/arg.html. */
-             BUILDY(DECREF1($2),
+             BUILD(DECREF1($2),
                     $$, "pushmeta", "O", $2);
          }
 
 popmeta : POPMETA KEY COLON eol
         {
-            BUILDY(DECREF1($2),
+            BUILD(DECREF1($2),
                    $$, "popmeta", "O", $2);
         }
 
 open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
-         BUILDY(DECREF5($1, $3, $4, $5, $7),
+         BUILD(DECREF5($1, $3, $4, $5, $7),
                 $$, "open", "OiOOOOO", FILENAME, LINENO, $1, $3, $4, $5, $7);
          ;
      }
@@ -536,37 +529,37 @@ opt_booking : STRING
 
 close : DATE CLOSE ACCOUNT eol key_value_list
       {
-          BUILDY(DECREF3($1, $3, $5),
+          BUILD(DECREF3($1, $3, $5),
                  $$, "close", "OiOOO", FILENAME, LINENO, $1, $3, $5);
       }
 
 commodity : DATE COMMODITY CURRENCY eol key_value_list
           {
-              BUILDY(DECREF3($1, $3, $5),
+              BUILD(DECREF3($1, $3, $5),
                      $$, "commodity", "OiOOO", FILENAME, LINENO, $1, $3, $5);
           }
 
 pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
-        BUILDY(DECREF4($1, $3, $4, $6),
+        BUILD(DECREF4($1, $3, $4, $6),
                $$, "pad", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
     }
 
 balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
         {
-            BUILDY(DECREF5($1, $3, $6, $4.pyobj1, $4.pyobj2),
+            BUILD(DECREF5($1, $3, $6, $4.pyobj1, $4.pyobj2),
                    $$, "balance", "OiOOOOO", FILENAME, LINENO, $1, $3, $4.pyobj1, $4.pyobj2, $6);
         }
 
 amount : number_expr CURRENCY
        {
-           BUILDY(DECREF2($1, $2),
+           BUILD(DECREF2($1, $2),
                   $$, "amount", "OO", $1, $2);
        }
 
 amount_tolerance : number_expr CURRENCY
                  {
-                     BUILDY(DECREF2($1, $2),
+                     BUILD(DECREF2($1, $2),
                             $$.pyobj1, "amount", "OO", $1, $2);
                      $$.pyobj2 = Py_None;
                      Py_INCREF(Py_None);
@@ -574,7 +567,7 @@ amount_tolerance : number_expr CURRENCY
                  }
                  | number_expr TILDE number_expr CURRENCY
                  {
-                     BUILDY(DECREF2($1, $4),
+                     BUILD(DECREF2($1, $4),
                             $$.pyobj1, "amount", "OO", $1, $4);
                      $$.pyobj2 = $3;
                  }
@@ -601,35 +594,35 @@ maybe_currency : empty
 
 compound_amount : maybe_number CURRENCY
                 {
-                    BUILDY(DECREF2($1, $2),
+                    BUILD(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
                 }
                 | number_expr maybe_currency
                 {
-                    BUILDY(DECREF2($1, $2),
+                    BUILD(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
                 }
                 | maybe_number HASH maybe_number CURRENCY
                 {
-                    BUILDY(DECREF3($1, $3, $4),
+                    BUILD(DECREF3($1, $3, $4),
                            $$, "compound_amount", "OOO", $1, $3, $4);
                     ;
                 }
 
 incomplete_amount : maybe_number maybe_currency
                   {
-                      BUILDY(DECREF2($1, $2),
+                      BUILD(DECREF2($1, $2),
                              $$, "amount", "OO", $1, $2);
                  }
 
 cost_spec : LCURL cost_comp_list RCURL
           {
-              BUILDY(DECREF1($2),
+              BUILD(DECREF1($2),
                      $$, "cost_spec", "OO", $2, Py_False);
           }
           | LCURLCURL cost_comp_list RCURLCURL
           {
-              BUILDY(DECREF1($2),
+              BUILD(DECREF1($2),
                      $$, "cost_spec", "OO", $2, Py_True);
           }
           | empty
@@ -645,12 +638,12 @@ cost_comp_list : empty
                }
                | cost_comp
                {
-                   BUILDY(DECREF1($1),
+                   BUILD(DECREF1($1),
                           $$, "handle_list", "OO", Py_None, $1);
                }
                | cost_comp_list COMMA cost_comp
                {
-                   BUILDY(DECREF2($1, $3),
+                   BUILD(DECREF2($1, $3),
                           $$, "handle_list", "OO", $1, $3);
                }
 
@@ -668,32 +661,32 @@ cost_comp : compound_amount
           }
           | ASTERISK
           {
-              BUILDY(,
+              BUILD(,
                      $$, "cost_merge", "O", Py_None);
           }
 
 
 price : DATE PRICE CURRENCY amount eol key_value_list
       {
-          BUILDY(DECREF4($1, $3, $4, $6),
+          BUILD(DECREF4($1, $3, $4, $6),
                  $$, "price", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
       }
 
 event : DATE EVENT STRING STRING eol key_value_list
       {
-          BUILDY(DECREF4($1, $3, $4, $6),
+          BUILD(DECREF4($1, $3, $4, $6),
                  $$, "event", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
       }
 
 query : DATE QUERY STRING STRING eol key_value_list
          {
-             BUILDY(DECREF4($1, $3, $4, $6),
+             BUILD(DECREF4($1, $3, $4, $6),
                     $$, "query", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
          }
 
 note : DATE NOTE ACCOUNT STRING eol key_value_list
       {
-          BUILDY(DECREF4($1, $3, $4, $6),
+          BUILD(DECREF4($1, $3, $4, $6),
                  $$, "note", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
       }
 
@@ -701,34 +694,34 @@ filename : STRING
 
 document : DATE DOCUMENT ACCOUNT filename tags_links eol key_value_list
          {
-             BUILDY(DECREF5($1, $3, $4, $5, $7),
+             BUILD(DECREF5($1, $3, $4, $5, $7),
                     $$, "document", "OiOOOOO", FILENAME, LINENO, $1, $3, $4, $5, $7);
          }
 
 
 custom_value : STRING
              {
-                 BUILDY(DECREF1($1),
+                 BUILD(DECREF1($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
              | DATE
              {
-                 BUILDY(DECREF1($1),
+                 BUILD(DECREF1($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
              | BOOL
              {
-                 BUILDY(DECREF1($1),
+                 BUILD(DECREF1($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
              | amount
              {
-                 BUILDY(DECREF1($1),
+                 BUILD(DECREF1($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
              | number_expr
              {
-                 BUILDY(DECREF1($1),
+                 BUILD(DECREF1($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
              | ACCOUNT
@@ -737,7 +730,7 @@ custom_value : STRING
                  PyObject* module = PyImport_ImportModule("beancount.core.account");
                  PyObject* dtype = PyObject_GetAttrString(module, "TYPE");
                  Py_DECREF(module);
-                 BUILDY(DECREF2($1, dtype),
+                 BUILD(DECREF2($1, dtype),
                         $$, "custom_value", "OO", $1, dtype);
              }
 
@@ -748,13 +741,13 @@ custom_value_list : empty
                   }
                   | custom_value_list custom_value
                   {
-                      BUILDY(DECREF2($1, $2),
+                      BUILD(DECREF2($1, $2),
                              $$, "handle_list", "OO", $1, $2);
                   }
 
 custom : DATE CUSTOM STRING custom_value_list eol key_value_list
        {
-           BUILDY(DECREF4($1, $3, $4, $6),
+           BUILD(DECREF4($1, $3, $4, $6),
                   $$, "custom", "OiOOOO", FILENAME, LINENO, $1, $3, $4, $6);
        }
 
@@ -777,24 +770,24 @@ entry : transaction
 
 option : OPTION STRING STRING eol
        {
-           BUILDY(DECREF2($2, $3),
+           BUILD(DECREF2($2, $3),
                   $$, "option", "OiOO", FILENAME, LINENO, $2, $3);
        }
 
 include : INCLUDE STRING eol
        {
-           BUILDY(DECREF1($2),
+           BUILD(DECREF1($2),
                   $$, "include", "OiO", FILENAME, LINENO, $2);
        }
 
 plugin : PLUGIN STRING eol
        {
-           BUILDY(DECREF1($2),
+           BUILD(DECREF1($2),
                   $$, "plugin", "OiOO", FILENAME, LINENO, $2, Py_None);
        }
        | PLUGIN STRING STRING eol
        {
-           BUILDY(DECREF2($2, $3),
+           BUILD(DECREF2($2, $3),
                   $$, "plugin", "OiOO", FILENAME, LINENO, $2, $3);
        }
 
@@ -814,7 +807,7 @@ declarations : declarations directive
              }
              | declarations entry
              {
-                 BUILDY(DECREF2($1, $2),
+                 BUILD(DECREF2($1, $2),
                         $$, "handle_list", "OO", $1, $2);
              }
              | declarations error
@@ -851,7 +844,7 @@ file : declarations
          if (PyErr_Occurred()) {
              YYABORT;
          }
-         BUILDY(DECREF1($1),
+         BUILD(DECREF1($1),
                 $$, "store_result", "O", $1);
      }
 

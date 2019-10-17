@@ -100,7 +100,7 @@ static inline void buffer_begin(struct buffer* b)
 #define yy_encoding ((Parser*)parser)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(PyObject* builder, const char* string, size_t length);
+void build_lexer_error(PyObject* builder, const char* format, ...);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
@@ -112,25 +112,25 @@ int PyFile_Read(PyObject *file, char *buf, size_t max_size);
     result = PyFile_Read((PyObject *)yyin, buf, max_size);
 
 /* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
-    if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception(builder);                                       \
-       return LEX_ERROR;                                                                \
-    }                                                                                   \
-    /* Lexer builder methods should never return None, check for it. */                 \
-    else if (yylval->pyobj == Py_None) {                                                \
-        Py_DECREF(Py_None);                                                             \
-        build_lexer_error(builder, "Unexpected None result from lexer", 34);            \
-        return LEX_ERROR;                                                               \
+#define BUILD(method_name, format, ...)                                 \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);  \
+    if (yylval->pyobj == NULL) {                                        \
+        build_lexer_error_from_exception(builder);                      \
+        return LEX_ERROR;                                               \
+    }                                                                   \
+    if (yylval->pyobj == Py_None) {                                     \
+        Py_DECREF(Py_None);                                             \
+        build_lexer_error(builder,                                      \
+                          "ValueError: None return value from %s.%s",   \
+                          Py_TYPE(builder)->tp_name, method_name);      \
+        return LEX_ERROR;                                               \
     }
 
 #define YY_USER_ACTION {                                        \
         yy_line_tokens++;                                       \
         yylloc->first_line = yylloc->last_line = yylineno;      \
         yylloc->first_column = yycolumn;                        \
-        yylloc->last_column = yycolumn+yyleng-1;                \
+        yylloc->last_column = yycolumn + yyleng - 1;            \
         yycolumn += yyleng;                                     \
     }
 
@@ -345,20 +345,20 @@ NULL		{
     day = strtonl(day_str, yytext + yyleng - day_str);
 
     /* Attempt to create the date. */
-    BUILD_LEX("DATE", "iii", year, month, day);
+    BUILD("DATE", "iii", year, month, day);
     return DATE;
 }
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
-    BUILD_LEX("ACCOUNT", "s", yytext);
+    BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
-    BUILD_LEX("CURRENCY", "s", yytext);
+    BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }
 
@@ -383,7 +383,7 @@ NULL		{
             Py_INCREF(Py_None);
             return LEX_ERROR;
         }
-        BUILD_LEX("STRING", "O", str);
+        BUILD("STRING", "O", str);
         Py_DECREF(str);
         return STRING;
     }
@@ -402,25 +402,25 @@ NULL		{
 
  /* Numbers */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
-    BUILD_LEX("NUMBER", "s", yytext);
+    BUILD("NUMBER", "s", yytext);
     return NUMBER;
 }
 
  /* Tags */
 #[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("TAG", "s", &(yytext[1]));
+    BUILD("TAG", "s", &(yytext[1]));
     return TAG;
 }
 
  /* Links */
 \^[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("LINK", "s", &(yytext[1]));
+    BUILD("LINK", "s", &(yytext[1]));
     return LINK;
 }
 
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
-    BUILD_LEX("KEY", "s#", yytext, (Py_ssize_t)(yyleng-1));
+    BUILD("KEY", "s#", yytext, (Py_ssize_t)(yyleng - 1));
     unput(':');
     return KEY;
 }
@@ -447,9 +447,7 @@ NULL		{
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    char buffer[256];
-    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(builder, buffer, length);
+    build_lexer_error(builder, "Invalid token: '%s'", yytext);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -514,51 +512,50 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(PyObject* builder, const char* string, size_t length)
+void build_lexer_error(PyObject* builder, const char* format, ...)
 {
-    TRACE_ERROR("Invalid Token");
+    PyObject* error = NULL;
+    PyObject* rv = NULL;
+    va_list va;
+
+    va_start(va, format);
+    error = PyUnicode_FromFormatV(format, va);
+    va_end(va);
+
+    if (!error)
+        return;
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, (Py_ssize_t)length);
-    if (rv == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: Building exception from default rule");
-    }
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "(O)", error);
+
+    Py_XDECREF(error);
     Py_XDECREF(rv);
 }
 
 void build_lexer_error_from_exception(PyObject* builder)
 {
-    TRACE_ERROR("Lexer Builder Exception");
+    PyObject* ptraceback = NULL;
+    PyObject* pvalue = NULL;
+    PyObject* ptype = NULL;
+    PyObject* rv = NULL;
 
     /* Get the exception context. */
-    PyObject* ptype = NULL;
-    PyObject* pvalue = NULL;
-    PyObject* ptraceback = NULL;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
 
     /* Clear the exception. */
     PyErr_Clear();
 
-    if (pvalue != NULL) {
+    if (pvalue)
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                           "OO", pvalue, ptype);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        rv = PyObject_CallMethod(builder, "build_lexer_error", "OO", pvalue, ptype);
+    else
+        PyErr_SetString(PyExc_RuntimeError, "No exception");
 
-        if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: While building exception");
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: No exception");
-    }
+    Py_XDECREF(rv);
+    Py_XDECREF(ptype);
+    Py_XDECREF(pvalue);
+    Py_XDECREF(ptraceback);
 }
 
 int PyFile_Read(PyObject *file, char *buf, size_t max_size)

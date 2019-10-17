@@ -577,7 +577,7 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([('LEX_ERROR', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message, "None result from lexer")
+        self.assertRegex(builder.errors[0].message, "None return value from LexBuilder.STRING")
 
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
@@ -735,14 +735,14 @@ class TestLexerUnicode(unittest.TestCase):
     def test_bytes_encoded_utf16_invalid(self):
         utf16_bytes = self.test_utf8_string.encode('utf16')
         builder = lexer.LexBuilder()
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UnicodeDecodeError):
             tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
 
     # Test providing utf16 bytes to the lexer with an encoding.
     def test_bytes_encoded_utf16(self):
         utf16_bytes = self.test_utf8_string.encode('utf16')
         builder = lexer.LexBuilder()
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UnicodeDecodeError):
             tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
 
 
