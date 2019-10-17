@@ -50,8 +50,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
             account_ = importer.file_account(file)
         except Exception as exc:
             account_ = None
-            logging.error("Importer %s.file_account() raised an unexpected error: %s",
-                          importer.name(), exc)
+            logging.exception("Importer %s.file_account() raised an unexpected error: %s",
+                              importer.name(), exc)
         if account_ is not None:
             file_accounts.append(account_)
 
@@ -83,8 +83,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     try:
         date = importer.file_date(file)
     except Exception as exc:
-        logging.error("Importer %s.file_date() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_date() raised an unexpected error: %s",
+                          importer.name(), exc)
         date = None
     if date is None:
         # Fallback on the last modified time of the file.
@@ -106,8 +106,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
                            "separators"),
                           importer.name(), clean_filename)
     except Exception as exc:
-        logging.error("Importer %s.file_name() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_name() raised an unexpected error: %s",
+                          importer.name(), exc)
         clean_filename = None
     if clean_filename is None:
         # If no filename has been provided, use the basename.
