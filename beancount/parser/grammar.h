@@ -43,6 +43,45 @@
 #if YYDEBUG
 extern int yydebug;
 #endif
+/* "%code requires" blocks.  */
+#line 12 "beancount/parser/grammar.y"
+
+
+#include <stdio.h>
+#include <assert.h>
+#include "parser.h"
+
+/* Extend default location type with file name information. */
+typedef struct YYLTYPE {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    PyObject* file_name;
+} YYLTYPE;
+
+#define YYLTYPE_IS_DECLARED 1
+
+/* Extend defult location action to copy file name over. */
+#define YYLLOC_DEFAULT(current, rhs, N)                                 \
+    do {                                                                \
+        if (N) {                                                        \
+            (current).first_line   = YYRHSLOC(rhs, 1).first_line;       \
+            (current).first_column = YYRHSLOC(rhs, 1).first_column;     \
+            (current).last_line    = YYRHSLOC(rhs, N).last_line;        \
+            (current).last_column  = YYRHSLOC(rhs, N).last_column;      \
+            (current).file_name    = YYRHSLOC(rhs, N).file_name;        \
+        } else {                                                        \
+            (current).first_line   = (current).last_line =              \
+                YYRHSLOC(rhs, 0).last_line;                             \
+            (current).first_column = (current).last_column =            \
+                YYRHSLOC(rhs, 0).last_column;                           \
+            (current).file_name    = YYRHSLOC(rhs, 0).file_name;        \
+        }                                                               \
+    } while (0)
+
+
+#line 85 "beancount/parser/grammar.h"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -110,7 +149,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 117 "beancount/parser/grammar.y"
+#line 149 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -120,7 +159,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 124 "beancount/parser/grammar.h"
+#line 163 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -144,6 +183,6 @@ struct YYLTYPE
 
 
 
-int yyparse (yyscan_t scanner, PyObject* parser, PyObject* builder);
+int yyparse (yyscan_t scanner, PyObject* builder);
 
 #endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */

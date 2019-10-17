@@ -28,19 +28,13 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     if (!self)
         return NULL;
 
-    yylex_init(&self->scanner);
-    yylex_initialize(self->scanner);
-    yyset_in(NULL, self->scanner);
-
-    self->encoding = "utf-8";
-    self->builder = NULL;
-    self->line = 0;
-    self->filename = PyUnicode_FromString("");
-    if (!self->filename) {
-        Py_DECREF(self);
+    self->scanner = yylex_new();
+    if (!self->scanner) {
+        Py_XDECREF(self);
         return NULL;
     }
 
+    self->builder = NULL;
     return (PyObject*)self;
 }
 
@@ -71,10 +65,8 @@ static int parser___init__(Parser* self, PyObject* args, PyObject* kwds)
 
 static void parser_dealloc(Parser* self)
 {
-    yylex_finalize(self->scanner);
-    yylex_destroy(self->scanner);
     Py_XDECREF(self->builder);
-    Py_XDECREF(self->filename);
+    yylex_free(self->scanner);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -83,8 +75,8 @@ PyDoc_STRVAR(parser_location_doc, "");
 static PyObject* parser_location(Parser* self)
 {
     return Py_BuildValue("Oi",
-                         self->filename,
-                         self->line + yyget_lineno(self->scanner));
+                         yyget_filename(self->scanner),
+                         yyget_firstline(self->scanner) + yyget_lineno(self->scanner));
 }
 
 static PyGetSetDef parser_getsetters[] = {
@@ -97,28 +89,18 @@ PyDoc_STRVAR(parser_parse_doc, "");
 static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
+    int lineno = 0;
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &self->line, &self->encoding))
+                                     &file, &filename, &lineno, &encoding))
         return NULL;
 
-    if (!filename) {
-        filename = PyObject_GetAttrString(file, "name");
-        if (!filename)
-            PyErr_Clear();
-    }
-
-    if (filename && (filename != Py_None)) {
-        Py_XDECREF(self->filename);
-        self->filename = filename;
-        Py_INCREF(filename);
-    }
-
-    yyset_in((void*)file, self->scanner);
-    ret = yyparse(self->scanner, (PyObject*)self, self->builder);
+    yylex_initialize(self->scanner, file, filename, lineno, encoding);
+    ret = yyparse(self->scanner, self->builder);
 
     /* Signal if an exception has been raised */
     if (PyErr_Occurred())
@@ -138,26 +120,16 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 static PyObject* parser_lex(Parser *self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
+    int lineno = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &self->line, &self->encoding))
+                                     &file, &filename, &lineno, &encoding))
         return NULL;
 
-    if (!filename) {
-        filename = PyObject_GetAttrString(file, "name");
-        if (!filename)
-            PyErr_Clear();
-    }
-
-    if (filename) {
-        Py_XDECREF(self->filename);
-        self->filename = filename;
-        Py_INCREF(filename);
-    }
-
-    yyset_in((void*)file, self->scanner);
+    yylex_initialize(self->scanner, file, filename, lineno, encoding);
 
     Py_INCREF(self);
     return (PyObject*)self;
@@ -176,7 +148,7 @@ static PyObject* parser_iternext(Parser* self)
         return NULL;
     }
 
-    token = yylex(&yylval, &yylloc, self->scanner, (PyObject*)self, self->builder);
+    token = yylex(&yylval, &yylloc, self->scanner, self->builder);
     if (!token)
         return NULL;
 

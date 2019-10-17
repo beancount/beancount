@@ -1,5 +1,5 @@
 /* -*- mode: c -*- */
-/* A flex lexer for Beancount. */
+/* A Flex lexer for Beancount. */
 
 /* Options */
 %option noyywrap
@@ -22,22 +22,28 @@
 
 typedef struct _yyextra_t yyextra_t;
 
-/* Initialize scanner private data. */
-void yylex_initialize(yyscan_t yyscanner);
+/* Allocate a new scanner object including private data. This
+ * encapsulates the cumbersome Flex native yylex_init() API. */
+yyscan_t* yylex_new(void);
 
-/* Free scanner private data */
-void yylex_finalize(yyscan_t yyscanner);
+/* Free scanner object including private data. This encapsulates the
+ * cumbersome Flex native yylex_destroy() API. */
+yyscan_t* yylex_free(yyscan_t scanner);
+
+/* Initialize scanner private data and reset scanner state. */
+void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int line, const char* encoding);
+
+PyObject* yyget_filename(yyscan_t scanner);
+int yyget_firstline(yyscan_t scanner);
 
 }
 
 /* Definitions. */
 %{
 
-/* Includes. */
 #include <math.h>
 #include <stdlib.h>
 
-#include "parser.h"
 #include "grammar.h"
 
 struct buffer {
@@ -47,6 +53,12 @@ struct buffer {
 };
 
 struct _yyextra_t {
+    /* The filename being tokenized. */
+    PyObject* filename;
+    /* Reporting line offset. This is used like the #line cpp macro */
+    int line;
+    /* The encoding to use for converting strings. */
+    const char* encoding;
     /* The number of times EOF has been hit. This is used to
      * synthesize an EOL at the end of the file. */
     int n_eof;
@@ -87,7 +99,7 @@ static inline char* buffer_data(const struct buffer* b)
     return b->buf;
 }
 
-static inline void buffer_begin(struct buffer* b)
+static inline void buffer_beginning(struct buffer* b)
 {
     b->ptr = b->buf;
 }
@@ -95,9 +107,9 @@ static inline void buffer_begin(struct buffer* b)
 #define strbuf &yyget_extra(yyscanner)->str
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
-#define yy_filename ((Parser*)parser)->filename
-#define yy_firstline ((Parser*)parser)->line
-#define yy_encoding ((Parser*)parser)->encoding
+#define yy_filename yyget_extra(yyscanner)->filename
+#define yy_firstline yyget_extra(yyscanner)->line
+#define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(PyObject* builder, const char* format, ...);
@@ -126,12 +138,15 @@ int PyFile_Read(PyObject *file, char *buf, size_t max_size);
         return LEX_ERROR;                                               \
     }
 
-#define YY_USER_ACTION {                                        \
-        yy_line_tokens++;                                       \
-        yylloc->first_line = yylloc->last_line = yylineno;      \
-        yylloc->first_column = yycolumn;                        \
-        yylloc->last_column = yycolumn + yyleng - 1;            \
-        yycolumn += yyleng;                                     \
+#define YY_USER_ACTION                                                  \
+    {                                                                   \
+        yy_line_tokens++;                                               \
+        yylloc->first_line = yylineno + yy_firstline;                   \
+        yylloc->last_line = yylloc->first_line;                         \
+        yylloc->first_column = yycolumn;                                \
+        yylloc->last_column = yycolumn + yyleng - 1;                    \
+        yylloc->file_name = yy_filename;                                \
+        yycolumn += yyleng;                                             \
     }
 
 /* Skip the rest of the input line.  This needs to be implemented as a
@@ -366,7 +381,7 @@ NULL		{
  /* Note that we use an exclusive start condition.
     See section "Start Conditions" in the GNU Flex manual. */
 \"	{
-    buffer_begin(strbuf);
+    buffer_beginning(strbuf);
     BEGIN(STRLIT);
 }
 
@@ -434,10 +449,11 @@ NULL		{
  /* Fake an EOL at the end of file, to ensure that files without a final newline
   * will process postings right. */
 <<EOF>>     		{
-  if ( yy_eof_times == 0 ) {
-    yy_eof_times = 1;
-    yylloc->first_line = yylineno;
-    return EOL;
+  if (yy_eof_times == 0) {
+      yy_eof_times = 1;
+      /* Ensure location data is populated. */
+      YY_USER_ACTION;
+      return EOL;
   }
   return 0;
 }
@@ -455,18 +471,95 @@ NULL		{
 
 %% /* User Code */
 
-void yylex_initialize(yyscan_t yyscanner)
+yyscan_t* yylex_new(void)
 {
-    yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
-    yy_eof_times = 0;
-    yy_line_tokens = 0;
-    buffer_init(strbuf, 1024);
+    yyscan_t scanner;
+    yyextra_t* extra;
+
+    extra = malloc(sizeof(*extra));
+    if (!extra)
+        return NULL;
+
+    extra->filename = PyUnicode_FromString("");
+    if (!extra->filename) {
+        free(extra);
+        return NULL;
+    }
+
+    buffer_init(&extra->str, 1024);
+
+    if (yylex_init_extra(extra, &scanner)) {
+        free(extra);
+        return NULL;
+    }
+
+    return scanner;
 }
 
-void yylex_finalize(yyscan_t yyscanner)
+yyscan_t* yylex_free(yyscan_t scanner)
 {
-    buffer_free(strbuf);
-    free(yyget_extra(yyscanner));
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(yyget_in(scanner));
+    Py_XDECREF(extra->filename);
+    buffer_free(&extra->str);
+    free(extra);
+    yylex_destroy(scanner);
+
+    return NULL;
+}
+
+/* yyrestart() does not reset the scanner start back to INITIAL and
+ * Flex does not provide a way of doing so outside a scanner
+ * relu. This function does just that accessing Flex internals. */
+static void yybegin(yyscan_t scanner)
+{
+    struct yyguts_t * yyg = (struct yyguts_t*)scanner;
+    BEGIN(INITIAL);
+}
+
+void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int line, const char* encoding)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(yyget_in(scanner));
+    yyrestart((void*)file, scanner);
+    Py_INCREF(file);
+    yybegin(scanner);
+
+    /* If a filename has not been specified explicitly, try to get it
+     * from the file object. The io.BaseIO object returned from open()
+     * stores the file path in the 'name' property. */
+    if (!filename || filename == Py_None) {
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename)
+            PyErr_Clear();
+    }
+
+    if (filename && filename != Py_None) {
+        Py_XDECREF(extra->filename);
+        extra->filename = filename;
+        Py_INCREF(filename);
+    }
+
+    extra->encoding = encoding ? encoding : "utf-8";
+    extra->line = line;
+    extra->n_eof = 0;
+    extra->n_line_tokens = 0;
+
+    buffer_beginning(&extra->str);
+}
+
+PyObject* yyget_filename(yyscan_t scanner)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+    return extra->filename;
+}
+
+int yyget_firstline(yyscan_t scanner)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+    return extra->line;
 }
 
 static void buffer_init(struct buffer* b, size_t size)

@@ -8,13 +8,21 @@
 
 typedef struct _yyextra_t yyextra_t;
 
-/* Initialize scanner private data. */
-void yylex_initialize(yyscan_t yyscanner);
+/* Allocate a new scanner object including private data. This
+ * encapsulates the cumbersome Flex native yylex_init() API. */
+yyscan_t* yylex_new(void);
 
-/* Free scanner private data */
-void yylex_finalize(yyscan_t yyscanner);
+/* Free scanner object including private data. This encapsulates the
+ * cumbersome Flex native yylex_destroy() API. */
+yyscan_t* yylex_free(yyscan_t scanner);
 
-#line 17 "beancount/parser/lexer.h"
+/* Initialize scanner private data and reset scanner state. */
+void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int line, const char* encoding);
+
+PyObject* yyget_filename(yyscan_t scanner);
+int yyget_firstline(yyscan_t scanner);
+
+#line 25 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -528,9 +536,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 457 "beancount/parser/lexer.l"
+#line 473 "beancount/parser/lexer.l"
 
 
-#line 534 "beancount/parser/lexer.h"
+#line 542 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

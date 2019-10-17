@@ -11,17 +11,11 @@
 typedef void* yyscan_t;
 
 #define YY_DECL int yylex (YYSTYPE * yylval_param, YYLTYPE * yylloc_param, \
-                           yyscan_t yyscanner, PyObject* parser, PyObject* builder)
+                           yyscan_t yyscanner, PyObject* builder)
 
 typedef struct {
     PyObject_HEAD
     yyscan_t scanner;
-    /* The filename being tokenized. */
-    PyObject* filename;
-    /* Reporting line offset. This is used like the #line cpp macro */
-    int line;
-    /* The encoding to use for converting strings. */
-    const char* encoding;
     PyObject* builder;
 } Parser;
 

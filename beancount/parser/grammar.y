@@ -8,11 +8,46 @@
 
 /*--------------------------------------------------------------------------------*/
 /* Prologue */
-%{
+
+%code requires {
 
 #include <stdio.h>
 #include <assert.h>
 #include "parser.h"
+
+/* Extend default location type with file name information. */
+typedef struct YYLTYPE {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    PyObject* file_name;
+} YYLTYPE;
+
+#define YYLTYPE_IS_DECLARED 1
+
+/* Extend defult location action to copy file name over. */
+#define YYLLOC_DEFAULT(current, rhs, N)                                 \
+    do {                                                                \
+        if (N) {                                                        \
+            (current).first_line   = YYRHSLOC(rhs, 1).first_line;       \
+            (current).first_column = YYRHSLOC(rhs, 1).first_column;     \
+            (current).last_line    = YYRHSLOC(rhs, N).last_line;        \
+            (current).last_column  = YYRHSLOC(rhs, N).last_column;      \
+            (current).file_name    = YYRHSLOC(rhs, N).file_name;        \
+        } else {                                                        \
+            (current).first_line   = (current).last_line =              \
+                YYRHSLOC(rhs, 0).last_line;                             \
+            (current).first_column = (current).last_column =            \
+                YYRHSLOC(rhs, 0).last_column;                           \
+            (current).file_name    = YYRHSLOC(rhs, 0).file_name;        \
+        }                                                               \
+    } while (0)
+
+}
+
+%{
+
 #include "grammar.h"
 #include "lexer.h"
 
@@ -23,19 +58,19 @@ extern YY_DECL;
  * in the handler. Always run the code to clean the references provided by the
  * reduced rule. {05bb0fb60e86}
  */
-#define BUILD(clean, target, method_name, format, ...)                          \
+#define BUILD(clean, target, method_name, format, ...)                  \
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
-    clean;                                                                      \
-    if (target == NULL) {                                                       \
-        build_grammar_error_from_exception(scanner, parser, builder);           \
-        YYERROR;                                                                \
+    clean;                                                              \
+    if (target == NULL) {                                               \
+        build_grammar_error_from_exception(builder, yyloc);             \
+        YYERROR;                                                        \
     }
 
-#define FILENAME ((Parser*)parser)->filename
-#define LINENO ((yyloc).first_line + ((Parser*)parser)->line)
+#define FILENAME (yyloc).file_name
+#define LINENO (yyloc).first_line
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(yyscan_t scanner, PyObject* parser, PyObject* builder)
+void build_grammar_error_from_exception(PyObject* builder, YYLTYPE yyloc)
 {
     PyObject* traceback = NULL;
     PyObject* value = NULL;
@@ -54,8 +89,7 @@ void build_grammar_error_from_exception(yyscan_t scanner, PyObject* parser, PyOb
 
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
-                                 ((Parser*)parser)->filename,
-                                 yyget_lineno(scanner) + ((Parser*)parser)->line,
+                                 yyloc.file_name, yyloc.first_line,
                                  value, type, traceback);
     } else {
         PyErr_SetString(PyExc_RuntimeError, "No exception");
@@ -68,7 +102,7 @@ void build_grammar_error_from_exception(yyscan_t scanner, PyObject* parser, PyOb
 }
 
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(YYLTYPE *locp, yyscan_t scanner, PyObject* parser, PyObject* builder, char const* message)
+void yyerror(YYLTYPE *locp, yyscan_t scanner, PyObject* builder, char const* message)
 {
     PyObject* rv = NULL;
 
@@ -78,8 +112,7 @@ void yyerror(YYLTYPE *locp, yyscan_t scanner, PyObject* parser, PyObject* builde
 
     /* Register a syntax error with the builder. */
     rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
-                             ((Parser*)parser)->filename,
-                             yyget_lineno(scanner) + ((Parser*)parser)->line,
+                             locp[0].file_name, locp[0].first_line,
                              message);
 
     Py_XDECREF(rv);
@@ -110,7 +143,6 @@ const char* getTokenName(int token);
 %locations
 %define api.pure full
 %param {yyscan_t scanner}
-%param {PyObject* parser}
 %param {PyObject* builder}
 
 /* Collection of value types. */
