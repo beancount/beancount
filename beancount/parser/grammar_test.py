@@ -106,6 +106,30 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Balance, data.Balance])
 
+    @parser.parse_doc()
+    def test_entry_balance_end(self, entries, _, __):
+      """
+          2013-05-17 balance_end Assets:US:BestBank:Checking  200 USD
+          2013-05-17 balance_end Assets:US:BestBank:Checking  200 ~ 0.002 USD
+
+      """
+      check_list(self, entries, [data.Balance, data.Balance])
+
+    @parser.parse_doc()
+    def test_entry_balance_end_same_as_balance(self, entries, _, __):
+      """
+          2013-05-17 balance_end Assets:US:BestBank:Checking  200 USD
+          2013-05-18 balance Assets:US:BestBank:Checking  200 USD
+
+      """
+      check_list(self, entries, [data.Balance, data.Balance])
+      # We want to check if the two assertions are identical...except for metadata (which includes a line number,
+      # which will never be the same))
+      for a in ('date', 'account', 'amount', 'tolerance', 'diff_amount'):
+        x = getattr(entries[0], a)
+        y = getattr(entries[1], a)
+        self.assertEqual(x, y)
+
     @parser.parse_doc(expect_errors=True)
     def test_entry_balance_with_cost(self, entries, errors, __):
         """
@@ -1539,6 +1563,9 @@ class TestMetaData(unittest.TestCase):
           2013-02-01 balance Assets:Investments  111.00 USD
             test1: "Something"
 
+          2013-01-31 balance_end Assets:Investments 111.00 USD
+            test1: "Something"
+
           2013-03-01 event "location" "Nowhere"
             test1: "Something"
 
@@ -1548,7 +1575,7 @@ class TestMetaData(unittest.TestCase):
           2013-03-01 price  HOOL  500 USD
             test1: "Something"
         """
-        self.assertEqual(9, len(entries))
+        self.assertEqual(10, len(entries))
 
     @parser.parse_doc()
     def test_metadata_data_types(self, entries, errors, _):

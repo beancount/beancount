@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.4.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
-   Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,9 +29,6 @@
 
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
 # define YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
@@ -75,42 +71,44 @@ extern int yydebug;
     FLAG = 281,
     TXN = 282,
     BALANCE = 283,
-    OPEN = 284,
-    CLOSE = 285,
-    COMMODITY = 286,
-    PAD = 287,
-    EVENT = 288,
-    PRICE = 289,
-    NOTE = 290,
-    DOCUMENT = 291,
-    QUERY = 292,
-    CUSTOM = 293,
-    PUSHTAG = 294,
-    POPTAG = 295,
-    PUSHMETA = 296,
-    POPMETA = 297,
-    OPTION = 298,
-    INCLUDE = 299,
-    PLUGIN = 300,
-    NONE = 301,
-    BOOL = 302,
-    DATE = 303,
-    ACCOUNT = 304,
-    CURRENCY = 305,
-    STRING = 306,
-    NUMBER = 307,
-    TAG = 308,
-    LINK = 309,
-    KEY = 310,
-    NEGATIVE = 311
+    BALANCE_END = 284,
+    OPEN = 285,
+    CLOSE = 286,
+    COMMODITY = 287,
+    PAD = 288,
+    EVENT = 289,
+    PRICE = 290,
+    NOTE = 291,
+    DOCUMENT = 292,
+    QUERY = 293,
+    CUSTOM = 294,
+    PUSHTAG = 295,
+    POPTAG = 296,
+    PUSHMETA = 297,
+    POPMETA = 298,
+    OPTION = 299,
+    INCLUDE = 300,
+    PLUGIN = 301,
+    NONE = 302,
+    BOOL = 303,
+    DATE = 304,
+    ACCOUNT = 305,
+    CURRENCY = 306,
+    STRING = 307,
+    NUMBER = 308,
+    TAG = 309,
+    LINK = 310,
+    KEY = 311,
+    NEGATIVE = 312
   };
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+
 union YYSTYPE
 {
-#line 126 "beancount/parser/grammar.y"
+#line 126 "beancount/parser/grammar.y" 
 
     char character;
     const char* string;
@@ -120,9 +118,9 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 124 "beancount/parser/grammar.h"
-
+#line 122 "beancount/parser/grammar.h" 
 };
+
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

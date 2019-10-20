@@ -10,6 +10,7 @@ import sys
 import traceback
 from os import path
 from datetime import date
+import datetime
 
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
@@ -651,6 +652,37 @@ class Builder(lexer.LexBuilder):
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
         return Balance(meta, date, account, amount, tolerance, diff_amount)
+
+    def balance_end(self, filename, lineno, date, account, amount, tolerance, kvlist):
+        """Process an assertion directive.
+
+        The original 'balance' assertion tests the balances at the beginning of the day.
+        That is, the balance assertion happens first and then all other transactions happen.
+
+        This one is the opposite: it tests the balances at the end of the day. All the other
+        transactions happen first, then the balance assertion is tested.
+
+        In practice, we accomplish this by just creating a Balance directive with *tomorrow's* date.
+        So balance_end(Thursday) becomes balance(Friday).
+
+        We produce no errors here by default. We replace the failing ones in the
+        routine that does the verification later one, that these have succeeded
+        or failed.
+
+        Args:
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to balance.
+          amount: The expected amount, to be checked.
+          tolerance: The tolerance number.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Balance object.
+        """
+        diff_amount = None
+        meta = new_metadata(filename, lineno, kvlist)
+        return Balance(meta, date + datetime.timedelta(days = 1), account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.

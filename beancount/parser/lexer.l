@@ -232,6 +232,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
  /* Keywords. */
 txn		{ return TXN; }
 balance		{ return BALANCE; }
+balance_end     { return BALANCE_END; }
 open		{ return OPEN; }
 close		{ return CLOSE; }
 commodity	{ return COMMODITY; }

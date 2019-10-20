@@ -160,6 +160,7 @@ const char* getTokenName(int token);
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
+%token BALANCE_END         /* 'balance_end' keyword */
 %token OPEN                /* 'open' keyword */
 %token CLOSE               /* 'close' keyword */
 %token COMMODITY           /* 'commodity' keyword */
@@ -203,6 +204,7 @@ const char* getTokenName(int token);
 %type <pyobj> close
 %type <pyobj> commodity
 %type <pyobj> balance
+%type <pyobj> balance_end
 %type <pyobj> pad
 %type <pairobj> amount_tolerance
 %type <pyobj> amount
@@ -250,7 +252,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 17
+%expect 18
 
 
 /*--------------------------------------------------------------------------------*/
@@ -560,6 +562,12 @@ balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
                    $$, "balance", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
         }
 
+balance_end : DATE BALANCE_END ACCOUNT amount_tolerance eol key_value_list
+        {
+            BUILDY(DECREF5($1, $3, $6, $4.pyobj1, $4.pyobj2),
+                   $$, "balance_end", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
+        }
+
 amount : number_expr CURRENCY
        {
            BUILDY(DECREF2($1, $2),
@@ -763,6 +771,7 @@ custom : DATE CUSTOM STRING custom_value_list eol key_value_list
 
 entry : transaction
       | balance
+      | balance_end
       | open
       | close
       | pad

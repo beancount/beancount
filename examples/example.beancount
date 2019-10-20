@@ -80,6 +80,7 @@ option "render_commas" "TRUE"
   Assets:US:BofA:Checking                         3219.17 USD
   Equity:Opening-Balances                        -3219.17 USD
 
+2013-01-01 balance_end Assets:US:BofA:Checking    3219.17 USD
 2013-01-02 balance Assets:US:BofA:Checking        3219.17 USD
 
 2013-01-04 * "BANK FEES" "Monthly bank fee"
