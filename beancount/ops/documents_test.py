@@ -6,6 +6,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import textwrap
+import unittest
 from os import path
 
 from beancount.core import account_test

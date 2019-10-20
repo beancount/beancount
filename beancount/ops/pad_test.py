@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount.core.amount import A
 from beancount.core import inventory

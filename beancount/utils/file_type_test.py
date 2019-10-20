@@ -1,6 +1,7 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import os
 from os import path
 import unittest
 
@@ -15,7 +16,7 @@ class TestFileType(unittest.TestCase):
         if not isinstance(expected_mime_types, list):
             expected_mime_types = [expected_mime_types]
         mime_type = file_type.guess_file_type(
-            path.join(self.DATA_DIR, example_file))
+            os.path.realpath(path.join(self.DATA_DIR, example_file)))
         self.assertIn(mime_type, expected_mime_types)
 
     def test_csv(self):

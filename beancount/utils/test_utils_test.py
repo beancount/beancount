@@ -24,9 +24,9 @@ class TestTestUtils(unittest.TestCase):
 
     def test_tempdir(self):
         with test_utils.tempdir() as tempdir:
-            open(path.join(tempdir, 'file1'), 'w')
+            with open(path.join(tempdir, 'file1'), 'w'): pass
             os.mkdir(path.join(tempdir, 'directory'))
-            open(path.join(tempdir, 'directory', 'file2'), 'w')
+            with open(path.join(tempdir, 'directory', 'file2'), 'w'): pass
         self.assertFalse(path.exists(tempdir))
         self.assertFalse(path.exists(path.join(tempdir, 'file1')))
         self.assertFalse(path.exists(path.join(tempdir, 'directory')))
@@ -52,12 +52,12 @@ class TestTestUtils(unittest.TestCase):
                                  for filename in files))
 
             # Check the contents of apples (with replacement of root).
-            apples_content = open(apples).read()
+            with open(apples) as f: apples_content = f.read()
             self.assertRegex(apples_content, 'open Assets:Apples')
             self.assertNotRegex(apples_content, '{root}')
 
             # Check the contents of oranges.
-            oranges_content = open(oranges).read()
+            with open(oranges) as f: oranges_content = f.read()
             self.assertRegex(oranges_content, 'open Assets:Oranges')
 
     def test_capture(self):
@@ -70,14 +70,14 @@ class TestTestUtils(unittest.TestCase):
     @test_utils.docfile
     def test_docfile(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf",
-                         open(filename).read())
+        with open(filename) as f: uuid = f.read()
+        self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
 
     @test_utils.docfile_extra(suffix='.txt')
     def test_docfile_extra(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf",
-                         open(filename).read())
+        with open(filename) as f: uuid = f.read()
+        self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
         self.assertTrue('.txt' in filename)
 
     def test_search_words(self):

@@ -9,6 +9,7 @@ from datetime import date
 import datetime
 import collections
 import re
+import unittest
 
 from beancount.core import inventory
 from beancount.core import data

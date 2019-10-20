@@ -11,7 +11,7 @@ from os import path
 from beancount.core import account
 
 
-# Note: This should live in beancount.utils.test_utils.
+# TODO(blais): This should live in beancount.utils.test_utils.
 class TmpFilesTestBase(unittest.TestCase):
     """A test utility base class that creates and cleans up a directory hierarchy.
     This convenience is useful for testing functions that work on files, such as the

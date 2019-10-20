@@ -11,7 +11,7 @@ class TestImportSymbol(unittest.TestCase):
     def test_import_symbol(self):
         with self.assertRaises(ImportError):
             import_utils.import_symbol('beancount.nothing.data')
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, ModuleNotFoundError)):
             import_utils.import_symbol('beancount.core.data.i_dont_exist')
         func = import_utils.import_symbol('beancount.core.account.join')
         self.assertIs(account.join, func)

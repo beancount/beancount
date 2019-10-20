@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount import loader
 from beancount.ops import lifetimes

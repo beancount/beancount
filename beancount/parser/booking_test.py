@@ -4,6 +4,7 @@ __license__ = "GNU GPLv2"
 import collections
 import re
 import textwrap
+import unittest
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO

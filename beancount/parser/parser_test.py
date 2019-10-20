@@ -47,6 +47,7 @@ class TestParserDoc(unittest.TestCase):
         """
         self.assertTrue(errors)
 
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
     @mark.xfail
     @parser.parse_doc(expect_errors=False)
     def test_parse_doc__errors(self, _, __, ___):
@@ -56,6 +57,7 @@ class TestParserDoc(unittest.TestCase):
           Assets:US:Cash             -100 USD
         """
 
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
     @mark.xfail
     @parser.parse_doc(expect_errors=True)
     def test_parse_doc__noerrors(self, _, __, ___):
@@ -95,10 +97,11 @@ class TestParserInputs(unittest.TestCase):
         assert not errors, "Errors: {}".format(errors)
 
     def test_parse_stdin(self):
+        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=test_utils.subprocess_env(),
+                                env=env,
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
