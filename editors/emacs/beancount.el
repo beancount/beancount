@@ -226,7 +226,7 @@ to align all amounts."
           "\\(" (regexp-opt beancount-timestamped-directive-names) "\\) +"))
 
 (defconst beancount-metadata-regexp
-  "^\\s-+\\([a-z][A-Za-z0-9]+:\\)\\s-+\\(.+\\)")
+  "^\\s-+\\([a-z][A-Za-z0-9_-]+:\\)\\s-+\\(.+\\)")
 
 (defvar beancount-outline-regexp "\\(;;;+\\|\\*+\\)")
 
