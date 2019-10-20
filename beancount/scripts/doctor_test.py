@@ -6,6 +6,7 @@ import re
 import textwrap
 import tempfile
 from os import path
+import unittest
 
 from beancount.parser import cmptest
 from beancount.utils import test_utils

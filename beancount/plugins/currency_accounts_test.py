@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount import loader
 from beancount.core import data
 from beancount.plugins import currency_accounts

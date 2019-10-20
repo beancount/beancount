@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.plugins import noduplicates

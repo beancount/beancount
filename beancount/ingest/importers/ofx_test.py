@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import re
+import unittest
 
 import bs4
 

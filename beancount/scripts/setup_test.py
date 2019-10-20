@@ -11,6 +11,7 @@ import subprocess
 import tarfile
 import re
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 

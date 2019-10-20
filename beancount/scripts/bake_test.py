@@ -5,6 +5,7 @@ import os
 import textwrap
 from os import path
 from unittest import mock
+import unittest
 
 import lxml.html
 
