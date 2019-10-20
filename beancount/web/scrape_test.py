@@ -8,6 +8,7 @@ import urllib.parse
 import re
 from os import path
 from unittest import mock
+import unittest
 
 import lxml.html
 

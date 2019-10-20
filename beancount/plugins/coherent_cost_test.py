@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount.parser import cmptest
 from beancount.plugins import coherent_cost

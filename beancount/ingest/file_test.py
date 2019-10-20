@@ -8,6 +8,7 @@ import os
 import logging
 import datetime
 import shutil
+import unittest
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
