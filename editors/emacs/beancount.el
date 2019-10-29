@@ -203,7 +203,7 @@ to align all amounts."
   "A regular expression to match currencies.")
 
 (defconst beancount-flag-regexp
-  ;; Single char taht is neither a space nor a lower-case letter.
+  ;; Single char that is neither a space nor a lower-case letter.
   "[^ a-z]")
 
 (defconst beancount-transaction-regexp
@@ -365,7 +365,7 @@ to align all amounts."
   (beginning-of-line)
   (if (looking-at-p beancount-transaction-regexp)
       (forward-line))
-  ;; everything that is indented with at lest one space or tab as part
+  ;; everything that is indented with at least one space or tab as part
   ;; of the transaction definition
   (while (looking-at-p "[ \t]+")
     (forward-line))
