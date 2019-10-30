@@ -43,6 +43,12 @@ def find_repository_root(filename=None):
     """
     if filename is None:
         filename = __file__
+
+    # Support root directory under Bazel.
+    match = re.match(r"(.*\.runfiles/beancount)/", filename)
+    if match:
+        return match.group(1)
+
     while not all(path.exists(path.join(filename, sigfile))
                   for sigfile in ('PKG-INFO', 'COPYING', 'README')):
         prev_filename = filename

@@ -4,6 +4,7 @@ __license__ = "GNU GPLv2"
 import tempfile
 import datetime
 import re
+import shutil
 import subprocess
 import unittest
 
@@ -247,7 +248,8 @@ class TestLedgerConversion(test_utils.TestCase):
                         report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
 
-                import shutil; shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
+                # FIXME: Use a proper temp dir.
+                shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
                 self.check_parses_ledger(lgrfile.name)
 
 

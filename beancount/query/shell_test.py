@@ -232,4 +232,6 @@ __incomplete__ = True
 
 
 if __name__ == '__main__':
+    if re.search(r"\.runfiles\b", __file__):
+        setup_module()
     unittest.main()

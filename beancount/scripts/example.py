@@ -21,6 +21,7 @@ import operator
 import random
 import re
 import sys
+import string
 import textwrap
 
 from dateutil import rrule
@@ -191,7 +192,6 @@ def parse(input_string, **replacements):
       A list of directive objects.
     """
     if replacements:
-        import string
         class IgnoreFormatter(string.Formatter):
             def check_unused_args(self, used_args, args, kwargs):
                 pass

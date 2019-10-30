@@ -376,6 +376,7 @@ def import_curses():
     # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
+    # pylint: disable=import-outside-toplevel
     import curses
     return curses
 

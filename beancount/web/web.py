@@ -1147,6 +1147,7 @@ def setup_monkey_patch_for_server_shutdown():
     (Bottle could easily remedy that.)"""
 
     # Save the original function.
+    # pylint: disable=import-outside-toplevel
     from wsgiref.simple_server import make_server
 
     # Create a decorator that will save the server upon start.

@@ -186,6 +186,7 @@ def main():
     # Read the original contents.
     file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
     contents = file.read()
+    file.close()
 
     # Align the contents.
     formatted_contents = align_beancount(

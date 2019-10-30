@@ -94,9 +94,11 @@ class TestScriptFormat(test_utils.TestCase):
         with test_utils.capture():
             result = test_utils.run_with_args(format.main, [filename])
         self.assertEqual(0, result)
+        with open(filename) as infile:
+            actual = infile.read()
         self.assertEqual("""
           2015-07-16 open Assets:BoA:checking USD
-        """.strip(), open(filename).read().strip())
+        """.strip(), actual.strip())
 
     @test_utils.docfile
     def test_commas(self, filename):

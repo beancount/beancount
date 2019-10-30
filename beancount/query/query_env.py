@@ -305,7 +305,7 @@ class OpenDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        open_entry, close_entry = context.open_close_map[args[0]]
+        open_entry, _ = context.open_close_map[args[0]]
         return open_entry.date if open_entry else None
 
 class CloseDate(query_compile.EvalFunction):
@@ -317,7 +317,7 @@ class CloseDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        close_entry, close_entry = context.open_close_map[args[0]]
+        _, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
 class Meta(query_compile.EvalFunction):

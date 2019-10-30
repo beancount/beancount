@@ -259,4 +259,5 @@ def get_html_template():
         {title}: for the title of the page.
         {body}: for the body, where the div goes.
     """
-    return open(path.join(path.dirname(__file__), 'template.html')).read()
+    with open(path.join(path.dirname(__file__), 'template.html')) as infile:
+        return infile.read()

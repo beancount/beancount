@@ -95,9 +95,8 @@ def compress_intervals_days(intervals, num_days):
             # Compress.
             last_end = date_end
             continue
-        else:
-            new_intervals.append((last_begin, last_end))
-            last_begin, last_end = date_begin, date_end
+        new_intervals.append((last_begin, last_end))
+        last_begin, last_end = date_begin, date_end
     new_intervals.append((last_begin, last_end))
     return new_intervals
 

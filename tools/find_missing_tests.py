@@ -10,6 +10,7 @@ testing code.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import os
 from os import path
 import re
@@ -52,7 +53,6 @@ def is_complete(filename):
 
 
 def main():
-    import argparse
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('source_root', action='store')
     opts = parser.parse_args()
