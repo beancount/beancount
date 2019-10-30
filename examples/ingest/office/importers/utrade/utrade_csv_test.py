@@ -2,6 +2,7 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
 from os import path
 
 from beancount.ingest import regression_pytest as regtest
