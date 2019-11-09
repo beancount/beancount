@@ -17,6 +17,5 @@ beancount.egg-info
 .cache
 .pytest_cache/*
 
-WORKSPACE
 bazel-*
 experiments/protos/bazel-*
