@@ -3,7 +3,7 @@ syntax: glob
 *.swp
 *~
 TAGS
-build
+build/
 dist
 *.a
 *.so
@@ -17,4 +17,6 @@ beancount.egg-info
 .cache
 .pytest_cache/*
 
+WORKSPACE
+bazel-*
 experiments/protos/bazel-*
