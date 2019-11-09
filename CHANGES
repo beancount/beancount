@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-10-20
+
+ - More changes to unittest while porting to Bazel build (for C++ support).
+
+
 2019-10-11
 
  - Added __main__ block to all tests because ongoing port to Bazel build
