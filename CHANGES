@@ -4,6 +4,18 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-11-10
+
+ - Added an option to upload-to-sheets script to apply a minimum to the number
+   of rows resized to. The problem was I had another sheet longer than the
+   auto-updated data sheet, and when new rows were being inserted, rows in the
+   referencing sheet were being incremented automatically to refer to the now
+   displaced previous rows in the updated data sheet (even if they used to refer
+   to rows after the last row in the data sheet). Avoid resizing in the number
+   of rows up or down sheet should avoid most of these problems (except when at
+   the boundary, but then the minimum number of rows could just be increased).
+   This is quick fix that should work in the medium term.
+
 2019-10-20
 
  - More changes to unittest while porting to Bazel build (for C++ support).

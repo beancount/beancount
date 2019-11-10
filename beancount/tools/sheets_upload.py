@@ -48,6 +48,7 @@ __license__ = "GNU GPLv2"
 import argparse
 import csv
 import logging
+import math
 import os
 import re
 import string
@@ -184,9 +185,10 @@ def create_doc(service):
 class Doc:
     "A wrapper for a particular document. This just keeps common immutable arguments."
 
-    def __init__(self, service, docid):
+    def __init__(self, service, docid, min_rows):
         self.service = service
         self.docid = docid
+        self.min_rows = min_rows
 
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
@@ -304,9 +306,14 @@ class Doc:
         nrows = len(rows)
         ncols = max(len(row) for row in rows) if rows else 0
 
-        # Note: Sizing down the sheet also deletes the values from the cells removed
-        # automatically.
-        self.resize_sheet(sheet_id, title, nrows, ncols)
+        nrows = self.min_rows if self.min_rows and nrows < self.min_rows else nrows
+        size = (nrows, ncols)
+
+        current_size = self.get_sheet_size(title)
+        if size != current_size:
+            # Note: Sizing down the sheet also deletes the values from the cells removed
+            # automatically.
+            x = self.resize_sheet(sheet_id, title, nrows, ncols)
 
         # Clear the remaining contents.
         self.clear_sheet(title, (nrows, ncols))
@@ -360,6 +367,13 @@ def _main():
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="Print out the log")
 
+    parser.add_argument('--min-rows',  action='store', type=int, default=0,
+                        help=("Minimum number rows to resize uploaded sheet to. "
+                              "This is useful when another sheet feeds from the uploaded "
+                              "one, which otherwise automatically renumbers its "
+                              "references to rows beyond it if they existed, to avoid "
+                              "most such resizing woes."))
+
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
@@ -397,10 +411,10 @@ def _main():
         docid = create_doc(service)
         logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
 
-    match_names_and_upload_sheets(service, docid, new_sheets)
+    match_names_and_upload_sheets(service, docid, new_sheets, args.min_rows)
 
     # Clean up temporary sheets created for new documents only.
-    doc = Doc(service, docid)
+    doc = Doc(service, docid, args.min_rows)
     if created:
         doc.delete_empty_sheets()
 
@@ -411,10 +425,10 @@ def _main():
     print("https://docs.google.com/spreadsheets/d/{}/".format(docid))
 
 
-def match_names_and_upload_sheets(service, docid, new_sheets):
+def match_names_and_upload_sheets(service, docid, new_sheets, min_rows):
     """Match sheet names and upload their attendant file contents."""
 
-    doc = Doc(service, docid)
+    doc = Doc(service, docid, min_rows)
 
     # Get the existing sheets within (this also validates the existence of the
     # document).
