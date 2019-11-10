@@ -313,7 +313,7 @@ class Doc:
         if size != current_size:
             # Note: Sizing down the sheet also deletes the values from the cells removed
             # automatically.
-            x = self.resize_sheet(sheet_id, title, nrows, ncols)
+            self.resize_sheet(sheet_id, title, nrows, ncols)
 
         # Clear the remaining contents.
         self.clear_sheet(title, (nrows, ncols))
@@ -367,7 +367,7 @@ def _main():
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="Print out the log")
 
-    parser.add_argument('--min-rows',  action='store', type=int, default=0,
+    parser.add_argument('--min-rows', action='store', type=int, default=0,
                         help=("Minimum number rows to resize uploaded sheet to. "
                               "This is useful when another sheet feeds from the uploaded "
                               "one, which otherwise automatically renumbers its "
