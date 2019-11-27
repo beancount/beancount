@@ -1,9 +1,8 @@
 /* A Python extension module that invokes the parser defined in lexer.l and
  * grammar.y. */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <moduleobject.h>
-#include <ctype.h>
 
 #include "parser.h"
 #include "lexer.h"
@@ -235,7 +234,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
     }
 
     tokenName = getTokenName(token);
-    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yytext, yyleng, obj);
+    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yytext, (Py_ssize_t)yyleng, obj);
 }
 
 
