@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-11-29
+
+ - Added 'encoding' option to CSV importer. Amex encodes as 'latin1', not
+   'utf-8' and this turned out to be necessary.
+
+
 2019-11-10
 
  - Added an option to upload-to-sheets script to apply a minimum to the number
