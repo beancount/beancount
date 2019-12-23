@@ -442,7 +442,7 @@ With an argument move to the next non cleared transaction."
                   (lambda (string pred action)
                     (if (null candidates)
                         (setq candidates
-                              (sort (delete string (beancount-collect regexp 1)) #'string<)))
+                              (sort (beancount-collect regexp 1) #'string<)))
                     (complete-with-action action candidates string pred))))
             (list (match-beginning 1) (match-end 1) completion-table)))
 
@@ -455,25 +455,30 @@ With an argument move to the next non cleared transaction."
                   (lambda (string pred action)
                     (if (null candidates)
                         (setq candidates
-                              (sort (delete string (beancount-collect regexp 1)) #'string<)))
+                              (sort (beancount-collect regexp 1) #'string<)))
                     (complete-with-action action candidates string pred))))
             (list (match-beginning 1) (match-end 1) completion-table))))))))
 
 (defun beancount-collect (regexp n)
   "Return an unique list of REGEXP group N in the current buffer."
-  (save-excursion
-    (save-match-data
-      (let ((hash (make-hash-table :test 'equal)))
-        (goto-char (point-min))
-        (while (re-search-forward regexp nil t)
-          (puthash (match-string-no-properties n) nil hash))
-        (hash-table-keys hash)))))
+  (let ((pos (point)))
+    (save-excursion
+      (save-match-data
+        (let ((hash (make-hash-table :test 'equal)))
+          (goto-char (point-min))
+          (while (re-search-forward regexp nil t)
+            ;; Ignore matches around `pos' (the point position when
+            ;; entering this funcyion) since that's presumably what
+            ;; we're currently trying to complete.
+            (unless (<= (match-beginning 0) pos (match-end 0))
+              (puthash (match-string-no-properties n) nil hash)))
+          (hash-table-keys hash))))))
 
 (defun beancount-account-completion-table (string pred action)
   (if (eq action 'metadata) '(metadata (category . beancount-account))
     (if (null beancount-accounts)
         (setq beancount-accounts
-              (sort (delete string (beancount-collect beancount-account-regexp 0)) #'string<)))
+              (sort (beancount-collect beancount-account-regexp 0) #'string<)))
     (complete-with-action action beancount-accounts string pred)))
 
 ;; Default to substring completion for beancount accounts.
