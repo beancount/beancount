@@ -132,11 +132,6 @@ to align all amounts."
     "pushtag")
   "Directive names that can appear at the beginning of a line.")
 
-(defvar beancount-directive-names
-  (append beancount-directive-names
-          beancount-timestamped-directive-names)
-  "A list of the directive names.")
-
 (defconst beancount-account-categories
   '("Assets" "Liabilities" "Equity" "Income" "Expenses"))
 
