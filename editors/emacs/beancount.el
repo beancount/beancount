@@ -269,6 +269,7 @@ to align all amounts."
   (let ((map (make-sparse-keymap))
         (p beancount-mode-map-prefix))
     (define-key map (kbd "TAB") #'beancount-tab-dwim)
+    (define-key map (kbd "M-RET") #'beancount-insert-date)
     (define-key map (vconcat p [(\')]) #'beancount-insert-account)
     (define-key map (vconcat p [(control g)]) #'beancount-transaction-clear)
     (define-key map (vconcat p [(l)]) #'beancount-check)
@@ -734,6 +735,12 @@ what that column is and returns it (an integer)."
           (setq column (- (match-beginning 1) (point))))
         ))
     column))
+
+(defun beancount-insert-date ()
+  "Start a new timestamped directive."
+  (interactive)
+  (unless (bolp) (newline))
+  (insert (format-time-string "%Y-%m-%d") " "))
 
 (defvar beancount-install-dir nil
   "Directory in which Beancount's source is located.
