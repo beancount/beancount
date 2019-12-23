@@ -40,82 +40,67 @@
 
 (defcustom beancount-transaction-indent 2
   "Transaction indent."
-  :type 'integer
-  :group 'beancount)
+  :type 'integer)
 
 (defcustom beancount-number-alignment-column 52
   "Column to which align numbers in postinng definitions. Set to
 0 to automatically determine the minimum column that will allow
 to align all amounts."
-  :type 'integer
-  :group 'beancount)
+  :type 'integer)
 
 (defcustom beancount-highlight-transaction-at-point nil
   "If t highlight transaction under point."
-  :type 'boolean
-  :group 'beancount)
+  :type 'boolean)
 
 (defcustom beancount-use-ido t
   "If non-nil, use ido-style completion rather than the standard."
-  :type 'boolean
-  :group 'beancount)
+  :type 'boolean)
 
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
 (defface beancount-directive
   `((t :inherit font-lock-keyword-face))
-  "Face for Beancount directives."
-  :group 'beancount-faces)
+  "Face for Beancount directives.")
 
 (defface beancount-tag
   `((t :inherit font-lock-type-face))
-  "Face for Beancount tags."
-  :group 'beancount-faces)
+  "Face for Beancount tags.")
 
 (defface beancount-link
   `((t :inherit font-lock-type-face))
-  "Face for Beancount links."
-  :group 'beancount-faces)
+  "Face for Beancount links.")
 
 (defface beancount-date
   `((t :inherit font-lock-constant-face))
-  "Face for Beancount dates."
-  :group 'beancount-faces)
+  "Face for Beancount dates.")
 
 (defface beancount-account
   `((t :inherit font-lock-builtin-face))
-  "Face for Beancount account names."
-  :group 'beancount-faces)
+  "Face for Beancount account names.")
 
 (defface beancount-amount
   `((t :inherit font-lock-default-face))
-  "Face for Beancount amounts."
-  :group 'beancount-faces)
+  "Face for Beancount amounts.")
 
 (defface beancount-narrative
   `((t :inherit font-lock-builtin-face))
-  "Face for Beancount transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount transactions narrative.")
 
 (defface beancount-narrative-cleared
   `((t :inherit font-lock-string-face))
-  "Face for Beancount cleared transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount cleared transactions narrative.")
 
 (defface beancount-narrative-pending
   `((t :inherit font-lock-keyword-face))
-  "Face for Beancount pending transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount pending transactions narrative.")
 
 (defface beancount-metadata
   `((t :inherit font-lock-type-face))
-  "Face for Beancount metadata."
-  :group 'beancount-faces)
+  "Face for Beancount metadata.")
 
 (defface beancount-highlight
   `((t :inherit highlight))
-  "Face to highlight Beancount transaction at point."
-  :group 'beancount-faces)
+  "Face to highlight Beancount transaction at point.")
 
 (defconst beancount-account-directive-names
   '("balance"
