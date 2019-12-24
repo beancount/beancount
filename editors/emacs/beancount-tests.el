@@ -233,3 +233,19 @@ known option nmaes."
                    '("* A"   org-level-1
                      "** B"  org-level-2
                      "*** C" org-level-3)))))
+
+(ert-deftest beancount/account-currency-001 ()
+  :tags '(regress)
+  (with-temp-buffer
+    (insert "
+2019-12-22 open Assets:Test:One USD
+2019-12-22 open Assets:Test:Two USD,EUR
+2019-12-22 open Assets:Test:Three USD \"STRICT\"
+2019-12-22 open Assets:Test:Four USD,EUR \"STRICT\"
+2019-12-22 open Assets:Test:Five \"STRICT\"
+")
+    (should (equal (beancount--account-currency "Assets:Test:One") "USD"))
+    (should (equal (beancount--account-currency "Assets:Test:Two") nil))
+    (should (equal (beancount--account-currency "Assets:Test:Three") "USD"))
+    (should (equal (beancount--account-currency "Assets:Test:Four") nil))
+    (should (equal (beancount--account-currency "Assets:Test:Five") nil))))

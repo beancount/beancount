@@ -56,6 +56,12 @@ to align all amounts."
   "If non-nil, use ido-style completion rather than the standard."
   :type 'boolean)
 
+(defcustom beancount-electric-currency nil
+  "If non-nil, make `newline' try to add missing currency to
+complete the posting at point. The correct currency is determined
+from the open directive for the relevant account."
+  :type 'boolean)
+
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
 (defface beancount-directive
@@ -312,6 +318,7 @@ to align all amounts."
   
   (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
   (add-hook 'post-command-hook #'beancount-highlight-transaction-at-point nil t)
+  (add-hook 'post-self-insert-hook #'beancount--electric-currency nil t)
   
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t)
@@ -735,6 +742,34 @@ what that column is and returns it (an integer)."
           (setq column (- (match-beginning 1) (point))))
         ))
     column))
+
+(defun beancount--account-currency (account)
+  ;; Build a regexp that matches an open directive that specifies a
+  ;; single account currencydaaee. The currency is match group 1.
+  (let ((re (concat "^" beancount-date-regexp " +open"
+                    "\\s-+" (regexp-quote account)
+                    "\\s-+\\(" beancount-currency-regexp "\\)\\s-+")))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward re nil t)
+        ;; The account has declared a single currency, so we can fill it in.
+        (match-string-no-properties 1)))))
+
+(defun beancount--electric-currency ()
+  (when (and beancount-electric-currency (eq last-command-event ?\n))
+    (save-excursion
+      (forward-line -1)
+      (when (and (beancount-inside-transaction-p)
+                 (looking-at (concat "\\s-+\\(" beancount-account-regexp "\\)"
+                                     "\\s-+\\(" beancount-number-regexp "\\)\\s-*$")))
+        ;; Last line is a posting without currency.
+        (let* ((account (match-string 1))
+               (pos (match-end 0))
+               (currency (beancount--account-currency account)))
+          (when currency
+            (save-excursion
+	      (goto-char pos)
+              (insert " " currency))))))))
 
 (defun beancount-insert-date ()
   "Start a new timestamped directive."
