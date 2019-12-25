@@ -6,6 +6,11 @@ Note: This file contains a list changes in the 'default' branch.
 
 2019-12-25
 
+ - Applied patch from Daniele Nicolodi
+   (https://bitbucket.org/blais/beancount/pull-requests/139/parser-work-around-python38-bug-causing-a)
+   to work around typing constraints around signed size types introduced in
+   Python 3.8. See also https://bugs.python.org/issue38913.
+
  - Fixed bug with running python3 as a subprocess during testing. Fixes an error
    that occurs with the tutorial file generation.
 
