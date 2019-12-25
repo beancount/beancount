@@ -195,7 +195,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         iconfig, has_header = normalize_config(
             self.config, file.head(), self.csv_dialect, self.skip_lines)
 
-        reader = iter(csv.reader(open(file.name, encoding=self.encoding), dialect=self.csv_dialect))
+        reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                 dialect=self.csv_dialect))
 
         # Skip garbage lines
         for _ in range(self.skip_lines):

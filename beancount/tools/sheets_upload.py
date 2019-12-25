@@ -48,7 +48,6 @@ __license__ = "GNU GPLv2"
 import argparse
 import csv
 import logging
-import math
 import os
 import re
 import string
