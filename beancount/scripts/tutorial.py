@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import logging
 import subprocess
+import sys
 import os
 from os import path
 
@@ -56,6 +57,8 @@ def main():
 
     for report_name, command_template in COMMANDS:
         logging.info('Generating %s: %s', report_name, command_template)
+        rootdir = test_utils.find_repository_root(__file__)
+        command_template = "{} {}/bin/{}".format(sys.executable, rootdir, command_template)
         output_filename = path.join(args.output_directory, '{}.output'.format(report_name))
         errors_filename = path.join(args.output_directory, '{}.errors'.format(report_name))
         with open(output_filename, 'w') as output_file:
@@ -67,7 +70,12 @@ def main():
                                         stdout=output_file,
                                         stderr=errors_file)
                 pipe.communicate()
-                assert pipe.returncode == 0, pipe.returncode
+                if pipe.returncode != 0:
+                    with open(errors_filename) as efile:
+                        errors = efile.read()
+                    raise RuntimeError(
+                        "Error running '{}': exit wiht {}; errors: {}".format(
+                            command, pipe.returncode, errors))
 
         if path.getsize(errors_filename) == 0:
             os.remove(errors_filename)

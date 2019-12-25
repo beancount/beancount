@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-12-25
+
+ - Fixed bug with running python3 as a subprocess during testing. Fixes an error
+   that occurs with the tutorial file generation.
+
+
 2019-11-29
 
  - Added 'encoding' option to CSV importer. Amex encodes as 'latin1', not
