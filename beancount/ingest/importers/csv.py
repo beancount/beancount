@@ -55,6 +55,9 @@ class Col(enum.Enum):
     # A field to use as a tag name.
     TAG = '[TAG]'
 
+    # A field to use as a unique reference id or number.
+    REFERENCE_ID = '[REF]'
+
     # A column which says DEBIT or CREDIT (generally ignored).
     DRCR = '[DRCR]'
 
@@ -246,6 +249,9 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else data.EMPTY_SET
 
+            link = get(row, Col.REFERENCE_ID)
+            links = {link} if link is not None else data.EMPTY_SET
+
             last4 = get(row, Col.LAST4)
 
             balance = get(row, Col.BALANCE)
@@ -264,7 +270,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                 meta['card'] = last4_friendly if last4_friendly else last4
             date = parse_date_liberally(date, self.dateutil_kwds)
             txn = data.Transaction(meta, date, self.FLAG, payee, narration,
-                                   tags, data.EMPTY_SET, [])
+                                   tags, links, [])
 
             # Attach one posting to the transaction
             amount_debit, amount_credit = get_amounts(iconfig, row)
