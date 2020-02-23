@@ -67,6 +67,11 @@ class Col(enum.Enum):
     # An account name.
     ACCOUNT = '[ACCOUNT]'
 
+    # Categorization, if the institution supports it. You could, in theory,
+    # specialize your importer to use this automatically assign a good expenses
+    # account.
+    CATEGORY = '[CATEGORY]'
+
 
 def get_amounts(iconfig, row, allow_zero_amounts=False):
     """Get the amount columns of a row.
@@ -112,6 +117,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                  dateutil_kwds: Optional[Dict] = None,
                  narration_sep: str = '; ',
                  encoding: Optional[str] = None,
+                 invert_sign: Optional[bool] = False,
                  **kwds):
         """Constructor.
 
@@ -133,6 +139,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             narration fields of a source field.
           encoding: An optional encoding for the file. Typically useful for files
             encoded in 'latin1' instead of 'utf-8' (the default).
+          invert_sign: If true, invert the amount's sign unconditionally.
           **kwds: Extra keyword arguments to provide to the base mixins.
         """
         assert isinstance(config, dict), "Invalid type: {}".format(config)
@@ -147,6 +154,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         self.csv_dialect = csv_dialect
         self.narration_sep = narration_sep
         self.encoding = encoding
+        self.invert_sign = invert_sign
 
         self.categorizer = categorizer
 
@@ -244,7 +252,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    for field in (Col.NARRATION1,
                                                  Col.NARRATION2,
                                                  Col.NARRATION3)])
-            narration = self.narration_sep.join(field.strip() for field in fields)
+            narration = self.narration_sep.join(
+                field.strip() for field in fields).replace('\n', '; ')
 
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else data.EMPTY_SET
@@ -282,6 +291,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             for amount in [amount_debit, amount_credit]:
                 if amount is None:
                     continue
+                if self.invert_sign:
+                    amount = -amount
                 units = Amount(amount, self.currency)
                 txn.postings.append(
                     data.Posting(account, units, None, None, None, None))

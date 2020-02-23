@@ -4,6 +4,15 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-02-23
+
+  - Added new features to the CSV importer:
+    * A new 'invert_sign' option to invert the sign of the amount.
+    * A new field, 'CATEGORY', which goes unrendered.
+    * Replace newlines from all narrations by semi-colons.
+    These were driven by recent changes to the Amex CSV format.
+
+
 2019-12-29
 
  - Added a CSV field for a unique reference number. If present, this is set as a
