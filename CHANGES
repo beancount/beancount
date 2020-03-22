@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-03-22
+
+  - Added docstrings on some import code (while installing a new importer; my
+    stuff is sometimes poorly documented I'm afraid).
+
+
 2020-02-23
 
   - Added new features to the CSV importer:
