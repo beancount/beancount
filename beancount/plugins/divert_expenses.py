@@ -34,7 +34,6 @@ __license__ = "GNU GPLv2"
 from beancount.core.data import Transaction
 from beancount.core import account_types
 from beancount.parser import options
-from beancount.parser import printer
 
 
 __plugins__ = ('divert_expenses',)
