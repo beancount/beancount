@@ -4641,6 +4641,13 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - When env var L is set to a directory, failure just says that the Lex scanner
+    fails; this should mention the name of the file, so it's clear. Sometimes I
+    override "L".
+
+  - The bean-query --numberify option does not split columns when the output is
+    text (default). Only for csv. This is inconsistent.
+
   - In order to render all linked transactions, support pulling the referenced
     link or tag name under the cursor (in Emacs).
 
