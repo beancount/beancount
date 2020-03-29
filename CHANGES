@@ -4,6 +4,13 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-03-28
+
+  - Allow the "divert_expenses" plugin to override diversions on postings that
+    aren't for expenses accounts. I needed this to account to a deposit to my
+    kid's daycare, which is an asset account in his diverted ledger.
+
+
 2020-03-22
 
   - Added docstrings on some import code (while installing a new importer; my

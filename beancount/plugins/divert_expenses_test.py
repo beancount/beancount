@@ -83,6 +83,36 @@ class TestDivertExpenses(cmptest.TestCase):
             divert: FALSE
         """, entries)
 
+    @loader.load_doc()
+    def test_divert_non_expenses(self, entries, errors, __):
+        """
+        plugin "beancount.plugins.divert_expenses" "{
+          'tag': 'kai',
+          'account': 'Expenses:Kai',
+        }"
+
+        2012-01-01 open Assets:Checking
+        2012-01-01 open Assets:Daycare:Deposit
+        2012-01-01 open Expenses:Kai
+
+        2018-05-05 * "Daycare" "Deposit for daycare" #kai
+          Assets:Checking           -6100.00 USD
+          Assets:Daycare:Deposit
+            divert: TRUE
+        """
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+
+        2012-01-01 open Assets:Checking
+        2012-01-01 open Assets:Daycare:Deposit
+        2012-01-01 open Expenses:Kai
+
+        2018-05-05 * "Daycare" "Deposit for daycare" #kai
+          Assets:Checking           -6100.00 USD
+          Expenses:Kai               6100.00 USD
+            diverted_account: "Assets:Daycare:Deposit"
+        """, entries)
+
 
 if __name__ == '__main__':
     unittest.main()
