@@ -56,10 +56,6 @@ void build_grammar_error_from_exception(void)
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
                                            yy_filename, yylineno + yy_firstline,
                                            pvalue, ptype, ptraceback);
-        Py_DECREF(ptype);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptraceback);
-
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
             /* PyErr_SetString(PyExc_RuntimeError, */
@@ -70,6 +66,10 @@ void build_grammar_error_from_exception(void)
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: No exception");
     }
+
+    Py_XDECREF(ptype);
+    Py_XDECREF(pvalue);
+    Py_XDECREF(ptraceback);
 }
 
 

@@ -4641,6 +4641,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Make the spreadsheets <-> beancount upload/download conversion scripts more
+    general and flexible and provide them to the general public. These are
+    really powerful.
+
   - When env var L is set to a directory, failure just says that the Lex scanner
     fails; this should mention the name of the file, so it's clear. Sometimes I
     override "L".

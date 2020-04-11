@@ -4,6 +4,13 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-04-11
+
+ - Fixed #425: Tentative bug fix for crash on decref over null traceback. The
+   Python API for this function may return some null values. Not taking any
+   chances. This should fix this particular bug.
+
+
 2020-03-28
 
   - Allow the "divert_expenses" plugin to override diversions on postings that
