@@ -4641,6 +4641,8 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - "find $PWD | treeify -F" is broken; used to work. Update and fix this.
+
   - Make the spreadsheets <-> beancount upload/download conversion scripts more
     general and flexible and provide them to the general public. These are
     really powerful.
