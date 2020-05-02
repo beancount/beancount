@@ -11,7 +11,6 @@ from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core import amount
 from beancount.core import account
-from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import getters
 

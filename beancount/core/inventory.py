@@ -477,7 +477,6 @@ class Inventory(dict):
         return new_inventory
 
 
-# pylint: disable=invalid-name
 from_string = Inventory.from_string
 
 
