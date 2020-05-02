@@ -479,7 +479,7 @@ def compute_balance(real_account):
     """
     total_balance = inventory.Inventory()
     for real_acc in iter_children(real_account):
-        total_balance += real_acc.balance
+        total_balance.add_inventory(real_acc.balance)
     return total_balance
 
 

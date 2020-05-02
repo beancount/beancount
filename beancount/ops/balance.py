@@ -136,7 +136,7 @@ def check(entries, options_map):
             # for the total sum of their subaccounts.
             subtree_balance = inventory.Inventory()
             for real_child in realization.iter_children(real_account, False):
-                subtree_balance += real_child.balance
+                subtree_balance.add_inventory(real_child.balance)
 
             # Get only the amount in the desired currency.
             balance_amount = subtree_balance.get_currency_units(expected_amount.currency)

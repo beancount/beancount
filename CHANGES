@@ -68,6 +68,11 @@ Note: This file contains a list changes in the 'default' branch.
    the boundary, but then the minimum number of rows could just be increased).
    This is quick fix that should work in the medium term.
 
+2020-05-02
+
+ - Minor performance improvment by avoiding calling __iadd__ in a few places.
+
+
 2019-10-20
 
  - More changes to unittest while porting to Bazel build (for C++ support).

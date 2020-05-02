@@ -167,7 +167,7 @@ def table_of_balances(real_root, price_map, price_date,
             line_balance = real_account.balance.reduce(convert.get_value, price_map)
 
             # Update the total balance for the totals line.
-            balance_totals += line_balance
+            balance_totals.add_inventory(line_balance)
 
         # Extract all the positions that the user has identified as operating
         # currencies to their own subinventories.

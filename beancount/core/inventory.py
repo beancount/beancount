@@ -439,7 +439,7 @@ class Inventory(dict):
           A new instance of Inventory.
         """
         new_inventory = self.__copy__()
-        new_inventory += other
+        new_inventory.add_inventory(other)
         return new_inventory
 
     __iadd__ = add_inventory
