@@ -1819,7 +1819,7 @@ case 59:
 YY_RULE_SETUP
 #line 375 "beancount/parser/lexer.l"
 {
-    BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    BUILD_LEX("KEY", "s#", yytext, (Py_ssize_t)(yyleng-1));
     unput(':');
     return KEY;
 }
@@ -3011,7 +3011,7 @@ void build_lexer_error(const char* string, size_t length)
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, length);
+                                       "s#", string, (Py_ssize_t)length);
     if (rv == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");

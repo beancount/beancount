@@ -229,5 +229,5 @@ def abs(amount):
             else Amount(-amount.number, amount.currency))
 
 
-A = from_string = Amount.from_string  # pylint: disable=invalid-name
+A = from_string = Amount.from_string
 NULL_AMOUNT = Amount(ZERO, '')

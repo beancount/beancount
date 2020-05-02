@@ -20,7 +20,6 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
-# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str

@@ -158,6 +158,7 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
         files = list(regression.find_input_files(self.tempdir))
         self.assertEqual([path.join(self.tempdir, 'something.other')], files)
 
+    @suppress_deprecation
     def test_compare_sample_files__no_directory(self):
         importer = _DummyImporter()
         this_module = sys.modules[type(importer).__module__]

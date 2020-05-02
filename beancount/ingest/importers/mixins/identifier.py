@@ -20,6 +20,7 @@ def identify(remap, converter, file):
       remap: A dict of 'part' to list-of-compiled-regexp objects, where each item is
         a specification to match against its part. The 'part' can be one of 'mime',
         'filename' or 'content'.
+      converter: A
     Returns:
       A boolean, true if the file is not rejected by the constraints.
     """
@@ -59,6 +60,7 @@ class IdentifyMixin(importer.ImporterProtocol):
             assert isinstance(regexp, str), repr(regexp)
             self.remap[part].append(re.compile(regexp))
 
+        # Converter is a fn(filename: Text) -> contents: Text.
         self.converter = kwds.pop('converter',
                                   getattr(self, 'converter', None))
 

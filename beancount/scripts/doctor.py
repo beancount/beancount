@@ -36,7 +36,7 @@ def do_lex(filename, unused_args):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
 
-do_dump_lexer = do_lex  # pylint: disable=invalid-name
+do_dump_lexer = do_lex
 
 
 def do_parse(filename, unused_args):
@@ -190,7 +190,6 @@ def do_deps(*unused_args):
     print('Use "pip3 install <package>" to install new packages.')
 
 # Alias old name.
-# pylint: disable=invalid-name
 do_checkdeps = do_deps
 
 
