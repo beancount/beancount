@@ -32,7 +32,7 @@ This script only requires the latest and official Google client API libraries
 API (current as of 2013-2017-12-15). You will need to have an installation of the
 following libraries for this to work:
 
- * apiclient (Google Python client API)
+ * google-api-python-client (Google Python client API)
  * oauth2client
  * httplib2
 
@@ -58,8 +58,8 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client import file
 import httplib2
-from apiclient import discovery
-from apiclient import errors
+from googleapiclient import discovery
+from googleapiclient import errors
 
 
 # The name of a sheet left as the unique sheet temporarily, while creating a new

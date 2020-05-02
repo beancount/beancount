@@ -49,7 +49,7 @@ def check_dependencies():
         check_import('lxml', module_name='lxml.etree', min_version='3'),
 
         # Optionally required to upload data to Google Drive.
-        check_import('apiclient'),
+        check_import('googleapiclient'),
         check_import('oauth2client'),
         check_import('httplib2'),
 
@@ -149,10 +149,13 @@ def check_import(package_name, min_version=None, module_name=None):
     try:
         __import__(module_name)
         module = sys.modules[module_name]
-        version = module.__version__
-        assert isinstance(version, str)
-        is_sufficient = (parse_version(version) >= parse_version(min_version)
-                         if min_version else True)
+        if min_version is not None:
+            version = module.__version__
+            assert isinstance(version, str)
+            is_sufficient = (parse_version(version) >= parse_version(min_version)
+                             if min_version else True)
+        else:
+            version, is_sufficient = None, True
     except ImportError:
         version, is_sufficient = None, False
     return (package_name, version, is_sufficient)
