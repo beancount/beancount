@@ -19,6 +19,7 @@ Note: This file contains a list changes in the 'default' branch.
  - Made balance check aggregation avoid an initial empty inventory object, and
    changed the balance check code to call the realization utility function
    compute_balance().
+ - Fixed bean-bake to honor all the bean-web options.
 
 
 2020-04-11
