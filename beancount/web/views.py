@@ -281,7 +281,7 @@ class ComponentView(View):
           entries: A list of directives.
           options_map: A dict of options, as produced by the parser.
           title: A string, the title of this view.
-          compnent: A string, the name of an account component to include.
+          component: A string, the name of an account component to include.
         """
         assert isinstance(component, str)
         self.component = component

@@ -256,7 +256,7 @@ def categorize_by_currency(entry, balances):
 
     - First we apply the constraint that cost-currency and price-currency must
       match, if there is both a cost and a price. This reduces the space of
-      possibilities somewahte.
+      possibilities somewhat.
 
     - If the currency is explicitly specified, we put the posting in that
       currency's bucket.

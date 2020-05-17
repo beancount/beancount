@@ -1278,7 +1278,7 @@ def thread_server_start(web_args, **kwargs):
 def thread_server_shutdown(thread):
     """Shutdown the server running in the given thread.
 
-    Unfortauntely, in the meantime this has a side-effect on all servers.
+    Unfortunately, in the meantime this has a side-effect on all servers.
     This returns after waiting that the thread has stopped.
 
     Args:

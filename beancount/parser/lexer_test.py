@@ -28,7 +28,7 @@ def print_tokens(tokens):
 
 
 def lex_tokens(fun):
-    """Decorator for test functions that will invokve a lexer on them.
+    """Decorator for test functions that will invoke a lexer on them.
 
     The lexer passes the list of tokens and errors to the test function.
 

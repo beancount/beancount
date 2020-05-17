@@ -38,7 +38,7 @@ def pad(entries, options_map):
       entries: A list of directives.
       options_map: A parser options dict.
     Returns:
-      A new list of directives, with Pad entries inserte, and a list of new
+      A new list of directives, with Pad entries inserted, and a list of new
       errors produced.
     """
     pad_errors = []

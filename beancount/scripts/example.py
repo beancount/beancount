@@ -251,7 +251,7 @@ def date_random_seq(date_begin, date_end, days_min, days_max):
 
 
 def delay_dates(date_iter, delay_days_min, delay_days_max):
-    """Delay the dates from the given iterator by some uniformly dranw number of days.
+    """Delay the dates from the given iterator by some uniformly drawn number of days.
 
     Args:
       date_iter: An iterator of datetime.date instances.
@@ -536,7 +536,7 @@ def generate_tax_preamble(date_birth):
     """, **locals())
 
 def generate_tax_accounts(year, date_max):
-    """Generate accounts and contributino directives for a particular tax year.
+    """Generate accounts and contribution directives for a particular tax year.
 
     Args:
       year: An integer, the year we're to generate this for.
@@ -1359,7 +1359,7 @@ def price_series(start, mu, sigma):
 
 
 def generate_prices(date_begin, date_end, currencies, cost_currency):
-    """Generate weekly or monthyl price entries for the given currencies.
+    """Generate weekly or monthly price entries for the given currencies.
 
     Args:
       date_begin: The start date.

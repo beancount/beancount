@@ -61,7 +61,7 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
 
 class TestCompileAggregateChecks(unittest.TestCase):
 
-    def test_is_aggregrate_derived(self):
+    def test_is_aggregate_derived(self):
         columns, aggregates = qc.get_columns_and_aggregates(
             qc.EvalAnd(
                 qc.EvalEqual(qe.PositionColumn(), qc.EvalConstant(42)),

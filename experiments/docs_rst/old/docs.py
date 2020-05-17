@@ -19,7 +19,7 @@ from oauth2client import service_account
 
 class Cache:
     """A cache for a service method for the Google Client API, like
-    "serivce.files()". This is useful when working remotely, to avoid
+    "service.files()". This is useful when working remotely, to avoid
     downloading the same document multiple times.
     """
     def __init__(self, filename, delegate_factory):
@@ -92,7 +92,7 @@ def enumerate_linked_documents(files, indexid):
       files: A Cached API client object with Google Drive scope.
       indexid: A string, a document id.
     Returns:
-      A list of link strins.
+      A list of link strings.
     """
     doc = files.export(fileId=indexid,
                        mimeType='text/html').execute()
@@ -111,7 +111,7 @@ def download_docs(files, docids, outdir, extension):
     Args:
       files: A Cached API client object with Google Drive scope.
       docids: A list of string, the document ids to download.
-      outdir: A string, the name of the directory where to store the filess.
+      outdir: A string, the name of the directory where to store the files.
       extension: A string, the extension of the requested documents.
     Returns:
       A list of string, the names of the downloaded files.

@@ -1,4 +1,4 @@
-"""Basic filteirng and aggregration operations on lists of entries.
+"""Basic filtering and aggregation operations on lists of entries.
 
 This module contains some common basic operations on entries that are complex
 enough not to belong in core/data.py.

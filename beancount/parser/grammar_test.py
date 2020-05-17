@@ -326,7 +326,7 @@ class TestUglyBugs(unittest.TestCase):
         """
           2013-05-01 open Assets:Cash   USD,CAD,EUR
           2013-05-02 close Assets:US:BestBank:Checking
-          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
+          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
           2013-05-04 event "location" "New York, USA"
           2013-05-05 * "Payee" "Narration"
             Assets:US:BestBank:Checking   100.00 USD
@@ -1772,7 +1772,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
       builder method is invoked and raises a Python exception. A macro in the
       code that invokes this method is used to catch this error and calls
       build_grammar_error_from_exception() to register an error and makes the
-      parser issue an error wth YYERROR (see {05bb0fb60e86}).
+      parser issue an error with YYERROR (see {05bb0fb60e86}).
 
     We never call YYABORT anywhere so the yyparse() function should never return
     anything else than 0. If it does, we translate that into a Python

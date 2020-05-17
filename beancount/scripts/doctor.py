@@ -369,10 +369,10 @@ def do_display_context(filename, args):
 
 
 def do_validate_html(directory, args):
-    """Validate all the HTML files under a directory hierachy.
+    """Validate all the HTML files under a directory hierarchy.
 
     Args:
-      directory: A string, the root directory whose contents to validte.
+      directory: A string, the root directory whose contents to validate.
       args: A tuple of the rest of arguments.
     """
     from beancount.web import scrape

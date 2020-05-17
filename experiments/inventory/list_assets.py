@@ -10,7 +10,7 @@ The main premise here is that we have two pieces of data:
 
 1. The user's assets and liabilities listed in a Beancount ledger file, and
 
-2. A database of institution and account informations to pull details from for
+2. A database of institution and account information to pull details from for
     each of the active user accounts and to include in the report.
 
 """

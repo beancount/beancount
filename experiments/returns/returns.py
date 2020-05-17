@@ -77,13 +77,13 @@ Let us first consider transactions which have at least some value accounts:
 Both of these type of transactions represents transfers within asset accounts
 and as such do not present any challenges or events in terms of calculating the
 returns. Since internal flow accounts are meant to be considered as revenue or
-costs internal to the portofolio, they can just be processed without having to
+costs internal to the portfolio, they can just be processed without having to
 revalue the portfolio across them.
 
 
 Other transactions need special treatment , however:
 
-  VALUE + EXTERNAL: These would be tranactions either with a deposit or a
+  VALUE + EXTERNAL: These would be transactions either with a deposit or a
     withdrawal from/to one of the value accounts:
 
        2014-01-10 * "Transferring money for investing"
@@ -205,7 +205,7 @@ Notes:
 
  - If you use the "account_rounding" option, the rounding postings will
    naturally end up being external flows and that's an undesirable effect. If
-   the option is turned on, we automatically ignore those postigs. (Note that
+   the option is turned on, we automatically ignore those postings. (Note that
    another valid solution would have been to insert this account in the list of
    internal accounts but that creates a more difficult set of resulting
    transactions, it's a bit confusing.).
@@ -279,7 +279,7 @@ def segment_periods(entries, accounts_value, accounts_internal):
 
     This function iterates through the given entries and computes balances at
     the beginning and end of periods without external flow entries. You should be
-    able to then compute the returns from these informations.
+    able to then compute the returns from this information.
 
     Args:
       entries: A list of directives. The list may contain directives other than
@@ -387,7 +387,7 @@ def compute_period_returns(date_begin, date_end,
           union of all currencies for those is returned (this is done to be able
           to evaluate and report on returns in multiple currencies).
         (mktvalue_begin, mktvalue_end): Both instances of Inventory, the balance
-          of the porfolio evaluated at the market value at the beginning and end
+          of the portfolio evaluated at the market value at the beginning and end
           of the period.
     """
     # Evaluate the boundary balances at market value.
@@ -480,12 +480,12 @@ def internalize(entries, transfer_account,
         is found that has only internal accounts and external accounts, the
         postings whose accounts are in this set of accounts will be
         internalized. This is a method that can be used to pull dividends into
-        the portfolio when valueing portfolios without their cash component. See
+        the portfolio when valuing portfolios without their cash component. See
         docstring and documentation for details. If specified, this set of
         accounts must be a subset of the internal flows accounts.
     Returns:
       A pair of the new list of internalized entries, including all the other entries, and
-      a short list of just the original entires that were removed and replaced by pairs of
+      a short list of just the original entries that were removed and replaced by pairs of
       entries.
     """
     # Verify that external flow entries only affect balance sheet accounts and

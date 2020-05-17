@@ -58,7 +58,7 @@ class Report:
           argv: A list of strings, command-line arguments to use to construct tbe report.
           kwds: A dict of other keyword arguments to pass to the report's constructor.
         Returns:
-          A new instace of the report.
+          A new instance of the report.
         """
         parser = version.ArgumentParser()
         cls.add_args(parser)
@@ -96,7 +96,7 @@ class Report:
           entries: A list of directives to render.
           errors: A list of errors that occurred during processing.
           options_map: A dict of options, as produced by the parser.
-          output_format: A string, the name of the format. I fnot specified, use
+          output_format: A string, the name of the format. If not specified, use
             the default format.
           file: The file to write the output to.
         Returns:

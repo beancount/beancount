@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-05-17
+
+ - Applied patch by Martin Michlmayr with fixes for many typos.
+
+
 2020-05-02
 
  - Minor performance improvment by avoiding calling __iadd__ in a few places.
@@ -1159,7 +1164,7 @@ Note: This file contains a list changes in the 'default' branch.
 
   - Some cleanup of internal tools.
 
-  - Added some basic unit tetsts for beancount.tools.sheets_upload.
+  - Added some basic unit tests for beancount.tools.sheets_upload.
 
   - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
     and replaced it with an associated stub for it.
@@ -1800,7 +1805,7 @@ Note: This file contains a list changes in the 'default' branch.
       GROUP BY 1
       ORDER BY 1
 
-    Note that the resulting balanaces almost certainly don't sum up to zero,
+    Note that the resulting balances almost certainly don't sum up to zero,
     because of differing dates of the Balance directives. Also, note that
     accounts without a single Balance directive will not have their postings
     marked at all.
@@ -3417,7 +3422,7 @@ Note: This file contains a list changes in the 'default' branch.
 
     I also moved the tests. All the code specifically related to numbers is
     now in beancount.core.number. I also removed the relative imports, as
-    Ledgerhub is importing from the Beancount source code now.
+    LedgerHub is importing from the Beancount source code now.
 
     This is not a user-visible change. However, if you wrote scripts against
     the codebase, you will need to rename your imports. In the meantime I added

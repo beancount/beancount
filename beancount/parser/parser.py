@@ -58,7 +58,7 @@ Indicating the conversion currency is also possible (and recommended):
 If a cost specification is provided, a "cost" attribute it set but it does not
 refer to a Cost instance (as in complete entries) but rather to a CostSpec
 instance. Some of the fields of a CostSpec may be MISSING if they were not
-specified in the input. For exammple:
+specified in the input. For example:
 
   INPUT: Assets:Account  1 HOOL {100 # 5 USD}
   posting.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
@@ -97,7 +97,7 @@ If you ask for the lots to be merged, you get this:
 The numbers have to be computed by Beancount, so we output this with MISSING
 values.
 
-Of course, you can provide only the non-basis informations, like just the date
+Of course, you can provide only the non-basis information, like just the date
 or label:
 
   INPUT: Assets:Account  1 HOOL {2015-09-21}

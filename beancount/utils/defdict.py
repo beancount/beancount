@@ -12,7 +12,7 @@ import collections
 class DefaultDictWithKey(collections.defaultdict):
     """A version of defaultdict whose factory accepts the key as an argument.
     Note: collections.defaultdict would be improved by supporting this directly,
-    this is a common occurence.
+    this is a common occurrence.
     """
     def __missing__(self, key):
         self[key] = value = self.default_factory(key)  # pylint: disable=not-callable
@@ -24,8 +24,8 @@ NOTFOUND = object()
 class ImmutableDictWithDefault(dict):
     """An immutable dict which returns a default value for missing keys.
 
-    This differs from a defualtdict in that it does not insert a missing default
-    value when one is materialized (from a missing fetch), and furtheremore, the
+    This differs from a defaultdict in that it does not insert a missing default
+    value when one is materialized (from a missing fetch), and furthermore, the
     set method is make unavailable to prevent mutation beyond construction.
     """
     def __init__(self, *args, default=None):

@@ -18,7 +18,7 @@ checks computes
                        0.08    +
                      -10.125
 
-and checks that the residual is below a small tolernace.
+and checks that the residual is below a small tolerance.
 
 But... usually the income leg isn't given to you in statements. Beancount can
 automatically infer it using the balance, which is convenient, like this:
