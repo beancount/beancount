@@ -191,9 +191,8 @@ def extract(importer_config,
                     allow_none_for_tags_and_links=allow_none_for_tags_and_links)
                 new_entries_list.append((filename, new_entries))
             except Exception as exc:
-                logging.error("Importer %s.extract() raised an unexpected error: %s",
-                              importer.name(), exc)
-                logging.error("Traceback: %s", traceback.format_exc())
+                logging.exception("Importer %s.extract() raised an unexpected error: %s",
+                                  importer.name(), exc)
                 continue
 
     # Find potential duplicate entries in the result sets, either against the
