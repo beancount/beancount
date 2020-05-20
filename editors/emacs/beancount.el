@@ -324,7 +324,9 @@ from the open directive for the relevant account."
   (setq-local font-lock-syntax-table t)
 
   (setq-local outline-regexp beancount-outline-regexp)
-  (setq-local outline-level #'beancount-outline-level))
+  (setq-local outline-level #'beancount-outline-level)
+
+  (setq-local imenu-create-index-function #'beancount-imenu-create-index-function))
 
 (defun beancount-collect-pushed-tags (begin end)
   "Return list of all pushed (and not popped) tags in the region."
@@ -1008,6 +1010,33 @@ Essentially a much simplified version of `next-line'."
   (while (and (not (eobp))
               (get-char-property (1- (point)) 'invisible))
     (beginning-of-line 2)))
+
+;;; imenu support
+(defun beancount-imenu-create-index-function ()
+  "The `imenu-create-index-function' for beancount-mode that returns an
+`imenu--index-alist' that stores the headings in the buffer."
+  (let ((index-alist '()))
+  (goto-char (point-max))
+  (while (re-search-backward "^\\(\\*+\\|;;;+\\)[ \t]+\\(.*?\\)[ \t]*$" nil t)
+    (let ((level (beancount-outline-level))
+          (name (match-string-no-properties 2))
+          (pos (point)))
+      (cond ((not index-alist)
+             (push (cons level (cons name pos)) index-alist))
+            ((< level (caar index-alist))
+             (let ((sub-index-alist index-alist))
+               (while (and (cdr index-alist)
+                           (< level (caadr index-alist)))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist))
+               (let ((sub-index-tail index-alist))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist)
+                 (setcdr sub-index-tail nil))
+               (push (cons level (cons name sub-index-alist)) index-alist)
+               ))
+            (t (push (cons level (cons name pos)) index-alist)))))
+  (mapcar 'cdr index-alist)))
 
 (provide 'beancount)
 ;;; beancount.el ends here
