@@ -67,13 +67,13 @@ def divert_expenses(entries, options_map, config_str):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction) and tag in entry.tags:
-            entry = replace_expenses_accounts(entry, replacement_account, acctypes)
+            entry = replace_diverted_accounts(entry, replacement_account, acctypes)
         new_entries.append(entry)
 
     return new_entries, errors
 
 
-def replace_expenses_accounts(entry, replacement_account, acctypes):
+def replace_diverted_accounts(entry, replacement_account, acctypes):
     """Replace the Expenses accounts from the entry.
 
     Args:
@@ -85,8 +85,10 @@ def replace_expenses_accounts(entry, replacement_account, acctypes):
     """
     new_postings = []
     for posting in entry.postings:
-        if (account_types.is_account_type(acctypes.expenses, posting.account) and
-            posting.meta.get('divert', True)):
+        divert = posting.meta.get('divert', None) if posting.meta else None
+        if (divert is True or (
+                divert is None and
+                account_types.is_account_type(acctypes.expenses, posting.account))):
             posting = posting._replace(account=replacement_account,
                                        meta={'diverted_account': posting.account})
         new_postings.append(posting)

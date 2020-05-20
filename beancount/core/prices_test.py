@@ -220,3 +220,7 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(exp_value, act_value.quantize(D('0.01')))
 
         self.assertEqual(1, len(price_map[('CAD', 'USD')]))
+
+
+if __name__ == '__main__':
+    unittest.main()

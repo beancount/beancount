@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import textwrap
+import unittest
 
 from beancount import loader
 from beancount.parser import cmptest
@@ -61,3 +62,7 @@ class TestExampleForecast(cmptest.TestCase):
               Expenses:Restaurant           50.02 USD
               Assets:Cash                  -50.02 USD
         """, entries)
+
+
+if __name__ == '__main__':
+    unittest.main()

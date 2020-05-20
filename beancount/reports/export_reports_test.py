@@ -380,3 +380,7 @@ class TestCommodityExport(unittest.TestCase):
             ], exported)
         self.assertFalse(converted)
         self.assertFalse(ignored)
+
+
+if __name__ == '__main__':
+    unittest.main()

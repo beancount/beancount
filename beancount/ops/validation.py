@@ -134,7 +134,7 @@ def validate_duplicate_balances(entries, unused_options_map):
 
 
 def validate_duplicate_commodities(entries, unused_options_map):
-    """Check that commodty entries are unique for each commodity.
+    """Check that commodity entries are unique for each commodity.
 
     Args:
       entries: A list of directives.

@@ -437,7 +437,7 @@ def get_columns_and_aggregates(node):
     Returns:
       A pair of (columns, aggregates), both of which are lists of EvalNode instances.
         columns: The list of all columns accessed not under an aggregate node.
-        aggregates: The lis tof all aggregate nodes.
+        aggregates: The list of all aggregate nodes.
     """
     columns = []
     aggregates = []

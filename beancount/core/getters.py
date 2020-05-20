@@ -102,7 +102,6 @@ class GetAccounts:
 
 
 # Global instance to share.
-# pylint: disable=invalid-name
 _GetAccounts = GetAccounts()
 
 
@@ -212,7 +211,7 @@ def get_all_links(entries):
 
 
 def get_leveln_parent_accounts(account_names, level, nrepeats=0):
-    """Return a list of all the unique leaf names are level N in an account hierarchy.
+    """Return a list of all the unique leaf names at level N in an account hierarchy.
 
     Args:
       account_names: A list of account names (strings)
@@ -253,7 +252,7 @@ get_dict_accounts.ACCOUNT_LABEL = '__root__'
 
 
 def get_min_max_dates(entries, types=None):
-    """Return the minimum and amximum dates in the list of entries.
+    """Return the minimum and maximum dates in the list of entries.
 
     Args:
       entries: A list of directive instances.

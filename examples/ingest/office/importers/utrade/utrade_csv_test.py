@@ -2,6 +2,7 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
 from os import path
 
 from beancount.ingest import regression_pytest as regtest
@@ -23,3 +24,7 @@ IMPORTER = utrade_csv.Importer(
 @regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass
+
+
+if __name__ == '__main__':
+    unittest.main()

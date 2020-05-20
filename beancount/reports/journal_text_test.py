@@ -161,3 +161,7 @@ class TestJournalTextRender(unittest.TestCase):
             journal_text.text_entries_table(
                 oss, self.postings,
                 30, False, True, 4, journal_text.NORMAL, journal_text.FORMAT_TEXT)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -28,7 +28,7 @@ def print_tokens(tokens):
 
 
 def lex_tokens(fun):
-    """Decorator for test functions that will invokve a lexer on them.
+    """Decorator for test functions that will invoke a lexer on them.
 
     The lexer passes the list of tokens and errors to the test function.
 
@@ -509,6 +509,25 @@ class TestIgnoredLines(unittest.TestCase):
         ], tokens)
         self.assertFalse(errors)
 
+    @lex_tokens
+    def test_ignored__org_mode_drawer(self, tokens, errors):
+        """
+        :PROPERTIES:
+        :this: is an org-mode property drawer
+        :END:
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, ':', None),
+            ('EOL', 3, '\n', None),
+            ('SKIPPED', 3, ':', None),
+            ('EOL', 4, '\n', None),
+            ('SKIPPED', 4, ':', None),
+            ('EOL', 5, '\n', None),
+            ('EOL', 5, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
 
 class TestLexerErrors(unittest.TestCase):
     """Test lexer error handling.
@@ -769,3 +788,7 @@ class TestLexerMisc(unittest.TestCase):
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None)
         ], tokens)
+
+
+if __name__ == '__main__':
+    unittest.main()

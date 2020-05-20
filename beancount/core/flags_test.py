@@ -21,3 +21,7 @@ class TestFlags(unittest.TestCase):
             names.add(name)
             values.add(value)
         self.assertEqual(len(names), len(values))
+
+
+if __name__ == '__main__':
+    unittest.main()

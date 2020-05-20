@@ -55,6 +55,9 @@ class Col(enum.Enum):
     # A field to use as a tag name.
     TAG = '[TAG]'
 
+    # A field to use as a unique reference id or number.
+    REFERENCE_ID = '[REF]'
+
     # A column which says DEBIT or CREDIT (generally ignored).
     DRCR = '[DRCR]'
 
@@ -63,6 +66,11 @@ class Col(enum.Enum):
 
     # An account name.
     ACCOUNT = '[ACCOUNT]'
+
+    # Categorization, if the institution supports it. You could, in theory,
+    # specialize your importer to use this automatically assign a good expenses
+    # account.
+    CATEGORY = '[CATEGORY]'
 
 
 def get_amounts(iconfig, row, allow_zero_amounts=False):
@@ -108,6 +116,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                  csv_dialect: Union[str, csv.Dialect] = 'excel',
                  dateutil_kwds: Optional[Dict] = None,
                  narration_sep: str = '; ',
+                 encoding: Optional[str] = None,
+                 invert_sign: Optional[bool] = False,
                  **kwds):
         """Constructor.
 
@@ -127,6 +137,9 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
           dateutil_kwds: An optional dict defining the dateutil parser kwargs.
           narration_sep: A string, a separator to use for splitting up the payee and
             narration fields of a source field.
+          encoding: An optional encoding for the file. Typically useful for files
+            encoded in 'latin1' instead of 'utf-8' (the default).
+          invert_sign: If true, invert the amount's sign unconditionally.
           **kwds: Extra keyword arguments to provide to the base mixins.
         """
         assert isinstance(config, dict), "Invalid type: {}".format(config)
@@ -140,6 +153,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         self.dateutil_kwds = dateutil_kwds
         self.csv_dialect = csv_dialect
         self.narration_sep = narration_sep
+        self.encoding = encoding
+        self.invert_sign = invert_sign
 
         self.categorizer = categorizer
 
@@ -163,7 +178,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
     def file_date(self, file):
         "Get the maximum date from the file."
-        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
+        iconfig, has_header = normalize_config(
+            self.config, file.head(), self.csv_dialect, self.skip_lines)
         if Col.DATE in iconfig:
             reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
@@ -187,9 +203,11 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         entries = []
 
         # Normalize the configuration to fetch by index.
-        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
+        iconfig, has_header = normalize_config(
+            self.config, file.head(), self.csv_dialect, self.skip_lines)
 
-        reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+        reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                 dialect=self.csv_dialect))
 
         # Skip garbage lines
         for _ in range(self.skip_lines):
@@ -234,10 +252,14 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    for field in (Col.NARRATION1,
                                                  Col.NARRATION2,
                                                  Col.NARRATION3)])
-            narration = self.narration_sep.join(field.strip() for field in fields)
+            narration = self.narration_sep.join(
+                field.strip() for field in fields).replace('\n', '; ')
 
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else data.EMPTY_SET
+
+            link = get(row, Col.REFERENCE_ID)
+            links = {link} if link is not None else data.EMPTY_SET
 
             last4 = get(row, Col.LAST4)
 
@@ -257,7 +279,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                 meta['card'] = last4_friendly if last4_friendly else last4
             date = parse_date_liberally(date, self.dateutil_kwds)
             txn = data.Transaction(meta, date, self.FLAG, payee, narration,
-                                   tags, data.EMPTY_SET, [])
+                                   tags, links, [])
 
             # Attach one posting to the transaction
             amount_debit, amount_credit = get_amounts(iconfig, row)
@@ -269,6 +291,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             for amount in [amount_debit, amount_credit]:
                 if amount is None:
                     continue
+                if self.invert_sign:
+                    amount = -amount
                 units = Amount(amount, self.currency)
                 txn.postings.append(
                     data.Posting(account, units, None, None, None, None))
@@ -296,7 +320,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             entry = entries[-1]
             date = entry.date + datetime.timedelta(days=1)
             balance = entry.meta.get('balance', None)
-            if balance:
+            if balance is not None:
                 meta = data.new_metadata(file.name, index)
                 entries.append(
                     data.Balance(meta, date,
@@ -310,13 +334,14 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         return entries
 
 
-def normalize_config(config, head, dialect='excel'):
+def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
     Args:
       config: A dict of Col types to string or indexes.
       head: A string, some decent number of bytes of the head of the file.
       dialect: A dialect definition to parse the header
+      skip_lines: Skip first x (garbage) lines of file.
     Returns:
       A pair of
         A dict of Col types to integer indexes of the fields, and
@@ -325,6 +350,12 @@ def normalize_config(config, head, dialect='excel'):
       ValueError: If there is no header and the configuration does not consist
         entirely of integer indexes.
     """
+    # Skip garbage lines before sniffing the header
+    assert isinstance(skip_lines, int)
+    assert skip_lines >= 0
+    for _ in range(skip_lines):
+        head = head[head.find('\n')+1:]
+
     has_header = csv.Sniffer().has_header(head)
     if has_header:
         header = next(csv.reader(io.StringIO(head), dialect=dialect))

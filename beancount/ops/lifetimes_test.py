@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount import loader
 from beancount.ops import lifetimes
@@ -215,3 +216,7 @@ class TestLifetimeDateIterators(test_utils.TestCase):
                           (datetime.date(2014, 6, 20), 'AAPL', 'USD'),
                           (datetime.date(2014, 6, 27), 'AAPL', 'USD')],
                          required_prices)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -4,6 +4,138 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2020-05-17
+
+ - Applied patch by Martin Michlmayr with fixes for many typos.
+
+
+2020-05-02
+
+ - Minor performance improvment by avoiding calling __iadd__ in a few places.
+ - Fixed bug due to the removal of __version__ in apiclient:
+   https://github.com/googleapis/google-api-python-client/commit/1d8ec6874e1c6081893de7cd7cbc86d1f6580320
+ - Changes all imports from 'apiclient' to 'googleapiclient', which is now the
+   recommended way.
+ - Fixed some warnings.
+ - Disabled expensive assertions in Inventory class and implemented a special
+   case for adding to an empty inventory to avoid expensive aggregation. This
+   can occur in aggregation loops and is unnecessarily expensive when adding a
+   single, very large inventory.
+ - Made balance check aggregation avoid an initial empty inventory object, and
+   changed the balance check code to call the realization utility function
+   compute_balance().
+ - Fixed bean-bake to honor all the bean-web options.
+
+
+2020-04-11
+
+ - Fixed #425: Tentative bug fix for crash on decref over null traceback. The
+   Python API for this function may return some null values. Not taking any
+   chances. This should fix this particular bug.
+
+
+2020-03-28
+
+  - Allow the "divert_expenses" plugin to override diversions on postings that
+    aren't for expenses accounts. I needed this to account to a deposit to my
+    kid's daycare, which is an asset account in his diverted ledger.
+
+
+2020-03-22
+
+  - Added docstrings on some import code (while installing a new importer; my
+    stuff is sometimes poorly documented I'm afraid).
+
+
+2020-02-23
+
+  - Added new features to the CSV importer:
+    * A new 'invert_sign' option to invert the sign of the amount.
+    * A new field, 'CATEGORY', which goes unrendered.
+    * Replace newlines from all narrations by semi-colons.
+    These were driven by recent changes to the Amex CSV format.
+
+
+2019-12-29
+
+ - Added a CSV field for a unique reference number. If present, this is set as a
+   link on the transaction.
+
+
+2019-12-25
+
+ - Applied patch from Daniele Nicolodi
+   (https://bitbucket.org/blais/beancount/pull-requests/139/parser-work-around-python38-bug-causing-a)
+   to work around typing constraints around signed size types introduced in
+   Python 3.8. See also https://bugs.python.org/issue38913.
+
+ - Fixed bug with running python3 as a subprocess during testing. Fixes an error
+   that occurs with the tutorial file generation.
+
+
+2019-11-29
+
+ - Added 'encoding' option to CSV importer. Amex encodes as 'latin1', not
+   'utf-8' and this turned out to be necessary.
+
+
+2019-11-10
+
+ - Added an option to upload-to-sheets script to apply a minimum to the number
+   of rows resized to. The problem was I had another sheet longer than the
+   auto-updated data sheet, and when new rows were being inserted, rows in the
+   referencing sheet were being incremented automatically to refer to the now
+   displaced previous rows in the updated data sheet (even if they used to refer
+   to rows after the last row in the data sheet). Avoid resizing in the number
+   of rows up or down sheet should avoid most of these problems (except when at
+   the boundary, but then the minimum number of rows could just be increased).
+   This is quick fix that should work in the medium term.
+
+
+
+2019-10-20
+
+ - More changes to unittest while porting to Bazel build (for C++ support).
+
+
+2019-10-11
+
+ - Added __main__ block to all tests because ongoing port to Bazel build
+   requires it.
+
+
+2019-10-10
+
+ - Moved test data for b.utils.file_type for Bazel support. It otherwise assumes
+   file_type.py is a package.
+
+
+2019-08-21
+
+ - Fixed bug in split_expenses plugin.
+
+
+2019-06-01
+
+  - Upgraded Bison to 3.4 (built from source). Silenced warnings.
+
+
+2019-05-01
+
+ - Fixed #389: Patch for b.p.forecast improvements.
+
+ - Added rolled back change to default value of flag used when using the 'txn'
+   syntax. See issue #295 for a discussion.
+
+
+2019-03-16
+
+  - Had a very quick shot at implementing trade tracking, added the list of
+    matches positions from the booking methods. This doesn't work yet, I need to
+    make changes to b.c.Inventory in order to make this work. Partial
+    changelist.
+
+
 2019-03-03
 
   - Fixed #378: Rendering metadata with null values wasn't properly implemented.
@@ -1032,7 +1164,7 @@ Note: This file contains a list changes in the 'default' branch.
 
   - Some cleanup of internal tools.
 
-  - Added some basic unit tetsts for beancount.tools.sheets_upload.
+  - Added some basic unit tests for beancount.tools.sheets_upload.
 
   - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
     and replaced it with an associated stub for it.
@@ -1673,7 +1805,7 @@ Note: This file contains a list changes in the 'default' branch.
       GROUP BY 1
       ORDER BY 1
 
-    Note that the resulting balanaces almost certainly don't sum up to zero,
+    Note that the resulting balances almost certainly don't sum up to zero,
     because of differing dates of the Balance directives. Also, note that
     accounts without a single Balance directive will not have their postings
     marked at all.
@@ -3290,7 +3422,7 @@ Note: This file contains a list changes in the 'default' branch.
 
     I also moved the tests. All the code specifically related to numbers is
     now in beancount.core.number. I also removed the relative imports, as
-    Ledgerhub is importing from the Beancount source code now.
+    LedgerHub is importing from the Beancount source code now.
 
     This is not a user-visible change. However, if you wrote scripts against
     the codebase, you will need to rename your imports. In the meantime I added

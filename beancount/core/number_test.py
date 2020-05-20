@@ -61,3 +61,7 @@ class TestToDecimal(unittest.TestCase):
 
         self.assertFalse(number.same_sign(D('-135.12345'), ZERO))
         self.assertFalse(number.same_sign(ZERO, D('-135.12345')))
+
+
+if __name__ == '__main__':
+    unittest.main()

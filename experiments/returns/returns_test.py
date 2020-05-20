@@ -891,3 +891,7 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         returns_, dates = returns.compute_timeline_and_returns(
             new_entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)
+
+
+if __name__ == '__main__':
+    unittest.main()

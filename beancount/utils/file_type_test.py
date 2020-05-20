@@ -1,6 +1,7 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import os
 from os import path
 import unittest
 
@@ -9,13 +10,13 @@ from beancount.utils import file_type
 
 class TestFileType(unittest.TestCase):
 
-    DATA_DIR = path.join(path.dirname(__file__), 'file_type')
+    DATA_DIR = path.join(path.dirname(__file__), 'file_type_testdata')
 
     def check_mime_type(self, example_file, expected_mime_types):
         if not isinstance(expected_mime_types, list):
             expected_mime_types = [expected_mime_types]
         mime_type = file_type.guess_file_type(
-            path.join(self.DATA_DIR, example_file))
+            os.path.realpath(path.join(self.DATA_DIR, example_file)))
         self.assertIn(mime_type, expected_mime_types)
 
     def test_csv(self):
@@ -83,3 +84,7 @@ class TestFileType(unittest.TestCase):
     @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     def test_bz2(self):
         self.check_mime_type('example.bz2', 'application/x-bzip2')
+
+
+if __name__ == '__main__':
+    unittest.main()

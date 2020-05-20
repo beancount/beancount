@@ -328,3 +328,7 @@ class TestFilters(unittest.TestCase):
         jobs = find_prices.get_price_jobs_at_date(entries, None, False, 'yahoo')
         self.assertEqual(1, len(jobs[0].sources))
         self.assertIsInstance(jobs[0].sources[0], find_prices.PriceSource)
+
+
+if __name__ == '__main__':
+    unittest.main()

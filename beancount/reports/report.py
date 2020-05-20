@@ -133,7 +133,7 @@ class ListFormatsAction(argparse.Action):
 
         # Build a description of the rows, a field specification.
         header = ['Name'] + all_formats
-        field_spec = [(index, name) for index, name in enumerate(header)]
+        field_spec = list(enumerate(header))
 
         # Create and render an ASCII table.
         table_ = table.create_table(rows, field_spec)
@@ -255,6 +255,9 @@ def main():
                 sys.exit(1)
     else:
         print(get_list_report_string())
+
+    if errors:
+        sys.exit(1)
 
     return 0
 

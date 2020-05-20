@@ -1,7 +1,7 @@
 """A container for an inventory of positions.
 
 This module provides a container class that can hold positions. An inventory is
-a mapping ofpositions, where each position is keyed by
+a mapping of positions, where each position is keyed by
 
   (currency: str, cost: Cost) -> position: Position
 
@@ -39,6 +39,10 @@ from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 from beancount.core import convert
 from beancount.core.display_context import DEFAULT_FORMATTER
+
+
+# Enable this in tests to assert types being passed to Inventory.
+ASSERTS_TYPES = False
 
 
 class Booking(enum.Enum):
@@ -250,7 +254,9 @@ class Inventory(dict):
         If the inventory is empty, return None.
         """
         if len(self) > 0:
-            assert len(self) <= 1
+            if len(self) > 1:
+                raise AssertionError("Inventory has more than one expected "
+                                     "position: {}".format(self))
             return next(iter(self))
 
     def get_currency_units(self, currency):
@@ -293,7 +299,7 @@ class Inventory(dict):
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 
-        See functions in beancount.core.conversions.
+        See functions in beancount.core.convert.
 
         Returns:
           An instance of Inventory.
@@ -364,10 +370,11 @@ class Inventory(dict):
           Position may be None if there is no corresponding Position object,
           e.g. the position was deleted.
         """
-        assert isinstance(units, Amount), (
-            "Internal error: {!r} (type: {})".format(units, type(units).__name__))
-        assert cost is None or isinstance(cost, Cost), (
-            "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
+        if ASSERTS_TYPES:
+            assert isinstance(units, Amount), (
+                "Internal error: {!r} (type: {})".format(units, type(units).__name__))
+            assert cost is None or isinstance(cost, Cost), (
+                "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
 
         # Find the position.
         key = (units.currency, cost)
@@ -410,10 +417,11 @@ class Inventory(dict):
           that was modified, and where 'booking' is a Booking enum that hints at
           how the lot was booked to this inventory.
         """
-        assert hasattr(position, 'units') and hasattr(position, 'cost'), (
-            "Invalid type for position: {}".format(position))
-        assert isinstance(position.cost, (type(None), Cost)), (
-            "Invalid type for cost: {}".format(position.cost))
+        if ASSERTS_TYPES:
+            assert hasattr(position, 'units') and hasattr(position, 'cost'), (
+                "Invalid type for position: {}".format(position))
+            assert isinstance(position.cost, (type(None), Cost)), (
+                "Invalid type for cost: {}".format(position.cost))
         return self.add_amount(position.units, position.cost)
 
     def add_inventory(self, other):
@@ -424,8 +432,15 @@ class Inventory(dict):
         Returns:
           This inventory, modified.
         """
-        for position in other.get_positions():
-            self.add_position(position)
+        if self.is_empty():
+            # Optimization for empty inventories; if the current one is empty,
+            # adopt all of the other inventory's positions without running
+            # through the full aggregation checks. This should be very cheap. We
+            # can do this because the positions are immutable.
+            self.update(other)
+        else:
+            for position in other.get_positions():
+                self.add_position(position)
         return self
 
     def __add__(self, other):
@@ -437,7 +452,7 @@ class Inventory(dict):
           A new instance of Inventory.
         """
         new_inventory = self.__copy__()
-        new_inventory += other
+        new_inventory.add_inventory(other)
         return new_inventory
 
     __iadd__ = add_inventory
@@ -462,7 +477,6 @@ class Inventory(dict):
         return new_inventory
 
 
-# pylint: disable=invalid-name
 from_string = Inventory.from_string
 
 

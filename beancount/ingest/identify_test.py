@@ -131,3 +131,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
         self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')
+
+
+if __name__ == '__main__':
+    unittest.main()

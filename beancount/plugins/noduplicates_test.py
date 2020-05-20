@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.plugins import noduplicates
@@ -111,3 +113,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         # Note! This is different. We allow exact duplicates of price directive
         # on purpose. They may be common, and they won't hurt anything.
         self.assertEqual([], list(map(type, valid_errors)))
+
+
+if __name__ == '__main__':
+    unittest.main()

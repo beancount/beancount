@@ -37,3 +37,7 @@ class TestHTMLFormatter(unittest.TestCase):
         self.assertRegex(html_balance, r'\b3\b')
         self.assertRegex(html_balance, r'\bHOOL\b')
         self.assertRegex(html_balance, r'\b400\b')
+
+
+if __name__ == '__main__':
+    unittest.main()

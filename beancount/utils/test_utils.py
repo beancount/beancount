@@ -1,4 +1,4 @@
-"""Support utillities for testing scripts.
+"""Support utilities for testing scripts.
 """
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -43,6 +43,12 @@ def find_repository_root(filename=None):
     """
     if filename is None:
         filename = __file__
+
+    # Support root directory under Bazel.
+    match = re.match(r"(.*\.runfiles/beancount)/", filename)
+    if match:
+        return match.group(1)
+
     while not all(path.exists(path.join(filename, sigfile))
                   for sigfile in ('PKG-INFO', 'COPYING', 'README')):
         prev_filename = filename
@@ -187,9 +193,9 @@ def patch(obj, attributes, replacement_type):
     Args:
       obj: The object to patch up.
       attributes: A string or a sequence of strings, the names of attributes to replace.
-      replacement_type: A callable to build replacment objects.
+      replacement_type: A callable to build replacement objects.
     Yields:
-      An instance of a list of sequencs of 'replacement_type'.
+      An instance of a list of sequences of 'replacement_type'.
     """
     single = isinstance(attributes, str)
     if single:
@@ -236,7 +242,7 @@ def docfile(function, **kwargs):
 def docfile_extra(**kwargs):
     """
     A decorator identical to @docfile,
-    but it also takes kwargs for the temporaryfile,
+    but it also takes kwargs for the temporary file,
     Kwargs:
       e.g. buffering, encoding, newline, dir, prefix, and suffix.
     Returns:

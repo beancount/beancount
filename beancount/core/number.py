@@ -36,7 +36,7 @@ import re
 #   pip3 install m3-cdecimal
 #
 def is_fast_decimal(decimal_module):
-    "Return true if a fast C decimal implementattion is installed."
+    "Return true if a fast C decimal implementation is installed."
     return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
 
 # Attempt to import a fast C decimal implementation.
@@ -47,14 +47,13 @@ if not is_fast_decimal(decimal):
     except ImportError:
         pass
     else:
-        decimal = cdecimal # pylint: disable=invalid-name
+        decimal = cdecimal
 
 if not is_fast_decimal(decimal):
     warnings.warn("Fast C decimal implementation appears to be missing; "
                   "Consider installing cdecimal")
 
 
-# pylint: disable=invalid-name
 Decimal = decimal.Decimal
 
 # Constants.
@@ -74,15 +73,17 @@ _CLEAN_NUMBER_RE = re.compile('[, ]')
 
 # pylint: disable=invalid-name
 def D(strord=None):
-    """Convert a string, possibly with commas, into a Decimal object.
+    """Convert a string into a Decimal object.
 
-    This function just returns the argument if it is already a Decimal object,
-    for convenience. This is used in parsing amounts from files in the
-    importers. This is the main function you should use to build all numbers the
-    system manipulates (never use floating-point in an accounting system)..
+    This is used in parsing amounts from files in the importers. This is the
+    main function you should use to build all numbers the system manipulates
+    (never use floating-point in an accounting system). Commas are stripped and
+    ignored, as they are assumed to be thousands separators (the French comma
+    separator as decimal is not supported). This function just returns the
+    argument if it is already a Decimal object, for convenience.
 
     Args:
-      stdord: A string or Decimal instance.
+      strord: A string or Decimal instance.
     Returns:
       A Decimal instance.
     """

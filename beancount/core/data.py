@@ -20,7 +20,6 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
-# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str
@@ -218,7 +217,7 @@ Posting = NamedTuple('Posting', [
 #   tags: A set of tag strings (without the '#'), or EMPTY_SET.
 #   links: A set of link strings (without the '^'), or EMPTY_SET.
 #   postings: A list of Posting instances, the legs of this transaction. See the
-#     doc under Posting below.
+#     doc under Posting above.
 Transaction = new_directive('Transaction', [
     ('flag', Flag),
     ('payee', Optional[str]),
@@ -541,11 +540,11 @@ def transaction_has_conversion(transaction):
     Args:
       transaction: an instance of a Transaction entry.
     Returns:
-      A boolean, true if this transacation contains at least one posting with a
+      A boolean, true if this transaction contains at least one posting with a
       price conversion.
     """
     assert isinstance(transaction, Transaction), (
-        "Invalid type of entry for Transaction: {}".format(transaction))
+        "Invalid type of entry for transaction: {}".format(transaction))
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True

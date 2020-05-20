@@ -150,7 +150,7 @@ def skipiter(iterable, num_skip):
       iterable: An iterator.
       num_skip: The number of elements in the period.
     Yields:
-      Elemnets from the iterable, with num_skip elements skipped.
+      Elements from the iterable, with num_skip elements skipped.
       For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
     """
     assert num_skip > 0
@@ -171,7 +171,7 @@ def skipiter(iterable, num_skip):
 def get_tuple_values(ntuple, predicate, memo=None):
     """Return all members referred to by this namedtuple instance that satisfy the
     given predicate. This function also works recursively on its members which
-    are lists or typles, and so it can be used for Transaction instances.
+    are lists or tuples, and so it can be used for Transaction instances.
 
     Args:
       ntuple: A tuple or namedtuple.
@@ -373,9 +373,10 @@ def import_curses():
     """
     # Note: There's a recipe for getting terminal size on Windows here, without
     # curses, I should probably implement that at some point:
-    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
+    # pylint: disable=import-outside-toplevel
     import curses
     return curses
 

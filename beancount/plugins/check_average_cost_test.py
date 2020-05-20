@@ -55,3 +55,7 @@ class TestMatchAverageCost(unittest.TestCase):
         """]:
             entries, errors, _ = loader.load_string(textwrap.dedent(setup + string))
             self.assertEqual(1, len(errors))
+
+
+if __name__ == '__main__':
+    unittest.main()

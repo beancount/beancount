@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount.parser import cmptest
 from beancount.plugins import coherent_cost
@@ -35,3 +36,7 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, r'\bHOOL\b')
         self.assertEqual(datetime.date(2014, 2, 1), errors[0].entry.date)
+
+
+if __name__ == '__main__':
+    unittest.main()

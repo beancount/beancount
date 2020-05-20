@@ -64,3 +64,7 @@ class TestSheetsUtils(unittest.TestCase):
                          sheets_upload.sheet_range(100, 20, 'Balances'))
         self.assertEqual('A1:T100',
                          sheets_upload.sheet_range(100, 20))
+
+
+if __name__ == '__main__':
+    unittest.main()

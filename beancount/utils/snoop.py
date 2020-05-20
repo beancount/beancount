@@ -63,7 +63,7 @@ class Snoop:
 
 # A global instance of a Snoop, for convenience. In many cases you can just
 # import and use this.
-snooper = Snoop()  # pylint: disable=invalid-name
+snooper = Snoop()
 
 
 def snoopify(function):
@@ -113,5 +113,4 @@ class _Saver(threading.local):
         return value
 
 
-# pylint: disable=invalid-name
 save = _Saver()

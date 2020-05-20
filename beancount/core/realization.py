@@ -18,10 +18,11 @@ list of desired directives to display and call the realize() function with them.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import io
 import collections
-import operator
 import copy
+import functools
+import io
+import operator
 
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
@@ -469,18 +470,17 @@ def iterate_with_balance(txn_postings):
     date_entries.clear()
 
 
-def compute_balance(real_account):
+def compute_balance(real_account, leaf_only=False):
     """Compute the total balance of this account and all its subaccounts.
 
     Args:
       real_account: A RealAccount instance.
+      leaf_only: A boolean flag, true if we should yield only leaves.
     Returns:
       An Inventory.
     """
-    total_balance = inventory.Inventory()
-    for real_acc in iter_children(real_account):
-        total_balance += real_acc.balance
-    return total_balance
+    return functools.reduce(operator.add, [
+        ra.balance for ra in iter_children(real_account, leaf_only)])
 
 
 def find_last_active_posting(txn_postings):

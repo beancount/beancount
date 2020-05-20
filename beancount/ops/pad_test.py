@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount.core.amount import A
 from beancount.core import inventory
@@ -568,3 +569,7 @@ class TestPadding(cmptest.TestCase):
         # self.assertEqual(1, len(errors))
         # self.assertRegex(errors[0].message, "Balance failed")
         # self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+
+if __name__ == '__main__':
+    unittest.main()

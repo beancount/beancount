@@ -88,7 +88,7 @@ def align_position_strings(strings):
 class EntryPrinter:
     """A multi-method interface for printing all directive types.
 
-    Atributes:
+    Attributes:
       dcontext: An instance of DisplayContext with which to render all the numbers.
       render_weight: A boolean, true if we should render the weight of the postings
         as a comment, for debugging.

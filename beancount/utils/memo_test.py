@@ -46,3 +46,7 @@ class TestMemoization(unittest.TestCase):
 
             # Make sure to close before the test directory goes away.
             del mem_function
+
+
+if __name__ == '__main__':
+    unittest.main()

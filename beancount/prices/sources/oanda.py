@@ -3,7 +3,7 @@
 Valid tickers are in the form "XXX_YYY", such as "EUR_USD".
 
 Here is the API documentation:
-http://developer.oanda.com/rest-live/rates/
+https://developer.oanda.com/rest-live/rates/
 
 For example:
 https://api-fxtrade.oanda.com/v1/candles?instrument=EUR_USD&granularity=D&start=2016-03-27T00%3A00%3A00Z&end=2016-04-04T00%3A00%3A00Z&candleFormat=midpoint

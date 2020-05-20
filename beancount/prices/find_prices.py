@@ -61,7 +61,7 @@ def format_dated_price_str(dprice):
 def parse_source_map(source_map_spec):
     """Parse a source map specification string.
 
-    Source map specifications allow the speification of multiple sources for
+    Source map specifications allow the specification of multiple sources for
     multiple quote currencies and follow the following syntax:
 
        <currency1>:<source1>,<source2>,... <currency2>:<source1>,...
@@ -72,7 +72,7 @@ def parse_source_map(source_map_spec):
 
     The <module> is resolved against the Python path, but first looked up under
     the package where the default price extractors lie. The presence of a '^'
-    character indicates that twe should use the inverse of the rate pull from
+    character indicates that we should use the inverse of the rate pull from
     this source.
 
     For example, for prices of AAPL in USD:

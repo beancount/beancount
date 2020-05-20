@@ -150,7 +150,7 @@ def reset_cache():
 
 
 def fetch_price(dprice, swap_inverted=False):
-    """Fetch a price for the DatePrice job.
+    """Fetch a price for the DatedPrice job.
 
     Args:
       dprice: A DatedPrice instances.
@@ -315,7 +315,7 @@ def process_args():
                         format='%(levelname)-8s: %(message)s')
 
     if args.all:
-        args.inactive = args.undeclared = args.clobber = True
+        args.inactive = args.clobber = True
         args.undeclared = DEFAULT_SOURCE
 
     # Setup for processing.

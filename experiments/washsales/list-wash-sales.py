@@ -53,8 +53,13 @@ fieldspec = [
 ]
 
 
-def aggregate_sales(sublots):
-    """Agreggate a list of LotSale instances."""
+def aggregate_sales(lots):
+    return [aggregate_lot_sales(glots)
+            for _, glots in misc_utils.groupby(
+                    lambda lot: (lot.ref, lot.term), lots).items()]
+
+def aggregate_lot_sales(sublots):
+    """Aggregate a list of LotSale instances, matching the 1099's."""
     if len(sublots) == 1:
         agglot = sublots[0]
     else:
@@ -99,48 +104,19 @@ def aggregate_sales(sublots):
     return agglot._replace(adj=agglot.adj or '')
 
 
-def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('report', choices=['detail', 'aggregate', 'summary'],
-                        help='Type of report')
-    parser.add_argument('filename',
-                        help='Beancount input file')
-    parser.add_argument('account',
-                        help='Account name')
-
-    parser.add_argument('--start', type=date_utils.parse_date_liberally,
-                        help="Start date")
-    parser.add_argument('--end', type=date_utils.parse_date_liberally,
-                        help="End date; if not set, at the end of star'ts year")
-
-    parser.add_argument('-o', '--output', action='store',
-                        help="Output filename for the CSV file")
-
-    args = parser.parse_args()
-
-    calculate_commission = False
-
-    # Setup date interval.
-    if args.start is None:
-        args.start = datetime.date(datetime.date.today().year, 1, 1)
-    if args.end is None:
-        args.end = datetime.date(args.start.year + 1, 1, 1)
-
-    entries, errors, options_map = loader.load_file(args.filename)
-
+def expand_sales_legs(entries, account, start, end, calculate_commission):
     # Expand each of the sales legs.
     balances = collections.defaultdict(inventory.Inventory)
     sales = []
     for txn in data.filter_txns(entries):
         # If we got to the end of the period, bail out.
-        if txn.date >= args.end:
+        if txn.date >= end:
             break
 
         # Accumulate the balances before the start date.
-        if txn.date < args.start:
+        if txn.date < start:
             for posting in txn.postings:
-                if re.match(args.account, posting.account):
+                if re.match(account, posting.account):
                     balance = balances[posting.account]
                     balance.add_position(posting)
             continue
@@ -150,7 +126,7 @@ def main():
         # Find reducing postings (i.e., for each lot).
         txn_sales = []
         for posting in txn.postings:
-            if re.match(args.account, posting.account):
+            if re.match(account, posting.account):
                 balance = balances[posting.account]
                 reduced_position, booking = balance.add_position(posting)
                 # Set the cost on the posting from the reduced position.
@@ -189,8 +165,11 @@ def main():
                 sale.posting.meta['commission'] = fraction * commission
 
         sales.extend(txn_sales)
+    return sales
 
-    # Convert into a table of data, full detail of very single log.
+
+def create_detailed_table(sales, calculate_commission):
+    """Convert into a table of data, full detail of very single log."""
     Q = D('0.01')
     lots = []
     total_loss = collections.defaultdict(D)
@@ -220,11 +199,14 @@ def main():
                 commission = commission_meta
             else:
                 # Fetch the commission that was inserted by the commissions plugin.
-                commission = commission_meta[0].units.number
+                commission = commission_meta.get_only_position().units.number
         commission = commission.quantize(Q)
 
         pnl = (totprice - totcost - commission).quantize(Q)
         is_wash = sale.posting.meta.get('wash', False)
+
+        # Ensure the key in all the dicts.
+        (total_gain[units.currency], total_loss[units.currency], total_adj[units.currency])
         if totprice > totcost:
             total_gain[units.currency] += pnl
         else:
@@ -257,61 +239,103 @@ def main():
                       code,
                       adj)
         lots.append(lot)
-    tab_detail = table.create_table(lots, fieldspec)
+    Totals = collections.namedtuple('Totals', 'loss gain adj')
+    totals = Totals(total_loss, total_gain, total_adj)
+    return lots, table.create_table(lots, fieldspec), totals
 
-    # Aggregate by transaction in order to be able to cross-check against the
-    # 1099 forms.
-    agglots = [aggregate_sales(lots)
-               for _, lots in misc_utils.groupby(
-                       lambda lot: (lot.ref), lots).items()]
-    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
-                                 fieldspec)
 
-    # Write out a summary of P/L.
+def create_summary_table(totals):
     summary_fields = list(enumerate(['Currency', 'Gain', 'Loss', 'Net', 'Adj/Wash']))
     summary = []
     gain = ZERO
     loss = ZERO
     adj = ZERO
-    for currency in sorted(total_adj.keys()):
-        gain += total_gain[currency]
-        loss += total_loss[currency]
-        adj += total_adj[currency]
+    for currency in sorted(totals.adj.keys()):
+        gain += totals.gain[currency]
+        loss += totals.loss[currency]
+        adj += totals.adj[currency]
         summary.append((currency,
-                        total_gain[currency],
-                        total_loss[currency],
-                        total_gain[currency] + total_loss[currency],
-                        total_adj[currency]))
+                        totals.gain[currency],
+                        totals.loss[currency],
+                        totals.gain[currency] + totals.loss[currency],
+                        totals.adj[currency]))
     summary.append(('*', gain, loss, gain + loss, adj))
-    tab_summary = table.create_table(summary, summary_fields)
+    return table.create_table(summary, summary_fields)
 
+
+def main():
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument('report', choices=['detail', 'aggregate', 'summary'],
+                        help='Type of report')
+    parser.add_argument('filename',
+                        help='Beancount input file')
+    parser.add_argument('account',
+                        help='Account name')
+
+    parser.add_argument('--start', type=date_utils.parse_date_liberally,
+                        help="Start date")
+    parser.add_argument('--end', type=date_utils.parse_date_liberally,
+                        help="End date; if not set, at the end of star'ts year")
+
+    parser.add_argument('-o', '--output', action='store',
+                        help="Output directory of all the reports, in txt and csv formats")
+
+    args = parser.parse_args()
+
+    calculate_commission = False
+
+    # Setup date interval.
+    if args.start is None:
+        args.start = datetime.date(datetime.date.today().year, 1, 1)
+    if args.end is None:
+        args.end = datetime.date(args.start.year + 1, 1, 1)
+
+    entries, errors, options_map = loader.load_file(args.filename)
+
+    # Create the list of sales.
+    sales = expand_sales_legs(entries, args.account, args.start, args.end,
+                              calculate_commission)
+
+    # Produce a detailed table.
+    lots, tab_detail, totals = create_detailed_table(sales, calculate_commission)
+
+    # Aggregate by transaction in order to be able to cross-check against the
+    # 1099 forms.
+    agglots = aggregate_sales(lots)
+    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
+                                 fieldspec)
+
+    # Create a summary table of P/L.
+    tab_summary = create_summary_table(totals)
+
+    # Render all the reports to an output directory.
+    if args.output:
+        os.makedirs(args.output, exist_ok=True)
+        for name, tab in [('detail', tab_detail),
+                          ('aggregate', tab_agg),
+                          ('summary', tab_summary)]:
+            for fmt in 'txt', 'csv':
+                with open(path.join(args.output,
+                                    '{}.{}'.format(name, fmt)), 'w') as outfile:
+                    table.render_table(tab, outfile, fmt)
+
+    # Rendering individual reports to the console.
     if args.report == 'detail':
-        # Render to the console.
         print('Detail of all lots')
         print('=' * 48)
         table.render_table(tab_detail, sys.stdout, 'txt')
         print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_detail, file, 'csv')
-
     elif args.report == 'aggregate':
         print('Aggregated by trade & Reference Number (to Match 1099/Form8459)')
         print('=' * 48)
         table.render_table(tab_agg, sys.stdout, 'txt')
         print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_agg, file, 'csv')
-
     elif args.report == 'summary':
         print('Summary')
         print('=' * 48)
         table.render_table(tab_summary, sys.stdout, 'txt')
         print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_summary, file, 'csv')
 
 
 if __name__ == '__main__':
