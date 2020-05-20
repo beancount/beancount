@@ -289,3 +289,7 @@ class TestInverted(unittest.TestCase):
             find_prices.PriceSource(yahoo, 'USDJPY', True)]), True)
         self.assertEqual(('USD', 'JPY'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
+
+
+if __name__ == '__main__':
+    unittest.main()

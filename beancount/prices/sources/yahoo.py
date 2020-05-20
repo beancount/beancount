@@ -1,6 +1,6 @@
 """Fetch prices from Yahoo Finance's CSV API.
 
-As of lated 2017, the older Yahoo finance API deprecated. In particular, the
+As of late 2017, the older Yahoo finance API deprecated. In particular, the
 ichart endpoint is gone, and the download endpoint requires a cookie (which
 could be gotten - here's some documentation for that
 http://blog.bradlucas.com/posts/2017-06-02-new-yahoo-finance-quote-download-url/).
@@ -36,7 +36,7 @@ def parse_response(response: requests.models.Response) -> Dict:
     Raises:
       YahooError: If there is an error in the response.
     """
-    json = response.json()
+    json = response.json(parse_float=D)
     content = next(iter(json.values()))
     if response.status_code != requests.codes.ok:
         raise YahooError("Status {}: {}".format(response.status_code, content['error']))

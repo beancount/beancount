@@ -95,9 +95,8 @@ def compress_intervals_days(intervals, num_days):
             # Compress.
             last_end = date_end
             continue
-        else:
-            new_intervals.append((last_begin, last_end))
-            last_begin, last_end = date_begin, date_end
+        new_intervals.append((last_begin, last_end))
+        last_begin, last_end = date_begin, date_end
     new_intervals.append((last_begin, last_end))
     return new_intervals
 
@@ -119,7 +118,7 @@ ONE_WEEK = datetime.timedelta(days=7)
 
 
 def required_weekly_prices(lifetimes_map, date_last):
-    """Enumerate all the commodities and fridays where the price is required.
+    """Enumerate all the commodities and Fridays where the price is required.
 
     Given a map of lifetimes for a set of commodities, enumerate all the Fridays
     for each commodity where it is active. This can be used to connect to a

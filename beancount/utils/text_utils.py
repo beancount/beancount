@@ -48,7 +48,8 @@ def entitize_ampersand(filename):
       which you may read to obtain the fixed contents.
     """
     tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w', delete=False)
-    contents = open(filename).read()
+    with open(filename) as infile:
+        contents = infile.read()
     new_contents = re.sub('&([^;&]{12})', '&amp;\\1', contents)
     tidy_file.write(new_contents)
     tidy_file.flush()

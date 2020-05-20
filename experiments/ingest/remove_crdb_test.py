@@ -23,3 +23,7 @@ class TestScriptRemoveCRDB(test_utils.TestCase):
         Bla bla,1029.02
         Bla bla,-928.02
         """, stdout.getvalue())
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.parser import cmptest
 from beancount.plugins import fix_payees
 from beancount import loader
@@ -69,3 +71,7 @@ class TestFixPayees(cmptest.TestCase):
         ]""")
         self.assertFalse(errors)
         self.assertEqualEntries(entries, self.in_entries)
+
+
+if __name__ == '__main__':
+    unittest.main()

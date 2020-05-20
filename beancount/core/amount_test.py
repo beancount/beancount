@@ -169,3 +169,7 @@ class TestAmount(unittest.TestCase):
                          amount.abs(Amount(D('0'), 'CAD')))
         self.assertEqual(Amount(D('82.98'), 'CAD'),
                          amount.abs(Amount(D('-82.98'), 'CAD')))
+
+
+if __name__ == '__main__':
+    unittest.main()

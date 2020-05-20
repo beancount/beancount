@@ -3,12 +3,12 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import tempfile
+import unittest
 
 from beancount import loader
 from beancount.parser import cmptest
 
 
-# pylint: disable=invalid-name
 TmpFile = tempfile.NamedTemporaryFile
 
 
@@ -112,3 +112,7 @@ class TestMergeMeta(cmptest.TestCase):
             topfile.flush()
             entries, errors, options_map = loader.load_file(topfile.name)
             self.assertEqual(1, len(errors))
+
+
+if __name__ == '__main__':
+    unittest.main()

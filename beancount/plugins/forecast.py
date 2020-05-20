@@ -5,12 +5,12 @@ inserted transactions in the future based on a convention. It serves mostly as
 an example of how you can experiment by creating and installing a local filter,
 and not so much as a serious forecasting feature (though the experiment is a
 good way to get something more general kickstarted eventually, I think the
-concept would generalize nicely and should eventually be added as a comon
+concept would generalize nicely and should eventually be added as a common
 feature of Beancount).
 
-A user can create a create a transaction like this:
+A user can create a transaction like this:
 
-  2014-03-08 # "Electricity bill [MONTHLY]""
+  2014-03-08 # "Electricity bill [MONTHLY]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
@@ -22,17 +22,27 @@ The number of recurrences can optionally be specified either by providing an
 end date or by specifying the number of times that the transaction will be
 repeated. For example:
 
-  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]""
+  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
-  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]""
+  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
-Transactions can be also be repeated at yearly intervals, e.g.:
+Transactions can also be repeated at yearly intervals, e.g.:
 
-  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]""
+  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]"
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+Other examples:
+
+  2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]"
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+  2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 """
@@ -78,25 +88,33 @@ def forecast_plugin(entries, options_map):
     new_entries = []
     for entry in forecast_entries:
         # Parse the periodicity.
-        match = re.search(r'(^.*)\[(MONTHLY|YEARLY)'
-                          r'(\s+REPEAT\s+([1-9][0-9]*)\s+TIMES)'
+        match = re.search(r'(^.*)\[(MONTHLY|YEARLY|WEEKLY|DAILY)'
+                          r'(\s+SKIP\s+([1-9][0-9]*)\s+TIME.?)'
+                          r'?(\s+REPEAT\s+([1-9][0-9]*)\s+TIME.?)'
                           r'?(\s+UNTIL\s+([0-9\-]+))?\]', entry.narration)
         if not match:
             new_entries.append(entry)
             continue
         forecast_narration = match.group(1).strip()
-        forecast_interval = (rrule.YEARLY
-                             if match.group(2).strip() == 'YEARLY'
-                             else rrule.MONTHLY)
+        forecast_interval = (
+            rrule.YEARLY if match.group(2).strip() == 'YEARLY'
+            else rrule.WEEKLY if match.group(2).strip() == 'WEEKLY'
+            else rrule.DAILY if match.group(2).strip() == 'DAILY'
+            else rrule.MONTHLY)
         forecast_periodicity = {'dtstart': entry.date}
-        if match.group(4):  # e.g., [MONTHLY REPEAT 3 TIMES]:
-            forecast_periodicity['count'] = int(match.group(4))
-        elif match.group(6):  # e.g., [MONTHLY UNTIL 2020-01-01]:
-            forecast_periodicity['until'] = datetime.datetime.strptime(match.group(6),
-                                                                       '%Y-%m-%d').date()
-        else:  # e.g., [MONTHLY]
-            forecast_periodicity['until'] = datetime.date(datetime.date.today().year,
-                                                          12, 31)
+        if match.group(6):  # e.g., [MONTHLY REPEAT 3 TIMES]:
+            forecast_periodicity['count'] = int(match.group(6))
+        elif match.group(8):  # e.g., [MONTHLY UNTIL 2020-01-01]:
+            forecast_periodicity['until'] = datetime.datetime.strptime(
+                match.group(8), '%Y-%m-%d').date()
+        else:
+            # e.g., [MONTHLY]
+            forecast_periodicity['until'] = datetime.date(
+                datetime.date.today().year, 12, 31)
+
+        if match.group(4):
+            # SKIP
+            forecast_periodicity['interval'] = int(match.group(4)) + 1
 
         # Generate a new entry for each forecast date.
         forecast_dates = [dt.date() for dt in rrule.rrule(forecast_interval,

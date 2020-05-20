@@ -522,3 +522,7 @@ class TestHoldings(unittest.TestCase):
 
         expected_price = A('60.00 USD')
         self.assertEqual(expected_price, posting.price)
+
+
+if __name__ == '__main__':
+    unittest.main()

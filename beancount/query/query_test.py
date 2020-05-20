@@ -28,3 +28,7 @@ class TestNumerifySimple(unittest.TestCase):
         self.assertEqual(['account', 'amount (USD)', 'amount (MXN)'],
                          [rt[0] for rt in rtypes])
         self.assertEqual(13, len(rrows))
+
+
+if __name__ == '__main__':
+    unittest.main()

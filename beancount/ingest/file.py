@@ -30,7 +30,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
       filename: A string, the name of the downloaded file to be processed.
       importers: A list of importer instances that handle this file.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       idify: A flag, if true, remove whitespace and funky characters in the destination
         filename.
@@ -166,7 +166,7 @@ def file(importer_config,
       files_or_directories: a list of files of directories to walk recursively and
         hunt for files to import.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       dry_run: A flag, if true, don't actually move the files.
       mkdirs: A flag, if true, make all the intervening directories; otherwise,
@@ -259,7 +259,7 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
 
 
 DESCRIPTION = ("Move and rename downloaded files to a documents tree "
-               "mirrorring the chart of accounts")
+               "mirroring the chart of accounts")
 
 
 def add_arguments(parser):

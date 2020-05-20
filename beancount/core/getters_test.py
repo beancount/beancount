@@ -228,3 +228,7 @@ class TestGetters(unittest.TestCase):
                           'PIPA': ('Pied Piper', None),
                           'USD': (None, None)},
                          values)
+
+
+if __name__ == '__main__':
+    unittest.main()

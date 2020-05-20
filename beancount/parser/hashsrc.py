@@ -54,7 +54,9 @@ def check_parser_source_files():
     parser_source_hash = hash_parser_source_files()
     if parser_source_hash is None:
         return
+    # pylint: disable=import-outside-toplevel
     from . import _parser
-    if _parser.SOURCE_HASH != parser_source_hash:
-        warnings.warn("The Beancount parser C extension module is out-of-date. "
-                      "You need to rebuild.")
+    if _parser.SOURCE_HASH and _parser.SOURCE_HASH != parser_source_hash:
+        warnings.warn(
+            ("The Beancount parser C extension module is out-of-date ('{}' != '{}'). "
+             "You need to rebuild.").format(_parser.SOURCE_HASH, parser_source_hash))

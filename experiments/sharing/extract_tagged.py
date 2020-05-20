@@ -8,6 +8,7 @@ rewrites them to convert its inflows to a single account.
 import argparse
 import logging
 import re
+import sys
 from typing import Dict
 
 from beancount import loader
@@ -16,14 +17,14 @@ from beancount.core.account import ACCOUNT_RE
 from beancount.parser import printer
 
 
-def adjust_entry(entry: data.Transaction, account: str, tag: str,
+def adjust_entry(entry: data.Transaction, match_account: str, account: str, tag: str,
                  translate_map: Dict[str, str]):
     new_postings = []
     for posting in entry.postings:
         new_account = posting.account
 
         # Use the diverted account.
-        if re.match('Expenses:', posting.account):
+        if re.match(match_account, posting.account):
             new_account = posting.meta.get('diverted_account', account)
         else:
             new_account = account
@@ -70,9 +71,11 @@ def main():
     entries, _, options_map = loader.load_file(args.filename)
     imported_entries = []
     tag = args.tag.lstrip('#')
+    match_account = 'Expenses:Kai'  # FIXME: Make this an option.
     for entry in data.filter_txns(entries):
         if tag in entry.tags:
-            entry = adjust_entry(entry, args.inflows_account, args.tag, translate_map)
+            entry = adjust_entry(entry, match_account, args.inflows_account, args.tag,
+                                 translate_map)
             imported_entries.append(entry)
 
     printer.print_entries(imported_entries)

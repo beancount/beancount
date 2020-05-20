@@ -4,6 +4,7 @@ __license__ = "GNU GPLv2"
 from os import path
 import argparse
 import os
+import unittest
 
 from beancount.utils import test_utils
 from beancount.ingest import scripts_utils
@@ -100,3 +101,7 @@ class TestImplicitInvocationMethods(scripts_utils.TestScriptsBase):
         # Make sure the duplicates function was called.
         self.assertRegex(stdout.getvalue(),
                          r'{60248d66-f3f2-41c2-96af-039341eafd25}')
+
+
+if __name__ == '__main__':
+    unittest.main()

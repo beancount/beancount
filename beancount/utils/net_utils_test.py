@@ -32,3 +32,7 @@ class TestRetryingUrlopen(unittest.TestCase):
         with mock.patch('urllib.request.urlopen',
                         side_effect=[None, None, None, None, None, None]):
             self.assertIsNone(net_utils.retrying_urlopen('http://nowhere.com'))
+
+
+if __name__ == '__main__':
+    unittest.main()

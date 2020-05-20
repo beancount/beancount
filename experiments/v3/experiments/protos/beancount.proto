@@ -1,0 +1,148 @@
+// -*- mode: protobuf -*-
+// A schema for Beancount a parsed and booked stream of directives.
+
+syntax = "proto3";
+
+/// import "google/protobuf/any.proto";
+
+package beancount;
+
+message KV {
+  string key = 1;
+  string value = 2; // FIXME: Must support other datatypes.
+}
+
+message Meta {
+  repeated KV kv = 1;
+}
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+message Decimal {
+  string strvalue = 1;
+}
+
+message Amount {
+  Decimal number = 1;
+  string currency = 2;
+}
+
+message Cost {
+  Decimal number = 1;
+  string currency = 2;
+  Date date = 3;
+  string label = 4;
+}
+
+message Posting {
+  Meta meta = 1;
+  bytes flag = 2;
+  string account = 3;
+  Amount units = 4;
+  Cost cost = 5;
+  Amount price = 6;
+}
+
+message Transaction {
+  bytes flag = 3;
+  string payee = 4;
+  string narration = 5;
+  repeated string tags = 6;
+  repeated string links = 7;
+  repeated Posting postings = 8;
+}
+
+message TxnPosting {
+  Transaction txn = 1;
+  Posting posting = 2;
+}
+
+enum Booking {
+  UNKNOWN = 0; // TODO(blais): Not sure I will need this.
+  STRICT = 1;
+  NONE = 2;
+  AVERAGE = 3;
+  FIFO = 4;
+  LIFO = 5;
+}
+
+message Open {
+  string account = 3;
+  repeated string currencies = 4;
+  Booking booking = 5;
+}
+
+message Close {
+  string account = 3;
+}
+
+message Commodity {
+  string currency = 3;
+}
+
+message Pad {
+  string account = 3;
+  string source_account = 4;
+}
+
+message Balance {
+  string account = 3;
+  Amount amount = 4;
+  Decimal tolerance = 5;
+  Amount diff_amount = 6;
+}
+
+message Note {
+  string account = 3;
+  string comment = 4;
+}
+
+message Event {
+  string type = 3;
+  string description = 4;
+}
+
+message Query {
+  string name = 3;
+  string query_string = 4;
+}
+
+message Price {
+  string currency = 3;
+  Amount amount = 4;
+}
+
+message Document {
+  string account = 3;
+  string filename = 4;
+  repeated string tags = 5;
+  repeated string links = 6;
+}
+
+message Custom {
+  string type = 3;
+  // TODO(blais): How to link against well_known_protos?
+  // repeated google.protobuf.Any values = 4;
+}
+
+message Directive {
+  Meta meta = 1;
+  Date date = 2;
+
+  Transaction txn = 3;
+  Open open = 4;
+  Close close = 5;
+  Commodity commodity = 6;
+  Pad pad = 7;
+  Balance balance = 8;
+  Note note = 9;
+  Event event = 10;
+  Query query = 11;
+  Price price = 12;
+  Document document = 13;
+  Custom custom = 14;
+}

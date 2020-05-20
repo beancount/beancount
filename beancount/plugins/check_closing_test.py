@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.parser import cmptest
 from beancount.plugins import auto_accounts
 from beancount import loader
@@ -47,3 +49,7 @@ class TestCheckClosing(cmptest.TestCase):
           2018-02-17 balance Assets:US:Brokerage:Main:Options  0 QQQ180216C160
 
         """, new_entries)
+
+
+if __name__ == '__main__':
+    unittest.main()

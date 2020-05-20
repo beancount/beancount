@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import re
+import unittest
 
 from beancount.core import data
 from beancount.parser import cmptest
@@ -407,3 +408,7 @@ class TestValidateTolerances(cmptest.TestCase):
     #       Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
     #     """
     #     self.assertFalse(errors)
+
+
+if __name__ == '__main__':
+    unittest.main()

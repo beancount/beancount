@@ -29,3 +29,7 @@ class TestPager(unittest.TestCase):
                 for _ in range(21):
                     file.write('TEST\n')
         self.assertRegex(stdout.getvalue(), 'TEST\nTEST\n')
+
+
+if __name__ == '__main__':
+    unittest.main()

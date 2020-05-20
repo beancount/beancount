@@ -44,7 +44,7 @@ ExportEntry = collections.namedtuple(
 
 
 def is_mutual_fund(ticker):
-    """Return true if the GFinanc ticker is for a mutual fund.
+    """Return true if the GFinance ticker is for a mutual fund.
 
     Args:
       ticker: A string, the symbol for GFinance.
@@ -124,7 +124,7 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
     Args:
       entries: A list of directives.
       options_map: A dict of options as provided by the parser.
-      promiscuous: A boolean, true if we should output a promiscuious memo.
+      promiscuous: A boolean, true if we should output a promiscuous memo.
       aggregate_by_commodity: A boolean, true if we should group the holdings by account.
     Returns:
       A pair of

@@ -11,6 +11,7 @@ import subprocess
 import tarfile
 import re
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 
@@ -166,3 +167,7 @@ class TestSetup(test_utils.TestCase):
 
         # Check that all the expected files are present.
         self.assertLessEqual(exp_filenames, tar_filenames)
+
+
+if __name__ == '__main__':
+    unittest.main()

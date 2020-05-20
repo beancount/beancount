@@ -59,7 +59,7 @@ def create_table(rows, field_spec=None):
             if isinstance(field, tuple):
                 assert len(field) <= 3, field
                 if len(field) == 1:
-                    field, = field
+                    field = field[0]
                     new_field_spec.append((field, None, None))
                 elif len(field) == 2:
                     field, header = field

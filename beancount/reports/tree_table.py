@@ -128,8 +128,8 @@ def table_of_balances(real_root, price_map, price_date,
       operating_currencies: A list of strings, the operating currencies to render
         to their own dedicated columns.
       formatter: A object used to render account names and other links.
-      classes: A list of strings, the CSS classes to attach to the renderd
-        top-level table objet.
+      classes: A list of strings, the CSS classes to attach to the rendered
+        top-level table object.
     Returns:
       A string with HTML contents, the rendered table.
     """
@@ -167,7 +167,7 @@ def table_of_balances(real_root, price_map, price_date,
             line_balance = real_account.balance.reduce(convert.get_value, price_map)
 
             # Update the total balance for the totals line.
-            balance_totals += line_balance
+            balance_totals.add_inventory(line_balance)
 
         # Extract all the positions that the user has identified as operating
         # currencies to their own subinventories.

@@ -166,7 +166,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
-\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
@@ -192,6 +191,17 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
         yy_skip_line();
         return SKIPPED;
     }
+}
+
+\:		{
+  if (yy_line_tokens != 1) {
+    return COLON;
+  }
+  else {
+    /* Allow org-mode drawers. */
+    yy_skip_line();
+    return SKIPPED;
+  }
 }
 
  /* Skip commented output (but not the accompanying newline). */
@@ -362,7 +372,7 @@ NULL		{
 
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
-    BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    BUILD_LEX("KEY", "s#", yytext, (Py_ssize_t)(yyleng-1));
     unput(':');
     return KEY;
 }
@@ -467,7 +477,7 @@ void yylex_finalize(void)
 }
 
 
-/* Reallocate the buffer to accomodate some new characters. */
+/* Reallocate the buffer to accommodate some new characters. */
 void strbuf_realloc(size_t num_new_chars)
 {
     assert(strbuf_ptr != NULL);
@@ -523,7 +533,7 @@ void build_lexer_error(const char* string, size_t length)
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, length);
+                                       "s#", string, (Py_ssize_t)length);
     if (rv == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");

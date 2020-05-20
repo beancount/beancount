@@ -22,7 +22,7 @@ def render_file_context(entries, options_map, filename, lineno):
       entries: A list of directives.
       options_map: A dict of options, as produced by the parser.
       filename: A string, the name of the file from which the transaction was parsed.
-      lineno: An integer, the line number in the file the transacation was parsed from.
+      lineno: An integer, the line number in the file the transaction was parsed from.
     Returns:
       A multiline string of text, which consists of the context before the
       transaction is applied, the transaction itself, and the context after it

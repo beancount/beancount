@@ -19,15 +19,16 @@ IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
-    The hash_obj is updated. This iterates over all the members of objtuple,
-    skipping the attributes from 'ignore', and if the elements are
-    lists or sets, sorts them for stability.
+    This iterates over all the members of objtuple, skipping the attributes from
+    the 'ignore' set, and computes a unique hash string code. If the elements
+    are lists or sets, sorts them for stability.
 
     Args:
       objtuple: A tuple object or other.
       ignore: A set of strings, attribute names to be skipped in
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
+
     """
     # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
@@ -109,7 +110,7 @@ def compare_entries(entries1, entries2):
       entries2: Another list of directives of any type.
     Returns:
       A tuple of (success, not_found1, not_found2), where the fields are:
-        success: A booelan, true if all the values are equal.
+        success: A boolean, true if all the values are equal.
         missing1: A list of directives from 'entries1' not found in
           'entries2'.
         missing2: A list of directives from 'entries2' not found in

@@ -30,7 +30,8 @@ CROOT = beancount/parser
 #LEX = flex -Ca
 LEX = flex
 
-YACC = bison --report=itemset --verbose
+# Note: -Wno-deprecated silences warnings about old directives from upgrading to 3.4.
+YACC = bison -Wno-deprecated --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
 
@@ -240,10 +241,10 @@ LINT_SRCS =					\
 
 # Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
 #PYLINT = pylint
-PYLINT = python3 $(shell which pylint)
+PYLINT = python3 -m pylint
 
 pylint lint:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	ENABLE_AUTOIMPORTS= $(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 LINT_TESTS=useless-suppression,empty-docstring
 pylint-only:

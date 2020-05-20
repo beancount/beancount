@@ -233,7 +233,7 @@ class Position(_Position):
         return (order_units, cost_number, cost_currency, self.units.number)
 
     def __lt__(self, other):
-        """A least-than comparison operator for positions.
+        """A less-than comparison operator for positions.
 
         Args:
           other: Another instance of Position.
@@ -264,7 +264,7 @@ class Position(_Position):
         """Get a copy of this position but with a negative number.
 
         Returns:
-          An instance of Position which represents the inserse of this Position.
+          An instance of Position which represents the inverse of this Position.
         """
         # Note: We use Decimal() for efficiency.
         return Position(-self.units, self.cost)
@@ -389,6 +389,5 @@ class Position(_Position):
         return Position(units, cost)
 
 
-# pylint: disable=invalid-name
 from_string = Position.from_string
 from_amounts = Position.from_amounts

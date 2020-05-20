@@ -46,3 +46,7 @@ class TestOneCommodity(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, 'Expenses:Restaurant')
+
+
+if __name__ == '__main__':
+    unittest.main()

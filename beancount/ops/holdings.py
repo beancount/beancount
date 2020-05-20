@@ -154,7 +154,7 @@ def get_commodities_at_date(entries, options_map, date=None):
       Commodity directive from its 'quote' metadata field.
 
     This is used in a routine that fetches prices from a data source on the
-    internet (either from Ledgerhub, but you can reuse this in your own script
+    internet (either from LedgerHub, but you can reuse this in your own script
     if you build one).
 
     Args:

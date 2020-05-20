@@ -115,7 +115,7 @@ def get_value(pos, price_map, date=None):
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
     Returns:
-      An Amount, either with a succesful value currency conversion, or if we
+      An Amount, either with a successful value currency conversion, or if we
       could not convert the value, just the units, unmodified. This is designed
       so that you could reduce an inventory with this and not lose any
       information silently in case of failure to convert (possibly due to an
@@ -156,7 +156,7 @@ def convert_position(pos, target_currency, price_map, date=None):
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
     Returns:
-      An Amount, either with a succesful value currency conversion, or if we
+      An Amount, either with a successful value currency conversion, or if we
       could not convert the value, just the units, unmodified. (See get_value()
       above for details.)
     """
@@ -173,7 +173,7 @@ def convert_amount(amt, target_currency, price_map, date=None, via=None):
     """Return the market value of an Amount in a particular currency.
 
     In addition, if a conversion rate isn't available, you can provide a list of
-    currencies to attempt to synthesize a rate for via implieds rates.
+    currencies to attempt to synthesize a rate for via implied rates.
 
     Args:
       amt: An instance of Amount.
@@ -183,7 +183,7 @@ def convert_amount(amt, target_currency, price_map, date=None, via=None):
       via: A list of currencies to attempt to synthesize an implied rate if the
         direct conversion fails.
     Returns:
-      An Amount, either with a succesful value currency conversion, or if we
+      An Amount, either with a successful value currency conversion, or if we
       could not convert the value, the amount itself, unmodified.
 
     """

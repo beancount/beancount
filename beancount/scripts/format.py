@@ -140,7 +140,7 @@ def normalize_indent_whitespace(match_pairs):
       match_pairs: A list of (prefix, number, rest) tuples.
     Returns:
       Another list of (prefix, number, rest) tuples, where prefix may have been
-      adjusted with a different whitespace prefi.
+      adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
     match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
@@ -186,6 +186,7 @@ def main():
     # Read the original contents.
     file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
     contents = file.read()
+    file.close()
 
     # Align the contents.
     formatted_contents = align_beancount(

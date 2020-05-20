@@ -20,3 +20,7 @@ class TestJournalReports(unittest.TestCase):
             output = report_.render(entries, errors, options_map, format_)
             self.assertEqual(options.OPTIONS_DEFAULTS, options_map)
             self.assertTrue(isinstance(output, str))
+
+
+if __name__ == '__main__':
+    unittest.main()

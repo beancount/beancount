@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import os
 import re
 import sys
 import traceback

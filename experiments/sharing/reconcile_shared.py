@@ -8,6 +8,8 @@ import logging
 from beancount import loader
 from beancount.core import inventory
 from beancount.core import data
+from beancount.core import prices
+from beancount.core import convert
 from beancount.core.number import D
 from beancount.core.number import ZERO
 
@@ -23,6 +25,7 @@ def main():
     args = parser.parse_args()
 
     entries, errors, options_map = loader.load_file(args.filename)
+    price_map = prices.build_price_map(entries)
     balances = {
         'Income:Dadpoo': inventory.Inventory(),
         'Income:Mompoo': inventory.Inventory()}
@@ -31,8 +34,14 @@ def main():
             balance = balances.get(posting.account, None)
             if balance is not None:
                 balance.add_position(posting)
-    dad_actual = -balances['Income:Dadpoo'].get_only_position().units.number
-    mom_actual = -balances['Income:Mompoo'].get_only_position().units.number
+
+    def get_actual(inv):
+        converted = inv.reduce(convert.convert_position, 'USD', price_map, None)
+        print(converted)
+        return -converted.get_only_position().units.number
+
+    dad_actual = get_actual(balances['Income:Dadpoo'])
+    mom_actual = get_actual(balances['Income:Mompoo'])
     #assert dad_actual.currency == mom_actual.currency == 'USD'
     total_amount = dad_actual + mom_actual
     dad_expected = total_amount * args.ratio

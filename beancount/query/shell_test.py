@@ -11,7 +11,6 @@ from beancount.query import shell
 from beancount import loader
 
 
-# pylint: disable=invalid-name
 entries, errors, options_map = None, None, None
 
 
@@ -229,3 +228,9 @@ class TestShell(test_utils.TestCase):
 
 
 __incomplete__ = True
+
+
+if __name__ == '__main__':
+    if re.search(r"\.runfiles\b", __file__):
+        setup_module()
+    unittest.main()

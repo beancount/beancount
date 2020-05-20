@@ -124,7 +124,7 @@ def print_features(title, features, currency, relative=False, print_holdings=Fal
     """Print a features aggregation.
 
     Args:
-      title: A string, the title to printfor this section.
+      title: A string, the title to print for this section.
       features: A dict of label strings to (number, list of scaled holdings).
       currency: A string, the currency to output.
       print_holdings: A boolean, if true, print the holdings detail in each category.

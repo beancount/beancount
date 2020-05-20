@@ -2775,7 +2775,7 @@ http://furius.ca/beancount/doc/proposal-query
 * Gains Sans Commissions
 
   How do I take into account the commissions and fees adjustment on the cost
-  basis for a position? You need to be able to accomodate commissions as not
+  basis for a position? You need to be able to accommodate commissions as not
   being part of the gain.
 
   BRANCH: 'sanscost'
@@ -3862,7 +3862,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
 
     * Follow this:
-      http://www.lemoda.net/c/reentrant-parser/
+      https://www.lemoda.net/c/reentrant-parser/
       http://flex.sourceforge.net/manual/Extra-Data.html
       to remove all globals from my lexer and make it truly reentrant and free of globals.
 
@@ -3877,7 +3877,7 @@ http://furius.ca/beancount/doc/proposal-query
 
       You also need to redefine yyerror() accordingly. I've done it and it
       works, it's simple, it's a 20 minute change:
-      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+      https://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
 
     * You also need to make the lexer reentrant:
       http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
@@ -3932,7 +3932,7 @@ http://furius.ca/beancount/doc/proposal-query
 * Reports
 ** Text Statements
 
-  - Complete text-statements branch, printing out balanace sheet and income
+  - Complete text-statements branch, printing out balance sheet and income
     statement to text for bean-report and ELI, complete with --date on those
     reports.
 
@@ -4037,7 +4037,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Financial Ratio Analysis
 
-  - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+  - Add these: https://www.csun.edu/~bjc20362/Controlling-2.pdf
 
 ** Trades
 
@@ -4229,7 +4229,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Move the TreeMaps experimental script for Expenses and Assets subtrees into
     the bean-web codebase:
-    http://bost.ocks.org/mike/treemap/
+    https://bost.ocks.org/mike/treemap/
     (Or maybe that would just be left for fava.)
 
 ** Rendering Documents
@@ -4640,6 +4640,26 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - "find $PWD | treeify -F" is broken; used to work. Update and fix this.
+
+  - Make the spreadsheets <-> beancount upload/download conversion scripts more
+    general and flexible and provide them to the general public. These are
+    really powerful.
+
+  - When env var L is set to a directory, failure just says that the Lex scanner
+    fails; this should mention the name of the file, so it's clear. Sometimes I
+    override "L".
+
+  - The bean-query --numberify option does not split columns when the output is
+    text (default). Only for csv. This is inconsistent.
+
+  - In order to render all linked transactions, support pulling the referenced
+    link or tag name under the cursor (in Emacs).
+
+  - In beancount.plugins.auto_accounts: It would be really nice to constraint
+    which types accounts can be auto-created, for example, don't auto-create
+    Assets/Income accounts. This would be helpful in trip files.
 
   - Idea! Add original conversion rate on an augmenting leg with cost basis, in
     order to be able to partition profits due to appreciate vs. currency drift.
