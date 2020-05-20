@@ -63,6 +63,7 @@ __license__ = "GNU GPLv2"
 import collections
 import enum
 import io
+from typing import Optional
 
 from beancount.core.number import Decimal
 from beancount.core import distribution
@@ -70,16 +71,18 @@ from beancount.core import distribution
 
 class Precision(enum.Enum):
     """The type of precision required."""
-    MOST_COMMON = 1
-    MAXIMUM = 2
+    MOST_COMMON = 1  # Rendering precision for most numbers. The default.
+    MAXIMUM = 2      # Rendering precision for costs and prices.
 
 
 class Align(enum.Enum):
-    """Alignment style for numbers."""
-    NATURAL = 1
-    DOT = 2
-    RIGHT = 3
+    """Horizontal alignment style for numbers."""
+    NATURAL = 1  # Default left alignment for numbers.
+    DOT = 2      # Aligned around the period
+    RIGHT = 3    # Aligned to the right, no matter how many decimals.
 
+
+_UNSET = object()
 
 class _CurrencyContext:
     """A container of information for a single currency.
@@ -99,6 +102,8 @@ class _CurrencyContext:
         self.has_sign = False
         self.integer_max = 1
         self.fractional_dist = distribution.Distribution()
+        self.final_mode = _UNSET
+        self.final_max = _UNSET
 
     def __str__(self):
         fmt = ('sign={:<2}  integer_max={:<2}  '
@@ -152,17 +157,27 @@ class _CurrencyContext:
         integer_digits = len(num_tuple.digits) + num_tuple.exponent
         self.integer_max = max(self.integer_max, integer_digits)
 
-    def get_fractional(self, precision):
+    def finalize(self):
+        self.final_mode = self.fractional_dist.mode()
+        self.final_max = self.fractional_dist.max()
+
+    def override_mode(self, number):
+        num_tuple = number.as_tuple()
+        self.final_mode = -num_tuple.exponent
+
+    def override_max(self, number):
+        num_tuple = number.as_tuple()
+        self.final_max = -num_tuple.exponent
+
+    def get_fractional(self, precision) -> Optional[int]:
         """
         Returns:
           An integer for the number of fractional digits, or None.
         """
-        if self.fractional_dist.empty():
-            return None
         if precision == Precision.MOST_COMMON:
-            return self.fractional_dist.mode()
+            return self.final_mode
         elif precision == Precision.MAXIMUM:
-            return self.fractional_dist.max()
+            return self.final_max
         else:
             raise ValueError("Unknown precision: {}".format(precision))
 
@@ -199,6 +214,21 @@ class DisplayContext:
           currency: An optional string, the currency this numbers applies to.
         """
         self.ccontexts[currency].update(number)
+
+    def finalize(self):
+        for ccontext in self.ccontexts.values():
+            ccontext.finalize()
+
+    def override(self, number, currency):
+        """Override  the builder with the given number for the given currency.
+
+        This erases the history and sets the final precision to use for display.
+
+        Args:
+          number: An instance of Decimal to consider for this currency.
+          currency: An optional string, the currency this numbers applies to.
+        """
+        self.ccontexts[currency].override(number)
 
     def quantize(self, number, currency, precision=Precision.MOST_COMMON):
         """Quantize the given number to the given precision.

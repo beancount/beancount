@@ -171,6 +171,10 @@ class Builder(lexer.LexBuilder):
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options['render_commas'])
 
+        # Finalize the display context and apply precision overrides.
+        self.dcontext.finalize()
+        # FIXME: TODO - apply overrides here.
+
         return (self.get_entries(), self.errors, self.get_options())
 
     def get_entries(self):

@@ -65,8 +65,8 @@ def options_validate_tolerance(value):
     return D(value)
 
 
-def options_validate_tolerance_map(value):
-    """Validate an option with a map of currency/tolerance pairs in a string.
+def options_validate_currency_number_map(value):
+    """Validate an option with a map of currency/decimal pairs in a string.
 
     Args:
       value: A string, the value provided as option.
@@ -301,6 +301,64 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("conversion_currency", "NOTHING")]),
 
     OptGroup("""
+      Set the per-currency tolerance values used to balance transactions. When
+      transactions are validated for balancing (as per the double-entry
+      book-keeping rules), a small residual amount of units is tolerated. This
+      is needed because numbers being compared are sometimes the results of
+      arithmetic operations, and the institutions from which some of the other
+      postings may be imported account for rounded numbers. In other words,
+      rounding occurs, and so balancing transactions cannot, and should not be
+      exact.
+
+      By default the tolerances used are inferred automatically (see other
+      options on tolerances, that control this), but this option allows you to
+      fix the tolerance.
+
+      A good baseline for how to set this value - if at all - is to use half of
+      the smallest digit you normally account for a currency. For example, US
+      dollars are typically accounted for in units of 1 cent, so a reasonable
+      value for its tolerance would be 0.005 USD.
+
+      For detailed documentation about how tolerances are handled, see this doc:
+      http://furius.ca/beancount/doc/tolerances
+    """, [Opt("tolerance", {}, "USD:0.005",
+              converter=options_validate_currency_number_map)]),
+
+    OptGroup("""
+      Set the per-currency precision values used to render numbers. When numbers
+      are being rendered, they are rounded to this given precision for display.
+      The point is that all numbers of a given currency should be rendered with
+      a consistent precision.
+
+      There are two contexts:
+
+      1. Rendering of all the regular numbers, such as those you would find on a
+         posting with no price, the simplest case. This precision is set using
+         the "precision" option.
+
+      2. Rendering of cost and price numbers. Those are used as multipliers, and
+         so are sometimes entered with a higher number of digits. For example,
+         exchange rates between currencies frequently use four digits after the
+         period, and mutual funds are often tracked in units of thousands. We
+         want to render those numbers with the same precision as their input.
+         This precision is set using the "precision_high" option.
+
+      By default, Beancount automatically infers good values for each of the
+      currencies based on simple statistics of the numbers witnessed in the
+      input file, separately for each currency. You can render the inferred
+      values with the following command:
+
+        bean-doctor display_context <ledger.beancount>
+
+      Setting these options explicitly allows you to OVERRIDE this mechanism,
+      for each currency, to set a specific value you want to use.
+
+    """, [Opt("precision", {}, "USD:0.01",
+              converter=options_validate_currency_number_map),
+          Opt("precision_high", {}, "USD:0.0001",
+              converter=options_validate_currency_number_map)]),
+
+    OptGroup("""
       Mappings of currency to the tolerance used when it cannot be inferred
       automatically. The tolerance at hand is the one used for verifying (1)
       that transactions balance, (2) explicit balance checks from 'balance'
@@ -320,7 +378,7 @@ PUBLIC_OPTION_GROUPS = [
       For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
-              converter=options_validate_tolerance_map)]),
+              converter=options_validate_currency_number_map)]),
 
     OptGroup("""
       A multiplier for inferred tolerance values.
