@@ -5,9 +5,9 @@ Valid tickers are in the form "ISIN:CURRENCY", such as "GB00B41XG308:GBP".
 For example:
 https://markets.ft.com/data/funds/tearsheet/summary?s=GB00B41XG308:GBP
 
-This source parses HTML to retrieve the price.
-
+This source parses the website's HTML to retrieve the price.
 """
+
 import datetime
 import urllib.request
 from html.parser import HTMLParser
@@ -55,12 +55,10 @@ def fetch_quote(ticker):
     url = "https://markets.ft.com/data/funds/tearsheet/summary?s={}".format(ticker.lower())
 
     currency = ticker.split(":")[1]
-
     price = D(ft_find_price(url, currency)).quantize(D('0.01'))
-
     time = datetime.datetime.now(tz.tzutc())
-
     return source.SourcePrice(price, time, currency)
+
 
 
 class Source(source.Source):
