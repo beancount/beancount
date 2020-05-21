@@ -11,6 +11,7 @@ https://api.coinbase.com/v2/prices/BTC-GBP/spot
 Timezone information: Input and output datetimes are specified via UTC
 timestamps.
 """
+
 import datetime
 
 import requests
@@ -25,21 +26,16 @@ class CoinbaseError(ValueError):
 
 
 def fetch_quote(ticker):
-    """Fetch"""
+    """Fetch a quote from Coinbase."""
     url = "https://api.coinbase.com/v2/prices/{}/spot".format(ticker.lower())
     response = requests.get(url)
     if response.status_code != requests.codes.ok:
-        raise CoinbaseError("Invalid response ({}): {}".format(
-            response.status_code,
-            response.text)
-        )
-
+        raise CoinbaseError("Invalid response ({}): {}".format(response.status_code,
+                                                               response.text))
     result = response.json()
 
     price = D(result['data']['amount']).quantize(D('0.01'))
-
     time = datetime.datetime.now(tz.tzutc())
-
     currency = result['data']['currency']
 
     return source.SourcePrice(price, time, currency)

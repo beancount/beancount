@@ -9,7 +9,7 @@ from beancount.prices.sources import coinbase
 
 
 def response(contents, status_code=requests.codes.ok):
-    """Produce a context manager to patch a JSON response."""
+    """Return a context manager to patch a JSON response."""
     response = mock.Mock()
     response.status_code = status_code
     response.text = ""
@@ -26,16 +26,15 @@ class CoinbasePriceFetcher(unittest.TestCase):
                 self.assertRegex(exc.message, 'premium')
 
     def test_valid_response(self):
-        contents = {
-            "data": {
-                "base": "BTC",
-                "currency": "USD",
-                "amount": 101.23
-            }
-        }
-
+        contents = {"data": {"base": "BTC",
+                             "currency": "USD",
+                             "amount": 101.23}}
         with response(contents):
             srcprice = coinbase.fetch_quote('BTC-GBP')
             self.assertIsInstance(srcprice, source.SourcePrice)
             self.assertEqual(D('101.23'), srcprice.price)
             self.assertEqual('USD', srcprice.quote_currency)
+
+
+if __name__ == '__main__':
+    unittest.main()

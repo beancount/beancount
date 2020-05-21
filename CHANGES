@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'default' branch.
 
 2020-05-20
 
+ - Cleaned up Coinbase price source importer.
+ - Merged PR101 with Coinbase and FT price sources.
  - Refactor to allow csv's get_amount to be overridden. See PR145.
 
 
