@@ -282,7 +282,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    tags, links, [])
 
             # Attach one posting to the transaction
-            amount_debit, amount_credit = get_amounts(iconfig, row)
+            amount_debit, amount_credit = self.get_amounts(iconfig, row)
 
             # Skip empty transactions
             if amount_debit is None and amount_credit is None:
@@ -332,6 +332,14 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             entry.meta.pop('balance', None)
 
         return entries
+
+    def get_amounts(self, iconfig, row, allow_zero_amounts=False):
+        """See function get_amounts() for details.
+
+        This method is present to allow clients to override it in order to deal
+        with special cases, e.g., columns with currency symbols in them.
+        """
+        return get_amounts(iconfig, row, allow_zero_amounts)
 
 
 def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
