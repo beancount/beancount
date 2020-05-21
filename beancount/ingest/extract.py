@@ -11,7 +11,6 @@ import inspect
 import logging
 import sys
 import textwrap
-import traceback
 
 from beancount.core import data
 from beancount.parser import printer
