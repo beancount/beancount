@@ -39,8 +39,7 @@ interested in that group as well.
 Download & Installation
 =======================
 
-You can obtain the source code from the official Mercurial repository on
-BitBucket:
+You can obtain the source code from the official Git repository on Github:
 
   | https://github.com/beancount/beancount/
 
@@ -52,7 +51,7 @@ __ http://furius.ca/beancount/doc/install
 Filing Bugs
 ===========
 
-Tickets can be filed at on the BitBucket project page:
+Tickets can be filed at on the Github project page:
 
   https://github.com/beancount/beancount/issues
 

@@ -230,7 +230,7 @@ setup(
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
-    download_url="https://github.com/blais/beancount",
+    download_url="https://github.com/beancount/beancount",
 
     packages = [
         'beancount',
