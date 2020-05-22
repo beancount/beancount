@@ -42,7 +42,7 @@ Download & Installation
 You can obtain the source code from the official Mercurial repository on
 BitBucket:
 
-  | https://github.com/blais/beancount/
+  | https://github.com/beancount/beancount/
 
 See the `Installing Beancount`__ document for more details.
 
@@ -54,13 +54,13 @@ Filing Bugs
 
 Tickets can be filed at on the BitBucket project page:
 
-  https://github.com/blais/beancount/issues
+  https://github.com/beancount/beancount/issues
 
 
 Copyright and License
 =====================
 
-Copyright (C) 2007-2016  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2020  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the terms of the "GNU GPLv2 only".
 See COPYING file for details.
