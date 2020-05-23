@@ -1,7 +1,19 @@
 ========================
    beancount: CHANGES
 ========================
-Note: This file contains a list changes in the 'default' branch.
+Note: This file contains a list changes in the 'master' branch.
+
+
+2020-05-23
+
+ - Added options to filter accounts in "onecommodity" plugin: skip accounts with
+   explicitly declared commodities, metadata of "onecommodity: FALSE" and added
+   regular expression to specify the list of accounts to match (default: all).
+
+
+2020-05-22
+
+ - Migration of code repository to Github.
 
 
 2020-05-02
