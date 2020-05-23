@@ -50,7 +50,7 @@ def find_repository_root(filename=None):
         return match.group(1)
 
     while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKG-INFO', 'COPYING', 'README')):
+                  for sigfile in ('PKG-INFO', 'COPYING', 'README.rst')):
         prev_filename = filename
         filename = path.dirname(filename)
         if prev_filename == filename:
