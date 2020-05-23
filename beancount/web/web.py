@@ -936,12 +936,11 @@ def url_restrict_generator(url_prefix):
     """
     # A list of URLs that should always be accepted, even when restricted.
     allowed_regexps = [re.compile(regexp).match
-                       for regexp in ['/web.css',
+                       for regexp in ['/resources',
                                       '/favicon.ico',
-                                      '/toc',
+                                      '/index',
                                       '/errors',
                                       '/source',
-                                      '/link',
                                       '/context',
                                       '/third_party']]
 
@@ -1183,6 +1182,9 @@ def add_web_arguments(argparser):
     group.add_argument('--port', action='store', type=int, default=8080,
                        help="Which port to listen on.")
 
+    group.add_argument('-q', '--quiet', action='store_true',
+                       help="Don't even print out web server log")
+
     group.add_argument('--debug', action='store_true',
                        help="Enable debugging features (auto-reloading of css).")
 
@@ -1218,42 +1220,24 @@ def main():
     run_app(args)
 
 
-def scrape_webapp(filename, callback, port, ignore_regexp,
-                  quiet=True, no_colons=False, extra_args=None):
+def scrape_webapp(webargs, callback, ignore_regexp):
     """Run a web server on a Beancount file and scrape it.
 
     This is the main entry point of this module.
 
     Args:
-      filename: A string, the name of the file to parse.
+      webargs: An argparse.Namespace container of the arguments provided in
+        web.add_web_arguments().
       callback: A callback function to invoke on each page to validate it.
         The function is called with the response and the url as arguments.
         This function should trigger an error on failure (via an exception).
-      port: An integer, a free port to use for serving the pages.
       ignore_regexp: A regular expression string, the urls to ignore.
-      quiet: True if we shouldn't log the web server pages.
-      no_colons: True if we should avoid rendering colons in URLs (for Windows).
-      extra_args: Extra arguments to bean-web that we want to start the
-        server with.
     Returns:
       A set of all the processed URLs and a set of all the skipped URLs.
     """
-    url_format = 'http://localhost:{}{{}}'.format(port)
+    url_format = 'http://localhost:{}{{}}'.format(webargs.port)
 
-    # Create a set of valid arguments to run the app.
-    argparser = version.ArgumentParser()
-    group = add_web_arguments(argparser)
-    group.set_defaults(filename=filename,
-                       port=port,
-                       no_colons=no_colons,
-                       quiet=quiet)
-
-    all_args = [filename]
-    if extra_args:
-        all_args.extend(extra_args)
-    args = argparser.parse_args(args=all_args)
-
-    thread = thread_server_start(args)
+    thread = thread_server_start(webargs)
 
     # Skips:
     # - Docs cannot be read for external files.
@@ -1294,7 +1278,7 @@ def thread_server_start(web_args, **kwargs):
 def thread_server_shutdown(thread):
     """Shutdown the server running in the given thread.
 
-    Unfortauntely, in the meantime this has a side-effect on all servers.
+    Unfortunately, in the meantime this has a side-effect on all servers.
     This returns after waiting that the thread has stopped.
 
     Args:

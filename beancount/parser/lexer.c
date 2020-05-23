@@ -2955,7 +2955,7 @@ void yylex_finalize(void)
 }
 
 
-/* Reallocate the buffer to accomodate some new characters. */
+/* Reallocate the buffer to accommodate some new characters. */
 void strbuf_realloc(size_t num_new_chars)
 {
     assert(strbuf_ptr != NULL);

@@ -1524,7 +1524,7 @@ class AccountColumn(query_compile.EvalColumn):
         return context.posting.account
 
 class OtherAccountsColumn(query_compile.EvalColumn):
-    "The list of other accounts in the transcation, excluding that of this posting."
+    "The list of other accounts in the transaction, excluding that of this posting."
     __intypes__ = [data.Posting]
 
     def __init__(self):

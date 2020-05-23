@@ -73,7 +73,7 @@ def open(entries,
         to transfer previous balances from, in order to initialize account
         balances at the beginning of the period. This is typically called an
         opening balances account.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to the first
@@ -121,7 +121,7 @@ def close(entries,
         list of entries.
       conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to one beyond
@@ -151,7 +151,7 @@ def clear(entries,
     """Transfer income and expenses balances at the given date to the equity accounts.
 
     This method insert entries to zero out balances on income and expenses
-    accounts by transfering them to an equity account.
+    accounts by transferring them to an equity account.
 
     Args:
       entries: A list of directive tuples.
@@ -237,7 +237,7 @@ def clamp(entries,
         to transfer previous balances from, in order to initialize account
         balances at the beginning of the period. This is typically called an
         opening balances account.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to the first
@@ -420,7 +420,7 @@ def summarize(entries, date, account_opening):
 
     Args:
       entries: A list of directives.
-      date: A datetime.date instance, the cutoff date before which to summararize.
+      date: A datetime.date instance, the cutoff date before which to summarize.
       account_opening: A string, the name of the source account to book summarization
         entries against.
     Returns:
@@ -544,7 +544,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
         balances account from the source account; otherwise the new entries
         transfer FROM the balances into the source account.
       meta: A dict to use as metadata for the transactions.
-      flag: A string, the flag to use for the transactinos.
+      flag: A string, the flag to use for the transactions.
       narration_template: A format string for creating the narration. It is
         formatted with 'account' and 'date' replacement variables.
     Returns:

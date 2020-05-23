@@ -53,7 +53,7 @@ automatically insert new postings like this:
 
 Notice that the "{year}" string in the configuration's account names is
 automatically replaced by the current year in the account name. This is useful
-if you maintain separate tax accounts per yera.
+if you maintain separate tax accounts per year.
 
 Furthermore, as in the configuration example above, you may have multiple
 matching entries to trigger multiple insertions. For example, the employer may

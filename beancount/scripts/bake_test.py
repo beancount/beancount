@@ -206,25 +206,6 @@ class TestScriptBake(test_utils.TestCase):
             directories = [root for root, _, _ in os.walk(outdir)]
             self.assertGreater(len(directories), 10)
 
-    @test_utils.docfile
-    def test_bake_bad_link(self, filename):
-        """
-        plugin "beancount.plugins.auto_accounts"
-
-        2014-03-02 * "Something" ^2015-06-14.something.pdf
-          Expenses:Restaurant   1 USD
-          Assets:Cash
-        """
-        with test_utils.tempdir(delete=0) as tmpdir:
-            tmpdir = path.join(tmpdir, 'output')
-            with test_utils.capture('stdout', 'stderr') as (output, _):
-                test_utils.run_with_args(bake.main, self.get_args() + [filename, tmpdir])
-            self.assertTrue(output.getvalue())
-            self.assertFalse(path.exists(
-                path.join(tmpdir, 'link/2015-06-14.something.pdf')))
-            self.assertTrue(path.exists(
-                path.join(tmpdir, 'link/2015-06-14.something.pdf.html')))
-
 
 class TestScriptArchive(TestScriptBake):
 

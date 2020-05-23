@@ -41,7 +41,7 @@ def _gen_missing_combinations(template, args):
     """Generate all possible expansions of args in template.
 
     Args:
-      template: A string, the template in new-sytle formatting.
+      template: A string, the template in new-style formatting.
       args: A list of strings to be included or excluded from the template.
     Yields:
       Strings of formatted template.
@@ -1090,7 +1090,7 @@ def _BM(method):
 
 
 class _BookingTestBase(unittest.TestCase):
-    """A base class for all booking scenario tsts.
+    """A base class for all booking scenario tests.
 
     This reuses Beancount's input syntax to create a DSL for writing tests. The
     purpose is to easily write a single test per booking scenario for the
@@ -1145,7 +1145,7 @@ class _BookingTestBase(unittest.TestCase):
               postings provided to handle_ambiguous_matches().
 
             - An entry with #ambi-resolved describes and asserts the list of
-              postings which were resolved from the call fo
+              postings which were resolved from the call of
               handle_ambiguous_matches().
 
             - An entry with #reduced describes and asserts the list of postings
@@ -2769,7 +2769,7 @@ class TestBook(unittest.TestCase):
           Assets:Account1          1 HOOL {100.00 USD}
           Assets:Other          -100.00 USD
 
-        2015-10-01 * "Held-at-cost, positive, differnt cost"
+        2015-10-01 * "Held-at-cost, positive, different cost"
           Assets:Account1          2 HOOL {101.00 USD}
           Assets:Other          -204.00 USD
         """

@@ -75,7 +75,7 @@ def check_python():
 
 
 def is_fast_decimal(decimal_module):
-    "Return true if a fast C decimal implementattion is installed."
+    "Return true if a fast C decimal implementation is installed."
     return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
 
 

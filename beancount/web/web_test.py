@@ -5,8 +5,9 @@ import unittest
 import urllib.parse
 from os import path
 
-from beancount.web import web
 from beancount.utils import test_utils
+from beancount.utils import version
+from beancount.web import web
 
 
 class TestWeb(unittest.TestCase):
@@ -16,10 +17,10 @@ class TestWeb(unittest.TestCase):
     # Components views... well there are just too many, makes the tests
     # impossibly slow. Just keep the A's so some are covered for testing.
     ignore_regexp = r'^({})'.format('|'.join([
-        '/context/',
-        '/view/component/[^A]',
+        r'/context/',
+        r'/view/component/[^A]',
         r'/view/year/\d+/month/[^1][^0]',
-        '.*/doc/']))
+        r'.*/doc/']))
 
     def check_page_okay(self, url, response, _, __, ___):
         self.assertIn(response.status, (200, 202),
@@ -28,14 +29,23 @@ class TestWeb(unittest.TestCase):
         requested_path = urllib.parse.urlparse(response.url).path
         self.assertEqual(requested_path, redirected_path)
 
-    def scrape(self, filename, **extra):
+    def scrape(self, filename, extra_args=None):
+        # Create a set of valid arguments to run the app.
         abs_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', filename)
-        web.scrape_webapp(abs_filename,
+
+        argparser = version.ArgumentParser()
+        group = web.add_web_arguments(argparser)
+        argv = [abs_filename,
+                '--quiet',
+                '--port', str(test_utils.get_test_port())]
+        if extra_args:
+            argv.extend(extra_args)
+        webargs = argparser.parse_args(argv)
+
+        web.scrape_webapp(webargs,
                           self.check_page_okay,
-                          test_utils.get_test_port(),
-                          self.ignore_regexp,
-                          **extra)
+                          self.ignore_regexp)
 
     @test_utils.docfile
     def test_scrape_empty_file(self, filename):

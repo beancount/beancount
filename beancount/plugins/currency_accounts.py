@@ -5,13 +5,13 @@ https://www.mathstat.dal.ca/~selinger/accounting/tutorial.html
 
 You enable it just like this:
 
-  plugin "beancount.plugins.currency_accounts" "Equity:CurrencyAcccounts"
+  plugin "beancount.plugins.currency_accounts" "Equity:CurrencyAccounts"
 
 Accounts will be automatically created under the given base account, with the
 currency name appended to it, e.g.,
 
-  Equity:CurrencyAcccounts:CAD
-  Equity:CurrencyAcccounts:USD
+  Equity:CurrencyAccounts:CAD
+  Equity:CurrencyAccounts:USD
 
 etc., where used. You can have a look at the account balances with a query like
 this:

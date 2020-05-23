@@ -8,6 +8,8 @@ addons:
       - zip
 install:
   - pip install -r requirements.txt
+  - pip install pylint
 script:
   - make build
-  - NOSE=nosetests make test
+  - make test
+  - make lint

@@ -118,7 +118,7 @@ ONE_WEEK = datetime.timedelta(days=7)
 
 
 def required_weekly_prices(lifetimes_map, date_last):
-    """Enumerate all the commodities and fridays where the price is required.
+    """Enumerate all the commodities and Fridays where the price is required.
 
     Given a map of lifetimes for a set of commodities, enumerate all the Fridays
     for each commodity where it is active. This can be used to connect to a

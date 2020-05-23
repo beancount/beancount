@@ -69,8 +69,8 @@ def postings_by_type(entry):
 
 
 def split_currency_conversions(entry):
-    """If the transcation has a mix of conversion at cost and a
-    currency conversion, split the transction into two transactions: one
+    """If the transaction has a mix of conversion at cost and a
+    currency conversion, split the transaction into two transactions: one
     that applies the currency conversion in the same account, and one
     that uses the other currency without conversion.
 

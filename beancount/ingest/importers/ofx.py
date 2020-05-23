@@ -206,7 +206,7 @@ def find_statement_transactions(soup):
         An account id string,
         A currency string,
         A list of transaction nodes (<STMTTRN> BeautifulSoup tags), and
-        A (date, balanace amount) for the <LEDGERBAL>.
+        A (date, balance amount) for the <LEDGERBAL>.
     """
     # Process STMTTRNRS and CCSTMTTRNRS tags.
     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
