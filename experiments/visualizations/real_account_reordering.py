@@ -10,7 +10,7 @@ __license__ = "GNU GPLv2"
 
 def reorder_accounts_tree(real_accounts):
 
-"""Reorder the children in a way that is sensible for display.
+    """Reorder the children in a way that is sensible for display.
     We want the most active accounts near the top, and the least
     important ones at the bottom."""
 
