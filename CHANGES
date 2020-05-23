@@ -1,19 +1,19 @@
 ========================
    beancount: CHANGES
 ========================
-Note: This file contains a list changes in the 'default' branch.
+Note: This file contains a list changes in the 'master' branch.
 
 
-2020-05-20
+2020-05-23
 
- - Cleaned up Coinbase price source importer.
- - Merged PR101 with Coinbase and FT price sources.
- - Refactor to allow csv's get_amount to be overridden. See PR145.
+ - Added options to filter accounts in "onecommodity" plugin: skip accounts with
+   explicitly declared commodities, metadata of "onecommodity: FALSE" and added
+   regular expression to specify the list of accounts to match (default: all).
 
 
-2020-05-17
+2020-05-22
 
- - Applied patch by Martin Michlmayr with fixes for many typos.
+ - Migration of code repository to Github.
 
 
 2020-05-02
@@ -31,7 +31,6 @@ Note: This file contains a list changes in the 'default' branch.
  - Made balance check aggregation avoid an initial empty inventory object, and
    changed the balance check code to call the realization utility function
    compute_balance().
- - Fixed bean-bake to honor all the bean-web options.
 
 
 2020-04-11
@@ -1171,7 +1170,7 @@ Note: This file contains a list changes in the 'default' branch.
 
   - Some cleanup of internal tools.
 
-  - Added some basic unit tests for beancount.tools.sheets_upload.
+  - Added some basic unit tetsts for beancount.tools.sheets_upload.
 
   - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
     and replaced it with an associated stub for it.
@@ -1812,7 +1811,7 @@ Note: This file contains a list changes in the 'default' branch.
       GROUP BY 1
       ORDER BY 1
 
-    Note that the resulting balances almost certainly don't sum up to zero,
+    Note that the resulting balanaces almost certainly don't sum up to zero,
     because of differing dates of the Balance directives. Also, note that
     accounts without a single Balance directive will not have their postings
     marked at all.
@@ -3429,7 +3428,7 @@ Note: This file contains a list changes in the 'default' branch.
 
     I also moved the tests. All the code specifically related to numbers is
     now in beancount.core.number. I also removed the relative imports, as
-    LedgerHub is importing from the Beancount source code now.
+    Ledgerhub is importing from the Beancount source code now.
 
     This is not a user-visible change. However, if you wrote scripts against
     the codebase, you will need to rename your imports. In the meantime I added
