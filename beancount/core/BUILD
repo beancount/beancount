@@ -1,5 +1,3 @@
-# NOTE: This file is complete.
-
 package(default_visibility = ["//visibility:public"])
 
 py_library(

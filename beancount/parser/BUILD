@@ -1,5 +1,3 @@
-# NOTE: This file is complete.
-
 load("//tools/build:py_extension.bzl", "py_extension")
 
 package(default_visibility = ["//visibility:public"])
@@ -301,7 +299,6 @@ py_test(
         "//beancount/core:data",
         "//beancount/core:number",
         "//beancount/utils:test_utils",
-        # TOOD(blais): Add py_test
     ],
 )
 
