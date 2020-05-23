@@ -443,7 +443,7 @@ def _load(sources, log_timings, extra_validations, encoding):
     Args:
       sources: A list of (filename-or-string, is-filename) where the first
         element is a string, with either a filename or a string to be parsed directly,
-        and the second arugment is a boolean that is true if the first is a filename.
+        and the second argument is a boolean that is true if the first is a filename.
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A file object or function to write timings to,

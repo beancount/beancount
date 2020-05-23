@@ -1659,7 +1659,7 @@ http://furius.ca/beancount/doc/proposal-query
       Down the road, the inventory booking would use that and implement all methods,
       but for now, only the balance check would consult that value and disable the
       check if the default booking method is "NONE". I think I could easily hack that
-      in in a few hours."
+      in a few hours."
 
 
 
