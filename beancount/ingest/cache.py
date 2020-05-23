@@ -103,7 +103,8 @@ def contents(filename):
     """
     # Attempt to detect the input encoding automatically, using chardet and a
     # decent amount of input.
-    rawdata = open(filename, 'rb').read(HEAD_DETECT_MAX_BYTES)
+    with open(filename, 'rb') as infile:
+        rawdata = infile.read(HEAD_DETECT_MAX_BYTES)
     detected = chardet.detect(rawdata)
     encoding = detected['encoding']
 

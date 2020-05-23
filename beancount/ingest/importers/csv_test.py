@@ -199,7 +199,7 @@ class TestCSVImporter(cmptest.TestCase):
 
           2016-03-18 * "Payment to Chafe card ending in 1234 03/18"
             Assets:Bank  -2680.89 USD
-            
+
           2016-03-19 balance Assets:Bank                                     0 USD
 
         """, entries)
