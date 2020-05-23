@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Filename')
     parser.add_argument('-o', '--output', action='store',
-                        help="Output filename (defaut is stdout)")
+                        help="Output filename (default is stdout)")
     args = parser.parse_args()
 
     outfile = open(args.output, 'wb') if args.output else sys.stdout.buffer

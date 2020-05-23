@@ -68,7 +68,7 @@ class Cache:
 
 
 def find_index_document(files):
-    """Find the the document of Beancount index.
+    """Find the document of Beancount index.
 
     Args:
       files: A Cached API client object with Google Drive scope.

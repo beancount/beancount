@@ -49,7 +49,7 @@ this example, this may result in multiple lots being created for a single one.
 
 Finally, Beancount will eventually support booking methods built-in, but this is
 a quick method that shows how to hack your own booking method via
-transformations of the postings that run in in a plugin.
+transformations of the postings that run in a plugin.
 
 Implementation notes:
 
