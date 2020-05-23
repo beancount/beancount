@@ -272,3 +272,7 @@ class TestEnv(unittest.TestCase):
         rtypes, rrows = query.run_query(entries, options_map,
                                         'SELECT date_add(date, -1) as m')
         self.assertEqual([(datetime.date(2016, 11, 19),)], rrows)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -244,7 +244,7 @@ LINT_SRCS =					\
 PYLINT = python3 -m pylint
 
 pylint lint:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	ENABLE_AUTOIMPORTS= $(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 LINT_TESTS=useless-suppression,empty-docstring
 pylint-only:

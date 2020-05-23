@@ -24,3 +24,7 @@ class TestDownloadDocs(unittest.TestCase):
                 {'id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}]}
         docid = download_docs.find_index_document(service)
         self.assertEqual('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', docid)
+
+
+if __name__ == '__main__':
+    unittest.main()

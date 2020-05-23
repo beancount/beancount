@@ -119,26 +119,28 @@ def save_scraped_document(output_dir, url, response, contents, html_root, skippe
         outfile.write(contents)
 
 
-def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
+def bake_to_directory(webargs, output_dir, render_all_pages=True):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
       webargs: An argparse parsed options object with the web app arguments.
       output_dir: A directory name. We don't check here whether it exists or not.
       quiet: A boolean, True to suppress web server fetch log.
-      full_mode: If true, fetch the full set of pages, not just the subset that
+      render_all_pages: If true, fetch the full set of pages, not just the subset that
         is palatable.
     Returns:
       True on success, False otherwise.
     """
     callback = functools.partial(save_scraped_document, output_dir)
 
-    if full_mode:
+    if render_all_pages:
         ignore_regexps = None
     else:
         regexps = [
             # Skip the context pages, too slow.
             r'/context/',
+            # Skip the link pages, too slow.
+            r'/link/',
             # Skip the component pages... too many.
             r'/view/component/',
             # Skip served documents.
@@ -148,12 +150,7 @@ def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
         ]
         ignore_regexps = '({})'.format('|'.join(regexps))
 
-    processed_urls, skipped_urls = web.scrape_webapp(webargs.filename,
-                                                     callback,
-                                                     webargs.port,
-                                                     ignore_regexps,
-                                                     quiet,
-                                                     webargs.no_colons)
+    processed_urls, skipped_urls = web.scrape_webapp(webargs, callback, ignore_regexps)
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -244,12 +241,9 @@ def main():
                              'we automatically archive the fetched directory '
                              'contents to this archive name and delete them.'))
 
-    group.add_argument('-q', '--quiet', action='store_true',
-                       help="Don't even print out web server log")
-
     # In order to be able to bake in a reasonable amount of time, we need to
     # remove some pages; you can use this switch to do that.
-    group.add_argument('--full-mode', '--full', action='store_true',
+    group.add_argument('--render-all-pages', '--full', action='store_true',
                        help=("Don't ignore some of the more numerious pages, "
                              "like monthly reports."))
 
@@ -275,7 +269,7 @@ def main():
             "ERROR: Output directory already exists '{}'".format(output_directory))
 
     # Bake to a directory hierarchy of files with local links.
-    bake_to_directory(opts, output_directory, opts.quiet, opts.full_mode)
+    bake_to_directory(opts, output_directory, opts.render_all_pages)
 
     # Verify the bake output files. This is just a sanity checking step.
     # You can also use "bean-doctor validate_html <file> to run this manually.

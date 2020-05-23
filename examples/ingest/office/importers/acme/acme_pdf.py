@@ -1,7 +1,7 @@
 """Example importer for PDF statements from ACME Bank.
 
 This importer identifies the file from its contents and only supports filing, it
-cannot extract any transactions from the PDF conersion to text. This is common,
+cannot extract any transactions from the PDF conversion to text. This is common,
 and I figured I'd provide an example for how this works.
 
 Furthermore, it uses an external library called PDFMiner2

@@ -25,3 +25,7 @@ class TestDistribution(unittest.TestCase):
         self.assertEqual(1, dist.min())
         self.assertEqual(4, dist.max())
         self.assertEqual(False, dist.empty())
+
+
+if __name__ == '__main__':
+    unittest.main()

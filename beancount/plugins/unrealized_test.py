@@ -290,3 +290,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertFalse(errors)
         new_entries, new_errors = unrealized.add_unrealized_gains(entries, options_map)
         self.assertFalse(new_errors)
+
+
+if __name__ == '__main__':
+    unittest.main()

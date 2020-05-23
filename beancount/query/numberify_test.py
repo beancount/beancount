@@ -143,3 +143,7 @@ class TestNumerifyPrecision(unittest.TestCase):
                   D('5.67'), None, None,
                   D('5.67'), None, None]]
         self.assertEqual(erows, arows)
+
+
+if __name__ == '__main__':
+    unittest.main()

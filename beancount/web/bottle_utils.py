@@ -51,7 +51,7 @@ def internal_redirect(app, path_depth):
         For example, if our subapplication is mount on /view/all, then the path
         depth is 2.
     Returns:
-      A Bottle HTTPResponse objet.
+      A Bottle HTTPResponse object.
     Raises:
       Exception: Any exception, depending on the callback.
     """

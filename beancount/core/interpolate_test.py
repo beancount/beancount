@@ -20,6 +20,11 @@ from beancount.parser import cmptest
 from beancount.utils import defdict
 from beancount import loader
 
+# TODO(blais): Remove this dependency from upstream.
+try:
+    from beancount.plugins import split_expenses
+except ImportError:
+    split_expenses = None
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'inferred_tolerance_default': {},
@@ -552,6 +557,7 @@ class TestInferTolerances(cmptest.TestCase):
                          transactions[0].meta['__tolerances__'])
         self.assertFalse(errors)
 
+    @unittest.skipIf(split_expenses is None, "split_expenses needs to be build with bazel")
     @loader.load_doc()
     def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
         """
@@ -603,3 +609,7 @@ class TestQuantize(unittest.TestCase):
         self.assertEqual(
             D('100.123123123'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+
+
+if __name__ == '__main__':
+    unittest.main()

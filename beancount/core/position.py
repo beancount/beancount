@@ -389,6 +389,5 @@ class Position(_Position):
         return Position(units, cost)
 
 
-# pylint: disable=invalid-name
 from_string = Position.from_string
 from_amounts = Position.from_amounts

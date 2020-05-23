@@ -398,7 +398,7 @@ class PositionRenderer(ColumnRenderer):
 
 
 class InventoryRenderer(PositionRenderer):
-    """A renderer for Inventoru instances. Inventories renders as a list of position
+    """A renderer for Inventory instances. Inventories renders as a list of position
     strings. Both the unit numbers and the cost numbers are aligned, if any.
     """
     dtype = inventory.Inventory

@@ -43,3 +43,7 @@ class TestImmutableDictWithDefault(unittest.TestCase):
         pick = pickle.dumps(dwd)
         dwd2 = pickle.loads(pick)
         self.assertEqual(dwd, dwd2)
+
+
+if __name__ == '__main__':
+    unittest.main()

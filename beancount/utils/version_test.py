@@ -32,4 +32,8 @@ class TestVersion(unittest.TestCase):
 
         with test_utils.capture('stdout') as stdout, self.assertRaises(SystemExit):
             parser.parse_args(['--version'])
-        self.assertRegex(stdout.getvalue(), 'Beancount.*(hg|git):')
+        self.assertRegex(stdout.getvalue(), r'Beancount \d+\.\d+\.\d+')
+
+
+if __name__ == '__main__':
+    unittest.main()

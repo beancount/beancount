@@ -531,3 +531,7 @@ class TestOptionsAggregation(unittest.TestCase):
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])
+
+
+if __name__ == '__main__':
+    unittest.main()

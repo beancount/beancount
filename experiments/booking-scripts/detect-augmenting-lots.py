@@ -2,7 +2,7 @@
 """Detect and list lots held at cost which augment an existing one.
 
 We're doing this because we conjecture that we could harmlessly make a
-modification to the invnetory booking algorithm that only ever merge lots for
+modification to the inventory booking algorithm that only ever merge lots for
 lots without cost. This lists all the occurrences where at lot at cost is being
 added to.
 """

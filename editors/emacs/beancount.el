@@ -40,82 +40,73 @@
 
 (defcustom beancount-transaction-indent 2
   "Transaction indent."
-  :type 'integer
-  :group 'beancount)
+  :type 'integer)
 
 (defcustom beancount-number-alignment-column 52
   "Column to which align numbers in postinng definitions. Set to
 0 to automatically determine the minimum column that will allow
 to align all amounts."
-  :type 'integer
-  :group 'beancount)
+  :type 'integer)
 
 (defcustom beancount-highlight-transaction-at-point nil
   "If t highlight transaction under point."
-  :type 'boolean
-  :group 'beancount)
+  :type 'boolean)
 
 (defcustom beancount-use-ido t
   "If non-nil, use ido-style completion rather than the standard."
-  :type 'boolean
-  :group 'beancount)
+  :type 'boolean)
+
+(defcustom beancount-electric-currency nil
+  "If non-nil, make `newline' try to add missing currency to
+complete the posting at point. The correct currency is determined
+from the open directive for the relevant account."
+  :type 'boolean)
 
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
 (defface beancount-directive
   `((t :inherit font-lock-keyword-face))
-  "Face for Beancount directives."
-  :group 'beancount-faces)
+  "Face for Beancount directives.")
 
 (defface beancount-tag
   `((t :inherit font-lock-type-face))
-  "Face for Beancount tags."
-  :group 'beancount-faces)
+  "Face for Beancount tags.")
 
 (defface beancount-link
   `((t :inherit font-lock-type-face))
-  "Face for Beancount links."
-  :group 'beancount-faces)
+  "Face for Beancount links.")
 
 (defface beancount-date
   `((t :inherit font-lock-constant-face))
-  "Face for Beancount dates."
-  :group 'beancount-faces)
+  "Face for Beancount dates.")
 
 (defface beancount-account
   `((t :inherit font-lock-builtin-face))
-  "Face for Beancount account names."
-  :group 'beancount-faces)
+  "Face for Beancount account names.")
 
 (defface beancount-amount
   `((t :inherit font-lock-default-face))
-  "Face for Beancount amounts."
-  :group 'beancount-faces)
+  "Face for Beancount amounts.")
 
 (defface beancount-narrative
   `((t :inherit font-lock-builtin-face))
-  "Face for Beancount transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount transactions narrative.")
 
 (defface beancount-narrative-cleared
   `((t :inherit font-lock-string-face))
-  "Face for Beancount cleared transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount cleared transactions narrative.")
 
 (defface beancount-narrative-pending
   `((t :inherit font-lock-keyword-face))
-  "Face for Beancount pending transactions narrative."
-  :group 'beancount-faces)
+  "Face for Beancount pending transactions narrative.")
 
 (defface beancount-metadata
   `((t :inherit font-lock-type-face))
-  "Face for Beancount metadata."
-  :group 'beancount-faces)
+  "Face for Beancount metadata.")
 
 (defface beancount-highlight
   `((t :inherit highlight))
-  "Face to highlight Beancount transaction at point."
-  :group 'beancount-faces)
+  "Face to highlight Beancount transaction at point.")
 
 (defconst beancount-account-directive-names
   '("balance"
@@ -146,11 +137,6 @@ to align all amounts."
     "poptag"
     "pushtag")
   "Directive names that can appear at the beginning of a line.")
-
-(defvar beancount-directive-names
-  (append beancount-directive-names
-          beancount-timestamped-directive-names)
-  "A list of the directive names.")
 
 (defconst beancount-account-categories
   '("Assets" "Liabilities" "Equity" "Income" "Expenses"))
@@ -203,7 +189,7 @@ to align all amounts."
   "A regular expression to match currencies.")
 
 (defconst beancount-flag-regexp
-  ;; Single char taht is neither a space nor a lower-case letter.
+  ;; Single char that is neither a space nor a lower-case letter.
   "[^ a-z]")
 
 (defconst beancount-transaction-regexp
@@ -226,7 +212,7 @@ to align all amounts."
           "\\(" (regexp-opt beancount-timestamped-directive-names) "\\) +"))
 
 (defconst beancount-metadata-regexp
-  "^\\s-+\\([a-z][A-Za-z0-9]+:\\)\\s-+\\(.+\\)")
+  "^\\s-+\\([a-z][A-Za-z0-9_-]+:\\)\\s-+\\(.+\\)")
 
 (defvar beancount-outline-regexp "\\(;;;+\\|\\*+\\)")
 
@@ -289,6 +275,7 @@ to align all amounts."
   (let ((map (make-sparse-keymap))
         (p beancount-mode-map-prefix))
     (define-key map (kbd "TAB") #'beancount-tab-dwim)
+    (define-key map (kbd "M-RET") #'beancount-insert-date)
     (define-key map (vconcat p [(\')]) #'beancount-insert-account)
     (define-key map (vconcat p [(control g)]) #'beancount-transaction-clear)
     (define-key map (vconcat p [(l)]) #'beancount-check)
@@ -322,7 +309,7 @@ to align all amounts."
   (setq-local comment-start-skip ";+\\s-*")
   (setq-local comment-add 1)
 
-  (setq-local indent-line-function #'beancount-indent-line-function)
+  (setq-local indent-line-function #'beancount-indent-line)
   (setq-local indent-region-function #'beancount-indent-region)
   (setq-local indent-tabs-mode nil)
 
@@ -331,12 +318,15 @@ to align all amounts."
   
   (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
   (add-hook 'post-command-hook #'beancount-highlight-transaction-at-point nil t)
+  (add-hook 'post-self-insert-hook #'beancount--electric-currency nil t)
   
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t)
 
   (setq-local outline-regexp beancount-outline-regexp)
-  (setq-local outline-level #'beancount-outline-level))
+  (setq-local outline-level #'beancount-outline-level)
+
+  (setq-local imenu-create-index-function #'beancount-imenu-create-index-function))
 
 (defun beancount-collect-pushed-tags (begin end)
   "Return list of all pushed (and not popped) tags in the region."
@@ -365,7 +355,7 @@ to align all amounts."
   (beginning-of-line)
   (if (looking-at-p beancount-transaction-regexp)
       (forward-line))
-  ;; everything that is indented with at lest one space or tab as part
+  ;; everything that is indented with at least one space or tab as part
   ;; of the transaction definition
   (while (looking-at-p "[ \t]+")
     (forward-line))
@@ -462,7 +452,7 @@ With an argument move to the next non cleared transaction."
                   (lambda (string pred action)
                     (if (null candidates)
                         (setq candidates
-                              (sort (delete string (beancount-collect regexp 1)) #'string<)))
+                              (sort (beancount-collect regexp 1) #'string<)))
                     (complete-with-action action candidates string pred))))
             (list (match-beginning 1) (match-end 1) completion-table)))
 
@@ -475,25 +465,30 @@ With an argument move to the next non cleared transaction."
                   (lambda (string pred action)
                     (if (null candidates)
                         (setq candidates
-                              (sort (delete string (beancount-collect regexp 1)) #'string<)))
+                              (sort (beancount-collect regexp 1) #'string<)))
                     (complete-with-action action candidates string pred))))
             (list (match-beginning 1) (match-end 1) completion-table))))))))
 
 (defun beancount-collect (regexp n)
   "Return an unique list of REGEXP group N in the current buffer."
-  (save-excursion
-    (save-match-data
-      (let ((hash (make-hash-table :test 'equal)))
-        (goto-char (point-min))
-        (while (re-search-forward regexp nil t)
-          (puthash (match-string-no-properties n) nil hash))
-        (hash-table-keys hash)))))
+  (let ((pos (point)))
+    (save-excursion
+      (save-match-data
+        (let ((hash (make-hash-table :test 'equal)))
+          (goto-char (point-min))
+          (while (re-search-forward regexp nil t)
+            ;; Ignore matches around `pos' (the point position when
+            ;; entering this funcyion) since that's presumably what
+            ;; we're currently trying to complete.
+            (unless (<= (match-beginning 0) pos (match-end 0))
+              (puthash (match-string-no-properties n) nil hash)))
+          (hash-table-keys hash))))))
 
 (defun beancount-account-completion-table (string pred action)
   (if (eq action 'metadata) '(metadata (category . beancount-account))
     (if (null beancount-accounts)
         (setq beancount-accounts
-              (sort (delete string (beancount-collect beancount-account-regexp 0)) #'string<)))
+              (sort (beancount-collect beancount-account-regexp 0) #'string<)))
     (complete-with-action action beancount-accounts string pred)))
 
 ;; Default to substring completion for beancount accounts.
@@ -548,23 +543,19 @@ will allow to align all numbers."
              (account-end (match-end 1))
              (number-beginning (match-beginning 3))
              (spaces (max 2 (- target-column account-end-column number-width))))
-        (goto-char account-end)
-        (delete-region account-end number-beginning)
-        (insert (make-string spaces ? ))))))
+        (unless (eq spaces (- number-beginning account-end))
+          (goto-char account-end)
+          (delete-region account-end number-beginning)
+          (insert (make-string spaces ? )))))))
 
 (defun beancount-indent-line ()
   (let ((indent (beancount-compute-indentation))
         (savep (> (current-column) (current-indentation))))
-    (if (eq last-command 'beancount-indent-line)
-        (setq indent 0))
     (unless (eq indent (current-indentation))
       (if savep (save-excursion (indent-line-to indent))
-        (indent-line-to indent))))
-  (beancount-align-number (beancount-number-alignment-column)))
-
-(defun beancount-indent-line-function ()
-  (beancount-indent-line)
-  (setq this-command 'beancount-indent-line))
+        (indent-line-to indent)))
+    (unless (eq this-command 'beancount-tab-dwim)
+      (beancount-align-number (beancount-number-alignment-column)))))
 
 (defun beancount-indent-region (start end)
   "Indent a region automagically. START and END specify the region to indent."
@@ -753,6 +744,40 @@ what that column is and returns it (an integer)."
           (setq column (- (match-beginning 1) (point))))
         ))
     column))
+
+(defun beancount--account-currency (account)
+  ;; Build a regexp that matches an open directive that specifies a
+  ;; single account currencydaaee. The currency is match group 1.
+  (let ((re (concat "^" beancount-date-regexp " +open"
+                    "\\s-+" (regexp-quote account)
+                    "\\s-+\\(" beancount-currency-regexp "\\)\\s-+")))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward re nil t)
+        ;; The account has declared a single currency, so we can fill it in.
+        (match-string-no-properties 1)))))
+
+(defun beancount--electric-currency ()
+  (when (and beancount-electric-currency (eq last-command-event ?\n))
+    (save-excursion
+      (forward-line -1)
+      (when (and (beancount-inside-transaction-p)
+                 (looking-at (concat "\\s-+\\(" beancount-account-regexp "\\)"
+                                     "\\s-+\\(" beancount-number-regexp "\\)\\s-*$")))
+        ;; Last line is a posting without currency.
+        (let* ((account (match-string 1))
+               (pos (match-end 0))
+               (currency (beancount--account-currency account)))
+          (when currency
+            (save-excursion
+	      (goto-char pos)
+              (insert " " currency))))))))
+
+(defun beancount-insert-date ()
+  "Start a new timestamped directive."
+  (interactive)
+  (unless (bolp) (newline))
+  (insert (format-time-string "%Y-%m-%d") " "))
 
 (defvar beancount-install-dir nil
   "Directory in which Beancount's source is located.
@@ -985,6 +1010,33 @@ Essentially a much simplified version of `next-line'."
   (while (and (not (eobp))
               (get-char-property (1- (point)) 'invisible))
     (beginning-of-line 2)))
+
+;;; imenu support
+(defun beancount-imenu-create-index-function ()
+  "The `imenu-create-index-function' for beancount-mode that returns an
+`imenu--index-alist' that stores the headings in the buffer."
+  (let ((index-alist '()))
+  (goto-char (point-max))
+  (while (re-search-backward "^\\(\\*+\\|;;;+\\)[ \t]+\\(.*?\\)[ \t]*$" nil t)
+    (let ((level (beancount-outline-level))
+          (name (match-string-no-properties 2))
+          (pos (point)))
+      (cond ((not index-alist)
+             (push (cons level (cons name pos)) index-alist))
+            ((< level (caar index-alist))
+             (let ((sub-index-alist index-alist))
+               (while (and (cdr index-alist)
+                           (< level (caadr index-alist)))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist))
+               (let ((sub-index-tail index-alist))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist)
+                 (setcdr sub-index-tail nil))
+               (push (cons level (cons name sub-index-alist)) index-alist)
+               ))
+            (t (push (cons level (cons name pos)) index-alist)))))
+  (mapcar 'cdr index-alist)))
 
 (provide 'beancount)
 ;;; beancount.el ends here

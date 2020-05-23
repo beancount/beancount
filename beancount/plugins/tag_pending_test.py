@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount import loader
 from beancount.core import data
 from beancount.plugins import tag_pending
@@ -37,3 +39,7 @@ class TestExampleTrackPending(test_utils.TestCase):
         self.assertEqual(data.EMPTY_SET, entries[4].tags)
         self.assertEqual(set(['PENDING']), entries[5].tags)
         self.assertEqual(data.EMPTY_SET, entries[6].tags)
+
+
+if __name__ == '__main__':
+    unittest.main()

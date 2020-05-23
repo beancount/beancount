@@ -9,6 +9,7 @@ from datetime import date
 import datetime
 import collections
 import re
+import unittest
 
 from beancount.core import inventory
 from beancount.core import data
@@ -1296,3 +1297,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
+
+
+if __name__ == '__main__':
+    unittest.main()

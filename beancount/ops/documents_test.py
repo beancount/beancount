@@ -6,6 +6,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import textwrap
+import unittest
 from os import path
 
 from beancount.core import account_test
@@ -211,3 +212,7 @@ class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
             self.root, '/tmp/input.beancount', {'Assets:US:Bank'}, False)
         self.assertEqual(0, len(errors))
         self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+
+if __name__ == '__main__':
+    unittest.main()

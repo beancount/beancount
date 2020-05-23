@@ -102,7 +102,7 @@ def split_expenses(entries, options_map, config):
                         # automatically calculated, so that the resulting
                         # calculated amounts aren't used to affect inferred
                         # tolerances.
-                        meta = posting.meta.copy()
+                        meta = posting.meta.copy() if posting.meta else {}
                         meta[interpolate.AUTOMATIC_META] = True
 
                         # Add a new posting for each member, to a new account

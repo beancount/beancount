@@ -551,3 +551,7 @@ class TestPrinterMisc(test_utils.TestCase):
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
         self.assertIs(entries[-1].postings[-1].meta['foo'], None)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -119,8 +119,8 @@ disable=locally-disabled,
   stop-iteration-return,
   assignment-from-no-return,
   c-extension-no-member,
-  cyclic-import
-
+  cyclic-import,
+  isinstance-second-argument-not-valid-type
 
 
 [VARIABLES]
@@ -221,7 +221,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 inlinevar-name-hint=[A-Za-z_][A-Za-z0-9_]*$
 
 # Regular expression matching correct variable names
-variable-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu|no)$
+variable-rgx=(_?[a-z_][a-z0-9_]{2,30}|__|mu|no)$
 
 # Naming hint for variable names
 variable-name-hint=[a-z_][a-z0-9_]{2,30}$
@@ -239,13 +239,13 @@ attr-rgx=[a-z_][a-z0-9_]{2,30}$
 attr-name-hint=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression matching correct argument names
-argument-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu)$
+argument-rgx=(_?[a-z_][a-z0-9_]{2,30}|__|mu)$
 
 # Naming hint for argument names
 argument-name-hint=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression matching correct function names
-function-rgx=[a-z_][a-zA-Z0-9_]{2,64}$
+function-rgx=_?[a-z_][a-zA-Z0-9_]{2,64}$
 
 # Naming hint for function names
 function-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$

@@ -160,3 +160,6 @@ class QuandlPriceFetcher(unittest.TestCase):
                                                tzinfo=tz.tzutc()),
                              srcprice.time.astimezone(tz.tzutc()))
             self.assertEqual(None, srcprice.quote_currency)
+
+if __name__ == '__main__':
+    unittest.main()

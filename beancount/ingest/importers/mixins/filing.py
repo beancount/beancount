@@ -18,13 +18,17 @@ from beancount.ingest import importer
 class FilingMixin(importer.ImporterProtocol):
 
     def __init__(self, **kwds):
-        """Pull 'filing' and 'prefix' from kwds."""
+        """Pull 'filing' and 'prefix' from kwds.
+
+        Args:
+          filing: The name of the account to file to.
+          prefix: The name of the institution prefix to insert.
+        """
 
         self.filing_account = kwds.pop('filing', None)
         assert account.is_valid(self.filing_account)
 
         self.prefix = kwds.pop('prefix', None)
-        assert account.is_valid(self.filing_account)
 
         super().__init__(**kwds)
 

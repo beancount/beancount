@@ -230,7 +230,7 @@ setup(
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
-    download_url="https://bitbucket.org/blais/beancount",
+    download_url="https://github.com/beancount/beancount",
 
     packages = [
         'beancount',
@@ -257,7 +257,7 @@ setup(
                           '*.css',
                           'third_party/*.js'],
         'beancount.reports': ['*.html'],
-        'beancount.utils.file_type': ['*'],
+        'beancount.utils.file_type_testdata': ['*'],
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
