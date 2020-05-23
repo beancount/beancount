@@ -6,6 +6,12 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-05-23
 
+ - Fixed #184: Added explicit test for Inventory.average().
+ - Fixed #404: Iex price source not working any more.
+ - Fixed #281: Query "id" column does not identify transactions uniquely. Made
+   the default hash_entry() function include metadata. Exclude metadata and
+   derived fields explicitly in the context of comparison.
+ - Fixed #182: Eliding an amount with total price raises TypeError.
  - Added options to filter accounts in "onecommodity" plugin: skip accounts with
    explicitly declared commodities, metadata of "onecommodity: FALSE" and added
    regular expression to specify the list of accounts to match (default: all).

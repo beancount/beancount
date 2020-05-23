@@ -31,7 +31,7 @@ __plugins__ = ('validate_one_commodity',)
 OneCommodityError = collections.namedtuple('OneCommodityError', 'source message entry')
 
 
-def validate_one_commodity(entries, unused_options_map, config):
+def validate_one_commodity(entries, unused_options_map, config=None):
     """Check that each account has units in only a single commodity.
 
     This is an extra constraint that you may want to apply optionally, despite
