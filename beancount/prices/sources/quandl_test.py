@@ -30,7 +30,8 @@ class QuandlPriceFetcher(unittest.TestCase):
                          quandl.parse_ticker('WIKI:FB'))
         self.assertEqual(quandl.TickerSpec('LBMA', 'GOLD', 'USD (PM)'),
                          quandl.parse_ticker('LBMA:GOLD:USD_(PM)'))
-        for test in 'WIKI/FB', 'FB', 'WIKI.FB', 'WIKI,FB', 'LBMA:GOLD:USD (PM)', 'LBMA:GOLD:col:umn':
+        for test in ['WIKI/FB', 'FB', 'WIKI.FB', 'WIKI,FB',
+                     'LBMA:GOLD:USD (PM)', 'LBMA:GOLD:col:umn']:
             with self.assertRaises(ValueError):
                 quandl.parse_ticker(test)
 
@@ -160,6 +161,7 @@ class QuandlPriceFetcher(unittest.TestCase):
                                                tzinfo=tz.tzutc()),
                              srcprice.time.astimezone(tz.tzutc()))
             self.assertEqual(None, srcprice.quote_currency)
+
 
 if __name__ == '__main__':
     unittest.main()

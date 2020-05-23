@@ -50,6 +50,7 @@ class QuandlError(ValueError):
 
 TickerSpec = collections.namedtuple('TickerSpec', 'database dataset column')
 
+
 def parse_ticker(ticker):
     """Convert ticker to Quandl codes."""
     if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:; ]+)?$", ticker):
