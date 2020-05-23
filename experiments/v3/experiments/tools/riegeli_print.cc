@@ -9,8 +9,9 @@
 #include "riegeli/records/record_reader.h"
 #include "absl/base/internal/raw_logging.h"
 #include "absl/base/log_severity.h"
+#include "absl/status/status.h"
 
-#include "experiments/protos/beancount.pb.h"
+#include "experiments/v3/experiments/protos/beancount.pb.h"
 
 
 int main(int argc, char** argv) {
@@ -22,7 +23,7 @@ int main(int argc, char** argv) {
 
   std::string record;
   int num_messages = 0;
-  while (record_reader.ReadRecord(&record)) {
+  while (record_reader.ReadRecord(record)) {
     ++num_messages;
 
     /// ABSL_RAW_LOG(INFO, "Size -> %ld", record.size());
@@ -37,7 +38,7 @@ int main(int argc, char** argv) {
   ABSL_RAW_LOG(ERROR, "Num messages = %d", num_messages);
 
   if (!record_reader.Close()) {
-    ABSL_RAW_LOG(ERROR, "Failed to close record reader: %s", record_reader.message().data());
+    ABSL_RAW_LOG(ERROR, "Failed to close record reader: %s", record_reader.status());
   }
 
   return 0;
