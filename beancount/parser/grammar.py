@@ -816,7 +816,9 @@ class Builder(lexer.LexBuilder):
             if units.number == ZERO:
                 number = ZERO
             else:
-                number = price.number/abs(units.number)
+                number = price.number
+                if number is not MISSING:
+                    number = number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
