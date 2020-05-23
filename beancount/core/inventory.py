@@ -327,6 +327,9 @@ class Inventory(dict):
         for (currency, cost_currency), positions in groups.items():
             total_units = sum(position.units.number
                               for position in positions)
+            # Explicitly skip aggregates when resulting in zero units.
+            if total_units == ZERO:
+                continue
             units_amount = Amount(total_units, currency)
 
             if cost_currency:

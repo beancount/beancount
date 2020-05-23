@@ -6,6 +6,7 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-05-23
 
+ - Fixed #184: Added explicit test for Inventory.average().
  - Fixed #404: Iex price source not working any more.
  - Fixed #281: Query "id" column does not identify transactions uniquely. Made
    the default hash_entry() function include metadata. Exclude metadata and
