@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-03-10
+
+  - Removed hidden option to allow negative prices. This is from 2015. You can't
+    use negative prices, it will cause an error.
+
+
 2019-03-03
 
   - Fixed #378: Rendering metadata with null values wasn't properly implemented.

@@ -742,15 +742,18 @@ class TestMiscOptions(unittest.TestCase):
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
 
-class TestToleranceOptions(unittest.TestCase):
+class TestPerCurrencyOptions(unittest.TestCase):
 
     # pylint: disable=empty-docstring
     @parser.parse_doc()
-    def test_tolerance_defaults(self, _, __, options_map):
+    def test_map_defaults(self, _, __, options_map):
         """
         """
         self.assertEqual({},
                          options_map['inferred_tolerance_default'])
+        self.assertEqual({}, options_map['tolerance'])
+        self.assertEqual({}, options_map['precision'])
+        self.assertEqual({}, options_map['precision_high'])
 
     @parser.parse_doc()
     def test_inferred_tolerance_default(self, _, __, options_map):
@@ -763,6 +766,18 @@ class TestToleranceOptions(unittest.TestCase):
                           "USD": D("0.05"),
                           "JPY": D("0.5")},
                          options_map['inferred_tolerance_default'])
+
+    @parser.parse_doc()
+    def test_tolerance(self, _, __, options_map):
+        """
+          option "tolerance" "*:0"
+          option "tolerance" "USD:0.05"
+          option "tolerance" "JPY:0.5"
+        """
+        self.assertEqual({"*": D("0"),
+                          "USD": D("0.05"),
+                          "JPY": D("0.5")},
+                         options_map['tolerance'])
 
 
 class TestDeprecatedOptions(unittest.TestCase):
