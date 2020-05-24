@@ -9,6 +9,10 @@ dist
 *.so
 .noseids
 examples/generated/*
+beancount/parser/lexer.c
+beancount/parser/lexer.h
+beancount/parser/grammar.c
+beancount/parser/grammar.h
 beancount/parser/grammar.output
 *.picklecache
 *.DS_Store
