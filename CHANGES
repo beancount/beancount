@@ -4,6 +4,15 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-05-25
+
+ - Fixed #449: Added options to bean-check: --no-cache and --cache-filename to
+   override the cache location. These are added to bean-check only and are
+   useful during development. The 'BEANCOUNT_DISABLE_LOAD_CACHE' and
+   'BEANCOUNT_LOAD_CACHE_FILENAME' environment variables are still honored by
+   the loader and work across all other programs.
+
+
 2020-05-23
 
  - Fixed #184: Added explicit test for Inventory.average().
