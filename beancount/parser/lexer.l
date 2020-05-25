@@ -291,6 +291,20 @@ NULL		{
     return DATE;
 }
 
+ /* Time. */
+[0-9][0-9]:[0-9][0-9]:[0-9][0-9] {
+    int hour, minute, second;
+
+    /* Parse the numbers. */
+    hour = strtonl(yytext, 2);
+    minute = strtonl(&yytext[3], 2);
+    second = strtonl(&yytext[6], 2);
+
+    /* Attempt to create the time. */
+    BUILD_LEX("TIME", "iii", hour, minute, second);
+    return TIME;
+}
+
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
     BUILD_LEX("ACCOUNT", "s", yytext);

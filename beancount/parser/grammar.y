@@ -180,6 +180,7 @@ const char* getTokenName(int token);
 %token <pyobj> NONE        /* A None value (parsed as NULL) */
 %token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
+%token <pyobj> TIME        /* A time object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
 %token <pyobj> STRING      /* A quoted string, with any characters inside */
@@ -250,7 +251,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 17
+%expect 18
 
 
 /*--------------------------------------------------------------------------------*/
@@ -368,7 +369,12 @@ tags_links : empty
 transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
             {
                 BUILDY(DECREF4($1, $3, $4, $6),
-                       $$, "transaction", "siObOOO", FILE_LINE_ARGS, $1, $2, $3, $4, $6);
+                       $$, "transaction", "siOObOOO", FILE_LINE_ARGS, $1, Py_None, $2, $3, $4, $6);
+            }
+            | DATE TIME txn txn_strings tags_links eol posting_or_kv_list
+            {
+                BUILDY(DECREF5($1, $2, $4, $5, $7),
+                       $$, "transaction", "siOObOOO", FILE_LINE_ARGS, $1, $2, $3, $4, $5, $7);
             }
 
 optflag : empty
@@ -899,6 +905,7 @@ const char* getTokenName(int token)
         case OPTION    : return "OPTION";
         case PLUGIN    : return "PLUGIN";
         case DATE      : return "DATE";
+        case TIME      : return "TIME";
         case ACCOUNT   : return "ACCOUNT";
         case CURRENCY  : return "CURRENCY";
         case STRING    : return "STRING";

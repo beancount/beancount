@@ -925,7 +925,7 @@ class Builder(lexer.LexBuilder):
         return (frozenset(tags) if tags else EMPTY_SET,
                 frozenset(links) if links else EMPTY_SET)
 
-    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
+    def transaction(self, filename, lineno, date, time, flag, txn_strings, tags_links,
                     posting_or_kv_list):
         """Process a transaction directive.
 
@@ -940,7 +940,8 @@ class Builder(lexer.LexBuilder):
         Args:
           filename: the current filename.
           lineno: the current line number.
-          date: a datetime object.
+          date: a datetime.date object.
+          time: an optional datetime.time object.
           flag: a str, one-character, the flag associated with this transaction.
           txn_strings: A list of strings, possibly empty, possibly longer.
           tags_links: A TagsLinks namedtuple of tags, and/or links.

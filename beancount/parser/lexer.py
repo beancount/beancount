@@ -83,9 +83,21 @@ class LexBuilder:
           month: integer month.
           day: integer day
         Returns:
-          A new datetime object.
+          A new datetime.date object.
         """
         return datetime.date(year, month, day)
+
+    def TIME(self, hour, minute, second):
+        """Process a DATE token.
+
+        Args:
+          hour: integer hour.
+          minute: integer minute.
+          second: integer seconds.
+        Returns:
+          A new datetime.time object.
+        """
+        return datetime.time(hour, minute, second)
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.

@@ -222,6 +222,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
     obj = Py_None;
     if (token == DATE ||
+        token == TIME ||
         token == ACCOUNT ||
         token == CURRENCY ||
         token == STRING ||
