@@ -32,8 +32,9 @@ def fetch_quote(ticker):
 
     results = response.json()
     if len(results) != 1:
-        raise IEXError("Invalid number of responses from IEX: {}".format(
-            response.status_code, response.text))
+        raise IEXError(
+            "Invalid number of responses from IEX: {} received, 1 expected".
+            format(len(results)))
     result = results[0]
 
     price = D(result['price']).quantize(D('0.01'))
