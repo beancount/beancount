@@ -146,12 +146,6 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-
-# Push to github.
-github:
-	hg bookmark -r default master
-	hg push git+ssh://git@github.com/beancount/beancount
-
 # Bake a release.
 release:
 	$(PYTHON) setup.py register sdist upload

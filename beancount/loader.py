@@ -18,6 +18,7 @@ import struct
 import textwrap
 import time
 import warnings
+from typing import Optional
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -50,7 +51,8 @@ RENAMED_MODULES = {}
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
 
-# The threshold below which we don't bother creating a cache file, in seconds.
+# The runtime threshold below which we don't bother creating a cache file, in
+# seconds.
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
@@ -211,10 +213,9 @@ def pickle_cache_function(pattern, time_threshold, function):
     return wrapped
 
 
-def _load_file(filename, *args, **kw):
+def _uncached_load_file(filename, *args, **kw):
     """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-_uncached_load_file = _load_file
 
 
 def needs_refresh(options_map):
@@ -443,7 +444,7 @@ def _load(sources, log_timings, extra_validations, encoding):
     Args:
       sources: A list of (filename-or-string, is-filename) where the first
         element is a string, with either a filename or a string to be parsed directly,
-        and the second arugment is a boolean that is true if the first is a filename.
+        and the second argument is a boolean that is true if the first is a filename.
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A file object or function to write timings to,
@@ -632,17 +633,27 @@ def load_doc(expect_errors=False):
     return decorator
 
 
-def initialize():
+def initialize(use_cache: bool, cache_filename: Optional[str] = None):
     """Initialize the loader."""
 
     # Unless an environment variable disables it, use the pickle load cache
-    # automatically.
+    # automatically. Note that this works across all Python programs running the
+    # loader which is why it's located here.
     # pylint: disable=invalid-name
     global _load_file
-    if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-        _load_file = pickle_cache_function(
-            os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or PICKLE_CACHE_FILENAME,
-            PICKLE_CACHE_THRESHOLD,
-            _uncached_load_file)
+    if use_cache:
+        if cache_filename is None:
+            cache_filename = (os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or
+                              PICKLE_CACHE_FILENAME)
+        _load_file = pickle_cache_function(cache_filename, PICKLE_CACHE_THRESHOLD,
+                                           _uncached_load_file)
+    else:
+        if cache_filename is not None:
+            logging.warning("Cache disabled; "
+                            "Explicitly overridden cache filename %s will be ignored.",
+                            cache_filename)
+        _load_file = _uncached_load_file
 
-initialize()
+
+# Default is to use the cache every time.
+initialize(os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None)

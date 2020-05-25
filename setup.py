@@ -196,7 +196,7 @@ def get_git_changeset():
         return None
 
 # Get the changeset to bake into the binary.
-for get_changeset in get_hg_changeset, get_git_changeset:
+for get_changeset in get_git_changeset, get_hg_changeset:
     changeset_timestamp = get_changeset()
     if changeset_timestamp is not None:
         vc_changeset, vc_timestamp = changeset_timestamp

@@ -139,7 +139,7 @@ def get_alpha_column(column):
     Args:
       column: An integer, the column number. Note: The first column is "0".
     Returns:
-      A string. This can possibly be more than one charater, if column > 26.
+      A string. This can possibly be more than one character, if column > 26.
     """
     letters = []
     while column >= 0:

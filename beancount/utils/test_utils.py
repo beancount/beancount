@@ -361,11 +361,13 @@ def environ(varname, newvalue):
       varname: A string, the environ variable name.
       newvalue: A string, the desired value.
     """
-    oldvalue = os.environ.get(varname)
+    oldvalue = os.environ.get(varname, None)
     os.environ[varname] = newvalue
     yield
-    if oldvalue:
+    if oldvalue is not None:
         os.environ[varname] = oldvalue
+    else:
+        del os.environ[varname]
 
 
 # A function call's arguments, including its return value.
