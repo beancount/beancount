@@ -52,7 +52,8 @@ if not is_fast_decimal(decimal):
         decimal = cdecimal
 
 if not is_fast_decimal(decimal):
-    warnings.warn("Fast C decimal implementation appears to be missing; " "Consider installing cdecimal")
+    warnings.warn("Fast C decimal implementation appears to be missing; "
+                  "Consider installing cdecimal")
 
 
 Decimal = decimal.Decimal
@@ -77,7 +78,7 @@ _CLEAN_NUMBER_RE_COMMA = re.compile("[. ]")
 
 
 # pylint: disable=invalid-name
-def D(strord, decimal_separator_comma=False):
+def D(strord=None, decimal_separator_comma=False):
     """Convert a string into a Decimal object.
 
     This is used in parsing amounts from files in the importers. This is the
