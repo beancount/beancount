@@ -37,8 +37,8 @@ class TestToDecimal(unittest.TestCase):
         self.assertEqual(Decimal('-122.34'), D('- 122.34'))
         self.assertEqual(Decimal(), D(''))
         self.assertEqual(Decimal(), D(None))
-        self.assertEqual(Decimal('-3122.34'), D('- 3 122,34', decimal_separator_comma=True))
-        self.assertEqual(Decimal('-3122.34'), D('- 3.122,34', decimal_separator_comma=True))
+        self.assertEqual(Decimal('-3122.34'), D('- 3 122,34', use_comma_as_decimal_separator=True))
+        self.assertEqual(Decimal('-3122.34'), D('- 3.122,34', use_comma_as_decimal_separator=True))
 
     def test_round_to(self):
         self.assertEqual(D('135.12'), number.round_to(D('135.12345'), D('0.01')))
