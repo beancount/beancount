@@ -39,8 +39,10 @@ def is_fast_decimal(decimal_module):
     "Return true if a fast C decimal implementation is installed."
     return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
 
+
 # Attempt to import a fast C decimal implementation.
 import decimal
+
 if not is_fast_decimal(decimal):
     try:
         import cdecimal
@@ -50,29 +52,32 @@ if not is_fast_decimal(decimal):
         decimal = cdecimal
 
 if not is_fast_decimal(decimal):
-    warnings.warn("Fast C decimal implementation appears to be missing; "
-                  "Consider installing cdecimal")
+    warnings.warn("Fast C decimal implementation appears to be missing; " "Consider installing cdecimal")
 
 
 Decimal = decimal.Decimal
 
 # Constants.
 ZERO = Decimal()
-HALF = Decimal('0.5')
-ONE = Decimal('1')
+HALF = Decimal("0.5")
+ONE = Decimal("1")
 
 # A constant used to make incomplete data, e.g. missing numbers in the cost spec
 # to be filled in automatically. We define this as a class so that it appears in
 # errors that would occur from attempts to access incomplete data.
-class MISSING: pass
+class MISSING:
+    pass
+
 
 # Regular expression for parsing a number in Python.
 NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 
-_CLEAN_NUMBER_RE = re.compile('[, ]')
+_CLEAN_NUMBER_RE = re.compile("[, ]")
+_CLEAN_NUMBER_RE_COMMA = re.compile("[. ]")
+
 
 # pylint: disable=invalid-name
-def D(strord=None):
+def D(strord, decimal_separator_comma=False):
     """Convert a string into a Decimal object.
 
     This is used in parsing amounts from files in the importers. This is the
@@ -81,27 +86,28 @@ def D(strord=None):
     ignored, as they are assumed to be thousands separators (the French comma
     separator as decimal is not supported). This function just returns the
     argument if it is already a Decimal object, for convenience.
-
     Args:
       strord: A string or Decimal instance.
+      decimal_separator_comma: if True, use comma as decimal separator
     Returns:
       A Decimal instance.
     """
     try:
-        # Note: try a map lookup and optimize performance here.
-        if strord is None or strord == '':
+        if strord is None or strord == "":
             return Decimal()
-        elif isinstance(strord, str):
-            return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
-        elif isinstance(strord, Decimal):
-            return strord
         elif isinstance(strord, (int, float)):
             return Decimal(strord)
+        elif isinstance(strord, Decimal):
+            return strord
+        elif isinstance(strord, str):
+            if decimal_separator_comma:
+                return Decimal(_CLEAN_NUMBER_RE_COMMA.sub("", strord).replace(",", "."))
+            else:
+                return Decimal(_CLEAN_NUMBER_RE.sub("", strord))
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
     except Exception as exc:
-        raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(
-                         strord, exc))
+        raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(strord, exc))
 
 
 def round_to(number, increment):
