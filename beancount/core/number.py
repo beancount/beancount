@@ -78,18 +78,20 @@ _CLEAN_NUMBER_RE_COMMA = re.compile("[. ]")
 
 
 # pylint: disable=invalid-name
-def D(strord=None, decimal_separator_comma=False):
+def D(strord=None, use_comma_as_decimal_separator=False):
     """Convert a string into a Decimal object.
 
     This is used in parsing amounts from files in the importers. This is the
     main function you should use to build all numbers the system manipulates
-    (never use floating-point in an accounting system). Commas are stripped and
-    ignored, as they are assumed to be thousands separators (the French comma
-    separator as decimal is not supported). This function just returns the
-    argument if it is already a Decimal object, for convenience.
+    (never use floating-point in an accounting system).
+    the beancount default decimal separator is the point ".". in the case , commas are stripped and
+    ignored, as they are assumed to be thousands separators.
+    if the option use_comma_as_decimal_separator is used, point and space are stripped and ignored.
+
+    This function just returns the argument if it is already a Decimal object, for convenience.
     Args:
       strord: A string or Decimal instance.
-      decimal_separator_comma: if True, use comma as decimal separator
+      use_comma_as_decimal_separator=False: if True, use comma as decimal separator
     Returns:
       A Decimal instance.
     """
@@ -101,7 +103,7 @@ def D(strord=None, decimal_separator_comma=False):
         elif isinstance(strord, Decimal):
             return strord
         elif isinstance(strord, str):
-            if decimal_separator_comma:
+            if use_comma_as_decimal_separator:
                 return Decimal(_CLEAN_NUMBER_RE_COMMA.sub("", strord).replace(",", "."))
             else:
                 return Decimal(_CLEAN_NUMBER_RE.sub("", strord))
