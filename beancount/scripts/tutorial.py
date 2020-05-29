@@ -74,7 +74,7 @@ def main():
                     with open(errors_filename) as efile:
                         errors = efile.read()
                     raise RuntimeError(
-                        "Error running '{}': exit wiht {}; errors: {}".format(
+                        "Error running '{}': exit with {}; errors: {}".format(
                             command, pipe.returncode, errors))
 
         if path.getsize(errors_filename) == 0:

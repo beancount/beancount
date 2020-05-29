@@ -7,8 +7,7 @@ addons:
       - gnupg
       - zip
 install:
-  - pip install -r requirements.txt
-  - pip install pylint
+  - pip install -r requirements_dev.txt
 script:
   - make build
   - make test

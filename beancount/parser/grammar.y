@@ -2,7 +2,7 @@
 /*
  * Parser grammar for beancount 2.0 input syntax.
  *
- * This assumes it feeds off the corresponding lexer in this pacakge. This is
+ * This assumes it feeds off the corresponding lexer in this package. This is
  * meant to be used with the stock "go yacc" command.
  */
 
