@@ -85,27 +85,32 @@ py_test(
     ],
 )
 
-# py_library(
-#     name = "doctor",
-#     srcs = ["doctor.py"],
-#     deps = [
-#         "//beancount/core:display_context",
-#         "//beancount/utils:misc_utils",
-#         "//beancount/utils:version",
-#         "//beancount:loader",
-#     ],
-# )
+py_library(
+    name = "doctor",
+    srcs = ["doctor.py"],
+    deps = [
+        "//beancount/core:compare",
+        "//beancount/core:realization",
+        "//beancount/core:display_context",
+        "//beancount/parser:printer",
+        "//beancount/reports:context",
+        "//beancount/scripts:deps",
+        "//beancount/utils:misc_utils",
+        "//beancount/utils:version",
+        "//beancount:loader",
+    ],
+)
 
-# py_test(
-#     name = "doctor_test",
-#     srcs = ["doctor_test.py"],
-#     deps = [
-#         "//beancount/parser:cmptest",
-#         "//beancount/scripts:directories_test",
-#         "//beancount/scripts:doctor",
-#         "//beancount/utils:test_utils",
-#     ],
-# )
+py_test(
+    name = "doctor_test",
+    srcs = ["doctor_test.py"],
+    deps = [
+        "//beancount/parser:cmptest",
+        "//beancount/scripts:directories_test",
+        "//beancount/scripts:doctor",
+        "//beancount/utils:test_utils",
+    ],
+)
 
 py_library(
     name = "example",
@@ -164,13 +169,13 @@ py_test(
     ],
 )
 
-# py_test(
-#     name = "setup_test",
-#     srcs = ["setup_test.py"],
-#     deps = [
-#         "//beancount/utils:test_utils",
-#     ],
-# )
+py_test(
+    name = "setup_test",
+    srcs = ["setup_test.py"],
+    deps = [
+        "//beancount/utils:test_utils",
+    ],
+)
 
 py_library(
     name = "sql",

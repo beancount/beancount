@@ -175,7 +175,7 @@ py_test(
     name = "query_test",
     srcs = ["query_test.py"],
     data = [
-        "//:sharing_beancount"
+        "//examples:sharing"
     ],
     deps = [
         "//beancount:loader",
@@ -209,7 +209,7 @@ py_test(
     name = "shell_test",
     srcs = ["shell_test.py"],
     data = [
-        "//:example_beancount"
+        "//examples:example"
     ],
     deps = [
         "//beancount:loader",

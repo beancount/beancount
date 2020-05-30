@@ -531,7 +531,7 @@ py_test(
     name = "split_expenses_test",
     srcs = ["split_expenses_test.py"],
     data = [
-        "//:sharing_beancount"
+        "//examples:sharing"
     ],
     deps = [
         ":split_expenses",

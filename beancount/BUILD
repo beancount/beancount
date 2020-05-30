@@ -7,6 +7,9 @@ py_library(
     ],
 )
 
+# Note: We don't include the required plugins in order to be conservative on
+# dependencies for those tests which bypass it. We can probably simplify the
+# deps later.
 py_library(
     name = "loader",
     srcs = ["loader.py"],

@@ -264,9 +264,7 @@ static struct PyModuleDef moduledef = {
 void initialize_metadata(PyObject* module) {
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
-#if PARSER_SOURCE_HASH == 1
-    static const char* quoted_hash = "";
-#elif _MSC_VER
+#if _MSC_VER
     static const char* quoted_hash = "" XSTRINGIFY(PARSER_SOURCE_HASH);
 #else
     static const char* quoted_hash = XSTRINGIFY(PARSER_SOURCE_HASH);

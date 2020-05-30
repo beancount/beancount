@@ -358,7 +358,7 @@ py_test(
     name = "report_test",
     srcs = ["report_test.py"],
     data = [
-        "//:example_beancount",
+        "//examples:example",
     ],
     deps = [
         "//beancount/reports:base",

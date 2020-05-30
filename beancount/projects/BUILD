@@ -32,7 +32,7 @@ py_library(
     name = "export",
     srcs = ["export.py"],
     data = [
-        "//:example_beancount",
+        "//examples:example",
     ],
     deps = [
         "//beancount/core:account",
