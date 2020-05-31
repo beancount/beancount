@@ -83,7 +83,7 @@ def subprocess_env():
             'PYTHONPATH': find_python_lib()}
 
 
-def run_with_args(function, args):
+def run_with_args(function, args, runner_file=None):
     """Run the given function with sys.argv set to argv. The first argument is
     automatically inferred to be where the function object was defined. sys.argv
     is restored after the function is called.
@@ -92,14 +92,18 @@ def run_with_args(function, args):
       function: A function object to call with no arguments.
       argv: A list of arguments, excluding the script name, to be temporarily
         set on sys.argv.
+      runner_file: An optional name of the top-level file being run.
     Returns:
       The return value of the function run.
     """
     saved_argv = sys.argv
     saved_handlers = logging.root.handlers
+
     try:
-        module = sys.modules[function.__module__]
-        sys.argv = [module.__file__] + args
+        if runner_file is None:
+            module = sys.modules[function.__module__]
+            runner_file = module.__file__
+        sys.argv = [runner_file] + args
         logging.root.handlers = []
         return function()
     finally:

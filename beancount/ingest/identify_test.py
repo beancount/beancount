@@ -9,11 +9,16 @@ import subprocess
 import sys
 import textwrap
 import unittest
+import functools
 
 from beancount.utils import test_utils
 from beancount.ingest.importer import ImporterProtocol
 from beancount.ingest import identify
 from beancount.ingest import scripts_utils
+
+
+
+identify_main = functools.partial(scripts_utils.trampoline_to_ingest, identify)
 
 
 class _TestImporter(ImporterProtocol):
@@ -98,17 +103,19 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
         # Invoke with old-style imports script via tool (with no ingest() call).
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(identify.main,
+            test_utils.run_with_args(identify_main,
                                      [path.join(self.tempdir, 'test.import'),
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     identify.__file__)
         output = stdout.getvalue().strip()
         self.assertTrue(re.match(regexp, output))
 
         # Invoke with new-style imports script via tool (with an ingest() call).
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(identify.main,
+            test_utils.run_with_args(identify_main,
                                      [path.join(self.tempdir, 'testimport.py'),
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     identify.__file__)
         output = stdout.getvalue().strip()
         self.assertTrue(re.match(regexp, output))
 
@@ -117,8 +124,11 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             test_utils.find_repository_root(__file__), 'examples', 'ingest')
         config_filename = path.join(example_dir, 'office', 'example.import')
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            result = test_utils.run_with_args(identify.main, [
-                config_filename, path.join(example_dir, 'Downloads')])
+            result = test_utils.run_with_args(
+                identify_main,
+                [config_filename, path.join(example_dir, 'Downloads')],
+                identify.__file__)
+
         self.assertEqual(0, result)
         output = stdout.getvalue()
         errors = stderr.getvalue()

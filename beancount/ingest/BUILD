@@ -1,5 +1,3 @@
-# TODO(blais): This file is incomplete.
-
 package(default_visibility = ["//visibility:public"])
 
 py_library(
@@ -45,20 +43,198 @@ py_test(
     ],
 )
 
-  # -rw-r--r--  1 blais blais  4038 May 22 12:47 cache.py
-  # -rw-r--r--  1 blais blais  1691 May 23 09:23 cache_test.py
-  # -rw-r--r--  1 blais blais  9947 May 23 09:23 extract.py
-  # -rw-r--r--  1 blais blais 14306 May 23 09:23 extract_test.py
-  # -rw-r--r--  1 blais blais 12091 May 23 09:23 file.py
-  # -rw-r--r--  1 blais blais 17072 May 23 09:23 file_test.py
-  # -rw-r--r--  1 blais blais  3757 May 23 09:23 identify.py
-  # -rw-r--r--  1 blais blais  5313 May 23 09:23 identify_test.py
-  # drwxr-xr-x  3 blais blais  4096 May 23 16:51 importers
-  # -rw-r--r--  1 blais blais   655 May 22 12:47 __init__.py
-  # -rw-r--r--  1 blais blais  9269 May 22 12:47 regression.py
-  # -rw-r--r--  1 blais blais  5957 May 22 12:47 regression_pytest.py
-  # -rw-r--r--  1 blais blais  7351 May 23 09:23 regression_test.py
-  # -rw-r--r--  1 blais blais 16582 May 22 12:47 scripts_utils.py
-  # -rw-r--r--  1 blais blais  4485 May 23 09:23 scripts_utils_test.py
-  # -rw-r--r--  1 blais blais  5550 May 22 12:47 similar.py
-  # -rw-r--r--  1 blais blais  5796 May 23 09:23 similar_test.py
+py_library(
+    name = "scripts_utils",
+    srcs = [
+        "scripts_utils.py",
+    ],
+    deps = [
+        "//beancount/ingest:importer",
+        "//beancount/ingest:cache",
+        "//beancount/utils:test_utils",
+        "//beancount/utils:version",
+        "//beancount/ingest:identify",
+        "//beancount/ingest:extract",
+        "//beancount/ingest:file",
+    ],
+)
+
+py_test(
+    name = "scripts_utils_test",
+    srcs = [
+        "scripts_utils_test.py",
+    ],
+    deps = [
+        ":scripts_utils",
+        "//beancount/utils:test_utils",
+        "//beancount/ingest:extract",
+    ],
+)
+
+py_library(
+    name = "similar",
+    srcs = [
+        "similar.py",
+    ],
+    deps = [
+        "//beancount/core:number",
+        "//beancount/core:data",
+        "//beancount/core:amount",
+        "//beancount/core:interpolate",
+    ],
+)
+
+py_test(
+    name = "similar_test",
+    srcs = [
+        "similar_test.py",
+    ],
+    deps = [
+        ":similar",
+        "//beancount/core:number",
+        "//beancount/core:data",
+        "//beancount/parser:cmptest",
+        "//beancount/parser:parser",
+        "//beancount:loader",
+        "//beancount/ops:pad",
+        "//beancount/ops:documents",
+        "//beancount/plugins:auto_accounts",
+        "//beancount/ops:balance",
+    ],
+)
+
+py_library(
+    name = "extract",
+    srcs = [
+        "extract.py",
+    ],
+    deps = [
+        "//beancount/core:data",
+        "//beancount/parser:printer",
+        "//beancount/ingest:similar",
+        "//beancount/ingest:identify",
+        "//beancount/ingest:cache",
+        "//beancount:loader",
+    ],
+)
+
+py_test(
+    name = "extract_test",
+    srcs = [
+        "extract_test.py",
+    ],
+    data = [
+        "//examples:example",
+        "//examples/ingest:office_files",
+    ],
+    deps = [
+        ":extract",
+        "//examples/ingest:office",
+        "//beancount/utils:test_utils",
+        "//beancount/utils:misc_utils",
+        "//beancount/parser:parser",
+        "//beancount:loader",
+        "//beancount/ingest:importer",
+        "//beancount/ingest:scripts_utils",
+    ],
+)
+
+py_library(
+    name = "file",
+    srcs = [
+        "file.py",
+    ],
+    deps = [
+        "//beancount/core:account",
+        "//beancount/utils:misc_utils",
+        "//beancount/ingest:identify",
+        "//beancount/ingest:cache",
+    ],
+)
+
+py_test(
+    name = "file_test",
+    srcs = [
+        "file_test.py",
+    ],
+    data = [
+        "//examples:example",
+        "//examples/ingest:office_files",
+    ],
+    deps = [
+        ":file",
+        "//examples/ingest:office",
+        "//beancount/utils:test_utils",
+        "//beancount/utils:file_utils",
+        "//beancount/ingest:scripts_utils",
+    ],
+)
+
+py_library(
+    name = "identify",
+    srcs = [
+        "identify.py",
+    ],
+    deps = [
+        "//beancount/utils:file_utils",
+        "//beancount/ingest:cache",
+    ],
+)
+
+py_test(
+    name = "identify_test",
+    srcs = [
+        "identify_test.py",
+    ],
+    data = [
+        "//examples:example",
+        "//examples/ingest:office_files",
+    ],
+    deps = [
+        ":identify",
+        "//examples/ingest:office",
+        "//beancount/utils:test_utils",
+        "//beancount/ingest:importer",
+        "//beancount/ingest:scripts_utils",
+    ],
+)
+
+py_library(
+    name = "regression",
+    srcs = [
+        "regression.py",
+    ],
+    deps = [
+        "//beancount/ingest:importer",
+        "//beancount/parser:printer",
+        "//beancount/utils:test_utils",
+        "//beancount/utils:misc_utils",
+        "//beancount/ingest:extract",
+        "//beancount/ingest:cache",
+    ],
+)
+
+py_library(
+    name = "regression_pytest",
+    srcs = [
+        "regression_pytest.py",
+    ],
+    deps = [
+        "//beancount/ingest:cache",
+        "//beancount/ingest:extract",
+        "//beancount/parser:printer",
+    ],
+)
+
+py_test(
+    name = "regression_test",
+    srcs = [
+        "regression_test.py",
+    ],
+    deps = [
+        ":regression",
+        "//beancount/utils:test_utils",
+        "//beancount/parser:parser",
+        "//beancount/ingest:importer",
+    ],
+)

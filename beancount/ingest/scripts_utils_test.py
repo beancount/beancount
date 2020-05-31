@@ -5,10 +5,14 @@ from os import path
 import argparse
 import os
 import unittest
+import functools
 
 from beancount.utils import test_utils
 from beancount.ingest import scripts_utils
 from beancount.ingest import extract
+
+
+extract_main = functools.partial(scripts_utils.trampoline_to_ingest, extract)
 
 
 def run(args, parser, importers_list, files_or_directories):
@@ -84,17 +88,19 @@ class TestImplicitInvocationMethods(scripts_utils.TestScriptsBase):
 
     def test_implicit_invocation(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main,
+            test_utils.run_with_args(extract_main,
                                      [path.join(self.tempdir, 'test.import'),
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     extract.__file__)
         self.assertRegex(stdout.getvalue(), r'\*.*ofxdownload.ofx')
         self.assertFalse(stderr.getvalue())
 
     def test_implicit_invocation_with_ingest_call(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main,
+            test_utils.run_with_args(extract_main,
                                      [path.join(self.tempdir, 'test2.import'),
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     extract.__file__)
         self.assertRegex(stdout.getvalue(), r'\*.*ofxdownload.ofx')
         self.assertFalse(stderr.getvalue())
 

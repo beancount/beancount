@@ -8,6 +8,7 @@ import io
 import os
 import re
 import textwrap
+import functools
 from unittest import mock
 
 from beancount.utils import test_utils
@@ -17,6 +18,9 @@ from beancount import loader
 from beancount.ingest import extract
 from beancount.ingest import importer
 from beancount.ingest import scripts_utils
+
+
+extract_main = functools.partial(scripts_utils.trampoline_to_ingest, extract)
 
 
 class TestScriptExtractFromFile(test_utils.TestCase):
@@ -285,9 +289,10 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
 
     def test_extract(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main,
+            test_utils.run_with_args(extract_main,
                                      [self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     extract.__file__)
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
@@ -304,9 +309,10 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                  wraps=extract.find_duplicate_entries)
     def test_extract_find_dups_once_only_with_many_files(self, mock):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main,
+            test_utils.run_with_args(extract_main,
                                      [self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     extract.__file__)
         output = stdout.getvalue()
         mock.assert_called_once()
 
@@ -341,10 +347,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
             """))
 
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main,
+            test_utils.run_with_args(extract_main,
                                      ['--existing={}'.format(existing_filename),
                                       self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')])
+                                      path.join(self.tempdir, 'Downloads')],
+                                     extract.__file__)
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
@@ -361,7 +368,8 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         emptydir = path.join(self.tempdir, 'Empty')
         os.makedirs(emptydir)
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract.main, [self.config_filename, emptydir])
+            test_utils.run_with_args(extract_main, [self.config_filename, emptydir],
+                                     extract.__file__)
         output = stdout.getvalue()
         self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
 
@@ -370,10 +378,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
             test_utils.find_repository_root(__file__), 'examples', 'ingest')
         config_filename = path.join(example_dir, 'office', 'example.import')
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            result = test_utils.run_with_args(extract.main, [
+            result = test_utils.run_with_args(extract_main, [
                 '--existing={}'.format(path.join(example_dir, 'example.beancount')),
                 config_filename,
-                path.join(example_dir, 'Downloads')])
+                path.join(example_dir, 'Downloads')],
+                                              extract.__file__)
         self.assertEqual(0, result)
         errors = stderr.getvalue()
         self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
