@@ -2,26 +2,26 @@
 
 package(default_visibility = ["//visibility:public"])
 
-# py_library(
-#     name = "bake",
-#     srcs = ["bake.py"],
-#     deps = [
-#         "//beancount/utils:file_utils",
-#         "//beancount/utils:version",
-#         "//beancount/web:scrape",
-#         "//beancount/web:web",
-#     ],
-# )
+py_library(
+    name = "bake",
+    srcs = ["bake.py"],
+    deps = [
+        "//beancount/utils:file_utils",
+        "//beancount/utils:version",
+        "//beancount/web:scrape",
+        "//beancount/web:web",
+    ],
+)
 
-# py_test(
-#     name = "bake_test",
-#     srcs = ["bake_test.py"],
-#     deps = [
-#         "//beancount/scripts:bake",
-#         "//beancount/utils:file_utils",
-#         "//beancount/utils:test_utils",
-#     ],
-# )
+py_test(
+    name = "bake_test",
+    srcs = ["bake_test.py"],
+    deps = [
+        "//beancount/scripts:bake",
+        "//beancount/utils:file_utils",
+        "//beancount/utils:test_utils",
+    ],
+)
 
 py_test(
     name = "check_examples_test",
@@ -208,14 +208,14 @@ py_library(
 
 # The problem with this test is that it calls the bean-report binary several times.
 # You'll have to rework the test.
-# py_test(
-#     name = "tutorial_test",
-#     srcs = ["tutorial_test.py"],
-#     data = [
-#         "//:example_beancount",
-#     ],
-#     deps = [
-#         ":tutorial",
-#         "//beancount/utils:test_utils",
-#     ],
-# )
+py_test(
+    name = "tutorial_test",
+    srcs = ["tutorial_test.py"],
+    data = [
+        "//examples:example",
+    ],
+    deps = [
+        ":tutorial",
+        "//beancount/utils:test_utils",
+    ],
+)

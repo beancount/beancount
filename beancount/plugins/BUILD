@@ -1,6 +1,43 @@
 package(default_visibility = ["//visibility:public"])
 
 py_library(
+    name = "all_plugins",
+    srcs = [
+        ":__init__.py",
+    ],
+    deps = [
+        ":auto_accounts",
+        ":auto",
+        ":book_conversions",
+        ":check_average_cost",
+        ":check_closing",
+        ":check_commodity",
+        ":coherent_cost",
+        ":commodity_attr",
+        ":currency_accounts",
+        ":divert_expenses",
+        ":exclude_tag",
+        ":fill_account",
+        ":fix_payees",
+        ":forecast",
+        ":implicit_prices",
+        ":ira_contribs",
+        ":leafonly",
+        ":mark_unverified",
+        ":merge_meta",
+        ":noduplicates",
+        ":nounused",
+        ":onecommodity",
+        ":pedantic",
+        ":sellgains",
+        ":split_expenses",
+        ":tag_pending",
+        ":unique_prices",
+        ":unrealized",
+    ],
+)
+
+py_library(
     name = "auto_accounts",
     srcs = ["auto_accounts.py"],
     deps = [
