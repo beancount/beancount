@@ -77,6 +77,8 @@ py_binary(
     ],
 )
 
+
+
   # -rwxr-xr-x  1 blais blais  155 May 22 12:47 bean-extract
   # -rwxr-xr-x  1 blais blais  152 May 22 12:47 bean-file
   # -rwxr-xr-x  1 blais blais  155 May 22 12:47 bean-format

@@ -106,6 +106,7 @@ py_library(
         "//beancount/core:data",
         "//beancount/core:position",
         "//beancount/core:number",
+        "//beancount/utils:test_utils",
         ":booking",
         ":parser",
         ":printer",
