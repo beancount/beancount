@@ -167,6 +167,7 @@ def create_temporary_files(root, contents_map):
             f.write(clean_contents)
 
 
+# TODO(blais): Improve this with kwargs instead.
 def capture(*attributes):
     """A context manager that captures what's printed to stdout.
 

@@ -1,5 +1,3 @@
-# TODO(blais): This file is incomplete.
-
 package(default_visibility = ["//visibility:public"])
 
 py_library(
@@ -203,11 +201,10 @@ py_library(
     deps = [
         "//beancount/utils:test_utils",
         "//beancount/utils:version",
+        "//beancount/reports:report",
     ],
 )
 
-# The problem with this test is that it calls the bean-report binary several times.
-# You'll have to rework the test.
 py_test(
     name = "tutorial_test",
     srcs = ["tutorial_test.py"],

@@ -11,6 +11,7 @@ from os import path
 
 from beancount.utils import test_utils
 from beancount.utils import version
+from beancount.reports import report
 
 
 # pylint: disable=bad-whitespace
@@ -22,7 +23,7 @@ COMMANDS = [
     ('help-formats'             , "bean-report --help-formats"),
     ('balances-restrict'        , "bean-report {} balances -e ETrade"),
     ('balances-restrict-cost'   , "bean-report {} balances -e ETrade -c"),
-    ('balances-tree'            , "bean-report {} balances | treeify"),
+    ('balances-tree'            , "bean-report {} balances"), ### TODO(blais) | treeify"),
     ('balsheet'                 , "bean-report {} balsheet"),
     ('journal'                  , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:BofA:Checking")),
@@ -58,27 +59,32 @@ def main():
     for report_name, command_template in COMMANDS:
         logging.info('Generating %s: %s', report_name, command_template)
         rootdir = test_utils.find_repository_root(__file__)
-        command_template = "{} {}/bin/{}".format(sys.executable, rootdir, command_template)
         output_filename = path.join(args.output_directory, '{}.output'.format(report_name))
         errors_filename = path.join(args.output_directory, '{}.errors'.format(report_name))
-        with open(output_filename, 'w') as output_file:
-            with open(errors_filename, 'w') as errors_file:
-                command = command_template.format(args.filename)
-                pipe = subprocess.Popen(command,
-                                        env=test_utils.subprocess_env(),
-                                        shell=True,
-                                        stdout=output_file,
-                                        stderr=errors_file)
-                pipe.communicate()
-                if pipe.returncode != 0:
+        command = command_template.format(args.filename)
+        command_args = command.split()[1:]
+        with test_utils.capture('stdout') as stdout:
+            with test_utils.capture('stderr') as stderr:
+                try:
+                    returncode = report.main(command_args)
+                except SystemExit as exc:
+                    returncode = exc.code
+                if returncode != 0:
                     with open(errors_filename) as efile:
                         errors = efile.read()
                     raise RuntimeError(
                         "Error running '{}': exit with {}; errors: {}".format(
-                            command, pipe.returncode, errors))
+                            command, returncode, errors))
 
-        if path.getsize(errors_filename) == 0:
-            os.remove(errors_filename)
+        # NOTE(blais): This could be removed by improving the capture() function.
+        output_filename = path.join(args.output_directory, '{}.output'.format(report_name))
+        with open(output_filename, 'w') as outfile:
+            outfile.write(stdout.getvalue())
+
+        if stderr.getvalue():
+            errors_filename = path.join(args.output_directory, '{}.errors'.format(report_name))
+            with open(errors_filename, 'w') as outfile:
+                outfile.write(stderr.getvalue())
 
     return 0
 

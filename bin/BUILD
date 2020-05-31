@@ -1,12 +1,10 @@
 # TODO(blais): This file is incomplete.
-# TODO(blais): Move loader deps into the loader.
-
-load("@subpar//:subpar.bzl", "par_binary")
 
 package(default_visibility = ["//visibility:public"])
 
+# Note: The genrule targets rename the scripts to .py generated files.
+# Note: subpar does not yet support C extensions.
 
-# Rename the scripts to .py generated files.
 genrule(
     name = "bean_check_py",
     srcs = [
@@ -21,11 +19,7 @@ py_binary(
     srcs = ["bean_check.py"],
     deps = [
         "//beancount/scripts:check",
-        # Move these into loader deps.
-        "//beancount/ops:pad",
-        "//beancount/ops:documents",
-        "//beancount/ops:balance",
-        "//beancount/plugins:all_plugins",
+        "//beancount:loader_with_plugins",
     ],
 )
 
@@ -43,18 +37,46 @@ py_binary(
     srcs = ["bean_bake.py"],
     deps = [
         "//beancount/scripts:bake",
-        # Move these into loader deps.
-        "//beancount/ops:pad",
-        "//beancount/ops:documents",
-        "//beancount/ops:balance",
-        "//beancount/plugins:all_plugins",
+        "//beancount:loader_with_plugins",
     ],
 )
 
+genrule(
+    name = "bean_doctor_py",
+    srcs = [
+        "bean-doctor",
+    ],
+    outs = ["bean_doctor.py"],
+    cmd = "cat $(locations :bean-doctor) > $@",
+)
 
+py_binary(
+    name = "bean_doctor",
+    srcs = ["bean_doctor.py"],
+    deps = [
+        "//beancount/scripts:doctor",
+        "//beancount:loader_with_plugins",
+    ],
+)
 
-  # -rwxr-xr-x  1 blais blais  155 May 22 12:47 bean-doctor
-  # -rwxr-xr-x  1 blais blais  156 May 22 12:47 bean-example
+genrule(
+    name = "bean_example_py",
+    srcs = [
+        "bean-example",
+    ],
+    outs = ["bean_example.py"],
+    cmd = "cat $(locations :bean-example) > $@",
+)
+
+py_binary(
+    name = "bean_example",
+    srcs = ["bean_example.py"],
+    deps = [
+        "//beancount/scripts:example",
+        "//beancount:loader_with_plugins",
+    ],
+)
+
   # -rwxr-xr-x  1 blais blais  155 May 22 12:47 bean-extract
   # -rwxr-xr-x  1 blais blais  152 May 22 12:47 bean-file
   # -rwxr-xr-x  1 blais blais  155 May 22 12:47 bean-format

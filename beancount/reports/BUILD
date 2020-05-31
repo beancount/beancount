@@ -337,7 +337,7 @@ py_library(
     name = "report",
     srcs = ["report.py"],
     deps = [
-        "//beancount:loader",
+        "//beancount:loader_with_plugins",
         "//beancount/ops:validation",
         "//beancount/reports:balance_reports",
         "//beancount/reports:base",

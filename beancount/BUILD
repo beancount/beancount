@@ -26,6 +26,17 @@ py_library(
     ],
 )
 
+py_library(
+    name = "loader_with_plugins",
+    deps = [
+        ":loader",
+        "//beancount/ops:pad",
+        "//beancount/ops:documents",
+        "//beancount/ops:balance",
+        "//beancount/plugins:all_plugins",
+    ],
+)
+
 py_test(
     name = "loader_test",
     srcs = ["loader_test.py"],

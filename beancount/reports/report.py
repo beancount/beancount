@@ -142,7 +142,7 @@ class ListFormatsAction(argparse.Action):
         sys.exit(0)
 
 
-def main():
+def main(argv=None):
     parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('--help-reports', '--list-reports',
@@ -200,7 +200,7 @@ def main():
             'filters', nargs='*',
             help='Filter expression(s) to select the subset of transactions.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=argv)
 
     # Warn on filters--not supported at this time.
     if hasattr(args, 'filters') and args.filters:
@@ -252,15 +252,12 @@ def main():
                 chosen_report.render(entries, errors, options_map, args.format, outfile)
             except base.ReportError as exc:
                 sys.stderr.write("Error: {}\n".format(exc))
-                sys.exit(1)
+                return 1
     else:
         print(get_list_report_string())
 
-    if errors:
-        sys.exit(1)
-
-    return 0
+    return (1 if errors else 0)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
