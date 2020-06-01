@@ -12,7 +12,6 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from babel.numbers import parse_decimal
 import types
 import warnings
 import re
@@ -56,6 +55,8 @@ if not is_fast_decimal(decimal):
 
 
 Decimal = decimal.Decimal
+
+from babel.numbers import parse_decimal
 
 # Constants.
 ZERO = Decimal()
