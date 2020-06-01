@@ -1,4 +1,4 @@
-load("//tools/build:py_extension.bzl", "py_extension")
+load("@oblique//third_party/python:py_extension.bzl", "py_extension")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -264,6 +264,8 @@ py_test(
 py_extension(
     name = "_parser",
     srcs = ["parser.c"],
+    # TODO(blais): Compute this value properly.
+    local_defines = ["VC_CHANGESET", "VC_TIMESTAMP", "PARSER_SOURCE_HASH", "RELEASE_VERSION"],
     deps = [
         ":grammar_c",
         ":lexer_c",
