@@ -38,6 +38,13 @@ class TestToDecimal(unittest.TestCase):
         self.assertEqual(Decimal(), D(''))
         self.assertEqual(Decimal(), D(None))
 
+    def test_localized_D(self):
+        dec = Decimal('1000.345')
+        self.assertEqual(dec, D('1’000.345', locale='de_CH'))
+        self.assertEqual(dec, D('1.000,345', locale='de_DE'))
+        self.assertEqual(dec, D('1,000.345', locale='en_US'))
+        self.assertEqual(dec, D('1\u202f000.345', locale='fr_CH'))
+
     def test_round_to(self):
         self.assertEqual(D('135.12'), number.round_to(D('135.12345'), D('0.01')))
         self.assertEqual(D('135.12'), number.round_to(D('135.12987'), D('0.01')))

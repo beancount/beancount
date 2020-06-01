@@ -12,6 +12,7 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from babel.numbers import parse_decimal
 import types
 import warnings
 import re
@@ -72,7 +73,7 @@ NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 _CLEAN_NUMBER_RE = re.compile('[, ]')
 
 # pylint: disable=invalid-name
-def D(strord=None):
+def D(strord=None, locale=None):
     """Convert a string into a Decimal object.
 
     This is used in parsing amounts from files in the importers. This is the
@@ -84,6 +85,7 @@ def D(strord=None):
 
     Args:
       strord: A string or Decimal instance.
+      locale: The optional locale to use when parsing strings.
     Returns:
       A Decimal instance.
     """
@@ -92,6 +94,8 @@ def D(strord=None):
         if strord is None or strord == '':
             return Decimal()
         elif isinstance(strord, str):
+            if locale:
+                return parse_decimal(strord, locale=locale)
             return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
         elif isinstance(strord, Decimal):
             return strord

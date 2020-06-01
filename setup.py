@@ -74,6 +74,10 @@ else:
             # against it.
             'chardet',
 
+            # This library is needed to provide locale support for the
+            # number parsing.
+            'babel',
+
             # This library is used to download and convert the documentation
             # programmatically and to upload lists of holdings to a Google
             # Spreadsheet for live intra-day monitoring.

@@ -73,7 +73,7 @@ class Col(enum.Enum):
     CATEGORY = '[CATEGORY]'
 
 
-def get_amounts(iconfig, row, allow_zero_amounts=False):
+def get_amounts(iconfig, row, allow_zero_amounts=False, locale=None):
     """Get the amount columns of a row.
 
     Args:
@@ -81,6 +81,7 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
       row: A row array containing the values of the given row.
       allow_zero_amounts: Is a transaction with amount D('0.00') okay? If not,
         return (None, None).
+      locale: A string specifying the locale to be used when parsing numbers.
     Returns:
       A pair of (debit-amount, credit-amount), both of which are either an
       instance of Decimal or None, or not available.
@@ -93,13 +94,13 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
 
     # If zero amounts aren't allowed, return null value.
-    is_zero_amount = ((credit is not None and D(credit) == ZERO) and
-                      (debit is not None and D(debit) == ZERO))
+    is_zero_amount = ((credit is not None and D(credit, locale) == ZERO) and
+                      (debit is not None and D(debit, locale) == ZERO))
     if not allow_zero_amounts and is_zero_amount:
         return (None, None)
 
-    return (-D(debit) if debit else None,
-            D(credit) if credit else None)
+    return (-D(debit, locale) if debit else None,
+            D(credit, locale) if credit else None)
 
 
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
@@ -117,6 +118,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                  dateutil_kwds: Optional[Dict] = None,
                  narration_sep: str = '; ',
                  encoding: Optional[str] = None,
+                 locale: Optional[str] = None,
                  invert_sign: Optional[bool] = False,
                  **kwds):
         """Constructor.
@@ -139,6 +141,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             narration fields of a source field.
           encoding: An optional encoding for the file. Typically useful for files
             encoded in 'latin1' instead of 'utf-8' (the default).
+          locale: An optional locale for the file. Used to correctly parse numbers.
           invert_sign: If true, invert the amount's sign unconditionally.
           **kwds: Extra keyword arguments to provide to the base mixins.
         """
@@ -154,6 +157,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         self.csv_dialect = csv_dialect
         self.narration_sep = narration_sep
         self.encoding = encoding
+        self.locale = locale
         self.invert_sign = invert_sign
 
         self.categorizer = categorizer
@@ -273,7 +277,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
             if balance is not None:
-                meta['balance'] = D(balance)
+                meta['balance'] = D(balance, self.locale)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
                 meta['card'] = last4_friendly if last4_friendly else last4
@@ -339,7 +343,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         This method is present to allow clients to override it in order to deal
         with special cases, e.g., columns with currency symbols in them.
         """
-        return get_amounts(iconfig, row, allow_zero_amounts)
+        return get_amounts(iconfig, row, allow_zero_amounts, self.locale)
 
 
 def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
