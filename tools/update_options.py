@@ -54,8 +54,8 @@ def get_options_docid():
     return list(filter(None, lines[0].group(1).split('/')))[-1]
 
 
-SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
-                                 '.google-apis-service-account.json')
+SERVICE_ACCOUNT_FILE = os.path.expanduser('~/.google-apis-service-account.json')
+
 
 def get_auth_via_service_account(scopes):
     """Get an authenticated http object via a service account.

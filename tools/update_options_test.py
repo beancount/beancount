@@ -10,7 +10,7 @@ try:
 except ImportError:
     apiclient = None
 else:
-    import update_options
+    from tools import update_options
 
 
 @unittest.skipIf(apiclient is None, "google-api-python-client not installed")
