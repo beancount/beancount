@@ -1,5 +1,6 @@
 # Use C++14.
 build --cxxopt=-std=c++14
+build -c opt
 
 ## Make Python protos faster by backing them with C++ protos.
 build --define=use_fast_cpp_protos=true
