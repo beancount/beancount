@@ -4,6 +4,16 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-02
+
+ - Modified recently added --no-cache option to also delete the cache if it
+   exists. Honor the same environment variables. The motivation behind this
+   change is that while --no-cache is useful for debugging plugins, it can be
+   disconcerting that if you remove it on the next run it picks up the old
+   existing cache. Deleting it on usage of --no-cache is reasonable behavior and
+   avoids the introduction of a --clear-cache option; this should be sufficient.
+
+
 2020-05-25
 
  - Fixed #449: Added options to bean-check: --no-cache and --cache-filename to
