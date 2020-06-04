@@ -94,4 +94,4 @@ def process_extracted_entries(extracted_entries_list, ledger_entries):
             for filename, entries in extracted_entries_list]
 
 # Invoke the script.
-scripts_utils.ingest(CONFIG, detect_duplicates_func=process_extracted_entries)
+scripts_utils.ingest(CONFIG, filter_funcs=[process_extracted_entries])

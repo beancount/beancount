@@ -6,6 +6,10 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-06-03
 
+ - Added a 'hooks' argument to beancount.ingest.scripts_utils.ingest() replacing
+   'detect_duplicates_func'. 'find_duplicate_entries()' is still inserted if no
+   other filter functions are specified (I'd like to remove this eventually; not
+   changing behavior here for now.)
  - Added an example for how to run the importers explictly via a Python script
    calling the ingest() function.
  - Fixed bug with explicit invocation of importers via ingest() function when
