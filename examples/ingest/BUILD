@@ -18,3 +18,33 @@ py_library(
         "//beancount/ingest/importers:ofx"
     ],
 )
+
+py_library(
+    name = "utrade_csv",
+    srcs = [
+        "//beancount/core:number",
+        "//beancount/core:data",
+        "//beancount/core:account",
+        "//beancount/core:amount",
+        "//beancount/core:position",
+        "//beancount/ingest:importer",
+    ],
+)
+
+py_library(
+    name = "acme_pdf",
+    srcs = [
+        "//beancount/ingest:importer",
+    ],
+)
+
+py_library(
+    name = "example_import",
+    srcs = ["office/example_import.py"],
+    deps = [
+        ":utrade_csv",
+        ":acme_pdf",
+        "//beancount/ingest:extract",
+        "//beancount/ingest/importers:ofx",
+    ],
+)
