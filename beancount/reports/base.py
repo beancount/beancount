@@ -55,7 +55,7 @@ class Report:
         and invokes add_args() and creates an appropriate instance directly.
 
         Args:
-          argv: A list of strings, command-line arguments to use to construct tbe report.
+          argv: A list of strings, command-line arguments to use to construct the report.
           kwds: A dict of other keyword arguments to pass to the report's constructor.
         Returns:
           A new instance of the report.
