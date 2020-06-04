@@ -6,7 +6,9 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-06-03
 
- - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjust
+ - Fixed bug with explicit invocation of importers via ingest() function when
+   calling the 'file' sub command.
+ - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjusted
    ingestion example scripts.
 
 
