@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-03
+
+ - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjust
+   ingestion example scripts.
+
+
 2020-06-02
 
  - Modified recently added --no-cache option to also delete the cache if it
