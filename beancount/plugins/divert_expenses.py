@@ -3,25 +3,25 @@
 This plugin allows you to select a tag and it automatically converts all the
 Expenses postings to use a single account. For example, with this input:
 
-  plugin "divert_expenses" "['kid', 'Expenses:Child']"
+    plugin "divert_expenses" "['kid', 'Expenses:Child']"
 
-  2018-01-28 * "CVS" "Formula" #kid
-    Liabilities:CreditCard      -10.27 USD
-    Expenses:Food:Grocery        10.27 USD
+    2018-01-28 * "CVS" "Formula" #kid
+      Liabilities:CreditCard      -10.27 USD
+      Expenses:Food:Grocery        10.27 USD
 
 It will output:
 
-  2018-01-28 * "CVS" "Formula" #kid
-    Liabilities:CreditCard      -10.27 USD
-    Expenses:Child               10.27 USD
+   2018-01-28 * "CVS" "Formula" #kid
+      Liabilities:CreditCard      -10.27 USD
+      Expenses:Child               10.27 USD
 
 You can limit the diversion to one posting only, like this:
 
-  2018-05-05 * "CVS/PHARMACY" "" #kai
-    Liabilities:CreditCard        -66.38 USD
-    Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
-    Expenses:Pharmacy              45.38 USD
-      divert: FALSE
+    2018-05-05 * "CVS/PHARMACY" "" #kai
+      Liabilities:CreditCard        -66.38 USD
+      Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
+      Expenses:Pharmacy              45.38 USD
+        divert: FALSE
 
 See unit test for details.
 

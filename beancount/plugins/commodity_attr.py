@@ -4,10 +4,10 @@ attribute and that it is part of a set of enum values.
 The configuration must be a mapping of attribute name to list of valid values,
 like this:
 
-  plugin "beancount.plugins.commodity_attr" "{
-    'sector': ['Technology', 'Financials', 'Energy'],
-    'name': None,
-  }"
+    plugin "beancount.plugins.commodity_attr" "{
+      'sector': ['Technology', 'Financials', 'Energy'],
+      'name': None,
+    }"
 
 The plugin issues an error if a Commodity directive is missing the attribute, or
 if the attribute value is not in the valid set. If you'd like to just ensure the
