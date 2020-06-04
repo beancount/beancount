@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-06-03
 
+ - Added an example for how to run the importers explictly via a Python script
+   calling the ingest() function.
  - Fixed bug with explicit invocation of importers via ingest() function when
    calling the 'file' sub command.
  - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjusted
