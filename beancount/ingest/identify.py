@@ -94,6 +94,6 @@ def add_arguments(parser):
     """Add arguments for the identify command."""
 
 
-def run(_, __, importers_list, files_or_directories, detect_duplicates_func=None):
+def run(_, __, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
     return identify(importers_list, files_or_directories)

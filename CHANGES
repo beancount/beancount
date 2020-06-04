@@ -4,6 +4,30 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-03
+
+ - Added a 'hooks' argument to beancount.ingest.scripts_utils.ingest() replacing
+   'detect_duplicates_func'. 'find_duplicate_entries()' is still inserted if no
+   other filter functions are specified (I'd like to remove this eventually; not
+   changing behavior here for now.)
+ - Added an example for how to run the importers explictly via a Python script
+   calling the ingest() function.
+ - Fixed bug with explicit invocation of importers via ingest() function when
+   calling the 'file' sub command.
+ - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjusted
+   ingestion example scripts.
+
+
+2020-06-02
+
+ - Modified recently added --no-cache option to also delete the cache if it
+   exists. Honor the same environment variables. The motivation behind this
+   change is that while --no-cache is useful for debugging plugins, it can be
+   disconcerting that if you remove it on the next run it picks up the old
+   existing cache. Deleting it on usage of --no-cache is reasonable behavior and
+   avoids the introduction of a --clear-cache option; this should be sufficient.
+
+
 2020-05-25
 
  - Fixed #449: Added options to bean-check: --no-cache and --cache-filename to

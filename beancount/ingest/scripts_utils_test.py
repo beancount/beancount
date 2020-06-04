@@ -75,7 +75,7 @@ def find_duplicates(new_entries_list, existing_entries):
     print('{60248d66-f3f2-41c2-96af-039341eafd25}')
     return new_entries_list
 
-scripts_utils.ingest(CONFIG, detect_duplicates_func=find_duplicates)
+scripts_utils.ingest(CONFIG, hooks=[find_duplicates])
 """
 
 class TestImplicitInvocationMethods(scripts_utils.TestScriptsBase):

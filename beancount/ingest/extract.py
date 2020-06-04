@@ -148,7 +148,7 @@ def extract(importer_config,
             options_map=None,
             mindate=None,
             ascending=True,
-            detect_duplicates_func=None):
+            hooks=None):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file.
@@ -166,10 +166,9 @@ def extract(importer_config,
       mindate: Optional minimum date to output transactions for.
       ascending: A boolean, true to print entries in ascending order, false if
         descending is desired.
-      detect_duplicates_func: An optional function which accepts a list of
-        lists of imported entries and a list of entries already existing in
-        the user's ledger. See function find_duplicate_entries(), which is the
-        default implementation for this.
+      hooks: An optional list of hook functions to apply to the list of extract
+        (filename, entries) pairs, in order. If not specified, find_duplicate_entries()
+        is used, automatically.
     """
     allow_none_for_tags_and_links = (
         options_map and options_map["allow_deprecated_none_for_tags_and_links"])
@@ -197,9 +196,10 @@ def extract(importer_config,
     # list of existing ones, or against each other. A single call to this
     # function is made on purpose, so that the function be able to merge
     # entries.
-    if detect_duplicates_func is None:
-        detect_duplicates_func = find_duplicate_entries
-    new_entries_list = detect_duplicates_func(new_entries_list, entries)
+    if hooks is None:
+        hooks = [find_duplicate_entries]
+    for hook_fn in hooks:
+        new_entries_list = hook_fn(new_entries_list, entries)
     assert isinstance(new_entries_list, list)
     assert all(isinstance(new_entries, tuple) for new_entries in new_entries_list)
     assert all(isinstance(new_entries[0], str) for new_entries in new_entries_list)
@@ -232,7 +232,7 @@ def add_arguments(parser):
                         help='Write out the entries in descending order')
 
 
-def run(args, _, importers_list, files_or_directories, detect_duplicates_func=None):
+def run(args, _, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
 
     # Load the ledger, if one is specified.
@@ -246,5 +246,5 @@ def run(args, _, importers_list, files_or_directories, detect_duplicates_func=No
             options_map=options_map,
             mindate=None,
             ascending=args.ascending,
-            detect_duplicates_func=detect_duplicates_func)
+            hooks=hooks)
     return 0

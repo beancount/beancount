@@ -134,7 +134,25 @@ def _log_errors(errors, log_errors):
             log_errors(error_io.getvalue())
 
 
-def pickle_cache_function(pattern, time_threshold, function):
+def get_cache_filename(pattern: str, filename: str) -> str:
+    """Compute the cache filename from a given pattern and the top-level filename.
+
+    Args:
+      pattern: A cache filename or pattern. If the pattern contains '{filename}' this
+        will get replaced by the top-level filename. This may be absolute or relative.
+      filename: The top-level filename.
+    Returns:
+      The resolved cache filename.
+    """
+    abs_filename = path.abspath(filename)
+    if path.isabs(pattern):
+        abs_pattern = pattern
+    else:
+        abs_pattern = path.join(path.dirname(abs_filename), pattern)
+    return abs_pattern.format(filename=path.basename(filename))
+
+
+def pickle_cache_function(cache_getter, time_threshold, function):
     """Decorate a loader function to make it loads its result from a pickle cache.
 
     This considers the first argument as a top-level filename and assumes the
@@ -145,8 +163,8 @@ def pickle_cache_function(pattern, time_threshold, function):
     recomputed and the cache refreshed.
 
     Args:
-      pattern: A string, the filename pattern for the pickled cache file.
-        A {filename} in it gets replaced by the basename of the input filename.
+      cache_getter: A function of one argument, the top-level filename, which
+        will return the name of the corresponding cache file.
       time_threshold: A float, the number of seconds below which we don't bother
         caching.
       function: A function object to decorate for caching.
@@ -156,10 +174,7 @@ def pickle_cache_function(pattern, time_threshold, function):
     """
     @functools.wraps(function)
     def wrapped(toplevel_filename, *args, **kw):
-        abs_filename = path.abspath(toplevel_filename)
-        cache_filename = path.join(
-            path.dirname(abs_filename),
-            pattern.format(filename=path.basename(toplevel_filename)))
+        cache_filename = cache_getter(toplevel_filename)
 
         # Read the cache if it exists in order to get the list of files whose
         # timestamps to check.
@@ -210,6 +225,28 @@ def pickle_cache_function(pattern, time_threshold, function):
                                 cache_filename, exc)
 
         return result
+    return wrapped
+
+
+def delete_cache_function(cache_getter, function):
+    """A wrapper that removes the cached filename.
+
+    Args:
+      cache_getter: A function of one argument, the top-level filename, which
+        will return the name of the corresponding cache file.
+      function: A function object to decorate for caching.
+    Returns:
+      A decorated function which will delete the cached filename, if it exists.
+    """
+    @functools.wraps(function)
+    def wrapped(toplevel_filename, *args, **kw):
+        # Delete the cache.
+        cache_filename = cache_getter(toplevel_filename)
+        if path.exists(cache_filename):
+            os.remove(cache_filename)
+
+        # Invoke the original function.
+        return function(toplevel_filename, *args, **kw)
     return wrapped
 
 
@@ -641,18 +678,23 @@ def initialize(use_cache: bool, cache_filename: Optional[str] = None):
     # loader which is why it's located here.
     # pylint: disable=invalid-name
     global _load_file
+
+    # Make a function to compute the cache filename.
+    cache_pattern = (cache_filename or
+                     os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or
+                     PICKLE_CACHE_FILENAME)
+    cache_getter = functools.partial(get_cache_filename, cache_pattern)
+
     if use_cache:
-        if cache_filename is None:
-            cache_filename = (os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or
-                              PICKLE_CACHE_FILENAME)
-        _load_file = pickle_cache_function(cache_filename, PICKLE_CACHE_THRESHOLD,
+        _load_file = pickle_cache_function(cache_getter, PICKLE_CACHE_THRESHOLD,
                                            _uncached_load_file)
     else:
         if cache_filename is not None:
             logging.warning("Cache disabled; "
                             "Explicitly overridden cache filename %s will be ignored.",
                             cache_filename)
-        _load_file = _uncached_load_file
+        _load_file = delete_cache_function(cache_getter,
+                                           _uncached_load_file)
 
 
 # Default is to use the cache every time.

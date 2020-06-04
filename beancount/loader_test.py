@@ -344,8 +344,10 @@ class TestLoadCache(unittest.TestCase):
 
     def setUp(self):
         self.num_calls = 0
+        cache_getter = functools.partial(loader.get_cache_filename,
+                                         loader.PICKLE_CACHE_FILENAME)
         mock.patch('beancount.loader._load_file',
-                   loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
+                   loader.pickle_cache_function(cache_getter,
                                                 0,  # No time threshold.
                                                 self._load_file)).start()
     def tearDown(self):
