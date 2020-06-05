@@ -59,92 +59,93 @@ class Importer(importer.ImporterProtocol):
         # Open the CSV file and create directives.
         entries = []
         index = 0
-        for index, row in enumerate(csv.DictReader(open(file.name))):
-            meta = data.new_metadata(file.name, index)
-            date = parse(row['DATE']).date()
-            rtype = row['TYPE']
-            link = "ut{0[REF #]}".format(row)
-            desc = "({0[TYPE]}) {0[DESCRIPTION]}".format(row)
-            units = amount.Amount(D(row['AMOUNT']), self.currency)
-            fees = amount.Amount(D(row['FEES']), self.currency)
-            other = amount.add(units, fees)
+        with open(file.name) as infile:
+            for index, row in enumerate(csv.DictReader(infile)):
+                meta = data.new_metadata(file.name, index)
+                date = parse(row['DATE']).date()
+                rtype = row['TYPE']
+                link = "ut{0[REF #]}".format(row)
+                desc = "({0[TYPE]}) {0[DESCRIPTION]}".format(row)
+                units = amount.Amount(D(row['AMOUNT']), self.currency)
+                fees = amount.Amount(D(row['FEES']), self.currency)
+                other = amount.add(units, fees)
 
-            if rtype == 'XFER':
-                assert fees.number == ZERO
-                txn = data.Transaction(
-                    meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
-                        data.Posting(self.account_cash, units, None, None, None, None),
-                        data.Posting(self.account_external, -other, None, None, None, None),
-                    ])
-
-            elif rtype == 'DIV':
-                assert fees.number == ZERO
-
-                # Extract the instrument name from its description.
-                match = re.search(r'~([A-Z]+)$', row['DESCRIPTION'])
-                if not match:
-                    logging.error("Missing instrument name in '%s'", row['DESCRIPTION'])
-                    continue
-                instrument = match.group(1)
-                account_dividends = self.account_dividends.format(instrument)
-
-                txn = data.Transaction(
-                    meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
-                        data.Posting(self.account_cash, units, None, None, None, None),
-                        data.Posting(account_dividends, -other, None, None, None, None),
-                    ])
-
-            elif rtype in ('BUY', 'SELL'):
-
-                # Extract the instrument name, number of units, and price from
-                # the description. That's just what we're provided with (this is
-                # actually realistic of some data from some institutions, you
-                # have to figure out a way in your parser).
-                match = re.search(r'\+([A-Z]+)\b +([0-9.]+)\b +@([0-9.]+)',
-                                  row['DESCRIPTION'])
-                if not match:
-                    logging.error("Missing purchase infos in '%s'", row['DESCRIPTION'])
-                    continue
-                instrument = match.group(1)
-                account_inst = account.join(self.account_root, instrument)
-                units_inst = amount.Amount(D(match.group(2)), instrument)
-                rate = D(match.group(3))
-
-                if rtype == 'BUY':
-                    cost = position.Cost(rate, self.currency, None, None)
+                if rtype == 'XFER':
+                    assert fees.number == ZERO
                     txn = data.Transaction(
                         meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
                             data.Posting(self.account_cash, units, None, None, None, None),
-                            data.Posting(self.account_fees, fees, None, None, None, None),
-                            data.Posting(account_inst, units_inst, cost, None, None, None),
+                            data.Posting(self.account_external, -other, None, None, None, None),
                         ])
 
-                elif rtype == 'SELL':
-                    # Extract the lot. In practice this information not be there
-                    # and you will have to identify the lots manually by editing
-                    # the resulting output. You can leave the cost.number slot
-                    # set to None if you like.
-                    match = re.search(r'\(LOT ([0-9.]+)\)', row['DESCRIPTION'])
+                elif rtype == 'DIV':
+                    assert fees.number == ZERO
+
+                    # Extract the instrument name from its description.
+                    match = re.search(r'~([A-Z]+)$', row['DESCRIPTION'])
                     if not match:
-                        logging.error("Missing cost basis in '%s'", row['DESCRIPTION'])
+                        logging.error("Missing instrument name in '%s'", row['DESCRIPTION'])
                         continue
-                    cost_number = D(match.group(1))
-                    cost = position.Cost(cost_number, self.currency, None, None)
-                    price = amount.Amount(rate, self.currency)
-                    account_gains = self.account_gains.format(instrument)
+                    instrument = match.group(1)
+                    account_dividends = self.account_dividends.format(instrument)
+
                     txn = data.Transaction(
                         meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
                             data.Posting(self.account_cash, units, None, None, None, None),
-                            data.Posting(self.account_fees, fees, None, None, None, None),
-                            data.Posting(account_inst, units_inst, cost, price, None, None),
-                            data.Posting(account_gains, None, None, None, None, None),
+                            data.Posting(account_dividends, -other, None, None, None, None),
                         ])
 
-            else:
-                logging.error("Unknown row type: %s; skipping", rtype)
-                continue
+                elif rtype in ('BUY', 'SELL'):
 
-            entries.append(txn)
+                    # Extract the instrument name, number of units, and price from
+                    # the description. That's just what we're provided with (this is
+                    # actually realistic of some data from some institutions, you
+                    # have to figure out a way in your parser).
+                    match = re.search(r'\+([A-Z]+)\b +([0-9.]+)\b +@([0-9.]+)',
+                                      row['DESCRIPTION'])
+                    if not match:
+                        logging.error("Missing purchase infos in '%s'", row['DESCRIPTION'])
+                        continue
+                    instrument = match.group(1)
+                    account_inst = account.join(self.account_root, instrument)
+                    units_inst = amount.Amount(D(match.group(2)), instrument)
+                    rate = D(match.group(3))
+
+                    if rtype == 'BUY':
+                        cost = position.Cost(rate, self.currency, None, None)
+                        txn = data.Transaction(
+                            meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
+                                data.Posting(self.account_cash, units, None, None, None, None),
+                                data.Posting(self.account_fees, fees, None, None, None, None),
+                                data.Posting(account_inst, units_inst, cost, None, None, None),
+                            ])
+
+                    elif rtype == 'SELL':
+                        # Extract the lot. In practice this information not be there
+                        # and you will have to identify the lots manually by editing
+                        # the resulting output. You can leave the cost.number slot
+                        # set to None if you like.
+                        match = re.search(r'\(LOT ([0-9.]+)\)', row['DESCRIPTION'])
+                        if not match:
+                            logging.error("Missing cost basis in '%s'", row['DESCRIPTION'])
+                            continue
+                        cost_number = D(match.group(1))
+                        cost = position.Cost(cost_number, self.currency, None, None)
+                        price = amount.Amount(rate, self.currency)
+                        account_gains = self.account_gains.format(instrument)
+                        txn = data.Transaction(
+                            meta, date, self.FLAG, None, desc, data.EMPTY_SET, {link}, [
+                                data.Posting(self.account_cash, units, None, None, None, None),
+                                data.Posting(self.account_fees, fees, None, None, None, None),
+                                data.Posting(account_inst, units_inst, cost, price, None, None),
+                                data.Posting(account_gains, None, None, None, None, None),
+                            ])
+
+                else:
+                    logging.error("Unknown row type: %s; skipping", rtype)
+                    continue
+
+                entries.append(txn)
 
         # Insert a final balance check.
         if index:
