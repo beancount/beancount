@@ -385,7 +385,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                                               extract.__file__)
         self.assertEqual(0, result)
         errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
 
         output = stdout.getvalue()
 
