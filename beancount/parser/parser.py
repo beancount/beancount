@@ -134,7 +134,7 @@ ParserError, ParserSyntaxError, DeprecatedError
 
 # When importing the module, always check that the compiled source matched the
 # installed source.
-hashsrc.check_parser_source_files()
+hashsrc.check_parser_source_files(_parser)
 
 
 def is_posting_incomplete(posting):

@@ -3,7 +3,10 @@
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import hashlib
+import textwrap
+import types
 import warnings
 from os import path
 
@@ -42,7 +45,7 @@ def hash_parser_source_files():
     return md5.hexdigest()
 
 
-def check_parser_source_files():
+def check_parser_source_files(parser_module: types.ModuleType):
     """Check the extension module's source hash and issue a warning if the
     current source differs from that of the module.
 
@@ -54,9 +57,28 @@ def check_parser_source_files():
     parser_source_hash = hash_parser_source_files()
     if parser_source_hash is None:
         return
-    # pylint: disable=import-outside-toplevel
-    from . import _parser
-    if _parser.SOURCE_HASH and _parser.SOURCE_HASH != parser_source_hash:
+    if parser_module.SOURCE_HASH and parser_module.SOURCE_HASH != parser_source_hash:
         warnings.warn(
             ("The Beancount parser C extension module is out-of-date ('{}' != '{}'). "
-             "You need to rebuild.").format(_parser.SOURCE_HASH, parser_source_hash))
+             "You need to rebuild.").format(parser_module.SOURCE_HASH, parser_source_hash))
+
+
+def gen_include():
+    """Generate an include file for the parser source hash."""
+    return textwrap.dedent("""\
+      #ifndef __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+      #define __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+
+      #define PARSER_SOURCE_HASH {source_hash}
+
+      #endif // __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+    """.format(source_hash=hash_parser_source_files()))
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    args = parser.parse_args()
+    print(gen_include())
+
+
+if __name__ == '__main__':
+    main()

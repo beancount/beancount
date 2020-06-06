@@ -7,6 +7,20 @@
 #include "parser.h"
 #include "lexer.h"
 
+// If we're running this from the Bazel environment, a genrule() is used to
+// produce an include file with the source hash. The hash is used to ensure that
+// a Python environment sourcing the parser from a build location in a source
+// repository (in contrast to a fixed installation) has an up-to-date build
+// w.r.t. to the source code.
+//
+// TODO(blais): Eventually this can be generalized to all extension modules by
+// modifying the definition of py_library(), making hashsrc parameterized, and
+// creating a macro. However, we may just delete this once we've committed to an
+// all C++ version.
+#ifndef PARSER_SOURCE_HASH
+#include "beancount/parser/parser_source_hash.h"
+#endif
+
 #define XSTRINGIFY(s) STRINGIFY(s)
 #define STRINGIFY(s) #s
 

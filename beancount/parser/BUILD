@@ -174,15 +174,38 @@ py_test(
     ],
 )
 
-# grammar.y
+filegroup(
+    name = "parser_source_files",
+    srcs = [
+        "lexer.l",
+        "grammar.y",
+        "parser.h",
+        "parser.c",
+    ],
+)
+
+genrule(
+    name = "parser_source_hash",
+    srcs = [],
+    tools = ["//beancount/parser:hashsrc"],
+    cmd = "$(location //beancount/parser:hashsrc) > $@",
+    outs = ["parser_source_hash.h"],
+)
 
 py_library(
+    name = "hashsrc_lib",
+    srcs = ["hashsrc.py"],
+    data = [":parser_source_files"],
+    deps = [
+        "//beancount/core:number",
+    ],
+)
+
+py_binary(
     name = "hashsrc",
     srcs = ["hashsrc.py"],
-    data = ["grammar.y", "lexer.l", "parser.h", "parser.c"],
     deps = [
-        ":_parser",
-        "//beancount/core:number",
+        ":hashsrc_lib",
     ],
 )
 
@@ -190,7 +213,8 @@ py_test(
     name = "hashsrc_test",
     srcs = ["hashsrc_test.py"],
     deps = [
-        ":hashsrc",
+        ":hashsrc_lib",
+        ":_parser",
     ],
 )
 
@@ -263,9 +287,12 @@ py_test(
 # TODO(blais): Compute VC_TIMESTAMP properly. See tools/*.bzl
 py_extension(
     name = "_parser",
-    srcs = ["parser.c"],
+    srcs = [
+        "parser.c",
+        ":parser_source_hash"
+    ],
     # TODO(blais): Compute this value properly.
-    local_defines = ["VC_CHANGESET", "VC_TIMESTAMP", "PARSER_SOURCE_HASH", "RELEASE_VERSION"],
+    local_defines = ["VC_CHANGESET", "VC_TIMESTAMP", "RELEASE_VERSION"],
     deps = [
         ":grammar_c",
         ":lexer_c",
@@ -288,7 +315,7 @@ py_library(
         ":_parser",
         ":grammar",
         ":printer",
-        ":hashsrc",
+        ":hashsrc_lib",
         "//beancount/core:data",
         "//beancount/core:number",
     ],

@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount.parser import hashsrc
+from beancount.parser import _parser
 
 
 class TestHashSource(unittest.TestCase):
@@ -15,7 +16,8 @@ class TestHashSource(unittest.TestCase):
         self.assertEqual(32, len(source_hash))
 
     def test_check_parser_source_files(self):
-        hashsrc.check_parser_source_files()
+        self.assertTrue(len(_parser.SOURCE_HASH) > 32)
+        hashsrc.check_parser_source_files(_parser)
 
 
 if __name__ == '__main__':
