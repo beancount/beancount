@@ -4,11 +4,15 @@ __license__ = "GNU GPLv2"
 import argparse
 import unittest
 
+import beancount
 from beancount.utils import version
 from beancount.utils import test_utils
 
 
 class TestVersion(unittest.TestCase):
+
+    def test_version_exists(self):
+        self.assertRegex(getattr(beancount, "__version__", ""), r"\d+\.\d+\.\d+")
 
     def test_compute_version_string(self):
         self.assertEqual(

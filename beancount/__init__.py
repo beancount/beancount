@@ -1,7 +1,4 @@
 """Beancount, a double-entry bookkeeping software.
-
-This is v2, a complete rewrite of Beancount v1, simplified and improved
-drastically.
 """
 __copyright__ = "Copyright (C) 2013-2014, 2016-2018  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -13,10 +10,13 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
     raise ImportError("Python 3.3 or above is required")
 
 
-__version__ = '2.2.3-dev'
+from os import path
+with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
+    __version__ = version_file.read().strip()
 
 
 # Remove annoying warnings in third-party modules.
+# TODO(blais): Review this, we may not need these anymore.
 import warnings
 warnings.filterwarnings(
     'ignore', module='lxml', category=DeprecationWarning,

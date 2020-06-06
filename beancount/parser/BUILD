@@ -174,6 +174,9 @@ py_test(
     ],
 )
 
+# Note that we could eventually build a macro that would generate a hash of the
+# source files involved in building an extension and moving these rules to a
+# macro, for a py_extension_with_hash() rule.
 filegroup(
     name = "parser_source_files",
     srcs = [
@@ -239,9 +242,6 @@ cc_library(
     ],
 )
 
-# lexer.l
-# lexer.patch
-
 py_library(
     name = "lexer",
     srcs = ["lexer.py"],
@@ -284,7 +284,6 @@ py_test(
     ],
 )
 
-# TODO(blais): Compute VC_TIMESTAMP properly. See tools/*.bzl
 py_extension(
     name = "_parser",
     srcs = [
@@ -292,7 +291,7 @@ py_extension(
         ":parser_source_hash"
     ],
     # TODO(blais): Compute this value properly.
-    local_defines = ["VC_CHANGESET", "VC_TIMESTAMP", "RELEASE_VERSION"],
+    local_defines = ["RELEASE_VERSION"],
     deps = [
         ":grammar_c",
         ":lexer_c",

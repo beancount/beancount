@@ -164,9 +164,8 @@ def get_cflags():
 
 
 # Read the version.
-version_module = runpy.run_path(path.join(path.dirname(__file__),
-                                          'beancount/__init__.py'))
-version = version_module['__version__']
+with open("beancount/VERSION") as version_file:
+    version = version_file.read().strip()
 assert isinstance(version, str)
 
 def get_hg_changeset():
@@ -252,6 +251,7 @@ setup(
     ],
 
     package_data = {
+        'beancount': ['VERSION'],
         'beancount.web': ['*.ico',
                           '*.html',
                           '*.css',

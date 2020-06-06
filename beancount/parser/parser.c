@@ -297,6 +297,8 @@ void initialize_metadata(PyObject* module) {
     PyObject_SetAttrString(module, "__version__", release_version);
 
     /* Provide the Mercurial (or Git mirror) changeset from the build. */
+    /* Note: In the Bazel build, this information is absent. */
+#ifdef VC_CHANGESET
 #ifdef _MSC_VER
     static const char* vc_changeset_str = "" XSTRINGIFY(VC_CHANGESET);
 #else
@@ -304,11 +306,15 @@ void initialize_metadata(PyObject* module) {
 #endif
     PyObject* vc_changeset = PyUnicode_FromString(vc_changeset_str);
     PyObject_SetAttrString(module, "__vc_changeset__", vc_changeset);
+#endif
 
     /* Provide the date of the last changeset. */
+    /* Note: In the Bazel build, this information is absent. */
+#ifdef VC_TIMESTAMP
     static const int vc_timestamp_int = VC_TIMESTAMP;
     PyObject* vc_timestamp = PyLong_FromLong(vc_timestamp_int);
     PyObject_SetAttrString(module, "__vc_timestamp__", vc_timestamp);
+#endif
 }
 
 PyMODINIT_FUNC PyInit__parser(void)

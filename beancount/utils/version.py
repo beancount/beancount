@@ -26,8 +26,8 @@ def ArgumentParser(*args, **kwargs):
     parser.add_argument('--version', '-V', action='version',
                         version=compute_version_string(
                             beancount.__version__,
-                            _parser.__vc_changeset__,
-                            _parser.__vc_timestamp__))
+                            getattr(_parser, "__vc_changeset__", None),
+                            getattr(_parser, "__vc_timestamp__", 0)))
 
     return parser
 

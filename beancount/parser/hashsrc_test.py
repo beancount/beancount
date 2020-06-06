@@ -16,7 +16,7 @@ class TestHashSource(unittest.TestCase):
         self.assertEqual(32, len(source_hash))
 
     def test_check_parser_source_files(self):
-        self.assertTrue(len(_parser.SOURCE_HASH) > 32)
+        self.assertTrue(len(_parser.SOURCE_HASH) >= 32)
         hashsrc.check_parser_source_files(_parser)
 
 

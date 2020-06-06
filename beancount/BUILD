@@ -3,8 +3,7 @@ package(default_visibility = ["//visibility:public"])
 py_library(
     name = "__init__",
     srcs = ["__init__.py"],
-    deps = [
-    ],
+    data = ["VERSION"],
 )
 
 # Note: We don't include the required plugins in order to be conservative on
