@@ -288,10 +288,9 @@ py_extension(
     name = "_parser",
     srcs = [
         "parser.c",
-        ":parser_source_hash"
+        ":parser_source_hash",
+        "//beancount:version_header",
     ],
-    # TODO(blais): Compute this value properly.
-    local_defines = ["RELEASE_VERSION"],
     deps = [
         ":grammar_c",
         ":lexer_c",

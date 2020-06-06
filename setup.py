@@ -269,7 +269,7 @@ setup(
                       "beancount/parser/parser.c",
                   ],
                   define_macros=[
-                      ('RELEASE_VERSION', version),
+                      ('BEANCOUNT_VERSION', version),
                       ('VC_CHANGESET', vc_changeset),
                       ('VC_TIMESTAMP', int(float(vc_timestamp))),
                       ('PARSER_SOURCE_HASH', hash_parser_source_files())],

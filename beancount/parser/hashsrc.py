@@ -74,6 +74,7 @@ def gen_include():
       #endif // __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
     """.format(source_hash=hash_parser_source_files()))
 
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     args = parser.parse_args()

@@ -1,5 +1,13 @@
 package(default_visibility = ["//visibility:public"])
 
+genrule(
+    name = "version_header",
+    srcs = [":VERSION"],
+    tools = ["//tools:gen_version_header"],
+    cmd = "$(location //tools:gen_version_header) $(location :VERSION) > $@",
+    outs = ["version.h"],
+)
+
 py_library(
     name = "__init__",
     srcs = ["__init__.py"],

@@ -1,6 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
 py_binary(
+    name = "gen_version_header",
+    srcs = ["gen_version_header.py"],
+)
+
+py_binary(
     name = "update_options",
     srcs = ["update_options.py"],
     deps = [

@@ -10,6 +10,7 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
     raise ImportError("Python 3.3 or above is required")
 
 
+# Read in the VERSION number from package data.
 from os import path
 with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
     __version__ = version_file.read().strip()
