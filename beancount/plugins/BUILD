@@ -88,8 +88,16 @@ py_library(
         "//beancount/core:data",
         "//beancount/reports:table",
         "//beancount/utils:version",
-        # TODO(blais): This has been used as a binary; don't do this, add a target.
         "//beancount:loader",
+    ],
+)
+
+py_binary(
+    name = "book_conversions_main",
+    srcs = ["book_conversions.py"],
+    main = "book_conversions.py",
+    deps = [
+        ":book_conversions",
     ],
 )
 

@@ -34,7 +34,7 @@ py_test(
         ":printer",
         ":booking_full",
         ":booking_method",
-        ":booking_test_lib",
+        ":booking",
         ":options",
         ":cmptest",
         "//beancount:loader",
@@ -70,21 +70,14 @@ py_library(
         ":booking_full",
         "//beancount/core:number",
         "//beancount/core:data",
+        "//beancount/core:amount",
+        "//beancount/core:position",
         "//beancount/core:inventory",
     ],
 )
 
 py_test(
     name = "booking_test",
-    srcs = ["booking_test.py"],
-    deps = [
-        ":booking_test_lib",
-    ],
-)
-
-# TODO(blais): Remove this target by removing the dependency.
-py_library(
-    name = "booking_test_lib",
     srcs = ["booking_test.py"],
     deps = [
         "//beancount/core:number",

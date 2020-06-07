@@ -367,7 +367,8 @@ class TestInferTolerances(cmptest.TestCase):
         # An example of a transaction that would fail without the inferred
         # tolerances and succeed with them.
         input_string = textwrap.dedent("""
-          plugin "beancount.plugins.auto_accounts"
+          2014-01-01 open Assets:Account3
+          2014-01-01 open Assets:Account4
 
           2014-02-25 *
             Assets:Account3       5.111 VHT {1000.00 USD}
@@ -556,28 +557,6 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'USD': D('0.02568'), 'VWELX': D('0.0005')},
                          transactions[0].meta['__tolerances__'])
         self.assertFalse(errors)
-
-    @unittest.skipIf(split_expenses is None, "split_expenses needs to be build with bazel")
-    @loader.load_doc()
-    def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
-        """
-        plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
-
-        option "inferred_tolerance_default" "USD:0.005"
-
-        1970-01-01 open Expenses:Food
-        1970-01-01 open Assets:Caroline
-
-        2010-01-01 * "Balances"
-          Expenses:Food      -8.00 USD
-          Assets:Caroline
-        """
-        # Interesting case: The Assets leg is filled in with 8.00 USD
-        # automatically here, so it is not used in inference. Further forward,
-        # the split_expenses plugin splits the first leg as well, and that is
-        # also marked as automatic, so if cannot use inference there either. So
-        # all legs end up being automatic... and we have to fall back on the
-        # default tolerance.
 
     @loader.load_doc()
     def test_tolerances__missing_units_only(self, entries, errors, options_map):

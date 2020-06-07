@@ -56,7 +56,7 @@ py_test(
     ],
 )
 
-# TODO(blais): Remove all test targets and use this. From core, parser, utils
+# A group of plugins widely assumed during testing.
 py_library(
     name = "plugins_for_tests",
     deps = [

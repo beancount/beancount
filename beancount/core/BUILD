@@ -8,20 +8,12 @@ py_library(
     ],
 )
 
-# TODO(blais): Move the test inside to test_utils and remove all dependencies to this.
-py_library(
-    name = "account_test_lib",
-    srcs = ["account_test.py"],
-    deps = [
-        ":account",
-    ],
-)
-
 py_test(
     name = "account_test",
     srcs = ["account_test.py"],
     deps = [
         ":account",
+        "//beancount/utils:test_utils",
     ],
 )
 
@@ -225,9 +217,6 @@ py_test(
         "//beancount/ops:pad",
         "//beancount/ops:documents",
         "//beancount/ops:balance",
-        # TODO(blais): Remove these dependencies from upstream.
-        #"//beancount/plugins:split_expenses",
-        "//beancount/plugins:auto_accounts",
     ],
 )
 

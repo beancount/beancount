@@ -104,6 +104,27 @@ class TestSplitExpenses(cmptest.TestCase):
             2011-06-01 close   Expenses:Restaurant
         """, entries)
 
+    @loader.load_doc()
+    def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
+        """
+        plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
+
+        option "inferred_tolerance_default" "USD:0.005"
+
+        1970-01-01 open Expenses:Food
+        1970-01-01 open Assets:Caroline
+
+        2010-01-01 * "Balances"
+          Expenses:Food      -8.00 USD
+          Assets:Caroline
+        """
+        # Interesting case: The Assets leg is filled in with 8.00 USD
+        # automatically here, so it is not used in inference. Further forward,
+        # the split_expenses plugin splits the first leg as well, and that is
+        # also marked as automatic, so if cannot use inference there either. So
+        # all legs end up being automatic... and we have to fall back on the
+        # default tolerance.
+
 
 class TestSplitReports(unittest.TestCase):
 

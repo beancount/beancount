@@ -80,7 +80,7 @@ py_test(
     name = "documents_test",
     srcs = ["documents_test.py"],
     deps = [
-        "//beancount/core:account_test_lib",
+        "//beancount/utils:test_utils",
         "//beancount/core:data",
         "//beancount/parser:cmptest",
         ":documents",

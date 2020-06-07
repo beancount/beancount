@@ -29,10 +29,7 @@ py_test(
 py_library(
     name = "date_utils",
     srcs = ["date_utils.py"],
-    deps = [
-        # TODO(blais): Don't I need an external dep for this external library?
-        # //dateutil
-    ],
+    deps = [],
 )
 
 py_test(

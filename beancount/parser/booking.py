@@ -7,9 +7,12 @@ __license__ = "GNU GPLv2"
 import collections
 
 from beancount.core.number import MISSING
-from beancount.parser import booking_full
+from beancount.core.number import ZERO
+from beancount.core import amount
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import position
+from beancount.parser import booking_full
 
 
 BookingError = collections.namedtuple('BookingError', 'source message entry')
@@ -116,3 +119,92 @@ def validate_inventory_booking(entries, unused_options_map, booking_methods):
                             entry))
 
     return errors
+
+
+def convert_lot_specs_to_lots(entries):
+    """For all the entries, convert the posting's position's CostSpec to Cost
+    instances. In the simple method, the data provided in the CostSpec must
+    unambiguously provide a way to compute the cost amount.
+
+    This essentially replicates the way the old parser used to work, but
+    allowing positions to have the fuzzy lot specifications instead of the
+    resolved ones. We used to simply compute the costs locally, and this gets
+    rid of the CostSpec to produce the Cost without fuzzy matching. This is only
+    there for the sake of transition to the new matching logic.
+
+    Args:
+      entries: A list of incomplete directives as per the parser.
+    Returns:
+      A list of entries whose postings's position costs have been converted to
+      Cost instances but that may still be incomplete.
+    Raises:
+      ValueError: If there's a unacceptable number.
+    """
+    new_entries = []
+    errors = []
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            new_entries.append(entry)
+            continue
+
+        new_postings = []
+        for posting in entry.postings:
+            try:
+                units = posting.units
+                cost_spec = posting.cost
+                cost = convert_spec_to_cost(units, cost_spec)
+                if cost_spec is not None and cost is None:
+                    errors.append(
+                        BookingError(entry.meta,
+                                     "Cost syntax not supported; cost spec ignored",
+                                     None))
+
+                if cost and isinstance(units, amount.Amount):
+                    # If there is a cost, we don't allow either a cost value of
+                    # zero, nor a zero number of units. Note that we allow a price
+                    # of zero as the only special case (for conversion entries), but
+                    # never for costs.
+                    if units.number == ZERO:
+                        raise ValueError('Amount is zero: "{}"'.format(units))
+                    if cost.number is not None and cost.number < ZERO:
+                        raise ValueError('Cost is negative: "{}"'.format(cost))
+            except ValueError as exc:
+                errors.append(BookingError(entry.meta, str(exc), None))
+                cost = None
+            new_postings.append(posting._replace(cost=cost))
+        new_entries.append(entry._replace(postings=new_postings))
+    return new_entries, errors
+
+
+def convert_spec_to_cost(units, cost_spec):
+    """Convert a posting's CostSpec instance to a Cost.
+
+    Args:
+      units: An instance of Amount.
+      cost_spec: An instance of CostSpec.
+    Returns:
+      An instance of Cost.
+    """
+    cost = cost_spec
+    errors = []
+    if isinstance(units, amount.Amount):
+        currency = units.currency
+        if cost_spec is not None:
+            number_per, number_total, cost_currency, date, label, merge = cost_spec
+
+            # Compute the cost.
+            if number_per is not MISSING or number_total is not None:
+                if number_total is not None:
+                    # Compute the per-unit cost if there is some total cost
+                    # component involved.
+                    units_num = units.number
+                    cost_total = number_total
+                    if number_per is not MISSING:
+                        cost_total += number_per * units_num
+                    unit_cost = cost_total / abs(units_num)
+                else:
+                    unit_cost = number_per
+                cost = position.Cost(unit_cost, cost_currency, date, label)
+            else:
+                cost = None
+    return cost

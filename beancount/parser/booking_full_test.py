@@ -17,6 +17,7 @@ from beancount.core.position import CostSpec
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
+
 from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
@@ -28,7 +29,7 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
-from beancount.parser import booking_test
+from beancount.parser import booking
 from beancount.parser import cmptest
 from beancount.parser import options
 from beancount import loader
@@ -578,7 +579,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             # Check the expected postings.
             if exp_string is not None:
                 exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
-                exp_entries, err2 = booking_test.convert_lot_specs_to_lots(exp_entries)
+                exp_entries, err2 = booking.convert_lot_specs_to_lots(exp_entries)
                 self.assertFalse(err1 or err2, "Internal error in test")
                 self.assertEqual(1, len(exp_entries),
                                  "Internal error, expected one entry")
@@ -1242,7 +1243,7 @@ class _BookingTestBase(unittest.TestCase):
             inv_expected = inventory.Inventory()
             for posting in entry_ex.postings:
                 inv_expected.add_amount(posting.units,
-                                        booking_test.convert_spec_to_cost(
+                                        booking.convert_spec_to_cost(
                                             posting.units, posting.cost))
             self.assertEqual(inv_expected, balances[account])
 
@@ -1271,7 +1272,7 @@ class _BookingTestBase(unittest.TestCase):
             if entry_matches:
                 actual_matches = call.args[2]
                 expected_matches = [Position(posting.units,
-                                             booking_test.convert_spec_to_cost(
+                                             booking.convert_spec_to_cost(
                                                  posting.units, posting.cost))
                                     for posting in entry_matches.postings]
                 self.assertEqual(sorted(expected_matches), sorted(actual_matches))
@@ -1320,7 +1321,7 @@ class _BookingTestBase(unittest.TestCase):
                              flag=None,
                              cost=(posting.cost
                                    if posting.flag == 'S' else
-                                   booking_test.convert_spec_to_cost(
+                                   booking.convert_spec_to_cost(
                                        posting.units, posting.cost)))
             for posting in expected_postings]
 

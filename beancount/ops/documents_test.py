@@ -9,14 +9,14 @@ import textwrap
 import unittest
 from os import path
 
-from beancount.core import account_test
+from beancount.utils import test_utils
 from beancount.core import data
 from beancount.ops import documents
 from beancount.parser import cmptest
 from beancount import loader
 
 
-class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/other.txt',
@@ -150,7 +150,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual([], errors1)
 
 
-class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocumentsDate(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/',
@@ -164,7 +164,7 @@ class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
 
 
 
-class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocumentsConstraints(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/',
