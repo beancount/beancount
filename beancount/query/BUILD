@@ -201,7 +201,7 @@ py_library(
         "//beancount/query:query_render",
         "//beancount/utils:misc_utils",
         "//beancount/utils:pager",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 

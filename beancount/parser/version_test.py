@@ -5,7 +5,7 @@ import argparse
 import unittest
 
 import beancount
-from beancount.utils import version
+from beancount.parser import version
 from beancount.utils import test_utils
 
 

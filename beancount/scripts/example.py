@@ -45,7 +45,7 @@ from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
-from beancount.utils import version
+from beancount.parser import version
 from beancount import loader
 
 

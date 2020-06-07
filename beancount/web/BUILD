@@ -99,7 +99,7 @@ py_library(
         "//beancount/reports:price_reports",
         "//beancount/utils:misc_utils",
         "//beancount/utils:text_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount/web:bottle_utils",
         "//beancount/web:scrape",
         "//beancount/web:views",
@@ -114,6 +114,6 @@ py_test(
     deps = [
         ":web",
         "//beancount/utils:test_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )

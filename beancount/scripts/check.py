@@ -11,7 +11,7 @@ import sys
 from beancount import loader
 from beancount.ops import validation
 from beancount.utils import misc_utils
-from beancount.utils import version
+from beancount.parser import version
 
 
 def main():

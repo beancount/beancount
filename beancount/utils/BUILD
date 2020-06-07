@@ -240,22 +240,3 @@ py_test(
         ":text_utils",
     ],
 )
-
-py_library(
-    name = "version",
-    srcs = ["version.py"],
-    deps = [
-        "//beancount:__init__",
-        "//beancount/parser:_parser",
-        "//beancount/core:number",  # Dynamic dep from _parser.
-    ],
-)
-
-py_test(
-    name = "version_test",
-    srcs = ["version_test.py"],
-    deps = [
-        ":version",
-        ":test_utils",
-    ],
-)

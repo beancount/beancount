@@ -10,7 +10,7 @@ import os
 from os import path
 
 from beancount.utils import test_utils
-from beancount.utils import version
+from beancount.parser import version
 from beancount.reports import report
 
 

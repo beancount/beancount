@@ -18,7 +18,7 @@ from os import path
 # under the assumption that not all third-party dependencies are installed.
 # Import what you need as late as possible.
 from beancount.utils import misc_utils
-from beancount.utils import version
+from beancount.parser import version
 from beancount.core import display_context
 
 

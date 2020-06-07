@@ -3,6 +3,25 @@ load("//third_party/python:py_extension.bzl", "py_extension")
 package(default_visibility = ["//visibility:public"])
 
 py_library(
+    name = "version",
+    srcs = ["version.py"],
+    deps = [
+        ":_parser",
+        "//beancount:__init__",
+        "//beancount/core:number",  # Dynamic dep from _parser.
+    ],
+)
+
+py_test(
+    name = "version_test",
+    srcs = ["version_test.py"],
+    deps = [
+        ":version",
+        "//beancount/utils:test_utils",
+    ],
+)
+
+py_library(
     name = "booking_full",
     srcs = ["booking_full.py"],
     deps = [

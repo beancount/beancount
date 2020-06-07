@@ -28,7 +28,7 @@ from beancount.ops import basicops
 from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import text_utils
-from beancount.utils import version
+from beancount.parser import version
 from beancount.web import bottle_utils
 from beancount.parser import options
 from beancount.parser import printer

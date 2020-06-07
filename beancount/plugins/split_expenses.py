@@ -42,7 +42,7 @@ from beancount.core import interpolate
 from beancount.parser import options
 from beancount.query import query
 from beancount.query import query_render
-from beancount.utils import version
+from beancount.parser import version
 
 
 __plugins__ = ('split_expenses',)

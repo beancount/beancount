@@ -24,7 +24,7 @@ from beancount.core import amount
 from beancount.parser import printer
 from beancount.prices import find_prices
 from beancount.utils import date_utils
-from beancount.utils import version
+from beancount.parser import version
 
 
 # Stand-in currency name for unknown currencies.

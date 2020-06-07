@@ -87,7 +87,7 @@ py_library(
         "//beancount/core:account",
         "//beancount/core:data",
         "//beancount/reports:table",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount:loader",
     ],
 )
@@ -568,7 +568,7 @@ py_library(
         "//beancount/parser:options",
         "//beancount/query:query",
         "//beancount/query:query_render",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 

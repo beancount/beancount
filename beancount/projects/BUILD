@@ -12,7 +12,7 @@ py_library(
         "//beancount/core:realization",
         "//beancount:loader",
         "//beancount/parser:options",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 

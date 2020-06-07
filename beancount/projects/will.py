@@ -27,7 +27,7 @@ from beancount.core import data
 from beancount.core import account
 from beancount.core import convert
 from beancount.parser import options
-from beancount.utils import version
+from beancount.parser import version
 
 
 def group_accounts_by_metadata(accounts_map, meta_name):

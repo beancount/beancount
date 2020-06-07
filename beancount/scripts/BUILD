@@ -5,7 +5,7 @@ py_library(
     srcs = ["bake.py"],
     deps = [
         "//beancount/utils:file_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount/web:scrape",
         "//beancount/web:web",
     ],
@@ -37,7 +37,7 @@ py_library(
         "//beancount:loader",
         "//beancount/ops:validation",
         "//beancount/utils:misc_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 
@@ -94,7 +94,7 @@ py_library(
         "//beancount/reports:context",
         "//beancount/scripts:deps",
         "//beancount/utils:misc_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount:loader",
     ],
 )
@@ -132,7 +132,7 @@ py_library(
         "//beancount/scripts:format",
         "//beancount/utils:date_utils",
         "//beancount/utils:misc_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 
@@ -154,7 +154,7 @@ py_library(
     deps = [
         "//beancount/core:account",
         "//beancount/core:amount",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 
@@ -182,7 +182,7 @@ py_library(
         "//beancount/core:data",
         "//beancount:loader",
         "//beancount/utils:misc_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 
@@ -200,7 +200,7 @@ py_library(
     srcs = ["tutorial.py"],
     deps = [
         "//beancount/utils:test_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount/reports:report",
     ],
 )

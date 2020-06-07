@@ -33,7 +33,7 @@ py_library(
         "//beancount/parser:options",
         "//beancount/reports:html_formatter",
         "//beancount/reports:table",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 
@@ -358,7 +358,7 @@ py_library(
         "//beancount/reports:table",
         "//beancount/utils:file_utils",
         "//beancount/utils:misc_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 

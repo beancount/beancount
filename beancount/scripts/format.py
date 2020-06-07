@@ -17,7 +17,7 @@ import sys
 
 from beancount.core import amount
 from beancount.core import account
-from beancount.utils import version
+from beancount.parser import version
 
 
 def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):

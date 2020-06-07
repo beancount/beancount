@@ -14,7 +14,7 @@ from decimal import Decimal
 from beancount import loader
 from beancount.core import data
 from beancount.utils import misc_utils
-from beancount.utils import version
+from beancount.parser import version
 
 
 def output_common(connection, unused_entries):

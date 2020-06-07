@@ -31,7 +31,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
-from beancount.utils import version
+from beancount.parser import version
 from beancount import loader
 
 

@@ -100,7 +100,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount import loader
 from beancount.reports import table
-from beancount.utils import version
+from beancount.parser import version
 
 
 # The name of the metadata field used to link matched postings.

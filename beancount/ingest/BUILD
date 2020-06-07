@@ -52,7 +52,7 @@ py_library(
         "//beancount/ingest:importer",
         "//beancount/ingest:cache",
         "//beancount/utils:test_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
         "//beancount/ingest:identify",
         "//beancount/ingest:extract",
         "//beancount/ingest:file",

@@ -17,7 +17,7 @@ from beancount.parser import options
 from beancount.core import realization
 from beancount.core import prices
 from beancount.core import display_context
-from beancount.utils import version
+from beancount.parser import version
 
 
 class ReportError(Exception):

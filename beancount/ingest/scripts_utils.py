@@ -16,7 +16,7 @@ import warnings
 from beancount.ingest import importer
 from beancount.ingest import cache
 from beancount.utils import test_utils
-from beancount.utils import version
+from beancount.parser import version
 from beancount.ingest import identify
 from beancount.ingest import extract
 from beancount.ingest import file

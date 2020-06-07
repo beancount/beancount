@@ -39,7 +39,7 @@ py_library(
         "//beancount/prices:__init__",
         "//beancount/prices:find_prices",
         "//beancount/utils:date_utils",
-        "//beancount/utils:version",
+        "//beancount/parser:version",
     ],
 )
 

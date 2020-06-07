@@ -1,4 +1,18 @@
-package(default_visibility = ["//visibility:public"])
+# This basically excludes //beancount/utils.
+package(default_visibility = [
+    "//beancount:__pkg__",
+    "//beancount/ingest:__subpackages__",
+    "//beancount/ops:__pkg__",
+    "//beancount/parser:__pkg__",
+    "//beancount/plugins:__pkg__",
+    "//beancount/prices:__subpackages__",
+    "//beancount/projects:__pkg__",
+    "//beancount/query:__pkg__",
+    "//beancount/reports:__pkg__",
+    "//beancount/scripts:__pkg__",
+    "//beancount/web:__pkg__",
+    "//examples:__subpackages__",
+])
 
 py_library(
     name = "account",

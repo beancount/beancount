@@ -24,7 +24,7 @@ import lxml.html
 from beancount.web import scrape
 from beancount.web import web
 from beancount.utils import file_utils
-from beancount.utils import version
+from beancount.parser import version
 
 
 # Directories where binary files are allowed.

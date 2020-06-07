@@ -25,7 +25,7 @@ from beancount.reports import price_reports
 from beancount.reports import convert_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
-from beancount.utils import version
+from beancount.parser import version
 
 
 def get_all_reports():
