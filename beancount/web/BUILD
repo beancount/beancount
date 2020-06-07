@@ -1,6 +1,3 @@
-package(default_visibility = ["//visibility:public"])
-
-
 py_library(
     name = "bottle_utils",
     srcs = ["bottle_utils.py"],
@@ -47,6 +44,9 @@ py_test(
 py_library(
     name = "scrape",
     srcs = ["scrape.py"],
+    visibility = [
+        "//beancount/scripts:__pkg__",
+    ],
     deps = [
         # Add lxml here?
     ],
@@ -70,6 +70,10 @@ py_library(
         "web.css",
         "favicon.ico",
         "third_party/sorttable.js"
+    ],
+    visibility = [
+        "//bin:__pkg__",
+        "//beancount/scripts:__pkg__",
     ],
     deps = [
         "//beancount/core:account",

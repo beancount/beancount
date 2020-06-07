@@ -1,4 +1,4 @@
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//beancount/web:__pkg__"])
 
 py_library(
     name = "balance_reports",
@@ -55,6 +55,10 @@ py_test(
 py_library(
     name = "context",
     srcs = ["context.py"],
+    visibility = [
+        "//beancount/scripts:__pkg__",
+        "//beancount/web:__pkg__",
+    ],
     deps = [
         "//beancount/core:compare",
         "//beancount/core:convert",
@@ -336,6 +340,10 @@ py_test(
 py_library(
     name = "report",
     srcs = ["report.py"],
+    visibility = [
+        "//bin:__pkg__",
+        "//beancount/scripts:__pkg__",
+    ],
     deps = [
         "//beancount:loader_with_plugins",
         "//beancount/ops:validation",
@@ -372,8 +380,7 @@ py_test(
 py_library(
     name = "table",
     srcs = ["table.py"],
-    deps = [
-    ],
+    visibility = ["//beancount/plugins:__pkg__"],
 )
 
 py_test(

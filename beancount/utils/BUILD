@@ -115,7 +115,7 @@ py_test(
     srcs = ["import_utils_test.py"],
     deps = [
         ":import_utils",
-        "//beancount/core:account",
+        ":defdict",
     ],
 )
 
@@ -247,7 +247,7 @@ py_library(
     deps = [
         "//beancount:__init__",
         "//beancount/parser:_parser",
-        "//beancount/core:number",
+        "//beancount/core:number",  # Dynamic dep from _parser.
     ],
 )
 
