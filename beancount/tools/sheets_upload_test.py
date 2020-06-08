@@ -3,9 +3,13 @@ __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
+import pytest
+
+# oauth2client is not part of benacount dependencies. Skip the tests
+# if it is not available.
+oauth2client = pytest.importorskip('oauth2client')
 
 from beancount.tools import sheets_upload
-
 
 _NOT_FOUND = '__NOT_FOUND__'
 
