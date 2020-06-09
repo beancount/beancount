@@ -79,6 +79,7 @@ py_binary(
     srcs = ["bean_extract.py"],
     deps = [
         "//beancount/ingest:extract",
+        "//beancount/ingest:scripts_utils",
         "//beancount:loader_with_plugins",
     ],
 )
@@ -95,6 +96,7 @@ py_binary(
     srcs = ["bean_file.py"],
     deps = [
         "//beancount/ingest:file",
+        "//beancount/ingest:scripts_utils",
         "//beancount:loader_with_plugins",
     ],
 )
@@ -111,6 +113,7 @@ py_binary(
     srcs = ["bean_identify.py"],
     deps = [
         "//beancount/ingest:identify",
+        "//beancount/ingest:scripts_utils",
         "//beancount:loader_with_plugins",
     ],
 )
