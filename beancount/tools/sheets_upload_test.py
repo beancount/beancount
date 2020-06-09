@@ -2,12 +2,16 @@
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+# Skip the tests if oauth2client is not available.
 import unittest
+import pytest
+oauth2client = pytest.importorskip('oauth2client')
 
 from beancount.tools import sheets_upload
 
 
 _NOT_FOUND = '__NOT_FOUND__'
+
 
 class TestPopAlist(unittest.TestCase):
 

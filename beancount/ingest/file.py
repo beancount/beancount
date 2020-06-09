@@ -287,7 +287,7 @@ def run(args, parser, importers_list, files_or_directories, hooks=None):
         if hasattr(args, 'config'):
             args.output_dir = path.dirname(path.abspath(args.config))
         else:
-            import __main__
+            import __main__ # pylint: disable=import-outside-toplevel
             args.output_dir = path.dirname(path.abspath(__main__.__file__))
 
     # Make sure the output directory exists.
