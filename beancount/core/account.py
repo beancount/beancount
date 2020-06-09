@@ -132,10 +132,10 @@ def has_component(account_name, component):
     Args:
       account_name: A string, an account name.
       component: A string, a component of an account name. For instance,
-        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+        ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      A boolean, true if the component is in the account. Note that a component
-      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+      Boolean: true if the component is in the account. Note that a component
+      name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
     return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
 
@@ -184,7 +184,7 @@ def parent_matcher(account_name):
       account_name: The name of the parent account we want to check for.
     Returns:
       A callable, which, when called, will return true if the given account is a
-      child of 'account_name'.
+      child of ``account_name``.
     """
     return re.compile(r'{}($|{})'.format(re.escape(account_name), sep)).match
 

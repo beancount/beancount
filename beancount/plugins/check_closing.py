@@ -10,24 +10,24 @@ to insert a balance check.
 This plugin allows you to do that more simply, by inserting metadata. For
 example, this transaction:
 
-  2018-02-16 * "SOLD -14 QQQ 100 16 FEB 18 160 CALL @5.31"
-    Assets:US:Brokerage:Main:Options     -1400 QQQ180216C160 {2.70 USD} @ 5.31 USD
-      closing: TRUE
-    Expenses:Financial:Commissions       17.45 USD
-    Expenses:Financial:Fees               0.42 USD
-    Assets:US:Brokerage:Main:Cash      7416.13 USD
-    Income:US:Brokerage:Main:PnL
+    2018-02-16 * "SOLD -14 QQQ 100 16 FEB 18 160 CALL @5.31"
+      Assets:US:Brokerage:Main:Options     -1400 QQQ180216C160 {2.70 USD} @ 5.31 USD
+        closing: TRUE
+      Expenses:Financial:Commissions       17.45 USD
+      Expenses:Financial:Fees               0.42 USD
+      Assets:US:Brokerage:Main:Cash      7416.13 USD
+      Income:US:Brokerage:Main:PnL
 
 Would expand into the following two directives:
 
-  2018-02-16 * "SOLD -14 QQQ 100 16 FEB 18 160 CALL @5.31"
-    Assets:US:Brokerage:Main:Options     -1400 QQQ180216C160 {2.70 USD} @ 5.31 USD
-    Expenses:Financial:Commissions       17.45 USD
-    Expenses:Financial:Fees               0.42 USD
-    Assets:US:Brokerage:Main:Cash      7416.13 USD
-    Income:US:Brokerage:Main:PnL
+    2018-02-16 * "SOLD -14 QQQ 100 16 FEB 18 160 CALL @5.31"
+      Assets:US:Brokerage:Main:Options     -1400 QQQ180216C160 {2.70 USD} @ 5.31 USD
+      Expenses:Financial:Commissions       17.45 USD
+      Expenses:Financial:Fees               0.42 USD
+      Assets:US:Brokerage:Main:Cash      7416.13 USD
+      Income:US:Brokerage:Main:PnL
 
-  2018-02-17 balance Assets:US:Brokerage:Main:Options  0 QQQ180216C160
+    2018-02-17 balance Assets:US:Brokerage:Main:Options  0 QQQ180216C160
 
 Insert the closing line when you know you're closing the position.
 """

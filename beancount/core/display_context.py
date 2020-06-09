@@ -16,12 +16,12 @@ Here are all the aspects supported by this module:
   PRECISION: Numbers for a particular currency are always rendered to the same
   precision, and they can be rendered to one of two precisions; either
 
-    1. the most common number of fractional digits, or
-    2. the maximum number of digits seen (this is useful for rendering prices).
+  1. the most common number of fractional digits, or
+  2. the maximum number of digits seen (this is useful for rendering prices).
 
   ALIGNMENT: Several alignment methods are supported.
 
-    "natural": Render the strings as small as possible with no padding, but to
+  * "natural": Render the strings as small as possible with no padding, but to
     their currency's precision. Like this:
 
       '1.2345'
@@ -29,16 +29,16 @@ Here are all the aspects supported by this module:
       '-7,409.01'
       '0.00000125'
 
-    "dot-aligned": The periods will align vertically, the left and right sides
-      are padded so that the column of numbers has the same width:
+  * "dot-aligned": The periods will align vertically, the left and right sides
+    are padded so that the column of numbers has the same width:
 
       '     1.2345    '
       '   764         '
       '-7,409.01      '
       '     0.00000125'
 
-    "right": The strings are all flushed right, the left side is padded so that
-      the column of numbers has the same width:
+  * "right": The strings are all flushed right, the left side is padded so that
+    the column of numbers has the same width:
 
       '     1.2345'
       '        764'

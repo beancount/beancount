@@ -4,14 +4,14 @@ This can be used to clean up dirty imported payee names.
 
 This plugin accepts a list of rules in this format:
 
-  plugin "beancount.plugins.fix_payees" "[
-      (PAYEE, MATCH1, MATCH2, ...),
-  ]"
+    plugin "beancount.plugins.fix_payees" "[
+        (PAYEE, MATCH1, MATCH2, ...),
+    ]"
 
 Each of the "MATCH" clauses is a string, in the format:
 
-  "A:<regexp>" : Match the account name.
-  "D:<regexp>" : Match the payee or the narration.
+    "A:<regexp>" : Match the account name.
+    "D:<regexp>" : Match the payee or the narration.
 
 The plugin matches the Transactions in the file and if there is a
 case-insensitive match against the regular expression (we use re.search()),
@@ -20,20 +20,20 @@ is used.
 
 For example:
 
-  plugin "beancount.plugins.fix_payees" "[
+    plugin "beancount.plugins.fix_payees" "[
 
-      ("T-Mobile USA",
-       "A:Expenses:Communications:Phone",
-       "D:t-mobile"),
+        ("T-Mobile USA",
+         "A:Expenses:Communications:Phone",
+         "D:t-mobile"),
 
-      ("Con Edison",
-       "A:Expenses:Home:Electricity",
-       "D:con ?ed"),
+        ("Con Edison",
+         "A:Expenses:Home:Electricity",
+         "D:con ?ed"),
 
-      ("Birreria @ Eataly",
-       "D:EATALY BIRRERIA"),
+        ("Birreria @ Eataly",
+         "D:EATALY BIRRERIA"),
 
-  ]"
+    ]"
 
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"

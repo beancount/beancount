@@ -10,9 +10,9 @@ feature of Beancount).
 
 A user can create a transaction like this:
 
-  2014-03-08 # "Electricity bill [MONTHLY]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [MONTHLY]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 
 and new transactions will be created monthly for the following year.
 Note the use of the '#' flag and the word 'MONTHLY' which defines the
@@ -22,29 +22,29 @@ The number of recurrences can optionally be specified either by providing an
 end date or by specifying the number of times that the transaction will be
 repeated. For example:
 
-  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 
-  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 
 Transactions can also be repeated at yearly intervals, e.g.:
 
-  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 
 Other examples:
 
-  2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 
-  2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]"
-    Expenses:Electricity 			50.10 USD
-    Assets:Checking			       -50.10 USD
+    2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]"
+      Expenses:Electricity 			50.10 USD
+      Assets:Checking			       -50.10 USD
 """
 
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
