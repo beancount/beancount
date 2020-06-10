@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-10
+
+  - Released 2.3.0. See #459.
+
+
 2020-06-03
 
  - Added a 'hooks' argument to beancount.ingest.scripts_utils.ingest() replacing
@@ -157,6 +162,7 @@ Note: This file contains a list changes in the 'master' branch.
 
 2019-08-21
 
+ - Released 2.2.3.
  - Fixed bug in split_expenses plugin.
 
 
