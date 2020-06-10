@@ -4,9 +4,6 @@ __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import logging
-import subprocess
-import sys
-import os
 from os import path
 
 from beancount.utils import test_utils
@@ -77,12 +74,14 @@ def main():
                             command, returncode, errors))
 
         # NOTE(blais): This could be removed by improving the capture() function.
-        output_filename = path.join(args.output_directory, '{}.output'.format(report_name))
+        output_filename = path.join(args.output_directory,
+                                    '{}.output'.format(report_name))
         with open(output_filename, 'w') as outfile:
             outfile.write(stdout.getvalue())
 
         if stderr.getvalue():
-            errors_filename = path.join(args.output_directory, '{}.errors'.format(report_name))
+            errors_filename = path.join(args.output_directory,
+                                        '{}.errors'.format(report_name))
             with open(errors_filename, 'w') as outfile:
                 outfile.write(stderr.getvalue())
 

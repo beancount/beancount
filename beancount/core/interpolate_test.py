@@ -20,11 +20,6 @@ from beancount.parser import cmptest
 from beancount.utils import defdict
 from beancount import loader
 
-# TODO(blais): Remove this dependency from upstream.
-try:
-    from beancount.plugins import split_expenses
-except ImportError:
-    split_expenses = None
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'inferred_tolerance_default': {},

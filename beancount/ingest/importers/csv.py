@@ -7,6 +7,7 @@ __license__ = "GNU GPLv2"
 # TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
 from beancount.utils import test_utils
 test_utils.remove_alt_csv_path()
+# pylint: disable=wrong-import-order
 import csv
 
 import datetime

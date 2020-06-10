@@ -12,7 +12,6 @@ import sys
 import tarfile
 import tempfile
 import unittest
-import unittest
 
 from beancount.utils import test_utils
 

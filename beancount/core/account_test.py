@@ -2,11 +2,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
-import tempfile
-import os
-import shutil
 import types
-from os import path
 
 from beancount.core import account
 from beancount.utils import test_utils
