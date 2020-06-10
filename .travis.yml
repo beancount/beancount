@@ -24,7 +24,7 @@ before_install:
   - sudo dpkg -i bazel_3.2.0-linux-x86_64.deb
 
 script:
-  - bin/bazel --bazelrc=.bazelrc.travis test //...
+  - /usr/bin/bazel --bazelrc=.bazelrc.travis test //...
   - make build
   - make test
   - make lint
