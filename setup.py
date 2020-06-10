@@ -15,7 +15,7 @@ import runpy
 import subprocess
 import sys
 
-from setuptools import setup, Extension
+from setuptools import setup, find_packages, Extension
 
 # Make sure we can import hashsrc in order to create a binary with a checksum of
 # the C source code. This checksum is used to issue a warning when loading an
@@ -102,25 +102,7 @@ setup(name="beancount",
       author_email="blais@furius.ca",
       url="http://furius.ca/beancount",
       download_url="https://github.com/beancount/beancount",
-
-      packages = [
-          'beancount',
-          'beancount.parser',
-          'beancount.core',
-          'beancount.ops',
-          'beancount.plugins',
-          'beancount.query',
-          'beancount.reports',
-          'beancount.scripts',
-          'beancount.prices',
-          'beancount.prices.sources',
-          'beancount.web',
-          'beancount.ingest',
-          'beancount.ingest.importers',
-          'beancount.ingest.importers.mixins',
-          'beancount.utils',
-          'beancount.tools',
-      ],
+      packages=find_packages(exclude=['experiments*', ]),
 
       package_data = {
           'beancount.web': ['*.ico',
