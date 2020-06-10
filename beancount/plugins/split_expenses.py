@@ -8,16 +8,16 @@ into multiple postings, one for each member.
 
 For example, given the names 'Martin' and 'Caroline', the following transaction:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-     Income:Caroline:CreditCard      -269.00 USD
-     Expenses:Accommodation
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+       Income:Caroline:CreditCard      -269.00 USD
+       Expenses:Accommodation
 
 Will be converted to this:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-    Income:Caroline:CreditCard       -269.00 USD
-    Expenses:Accommodation:Martin     134.50 USD
-    Expenses:Accommodation:Caroline   134.50 USD
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+      Income:Caroline:CreditCard       -269.00 USD
+      Expenses:Accommodation:Martin     134.50 USD
+      Expenses:Accommodation:Caroline   134.50 USD
 
 After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings

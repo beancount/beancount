@@ -640,10 +640,10 @@ def has_entry_account_component(entry, component):
     Args:
       entry: A Transaction entry.
       component: A string, a component of an account name. For instance,
-        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+        ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      A boolean, true if the component is in the account. Note that a component
-      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+      Boolean: true if the component is in the account. Note that a component
+      name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
     return (isinstance(entry, Transaction) and
             any(has_component(posting.account, component)

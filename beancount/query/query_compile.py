@@ -823,8 +823,8 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     Args:
       select: An instance of query_parser.Select.
       targets_environ: A compilation environment for evaluating targets.
-      postings_environ: : A compilation environment for evaluating postings filters.
-      entries_environ: : A compilation environment for evaluating entry filters.
+      postings_environ: A compilation environment for evaluating postings filters.
+      entries_environ: A compilation environment for evaluating entry filters.
     Returns:
       An instance of EvalQuery, ready to be executed.
     """
