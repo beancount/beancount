@@ -1,10 +1,12 @@
 # Bazel build configuration for Travis-CI.
+#
+# NOTE: The default .bazelrc parameters are autoamtically combined with this file.
 
 # Avoid blowing up the RAM usage.
 startup --host_jvm_args=-Xmx2500m
 startup --host_jvm_args=-Xms2500m
 startup --batch
-test --ram_utilization_factor=10
+#test --ram_utilization_factor=10
 
 # This is so we understand failures better
 build --verbose_failures
@@ -15,9 +17,3 @@ build --verbose_failures
 # fails to run tests.
 build --spawn_strategy=standalone --genrule_strategy=standalone
 test --test_strategy=standalone
-
-#-------------------------------------------------------------------------------
-# Contents of .bazelrc.
-
-build --cxxopt=-std=c++14
-build -c opt
