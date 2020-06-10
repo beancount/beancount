@@ -238,11 +238,11 @@ LINT_SRCS =					\
 PYLINT = python3 -m pylint
 
 pylint lint:
-	ENABLE_AUTOIMPORTS= $(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	ENABLE_AUTOIMPORTS= $(PYLINT) $(LINT_SRCS)
 
 LINT_TESTS=useless-suppression,empty-docstring
 pylint-only:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
+	$(PYLINT) --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
