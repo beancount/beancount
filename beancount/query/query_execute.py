@@ -8,6 +8,7 @@ import collections
 import datetime
 import itertools
 import operator
+from decimal import Decimal
 
 from beancount.query import query_compile
 from beancount.query import query_env
@@ -168,7 +169,7 @@ _MIN_VALUES = {
     int: 0,
     float: 0.0,
     str: '',
-    number.Decimal: number.ZERO,
+    Decimal: number.ZERO,
     datetime.date: datetime.date.min,
 }
 

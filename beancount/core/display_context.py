@@ -63,8 +63,8 @@ __license__ = "GNU GPLv2"
 import collections
 import enum
 import io
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import distribution
 
 

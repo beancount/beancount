@@ -6,9 +6,9 @@ import decimal
 import io
 import unittest
 import textwrap
+from decimal import Decimal
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
 from beancount.query import query_compile as qc
