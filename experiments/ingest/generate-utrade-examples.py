@@ -11,12 +11,12 @@ import csv
 import sys
 import random
 import bisect
+from decimal import Decimal
 from os import path
 
 from dateutil.parser import parse as parse_time
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.utils.bisect_key import bisect_left_with_key
 from beancount.core import amount

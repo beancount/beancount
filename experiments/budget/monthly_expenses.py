@@ -9,8 +9,8 @@ import logging
 import datetime
 import collections
 import re
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import data
 from beancount.core import prices
 from beancount.core import convert

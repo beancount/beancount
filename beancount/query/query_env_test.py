@@ -3,9 +3,9 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
+from decimal import Decimal
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount

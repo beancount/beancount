@@ -21,6 +21,7 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from typing import NamedTuple, Tuple, List, Set, Any, Dict
+from decimal import Decimal
 import argparse
 import csv
 import datetime
@@ -29,7 +30,6 @@ import re
 
 from beancount.core.number import ONE
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import inventory

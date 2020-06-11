@@ -12,8 +12,8 @@ import datetime
 import decimal
 import re
 import textwrap
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry

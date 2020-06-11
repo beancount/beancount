@@ -59,8 +59,8 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory

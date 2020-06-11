@@ -5,9 +5,9 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from decimal import Decimal
 
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
