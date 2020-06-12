@@ -42,7 +42,6 @@ filegroup(
         strip_prefix = "RE-flex-1.6.6",
         sha256 = "f044631311fdabd71d9c6303b8f9edc7052289c099c7c47a1a42f5d9e8ad4905",
         urls = ["https://github.com/Genivia/RE-flex/archive/v1.6.6.zip"],
-        ##build_file = "@//:BUILD.reflex",
     )
 
     # 2020-05-09

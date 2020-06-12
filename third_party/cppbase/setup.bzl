@@ -7,6 +7,7 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 def setup_cppbase():
     setup_absl()
     setup_googletest()
+    setup_decimal()
 
 
 def setup_absl():
@@ -47,4 +48,17 @@ def setup_googletest():
             url = "https://github.com/google/googletest/archive/0eea2e9fc63461761dea5f2f517bd6af2ca024fa.tar.gz",
             sha256 = "552f1b59b8332195ae257b01182101dc93a3a16c3f808e763af9a1c3e4b1756a",
             strip_prefix = "googletest-0eea2e9fc63461761dea5f2f517bd6af2ca024fa",
+        )
+
+
+def setup_decimal():
+    # GoogleTest/GoogleMock framework. Used by most unit-tests.
+    if not native.existing_rule("mpdecimal"):
+        # 2016-02-28
+        http_archive(
+            name = "mpdecimal",
+            url = "http://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.4.2.tar.gz",
+            sha256 = "83c628b90f009470981cf084c5418329c88b19835d8af3691b930afccb7d79c7",
+            strip_prefix = "mpdecimal-2.4.2",
+            build_file = "//third_party/cppbase:mpdecimal.BUILD",
         )
