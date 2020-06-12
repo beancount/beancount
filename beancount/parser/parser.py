@@ -114,7 +114,6 @@ import inspect
 import textwrap
 import io
 import sys
-from os import path
 
 from beancount.parser import _parser
 from beancount.parser import grammar

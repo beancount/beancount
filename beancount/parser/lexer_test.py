@@ -573,7 +573,8 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([('LEX_ERROR', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message, "None return value from LexBuilder.STRING")
+        self.assertRegex(builder.errors[0].message,
+                         "None return value from LexBuilder.STRING")
 
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):

@@ -128,7 +128,7 @@ class TestParserInputs(unittest.TestCase):
     def test_parse_file_readerror(self):
         class Mock(io.BytesIO):
             def readinto(self, b):
-                raise IOError("mock error");
+                raise IOError("mock error")
         with self.assertRaises(IOError):
             entries, errors, _ = parser.parse_file(Mock())
 

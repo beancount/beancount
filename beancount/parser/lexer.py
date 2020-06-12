@@ -7,10 +7,8 @@ import collections
 import datetime
 import io
 import re
-import tempfile
 from decimal import Decimal
 
-from beancount.core import data
 from beancount.core.data import new_metadata
 from beancount.core import account
 from beancount.parser import _parser
