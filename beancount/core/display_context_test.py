@@ -2,9 +2,9 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
+from decimal import Decimal
 
 from beancount.core import display_context
-from beancount.core.number import Decimal
 from beancount.core.display_context import Precision
 from beancount.core.display_context import Align
 

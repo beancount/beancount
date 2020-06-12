@@ -12,6 +12,7 @@ import sys
 from os import path
 
 from beancount.utils import file_utils
+from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 
 
@@ -97,3 +98,7 @@ def add_arguments(parser):
 def run(_, __, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
     return identify(importers_list, files_or_directories)
+
+
+def main():
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

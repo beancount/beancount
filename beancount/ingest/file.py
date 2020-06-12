@@ -20,6 +20,7 @@ from beancount.core import account
 from beancount.utils import misc_utils
 from beancount.ingest import identify
 from beancount.ingest import cache
+from beancount.ingest import scripts_utils
 
 
 def file_one_file(filename, importers, destination, idify=False, logfile=None):
@@ -301,3 +302,7 @@ def run(args, parser, importers_list, files_or_directories, hooks=None):
          idify=True,
          logfile=sys.stdout)
     return 0
+
+
+def main():
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

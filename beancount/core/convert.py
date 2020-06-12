@@ -21,7 +21,8 @@ Functions named ``convert_*()`` are used to convert postings and amounts to any 
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from beancount.core.number import Decimal
+from decimal import Decimal
+
 from beancount.core.number import MISSING
 from beancount.core.amount import Amount
 from beancount.core.position import Cost

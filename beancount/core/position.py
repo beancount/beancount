@@ -9,10 +9,10 @@ import copy
 import datetime
 import re
 
+from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount

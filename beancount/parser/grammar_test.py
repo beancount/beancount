@@ -9,10 +9,10 @@ import unittest
 import inspect
 import textwrap
 import re
+from decimal import Decimal
 from unittest import mock
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import from_string as A

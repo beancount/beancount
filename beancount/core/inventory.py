@@ -27,11 +27,11 @@ __license__ = "GNU GPLv2"
 
 import collections
 from collections.abc import Iterable
+from decimal import Decimal
 import enum
 import re
 
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import same_sign
 from beancount.core.amount import Amount
 from beancount.core.position import Cost

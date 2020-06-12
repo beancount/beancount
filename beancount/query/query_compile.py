@@ -12,8 +12,8 @@ import copy
 import datetime
 import re
 import operator
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
 

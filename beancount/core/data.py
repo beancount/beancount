@@ -8,10 +8,10 @@ import datetime
 import enum
 import sys
 
+from decimal import Decimal
 from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
 
 from beancount.core.amount import Amount
-from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec

@@ -11,7 +11,7 @@ from beancount.parser import version
 from beancount.reports import report
 
 
-# pylint: disable=bad-whitespace
+# pylint: disable=bad-whitespace,line-too-long
 COMMANDS = [
     ('balances'                 , "bean-report {} balances"),
     ('help-reports'             , "bean-report --help-reports"),
@@ -52,6 +52,7 @@ def main():
     parser.add_argument('filename', help='Beancount filename')
     parser.add_argument('output_directory', help='Output directory for the tutorial files')
     args = parser.parse_args()
+    rootdir = test_utils.find_repository_root(__file__)
 
     for report_name, command_template in COMMANDS:
         logging.info('Generating %s: %s', report_name, command_template)
