@@ -763,6 +763,35 @@ class TestToleranceOptions(unittest.TestCase):
                           "JPY": D("0.5")},
                          options_map['inferred_tolerance_default'])
 
+class TestPrecisionMetadata(unittest.TestCase):
+
+    # pylint: disable=empty-docstring
+    @parser.parse_doc()
+    def test_precision_auto(self, _, __, options_map):
+        """
+        """
+        self.assertEqual(options_map['dcontext'].ccontexts['EUR'].precision,
+                         None)
+
+    @parser.parse_doc()
+    def test_precision_explicit(self, _, __, options_map):
+        """
+        1993-11-01 commodity EUR
+          precision: 0.01
+        """
+        self.assertEqual(options_map['dcontext'].ccontexts['EUR'].precision,
+                         Decimal('0.01'))
+
+    @parser.parse_doc(expect_errors=True)
+    def test_precision_invalid(self, _, errors, options_map):
+        """
+        1993-11-01 commodity EUR
+          precision: 0.02
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, "Invalid precision: 0.02")
+        self.assertEqual(options_map['dcontext'].ccontexts['EUR'].precision,
+                         None)
 
 class TestDeprecatedOptions(unittest.TestCase):
 

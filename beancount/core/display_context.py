@@ -99,9 +99,10 @@ class _CurrencyContext:
         self.has_sign = False
         self.integer_max = 1
         self.fractional_dist = distribution.Distribution()
+        self.precision = None
 
     def __str__(self):
-        fmt = ('sign={:<2}  integer_max={:<2}  '
+        fmt = ('sign={:<2}  precision={:}  integer_max={:<2}  '
                'fractional_common={:<2}  fractional_max={:<2}  '
                '"{}" "{}"')
         dist = self.fractional_dist
@@ -126,8 +127,7 @@ class _CurrencyContext:
             example_max = example + '.' + ('0' * fractional_max)
 
         return fmt.format(
-            int(self.has_sign),
-            self.integer_max,
+            int(self.has_sign), self.precision, self.integer_max,
             '_' if dist.empty() else dist.mode(),
             '_' if dist.empty() else dist.max(),
             example_common, example_max)
@@ -157,6 +157,9 @@ class _CurrencyContext:
         Returns:
           An integer for the number of fractional digits, or None.
         """
+        if self.precision is not None:
+            return -self.precision.as_tuple().exponent
+
         if self.fractional_dist.empty():
             return None
         if precision == Precision.MOST_COMMON:
@@ -183,6 +186,11 @@ class DisplayContext:
     def set_commas(self, commas):
         """Set the default value for rendering commas."""
         self.commas = commas
+
+    def set_precision(self, precision, currency='__default__'):
+        if precision is None:
+            return
+        self.ccontexts[currency].precision = precision
 
     def __str__(self):
         oss = io.StringIO()

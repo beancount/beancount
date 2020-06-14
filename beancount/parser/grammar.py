@@ -97,6 +97,23 @@ def valid_account_regexp(options):
                                                account.ACC_COMP_NAME_RE))
 
 
+def valid_precision(value):
+    """Check if the argument represents a valid precision.
+
+    Precision is specified with a Decimal representing the resolution
+    with which the amounts are reported. In practice this sets the
+    number of digits used for amout representation. To avoid
+    confusion, accept only values with mantissa equal to one: 0.1 or
+    0.01 but not 0.2.
+
+    Argument:
+      value: The value to check.
+    Returns:
+      A boolean.
+    """
+    return isinstance(value, Decimal) and value.as_tuple().digits == (1, )
+
+
 # A temporary data structure used during parsing to hold and accumulate the
 # fields being parsed on a transaction line. Because we want to be able to parse
 # these in arbitrary order, we have to accumulate the fields and then unpack
@@ -612,7 +629,17 @@ class Builder(lexer.LexBuilder):
           A new Close object.
         """
         meta = new_metadata(filename, lineno, kvlist)
-        return Commodity(meta, date, currency)
+        entry = Commodity(meta, date, currency)
+
+        precision = meta.get('precision', None)
+        if precision is not None:
+            if valid_precision(precision):
+                self.dcontext.set_precision(precision, entry.currency)
+            else:
+                self.errors.append(
+                    ParserError(meta, "Invalid precision: {:}".format(precision), entry))
+
+        return entry
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
