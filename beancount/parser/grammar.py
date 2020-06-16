@@ -200,10 +200,6 @@ class Builder(lexer.LexBuilder):
 
         return self.options
 
-    def get_invalid_account(self):
-        """See base class."""
-        return account.join(self.options['name_equity'], 'InvalidAccountName')
-
     def get_long_string_maxlines(self):
         """See base class."""
         return self.options['long_string_maxlines']

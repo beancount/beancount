@@ -46,18 +46,6 @@ class LexBuilder:
         # Default number of lines in string literals.
         self.long_string_maxlines_default = 64
 
-    def get_invalid_account(self):
-        """Return the name of an invalid account placeholder.
-
-        When an account name is not deemed a valid one, replace it by
-        this account name. This can be overridden by the parser to
-        take into account the options.
-
-        Returns:
-          A string, the name of the root/type for invalid account names.
-        """
-        return 'Equity:InvalidAccountName'
-
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
     def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}
