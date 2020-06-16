@@ -27,7 +27,7 @@
 #define build_FALSE() ({ Py_INCREF(Py_False); Py_False; })
 #define build_NONE() ({ Py_INCREF(Py_None); Py_None; })
 #define build_NUMBER(_str) PyDecimal_FromCString(_str)
-#define build_DATE(_year, _month, _day) PyDate_FromDate(_year, _month, _day)
+#define build_DATE(_str, _len) PyDate_FromCString(_str)
 #define build_STRING(_str, _len, _enc) PyUnicode_FromCQuotedString(_str, _len, _enc);
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
 
@@ -210,6 +210,46 @@ static PyObject* PyUnicode_FromCQuotedString(char* string, size_t len, const cha
     free(unescaped);
 
     return rv;
+}
+
+
+/**
+ * Convert ASCII string to an integer.
+ *
+ * Converts the @string string of length @len to int. The input is
+ * assumed to be a valid representation of an integer number. No input
+ * validation or error checking is performed.
+ */
+static int strtonl(const char* string, size_t len)
+{
+    int result = 0;
+
+    for (size_t i = 0; i < len; ++i) {
+        result *= 10;
+        result += string[i] - '0';
+    }
+
+    return result;
+}
+
+
+static PyObject* PyDate_FromCString(const char* string)
+{
+    int year, month, day;
+    size_t n;
+
+    n = strcspn(string, "-/");
+    year = strtonl(string, n);
+    string += n + 1;
+
+    n = strcspn(string, "-/");
+    month = strtonl(string, n);
+    string += n + 1;
+
+    n = strcspn(string, "-/");
+    day = strtonl(string, n);
+
+    return PyDate_FromDate(year, month, day);
 }
 
 

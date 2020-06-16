@@ -534,7 +534,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 376 "beancount/parser/lexer.l"
+#line 357 "beancount/parser/lexer.l"
 
 
 #line 540 "beancount/parser/lexer.h"

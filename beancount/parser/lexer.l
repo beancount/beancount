@@ -104,9 +104,6 @@ int PyFile_Read(PyObject *file, char *buf, size_t max_size);
         }                                       \
     } while (0)
 
-/* Utility functions. */
-int strtonl(const char* buf, size_t nchars);
-
 %}
 
 /* A start condition for chomping an invalid token. */
@@ -279,23 +276,7 @@ NULL		{
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
-    const char* year_str;
-    const char* month_str;
-    const char* day_str;
-    int year, month, day;
-
-    /* Parse the numbers. */
-    year_str = yytext;
-    month_str = strpbrk(year_str, "-/");
-    year = strtonl(year_str, month_str - year_str);
-    month_str++;
-    day_str = strpbrk(month_str, "-/");
-    month = strtonl(month_str, day_str - month_str);
-    day_str++;
-    day = strtonl(day_str, yytext + yyleng - day_str);
-
-    /* Attempt to create the date. */
-    token(DATE, year, month, day);
+    token(DATE, yytext, yyleng);
     return DATE;
 }
 
@@ -314,7 +295,7 @@ NULL		{
 
  /* String literals. */
 \"([^\\\"]|\\.)*\"		{
-    token(STRING, yytext + 1, yyleng -2, yy_encoding);
+    token(STRING, yytext + 1, yyleng - 2, yy_encoding);
     return STRING;
 }
 
@@ -448,18 +429,6 @@ void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int 
     extra->line = line;
     extra->n_eof = 0;
     extra->n_line_tokens = 0;
-}
-
-/* Convert an integer string to a number. */
-int strtonl(const char* buf, size_t nchars)
-{
-    int result = 0;
-    size_t i;
-    for ( i = 0; i < nchars; ++i ) {
-        result *= 10;
-        result += (buf[i] - '0');
-    }
-    return result;
 }
 
 /* Build and accumulate an error on the builder object. */
