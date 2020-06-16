@@ -352,13 +352,13 @@ NULL		{
  /* Fake an EOL at the end of file, to ensure that files without a final newline
   * will process postings right. */
 <<EOF>>     		{
-  if (yy_eof_times == 0) {
-      yy_eof_times = 1;
-      /* Ensure location data is populated. */
-      YY_USER_ACTION;
-      return EOL;
-  }
-  return 0;
+    if (yy_eof_times == 0) {
+	yy_eof_times = 1;
+	/* Ensure location data is populated. */
+	YY_USER_ACTION;
+	return EOL;
+    }
+    return 0;
 }
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
