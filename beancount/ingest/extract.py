@@ -17,7 +17,6 @@ from beancount.parser import printer
 from beancount.ingest import similar
 from beancount.ingest import identify
 from beancount.ingest import cache
-from beancount.ingest import scripts_utils
 from beancount import loader
 
 
@@ -249,7 +248,3 @@ def run(args, _, importers_list, files_or_directories, hooks=None):
             ascending=args.ascending,
             hooks=hooks)
     return 0
-
-
-def main():
-    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

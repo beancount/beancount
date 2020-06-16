@@ -95,7 +95,7 @@ setup(name="beancount",
       automate the conversion of external data into one's input file in
       Beancount syntax.
       """,
-      
+
       license="GNU GPLv2 only",
       author="Martin Blais",
       author_email="blais@furius.ca",
@@ -194,9 +194,9 @@ setup(name="beancount",
               'bean-report = beancount.reports.report:main',
               'bean-sql = beancount.scripts.sql:main',
               'bean-web = beancount.web.web:main',
-              'bean-identify = beancount.ingest.identify:main',
-              'bean-extract = beancount.ingest.extract:main',
-              'bean-file = beancount.ingest.file:main',
+              'bean-identify = beancount.ingest.scripts_utils:identify_main',
+              'bean-extract = beancount.ingest.scripts_utils:extract_main',
+              'bean-file = beancount.ingest.scripts_utils:file_main',
               'treeify = beancount.tools.treeify:main',
               'upload-to-sheets = beancount.tools.sheets_upload:main',
           ]

@@ -109,11 +109,11 @@ py_library(
         "extract.py",
     ],
     deps = [
+        ":similar",
+        ":identify",
+        ":cache",
         "//beancount/core:data",
         "//beancount/parser:printer",
-        "//beancount/ingest:similar",
-        "//beancount/ingest:identify",
-        "//beancount/ingest:cache",
         "//beancount:loader",
     ],
 )
@@ -145,9 +145,9 @@ py_library(
         "file.py",
     ],
     deps = [
+        ":identify",
         "//beancount/core:account",
         "//beancount/utils:misc_utils",
-        "//beancount/ingest:identify",
         "//beancount/ingest:cache",
     ],
 )
@@ -163,10 +163,10 @@ py_test(
     ],
     deps = [
         ":file",
+        ":scripts_utils",
         "//examples/ingest:office",
         "//beancount/utils:test_utils",
         "//beancount/utils:file_utils",
-        "//beancount/ingest:scripts_utils",
     ],
 )
 
@@ -176,8 +176,8 @@ py_library(
         "identify.py",
     ],
     deps = [
+        ":cache",
         "//beancount/utils:file_utils",
-        "//beancount/ingest:cache",
     ],
 )
 
