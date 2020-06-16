@@ -8,7 +8,6 @@ import datetime
 import functools
 import textwrap
 import unittest
-import re
 import pytest
 
 from beancount.core.number import D
@@ -318,7 +317,8 @@ class TestLexer(unittest.TestCase):
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
-        self.assertEqual(builder.errors[0].message, 'ValueError: String too long (68 lines)')
+        self.assertEqual(builder.errors[0].message,
+                         'ValueError: String too long (68 lines)')
 
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
@@ -555,18 +555,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 5, b'\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
-    def test_lexer_builder_returns_none(self):
-        builder = lexer.LexBuilder()
-        def return_none(string):
-            return None
-        setattr(builder, 'STRING', return_none)
-        tokens = list(lexer.lex_iter_string('"Something"', builder))
-        self.assertEqual([('LEX_ERROR', 1, b'"Something"', None),
-                          ('EOL', 1, b'\x00', None)], tokens)
-        self.assertEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message,
-                         "None return value from LexBuilder.STRING")
-
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
         """
@@ -596,46 +584,6 @@ class TestLexerErrors(unittest.TestCase):
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None)], tokens)
         self.assertEqual(0, len(builder.errors))
-
-    def _run_lexer_with_raising_builder_method(self, test_input, method_name,
-                                               expected_tokens):
-        builder = lexer.LexBuilder()
-        def raise_error(string):
-            raise ValueError
-        setattr(builder, method_name, raise_error)
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual(expected_tokens, tokens)
-        self.assertEqual(1, len(builder.errors))
-
-    def test_lexer_exception_STRING(self):
-        self._run_lexer_with_raising_builder_method(
-            ' "Something" ', 'STRING',
-            [('LEX_ERROR', 1, b'"Something"', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_NUMBER(self):
-        self._run_lexer_with_raising_builder_method(
-            ' 100.23 ', 'NUMBER',
-            [('LEX_ERROR', 1, b'100.23', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_TAG(self):
-        self._run_lexer_with_raising_builder_method(
-            ' #the-tag ', 'TAG',
-            [('LEX_ERROR', 1, b'#the-tag', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_LINK(self):
-        self._run_lexer_with_raising_builder_method(
-            ' ^the-link ', 'LINK',
-            [('LEX_ERROR', 1, b'^the-link', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_KEY(self):
-        self._run_lexer_with_raising_builder_method(
-            ' mykey: ', 'KEY',
-            [('LEX_ERROR', 1, b'mykey:', None),
-             ('EOL', 1, b'\x00', None)])
 
 
 class TestLexerUnicode(unittest.TestCase):
