@@ -67,44 +67,44 @@ class TestLexer(unittest.TestCase):
           somekey:
         """
         self.assertEqual([
-            ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
-            ('DATE', 1, '2014-01-02', datetime.date(2014, 1, 2)),
-            ('DATE', 1, '2014/01/02', datetime.date(2014, 1, 2)),
-            ('EOL', 2, '\n', None),
-            ('ACCOUNT', 2, 'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
-            ('EOL', 3, '\n', None),
-            ('ACCOUNT', 3, 'Liabilities:US:Bank:Credit', 'Liabilities:US:Bank:Credit'),
-            ('EOL', 4, '\n', None),
-            ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
-            ('EOL', 5, '\n', None),
-            ('CURRENCY', 5, 'USD', 'USD'),
-            ('CURRENCY', 5, 'HOOL', 'HOOL'),
-            ('CURRENCY', 5, 'TEST_D', 'TEST_D'),
-            ('CURRENCY', 5, 'TEST_3', 'TEST_3'),
-            ('CURRENCY', 5, 'TEST-D', 'TEST-D'),
-            ('CURRENCY', 5, 'TEST-3', 'TEST-3'),
-            ('CURRENCY', 5, 'NT', 'NT'),
-            ('EOL', 6, '\n', None),
-            ('STRING', 6, '"', 'Nice dinner at Mermaid Inn'),
-            ('EOL', 7, '\n', None),
-            ('STRING', 7, '"', ''),
-            ('EOL', 8, '\n', None),
-            ('NUMBER', 8, '123', D('123')),
-            ('NUMBER', 8, '123.45', D('123.45')),
-            ('NUMBER', 8, '123.456789', D('123.456789')),
-            ('MINUS', 8, '-', None),
-            ('NUMBER', 8, '123', D('123')),
-            ('MINUS', 8, '-', None),
-            ('NUMBER', 8, '123.456789', D('123.456789')),
-            ('EOL', 9, '\n', None),
-            ('TAG', 9, '#sometag123', 'sometag123'),
-            ('EOL', 10, '\n', None),
-            ('LINK', 10, '^sometag123', 'sometag123'),
-            ('EOL', 11, '\n', None),
-            ('KEY', 11, 'somekey:', 'somekey'),
-            ('COLON', 11, ':', None),
-            ('EOL', 12, '\n', None),
-            ('EOL', 12, '\x00', None)
+            ('DATE', 1, b'2013-05-18', datetime.date(2013, 5, 18)),
+            ('DATE', 1, b'2014-01-02', datetime.date(2014, 1, 2)),
+            ('DATE', 1, b'2014/01/02', datetime.date(2014, 1, 2)),
+            ('EOL', 2, b'\n', None),
+            ('ACCOUNT', 2, b'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
+            ('EOL', 3, b'\n', None),
+            ('ACCOUNT', 3, b'Liabilities:US:Bank:Credit', 'Liabilities:US:Bank:Credit'),
+            ('EOL', 4, b'\n', None),
+            ('ACCOUNT', 4, b'Other:Bank', 'Other:Bank'),
+            ('EOL', 5, b'\n', None),
+            ('CURRENCY', 5, b'USD', 'USD'),
+            ('CURRENCY', 5, b'HOOL', 'HOOL'),
+            ('CURRENCY', 5, b'TEST_D', 'TEST_D'),
+            ('CURRENCY', 5, b'TEST_3', 'TEST_3'),
+            ('CURRENCY', 5, b'TEST-D', 'TEST-D'),
+            ('CURRENCY', 5, b'TEST-3', 'TEST-3'),
+            ('CURRENCY', 5, b'NT', 'NT'),
+            ('EOL', 6, b'\n', None),
+            ('STRING', 6, b'"', 'Nice dinner at Mermaid Inn'),
+            ('EOL', 7, b'\n', None),
+            ('STRING', 7, b'"', ''),
+            ('EOL', 8, b'\n', None),
+            ('NUMBER', 8, b'123', D('123')),
+            ('NUMBER', 8, b'123.45', D('123.45')),
+            ('NUMBER', 8, b'123.456789', D('123.456789')),
+            ('MINUS', 8, b'-', None),
+            ('NUMBER', 8, b'123', D('123')),
+            ('MINUS', 8, b'-', None),
+            ('NUMBER', 8, b'123.456789', D('123.456789')),
+            ('EOL', 9, b'\n', None),
+            ('TAG', 9, b'#sometag123', 'sometag123'),
+            ('EOL', 10, b'\n', None),
+            ('LINK', 10, b'^sometag123', 'sometag123'),
+            ('EOL', 11, b'\n', None),
+            ('KEY', 11, b'somekey:', 'somekey'),
+            ('COLON', 11, b':', None),
+            ('EOL', 12, b'\n', None),
+            ('EOL', 12, b'\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -114,16 +114,16 @@ class TestLexer(unittest.TestCase):
           abc1:abc1 ΑβγⅠ:ΑβγⅠ ابجا:ابجا
         """
         self.assertEqual([
-            ('ACCOUNT', 1, 'Other:Bank', 'Other:Bank'),
-            ('ACCOUNT', 1, 'Óthяr:Bあnk', 'Óthяr:Bあnk'),
-            ('EOL', 2, '\n', None),
-            ('KEY', 2, 'abc1:', 'abc1'),
-            ('COLON', 2, ':', None),
-            ('error', 2, 'abc1', None),
-            ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ', 'ΑβγⅠ:ΑβγⅠ'),
-            ('ACCOUNT', 2, 'ابجا:ابجا', 'ابجا:ابجا'),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None)
+            ('ACCOUNT', 1, b'Other:Bank', 'Other:Bank'),
+            ('ACCOUNT', 1, 'Óthяr:Bあnk'.encode('utf8'), 'Óthяr:Bあnk'),
+            ('EOL', 2, b'\n', None),
+            ('KEY', 2, b'abc1:', 'abc1'),
+            ('COLON', 2, b':', None),
+            ('error', 2, b'abc1', None),
+            ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ'.encode('utf8'), 'ΑβγⅠ:ΑβγⅠ'),
+            ('ACCOUNT', 2, 'ابجا:ابجا'.encode('utf8'), 'ابجا:ابجا'),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -133,13 +133,13 @@ class TestLexer(unittest.TestCase):
             Equity:Something
         """
         self.assertEqual([
-            ('DATE', 1, '2014-07-05', datetime.date(2014, 7, 5)),
-            ('ASTERISK', 1, '*', None),
-            ('EOL', 2, '\n', None),
-            ('INDENT', 2, '  ', None),
-            ('ACCOUNT', 2, 'Equity:Something', 'Equity:Something'),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('DATE', 1, b'2014-07-05', datetime.date(2014, 7, 5)),
+            ('ASTERISK', 1, b'*', None),
+            ('EOL', 2, b'\n', None),
+            ('INDENT', 2, b'  ', None),
+            ('ACCOUNT', 2, b'Equity:Something', 'Equity:Something'),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -148,13 +148,13 @@ class TestLexer(unittest.TestCase):
           USD,CAD,AUD
         """
         self.assertEqual([
-            ('CURRENCY', 1, 'USD', 'USD'),
-            ('COMMA', 1, ',', None),
-            ('CURRENCY', 1, 'CAD', 'CAD'),
-            ('COMMA', 1, ',', None),
-            ('CURRENCY', 1, 'AUD', 'AUD'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('CURRENCY', 1, b'USD', 'USD'),
+            ('COMMA', 1, b',', None),
+            ('CURRENCY', 1, b'CAD', 'CAD'),
+            ('COMMA', 1, b',', None),
+            ('CURRENCY', 1, b'AUD', 'AUD'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -204,10 +204,10 @@ class TestLexer(unittest.TestCase):
           555.00 CAD.11
         """
         self.assertEqual([
-            ('NUMBER', 1, '555.00', D('555.00')),
-            ('CURRENCY', 1, 'CAD.11', 'CAD.11'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('NUMBER', 1, b'555.00', D('555.00')),
+            ('CURRENCY', 1, b'CAD.11', 'CAD.11'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -216,9 +216,9 @@ class TestLexer(unittest.TestCase):
           TEST-DA
         """
         self.assertEqual([
-            ('CURRENCY', 1, 'TEST-DA', 'TEST-DA'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('CURRENCY', 1, b'TEST-DA', 'TEST-DA'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertEqual(0, len(errors))
 
@@ -228,9 +228,9 @@ class TestLexer(unittest.TestCase):
           2013-12-98
         """
         self.assertEqual([
-            ('error', 1, '2013-12-98', None),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('error', 1, b'2013-12-98', None),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, '(out of range|month must be)')
@@ -241,9 +241,9 @@ class TestLexer(unittest.TestCase):
           2013-12-228
         """
         self.assertEqual([
-            ('error', 1, '2013-12-228', None),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('error', 1, b'2013-12-228', None),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -252,9 +252,9 @@ class TestLexer(unittest.TestCase):
           Assets:A
         """
         self.assertEqual([
-            ('ACCOUNT', 1, 'Assets:A', 'Assets:A'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('ACCOUNT', 1, b'Assets:A', 'Assets:A'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -266,13 +266,13 @@ class TestLexer(unittest.TestCase):
           Assets:signals
         """
         self.assertEqual([
-            ('ACCOUNT', 1, 'Assets:Vouchers:99Ranch', 'Assets:Vouchers:99Ranch'),
-            ('EOL', 2, '\n', None),
-            ('ACCOUNT', 2, 'Assets:99Test', 'Assets:99Test'),
-            ('EOL', 3, '\n', None),
-            ('error', 3, 'Assets:signals', None),
-            ('EOL', 4, '\n', None),
-            ('EOL', 4, '\x00', None)
+            ('ACCOUNT', 1, b'Assets:Vouchers:99Ranch', 'Assets:Vouchers:99Ranch'),
+            ('EOL', 2, b'\n', None),
+            ('ACCOUNT', 2, b'Assets:99Test', 'Assets:99Test'),
+            ('EOL', 3, b'\n', None),
+            ('error', 3, b'Assets:signals', None),
+            ('EOL', 4, b'\n', None),
+            ('EOL', 4, b'\x00', None)
         ], tokens)
         self.assertEqual(1, len(errors))
 
@@ -282,9 +282,9 @@ class TestLexer(unittest.TestCase):
           Equity:Beginning-Balances
         """
         self.assertEqual([
-            ('ACCOUNT', 1, 'Equity:Beginning-Balances', 'Equity:Beginning-Balances'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('ACCOUNT', 1, b'Equity:Beginning-Balances', 'Equity:Beginning-Balances'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -294,13 +294,13 @@ class TestLexer(unittest.TestCase):
           2008-03-01 check Assets:BestBank:Savings 2340.19 USD
         """
         self.assertEqual([
-            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
-            ('error', 1, 'check', None),
-            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
-            ('NUMBER', 1, '2340.19', D('2340.19')),
-            ('CURRENCY', 1, 'USD', 'USD'),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('DATE', 1, b'2008-03-01', datetime.date(2008, 3, 1)),
+            ('error', 1, b'check', None),
+            ('ACCOUNT', 1, b'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
+            ('NUMBER', 1, b'2340.19', D('2340.19')),
+            ('CURRENCY', 1, b'USD', 'USD'),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, r'\bcheck\b')
@@ -344,10 +344,10 @@ class TestLexer(unittest.TestCase):
           2014-01-01 open Assets:Temporary \
         """
         self.assertEqual([
-            ('DATE', 1, '2014-01-01', datetime.date(2014, 1, 1)),
-            ('OPEN', 1, 'open', None),
-            ('ACCOUNT', 1, 'Assets:Temporary', 'Assets:Temporary'),
-            ('EOL', 1, '\x00', None),
+            ('DATE', 1, b'2014-01-01', datetime.date(2014, 1, 1)),
+            ('OPEN', 1, b'open', None),
+            ('ACCOUNT', 1, b'Assets:Temporary', 'Assets:Temporary'),
+            ('EOL', 1, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -358,12 +358,12 @@ class TestLexer(unittest.TestCase):
           "The Great \t\n\r\f\b"
         '''
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('STRING', 2, '"', 'The Great "Juju"'),
-            ('EOL', 3, '\n', None),
-            ('STRING', 3, '"', 'The Great \t\n\r\x0c\x08'),
-            ('EOL', 4, '\n', None),
-            ('EOL', 4, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('STRING', 2, br'"', 'The Great "Juju"'),
+            ('EOL', 3, b'\n', None),
+            ('STRING', 3, br'"', 'The Great \t\n\r\x0c\x08'),
+            ('EOL', 4, b'\n', None),
+            ('EOL', 4, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -373,8 +373,8 @@ class TestLexer(unittest.TestCase):
         # Note that this test contains an _actual_ newline, not an escape one as
         # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
-            ('STRING', 2, '"', 'The Great\nJuju'),
-            ('EOL', 2, '\x00', None),
+            ('STRING', 2, b'"', 'The Great\nJuju'),
+            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -390,10 +390,10 @@ class TestLexer(unittest.TestCase):
         # Note that this test contains an _actual_ newline, not an escape one as
         # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('STRING', 6, '"', 'Forty\nworld\nleaders\nand\nhundreds'),
-            ('EOL', 7, '\n', None),
-            ('EOL', 7, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('STRING', 6, b'"', 'Forty\nworld\nleaders\nand\nhundreds'),
+            ('EOL', 7, b'\n', None),
+            ('EOL', 7, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -412,12 +412,12 @@ class TestLexer(unittest.TestCase):
         popmeta location:
         '''
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('POPMETA', 2, 'popmeta', None),
-            ('KEY', 2, 'location:', 'location'),
-            ('COLON', 2, ':', None),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('POPMETA', 2, b'popmeta', None),
+            ('KEY', 2, b'location:', 'location'),
+            ('COLON', 2, b':', None),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -427,12 +427,12 @@ class TestLexer(unittest.TestCase):
         TRUE FALSE NULL
         '''
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('BOOL', 2, 'TRUE', None),
-            ('BOOL', 2, 'FALSE', None),
-            ('NONE', 2, 'NULL', None),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('BOOL', 2, b'TRUE', None),
+            ('BOOL', 2, b'FALSE', None),
+            ('NONE', 2, b'NULL', None),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -445,10 +445,10 @@ class TestIgnoredLines(unittest.TestCase):
         ;; Long comment line about something something.
         """
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('COMMENT', 2, ';; Long comment line about something something.', None),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('COMMENT', 2, b';; Long comment line about something something.', None),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -459,15 +459,15 @@ class TestIgnoredLines(unittest.TestCase):
           ;; Something something.
         """
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('OPTION', 2, 'option', None),
-            ('STRING', 2, '"', 'title'),
-            ('STRING', 2, '"', 'The Title'),
-            ('EOL', 3, '\n', None),
-            ('INDENT', 3, '  ', None),
-            ('COMMENT', 3, ';; Something something.', None),
-            ('EOL', 4, '\n', None),
-            ('EOL', 4, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('OPTION', 2, b'option', None),
+            ('STRING', 2, b'"', 'title'),
+            ('STRING', 2, b'"', 'The Title'),
+            ('EOL', 3, b'\n', None),
+            ('INDENT', 3, b'  ', None),
+            ('COMMENT', 3, b';; Something something.', None),
+            ('EOL', 4, b'\n', None),
+            ('EOL', 4, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -477,10 +477,10 @@ class TestIgnoredLines(unittest.TestCase):
         Regular prose appearing mid-file which starts with a flag character.
         """
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('SKIPPED', 2, 'R', None),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('SKIPPED', 2, b'R', None),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -497,10 +497,10 @@ class TestIgnoredLines(unittest.TestCase):
         * This sentence is an org-mode title.
         """
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('SKIPPED', 2, '*', None),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('SKIPPED', 2, b'*', None),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -512,14 +512,14 @@ class TestIgnoredLines(unittest.TestCase):
         :END:
         """
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('SKIPPED', 2, ':', None),
-            ('EOL', 3, '\n', None),
-            ('SKIPPED', 3, ':', None),
-            ('EOL', 4, '\n', None),
-            ('SKIPPED', 4, ':', None),
-            ('EOL', 5, '\n', None),
-            ('EOL', 5, '\x00', None),
+            ('EOL', 2, b'\n', None),
+            ('SKIPPED', 2, b':', None),
+            ('EOL', 3, b'\n', None),
+            ('SKIPPED', 3, b':', None),
+            ('EOL', 4, b'\n', None),
+            ('SKIPPED', 4, b':', None),
+            ('EOL', 5, b'\n', None),
+            ('EOL', 5, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -533,13 +533,13 @@ class TestLexerErrors(unittest.TestCase):
         """
           2000-01-01 open ` USD
         """
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
-                          ('OPEN', 2, 'open', None),
-                          ('error', 2, '`', None),
-                          ('CURRENCY', 2, 'USD', 'USD'),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)],
+        self.assertEqual([('EOL', 2, b'\n', None),
+                          ('DATE', 2, b'2000-01-01', datetime.date(2000, 1, 1)),
+                          ('OPEN', 2, b'open', None),
+                          ('error', 2, b'`', None),
+                          ('CURRENCY', 2, b'USD', 'USD'),
+                          ('EOL', 3, b'\n', None),
+                          ('EOL', 3, b'\x00', None)],
                          tokens)
         self.assertEqual(1, len(errors))
 
@@ -550,17 +550,17 @@ class TestLexerErrors(unittest.TestCase):
 
           2000-01-02 open Assets:Working
         """
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('error', 2, '2000-13-32', None),
-                          ('OPEN', 2, 'open', None),
-                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 4, '\n', None),
-                          ('DATE', 4, '2000-01-02', datetime.date(2000, 1, 2)),
-                          ('OPEN', 4, 'open', None),
-                          ('ACCOUNT', 4, 'Assets:Working', 'Assets:Working'),
-                          ('EOL', 5, '\n', None),
-                          ('EOL', 5, '\x00', None)], tokens)
+        self.assertEqual([('EOL', 2, b'\n', None),
+                          ('error', 2, b'2000-13-32', None),
+                          ('OPEN', 2, b'open', None),
+                          ('ACCOUNT', 2, b'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, b'\n', None),
+                          ('EOL', 4, b'\n', None),
+                          ('DATE', 4, b'2000-01-02', datetime.date(2000, 1, 2)),
+                          ('OPEN', 4, b'open', None),
+                          ('ACCOUNT', 4, b'Assets:Working', 'Assets:Working'),
+                          ('EOL', 5, b'\n', None),
+                          ('EOL', 5, b'\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
     def test_lexer_builder_returns_none(self):
@@ -569,8 +569,8 @@ class TestLexerErrors(unittest.TestCase):
             return None
         setattr(builder, 'STRING', return_none)
         tokens = list(lexer.lex_iter_string('"Something"', builder))
-        self.assertEqual([('error', 1, '"', None),
-                          ('EOL', 1, '\x00', None)], tokens)
+        self.assertEqual([('error', 1, b'"', None),
+                          ('EOL', 1, b'\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
         self.assertRegex(builder.errors[0].message, "None result from lexer")
 
@@ -579,12 +579,12 @@ class TestLexerErrors(unittest.TestCase):
         """
           2000-13-32 open Assets:Something
         """
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('error', 2, '2000-13-32', None),
-                          ('OPEN', 2, 'open', None),
-                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual([('EOL', 2, b'\n', None),
+                          ('error', 2, b'2000-13-32', None),
+                          ('OPEN', 2, b'open', None),
+                          ('ACCOUNT', 2, b'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, b'\n', None),
+                          ('EOL', 3, b'\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
     def test_lexer_exception_substring_with_quotes(self):
@@ -594,13 +594,13 @@ class TestLexerErrors(unittest.TestCase):
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([
-            ('EOL', 2, '\n', None),
-            ('DATE', 2, '2016-07-15', datetime.date(2016, 7, 15)),
-            ('QUERY', 2, 'query', None),
-            ('STRING', 2, '"', 'hotels'),
-            ('STRING', 2, '"', "SELECT * WHERE account ~ 'Expenses:Accommodation'"),
-            ('EOL', 3, '\n', None),
-            ('EOL', 3, '\x00', None)], tokens)
+            ('EOL', 2, b'\n', None),
+            ('DATE', 2, b'2016-07-15', datetime.date(2016, 7, 15)),
+            ('QUERY', 2, b'query', None),
+            ('STRING', 2, b'"', 'hotels'),
+            ('STRING', 2, b'"', 'SELECT * WHERE account ~ \'Expenses:Accommodation\''),
+            ('EOL', 3, b'\n', None),
+            ('EOL', 3, b'\x00', None)], tokens)
         self.assertEqual(0, len(builder.errors))
 
     def _run_lexer_with_raising_builder_method(self, test_input, method_name,
@@ -616,32 +616,32 @@ class TestLexerErrors(unittest.TestCase):
     def test_lexer_exception_STRING(self):
         self._run_lexer_with_raising_builder_method(
             ' "Something" ', 'STRING',
-            [('error', 1, '"', None),
-             ('EOL', 1, '\x00', None)])
+            [('error', 1, b'"', None),
+             ('EOL', 1, b'\x00', None)])
 
     def test_lexer_exception_NUMBER(self):
         self._run_lexer_with_raising_builder_method(
             ' 100.23 ', 'NUMBER',
-            [('error', 1, '100.23', None),
-             ('EOL', 1, '\x00', None)])
+            [('error', 1, b'100.23', None),
+             ('EOL', 1, b'\x00', None)])
 
     def test_lexer_exception_TAG(self):
         self._run_lexer_with_raising_builder_method(
             ' #the-tag ', 'TAG',
-            [('error', 1, '#the-tag', None),
-             ('EOL', 1, '\x00', None)])
+            [('error', 1, b'#the-tag', None),
+             ('EOL', 1, b'\x00', None)])
 
     def test_lexer_exception_LINK(self):
         self._run_lexer_with_raising_builder_method(
             ' ^the-link ', 'LINK',
-            [('error', 1, '^the-link', None),
-             ('EOL', 1, '\x00', None)])
+            [('error', 1, b'^the-link', None),
+             ('EOL', 1, b'\x00', None)])
 
     def test_lexer_exception_KEY(self):
         self._run_lexer_with_raising_builder_method(
             ' mykey: ', 'KEY',
-            [('error', 1, 'mykey:', None),
-             ('EOL', 1, '\x00', None)])
+            [('error', 1, b'mykey:', None),
+             ('EOL', 1, b'\x00', None)])
 
 
 class TestLexerUnicode(unittest.TestCase):
@@ -712,9 +712,9 @@ class TestLexerMisc(unittest.TestCase):
           45,234.00
         """
         self.assertEqual([
-            ('NUMBER', 1, '45,234.00', D('45234.00')),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('NUMBER', 1, b'45,234.00', D('45234.00')),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertEqual(0, len(errors))
 
@@ -725,9 +725,9 @@ class TestLexerMisc(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertEqual([
-            ('error', 1, '452,34.00', None),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('error', 1, b'452,34.00', None),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None),
         ], tokens)
 
     @lex_tokens
@@ -740,11 +740,11 @@ class TestLexerMisc(unittest.TestCase):
         # case here in case eventually we improve the lexer.
         self.assertEqual(0, len(errors))
         self.assertEqual([
-            ('NUMBER', 1, '45234.000', D('45234.000')),
-            ('COMMA', 1, ',', None),
-            ('NUMBER', 1, '000', D('0')),
-            ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None)
+            ('NUMBER', 1, b'45234.000', D('45234.000')),
+            ('COMMA', 1, b',', None),
+            ('NUMBER', 1, b'000', D('0')),
+            ('EOL', 2, b'\n', None),
+            ('EOL', 2, b'\x00', None)
         ], tokens)
 
 
