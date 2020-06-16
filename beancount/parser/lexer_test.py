@@ -8,7 +8,6 @@ import datetime
 import functools
 import textwrap
 import unittest
-import re
 
 from beancount.core.number import D
 from beancount.parser import lexer
@@ -122,7 +121,7 @@ class TestLexer(unittest.TestCase):
             ('COLON', 2, ':', None),
             ('error', 2, 'abc1', None),
             ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ', 'ΑβγⅠ:ΑβγⅠ'),
-            ('error', 2, 'ابجا:ابجا', None),
+            ('ACCOUNT', 2, 'ابجا:ابجا', 'ابجا:ابجا'),
             ('EOL', 3, '\n', None),
             ('EOL', 3, '\x00', None)
             ], tokens)
@@ -587,22 +586,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(errors))
-
-    def test_lexer_exception_ACCOUNT(self):
-        test_input = """
-          Invalid:Something
-        """
-        builder = lexer.LexBuilder()
-        # This modification is similar to what the options do, and will cause a
-        # ValueError exception to be raised in the lexer.
-        builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
-                                            '(:[A-Z][A-Za-z0-9-]*)*$')
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('error', 2, 'Invalid:Something', None),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
-        self.assertEqual(1, len(builder.errors))
 
     def test_lexer_exception_substring_with_quotes(self):
         test_input = """

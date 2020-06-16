@@ -78,7 +78,7 @@ class TestAccountTypeOptions(unittest.TestCase):
           2014-01-04 open Actif:CA:RBC:CompteChèques
           2014-01-04 open Passif:CA:RBC:CarteDeCrédit
         """
-        self.assertEqual(0, len(entries))
+        self.assertEqual(2, len(entries))
         self.assertEqual(2, len(errors))
         for error in errors:
             self.assertRegex(error.message, "Invalid account name")
@@ -90,7 +90,20 @@ class TestAccountTypeOptions(unittest.TestCase):
 
           option "name_assets" "Actif"
         """
-        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "Invalid account name")
+
+    @parser.parse_doc(expect_errors=True)
+    def test_custom_account_names__fail_invalid_other(self, entries, errors, options_map):
+        """
+          2014-01-01 open Assets:CA:RBC:Checking
+
+          option "name_assets" "Actif"
+
+          2014-01-04 open Assets:CA:RBC:Checking
+        """
+        self.assertEqual(2, len(entries))
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "Invalid account name")
 

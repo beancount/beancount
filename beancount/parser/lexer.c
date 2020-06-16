@@ -1103,7 +1103,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     do {                                        \
         for (;;) {                              \
             int c = input(yyscanner);           \
-            if (c == EOF || c == -1) {          \
+            if (c == 0 || c == -1) {		\
                 break;                          \
             }                                   \
             if (c == '\n') {                    \
@@ -3253,6 +3253,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     Py_INCREF(file);
     yyrestart((void *)file, scanner);
     yybegin(scanner);
+    
     yyset_lineno(lineno, scanner);
 }
 
