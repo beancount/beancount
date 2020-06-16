@@ -28,17 +28,17 @@ DESCRIPTION = ("Identify, extract or file away data downloaded from "
 
 def identify_main():
     """Main program for 'identify' function."""
-    return scripts_utils.trampoline_to_ingest(identify)
+    return trampoline_to_ingest(identify)
 
 
 def extract_main():
     """Main program for 'extract' function."""
-    return scripts_utils.trampoline_to_ingest(extract)
+    return trampoline_to_ingest(extract)
 
 
 def file_main():
     """Main program for 'file' function."""
-    return scripts_utils.trampoline_to_ingest(file)
+    return trampoline_to_ingest(file)
 
 
 def ingest(importers_list, detect_duplicates_func=None, hooks=None):
