@@ -127,6 +127,9 @@ class Builder(lexer.LexBuilder):
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
 
+        # All the commodities encountered during parsing.
+        self.commodities = set()
+
         # A mapping of all the accounts created.
         self.accounts = {}
 
@@ -257,6 +260,17 @@ class Builder(lexer.LexBuilder):
         # Intern account names. This should reduces memory usage a
         # fair bit because these strings are repeated liberally.
         return self.accounts.setdefault(account, account)
+
+    def currency(self, filename, lineno, currency):
+        """Add currency to the set of currency encountered during parsing.
+
+        Args:
+          currency: a str, the currency symbol.
+        Returns:
+          A string, the currency symbol.
+        """
+        self.commodities.add(currency)
+        return currency
 
     def pipe_deprecated_error(self, filename, lineno):
         """Issue a 'Pipe deprecated' error.

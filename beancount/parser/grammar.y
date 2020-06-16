@@ -208,6 +208,7 @@ void yyerror(YYLTYPE *locp, yyscan_t scanner, PyObject* builder, char const* mes
 %type <character> txn
 %type <character> optflag
 %type <pyobj> account
+%type <pyobj> currency
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> key_value
@@ -413,6 +414,12 @@ account : ACCOUNT
                  $$, "account", "O", $1);
         }
 
+currency : CURRENCY
+        {
+            CALL(DECREF($1),
+                 $$, "currency", "O", $1);
+        }
+
 posting : INDENT optflag account incomplete_amount cost_spec eol
         {
             CALL(DECREF($3, $4, $5),
@@ -448,7 +455,7 @@ key_value_line : INDENT key_value eol
 key_value_value : STRING
                 | account
                 | DATE
-                | CURRENCY
+                | currency
                 | TAG
                 | BOOL
                 | NONE
@@ -504,12 +511,12 @@ currency_list : empty
                   Py_INCREF(Py_None);
                   $$ = Py_None;
               }
-              | CURRENCY
+              | currency
               {
                   CALL(DECREF($1),
                        $$, "handle_list", "OO", Py_None, $1);
               }
-              | currency_list COMMA CURRENCY
+              | currency_list COMMA currency
               {
                   CALL(DECREF($1, $3),
                        $$, "handle_list", "OO", $1, $3);
@@ -565,7 +572,7 @@ close : DATE CLOSE account eol key_value_list
                $$, "close", "OOO", $1, $3, $5);
       }
 
-commodity : DATE COMMODITY CURRENCY eol key_value_list
+commodity : DATE COMMODITY currency eol key_value_list
           {
               CALL(DECREF($1, $3, $5),
                    $$, "commodity", "OOO", $1, $3, $5);
@@ -583,13 +590,13 @@ balance : DATE BALANCE account amount_tolerance eol key_value_list
                  $$, "balance", "OOOOO", $1, $3, $4.pyobj1, $4.pyobj2, $6);
         }
 
-amount : number_expr CURRENCY
+amount : number_expr currency
        {
            CALL(DECREF($1, $2),
                 $$, "amount", "OO", $1, $2);
        }
 
-amount_tolerance : number_expr CURRENCY
+amount_tolerance : number_expr currency
                  {
                      CALL(DECREF($1, $2),
                           $$.pyobj1, "amount", "OO", $1, $2);
@@ -597,7 +604,7 @@ amount_tolerance : number_expr CURRENCY
                      Py_INCREF(Py_None);
                      ;
                  }
-                 | number_expr TILDE number_expr CURRENCY
+                 | number_expr TILDE number_expr currency
                  {
                      CALL(DECREF($1, $4),
                           $$.pyobj1, "amount", "OO", $1, $4);
@@ -619,12 +626,12 @@ maybe_currency : empty
                  Py_INCREF(missing);
                  $$ = missing;
              }
-             | CURRENCY
+             | currency
              {
                  $$ = $1;
              }
 
-compound_amount : maybe_number CURRENCY
+compound_amount : maybe_number currency
                 {
                     CALL(DECREF($1, $2),
                          $$, "compound_amount", "OOO", $1, Py_None, $2);
@@ -634,7 +641,7 @@ compound_amount : maybe_number CURRENCY
                     CALL(DECREF($1, $2),
                          $$, "compound_amount", "OOO", $1, Py_None, $2);
                 }
-                | maybe_number HASH maybe_number CURRENCY
+                | maybe_number HASH maybe_number currency
                 {
                     CALL(DECREF($1, $3, $4),
                          $$, "compound_amount", "OOO", $1, $3, $4);
@@ -698,7 +705,7 @@ cost_comp : compound_amount
           }
 
 
-price : DATE PRICE CURRENCY amount eol key_value_list
+price : DATE PRICE currency amount eol key_value_list
       {
           CALL(DECREF($1, $3, $4, $6),
                $$, "price", "OOOO", $1, $3, $4, $6);
