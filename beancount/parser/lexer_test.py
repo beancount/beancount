@@ -306,36 +306,24 @@ class TestLexer(unittest.TestCase):
         self.assertRegex(errors[0].message, r'\bcheck\b')
 
     def test_string_too_long_warning(self):
-        # This tests the maximum string length implemented in Python, which is used
-        # to detect input errors.
         test_input = """
           ;; This is a typical error that should get detected for long strings.
           2014-01-01 note Assets:Temporary "Bla bla" "
-
           2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
-          2014-02-02 open Liabilities:US:BankWithLongName:Credit-Card:Account02
-          2014-02-03 open Liabilities:US:BankWithLongName:Credit-Card:Account03
-          2014-02-04 open Liabilities:US:BankWithLongName:Credit-Card:Account04
-          2014-02-05 open Liabilities:US:BankWithLongName:Credit-Card:Account05
-          2014-02-06 open Liabilities:US:BankWithLongName:Credit-Card:Account06
-          2014-02-07 open Liabilities:US:BankWithLongName:Credit-Card:Account07
-          2014-02-08 open Liabilities:US:BankWithLongName:Credit-Card:Account08
-          2014-02-09 open Liabilities:US:BankWithLongName:Credit-Card:Account09
-          2014-02-10 open Liabilities:US:BankWithLongName:Credit-Card:Account10
-
+        """ + "\n" * 64 + """
           2014-02-02 note Assets:Temporary "Bla bla"
         """
         builder = lexer.LexBuilder()
-        builder.long_string_maxlines_default = 8
-        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message, 'String too long')
+        self.assertEqual(builder.errors[0].message, 'ValueError: String too long (68 lines)')
 
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
         test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
         builder = lexer.LexBuilder()
-        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual(tokens[0][3], test_input[1:-1])
         self.assertLessEqual(0, len(builder.errors))
 
     @lex_tokens

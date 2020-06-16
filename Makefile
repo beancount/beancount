@@ -38,7 +38,9 @@ SOURCES =					\
 	$(CROOT)/lexer.c			\
 	$(CROOT)/lexer.h			\
 	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h
+	$(CROOT)/grammar.h			\
+	$(CROOT)/macros.h			\
+	$(CROOT)/tokens.h
 
 .PHONY: build
 build: $(SOURCES)
