@@ -1,5 +1,5 @@
-#ifndef BEANCOUNT_BUILDER_H
-#define BEANCOUNT_BUILDER_H
+#ifndef BEANCOUNT_PARSER_H
+#define BEANCOUNT_PARSER_H
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -21,4 +21,4 @@ typedef struct {
 
 extern PyObject* missing;
 
-#endif /* BEANCOUNT_BUILDER_H */
+#endif /* BEANCOUNT_PARSER_H */
