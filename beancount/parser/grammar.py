@@ -127,6 +127,9 @@ class Builder(lexer.LexBuilder):
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
 
+        # A mapping of all the accounts created.
+        self.accounts = {}
+
         # Make the account regexp more restrictive than the default: check
         # types. Warning: This overrides the value in the base class.
         self.account_regexp = valid_account_regexp(self.options)
@@ -238,6 +241,22 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
+
+    def account(self, filename, lineno, account):
+        """Check account name validity.
+
+        Args:
+          account: a str, the account name.
+        Returns:
+          A string, the account name.
+        """
+        if not self.account_regexp.match(account):
+            meta = new_metadata(filename, lineno)
+            self.errors.append(
+                ParserError(meta, "Invalid account name: {}".format(account), None))
+        # Intern account names. This should reduces memory usage a
+        # fair bit because these strings are repeated liberally.
+        return self.accounts.setdefault(account, account)
 
     def pipe_deprecated_error(self, filename, lineno):
         """Issue a 'Pipe deprecated' error.
