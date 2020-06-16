@@ -4,8 +4,8 @@
 
 #line 5 "beancount/parser/lexer.h"
 
-#include <stdbool.h>
 #include "parser.h"
+#include "tokens.h"
 
 typedef struct _yyextra_t yyextra_t;
 
@@ -534,7 +534,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 415 "beancount/parser/lexer.l"
+#line 376 "beancount/parser/lexer.l"
 
 
 #line 540 "beancount/parser/lexer.h"
