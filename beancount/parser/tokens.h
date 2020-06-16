@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <datetime.h>
 
+#include "decimal.h"
+
+
 /**
  * Dispatch to token values build functions.
  *
@@ -101,15 +104,7 @@ static PyObject* PyDecimal_FromCString(const char* str)
         return NULL;
     }
 
-    /* TODO: Cache this somewhere. */
-    PyObject* decimal = PyImport_ImportModule("decimal");
-    if (!decimal)
-        return NULL;
-
-    PyObject* rv = PyObject_CallMethod(decimal, "Decimal", "s#", buffer, len);
-
-    Py_DECREF(decimal);
-    return rv;
+    return PyDec_FromCString(buffer, len);
 }
 
 

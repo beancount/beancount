@@ -3036,6 +3036,7 @@ yyscan_t* yylex_new(void)
     }
 
     PyDateTime_IMPORT;
+    PyDecimal_IMPORT;
 
     return scanner;
 }
