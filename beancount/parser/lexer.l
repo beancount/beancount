@@ -18,6 +18,7 @@
 /* Top Code. This is included in the FLex generated header file. */
 %top{
 
+#include <stdbool.h>
 #include "parser.h"
 
 typedef struct _yyextra_t yyextra_t;
@@ -43,12 +44,6 @@ void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int 
 
 #include "grammar.h"
 
-struct buffer {
-    char* buf;
-    char* ptr;
-    char* end;
-};
-
 struct _yyextra_t {
     /* The filename being tokenized. */
     PyObject* filename;
@@ -61,47 +56,10 @@ struct _yyextra_t {
     int n_eof;
     /* Number of tokens since the beginning of the line. */
     int n_line_tokens;
-    /* Variable size buffer used to accumulate string data. */
-    struct buffer str;
 };
 
-static void buffer_init(struct buffer* b, size_t size);
-static void buffer_free(struct buffer* b);
-static void buffer_realloc(struct buffer* b, size_t num_new_chars);
+static ssize_t cunescape(const char* string, size_t len, int strict, char** ret);
 
-static inline void buffer_push(struct buffer* b, char value)
-{
-    if (b->ptr > b->end)
-        buffer_realloc(b, 1);
-    *b->ptr++ = value;
-}
-
-static inline void buffer_append(struct buffer* b, const char* data, ssize_t len)
-{
-    if (len > (b->end - b->ptr))
-        buffer_realloc(b, len);
-
-    memcpy(b->ptr, data, len);
-
-    b->ptr += len;
-}
-
-static inline size_t buffer_strlen(const struct buffer* b)
-{
-    return b->ptr - b->buf;
-}
-
-static inline char* buffer_data(const struct buffer* b)
-{
-    return b->buf;
-}
-
-static inline void buffer_beginning(struct buffer* b)
-{
-    b->ptr = b->buf;
-}
-
-#define strbuf &yyget_extra(yyscanner)->str
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
 #define yy_filename yyget_extra(yyscanner)->filename
@@ -375,41 +333,28 @@ NULL		{
 }
 
  /* String literals. */
- /* Note that we use an exclusive start condition.
-    See section "Start Conditions" in the GNU Flex manual. */
-\"	{
-    buffer_beginning(strbuf);
-    BEGIN(STRLIT);
-}
+\"([^\\\"]|\\.)*\"		{
+    char* unescaped = NULL;
+    ssize_t r;
 
-<STRLIT>{
-
-    /* Saw closing quote - all done. */
-    \"        {
-        BEGIN(INITIAL);
-        PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
-                                         yy_encoding, "ignore");
-        if (!str) {
-            build_lexer_error_from_exception(yylloc, builder);
-            yylval->pyobj = Py_None;
-            Py_INCREF(Py_None);
-            return LEX_ERROR;
-        }
-        BUILD("STRING", "O", str);
-        Py_DECREF(str);
-        return STRING;
+    r = cunescape(yytext + 1, yyleng - 2, false, &unescaped);
+    if (r < 0) {
+	build_lexer_error(yylloc, builder, "Invalid string escape.");
+	yylval->pyobj = Py_None;
+	Py_INCREF(Py_None);
+	return LEX_ERROR;
     }
 
-    /* Escape sequences. */
-    \\n       buffer_push(strbuf, '\n');
-    \\t       buffer_push(strbuf, '\t');
-    \\r       buffer_push(strbuf, '\r');
-    \\b       buffer_push(strbuf, '\b');
-    \\f       buffer_push(strbuf, '\f');
-    \\(.|\n)  buffer_push(strbuf, yytext[1]);
+    PyObject* string = PyUnicode_Decode(unescaped, r, yy_encoding, "ignore");
+    if (!string) {
+	build_lexer_error_from_exception(yylloc, builder);
+	yylval->pyobj = Py_None;
+	Py_INCREF(Py_None);
+	return LEX_ERROR;
+    }
 
-    /* All other characters. */
-    [^\\\"]+  buffer_append(strbuf, yytext, yyleng);
+    BUILD("STRING", "O", string);
+    return STRING;
 }
 
  /* Numbers */
@@ -483,8 +428,6 @@ yyscan_t* yylex_new(void)
         return NULL;
     }
 
-    buffer_init(&extra->str, 1024);
-
     if (yylex_init_extra(extra, &scanner)) {
         free(extra);
         return NULL;
@@ -499,7 +442,6 @@ yyscan_t* yylex_free(yyscan_t scanner)
 
     Py_XDECREF(yyget_in(scanner));
     Py_XDECREF(extra->filename);
-    buffer_free(&extra->str);
     free(extra);
     yylex_destroy(scanner);
 
@@ -543,38 +485,63 @@ void yylex_initialize(yyscan_t scanner, PyObject* file, PyObject* filename, int 
     extra->line = line;
     extra->n_eof = 0;
     extra->n_line_tokens = 0;
-
-    buffer_beginning(&extra->str);
 }
 
-static void buffer_init(struct buffer* b, size_t size)
+static ssize_t cunescape(const char* string, size_t len, int strict, char** ret)
 {
-    b->buf = malloc(size);
-    b->end = b->buf + size - 1;
-    b->ptr = b->buf;
-}
+    const char* src;
+    char* buffer;
+    char* dst;
 
-static void buffer_free(struct buffer* b)
-{
-    free(b->buf);
-    b->buf = b->ptr = b->end = NULL;
-}
+    /* Make sure we hace space for the string terminator. */
+    buffer = malloc(len + 1);
 
-static void buffer_realloc(struct buffer* b, size_t num_new_chars)
-{
-    assert(b->ptr != NULL);
+    for (src = string, dst = buffer; src < string + len; src++) {
+        if (*src != '\\') {
+            *dst = *src;
+            dst++;
+            continue;
+        }
 
-    size_t size = b->end - b->buf + 1;
-    size_t cur_size = b->ptr - b->buf;
-    size_t new_size = cur_size + num_new_chars;
+        if (string + len - src < 2)
+            return -EINVAL;
 
-    while (size < new_size)
-        size <<= 1;
+        src++;
 
-    b->buf = realloc(b->buf, size);
+        switch (*src) {
+        case '"':
+            *dst++ = '"';
+            break;
+        case 'n':
+            *dst++ = '\n';
+            break;
+        case 't':
+            *dst++ = '\t';
+            break;
+        case 'r':
+            *dst++ = '\r';
+            break;
+        case 'f':
+            *dst++ = '\f';
+            break;
+        case 'b':
+            *dst++ = '\b';
+            break;
+        default:
+            if (strict)
+                return -EINVAL;
+            *dst++ = *src;
+        }
+    }
 
-    b->ptr = b->buf + cur_size;
-    b->end = b->buf + size - 1;
+    /* The input string may be not NULL terminated, however it is
+     * safer to handle NULL terminated strings: add the terminator to
+     * the unescaped string. */
+    *dst = '\0';
+
+    *ret = buffer;
+
+    return dst - buffer;
 }
 
 /* Convert an integer string to a number. */

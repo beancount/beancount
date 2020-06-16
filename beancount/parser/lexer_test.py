@@ -87,9 +87,9 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, b'TEST-3', 'TEST-3'),
             ('CURRENCY', 5, b'NT', 'NT'),
             ('EOL', 6, b'\n', None),
-            ('STRING', 6, b'"', 'Nice dinner at Mermaid Inn'),
+            ('STRING', 6, b'"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, b'\n', None),
-            ('STRING', 7, b'"', ''),
+            ('STRING', 7, b'""', ''),
             ('EOL', 8, b'\n', None),
             ('NUMBER', 8, b'123', D('123')),
             ('NUMBER', 8, b'123.45', D('123.45')),
@@ -361,9 +361,9 @@ class TestLexer(unittest.TestCase):
         '''
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('STRING', 2, br'"', 'The Great "Juju"'),
+            ('STRING', 2, br'"The Great \"Juju\""', 'The Great "Juju"'),
             ('EOL', 3, b'\n', None),
-            ('STRING', 3, br'"', 'The Great \t\n\r\x0c\x08'),
+            ('STRING', 3, br'"The Great \t\n\r\f\b"', 'The Great \t\n\r\x0c\x08'),
             ('EOL', 4, b'\n', None),
             ('EOL', 4, b'\x00', None),
             ], tokens)
@@ -375,7 +375,7 @@ class TestLexer(unittest.TestCase):
         # Note that this test contains an _actual_ newline, not an escape one as
         # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
-            ('STRING', 2, b'"', 'The Great\nJuju'),
+            ('STRING', 2, b'"The Great\nJuju"', 'The Great\nJuju'),
             ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
@@ -393,7 +393,9 @@ class TestLexer(unittest.TestCase):
         # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('STRING', 6, b'"', 'Forty\nworld\nleaders\nand\nhundreds'),
+            ('STRING', 6,
+             b'"Forty\nworld\nleaders\nand\nhundreds"',
+             'Forty\nworld\nleaders\nand\nhundreds'),
             ('EOL', 7, b'\n', None),
             ('EOL', 7, b'\x00', None),
             ], tokens)
@@ -463,8 +465,8 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('OPTION', 2, b'option', None),
-            ('STRING', 2, b'"', 'title'),
-            ('STRING', 2, b'"', 'The Title'),
+            ('STRING', 2, b'"title"', 'title'),
+            ('STRING', 2, b'"The Title"', 'The Title'),
             ('EOL', 3, b'\n', None),
             ('INDENT', 3, b'  ', None),
             ('COMMENT', 3, b';; Something something.', None),
@@ -571,7 +573,7 @@ class TestLexerErrors(unittest.TestCase):
             return None
         setattr(builder, 'STRING', return_none)
         tokens = list(lexer.lex_iter_string('"Something"', builder))
-        self.assertEqual([('LEX_ERROR', 1, b'"', None),
+        self.assertEqual([('LEX_ERROR', 1, b'"Something"', None),
                           ('EOL', 1, b'\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
         self.assertRegex(builder.errors[0].message,
@@ -600,8 +602,9 @@ class TestLexerErrors(unittest.TestCase):
             ('EOL', 2, b'\n', None),
             ('DATE', 2, b'2016-07-15', datetime.date(2016, 7, 15)),
             ('QUERY', 2, b'query', None),
-            ('STRING', 2, b'"', 'hotels'),
-            ('STRING', 2, b'"', 'SELECT * WHERE account ~ \'Expenses:Accommodation\''),
+            ('STRING', 2, b'"hotels"', 'hotels'),
+            ('STRING', 2, b'"SELECT * WHERE account ~ \'Expenses:Accommodation\'"',
+             'SELECT * WHERE account ~ \'Expenses:Accommodation\''),
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None)], tokens)
         self.assertEqual(0, len(builder.errors))
@@ -619,7 +622,7 @@ class TestLexerErrors(unittest.TestCase):
     def test_lexer_exception_STRING(self):
         self._run_lexer_with_raising_builder_method(
             ' "Something" ', 'STRING',
-            [('LEX_ERROR', 1, b'"', None),
+            [('LEX_ERROR', 1, b'"Something"', None),
              ('EOL', 1, b'\x00', None)])
 
     def test_lexer_exception_NUMBER(self):

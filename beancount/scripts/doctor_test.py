@@ -42,7 +42,7 @@ class TestScriptDoctor(test_utils.TestCase):
             EOL               5 b'\\n'
             DATE              5 b'2014-03-02'
             ASTERISK          5 b'*'
-            STRING            5 b'"'
+            STRING            5 b'"Something"'
             EOL               6 b'\\n'
             INDENT            6 b'  '
             ACCOUNT           6 b'Expenses:Restaurant'
