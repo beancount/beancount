@@ -26,10 +26,11 @@
 #define build_BOOL(_value) PyBool_FromLong(_value)
 #define build_NONE() ({ Py_INCREF(Py_None); Py_None; })
 #define build_NUMBER(_str) pydecimal_from_cstring(_str)
-#define build_DATE(_year, _month, _day) PyDate_FromDate(_year, _month, _day)
+#define build_DATE(_str) pydate_from_cstring(_str)
 #define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
 
+#define DIGITS "0123456789"
 #define LONG_STRING_LINES_MAX 64
 
 
@@ -220,6 +221,53 @@ static PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const ch
     free(unescaped);
 
     return rv;
+}
+
+
+/**
+ * Convert ASCII string to an integer.
+ *
+ * Converts the @string string of length @len to int. The input is
+ * assumed to be a valid representation of an integer number. No input
+ * validation or error checking is performed.
+ */
+static int strtonl(const char* string, size_t len)
+{
+    int result = 0;
+
+    for (size_t i = 0; i < len; ++i) {
+        result *= 10;
+        result += string[i] - '0';
+    }
+
+    return result;
+}
+
+
+/**
+ * Convert an ASCII string to a PyDate object.
+ *
+ * The @string is assumed to be a valid date represetation in the
+ * format YYYY-MM-DD allowing for any character to divide the three
+ * digits groups.
+ */
+static PyObject* pydate_from_cstring(const char* string)
+{
+    int year, month, day;
+    size_t n;
+
+    n = strspn(string, DIGITS);
+    year = strtonl(string, n);
+    string += n + 1;
+
+    n = strspn(string, DIGITS);
+    month = strtonl(string, n);
+    string += n + 1;
+
+    n = strspn(string, DIGITS);
+    day = strtonl(string, n);
+
+    return PyDate_FromDate(year, month, day);
 }
 
 
