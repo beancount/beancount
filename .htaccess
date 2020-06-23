@@ -197,3 +197,4 @@ RedirectMatch /doc/ledgerhub/proposal-v2  /beancount/doc/ledgerhub/postmortem
 
 RedirectMatch /doc/v3-dependencies        https://docs.google.com/document/d/10R-msZljuqFY8nckUnR1jVxMX1ol7rJUCMZo7w7QUQs/
 RedirectMatch /doc/v3-deps                /beancount/doc/v3-dependencies
+RedirectMatch /doc/v3-install             /beancount/doc/v3-install
