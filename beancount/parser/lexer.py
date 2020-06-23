@@ -219,15 +219,8 @@ def lex_iter(file, builder=None, encoding=None):
         file = open(file, 'rb')
     if builder is None:
         builder = LexBuilder()
-    _parser.lexer_initialize(file, builder, encoding=encoding)
-    try:
-        while 1:
-            token_tuple = _parser.lexer_next()
-            if token_tuple is None:
-                break
-            yield token_tuple
-    finally:
-        _parser.lexer_finalize()
+    parser = _parser.Parser(builder)
+    yield from parser.lex(file, encoding=encoding)
 
 
 def lex_iter_string(string, builder=None, encoding=None):
@@ -241,7 +234,7 @@ def lex_iter_string(string, builder=None, encoding=None):
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
-    if isinstance(string, str):
-        string = string.encode('utf-8')
+    if not isinstance(string, bytes):
+        string = string.encode('utf8')
     file = io.BytesIO(string)
-    return lex_iter(file, builder, encoding)
+    yield from lex_iter(file, builder, encoding)
