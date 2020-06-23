@@ -3,9 +3,11 @@ __license__ = "GNU GPLv2"
 
 import textwrap
 import unittest
+from pprint import pformat
 
-from beancount.ingest.importers import csv
+from beancount.core import data
 from beancount.ingest import cache
+from beancount.ingest.importers import csv
 from beancount.parser import cmptest
 from beancount.utils import test_utils
 
@@ -202,6 +204,77 @@ class TestCSVImporter(cmptest.TestCase):
             
           2016-03-19 balance Assets:Bank                                     0 USD
 
+        """, entries)
+
+    @test_utils.docfile
+    def test_categorizer_one_argument(self, filename):
+        """\
+          Date,Amount,Payee,Description
+          6/2/2020,30.00,"Payee here","Description"
+          7/2/2020,-25.00,"Supermarket","Groceries"
+        """
+        file = cache.get_file(filename)
+
+        def categorizer(txn):
+            if txn.narration == "Groceries":
+                txn.postings.append(
+                    data.Posting("Expenses:Groceries",
+                                 -txn.postings[0].units,
+                                 None, None, None, None))
+
+            return txn
+
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount'},
+                                 'Assets:Bank',
+                                 'EUR',
+                                 ('Date,Amount,Payee,Description'),
+                                 categorizer=categorizer,
+                                 institution='foobar')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-06-02 * "Description"
+            Assets:Bank  30.00 EUR
+        
+          2020-07-02 * "Groceries"
+            Assets:Bank  -25.00 EUR
+            Expenses:Groceries  25.00 EUR
+        """, entries)
+
+    @test_utils.docfile
+    def test_categorizer_two_arguments(self, filename):
+        """\
+          Date,Amount,Payee,Description
+          6/2/2020,30.00,"Payee here","Description"
+          7/2/2020,-25.00,"Supermarket","Groceries"
+        """
+        file = cache.get_file(filename)
+
+        def categorizer(txn, row):
+            txn = txn._replace(payee=row[2])
+            txn.meta['source'] = pformat(row)
+            return txn
+
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount'},
+                                 'Assets:Bank',
+                                 'EUR',
+                                 ('Date,Amount,Payee,Description'),
+                                 categorizer=categorizer,
+                                 institution='foobar')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-06-02 * "Payee here" "Description"
+            source: "['6/2/2020', '30.00', 'Supermarket', 'Groceries']"
+            Assets:Bank  30.00 EUR
+        
+          2020-07-02 * "Supermarket" "Groceries"
+            source: "['7/2/2020', '-25.00', 'Supermarket', 'Groceries']"
+            Assets:Bank  -25.00 EUR
         """, entries)
 
 # TODO: Test things out with/without payee and with/without narration.

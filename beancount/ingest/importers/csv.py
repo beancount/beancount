@@ -3,21 +3,20 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import collections
 import csv
 import datetime
 import enum
 import io
-import collections
-from typing import Union, Dict, Callable, Optional
+from inspect import signature
+from typing import Callable, Dict, Optional, Union
 
 import dateutil.parser
 
 from beancount.core import data
 from beancount.core.amount import Amount
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.ingest.importers.mixins import filing
-from beancount.ingest.importers.mixins import identifier
+from beancount.core.number import ZERO, D
+from beancount.ingest.importers.mixins import filing, identifier
 from beancount.utils.date_utils import parse_date_liberally
 
 
@@ -128,8 +127,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
           regexps: A list of regular expression strings.
           skip_lines: Skip first x (garbage) lines of file.
           last4_map: A dict that maps last 4 digits of the card to a friendly string.
-          categorizer: A callable that attaches the other posting (usually expenses)
-            to a transaction with only single posting.
+          categorizer: A callable with two arguments (transaction, row) that can attach
+            the other posting (usually expenses) to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
           csv_dialect: A `csv` dialect given either as string or as instance or
@@ -298,8 +297,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                     data.Posting(account, units, None, None, None, None))
 
             # Attach the other posting(s) to the transaction.
-            if isinstance(self.categorizer, collections.abc.Callable):
-                txn = self.categorizer(txn)
+            txn = self.call_categorizer(txn, row)
 
             # Add the transaction to the output list
             entries.append(txn)
@@ -332,6 +330,16 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             entry.meta.pop('balance', None)
 
         return entries
+
+    def call_categorizer(self, txn, row):
+        if not isinstance(self.categorizer, collections.abc.Callable):
+            return txn
+
+        params = signature(self.categorizer).parameters
+        if len(params) < 2:
+            return self.categorizer(txn)
+        else:
+            return self.categorizer(txn, row)
 
     def get_amounts(self, iconfig, row, allow_zero_amounts=False):
         """See function get_amounts() for details.
