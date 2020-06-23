@@ -8,11 +8,46 @@
 
 /*--------------------------------------------------------------------------------*/
 /* Prologue */
-%{
+
+%code requires {
 
 #include <stdio.h>
 #include <assert.h>
 #include "parser.h"
+
+/* Extend default location type with file name information. */
+typedef struct YYLTYPE {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    const char* file_name;
+} YYLTYPE;
+
+#define YYLTYPE_IS_DECLARED 1
+
+/* Extend defult location action to copy file name over. */
+#define YYLLOC_DEFAULT(current, rhs, N)                                 \
+    do {                                                                \
+        if (N) {                                                        \
+            (current).first_line   = YYRHSLOC(rhs, 1).first_line;       \
+            (current).first_column = YYRHSLOC(rhs, 1).first_column;     \
+            (current).last_line    = YYRHSLOC(rhs, N).last_line;        \
+            (current).last_column  = YYRHSLOC(rhs, N).last_column;      \
+            (current).file_name    = YYRHSLOC(rhs, N).file_name;        \
+        } else {                                                        \
+            (current).first_line   = (current).last_line =              \
+                YYRHSLOC(rhs, 0).last_line;                             \
+            (current).first_column = (current).last_column =            \
+                YYRHSLOC(rhs, 0).last_column;                           \
+            (current).file_name    = YYRHSLOC(rhs, 0).file_name;        \
+        }                                                               \
+    } while (0)
+
+}
+
+%{
+
 #include "grammar.h"
 #include "lexer.h"
 
@@ -28,15 +63,15 @@ extern YY_DECL;
                                  FILENAME, LINENO, ## __VA_ARGS__);             \
     clean;                                                                      \
     if (target == NULL) {                                                       \
-        build_grammar_error_from_exception(scanner);                            \
+        build_grammar_error_from_exception(&yyloc);                             \
         YYERROR;                                                                \
     }
 
-#define FILENAME yyget_filename(scanner)
-#define LINENO ((yyloc).first_line + yyget_firstline(scanner))
+#define FILENAME (yyloc).file_name
+#define LINENO (yyloc).first_line
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(yyscan_t scanner)
+void build_grammar_error_from_exception(YYLTYPE* loc)
 {
     TRACE_ERROR("Grammar Builder Exception");
 
@@ -53,10 +88,8 @@ void build_grammar_error_from_exception(yyscan_t scanner)
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
-                                           yyget_filename(scanner),
-                                           yyget_lineno(scanner) + yyget_firstline(scanner),
+                                           loc->file_name, loc->first_line,
                                            pvalue, ptype, ptraceback);
-
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
             /* PyErr_SetString(PyExc_RuntimeError, */
@@ -73,10 +106,8 @@ void build_grammar_error_from_exception(yyscan_t scanner)
     Py_XDECREF(ptraceback);
 }
 
-
-
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
+void yyerror(YYLTYPE* loc, yyscan_t scanner, char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
@@ -85,8 +116,7 @@ void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
     else {
         /* Register a syntax error with the builder. */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
-                                           yyget_filename(scanner),
-                                           yyget_lineno(scanner) + yyget_firstline(scanner),
+                                           loc->file_name, loc->first_line,
                                            message);
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,

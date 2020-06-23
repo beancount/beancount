@@ -28,22 +28,14 @@ void yylex_initialize(const char* filename, int firstline, const char* encoding,
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
-/* Get the current filename from the scanner state. */
-const char* yyget_filename(yyscan_t *scanner);
-
-/* Get the first line from the scanner state. */
-int yyget_firstline(yyscan_t *scanner);
-
 }
 
 /* Definitions. */
 %{
 
-/* Includes. */
 #include <math.h>
 #include <stdlib.h>
 
-#include "parser.h"
 #include "grammar.h"
 
 struct buffer {
@@ -117,11 +109,11 @@ static inline void buffer_begin(struct buffer* b)
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length);
+void build_lexer_error(YYLTYPE* loc, const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(void);
+void build_lexer_error_from_exception(YYLTYPE* loc);
 
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
@@ -133,22 +125,25 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
     /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
     if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception();                                              \
-       return LEX_ERROR;                                                                \
+	build_lexer_error_from_exception(yylloc);			                \
+	return LEX_ERROR;						                \
     }                                                                                   \
     /* Lexer builder methods should never return None, check for it. */                 \
     else if (yylval->pyobj == Py_None) {                                                \
         Py_DECREF(Py_None);                                                             \
-        build_lexer_error("Unexpected None result from lexer", 34);                     \
+        build_lexer_error(yylloc, "Unexpected None result from lexer", 34);             \
         return LEX_ERROR;                                                               \
     }
 
-#define YY_USER_ACTION {                                        \
-        yy_line_tokens++;                                       \
-        yylloc->first_line = yylloc->last_line = yylineno;      \
-        yylloc->first_column = yycolumn;                        \
-        yylloc->last_column = yycolumn+yyleng-1;                \
-        yycolumn += yyleng;                                     \
+#define YY_USER_ACTION                                                  \
+    {                                                                   \
+        yy_line_tokens++;                                               \
+        yylloc->first_line = yylineno + yy_firstline;                   \
+        yylloc->last_line = yylloc->first_line;                         \
+        yylloc->first_column = yycolumn;                                \
+        yylloc->last_column = yycolumn + yyleng - 1;                    \
+        yylloc->file_name = yy_filename;                                \
+        yycolumn += yyleng;                                             \
     }
 
 /* Skip the rest of the input line.  This needs to be implemented as a
@@ -386,7 +381,7 @@ NULL		{
         PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
                                          yy_encoding, "ignore");
         if (!str) {
-            build_lexer_error_from_exception();
+            build_lexer_error_from_exception(yylloc);
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
             return LEX_ERROR;
@@ -442,12 +437,13 @@ NULL		{
  /* Fake an EOL at the end of file, to ensure that files without a final newline
   * will process postings right. */
 <<EOF>>     		{
-  if (yy_eof_times == 0) {
-    yy_eof_times = 1;
-    yylloc->first_line = yylineno;
-    return EOL;
-  }
-  return 0;
+    if (yy_eof_times == 0) {
+	yy_eof_times = 1;
+	/* Ensure location data is populated. */
+	YY_USER_ACTION;
+	return EOL;
+    }
+    return 0;
 }
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
@@ -457,7 +453,7 @@ NULL		{
 <INVALID>[^ \t\n\r]+     {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(buffer, length);
+    build_lexer_error(yylloc, buffer, length);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -481,16 +477,6 @@ void yylex_finalize(yyscan_t yyscanner)
 {
     buffer_free(strbuf);
     free(yyget_extra(yyscanner));
-}
-
-const char* yyget_filename(yyscan_t *scanner)
-{
-    return yyget_extra(scanner)->filename;
-}
-
-int yyget_firstline(yyscan_t *scanner)
-{
-    return yyget_extra(scanner)->line;
 }
 
 static void buffer_init(struct buffer* b, size_t size)
@@ -537,13 +523,14 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length)
+void build_lexer_error(YYLTYPE* loc, const char* string, size_t length)
 {
     TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, (Py_ssize_t)length);
+    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "sis#",
+				       loc->file_name, loc->first_line,
+				       string, (Py_ssize_t)length);
     if (rv == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");
@@ -551,7 +538,7 @@ void build_lexer_error(const char* string, size_t length)
     Py_XDECREF(rv);
 }
 
-void build_lexer_error_from_exception()
+void build_lexer_error_from_exception(YYLTYPE* loc)
 {
     TRACE_ERROR("Lexer Builder Exception");
 
@@ -567,8 +554,9 @@ void build_lexer_error_from_exception()
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                           "OO", pvalue, ptype);
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "siOO",
+					   loc->file_name, loc->first_line,
+					   pvalue, ptype);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);

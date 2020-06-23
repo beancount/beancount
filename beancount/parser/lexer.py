@@ -9,7 +9,7 @@ import io
 import re
 from decimal import Decimal
 
-from beancount.core import data
+from beancount.core.data import new_metadata
 from beancount.core import account
 from beancount.parser import _parser
 
@@ -58,13 +58,9 @@ class LexBuilder:
         """
         return 'Equity:InvalidAccountName'
 
-    def get_lexer_location(self):
-        return data.new_metadata(_parser.get_yyfilename(),
-                                 _parser.get_yylineno())
-
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, message, exc_type=None): # {0e31aeca3363}
+    def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}
         """Build a lexer error and appends it to the list of pending errors.
 
         Args:
@@ -76,7 +72,7 @@ class LexBuilder:
         if exc_type is not None:
             message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(self.get_lexer_location(), message, None))
+            LexerError(new_metadata(filename, lineno), message, None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.

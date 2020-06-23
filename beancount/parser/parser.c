@@ -100,16 +100,6 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     return handle_yyparse_result(result);
 }
 
-PyObject* get_yyfilename(PyObject *self, PyObject *args)
-{
-    return PyUnicode_FromString(yyget_filename(_scanner));
-}
-
-PyObject* get_yylineno(PyObject *self, PyObject *args)
-{
-    return PyLong_FromLong(yyget_lineno(_scanner) + yyget_firstline(_scanner));
-}
-
 /* Inititalize the lexer to start running in debug mode. */
 PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -204,8 +194,6 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 static PyMethodDef module_functions[] = {
     {"parse_file", (PyCFunction)parse_file, METH_VARARGS|METH_KEYWORDS, parse_file_doc},
-    {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
-    {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
     {"lexer_initialize", (PyCFunction)lexer_initialize, METH_VARARGS|METH_KEYWORDS, NULL},
     {"lexer_next", lexer_next, METH_VARARGS, NULL},
     {"lexer_finalize", lexer_finalize, METH_VARARGS, NULL},
