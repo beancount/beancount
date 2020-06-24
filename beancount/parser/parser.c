@@ -19,7 +19,7 @@ extern const char* getTokenName(int token);
 yyscan_t _scanner;
 
 /* The current builder during parsing (as a global variable for now). */
-PyObject* builder = 0;
+PyObject* _builder = 0;
 
 /* A reference to a Python-defined constant object used as a placeholder for
    missing cost specifications. */
@@ -62,7 +62,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                     &file, &builder,
+                                     &file, &_builder,
                                      &report_filename, &report_firstline,
                                      &encoding, &yydebug)) {
         return NULL;
@@ -85,7 +85,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     yyset_in((void*)file, _scanner);
 
     /* Parse! This will call back methods on the builder instance. */
-    result = yyparse(_scanner);
+    result = yyparse(_scanner, _builder);
 
     /* Finalize the parser. */
     /* Noop. */
@@ -95,7 +95,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     yylex_destroy(_scanner);
 
     Py_XDECREF(name);
-    builder = NULL;
+    _builder = NULL;
 
     return handle_yyparse_result(result);
 }
@@ -115,7 +115,7 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                     &file, &builder,
+                                     &file, &_builder,
                                      &report_filename, &report_firstline,
                                      &encoding, &yydebug)) {
         return NULL;
@@ -140,7 +140,7 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
 
     /* We need to keep those objects alive after we leave this function. */
     Py_INCREF(file);
-    Py_INCREF(builder);
+    Py_INCREF(_builder);
 
     Py_RETURN_NONE;
 }
@@ -150,7 +150,7 @@ PyObject* lexer_finalize(PyObject *self, PyObject *args)
 {
     /* Now we can let those objects go. */
     Py_XDECREF((void*)yyget_in(_scanner));
-    Py_XDECREF(builder);
+    Py_XDECREF(_builder);
 
     /* Finalize the lexer. */
     yylex_finalize(_scanner);
@@ -169,7 +169,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
     PyObject* obj;
 
     /* Run the lexer. */
-    token = yylex(&yylval, &yylloc, _scanner);
+    token = yylex(&yylval, &yylloc, _scanner, _builder);
     if (PyErr_Occurred()) {
         return NULL;
     } else if (token == 0) {

@@ -63,7 +63,7 @@ extern YY_DECL;
                                  FILENAME, LINENO, ## __VA_ARGS__);             \
     clean;                                                                      \
     if (target == NULL) {                                                       \
-        build_grammar_error_from_exception(&yyloc);                             \
+        build_grammar_error_from_exception(&yyloc, builder);                    \
         YYERROR;                                                                \
     }
 
@@ -71,7 +71,7 @@ extern YY_DECL;
 #define LINENO (yyloc).first_line
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(YYLTYPE* loc)
+void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
     TRACE_ERROR("Grammar Builder Exception");
 
@@ -107,7 +107,7 @@ void build_grammar_error_from_exception(YYLTYPE* loc)
 }
 
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(YYLTYPE* loc, yyscan_t scanner, char const* message)
+void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
@@ -151,6 +151,7 @@ const char* getTokenName(int token);
 %locations
 %define api.pure full
 %param {yyscan_t scanner}
+%param {PyObject* builder}
 
 /* Collection of value types. */
 %union {

@@ -109,11 +109,11 @@ static inline void buffer_begin(struct buffer* b)
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, const char* string, size_t length);
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(YYLTYPE* loc);
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
 
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
@@ -125,13 +125,13 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
     /* Handle a Python exception raised by the driver {3cfb2739349a} */                 \
     if (yylval->pyobj == NULL) {                                                        \
-	build_lexer_error_from_exception(yylloc);			                \
+	build_lexer_error_from_exception(yylloc, builder);		                \
 	return LEX_ERROR;						                \
     }                                                                                   \
     /* Lexer builder methods should never return None, check for it. */                 \
     else if (yylval->pyobj == Py_None) {                                                \
         Py_DECREF(Py_None);                                                             \
-        build_lexer_error(yylloc, "Unexpected None result from lexer", 34);             \
+        build_lexer_error(yylloc, builder, "Unexpected None result from lexer", 34);    \
         return LEX_ERROR;                                                               \
     }
 
@@ -381,7 +381,7 @@ NULL		{
         PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
                                          yy_encoding, "ignore");
         if (!str) {
-            build_lexer_error_from_exception(yylloc);
+            build_lexer_error_from_exception(yylloc, builder);
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
             return LEX_ERROR;
@@ -453,7 +453,7 @@ NULL		{
 <INVALID>[^ \t\n\r]+     {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(yylloc, buffer, length);
+    build_lexer_error(yylloc, builder, buffer, length);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -523,7 +523,7 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, const char* string, size_t length)
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length)
 {
     TRACE_ERROR("Invalid Token");
 
@@ -535,7 +535,7 @@ void build_lexer_error(YYLTYPE* loc, const char* string, size_t length)
     Py_XDECREF(rv);
 }
 
-void build_lexer_error_from_exception(YYLTYPE* loc)
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
     TRACE_ERROR("Lexer Builder Exception");
 

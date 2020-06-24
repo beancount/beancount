@@ -155,7 +155,7 @@ typedef struct YYLTYPE {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 156 "beancount/parser/grammar.y"
+#line 157 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -189,6 +189,6 @@ struct YYLTYPE
 
 
 
-int yyparse (yyscan_t scanner);
+int yyparse (yyscan_t scanner, PyObject* builder);
 
 #endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */
