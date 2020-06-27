@@ -12,8 +12,8 @@ import copy
 import datetime
 import re
 import operator
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
 
@@ -437,7 +437,7 @@ def get_columns_and_aggregates(node):
     Returns:
       A pair of (columns, aggregates), both of which are lists of EvalNode instances.
         columns: The list of all columns accessed not under an aggregate node.
-        aggregates: The lis tof all aggregate nodes.
+        aggregates: The list of all aggregate nodes.
     """
     columns = []
     aggregates = []
@@ -823,8 +823,8 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     Args:
       select: An instance of query_parser.Select.
       targets_environ: A compilation environment for evaluating targets.
-      postings_environ: : A compilation environment for evaluating postings filters.
-      entries_environ: : A compilation environment for evaluating entry filters.
+      postings_environ: A compilation environment for evaluating postings filters.
+      entries_environ: A compilation environment for evaluating entry filters.
     Returns:
       An instance of EvalQuery, ready to be executed.
     """

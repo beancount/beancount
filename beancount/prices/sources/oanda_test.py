@@ -189,3 +189,7 @@ class TestOandaGetHistorical(TimezoneTestBase, unittest.TestCase):
         for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
             with date_utils.intimezone(tzname):
                 self._check_valid(datetime.date(2017, 1, 20), None, None)
+
+
+if __name__ == '__main__':
+    unittest.main()

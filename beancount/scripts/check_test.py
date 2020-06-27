@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.utils import test_utils
 from beancount.scripts import check
 
@@ -39,3 +41,7 @@ class TestScriptCheck(test_utils.TestCase):
         self.assertEqual(1, result)
         self.assertRegex(stderr.getvalue(), "Balance failed")
         self.assertRegex(stderr.getvalue(), "Assets:Cash")
+
+
+if __name__ == '__main__':
+    unittest.main()

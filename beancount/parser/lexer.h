@@ -4,78 +4,23 @@
 
 #line 6 "beancount/parser/lexer.h"
 
-/* Includes. */
-#include <math.h>
-#include <stdlib.h>
-
 #include "parser.h"
-#include "grammar.h"
 
-/* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length);
+typedef struct _yyextra_t yyextra_t;
 
-/* Build and accumulate an error on the builder object using the current
- * exception state. */
-void build_lexer_error_from_exception(void);
+/* Initialize scanner private data. */
+void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
 
-/* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
-    if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception();                                              \
-       return LEX_ERROR;                                                                \
-    }                                                                                   \
-    /* Lexer builder methods should never return None, check for it. */                 \
-    else if (yylval->pyobj == Py_None) {                                                \
-        Py_DECREF(Py_None);                                                             \
-        build_lexer_error("Unexpected None result from lexer", 34);                     \
-        return LEX_ERROR;                                                               \
-    }
+/* Free scanner private data */
+void yylex_finalize(yyscan_t yyscanner);
 
-/* Initialization/finalization methods. These are separate from the yylex_init()
- * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename, const char* encoding);
-void yylex_finalize(void);
+/* Get the current filename from the scanner state. */
+const char* yyget_filename(yyscan_t *scanner);
 
-/* Global declarations; defined below. */
-extern int yy_eof_times;
-extern const char* yy_filename;
-extern int yycolumn;
-extern const char* yy_encoding;
+/* Get the first line from the scanner state. */
+int yyget_firstline(yyscan_t *scanner);
 
-/* String buffer statics. */
-extern size_t strbuf_size; /* Current buffer size (not including final nul). */
-extern char* strbuf;       /* Current buffer head. */
-extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
-extern char* strbuf_ptr;   /* Current insertion point in buffer. */
-void strbuf_realloc(size_t num_new_chars);
-
-/* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol. */
-
-#define YY_USER_ACTION  {                               \
-    yy_line_tokens++;                                   \
-    yylloc->first_line = yylloc->last_line = yylineno;  \
-    yylloc->first_column = yycolumn;                    \
-    yylloc->last_column = yycolumn+yyleng-1;            \
-    yycolumn += yyleng;                                 \
-  }
-
-/* Skip the rest of the input line. */
-int yy_skip_line(void);
-
-/* Utility functions. */
-int strtonl(const char* buf, size_t nchars);
-
-/* Append characters to the static string buffer and verify. */
-#define SAFE_COPY_CHAR(value)                    \
-	if (strbuf_ptr >= strbuf_end) {         \
-            strbuf_realloc(1);                  \
-	}                                       \
-        *strbuf_ptr++ = value;
-
-#line 79 "beancount/parser/lexer.h"
+#line 24 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -202,6 +147,23 @@ typedef unsigned int flex_uint32_t;
 #define yynoreturn
 #endif
 
+/* An opaque pointer. */
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+/* For convenience, these vars (plus the bison vars far below)
+   are macros in the reentrant scanner. */
+#define yyin yyg->yyin_r
+#define yyout yyg->yyout_r
+#define yyextra yyg->yyextra_r
+#define yyleng yyg->yyleng_r
+#define yytext yyg->yytext_r
+#define yylineno (YY_CURRENT_BUFFER_LVALUE->yy_bs_lineno)
+#define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
+#define yy_flex_debug yyg->yy_flex_debug_r
+
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
 #ifdef __ia64__
@@ -224,10 +186,6 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #define YY_TYPEDEF_YY_SIZE_T
 typedef size_t yy_size_t;
 #endif
-
-extern int yyleng;
-
-extern FILE *yyin, *yyout;
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
@@ -280,34 +238,28 @@ struct yy_buffer_state
 	};
 #endif /* !YY_STRUCT_YY_BUFFER_STATE */
 
-void yyrestart ( FILE *input_file  );
-void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer  );
-YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size  );
-void yy_delete_buffer ( YY_BUFFER_STATE b  );
-void yy_flush_buffer ( YY_BUFFER_STATE b  );
-void yypush_buffer_state ( YY_BUFFER_STATE new_buffer  );
-void yypop_buffer_state ( void );
+void yyrestart ( FILE *input_file , yyscan_t yyscanner );
+void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size , yyscan_t yyscanner );
+void yy_delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yy_flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yypush_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+void yypop_buffer_state ( yyscan_t yyscanner );
 
-YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size  );
-YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len  );
+YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_string ( const char *yy_str , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
 
-void *yyalloc ( yy_size_t  );
-void *yyrealloc ( void *, yy_size_t  );
-void yyfree ( void *  );
+void *yyalloc ( yy_size_t , yyscan_t yyscanner );
+void *yyrealloc ( void *, yy_size_t , yyscan_t yyscanner );
+void yyfree ( void * , yyscan_t yyscanner );
 
 /* Begin user sect3 */
 
-#define yywrap() (/*CONSTCOND*/1)
+#define yywrap(yyscanner) (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
-extern int yylineno;
-
-extern char *yytext;
-#ifdef yytext_ptr
-#undef yytext_ptr
-#endif
-#define yytext_ptr yytext
+#define yytext_ptr yytext_r
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
@@ -324,46 +276,52 @@ extern char *yytext;
 #include <unistd.h>
 #endif
 
-#ifndef YY_EXTRA_TYPE
-#define YY_EXTRA_TYPE void *
-#endif
+#define YY_EXTRA_TYPE yyextra_t*
+
+int yylex_init (yyscan_t* scanner);
+
+int yylex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int yylex_destroy ( void );
+int yylex_destroy ( yyscan_t yyscanner );
 
-int yyget_debug ( void );
+int yyget_debug ( yyscan_t yyscanner );
 
-void yyset_debug ( int debug_flag  );
+void yyset_debug ( int debug_flag , yyscan_t yyscanner );
 
-YY_EXTRA_TYPE yyget_extra ( void );
+YY_EXTRA_TYPE yyget_extra ( yyscan_t yyscanner );
 
-void yyset_extra ( YY_EXTRA_TYPE user_defined  );
+void yyset_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
 
-FILE *yyget_in ( void );
+FILE *yyget_in ( yyscan_t yyscanner );
 
-void yyset_in  ( FILE * _in_str  );
+void yyset_in  ( FILE * _in_str , yyscan_t yyscanner );
 
-FILE *yyget_out ( void );
+FILE *yyget_out ( yyscan_t yyscanner );
 
-void yyset_out  ( FILE * _out_str  );
+void yyset_out  ( FILE * _out_str , yyscan_t yyscanner );
 
-			int yyget_leng ( void );
+			int yyget_leng ( yyscan_t yyscanner );
 
-char *yyget_text ( void );
+char *yyget_text ( yyscan_t yyscanner );
 
-int yyget_lineno ( void );
+int yyget_lineno ( yyscan_t yyscanner );
 
-void yyset_lineno ( int _line_number  );
+void yyset_lineno ( int _line_number , yyscan_t yyscanner );
 
-YYSTYPE * yyget_lval ( void );
+int yyget_column  ( yyscan_t yyscanner );
 
-void yyset_lval ( YYSTYPE * yylval_param  );
+void yyset_column ( int _column_no , yyscan_t yyscanner );
 
-       YYLTYPE *yyget_lloc ( void );
+YYSTYPE * yyget_lval ( yyscan_t yyscanner );
+
+void yyset_lval ( YYSTYPE * yylval_param , yyscan_t yyscanner );
+
+       YYLTYPE *yyget_lloc ( yyscan_t yyscanner );
     
-        void yyset_lloc ( YYLTYPE * yylloc_param  );
+        void yyset_lloc ( YYLTYPE * yylloc_param , yyscan_t yyscanner );
     
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -371,18 +329,18 @@ void yyset_lval ( YYSTYPE * yylval_param  );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int yywrap ( void );
+extern "C" int yywrap ( yyscan_t yyscanner );
 #else
-extern int yywrap ( void );
+extern int yywrap ( yyscan_t yyscanner );
 #endif
 #endif
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy ( char *, const char *, int );
+static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen ( const char * );
+static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
@@ -411,10 +369,10 @@ static int yy_flex_strlen ( const char * );
 #define YY_DECL_IS_OURS 1
 
 extern int yylex \
-               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param );
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner);
 
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param )
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
 /* yy_get_previous_state - get the state just before the EOB char was reached */
@@ -576,9 +534,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 411 "beancount/parser/lexer.l"
+#line 467 "beancount/parser/lexer.l"
 
 
-#line 583 "beancount/parser/lexer.h"
+#line 541 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

@@ -33,3 +33,7 @@ class TestGviz(unittest.TestCase):
         self.assertRegex(html, r'\bz\b')
         self.assertRegex(html, r'\.visualization\.AnnotatedTimeLine')
         self.assertRegex(html, r'\.setOnLoadCallback')
+
+
+if __name__ == '__main__':
+    unittest.main()

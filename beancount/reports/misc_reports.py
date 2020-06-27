@@ -111,8 +111,7 @@ class CurrentEventsReport(base.TableReport):
         for entry in entries:
             if isinstance(entry, data.Event):
                 events[entry.type] = entry.description
-        return table.create_table([(type_, description)
-                                   for type_, description in sorted(events.items())],
+        return table.create_table(list(sorted(events.items())),
                                   [(0, "Type", self.formatter.render_event_type),
                                    (1, "Description")])
 

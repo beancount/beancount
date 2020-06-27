@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount import loader
 from beancount.parser import cmptest
 
@@ -102,3 +104,7 @@ class TestIraContributions(cmptest.TestCase):
         2013-02-17 price SE2030                             17.834 USD
 
         """, entries)
+
+
+if __name__ == '__main__':
+    unittest.main()

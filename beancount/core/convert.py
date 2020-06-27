@@ -1,27 +1,28 @@
 """Conversions from Position (or Posting) to units, cost, weight, market value.
 
-  Units: Just the primary amount of the position.
-  Cost: The cost basis of the position, if available.
-  Weight: The cost basis or price of the position.
-  Market Value: The units converted to a value via a price map.
+  * Units: Just the primary amount of the position.
+  * Cost: The cost basis of the position, if available.
+  * Weight: The cost basis or price of the position.
+  * Market Value: The units converted to a value via a price map.
 
 To convert an inventory's contents, simply use these functions in conjunction
-with Inventory.reduce(), like
+with ``Inventory.reduce()``, like
 
-  cost_inv = inv.reduce(convert.get_cost)
+    cost_inv = inv.reduce(convert.get_cost)
 
 This module equivalently converts Position and Posting instances. Note that
 we're specifically avoiding to create an import dependency on
 beancount.core.data in order to keep this module isolatable, but it works on
 postings due to duck-typing.
 
-Function named get_*() are used to compute values from postings to their price currency.
-Functions named convert_*() are used to convert postings and amounts to any currency.
+Function named ``get_*()`` are used to compute values from postings to their price currency.
+Functions named ``convert_*()`` are used to convert postings and amounts to any currency.
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from beancount.core.number import Decimal
+from decimal import Decimal
+
 from beancount.core.number import MISSING
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
@@ -67,10 +68,10 @@ def get_weight(pos):
     Here are all relevant examples, with the amounts used to balance the
     postings:
 
-      Assets:Account  5234.50 USD                             ->  5234.50 USD
-      Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+        Assets:Account  5234.50 USD                             ->  5234.50 USD
+        Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
+        Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+        Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       pos: An instance of Position or Posting, equivalently.
@@ -108,7 +109,7 @@ def get_value(pos, price_map, date=None):
     Note that if the position is not held at cost, this does not convert
     anything, even if a price is available in the 'price_map'. We don't specify
     a target currency here. If you're attempting to make such a conversion, see
-    convert_*() functions below.
+    ``convert_*()`` functions below.
 
     Args:
       pos: An instance of Position or Posting, equivalently.

@@ -26,5 +26,9 @@ class TestTextUtils(unittest.TestCase):
             input_file.write('S&P 500. Some other thing and &entity;')
             input_file.flush()
             tidy_file = text_utils.entitize_ampersand(input_file.name)
-            self.assertEqual('S&amp;P 500. Some other thing and &entity;',
-                             open(tidy_file.name).read())
+            with open(tidy_file.name) as f: contents = f.read()
+            self.assertEqual('S&amp;P 500. Some other thing and &entity;', contents)
+
+
+if __name__ == '__main__':
+    unittest.main()

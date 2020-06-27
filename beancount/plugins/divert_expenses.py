@@ -3,25 +3,25 @@
 This plugin allows you to select a tag and it automatically converts all the
 Expenses postings to use a single account. For example, with this input:
 
-  plugin "divert_expenses" "['kid', 'Expenses:Child']"
+    plugin "divert_expenses" "['kid', 'Expenses:Child']"
 
-  2018-01-28 * "CVS" "Formula" #kid
-    Liabilities:CreditCard      -10.27 USD
-    Expenses:Food:Grocery        10.27 USD
+    2018-01-28 * "CVS" "Formula" #kid
+      Liabilities:CreditCard      -10.27 USD
+      Expenses:Food:Grocery        10.27 USD
 
 It will output:
 
-  2018-01-28 * "CVS" "Formula" #kid
-    Liabilities:CreditCard      -10.27 USD
-    Expenses:Child               10.27 USD
+   2018-01-28 * "CVS" "Formula" #kid
+      Liabilities:CreditCard      -10.27 USD
+      Expenses:Child               10.27 USD
 
 You can limit the diversion to one posting only, like this:
 
-  2018-05-05 * "CVS/PHARMACY" "" #kai
-    Liabilities:CreditCard        -66.38 USD
-    Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
-    Expenses:Pharmacy              45.38 USD
-      divert: FALSE
+    2018-05-05 * "CVS/PHARMACY" "" #kai
+      Liabilities:CreditCard        -66.38 USD
+      Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
+      Expenses:Pharmacy              45.38 USD
+        divert: FALSE
 
 See unit test for details.
 
@@ -67,13 +67,13 @@ def divert_expenses(entries, options_map, config_str):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction) and tag in entry.tags:
-            entry = replace_expenses_accounts(entry, replacement_account, acctypes)
+            entry = replace_diverted_accounts(entry, replacement_account, acctypes)
         new_entries.append(entry)
 
     return new_entries, errors
 
 
-def replace_expenses_accounts(entry, replacement_account, acctypes):
+def replace_diverted_accounts(entry, replacement_account, acctypes):
     """Replace the Expenses accounts from the entry.
 
     Args:
@@ -85,8 +85,10 @@ def replace_expenses_accounts(entry, replacement_account, acctypes):
     """
     new_postings = []
     for posting in entry.postings:
-        if (account_types.is_account_type(acctypes.expenses, posting.account) and
-            posting.meta.get('divert', True)):
+        divert = posting.meta.get('divert', None) if posting.meta else None
+        if (divert is True or (
+                divert is None and
+                account_types.is_account_type(acctypes.expenses, posting.account))):
             posting = posting._replace(account=replacement_account,
                                        meta={'diverted_account': posting.account})
         new_postings.append(posting)

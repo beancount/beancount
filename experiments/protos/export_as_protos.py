@@ -11,10 +11,10 @@ __license__ = "GNU GPLv2"
 import argparse
 import logging
 import datetime
+from decimal import Decimal
 
 from beancount import loader
 from beancount.parser import printer
-from beancount.core.number import Decimal
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import position

@@ -3,9 +3,9 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
+from decimal import Decimal
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.query import query_parser as qp
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
@@ -61,7 +61,7 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
 
 class TestCompileAggregateChecks(unittest.TestCase):
 
-    def test_is_aggregrate_derived(self):
+    def test_is_aggregate_derived(self):
         columns, aggregates = qc.get_columns_and_aggregates(
             qc.EvalAnd(
                 qc.EvalEqual(qe.PositionColumn(), qc.EvalConstant(42)),
@@ -753,3 +753,7 @@ class TestCompilePrint(CompileSelectBase):
             qc.EvalFrom(qc.EvalEqual(qe.YearEntryColumn(), qc.EvalConstant(2014)),
                         None, None, None)
             ), "PRINT FROM year = 2014;")
+
+
+if __name__ == '__main__':
+    unittest.main()

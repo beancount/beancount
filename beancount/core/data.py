@@ -8,10 +8,10 @@ import datetime
 import enum
 import sys
 
+from decimal import Decimal
 from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
 
 from beancount.core.amount import Amount
-from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
@@ -20,7 +20,6 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
-# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str
@@ -641,10 +640,10 @@ def has_entry_account_component(entry, component):
     Args:
       entry: A Transaction entry.
       component: A string, a component of an account name. For instance,
-        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+        ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      A boolean, true if the component is in the account. Note that a component
-      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+      Boolean: true if the component is in the account. Note that a component
+      name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
     return (isinstance(entry, Transaction) and
             any(has_component(posting.account, component)

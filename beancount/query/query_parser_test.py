@@ -662,3 +662,7 @@ class TestExplain(QueryParserTestBase):
         self.assertParse(qp.Explain(
             qp.Journal('Assets:ETrade', 'units', None)
             ), "EXPLAIN JOURNAL 'Assets:ETrade' AT units;")
+
+
+if __name__ == '__main__':
+    unittest.main()

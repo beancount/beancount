@@ -10,10 +10,10 @@ import sys
 import traceback
 from os import path
 from datetime import date
+from decimal import Decimal
 
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
-from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import CostSpec
@@ -816,7 +816,9 @@ class Builder(lexer.LexBuilder):
             if units.number == ZERO:
                 number = ZERO
             else:
-                number = price.number/abs(units.number)
+                number = price.number
+                if number is not MISSING:
+                    number = number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for

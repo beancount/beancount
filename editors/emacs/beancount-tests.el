@@ -233,3 +233,73 @@ known option nmaes."
                    '("* A"   org-level-1
                      "** B"  org-level-2
                      "*** C" org-level-3)))))
+
+(ert-deftest beancount/account-currency-001 ()
+  :tags '(regress)
+  (with-temp-buffer
+    (insert "
+2019-12-22 open Assets:Test:One USD
+2019-12-22 open Assets:Test:Two USD,EUR
+2019-12-22 open Assets:Test:Three USD \"STRICT\"
+2019-12-22 open Assets:Test:Four USD,EUR \"STRICT\"
+2019-12-22 open Assets:Test:Five \"STRICT\"
+")
+    (should (equal (beancount--account-currency "Assets:Test:One") "USD"))
+    (should (equal (beancount--account-currency "Assets:Test:Two") nil))
+    (should (equal (beancount--account-currency "Assets:Test:Three") "USD"))
+    (should (equal (beancount--account-currency "Assets:Test:Four") nil))
+    (should (equal (beancount--account-currency "Assets:Test:Five") nil))))
+
+(ert-deftest beancount/imenu-001 ()
+  :tags '(regress imenu)
+  (with-temp-buffer
+    (insert "
+;;; 2019
+;;;; 2019 January
+;;;; 2019 February
+;;; 2020
+;;;; 2020 January
+
+2020-01-01 * \"Example\"
+  Expenses:Test    1.00 USD
+  Assets:Checking
+
+;;;; 2020 February
+")
+    (beancount-mode)
+    (outline-minor-mode)
+    (let* ((imenu-use-markers nil) ; makes testing easier
+           (index (funcall imenu-create-index-function)))
+      (should (equal index '(("2019" . 2)
+                             ("2019 January" . 11)
+                             ("2019 February" . 29)
+                             ("2020" . 48)
+                             ("2020 January" . 57)
+                             ("2020 February" . 146)))))))
+
+(ert-deftest beancount/imenu-002 ()
+  :tags '(regress imenu)
+  (with-temp-buffer
+    (insert "
+* 2019
+** 2019 January
+
+2019-01-01 * \"Example\"
+  Expenses:Test    1.00 USD
+  Assets:Checking
+
+** 2019 February
+* 2020
+** 2020 January
+** 2020 February
+")
+    (beancount-mode)
+    (outline-minor-mode)
+    (let* ((imenu-use-markers nil) ; makes testing easier
+           (index (funcall imenu-create-index-function)))
+      (should (equal index '(("2019" . 2)
+                             ("2019 January" . 9)
+                             ("2019 February" . 96)
+                             ("2020" . 113)
+                             ("2020 January" . 120)
+                             ("2020 February" . 136)))))))

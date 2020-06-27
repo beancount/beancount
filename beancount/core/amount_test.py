@@ -151,7 +151,7 @@ class TestAmount(unittest.TestCase):
                          amount.add(Amount(D('100'), 'CAD'),
                                     Amount(D('17.02'), 'CAD')))
         with self.assertRaises(ValueError):
-            amount.sub(Amount(D('100'), 'USD'),
+            amount.add(Amount(D('100'), 'USD'),
                        Amount(D('17.02'), 'CAD'))
 
     def test_sub(self):
@@ -169,3 +169,7 @@ class TestAmount(unittest.TestCase):
                          amount.abs(Amount(D('0'), 'CAD')))
         self.assertEqual(Amount(D('82.98'), 'CAD'),
                          amount.abs(Amount(D('-82.98'), 'CAD')))
+
+
+if __name__ == '__main__':
+    unittest.main()

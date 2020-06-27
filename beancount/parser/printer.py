@@ -9,8 +9,8 @@ import io
 import re
 import sys
 import textwrap
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import position
 from beancount.core import convert
 from beancount.core import inventory
@@ -88,7 +88,7 @@ def align_position_strings(strings):
 class EntryPrinter:
     """A multi-method interface for printing all directive types.
 
-    Atributes:
+    Attributes:
       dcontext: An instance of DisplayContext with which to render all the numbers.
       render_weight: A boolean, true if we should render the weight of the postings
         as a comment, for debugging.
@@ -97,12 +97,14 @@ class EntryPrinter:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, dcontext=None, render_weight=False, min_width_account=None):
+    def __init__(self, dcontext=None, render_weight=False, min_width_account=None,
+                 prefix=None):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
         self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
         self.render_weight = render_weight
         self.min_width_account = min_width_account
+        self.prefix = prefix or '  '
 
     def __call__(self, obj):
         """Render a directive.
@@ -119,7 +121,7 @@ class EntryPrinter:
 
     META_IGNORE = set(['filename', 'lineno', '__automatic__'])
 
-    def write_metadata(self, meta, oss, prefix='  '):
+    def write_metadata(self, meta, oss, prefix=None):
         """Write metadata to the file object, excluding filename and line number.
 
         Args:
@@ -128,6 +130,8 @@ class EntryPrinter:
         """
         if meta is None:
             return
+        if prefix is None:
+            prefix = self.prefix
         for key, value in sorted(meta.items()):
             if key not in self.META_IGNORE:
                 value_str = None
@@ -183,8 +187,8 @@ class EntryPrinter:
                                if self.render_weight
                                else False)
         if non_trivial_balance:
-            fmt = "  {{:{0}}}  {{:{1}}}  ; {{:{2}}}\n".format(
-                width_account, width_position, width_weight).format
+            fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
+                self.prefix, width_account, width_position, width_weight).format
             for posting, account, position_str, weight_str in zip(entry.postings,
                                                                   strs_account,
                                                                   strs_position,
@@ -195,7 +199,8 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "  {{:{0}}}  {{:{1}}}\n".format(width_account, max(1, width_position))
+            fmt_str = "{0}{{:{1}}}  {{:{2}}}\n".format(
+                self.prefix, width_account, max(1, width_position))
             fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
@@ -243,7 +248,8 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} ; {}\n'.format(flag_account,
+        oss.write('{}{:64} {} ; {}\n'.format(self.prefix,
+                                             flag_account,
                                              position_str,
                                              weight_str).rstrip())
         if posting.meta:
@@ -328,7 +334,7 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
 
-def format_entry(entry, dcontext=None, render_weights=False):
+def format_entry(entry, dcontext=None, render_weights=False, prefix=None):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
@@ -338,7 +344,7 @@ def format_entry(entry, dcontext=None, render_weights=False):
     Returns:
       A string, the formatted entry.
     """
-    return EntryPrinter(dcontext, render_weights)(entry)
+    return EntryPrinter(dcontext, render_weights, prefix=prefix)(entry)
 
 
 def print_entry(entry, dcontext=None, render_weights=False, file=None):
@@ -350,7 +356,9 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
+    output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                      if hasattr(sys.stdout, 'buffer') else
+                      sys.stdout)
     output.write(format_entry(entry, dcontext, render_weights))
     output.write('\n')
 

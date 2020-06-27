@@ -7,9 +7,8 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+from decimal import Decimal
 from typing import Optional, NamedTuple
-
-from beancount.core.number import Decimal
 
 
 # A record that contains data for a price fetched from a source.

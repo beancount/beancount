@@ -323,7 +323,7 @@ class SelectParser(Lexer):
     def handle_comma_separated_list(self, p):
         """Handle a list of 0, 1 or more comma-separated values.
         Args:
-          p: A gramar object.
+          p: A grammar object.
         """
         if len(p) == 2:
             return [] if p[1] is None else [p[1]]

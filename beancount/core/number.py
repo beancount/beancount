@@ -12,50 +12,9 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import types
-import warnings
 import re
+from decimal import Decimal
 
-
-# Note: Python 3.3 is supposed to guarantee a fast "C" decimal implementation,
-# as it comes with its source code. However, in practice, many distributions,
-# including the popular Ubuntu distro, simply don't compile it. Other distros
-# (e.g., Arch Linux) insist on breaking up Python into multiple packages in
-# order to manage the dependency to the mpdec library, and make that
-# installation optional. Moreover, there seems to have been changes in the
-# dispatching of pure-Python and fast C decimal implementations in Python-3.5's
-# source code itself. The result is that despite Python-3.3 or above being
-# installed, a fast C decimal implementation may or may not be present. Thus, we
-# must detect it here. I believe this subtle problem should go away with
-# Python-3.5 and above.
-#
-# What do we do? We import the default 'decimal' module, and if it's the pure
-# Python implementation, we attempt to import an explicitly installed
-# 'cdecimal', which you can install with
-#
-#   pip3 install m3-cdecimal
-#
-def is_fast_decimal(decimal_module):
-    "Return true if a fast C decimal implementation is installed."
-    return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
-
-# Attempt to import a fast C decimal implementation.
-import decimal
-if not is_fast_decimal(decimal):
-    try:
-        import cdecimal
-    except ImportError:
-        pass
-    else:
-        decimal = cdecimal # pylint: disable=invalid-name
-
-if not is_fast_decimal(decimal):
-    warnings.warn("Fast C decimal implementation appears to be missing; "
-                  "Consider installing cdecimal")
-
-
-# pylint: disable=invalid-name
-Decimal = decimal.Decimal
 
 # Constants.
 ZERO = Decimal()

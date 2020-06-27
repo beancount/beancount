@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.utils import test_utils
 from beancount.scripts import example
 from beancount.ops import validation
@@ -21,3 +23,7 @@ class TestScriptExample(test_utils.TestCase):
             file_contents,
             extra_validations=validation.HARDCORE_VALIDATIONS)
         self.assertFalse(errors)
+
+
+if __name__ == '__main__':
+    unittest.main()

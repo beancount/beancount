@@ -123,3 +123,22 @@ class TestCompare(unittest.TestCase):
         excludes, extra = compare.excludes_entries(entries1[0:4], entries2[4:])
         self.assertTrue(excludes)
         self.assertFalse(extra)
+
+    def test_hash_with_exclude_meta(self):
+        entries, _, __ = loader.load_string("""
+          2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39
+            Expenses:Coffee         5 USD
+            Assets:US:Cash
+
+          2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39
+            Expenses:Coffee         5 USD
+            Assets:US:Cash
+        """)
+        self.assertNotEqual(compare.hash_entry(entries[0], exclude_meta=False),
+                            compare.hash_entry(entries[1], exclude_meta=False))
+        self.assertEqual(compare.hash_entry(entries[0], exclude_meta=True),
+                         compare.hash_entry(entries[1], exclude_meta=True))
+
+
+if __name__ == '__main__':
+    unittest.main()

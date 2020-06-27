@@ -26,3 +26,7 @@ class TestRegexpUtils(unittest.TestCase):
 
         self.assertFalse(match(r"[\p{Nd}]+", "Assets"))
         self.assertTrue(match(r"[\p{Nd}]+", "78654865347"))
+
+
+if __name__ == '__main__':
+    unittest.main()
