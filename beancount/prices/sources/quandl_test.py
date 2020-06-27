@@ -156,7 +156,7 @@ class QuandlPriceFetcher(unittest.TestCase):
                         'start_date': '2019-06-08',
                         'transform': None}}
         with response(contents):
-            srcprice = quandl.fetch_time_series('LBMA:GOLD:USD (PM)', None)
+            srcprice = quandl.fetch_time_series('LBMA:GOLD:USD_(PM)', None)
             self.assertIsInstance(srcprice, source.SourcePrice)
 
             self.assertEqual(D('1341.35'), srcprice.price)
