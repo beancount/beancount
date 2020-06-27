@@ -584,17 +584,22 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     PyObject* read = NULL;
     int ret = 0;
 
+    // Note: Eventually we ought to allocatee this once in the parser state and
+    // avoid reallocating this on every block read.
     dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
-    if (!dest)
+    if (!dest) {
 	goto error;
+    }
 
     read = PyObject_CallMethod(file, "readinto", "O", dest);
-    if (!read)
+    if (!read) {
 	goto error;
+    }
 
     ret = PyLong_AsSize_t(read);
-    if (PyErr_Occurred())
+    if (PyErr_Occurred()) {
 	ret = 0;
+    }
 
 error:
     Py_XDECREF(dest);

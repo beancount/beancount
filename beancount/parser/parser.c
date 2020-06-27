@@ -61,10 +61,10 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     static char* kwlist[] = {"file", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                      &file, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug)) {
+    if (! yArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
+                                     &file, &builder,
+                                     &report_filename, &report_firstline,
+                                     &encoding, &yydebug)) {
         return NULL;
     }
 
