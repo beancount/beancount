@@ -2,7 +2,7 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "beancount/parser/lexer.h"
+#line 6 "beancount/parser/lexer.h"
 
 #include "parser.h"
 
@@ -14,11 +14,13 @@ void yylex_initialize(const char* filename, int firstline, const char* encoding,
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
+/* Get the current filename from the scanner state. */
 const char* yyget_filename(yyscan_t *scanner);
 
+/* Get the first line from the scanner state. */
 int yyget_firstline(yyscan_t *scanner);
 
-#line 21 "beancount/parser/lexer.h"
+#line 24 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -532,9 +534,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 460 "beancount/parser/lexer.l"
+#line 467 "beancount/parser/lexer.l"
 
 
-#line 538 "beancount/parser/lexer.h"
+#line 541 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

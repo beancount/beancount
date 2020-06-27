@@ -28,8 +28,10 @@ void yylex_initialize(const char* filename, int firstline, const char* encoding,
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
+/* Get the current filename from the scanner state. */
 const char* yyget_filename(yyscan_t *scanner);
 
+/* Get the first line from the scanner state. */
 int yyget_firstline(yyscan_t *scanner);
 
 }
@@ -54,14 +56,19 @@ struct _yyextra_t {
     /* The number of times EOF has been hit. This is used to
      * synthesize an EOL at the end of the file. */
     int n_eof;
+
     /* Number of tokens since the beginning of the line. */
     int n_line_tokens;
+
     /* The filename being tokenized. */
     const char* filename;
+
     /* Reporting line offset. This is used like the #line cpp macro */
     int line;
+
     /* The encoding to use for converting strings. */
     const char* encoding;
+
     /* Variable size buffer used to accumulate string data. */
     struct buffer str;
 };
@@ -145,7 +152,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     }
 
 /* Skip the rest of the input line.  This needs to be implemented as a
- * macro because input() and unput() are thmeselves macros tha use
+ * macro because input() and unput() are themselves macros tha use
  * variable definitions internal to the yylex() function. */
 #define yy_skip_line()                          \
     do {                                        \

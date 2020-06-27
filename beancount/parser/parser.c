@@ -15,6 +15,7 @@ extern YY_DECL;
 
 extern const char* getTokenName(int token);
 
+/* TODO(blais,dnicolodi): Convert those to locals eventually. */
 yyscan_t _scanner;
 
 /* The current builder during parsing (as a global variable for now). */

@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-27
+
+  - Merged #484, some parser improvements by dnicolodi@.
+
+
 2020-06-26
 
   - Merged #480 - parser: Read input data from Python file objects by dnicolodi.
