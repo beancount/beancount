@@ -73,7 +73,7 @@ class Col(enum.Enum):
     CATEGORY = '[CATEGORY]'
 
 
-def get_amounts(iconfig, row, allow_zero_amounts=False, D=D):
+def get_amounts(iconfig, row, allow_zero_amounts, create_decimal):
     """Get the amount columns of a row.
 
     Args:
@@ -93,13 +93,13 @@ def get_amounts(iconfig, row, allow_zero_amounts=False, D=D):
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
 
     # If zero amounts aren't allowed, return null value.
-    is_zero_amount = ((credit is not None and D(credit) == ZERO) and
-                      (debit is not None and D(debit) == ZERO))
+    is_zero_amount = ((credit is not None and create_decimal(credit) == ZERO) and
+                      (debit is not None and create_decimal(debit) == ZERO))
     if not allow_zero_amounts and is_zero_amount:
         return (None, None)
 
-    return (-D(debit) if debit else None,
-            D(credit) if credit else None)
+    return (-create_decimal(debit) if debit else None,
+            create_decimal(credit) if credit else None)
 
 
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
@@ -199,9 +199,6 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                     max_date = date
             return max_date
 
-    def parse_amount(self, amt):
-        return D(amt)
-
     def extract(self, file, existing_entries=None):
         account = self.file_account(file)
         entries = []
@@ -286,7 +283,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    tags, links, [])
 
             # Attach one posting to the transaction
-            amount_debit, amount_credit = self.get_amounts(iconfig, row)
+            amount_debit, amount_credit = self.get_amounts(iconfig, row, False)
 
             # Skip empty transactions
             if amount_debit is None and amount_credit is None:
@@ -337,13 +334,17 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
         return entries
 
-    def get_amounts(self, iconfig, row, allow_zero_amounts=False):
+    def parse_amount(self, string):
+        """The method used to create Decimal instances. You can override this."""
+        return D(string)
+
+    def get_amounts(self, iconfig, row, allow_zero_amounts):
         """See function get_amounts() for details.
 
         This method is present to allow clients to override it in order to deal
         with special cases, e.g., columns with currency symbols in them.
         """
-        return get_amounts(iconfig, row, allow_zero_amounts)
+        return get_amounts(iconfig, row, allow_zero_amounts, self.parse_amount)
 
 
 def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
