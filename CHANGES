@@ -6,7 +6,12 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-06-27
 
-  - Merged #484, some parser improvements by dnicolodi@.
+  - Merged PR #484, some parser improvements by @dnicolodi.
+  - Merged PR #488 from branch beancount/pr135_ppmarciniak_fixnetworth by
+    @pmarciniak.
+  - Merged branch pr131_tohojo_csvtweaks (BitBucket PR 131) by @tohojo, fixed
+    encoding bug in reading the file for the date and allow customizing the
+    number parser.
 
 
 2020-06-26
