@@ -36,6 +36,10 @@ void build_lexer_error(const char* string, size_t length);
  * exception state. */
 void build_lexer_error_from_exception(void);
 
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+
+#define YY_INPUT(buf, result, max_size)                         \
+    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
 
 
 /* Callback call site with error handling. */
@@ -441,7 +445,7 @@ void yylex_initialize(const char* filename, const char* encoding)
 {
     assert(filename != NULL);
     yy_eof_times = 0;
-    yy_filename = filename;
+    yy_filename = filename ? filename : "";
     yy_line_tokens = 0;
     yycolumn = 1;
     if ( encoding == 0 ) {
@@ -572,4 +576,28 @@ void build_lexer_error_from_exception()
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: No exception");
     }
+}
+
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
+{
+    PyObject* dest = NULL;
+    PyObject* read = NULL;
+    int ret = 0;
+
+    dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
+    if (!dest)
+	goto error;
+
+    read = PyObject_CallMethod(file, "readinto", "O", dest);
+    if (!read)
+	goto error;
+
+    ret = PyLong_AsSize_t(read);
+    if (PyErr_Occurred())
+	ret = 0;
+
+error:
+    Py_XDECREF(dest);
+    Py_XDECREF(read);
+    return ret;
 }
