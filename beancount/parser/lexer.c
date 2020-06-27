@@ -3059,25 +3059,30 @@ void build_lexer_error_from_exception()
 
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
 {
-     PyObject* dest = NULL;
-     PyObject* read = NULL;
-     int ret = 0;
+    PyObject* dest = NULL;
+    PyObject* read = NULL;
+    int ret = 0;
 
-     dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
-     if (!dest)
-          goto error;
+    // Note: Eventually we ought to allocatee this once in the parser state and
+    // avoid reallocating this on every block read.
+    dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
+    if (!dest) {
+	goto error;
+    }
 
-     read = PyObject_CallMethod(file, "readinto", "O", dest);
-     if (!read)
-          goto error;
+    read = PyObject_CallMethod(file, "readinto", "O", dest);
+    if (!read) {
+	goto error;
+    }
 
-     ret = PyLong_AsSize_t(read);
-     if (PyErr_Occurred())
-          ret = 0;
+    ret = PyLong_AsSize_t(read);
+    if (PyErr_Occurred()) {
+	ret = 0;
+    }
 
 error:
-     Py_XDECREF(dest);
-     Py_XDECREF(read);
-     return ret;
+    Py_XDECREF(dest);
+    Py_XDECREF(read);
+    return ret;
 }
 
