@@ -26,6 +26,9 @@ def response(contents, status_code=requests.codes.ok):
 class QuandlPriceFetcher(unittest.TestCase):
 
     def test_parse_ticker(self):
+        # NOTE(pmarciniak): "LBMA:GOLD:USD (PM)" is a valid ticker in Quandl
+        # requests, but since space is not allowed in price source syntax, we're
+        # representing space with an underscore.
         self.assertEqual(quandl.TickerSpec('WIKI', 'FB', None),
                          quandl.parse_ticker('WIKI:FB'))
         self.assertEqual(quandl.TickerSpec('LBMA', 'GOLD', 'USD (PM)'),
