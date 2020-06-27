@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.core import data
@@ -75,3 +77,7 @@ class TestMarkUnverified(cmptest.TestCase):
             for expect_posting, posting in zip(expect_entry.postings, entry.postings):
                 self.assertEqual(expect_posting.meta.get('unverified'),
                                  posting.meta.get('unverified'))
+
+
+if __name__ == '__main__':
+    unittest.main()

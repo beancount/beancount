@@ -123,3 +123,7 @@ class QuandlPriceFetcher(unittest.TestCase):
         for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
             with date_utils.intimezone(tzname):
                 self._test_valid_response()
+
+
+if __name__ == '__main__':
+    unittest.main()

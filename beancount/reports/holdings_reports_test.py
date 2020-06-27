@@ -73,6 +73,7 @@ class TestHoldingsReports(unittest.TestCase):
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
 
+
 class TestMultiCurrencyNetWorthCalculation(unittest.TestCase):
 
     @loader.load_doc()
@@ -102,3 +103,6 @@ class TestMultiCurrencyNetWorthCalculation(unittest.TestCase):
         self.assertTrue(isinstance(net_worths, list))
         self.assertListEqual(
             [('CHF', Decimal('120.0')), ('USD', Decimal('200'))], net_worths)
+
+if __name__ == '__main__':
+    unittest.main()

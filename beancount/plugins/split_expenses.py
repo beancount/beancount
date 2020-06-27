@@ -8,16 +8,16 @@ into multiple postings, one for each member.
 
 For example, given the names 'Martin' and 'Caroline', the following transaction:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-     Income:Caroline:CreditCard      -269.00 USD
-     Expenses:Accommodation
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+       Income:Caroline:CreditCard      -269.00 USD
+       Expenses:Accommodation
 
 Will be converted to this:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-    Income:Caroline:CreditCard       -269.00 USD
-    Expenses:Accommodation:Martin     134.50 USD
-    Expenses:Accommodation:Caroline   134.50 USD
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+      Income:Caroline:CreditCard       -269.00 USD
+      Expenses:Accommodation:Martin     134.50 USD
+      Expenses:Accommodation:Caroline   134.50 USD
 
 After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings
@@ -102,7 +102,7 @@ def split_expenses(entries, options_map, config):
                         # automatically calculated, so that the resulting
                         # calculated amounts aren't used to affect inferred
                         # tolerances.
-                        meta = posting.meta.copy()
+                        meta = posting.meta.copy() if posting.meta else {}
                         meta[interpolate.AUTOMATIC_META] = True
 
                         # Add a new posting for each member, to a new account

@@ -102,7 +102,6 @@ class GetAccounts:
 
 
 # Global instance to share.
-# pylint: disable=invalid-name
 _GetAccounts = GetAccounts()
 
 

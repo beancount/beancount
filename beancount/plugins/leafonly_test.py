@@ -49,3 +49,7 @@ class TestLeafOnly(unittest.TestCase):
         self.assertEqual(2, len(errors))
         for error in errors:
             self.assertRegex(error.message, 'Expenses:Food')
+
+
+if __name__ == '__main__':
+    unittest.main()

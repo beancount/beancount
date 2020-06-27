@@ -122,7 +122,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertEqual(0, result)
         output = stdout.getvalue()
         errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
 
         self.assertRegex(output, 'Downloads/UTrade20160215.csv')
         self.assertRegex(output, 'Importer:.*importers.utrade.utrade_csv.Importer')
@@ -131,3 +131,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
         self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')
+
+
+if __name__ == '__main__':
+    unittest.main()

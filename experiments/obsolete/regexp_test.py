@@ -48,3 +48,7 @@ class TestRegexpMixin(unittest.TestCase):
                                        'MimeType: text/xml'])
         file = cache._FileMemo(filename)
         self.assertFalse(importer.identify(file))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 from beancount.scripts import tutorial
@@ -25,3 +26,7 @@ class TestTutorial(test_utils.TestCase):
             self.assertLess(20, len(output_files))
         finally:
             shutil.rmtree(temp_output_dir)
+
+
+if __name__ == '__main__':
+    unittest.main()

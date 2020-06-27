@@ -8,13 +8,13 @@ on transactions. This is an example on how to implement that with a plugin.
 
 For example, assuming the user enters linked transactions like this:
 
-  2013-03-28 * "Bill for datacenter electricity"  ^invoice-27a30ab61191
-    Expenses:Electricity			  450.82 USD
-    Liabilities:AccountsPayable
+    2013-03-28 * "Bill for datacenter electricity"  ^invoice-27a30ab61191
+      Expenses:Electricity			  450.82 USD
+      Liabilities:AccountsPayable
 
-  2013-04-15 * "Paying electricity company" ^invoice-27a30ab61191
-    Assets:Checking			  	-450.82 USD
-    Liabilities:AccountsPayable
+    2013-04-15 * "Paying electricity company" ^invoice-27a30ab61191
+      Assets:Checking			  	-450.82 USD
+      Liabilities:AccountsPayable
 
 Transactions are grouped by link ("invoice-27a30ab61191") and then the
 intersection of their common accounts is automatically calculated

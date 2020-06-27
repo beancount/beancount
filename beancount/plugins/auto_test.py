@@ -17,3 +17,7 @@ class TestAuto(unittest.TestCase):
           Assets:US:Bank:Checking     100 USD @ 1.01 CAD
           Assets:US:Bank:Savings     -101 CAD
         """
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -8,6 +8,7 @@ import collections
 import datetime
 import itertools
 import operator
+from decimal import Decimal
 
 from beancount.query import query_compile
 from beancount.query import query_env
@@ -80,7 +81,7 @@ def execute_print(c_print, entries, options_map, file):
     """Print entries from a print statement specification.
 
     Args:
-      c_print: An instance of a compiled EvalPrint statemnet.
+      c_print: An instance of a compiled EvalPrint statement.
       entries: A list of directives.
       options_map: A parser's option_map.
       file: The output file to print to.
@@ -117,7 +118,7 @@ class Allocator:
         """Create a new row-aggregation store suitable to contain all the node allocations.
 
         Returns:
-          A store that can accomodate and be indexed by all the allocated slot handles.
+          A store that can accommodate and be indexed by all the allocated slot handles.
         """
         return [None] * self.size
 
@@ -168,7 +169,7 @@ _MIN_VALUES = {
     int: 0,
     float: 0.0,
     str: '',
-    number.Decimal: number.ZERO,
+    Decimal: number.ZERO,
     datetime.date: datetime.date.min,
 }
 

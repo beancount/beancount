@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import textwrap
+import unittest
 
 from beancount.utils import test_utils
 from beancount.reports import context
@@ -61,7 +62,7 @@ class TestContext(test_utils.TestCase):
                                                   search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:fa550e3e0c65107d658be07c9cf87356
+        Hash:a62bcf48b818459f06c6d7f9b78029b4
         Location: <string>:31
 
         ------------ Balances before transaction
@@ -95,3 +96,7 @@ class TestContext(test_utils.TestCase):
         """), str_context)
 
     maxDiff = 8192
+
+
+if __name__ == '__main__':
+    unittest.main()

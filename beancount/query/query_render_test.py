@@ -5,10 +5,10 @@ import datetime
 import io
 import unittest
 import collections
+from decimal import Decimal
 from itertools import zip_longest
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import position
@@ -288,3 +288,7 @@ class TestQueryRender(unittest.TestCase):
 # Add a test like this, where the column's result ends up being zero wide.
 # bean-query $L  "select account, sum(units(position)) from open on 2014-01-01
 #   close on 2015-01-01 clear  where account ~ 'PnL'  group by 1"
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -150,7 +150,7 @@ def reset_cache():
 
 
 def fetch_price(dprice, swap_inverted=False):
-    """Fetch a price for the DatePrice job.
+    """Fetch a price for the DatedPrice job.
 
     Args:
       dprice: A DatedPrice instances.

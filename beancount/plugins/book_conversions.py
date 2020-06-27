@@ -7,49 +7,49 @@ particular account, which you provide. For each of those accounts, it also
 requires a corresponding Income account to book the profit/loss of reducing
 lots (i.e., sales):
 
-  plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+    plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
 Then, simply input the transactions with price conversion. We use "Bitcoins" in
 this example, converting Bitcoin purchases that were carried out as currency
 into maintaining these with cost basis, for tax reporting purposes:
 
-  2015-09-04 * "Buy some bitcoins"
-    Assets:Bank          -1000.00 USD
-    Assets:Bitcoin       4.333507 BTC @ 230.76 USD
+    2015-09-04 * "Buy some bitcoins"
+      Assets:Bank          -1000.00 USD
+      Assets:Bitcoin       4.333507 BTC @ 230.76 USD
 
-  2015-09-05 * "Buy some more bitcoins at a different price"
-    Assets:Bank          -1000.00 USD
-    Assets:Bitcoin       4.345747 BTC @ 230.11 USD
+    2015-09-05 * "Buy some more bitcoins at a different price"
+      Assets:Bank          -1000.00 USD
+      Assets:Bitcoin       4.345747 BTC @ 230.11 USD
 
-  2015-09-20 * "Use (sell) some bitcoins"
-    Assets:Bitcoin       -6.000000 BTC @ 230.50 USD
-    Expenses:Something
+    2015-09-20 * "Use (sell) some bitcoins"
+      Assets:Bitcoin       -6.000000 BTC @ 230.50 USD
+      Expenses:Something
 
 The result is that cost bases are inserted on augmenting lots:
 
-  2015-09-04 * "Buy some bitcoins"
-    Assets:Bitcoin  4.333507 BTC {230.76 USD} @ 230.76 USD
-    Assets:Bank     -1000.00 USD
+    2015-09-04 * "Buy some bitcoins"
+      Assets:Bitcoin  4.333507 BTC {230.76 USD} @ 230.76 USD
+      Assets:Bank     -1000.00 USD
 
-  2015-09-05 * "Buy some more bitcoins at a different price"
-    Assets:Bitcoin  4.345747 BTC {230.11 USD} @ 230.11 USD
-    Assets:Bank     -1000.00 USD
+    2015-09-05 * "Buy some more bitcoins at a different price"
+      Assets:Bitcoin  4.345747 BTC {230.11 USD} @ 230.11 USD
+      Assets:Bank     -1000.00 USD
 
 While on reducing lots, matching FIFO lots are automatically found and the
 corresponding cost basis added:
 
-  2015-09-20 * "Use (sell) some bitcoins"
-    Assets:Bitcoin          -4.333507 BTC {230.76 USD} @ 230.50 USD
-    Assets:Bitcoin          -1.666493 BTC {230.11 USD} @ 230.50 USD
-    Income:Bitcoin         0.47677955 USD
-    Expenses:Something  1383.00000000 USD
+    2015-09-20 * "Use (sell) some bitcoins"
+      Assets:Bitcoin          -4.333507 BTC {230.76 USD} @ 230.50 USD
+      Assets:Bitcoin          -1.666493 BTC {230.11 USD} @ 230.50 USD
+      Income:Bitcoin         0.47677955 USD
+      Expenses:Something  1383.00000000 USD
 
 Note that multiple lots were required to fulfill the sale quantity here. As in
 this example, this may result in multiple lots being created for a single one.
 
 Finally, Beancount will eventually support booking methods built-in, but this is
 a quick method that shows how to hack your own booking method via
-transformations of the postings that run in in a plugin.
+transformations of the postings that run in a plugin.
 
 Implementation notes:
 

@@ -1,4 +1,4 @@
-"""Support utillities for testing scripts.
+"""Support utilities for testing scripts.
 """
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -63,7 +63,7 @@ def read_string_or_entries(entries_or_str, allow_incomplete=False):
 
 
 def _local_booking(entry):
-    """Transform incompolete entries as booked.
+    """Transform incomplete entries as booked.
 
     This method converts incomplete entries with positions that sport CostSpec
     instances and missing portions to using Cost and replacing MISSING instances

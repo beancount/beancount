@@ -4,11 +4,11 @@ When you sell stock, the gains can be automatically implied by the corresponding
 cash amounts. For example, in the following transaction the 2nd and 3rd postings
 should match the value of the stock sold:
 
-1999-07-31 * "Sell"
-  Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD}
-  Assets:US:BRS:Company:Cash      2141.36 USD
-  Expenses:Financial:Fees            0.08 USD
-  Income:US:Company:ESPP:PnL      -10.125 USD
+    1999-07-31 * "Sell"
+      Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD}
+      Assets:US:BRS:Company:Cash      2141.36 USD
+      Expenses:Financial:Fees            0.08 USD
+      Income:US:Company:ESPP:PnL      -10.125 USD
 
 The cost basis is checked against: 2141.36 + 008 + -10.125. That is, the balance
 checks computes
@@ -18,25 +18,25 @@ checks computes
                        0.08    +
                      -10.125
 
-and checks that the residual is below a small tolernace.
+and checks that the residual is below a small tolerance.
 
 But... usually the income leg isn't given to you in statements. Beancount can
 automatically infer it using the balance, which is convenient, like this:
 
-1999-07-31 * "Sell"
-  Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD}
-  Assets:US:BRS:Company:Cash      2141.36 USD
-  Expenses:Financial:Fees            0.08 USD
-  Income:US:Company:ESPP:PnL
+    1999-07-31 * "Sell"
+      Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD}
+      Assets:US:BRS:Company:Cash      2141.36 USD
+      Expenses:Financial:Fees            0.08 USD
+      Income:US:Company:ESPP:PnL
 
 Additionally, most often you have the sales prices given to you on your
 transaction confirmation statement, so you can enter this:
 
-1999-07-31 * "Sell"
-  Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
-  Assets:US:BRS:Company:Cash      2141.36 USD
-  Expenses:Financial:Fees            0.08 USD
-  Income:US:Company:ESPP:PnL
+    1999-07-31 * "Sell"
+      Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
+      Assets:US:BRS:Company:Cash      2141.36 USD
+      Expenses:Financial:Fees            0.08 USD
+      Income:US:Company:ESPP:PnL
 
 So in theory, if the price is given (26.4375 USD), we could verify that the
 proceeds from the sale at the given price match non-Income postings. That is,

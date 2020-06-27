@@ -5,24 +5,24 @@ https://www.mathstat.dal.ca/~selinger/accounting/tutorial.html
 
 You enable it just like this:
 
-  plugin "beancount.plugins.currency_accounts" "Equity:CurrencyAcccounts"
+    plugin "beancount.plugins.currency_accounts" "Equity:CurrencyAccounts"
 
 Accounts will be automatically created under the given base account, with the
 currency name appended to it, e.g.,
 
-  Equity:CurrencyAcccounts:CAD
-  Equity:CurrencyAcccounts:USD
+    Equity:CurrencyAccounts:CAD
+    Equity:CurrencyAccounts:USD
 
 etc., where used. You can have a look at the account balances with a query like
 this:
 
-  bean-query $L "select account, sum(position), convert(sum(position), 'USD')
-                 where date >= 2018-01-01 and  account ~ 'CurrencyAccounts' "
+    bean-query $L "select account, sum(position), convert(sum(position), 'USD')
+                   where date >= 2018-01-01 and  account ~ 'CurrencyAccounts' "
 
 The sum total of the converted amounts should be a number not too large:
 
-  bean-query $L "select convert(sum(position), 'USD')
-                 where date >= 2018-01-01 and  account ~ 'CurrencyAccounts'"
+    bean-query $L "select convert(sum(position), 'USD')
+                   where date >= 2018-01-01 and  account ~ 'CurrencyAccounts'"
 
 WARNING: This is a prototype. Note the FIXMEs in the code below, which indicate
 some potential problems.

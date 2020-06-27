@@ -376,7 +376,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 path.join(example_dir, 'Downloads')])
         self.assertEqual(0, result)
         errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
 
         output = stdout.getvalue()
 
@@ -389,3 +389,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
 
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')
+
+
+if __name__ == '__main__':
+    unittest.main()

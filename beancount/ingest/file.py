@@ -30,7 +30,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
       filename: A string, the name of the downloaded file to be processed.
       importers: A list of importer instances that handle this file.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       idify: A flag, if true, remove whitespace and funky characters in the destination
         filename.
@@ -50,8 +50,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
             account_ = importer.file_account(file)
         except Exception as exc:
             account_ = None
-            logging.error("Importer %s.file_account() raised an unexpected error: %s",
-                          importer.name(), exc)
+            logging.exception("Importer %s.file_account() raised an unexpected error: %s",
+                              importer.name(), exc)
         if account_ is not None:
             file_accounts.append(account_)
 
@@ -83,8 +83,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     try:
         date = importer.file_date(file)
     except Exception as exc:
-        logging.error("Importer %s.file_date() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_date() raised an unexpected error: %s",
+                          importer.name(), exc)
         date = None
     if date is None:
         # Fallback on the last modified time of the file.
@@ -106,8 +106,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
                            "separators"),
                           importer.name(), clean_filename)
     except Exception as exc:
-        logging.error("Importer %s.file_name() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_name() raised an unexpected error: %s",
+                          importer.name(), exc)
         clean_filename = None
     if clean_filename is None:
         # If no filename has been provided, use the basename.
@@ -166,7 +166,7 @@ def file(importer_config,
       files_or_directories: a list of files of directories to walk recursively and
         hunt for files to import.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       dry_run: A flag, if true, don't actually move the files.
       mkdirs: A flag, if true, make all the intervening directories; otherwise,
@@ -259,7 +259,7 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
 
 
 DESCRIPTION = ("Move and rename downloaded files to a documents tree "
-               "mirrorring the chart of accounts")
+               "mirroring the chart of accounts")
 
 
 def add_arguments(parser):
@@ -278,14 +278,18 @@ def add_arguments(parser):
                         help="Don't overwrite destination files with the same name.")
 
 
-def run(args, parser, importers_list, files_or_directories, detect_duplicates_func=None):
+def run(args, parser, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
 
-    # If the output directory is not specified, move the files at the root of
-    # the configuration file. (Providing this default seems better than using a
-    # required option.)
+    # If the output directory is not specified, move the files at the root where
+    # the import configuration file is located. (Providing this default seems
+    # better than using a required option.)
     if args.output_dir is None:
-        args.output_dir = path.dirname(path.abspath(args.config))
+        if hasattr(args, 'config'):
+            args.output_dir = path.dirname(path.abspath(args.config))
+        else:
+            import __main__ # pylint: disable=import-outside-toplevel
+            args.output_dir = path.dirname(path.abspath(__main__.__file__))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):

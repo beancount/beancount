@@ -8,6 +8,7 @@ import urllib.parse
 import re
 from os import path
 from unittest import mock
+import unittest
 
 import lxml.html
 
@@ -135,3 +136,7 @@ class TestScrapeVerification(test_utils.TestCase):
             missing, empty = scrape.validate_local_links(filename)
             self.assertTrue(empty)
             self.assertFalse(missing)
+
+
+if __name__ == '__main__':
+    unittest.main()

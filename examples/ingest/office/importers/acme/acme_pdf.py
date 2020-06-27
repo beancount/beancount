@@ -1,7 +1,7 @@
 """Example importer for PDF statements from ACME Bank.
 
 This importer identifies the file from its contents and only supports filing, it
-cannot extract any transactions from the PDF conersion to text. This is common,
+cannot extract any transactions from the PDF conversion to text. This is common,
 and I figured I'd provide an example for how this works.
 
 Furthermore, it uses an external library called PDFMiner2
@@ -27,7 +27,12 @@ def is_pdfminer_installed():
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
     except (FileNotFoundError, PermissionError):
-        return False
+        try:
+            returncode = subprocess.call(['pdf2txt', '-h'],
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE)
+        except (FileNotFoundError, PermissionError):
+            return False
     else:
         return returncode == 0
 
@@ -40,9 +45,14 @@ def pdf_to_text(filename):
     Returns:
       A string, the text contents of the filename.
     """
-    pipe = subprocess.Popen(['pdf2txt.py', filename],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    try:
+        pipe = subprocess.Popen(['pdf2txt.py', filename],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+    except (FileNotFoundError, PermissionError):
+        pipe = subprocess.Popen(['pdf2txt', filename],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
     stdout, stderr = pipe.communicate()
     if stderr:
         raise ValueError(stderr.decode())

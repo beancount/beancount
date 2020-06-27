@@ -146,12 +146,6 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-
-# Push to github.
-github:
-	hg bookmark -r default master
-	hg push git+ssh://git@github.com/beancount/beancount
-
 # Bake a release.
 release:
 	$(PYTHON) setup.py register sdist upload
@@ -244,7 +238,7 @@ LINT_SRCS =					\
 PYLINT = python3 -m pylint
 
 pylint lint:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	ENABLE_AUTOIMPORTS= $(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 LINT_TESTS=useless-suppression,empty-docstring
 pylint-only:

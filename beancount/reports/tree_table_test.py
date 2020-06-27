@@ -85,3 +85,7 @@ class TestTables(unittest.TestCase):
 
         # Check that an inactive account is being skipped.
         self.assertNotRegex(html, 'Inactive')
+
+
+if __name__ == '__main__':
+    unittest.main()

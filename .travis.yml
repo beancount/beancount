@@ -1,13 +1,14 @@
 language: python
 python:
-  - "3.6"
+  - "3.8"
 addons:
   apt:
     packages:
       - gnupg
       - zip
 install:
-  - pip install -r requirements.txt
+  - pip install -r requirements_dev.txt
 script:
   - make build
-  - NOSE=nosetests make test
+  - make test
+  - make lint

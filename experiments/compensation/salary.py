@@ -13,13 +13,13 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import datetime
+from decimal import Decimal
 
 from matplotlib import pyplot
 
 import dateutil
 from dateutil import rrule
 
-from beancount.core.number import Decimal
 from beancount import loader
 from beancount.core import inventory
 from beancount.core import data

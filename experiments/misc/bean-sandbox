@@ -15,13 +15,13 @@ import sys
 import time
 import logging
 from collections import defaultdict, namedtuple
+from decimal import Decimal
 
 import pandas
 import matplotlib #; matplotlib.use('qt4agg')
 from matplotlib import pyplot
 
 from beancount.core import data
-from beancount.core.number import Decimal
 from beancount.core.data import Transaction, Price
 from beancount.core import realization
 from beancount.core import convert

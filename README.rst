@@ -23,8 +23,13 @@ reports from them, and provides a web interface.
 Documentation
 =============
 
-Documentation lives on Google Docs. You can find an index to all the available
-documents here:
+Documentation can be read at:
+
+  https://beancount.github.io/docs/
+
+Documentation authoring happens on Google Docs, where you can contribute by
+requesting access or commenting on individual documents. An index of all source
+documents is available here:
 
   http://furius.ca/beancount/doc/index
 
@@ -39,10 +44,9 @@ interested in that group as well.
 Download & Installation
 =======================
 
-You can obtain the source code from the official Mercurial repository on
-BitBucket:
+You can obtain the source code from the official Git repository on Github:
 
-  | https://bitbucket.org/blais/beancount/
+  | https://github.com/beancount/beancount/
 
 See the `Installing Beancount`__ document for more details.
 
@@ -52,15 +56,15 @@ __ http://furius.ca/beancount/doc/install
 Filing Bugs
 ===========
 
-Tickets can be filed at on the BitBucket project page:
+Tickets can be filed at on the Github project page:
 
-  https://bitbucket.org/blais/beancount/issues
+  https://github.com/beancount/beancount/issues
 
 
 Copyright and License
 =====================
 
-Copyright (C) 2007-2016  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2020  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the terms of the "GNU GPLv2 only".
 See COPYING file for details.

@@ -65,8 +65,8 @@ def find_imports(importer_config, files_or_directories, logfile=None):
                 if matched:
                     matching_importers.append(importer)
             except Exception as exc:
-                logging.error("Importer %s.identify() raised an unexpected error: %s",
-                              importer.name(), exc)
+                logging.exception("Importer %s.identify() raised an unexpected error: %s",
+                                  importer.name(), exc)
 
         yield (filename, matching_importers)
 
@@ -95,7 +95,7 @@ def add_arguments(parser):
     """Add arguments for the identify command."""
 
 
-def run(_, __, importers_list, files_or_directories, detect_duplicates_func=None):
+def run(_, __, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
     return identify(importers_list, files_or_directories)
 
