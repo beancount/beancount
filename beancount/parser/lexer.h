@@ -18,6 +18,11 @@ void build_lexer_error(const char* string, size_t length);
  * exception state. */
 void build_lexer_error_from_exception(void);
 
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+
+#define YY_INPUT(buf, result, max_size)                         \
+    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
+
 /* Callback call site with error handling. */
 #define BUILD_LEX(method_name, format, ...)                                             \
     yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
@@ -75,7 +80,7 @@ int strtonl(const char* buf, size_t nchars);
 	}                                       \
         *strbuf_ptr++ = value;
 
-#line 79 "beancount/parser/lexer.h"
+#line 84 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -576,9 +581,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 411 "beancount/parser/lexer.l"
+#line 415 "beancount/parser/lexer.l"
 
 
-#line 583 "beancount/parser/lexer.h"
+#line 588 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

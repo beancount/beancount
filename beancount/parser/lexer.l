@@ -36,6 +36,10 @@ void build_lexer_error(const char* string, size_t length);
  * exception state. */
 void build_lexer_error_from_exception(void);
 
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+
+#define YY_INPUT(buf, result, max_size)                         \
+    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
 
 
 /* Callback call site with error handling. */
@@ -140,12 +144,12 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     initial indent and thus group postings and comments together in
     the grammar. */
 [ \t\r]+	{
-    if ( yy_line_tokens == 1 ) {
+    if (yy_line_tokens == 1) {
         /* If the next character completes the line, skip it. */
-        if ( yy_hold_char == '\n' ||
-             yy_hold_char == '\r' ||
-             yy_hold_char == '\0' ) {
-            return SKIPPED;
+        if (yy_hold_char == '\n' ||
+            yy_hold_char == '\r' ||
+            yy_hold_char == '\0') {
+          return SKIPPED;
         }
         else {
             return INDENT;
@@ -172,7 +176,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
  /* Special handling for characters beginning a line to be ignored.
   * I'd like to improve how this is handled. Needs own lexer, really. */
 \#		{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return HASH;
     }
     else {
@@ -183,7 +187,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 }
 
 \*		{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return ASTERISK;
     }
     else {
@@ -219,7 +223,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     be possible. {5307d8fa1e7b}
     */
 [!&#?%PSTCURM]	{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         yylval->character = yytext[0];
         return FLAG;
     }
@@ -320,7 +324,7 @@ NULL		{
         *strbuf_ptr = '\0';
         PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
                                                  yy_encoding, "ignore");
-        if ( unicode_str == NULL ) {
+        if (unicode_str == NULL) {
             build_lexer_error_from_exception();
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
@@ -342,7 +346,7 @@ NULL		{
 
     /* All other characters. */
     [^\\\"]+        {
-        if ( yyleng > (strbuf_end - strbuf_ptr) ) {
+        if (yyleng > (strbuf_end - strbuf_ptr)) {
             strbuf_realloc(yyleng);
         }
         ssize_t i;
@@ -386,7 +390,7 @@ NULL		{
  /* Fake an EOL at the end of file, to ensure that files without a final newline
   * will process postings right. */
 <<EOF>>     		{
-  if ( yy_eof_times == 0 ) {
+  if (yy_eof_times == 0) {
     yy_eof_times = 1;
     yylloc->first_line = yylineno;
     return EOL;
@@ -441,10 +445,10 @@ void yylex_initialize(const char* filename, const char* encoding)
 {
     assert(filename != NULL);
     yy_eof_times = 0;
-    yy_filename = filename;
+    yy_filename = filename ? filename : "";
     yy_line_tokens = 0;
     yycolumn = 1;
-    if ( encoding == 0 ) {
+    if (encoding == 0) {
         yy_encoding = "utf8";
     }
     else {
@@ -467,7 +471,7 @@ void yylex_finalize(void)
     yy_filename = NULL;
 
     /* Finalize our reading buffer. */
-    if ( strbuf != NULL ) {
+    if (strbuf != NULL) {
         free(strbuf);
         strbuf = NULL;
     }
@@ -483,7 +487,7 @@ void strbuf_realloc(size_t num_new_chars)
     assert(strbuf_ptr != NULL);
     size_t cur_size = strbuf_ptr - strbuf;
     size_t new_size = cur_size + num_new_chars;
-    while ( strbuf_size < new_size ) {
+    while (strbuf_size < new_size) {
         strbuf_size <<= 1;
     }
     strbuf = realloc(strbuf, strbuf_size + 1);
@@ -499,13 +503,13 @@ void strbuf_realloc(size_t num_new_chars)
 int yy_skip_line()
 {
     int num_chars = 0;
-    for ( ;; ) {
+    for (;;) {
         int c = input();
         num_chars++;
-        if ( c == LEXEOF || c == -1 ) {
+        if (c == LEXEOF || c == -1) {
             break;
         }
-        if ( c == '\n' ) {
+        if (c == '\n') {
             unput(c);
             num_chars--;
             break;
@@ -519,7 +523,7 @@ int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;
     size_t i;
-    for ( i = 0; i < nchars; ++i ) {
+    for (i = 0; i < nchars; ++i) {
         result *= 10;
         result += (buf[i] - '0');
     }
@@ -572,4 +576,33 @@ void build_lexer_error_from_exception()
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: No exception");
     }
+}
+
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
+{
+    PyObject* dest = NULL;
+    PyObject* read = NULL;
+    int ret = 0;
+
+    // Note: Eventually we ought to allocate this once in the parser state and
+    // avoid reallocating this on every block read.
+    dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
+    if (!dest) {
+	goto error;
+    }
+
+    read = PyObject_CallMethod(file, "readinto", "O", dest);
+    if (!read) {
+	goto error;
+    }
+
+    ret = PyLong_AsSize_t(read);
+    if (PyErr_Occurred()) {
+	ret = 0;
+    }
+
+error:
+    Py_XDECREF(dest);
+    Py_XDECREF(read);
+    return ret;
 }
