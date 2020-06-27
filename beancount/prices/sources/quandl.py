@@ -53,7 +53,7 @@ TickerSpec = collections.namedtuple('TickerSpec', 'database dataset column')
 
 def parse_ticker(ticker):
     """Convert ticker to Quandl codes."""
-    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:; ]+)?$", ticker):
+    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:;]+)?$", ticker):
         raise ValueError(
             'Invalid code. Use "<DATABASE>:<DATASET>[:<COLUMN NAME>]" format.')
     split = ticker.split(":")

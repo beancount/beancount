@@ -190,9 +190,9 @@ def find_currencies_declared(entries, date=None):
                 continue
             try:
                 source_map = parse_source_map(source_str)
-            except ValueError as e:
+            except ValueError as exc:
                 logging.warning("Ignoring currency with invalid 'price' source: %s (%s)",
-                                entry.currency, e)
+                                entry.currency, exc)
             else:
                 for quote, psources in source_map.items():
                     currencies.append((entry.currency, quote, psources))
