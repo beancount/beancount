@@ -69,8 +69,8 @@ def postings_by_type(entry):
 
 
 def split_currency_conversions(entry):
-    """If the transcation has a mix of conversion at cost and a
-    currency conversion, split the transction into two transactions: one
+    """If the transaction has a mix of conversion at cost and a
+    currency conversion, split the transaction into two transactions: one
     that applies the currency conversion in the same account, and one
     that uses the other currency without conversion.
 
@@ -168,22 +168,20 @@ class LedgerPrinter:
         # residual and precisely balance the transaction.
         entry = interpolate.fill_residual_posting(entry, ROUNDING_ACCOUNT)
 
-        if entry.tags:
-            for tag in sorted(entry.tags):
-                strings.append(';; Tag: #{}'.format(tag))
-        if entry.links:
-            for link in sorted(entry.links):
-                strings.append(';; Link: ^{}'.format(link))
-
         # Compute the string for the payee and narration line.
         if entry.payee:
             strings.append('{} |'.format(entry.payee))
         if entry.narration:
             strings.append(entry.narration)
 
-        oss.write('{e.date:%Y/%m/%d} {flag} {}\n'.format(' '.join(strings),
+        oss.write('{e.date:%Y-%m-%d} {flag} {}\n'.format(' '.join(strings),
                                                          flag=entry.flag or '',
                                                          e=entry))
+
+        if entry.tags:
+            oss.write('  ; :{}:\n'.format(':'.join(sorted(entry.tags))))
+        if entry.links:
+            oss.write('  ; Link: {}\n'.format(', '.join(sorted(entry.links))))
 
         for posting in entry.postings:
             self.Posting(posting, entry, oss)
@@ -230,10 +228,10 @@ class LedgerPrinter:
         pass
 
     def Note(_, entry, oss):
-        oss.write(';; Note: {e.date:%Y/%m/%d} {e.account} {e.comment}\n'.format(e=entry))
+        oss.write(';; Note: {e.date:%Y-%m-%d} {e.account} {e.comment}\n'.format(e=entry))
 
     def Document(_, entry, oss):
-        oss.write(';; Document: {e.date:%Y/%m/%d} {e.account} {e.filename}\n'.format(
+        oss.write(';; Document: {e.date:%Y-%m-%d} {e.account} {e.filename}\n'.format(
             e=entry))
 
     def Pad(_, entry, oss):
@@ -241,7 +239,7 @@ class LedgerPrinter:
         # Beancount file explicit padding entries will be generated
         # automatically, thus balancing the accounts. Ledger does not support
         # automatically padding, so we can just output this as a comment.
-        oss.write(';; Pad: {e.date:%Y/%m/%d} {e.account} {e.source_account}\n'.format(
+        oss.write(';; Pad: {e.date:%Y-%m-%d} {e.account} {e.source_account}\n'.format(
             e=entry))
 
     def Commodity(_, entry, oss):
@@ -255,21 +253,20 @@ class LedgerPrinter:
                                                         for currency in entry.currencies)))
 
     def Close(_, entry, oss):
-        oss.write(';; Close: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
+        oss.write(';; Close: {e.date:%Y-%m-%d} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        price_directive = (
-            'P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
-            e=entry, amount=str(entry.amount)))
-        oss.write(quote_currency(price_directive))
+        oss.write(
+            'P {:%Y-%m-%d} 00:00:00 {:<16} {:>16}\n'.format(
+            entry.date, quote_currency(entry.currency), str(entry.amount)))
 
     def Event(_, entry, oss):
         oss.write(
-            ';; Event: {e.date:%Y/%m/%d} "{e.type}" "{e.description}"\n'.format(e=entry))
+            ';; Event: {e.date:%Y-%m-%d} "{e.type}" "{e.description}"\n'.format(e=entry))
 
     def Query(_, entry, oss):
         oss.write(
-            ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
+            ';; Query: {e.date:%Y-%m-%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
 
     def Custom(_, entry, oss):
         pass  # Don't render anything.
@@ -290,6 +287,34 @@ class HLedgerReport(base.Report):
 
 class HLedgerPrinter(LedgerPrinter):
     "Multi-method for printing directives in HLedger format."
+
+    def Transaction(self, entry, oss):
+        strings = []
+
+        # Insert a posting to absorb the residual if necessary. This is
+        # sometimes needed because Ledger bases its balancing precision on the
+        # *last* number of digits used on that currency. This is believed to be
+        # a bug, so instead, we simply insert a rounding account to absorb the
+        # residual and precisely balance the transaction.
+        entry = interpolate.fill_residual_posting(entry, ROUNDING_ACCOUNT)
+
+        # Compute the string for the payee and narration line.
+        if entry.payee:
+            strings.append('{} |'.format(entry.payee))
+        if entry.narration:
+            strings.append(entry.narration)
+
+        oss.write('{e.date:%Y-%m-%d} {flag} {}\n'.format(' '.join(strings),
+                                                         flag=entry.flag or '',
+                                                         e=entry))
+
+        if entry.tags:
+            oss.write('  ; {}:\n'.format(':, '.join(sorted(entry.tags))))
+        if entry.links:
+            oss.write('  ; Link: {}\n'.format(' '.join(sorted(entry.links))))
+
+        for posting in entry.postings:
+            self.Posting(posting, entry, oss)
 
     def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
@@ -317,7 +342,7 @@ class HLedgerPrinter(LedgerPrinter):
 
     def Open(_, entry, oss):
         # Not supported by HLedger AFAIK.
-        oss.write(';; Open: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
+        oss.write(';; Open: {e.date:%Y-%m-%d} close {e.account}\n'.format(e=entry))
 
 
 __reports__ = [

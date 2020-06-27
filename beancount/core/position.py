@@ -8,12 +8,11 @@ __license__ = "GNU GPLv2"
 import copy
 import datetime
 import re
-import warnings
 
+from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount
@@ -21,10 +20,6 @@ from beancount.core.amount import mul as amount_mul
 from beancount.core.amount import abs as amount_abs
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
-
-
-# Disable lint errors for namedtuples declared here.
-# pylint: disable=invalid-name
 
 
 # A variant of Amount that also includes a date and a label.
@@ -238,7 +233,7 @@ class Position(_Position):
         return (order_units, cost_number, cost_currency, self.units.number)
 
     def __lt__(self, other):
-        """A least-than comparison operator for positions.
+        """A less-than comparison operator for positions.
 
         Args:
           other: Another instance of Position.
@@ -257,16 +252,6 @@ class Position(_Position):
         # Note: We use Decimal() for efficiency.
         return Position(copy.copy(self.units), copy.copy(self.cost))
 
-    def set_units(self, units):
-        """Set the units. This is required to abstract over the old and the new position
-        object.
-
-        Args:
-          units: An instance of Amount.
-        """
-        assert isinstance(units, Amount)
-        self.units = units  # pylint: disable=assigning-non-slot
-
     def currency_pair(self):
         """Return the currency pair associated with this position.
 
@@ -275,47 +260,11 @@ class Position(_Position):
         """
         return (self.units.currency, self.cost.currency if self.cost else None)
 
-    def get_cost(self):
-        """Return the cost associated with this position. The cost is the number of
-        units of the lot times the cost of the lot. If the lot has no associated
-        cost, the amount of the position is returned as its cost.
-
-        Returns:
-          An instance of Amount.
-        """
-        warnings.warn("Position.get_cost() is deprecated; "
-                      "use convert.get_cost(position) instead")
-        cost = self.cost
-        if cost is None:
-            rcost = self.units
-        else:
-            rcost = amount_mul(cost, self.units.number)
-        return rcost
-
-    def at_cost(self):
-        """Return a Position representing the cost of this position.
-
-        Returns:
-          An instance of Position if there is a cost, or itself, if the position
-          has no associated cost. Since we consider the Position object to be
-          immutable and associated operations never modify an existing Position
-          instance, it is legit to return this object itself.
-        """
-        warnings.warn("Position.at_cost() is deprecated; "
-                      "use convert.get_cost(position) instead")
-        cost = self.cost
-        if cost is None:
-            pos = self
-        else:
-            pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
-                           None)
-        return pos
-
     def get_negative(self):
         """Get a copy of this position but with a negative number.
 
         Returns:
-          An instance of Position which represents the inserse of this Position.
+          An instance of Position which represents the inverse of this Position.
         """
         # Note: We use Decimal() for efficiency.
         return Position(-self.units, self.cost)
@@ -382,8 +331,11 @@ class Position(_Position):
             for expr in expressions:
 
                 # Match a compound number.
-                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})$'.format(
-                    NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
+                match = re.match(
+                    r'({NUMBER_RE})\s*(?:#\s*({NUMBER_RE}))?\s+({CURRENCY_RE})$'
+                    .format(NUMBER_RE=NUMBER_RE, CURRENCY_RE=CURRENCY_RE),
+                    expr
+                )
                 if match:
                     per_number, total_number, cost_currency = match.group(1, 2, 3)
                     per_number = D(per_number) if per_number else ZERO
@@ -437,6 +389,5 @@ class Position(_Position):
         return Position(units, cost)
 
 
-# pylint: disable=invalid-name
 from_string = Position.from_string
 from_amounts = Position.from_amounts

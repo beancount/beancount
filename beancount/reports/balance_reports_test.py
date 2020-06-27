@@ -11,7 +11,7 @@ from beancount.parser import options
 class TestBalanceReports(unittest.TestCase):
 
     def test_all_reports_empty(self):
-        # Test rendering all reports from empty liss of entries.
+        # Test rendering all reports from empty list of entries.
         entries = []
         errors = []
         options_map = options.OPTIONS_DEFAULTS.copy()
@@ -20,3 +20,7 @@ class TestBalanceReports(unittest.TestCase):
             output = report_.render(entries, errors, options_map, format_)
             self.assertEqual(options.OPTIONS_DEFAULTS, options_map)
             self.assertTrue(isinstance(output, str))
+
+
+if __name__ == '__main__':
+    unittest.main()

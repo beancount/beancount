@@ -3,8 +3,8 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.amount import A
 from beancount.core import amount
@@ -143,3 +143,7 @@ class TestNumerifyPrecision(unittest.TestCase):
                   D('5.67'), None, None,
                   D('5.67'), None, None]]
         self.assertEqual(erows, arows)
+
+
+if __name__ == '__main__':
+    unittest.main()

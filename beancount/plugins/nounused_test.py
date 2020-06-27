@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount.parser import cmptest
 from beancount.plugins import nounused
 from beancount import loader
@@ -26,3 +28,7 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         _, errors = nounused.validate_unused_accounts(entries, options_map)
         self.assertEqual(1, len(errors))
         self.assertEqual('Assets:Account3', errors[0].entry.account)
+
+
+if __name__ == '__main__':
+    unittest.main()

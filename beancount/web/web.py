@@ -1,11 +1,9 @@
-"""
-Web server for Beancount ledgers.
+"""Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 from os import path
 import io
 import logging
@@ -30,6 +28,7 @@ from beancount.ops import basicops
 from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import text_utils
+from beancount.utils import version
 from beancount.web import bottle_utils
 from beancount.parser import options
 from beancount.parser import printer
@@ -174,7 +173,9 @@ def render_report(report_class, entries, args=None,
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root, args=None, leaf_only=False):
+def render_real_report(report_class, real_root, price_map, price_date,
+                       args=None, leaf_only=False):
+    # pylint: disable=too-many-arguments
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -183,6 +184,8 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Args:
       report_class: A class, the type of the report to render.
       real_root: An instance of RealAccount to render.
+      price_map: A price map as built by build_price_map().
+      price_date: The date at which to evaluate the prices.
       args: A list of strings, the arguments to initialize the report with.
       leaf_only: A boolean, whether to render the leaf names only.
     Returns:
@@ -192,7 +195,7 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
                               request.app.get_url, leaf_only, app.account_xform)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
-    report_.render_real_htmldiv(real_root, app.options, oss)
+    report_.render_real_htmldiv(real_root, price_map, price_date, app.options, oss)
     return oss.getvalue()
 
 
@@ -350,8 +353,8 @@ def source():
         for i, line in enumerate(app.source.splitlines()):
             lineno = i+1
             contents.write(
-                '<pre id="{}">{}  {}</pre>\n'.format(
-                    lineno, lineno, line.rstrip()))
+                '<pre id="{lineno}">{lineno}  {line}</pre>\n'.format(
+                    lineno=lineno, line=line.rstrip()))
         contents.write('</div>')
 
     return render_global(
@@ -617,6 +620,8 @@ def trial():
         pagetitle="Trial Balance",
         contents=render_real_report(balance_reports.BalancesReport,
                                     request.view.real_accounts,
+                                    app.price_map,
+                                    request.view.price_date,
                                     leaf_only=True))
 
 
@@ -626,6 +631,8 @@ def balsheet():
     return render_view(pagetitle="Balance Sheet",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
                                                    request.view.closing_real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -635,6 +642,8 @@ def openbal():
     return render_view(pagetitle="Opening Balances",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
                                                    request.view.opening_real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -644,6 +653,8 @@ def income():
     return render_view(pagetitle="Income Statement",
                        contents=render_real_report(balance_reports.IncomeStatementReport,
                                                    request.view.real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -748,7 +759,10 @@ def journal_(account_name=None):
 
     try:
         html_journal = render_real_report(journal_reports.JournalReport,
-                                          real_accounts, args, leaf_only=False)
+                                          real_accounts,
+                                          app.price_map,
+                                          request.view.price_date,
+                                          args, leaf_only=False)
     except KeyError as e:
         raise bottle.HTTPError(404, '{}'.format(e))
 
@@ -786,8 +800,8 @@ def documents():
 
 
 @viewapp.route('/prices'
-               '/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
-               '/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
+               r'/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
+               r'/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
     html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
@@ -809,7 +823,7 @@ def commodities():
         contents=html_table)
 
 
-@viewapp.route('/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
+@viewapp.route(r'/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
 def event(event=None):
     "Render all values of a particular event."
     if not event:
@@ -836,6 +850,8 @@ def activity():
         pagetitle="Update Activity",
         contents=render_real_report(misc_reports.ActivityReport,
                                     request.view.real_accounts,
+                                    app.price_map,
+                                    request.view.price_date,
                                     leaf_only=False))
 
 @viewapp.route('/stats_types', name='stats_types')
@@ -920,12 +936,11 @@ def url_restrict_generator(url_prefix):
     """
     # A list of URLs that should always be accepted, even when restricted.
     allowed_regexps = [re.compile(regexp).match
-                       for regexp in ['/web.css',
+                       for regexp in ['/resources',
                                       '/favicon.ico',
-                                      '/toc',
+                                      '/index',
                                       '/errors',
                                       '/source',
-                                      '/link',
                                       '/context',
                                       '/third_party']]
 
@@ -1017,6 +1032,7 @@ def auto_reload_input_file(callback):
 
             # Print out the list of errors.
             if errors:
+                # pylint: disable=unsupported-assignment-operation
                 request.params['render_overlay'] = True
                 print(',----------------------------------------------------------------')
                 printer.print_errors(errors, file=sys.stdout)
@@ -1041,6 +1057,7 @@ def auto_reload_input_file(callback):
             # For now, the overlay is a link to the errors page. Always render
             # it on the right when there are errors.
             if app.errors:
+                # pylint: disable=unsupported-assignment-operation
                 request.params['render_overlay'] = True
 
         return callback(*posargs, **kwargs)
@@ -1129,6 +1146,7 @@ def setup_monkey_patch_for_server_shutdown():
     (Bottle could easily remedy that.)"""
 
     # Save the original function.
+    # pylint: disable=import-outside-toplevel
     from wsgiref.simple_server import make_server
 
     # Create a decorator that will save the server upon start.
@@ -1164,6 +1182,9 @@ def add_web_arguments(argparser):
     group.add_argument('--port', action='store', type=int, default=8080,
                        help="Which port to listen on.")
 
+    group.add_argument('-q', '--quiet', action='store_true',
+                       help="Don't even print out web server log")
+
     group.add_argument('--debug', action='store_true',
                        help="Enable debugging features (auto-reloading of css).")
 
@@ -1192,49 +1213,31 @@ def add_web_arguments(argparser):
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
-    argparser = argparse.ArgumentParser(description=__doc__.strip())
+    argparser = version.ArgumentParser(description=__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
 
     run_app(args)
 
 
-def scrape_webapp(filename, callback, port, ignore_regexp,
-                  quiet=True, no_colons=False, extra_args=None):
+def scrape_webapp(webargs, callback, ignore_regexp):
     """Run a web server on a Beancount file and scrape it.
 
     This is the main entry point of this module.
 
     Args:
-      filename: A string, the name of the file to parse.
+      webargs: An argparse.Namespace container of the arguments provided in
+        web.add_web_arguments().
       callback: A callback function to invoke on each page to validate it.
         The function is called with the response and the url as arguments.
         This function should trigger an error on failure (via an exception).
-      port: An integer, a free port to use for serving the pages.
       ignore_regexp: A regular expression string, the urls to ignore.
-      quiet: True if we shouldn't log the web server pages.
-      no_colons: True if we should avoid rendering colons in URLs (for Windows).
-      extra_args: Extra arguments to bean-web that we want to start the
-        server with.
     Returns:
       A set of all the processed URLs and a set of all the skipped URLs.
     """
-    url_format = 'http://localhost:{}{{}}'.format(port)
+    url_format = 'http://localhost:{}{{}}'.format(webargs.port)
 
-    # Create a set of valid arguments to run the app.
-    argparser = argparse.ArgumentParser()
-    group = add_web_arguments(argparser)
-    group.set_defaults(filename=filename,
-                       port=port,
-                       no_colons=no_colons,
-                       quiet=quiet)
-
-    all_args = [filename]
-    if extra_args:
-        all_args.extend(extra_args)
-    args = argparser.parse_args(args=all_args)
-
-    thread = thread_server_start(args)
+    thread = thread_server_start(webargs)
 
     # Skips:
     # - Docs cannot be read for external files.
@@ -1275,7 +1278,7 @@ def thread_server_start(web_args, **kwargs):
 def thread_server_shutdown(thread):
     """Shutdown the server running in the given thread.
 
-    Unfortauntely, in the meantime this has a side-effect on all servers.
+    Unfortunately, in the meantime this has a side-effect on all servers.
     This returns after waiting that the thread has stopped.
 
     Args:

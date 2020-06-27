@@ -8,10 +8,10 @@ import datetime
 import enum
 import sys
 
+from decimal import Decimal
 from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
 
 from beancount.core.amount import Amount
-from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
@@ -20,7 +20,6 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
-# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str
@@ -54,7 +53,7 @@ class Booking(enum.Enum):
     LIFO = 'LIFO'
 
 
-def new_directive(clsname, fields: List[Tuple]):
+def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
     """Create a directive class. Do not include default fields.
     This should probably be carried out through inheritance.
 
@@ -130,13 +129,13 @@ Commodity = new_directive('Commodity', [
 # automatically inserts transactions that will make the next chronological
 # balance directive succeeds. It can be used to fill in missing date ranges of
 # transactions, as a convenience. You don't have to use this, it's sugar coating
-# in case you need it, while you're enterering past history into your Ledger.
+# in case you need it, while you're entering past history into your Ledger.
 #
 # Attributes:
 #   meta: See above.
 #   date: See above.
 #   account: A string, the name of the account which needs to be filled.
-#   source_account: A string, the anem of the account which is used to debit from
+#   source_account: A string, the name of the account which is used to debit from
 #     in order to fill 'account'.
 Pad = new_directive('Pad', [
     ('account', Account),
@@ -218,7 +217,7 @@ Posting = NamedTuple('Posting', [
 #   tags: A set of tag strings (without the '#'), or EMPTY_SET.
 #   links: A set of link strings (without the '^'), or EMPTY_SET.
 #   postings: A list of Posting instances, the legs of this transaction. See the
-#     doc under Posting below.
+#     doc under Posting above.
 Transaction = new_directive('Transaction', [
     ('flag', Flag),
     ('payee', Optional[str]),
@@ -251,7 +250,7 @@ TxnPosting = NamedTuple('TxnPosting', [
 #   date: See above.
 #   account: A string, the account which the note is to be attached to. This is
 #     never None, notes always have an account they correspond to.
-#   comment: A free-form string, the text of the note. This can be logn if you
+#   comment: A free-form string, the text of the note. This can be long if you
 #     want it to.
 Note = new_directive('Note', [
     ('account', Account),
@@ -270,7 +269,7 @@ Note = new_directive('Note', [
 # present in the country for 183 days or more, excluding trips of less than 30
 # days. There is a similar test to be done in the US by aliens to figure out if
 # they need to be considered as residents for tax purposes (the so-called
-# "subtantial presence test"). By integrating these directives into your
+# "substantial presence test"). By integrating these directives into your
 # bookkeeping, you can easily have a little program that computes the tests for
 # you. This is, of course, entirely optional and somewhat auxiliary to the main
 # purpose of double-entry bookkeeping, but correlates strongly with the
@@ -280,7 +279,7 @@ Note = new_directive('Note', [
 # Attributes:
 #   meta: See above.
 #   date: See above.
-#   type: A short string, typically a single lowercase word, that defines a
+#   "type": A short string, typically a single lowercase word, that defines a
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
@@ -298,7 +297,7 @@ Event = new_directive('Event', [
 #   date: The date at which this query should be run. All directives following
 #     this date will be ignored automatically. This is essentially equivalent to
 #     the CLOSE modifier in the shell syntax.
-#   name: A string, the unique idenfitier for the query.
+#   name: A string, the unique identifier for the query.
 #   query_string: The SQL query string to be run or made available.
 Query = new_directive('Query', [
     ('name', str),
@@ -328,7 +327,7 @@ Price = new_directive('Price', [
 # render PDF files or scans of your bank statements into the account's journal.
 # While you can explicitly create those directives in the input syntax, it is
 # much more convenient to provide Beancount with a root directory to search for
-# filenames in a hirerarchy mirroring the chart of accounts, filenames which
+# filenames in a hierarchy mirroring the chart of accounts, filenames which
 # should match the following dated format: "YYYY-MM-DD.*". See options for
 # detail. Beancount will automatically create these documents directives based
 # on the file hierarchy, and you can get them by parsing the list of entries.
@@ -364,7 +363,7 @@ Document = new_directive('Document', [
 #   dir_type: A string that represents the type of the directive.
 #   values: A list of values of various simple types supported by the grammar.
 #     (Note that this list is not enforced to be consistent for all directives
-#     of hte same type by the parser.)
+#     of the same type by the parser.)
 Custom = new_directive('Custom', [
     ('type', str),
     ('values', List)])
@@ -385,6 +384,25 @@ ALL_DIRECTIVES = (
     Document,
     Custom
 )
+
+# Type for any of the directives.
+Directive = Union[
+    Open,
+    Close,
+    Commodity,
+    Pad,
+    Balance,
+    Transaction,
+    Note,
+    Event,
+    Query,
+    Price,
+    Document,
+    Custom
+]
+
+# Type for the list of entries.
+Entries = List[Directive]
 
 
 def new_metadata(filename, lineno, kvlist=None):
@@ -522,11 +540,11 @@ def transaction_has_conversion(transaction):
     Args:
       transaction: an instance of a Transaction entry.
     Returns:
-      A boolean, true if this transacation contains at least one posting with a
+      A boolean, true if this transaction contains at least one posting with a
       price conversion.
     """
     assert isinstance(transaction, Transaction), (
-        "Invalid type of entry for Transaction: {}".format(transaction))
+        "Invalid type of entry for transaction: {}".format(transaction))
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True
@@ -622,10 +640,10 @@ def has_entry_account_component(entry, component):
     Args:
       entry: A Transaction entry.
       component: A string, a component of an account name. For instance,
-        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+        ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      A boolean, true if the component is in the account. Note that a component
-      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+      Boolean: true if the component is in the account. Note that a component
+      name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
     return (isinstance(entry, Transaction) and
             any(has_component(posting.account, component)
@@ -652,7 +670,7 @@ def find_closest(entries, filename, lineno):
         emeta = entry.meta
         if emeta["filename"] == filename and emeta["lineno"] > 0:
             diffline = lineno - emeta["lineno"]
-            if diffline >= 0 and diffline < min_diffline:
+            if 0 <= diffline < min_diffline:
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry

@@ -128,3 +128,7 @@ class TestSplitReports(unittest.TestCase):
 
     def test_split_reports_with_currency(self):
         self.run_split_reports(['--output-stdout', '--currency=USD'])
+
+
+if __name__ == '__main__':
+    unittest.main()

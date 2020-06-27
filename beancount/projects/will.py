@@ -13,7 +13,6 @@ be included in the document rendered by this script.
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import collections
 import logging
 import io
@@ -28,6 +27,7 @@ from beancount.core import data
 from beancount.core import account
 from beancount.core import convert
 from beancount.parser import options
+from beancount.utils import version
 
 
 def group_accounts_by_metadata(accounts_map, meta_name):
@@ -298,7 +298,7 @@ def format_xhtml_table(items, klass='fields'):
     oss.write('<table class="{}">\n'.format(klass))
     for key, value in items:
         if re.match('[a-z]+://', value):
-            value = '<a href="{}">{}</a>'.format(value, value)
+            value = '<a href="{value}">{value}</a>'.format(value=value)
         oss.write('<tr><td>{}:</td><td>{}</td></tr>'.format(key.capitalize(), value))
     oss.write('</table>\n')
     return oss.getvalue()
@@ -306,7 +306,7 @@ def format_xhtml_table(items, klass='fields'):
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
     args = parser.parse_args()
 

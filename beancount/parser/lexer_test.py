@@ -28,7 +28,7 @@ def print_tokens(tokens):
 
 
 def lex_tokens(fun):
-    """Decorator for test functions that will invokve a lexer on them.
+    """Decorator for test functions that will invoke a lexer on them.
 
     The lexer passes the list of tokens and errors to the test function.
 
@@ -106,6 +106,25 @@ class TestLexer(unittest.TestCase):
             ('COLON', 11, ':', None),
             ('EOL', 12, '\n', None),
             ('EOL', 12, '\x00', None)
+            ], tokens)
+
+    @lex_tokens
+    def test_lex_unicode_account(self, tokens, errors):
+        """\
+          Other:Bank Óthяr:Bあnk
+          abc1:abc1 ΑβγⅠ:ΑβγⅠ ابجا:ابجا
+        """
+        self.assertEqual([
+            ('ACCOUNT', 1, 'Other:Bank', 'Other:Bank'),
+            ('ACCOUNT', 1, 'Óthяr:Bあnk', 'Óthяr:Bあnk'),
+            ('EOL', 2, '\n', None),
+            ('KEY', 2, 'abc1:', 'abc1'),
+            ('COLON', 2, ':', None),
+            ('LEX_ERROR', 2, 'abc1', None),
+            ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ', 'ΑβγⅠ:ΑβγⅠ'),
+            ('LEX_ERROR', 2, 'ابجا:ابجا', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -235,6 +254,36 @@ class TestLexer(unittest.TestCase):
         """
         self.assertEqual([
             ('ACCOUNT', 1, 'Assets:A', 'Assets:A'),
+            ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_account_names_with_numbers(self, tokens, errors):
+        """\
+          Assets:Vouchers:99Ranch
+          Assets:99Test
+          Assets:signals
+        """
+        self.assertEqual([
+            ('ACCOUNT', 1, 'Assets:Vouchers:99Ranch', 'Assets:Vouchers:99Ranch'),
+            ('EOL', 2, '\n', None),
+            ('ACCOUNT', 2, 'Assets:99Test', 'Assets:99Test'),
+            ('EOL', 3, '\n', None),
+            ('LEX_ERROR', 3, 'Assets:signals', None),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None)
+        ], tokens)
+        self.assertEqual(1, len(errors))
+
+    @lex_tokens
+    def test_account_names_with_dash(self, tokens, errors):
+        """\
+          Equity:Beginning-Balances
+        """
+        self.assertEqual([
+            ('ACCOUNT', 1, 'Equity:Beginning-Balances', 'Equity:Beginning-Balances'),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
@@ -375,6 +424,23 @@ class TestLexer(unittest.TestCase):
         ], tokens)
         self.assertFalse(errors)
 
+    @lex_tokens
+    def test_null_true_false(self, tokens, errors):
+        '''
+        TRUE FALSE NULL
+        '''
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('BOOL', 2, 'TRUE', None),
+            ('BOOL', 2, 'FALSE', None),
+            ('NULL', 2, 'NULL', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
 
 class TestIgnoredLines(unittest.TestCase):
 
@@ -403,7 +469,7 @@ class TestIgnoredLines(unittest.TestCase):
             ('STRING', 2, '"', 'title'),
             ('STRING', 2, '"', 'The Title'),
             ('EOL', 3, '\n', None),
-            ('SKIPPED', 3, '  ', None),
+            ('INDENT', 3, '  ', None),
             ('COMMENT', 3, ';; Something something.', None),
             ('EOL', 4, '\n', None),
             ('EOL', 4, '\x00', None),
@@ -440,6 +506,25 @@ class TestIgnoredLines(unittest.TestCase):
             ('SKIPPED', 2, '*', None),
             ('EOL', 3, '\n', None),
             ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__org_mode_drawer(self, tokens, errors):
+        """
+        :PROPERTIES:
+        :this: is an org-mode property drawer
+        :END:
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, ':', None),
+            ('EOL', 3, '\n', None),
+            ('SKIPPED', 3, ':', None),
+            ('EOL', 4, '\n', None),
+            ('SKIPPED', 4, ':', None),
+            ('EOL', 5, '\n', None),
+            ('EOL', 5, '\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -515,7 +600,7 @@ class TestLexerErrors(unittest.TestCase):
         # This modification is similar to what the options do, and will cause a
         # ValueError exception to be raised in the lexer.
         builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
-                                            '(:[A-Z][A-Za-z0-9\-]*)*$')
+                                            '(:[A-Z][A-Za-z0-9-]*)*$')
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([('EOL', 2, '\n', None),
                           ('LEX_ERROR', 2, 'Invalid:Something', None),
@@ -620,7 +705,7 @@ class TestLexerUnicode(unittest.TestCase):
         self.assertEqual(self.expected_utf8_string, str_tokens[0][3])
 
     # Test providing latin1 bytes to the lexer when it is expecting utf8.
-    def test_bytes_encoded_invalid(self):
+    def test_bytes_encoded_latin1_invalid(self):
         latin1_bytes = self.test_utf8_string.encode('latin1')
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
@@ -645,6 +730,20 @@ class TestLexerUnicode(unittest.TestCase):
         # Check that the lexer correctly parsed the latin1 string.
         str_tokens = [token for token in tokens if token[0] == 'STRING']
         self.assertEqual(self.expected_latin1_string, str_tokens[0][3])
+
+    # Test providing utf16 bytes to the lexer when it is expecting utf8.
+    def test_bytes_encoded_utf16_invalid(self):
+        utf16_bytes = self.test_utf8_string.encode('utf16')
+        builder = lexer.LexBuilder()
+        with self.assertRaises(SystemError):
+            tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
+
+    # Test providing utf16 bytes to the lexer with an encoding.
+    def test_bytes_encoded_utf16(self):
+        utf16_bytes = self.test_utf8_string.encode('utf16')
+        builder = lexer.LexBuilder()
+        with self.assertRaises(SystemError):
+            tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
 
 
 class TestLexerMisc(unittest.TestCase):
@@ -689,3 +788,7 @@ class TestLexerMisc(unittest.TestCase):
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None)
         ], tokens)
+
+
+if __name__ == '__main__':
+    unittest.main()

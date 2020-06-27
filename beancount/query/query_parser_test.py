@@ -52,11 +52,8 @@ class QueryParserTestBase(unittest.TestCase):
             print()
             print(actual)
             print()
-        try:
-            self.assertEqual(expected, actual)
-            return actual
-        except AssertionError:
-            raise
+        self.assertEqual(expected, actual)
+        return actual
 
 
 class TestSelectTarget(QueryParserTestBase):
@@ -665,3 +662,7 @@ class TestExplain(QueryParserTestBase):
         self.assertParse(qp.Explain(
             qp.Journal('Assets:ETrade', 'units', None)
             ), "EXPLAIN JOURNAL 'Assets:ETrade' AT units;")
+
+
+if __name__ == '__main__':
+    unittest.main()

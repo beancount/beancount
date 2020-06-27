@@ -19,15 +19,16 @@ IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
-    The hash_obj is updated. This iterates over all the members of objtuple,
-    skipping the attributes from 'ignore', and if the elements are
-    lists or sets, sorts them for stability.
+    This iterates over all the members of objtuple, skipping the attributes from
+    the 'ignore' set, and computes a unique hash string code. If the elements
+    are lists or sets, sorts them for stability.
 
     Args:
       objtuple: A tuple object or other.
       ignore: A set of strings, attribute names to be skipped in
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
+
     """
     # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
@@ -50,24 +51,36 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     return hashobj.hexdigest()
 
 
-def hash_entry(entry):
+def hash_entry(entry, exclude_meta=False):
     """Compute the stable hash of a single entry.
 
     Args:
       entry: A directive instance.
+      exclude_meta: If set, exclude the metadata from the hash. Use this for
+        unit tests comparing entries coming from different sources as the
+        filename and lineno will be distinct. However, when you're using the
+        hashes to uniquely identify transactions, you want to include the
+        filenames and line numbers (the default).
     Returns:
       A stable hexadecimal hash of this entry.
+
     """
-    return stable_hash_namedtuple(entry, IGNORED_FIELD_NAMES)
+    return stable_hash_namedtuple(entry,
+                                  IGNORED_FIELD_NAMES if exclude_meta else frozenset())
 
 
-def hash_entries(entries):
+def hash_entries(entries, exclude_meta=False):
     """Compute unique hashes of each of the entries and return a map of them.
 
     This is used for comparisons between sets of entries.
 
     Args:
       entries: A list of directives.
+      exclude_meta: If set, exclude the metadata from the hash. Use this for
+        unit tests comparing entries coming from different sources as the
+        filename and lineno will be distinct. However, when you're using the
+        hashes to uniquely identify transactions, you want to include the
+        filenames and line numbers (the default).
     Returns:
       A dict of hash-value to entry (for all entries) and a list of errors.
       Errors are created when duplicate entries are found.
@@ -76,7 +89,7 @@ def hash_entries(entries):
     errors = []
     num_legal_duplicates = 0
     for entry in entries:
-        hash_ = hash_entry(entry)
+        hash_ = hash_entry(entry, exclude_meta)
 
         if hash_ in entry_hash_dict:
             if isinstance(entry, Price):
@@ -109,7 +122,7 @@ def compare_entries(entries1, entries2):
       entries2: Another list of directives of any type.
     Returns:
       A tuple of (success, not_found1, not_found2), where the fields are:
-        success: A booelan, true if all the values are equal.
+        success: A boolean, true if all the values are equal.
         missing1: A list of directives from 'entries1' not found in
           'entries2'.
         missing2: A list of directives from 'entries2' not found in
@@ -117,8 +130,8 @@ def compare_entries(entries1, entries2):
     Raises:
       ValueError: If a duplicate entry is found.
     """
-    hashes1, errors1 = hash_entries(entries1)
-    hashes2, errors2 = hash_entries(entries2)
+    hashes1, errors1 = hash_entries(entries1, exclude_meta=True)
+    hashes2, errors2 = hash_entries(entries2, exclude_meta=True)
     keys1 = set(hashes1.keys())
     keys2 = set(hashes2.keys())
 
@@ -143,9 +156,9 @@ def includes_entries(subset_entries, entries):
     Raises:
       ValueError: If a duplicate entry is found.
     """
-    subset_hashes, subset_errors = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries, exclude_meta=True)
     subset_keys = set(subset_hashes.keys())
-    hashes, errors = hash_entries(entries)
+    hashes, errors = hash_entries(entries, exclude_meta=True)
     keys = set(hashes.keys())
 
     if subset_errors or errors:
@@ -168,9 +181,9 @@ def excludes_entries(subset_entries, entries):
     Raises:
       ValueError: If a duplicate entry is found.
     """
-    subset_hashes, subset_errors = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries, exclude_meta=True)
     subset_keys = set(subset_hashes.keys())
-    hashes, errors = hash_entries(entries)
+    hashes, errors = hash_entries(entries, exclude_meta=True)
     keys = set(hashes.keys())
 
     if subset_errors or errors:

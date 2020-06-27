@@ -66,8 +66,9 @@ class Importer(importer.ImporterProtocol):
 
     def identify(self, file):
         # Match for a compatible MIME type.
-        if (file.mimetype() != 'application/x-ofx' and
-            file.mimetype() != 'application/vnd.intu.qbo'):
+        if file.mimetype() not in {'application/x-ofx',
+                                   'application/vnd.intu.qbo',
+                                   'application/vnd.intu.qfx'}:
             return False
 
         # Match the account id.
@@ -87,7 +88,7 @@ class Importer(importer.ImporterProtocol):
         """Return the optional renamed account filename."""
         return find_max_date(file.contents())
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         """Extract a list of partially complete transactions from the file."""
         soup = bs4.BeautifulSoup(file.contents(), 'lxml')
         return extract(soup, file.name, self.acctid_regexp, self.account, self.FLAG,
@@ -205,7 +206,7 @@ def find_statement_transactions(soup):
         An account id string,
         A currency string,
         A list of transaction nodes (<STMTTRN> BeautifulSoup tags), and
-        A (date, balanace amount) for the <LEDGERBAL>.
+        A (date, balance amount) for the <LEDGERBAL>.
     """
     # Process STMTTRNRS and CCSTMTTRNRS tags.
     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
@@ -215,7 +216,10 @@ def find_statement_transactions(soup):
 
             # Extract ACCTID account information.
             acctid_node = stmtrs.find('acctid')
-            acctid = next(acctid_node.children).strip()
+            if acctid_node:
+                acctid = next(acctid_node.children).strip()
+            else:
+                acctid = ''
 
             # Get the LEDGERBAL node. There appears to be a single one for all
             # transaction lists.

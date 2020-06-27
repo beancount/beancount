@@ -13,13 +13,11 @@ __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import datetime
 import logging
 import os
 import shutil
 import tempfile
 import subprocess
-import re
 from os import path
 
 

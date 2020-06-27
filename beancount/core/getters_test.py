@@ -96,6 +96,11 @@ class TestGetters(unittest.TestCase):
         payees = getters.get_all_payees(entries)
         self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
+    def test_get_all_links(self):
+        entries = loader.load_string(TEST_INPUT)[0]
+        links = getters.get_all_links(entries)
+        self.assertEqual(['ee89ada94a39'], links)
+
     def test_get_leveln_parent_accounts(self):
         account_names = ['Assets:US:Cash',
                          'Assets:US:Credit-Card',
@@ -120,8 +125,8 @@ class TestGetters(unittest.TestCase):
                          'Expenses:Coffee',
                          'Expenses:Restaurant']
 
-        LABEL = getters.get_dict_accounts.ACCOUNT_LABEL
-        root = OrderedDict([(LABEL, True)])
+        label = getters.get_dict_accounts.ACCOUNT_LABEL
+        root = OrderedDict([(label, True)])
         account_dict = OrderedDict([
             ('Assets', OrderedDict([
                 ('US', OrderedDict([
@@ -132,7 +137,7 @@ class TestGetters(unittest.TestCase):
             ('Expenses', OrderedDict([
                 ('Grocery', OrderedDict([
                     ('Bean', root), # Wrong order here
-                    (LABEL, True),
+                    (label, True),
                 ])),
                 ('Coffee', root),
                 ('Restaurant', root),
@@ -143,7 +148,7 @@ class TestGetters(unittest.TestCase):
             account_dict
         )
         account_dict['Expenses']['Grocery'] = OrderedDict([
-            (LABEL, True),
+            (label, True),
             ('Bean', root),
         ])
 
@@ -223,3 +228,7 @@ class TestGetters(unittest.TestCase):
                           'PIPA': ('Pied Piper', None),
                           'USD': (None, None)},
                          values)
+
+
+if __name__ == '__main__':
+    unittest.main()

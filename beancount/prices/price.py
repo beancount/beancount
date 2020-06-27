@@ -11,9 +11,10 @@ import tempfile
 import hashlib
 import os
 import sys
-import argparse
 import logging
 from concurrent import futures
+
+from dateutil import tz
 
 from beancount.core.number import ONE
 import beancount.prices
@@ -23,6 +24,7 @@ from beancount.core import amount
 from beancount.parser import printer
 from beancount.prices import find_prices
 from beancount.utils import date_utils
+from beancount.utils import version
 
 
 # Stand-in currency name for unknown currencies.
@@ -36,9 +38,13 @@ _CACHE = None
 DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
 
 
+# The default source parser is back.
+DEFAULT_SOURCE = 'beancount.prices.sources.yahoo'
+
+
 def now():
     "Indirection in order to be able to mock it out in the tests."
-    return datetime.datetime.now()
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def fetch_cached_price(source, symbol, date):
@@ -55,36 +61,63 @@ def fetch_cached_price(source, symbol, date):
     Returns:
       A SourcePrice instance.
     """
-    time_now = now()
+    # Compute a suitable timestamp from the date, if specified.
+    if date is not None:
+        # We query as for 4pm for the given date of the current timezone, if
+        # specified.
+        query_time = datetime.time(16, 0, 0)
+        time_local = datetime.datetime.combine(date, query_time, tzinfo=tz.tzlocal())
+        time = time_local.astimezone(tz.tzutc())
+    else:
+        time = None
+
     if _CACHE is None:
         # The cache is disabled; just call and return.
         result = (source.get_latest_price(symbol)
-                  if date is None else
-                  source.get_historical_price(symbol, date))
-    elif date is None or date >= time_now.date():
-        # The cache is enabled and we have to compute the current/latest price.
-        # Fetch from the cache but miss if the price is too old.
-        md5 = hashlib.md5()
-        md5.update(str((type(source).__module__, symbol)).encode('utf-8'))
-        key = md5.hexdigest()
-        try:
-            time_created, result = _CACHE[key]
-            if (time_now - time_created) > _CACHE.expiration:
-                raise KeyError
-        except KeyError:
-            result = source.get_latest_price(symbol)
-            _CACHE[key] = (time_now, result)
+                  if time is None else
+                  source.get_historical_price(symbol, time))
+
     else:
-        # The cache is enabled and we are asked to provide an old price. Assume
-        # it doesn't change and return the cached value if at all available.
+        # The cache is enabled and we have to compute the current/latest price.
+        # Try to fetch from the cache but miss if the price is too old.
         md5 = hashlib.md5()
         md5.update(str((type(source).__module__, symbol, date)).encode('utf-8'))
         key = md5.hexdigest()
+        timestamp_now = int(now().timestamp())
         try:
-            _, result = _CACHE[key]
+            timestamp_created, result_naive = _CACHE[key]
+
+            # Convert naive timezone to UTC, which is what the cache is always
+            # assumed to store. (The reason for this is that timezones from
+            # aware datetime objects cannot be serialized properly due to bug.)
+            if result_naive.time is not None:
+                result = result_naive._replace(
+                    time=result_naive.time.replace(tzinfo=tz.tzutc()))
+            else:
+                result = result_naive
+
+            if (timestamp_now - timestamp_created) > _CACHE.expiration.total_seconds():
+                raise KeyError
         except KeyError:
-            result = source.get_historical_price(symbol, date)
-            _CACHE[key] = (None, result)
+            logging.info("Fetching: %s (time: %s)", symbol, time)
+            try:
+                result = (source.get_latest_price(symbol)
+                          if time is None else
+                          source.get_historical_price(symbol, time))
+            except ValueError as exc:
+                logging.error("Error fetching %s: %s", symbol, exc)
+                result = None
+
+            # Make sure the timezone is UTC and make naive before serialization.
+            if result and result.time is not None:
+                time_utc = result.time.astimezone(tz.tzutc())
+                time_naive = time_utc.replace(tzinfo=None)
+                result_naive = result._replace(time=time_naive)
+            else:
+                result_naive = result
+
+            if result_naive is not None:
+                _CACHE[key] = (timestamp_now, result_naive)
     return result
 
 
@@ -100,8 +133,8 @@ def setup_cache(cache_filename, clear_cache):
         os.remove(cache_filename)
 
     if cache_filename:
-        logging.info('Using price cache at "{}" (with indefinite expiration)'.format(
-            cache_filename))
+        logging.info('Using price cache at "%s" (with indefinite expiration)',
+                     cache_filename)
 
         global _CACHE
         _CACHE = shelve.open(cache_filename, 'c')
@@ -117,7 +150,7 @@ def reset_cache():
 
 
 def fetch_price(dprice, swap_inverted=False):
-    """Fetch a price for the DatePrice job.
+    """Fetch a price for the DatedPrice job.
 
     Args:
       dprice: A DatedPrice instances.
@@ -128,7 +161,10 @@ def fetch_price(dprice, swap_inverted=False):
 
     """
     for psource in dprice.sources:
-        source = psource.module.Source()
+        try:
+            source = psource.module.Source()
+        except AttributeError:
+            continue
         srcprice = fetch_cached_price(source, psource.symbol, dprice.date)
         if srcprice is not None:
             break
@@ -150,7 +186,20 @@ def fetch_price(dprice, swap_inverted=False):
 
     assert base is not None
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
-    return data.Price(fileloc, srcprice.time.date(), base,
+
+    # The datetime instance is required to be aware. We always convert to the
+    # user's timezone before extracting the date. This means that if the market
+    # returns a timestamp for a particular date, once we convert to the user's
+    # timezone the returned date may be different by a day. The intent is that
+    # whatever we print is assumed coherent with the user's timezone. See
+    # discussion at
+    # https://groups.google.com/d/msg/beancount/9j1E_HLEMBQ/fYRuCQK_BwAJ
+    srctime = srcprice.time
+    if srctime.tzinfo is None:
+        raise ValueError("Time returned by the price source is not timezone aware.")
+    date = srctime.astimezone(tz.tzlocal()).date()
+
+    return data.Price(fileloc, date, base,
                       amount.Amount(price, quote or UNKNOWN_CURRENCY))
 
 
@@ -201,7 +250,7 @@ def process_args():
         jobs: A list of DatedPrice job objects.
         entries: A list of all the parsed entries.
     """
-    parser = argparse.ArgumentParser(description=beancount.prices.__doc__.splitlines()[0])
+    parser = version.ArgumentParser(description=beancount.prices.__doc__.splitlines()[0])
 
     # Input sources or filenames.
     parser.add_argument('sources', nargs='+', help=(
@@ -266,7 +315,8 @@ def process_args():
                         format='%(levelname)-8s: %(message)s')
 
     if args.all:
-        args.inactive = args.undeclared = args.clobber = True
+        args.inactive = args.clobber = True
+        args.undeclared = DEFAULT_SOURCE
 
     # Setup for processing.
     setup_cache(args.cache_filename, args.clear_cache)
@@ -285,7 +335,7 @@ def process_args():
             except ValueError:
                 extra = "; did you provide a filename?" if path.exists(source_str) else ''
                 msg = ('Invalid source "{{}}"{}. '.format(extra) +
-                       'Supported format is "CCY:module/SYMBOL"'.format(extra))
+                       'Supported format is "CCY:module/SYMBOL"')
                 parser.error(msg.format(source_str))
             else:
                 for currency, psources in psource_map.items():

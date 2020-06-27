@@ -58,7 +58,7 @@ Indicating the conversion currency is also possible (and recommended):
 If a cost specification is provided, a "cost" attribute it set but it does not
 refer to a Cost instance (as in complete entries) but rather to a CostSpec
 instance. Some of the fields of a CostSpec may be MISSING if they were not
-specified in the input. For exammple:
+specified in the input. For example:
 
   INPUT: Assets:Account  1 HOOL {100 # 5 USD}
   posting.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
@@ -97,7 +97,7 @@ If you ask for the lots to be merged, you get this:
 The numbers have to be computed by Beancount, so we output this with MISSING
 values.
 
-Of course, you can provide only the non-basis informations, like just the date
+Of course, you can provide only the non-basis information, like just the date
 or label:
 
   INPUT: Assets:Account  1 HOOL {2015-09-21}
@@ -113,7 +113,7 @@ import functools
 import inspect
 import textwrap
 import io
-from os import path
+import sys
 
 from beancount.parser import _parser
 from beancount.parser import grammar
@@ -179,7 +179,7 @@ def is_entry_incomplete(entry):
     return False
 
 
-def parse_file(filename, **kw):
+def parse_file(file, report_filename=None, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -192,18 +192,27 @@ def parse_file(filename, **kw):
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
-    abs_filename = path.abspath(filename) if filename else None
-    builder = grammar.Builder(abs_filename)
-    _parser.parse_file(filename, builder, **kw)
+    if file == '-':
+        file = sys.stdin.buffer
+    # It would be more appropriate here to check for io.RawIOBase but
+    # that does not work for io.BytesIO despite it implementing the
+    # readinto() method.
+    elif not isinstance(file, io.IOBase):
+        file = open(file, 'rb')
+    builder = grammar.Builder(report_filename or file.name)
+    _parser.parse_file(file, builder, report_filename=report_filename, **kw)
     return builder.finalize()
 
 
-def parse_string(string, **kw):
+def parse_string(string, report_filename=None, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      string: a str, the contents to be parsed instead of a file's.
+      string: A string, the contents to be parsed instead of a file's.
+      report_filename: A string, the source filename from which this string
+        has been extracted, if any. This is stored in the metadata of the
+        parsed entries.
       **kw: See parse.c. This function parses out 'dedent' which removes
         whitespace from the front of the text (default is False).
     Return:
@@ -211,10 +220,12 @@ def parse_string(string, **kw):
     """
     if kw.pop('dedent', None):
         string = textwrap.dedent(string)
-    builder = grammar.Builder(None)
-    _parser.parse_string(string, builder, **kw)
-    builder.options['filename'] = '<string>'
-    return builder.finalize()
+    if isinstance(string, str):
+        string = string.encode('utf8')
+    if report_filename is None:
+        report_filename = '<string>'
+    file = io.BytesIO(string)
+    return parse_file(file, report_filename=report_filename, **kw)
 
 
 def parse_doc(expect_errors=False, allow_incomplete=False):

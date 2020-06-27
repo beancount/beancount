@@ -24,13 +24,13 @@ from beancount.ingest import cache
 
 
 def file_one_file(filename, importers, destination, idify=False, logfile=None):
-    """File a single filename with its matched importers.
+    """Move a single filename using its matched importers.
 
     Args:
       filename: A string, the name of the downloaded file to be processed.
       importers: A list of importer instances that handle this file.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       idify: A flag, if true, remove whitespace and funky characters in the destination
         filename.
@@ -50,8 +50,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
             account_ = importer.file_account(file)
         except Exception as exc:
             account_ = None
-            logging.error("Importer %s.file_account() raised an unexpected error: %s",
-                          importer.name(), exc)
+            logging.exception("Importer %s.file_account() raised an unexpected error: %s",
+                              importer.name(), exc)
         if account_ is not None:
             file_accounts.append(account_)
 
@@ -83,8 +83,8 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     try:
         date = importer.file_date(file)
     except Exception as exc:
-        logging.error("Importer %s.file_date() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_date() raised an unexpected error: %s",
+                          importer.name(), exc)
         date = None
     if date is None:
         # Fallback on the last modified time of the file.
@@ -106,14 +106,15 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
                            "separators"),
                           importer.name(), clean_filename)
     except Exception as exc:
-        logging.error("Importer %s.file_name() raised an unexpected error: %s",
-                      importer.name(), exc)
+        logging.exception("Importer %s.file_name() raised an unexpected error: %s",
+                          importer.name(), exc)
         clean_filename = None
     if clean_filename is None:
-        clean_filename = file.name
-    elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):
+        # If no filename has been provided, use the basename.
+        clean_filename = path.basename(file.name)
+    elif re.match(r'\d\d\d\d-\d\d-\d\d', clean_filename):
         logging.error("The importer '%s' file_name() method should not date the "
-                      "returned filename.")
+                      "returned filename. Implement file_date() instead.")
 
     # We need a simple filename; remove the directory part if there is one.
     clean_basename = path.basename(clean_filename)
@@ -165,7 +166,7 @@ def file(importer_config,
       files_or_directories: a list of files of directories to walk recursively and
         hunt for files to import.
       destination: A string, the root destination directory where the files are
-        to be filed. The files are organized there under a hierarchy mirrorring
+        to be filed. The files are organized there under a hierarchy mirroring
         that of the chart of accounts.
       dry_run: A flag, if true, don't actually move the files.
       mkdirs: A flag, if true, make all the intervening directories; otherwise,
@@ -257,10 +258,12 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     os.remove(src_filename)
 
 
-def main():
-    parser = scripts_utils.create_arguments_parser(
-        "Move and rename downloaded files to a documents tree "
-        "mirrorring the chart of accounts")
+DESCRIPTION = ("Move and rename downloaded files to a documents tree "
+               "mirroring the chart of accounts")
+
+
+def add_arguments(parser):
+    """Add arguments for the extract command."""
 
     parser.add_argument('-o', '--output', '--output-dir', '--destination',
                         dest='output_dir', action='store',
@@ -274,22 +277,32 @@ def main():
                         action='store_false', default=True,
                         help="Don't overwrite destination files with the same name.")
 
-    args, config, downloads_directories = scripts_utils.parse_arguments(parser)
 
-    # If the output directory is not specified, move the files at the root of
-    # the configuration file. (Providing this default seems better than using a
-    # required option.)
+def run(args, parser, importers_list, files_or_directories, hooks=None):
+    """Run the subcommand."""
+
+    # If the output directory is not specified, move the files at the root where
+    # the import configuration file is located. (Providing this default seems
+    # better than using a required option.)
     if args.output_dir is None:
-        args.output_dir = path.dirname(path.abspath(args.config))
+        if hasattr(args, 'config'):
+            args.output_dir = path.dirname(path.abspath(args.config))
+        else:
+            import __main__ # pylint: disable=import-outside-toplevel
+            args.output_dir = path.dirname(path.abspath(__main__.__file__))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):
         parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
 
-    file(config, downloads_directories, args.output_dir,
+    file(importers_list, files_or_directories, args.output_dir,
          dry_run=args.dry_run,
          mkdirs=True,
          overwrite=args.overwrite,
          idify=True,
          logfile=sys.stdout)
     return 0
+
+
+def main():
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

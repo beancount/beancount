@@ -42,7 +42,7 @@ def process_documents(entries, options_map):
         accounts = getters.get_accounts(entries)
 
         # Accumulate all the entries.
-        for directory in document_dirs:
+        for directory in map(path.normpath, document_dirs):
             new_entries, new_errors = find_documents(directory, filename, accounts)
             autodoc_entries.extend(new_entries)
             autodoc_errors.extend(new_errors)
@@ -116,7 +116,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
         # Look for files that have a dated filename.
         for filename in files:
-            match = re.match('(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
+            match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
             if not match:
                 continue
 

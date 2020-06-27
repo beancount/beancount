@@ -7,6 +7,8 @@ import os
 import datetime
 import unittest
 import textwrap
+import functools
+import warnings
 import sys
 from unittest import mock
 from os import path
@@ -17,12 +19,23 @@ from beancount.ingest import importer
 from beancount.ingest import regression
 
 
+def suppress_deprecation(fun):
+    @functools.wraps(fun)
+    def wrapped(*args, **kw):
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module=r'.*\.regression',
+                                    category=DeprecationWarning)
+            return fun(*args, **kw)
+    return wrapped
+
+
 class _DummyImporter(importer.ImporterProtocol):
     "A dummy importer for testing."
 
 
 class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
 
+    @suppress_deprecation
     @mock.patch('beancount.ingest.extract.extract_from_file')
     def test_test_expect_extract(self, extract_mock):
         importer = _DummyImporter()
@@ -47,7 +60,7 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
             imp_meth.return_value = []
 
             # Test actual working import.
-            extract_mock.return_value = [entry], []
+            extract_mock.return_value = [entry]
             for method, *args in regression.compare_sample_files(importer, self.tempdir):
                 try:
                     method(*args)
@@ -63,6 +76,7 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
                     method(*args)
             self.assertEqual(1, extract_mock.call_count)
 
+    @suppress_deprecation
     def test_test_expect_file_date(self):
         importer = _DummyImporter()
 
@@ -96,6 +110,7 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
             self.assertEqual(1, imp_meth.call_count)
             self.assertTrue(path.exists(expect_filename))
 
+    @suppress_deprecation
     def test_test_expect_file_name(self):
         importer = _DummyImporter()
 
@@ -143,6 +158,7 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
         files = list(regression.find_input_files(self.tempdir))
         self.assertEqual([path.join(self.tempdir, 'something.other')], files)
 
+    @suppress_deprecation
     def test_compare_sample_files__no_directory(self):
         importer = _DummyImporter()
         this_module = sys.modules[type(importer).__module__]
@@ -154,6 +170,7 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
                 tests = list(regression.compare_sample_files(importer))
                 self.assertEqual(1, len(tests))
 
+    @suppress_deprecation
     def test_compare_sample_files__with_directory(self):
         importer = _DummyImporter()
         with mock.patch.object(importer.__class__, 'file_date') as imp_meth:
@@ -169,3 +186,7 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
             # Test with a filename.
             tests = list(regression.compare_sample_files(importer, filename))
             self.assertEqual(1, len(tests))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -5,15 +5,15 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import os
 import re
+import sys
 import traceback
 from os import path
 from datetime import date
+from decimal import Decimal
 
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
-from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import CostSpec
@@ -38,14 +38,6 @@ from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
-
-
-# FIXME: This environment variable enables temporary support for negative
-# prices. If you've updated across 2015-01-10 and you're getting a lot of
-# errors, you need to fix all the signs on your @@ total price values (they are
-# to be positive only). Just set this environment variable to disable this
-# change if you need to post-pone this.
-__allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', False)
 
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
@@ -96,7 +88,13 @@ def valid_account_regexp(options):
                                       'name_equity',
                                       'name_income',
                                       'name_expenses'))
-    return re.compile('({})(:[A-Z][A-Za-z0-9\-]*)*$'.format('|'.join(names)))
+
+    # Replace the first term of the account regular expression with the specific
+    # names allowed under the options configuration. This code is kept in sync
+    # with {5672c7270e1e}.
+    return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
+                                               account.sep,
+                                               account.ACC_COMP_NAME_RE))
 
 
 # A temporary data structure used during parsing to hold and accumulate the
@@ -133,12 +131,17 @@ class Builder(lexer.LexBuilder):
         self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
-        # types.
+        # types. Warning: This overrides the value in the base class.
         self.account_regexp = valid_account_regexp(self.options)
 
         # A display context builder.
         self.dcontext = display_context.DisplayContext()
-        self.dcupdate = self.dcontext.update
+        self._dcupdate = self.dcontext.update
+
+    def dcupdate(self, number, currency):
+        """Update the display context."""
+        if isinstance(number, Decimal) and currency and currency is not MISSING:
+            self._dcupdate(number, currency)
 
     def finalize(self):
         """Finalize the parser, check for final errors and return the triple.
@@ -163,7 +166,7 @@ class Builder(lexer.LexBuilder):
                     "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ', '.join(value_list)), None))
 
-        # Weave the commas option in the DisplayContext itself, so it propagages
+        # Weave the commas option in the DisplayContext itself, so it propagates
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options['render_commas'])
 
@@ -379,7 +382,10 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
-
+            elif key == 'insert_pythonpath':
+                # Insert the PYTHONPATH to this file when and only if you
+                # encounter this option.
+                sys.path.insert(0, path.dirname(filename))
 
     def include(self, filename, lineno, include_filename):
         """Process an include directive.
@@ -414,8 +420,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if isinstance(number, Decimal) and currency and currency is not MISSING:
-            self.dcupdate(number, currency)
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def compound_amount(self, number_per, number_total, currency):
@@ -431,10 +436,8 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if isinstance(number_per, Decimal):
-            self.dcupdate(number_per, currency)
-        if isinstance(number_total, Decimal):
-            self.dcupdate(number_total, currency)
+        self.dcupdate(number_per, currency)
+        self.dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
         # here because we only get the number of units in the full lot spec.
@@ -519,7 +522,7 @@ class Builder(lexer.LexBuilder):
                             ("Per-unit cost may not be specified using total cost "
                              "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
                             None))
-                    # Ignore per-unit numbrer.
+                    # Ignore per-unit number.
                     number_per = ZERO
                 else:
                     # There's a single number specified; interpret it as a total cost.
@@ -732,7 +735,7 @@ class Builder(lexer.LexBuilder):
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-        tags, links = self.process_tags_links(tags_links)
+        tags, links = self.finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
 
     def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
@@ -785,7 +788,8 @@ class Builder(lexer.LexBuilder):
           filename: the current filename.
           lineno: the current line number.
           account: A string, the account of the posting.
-          position: An instance of Position from the grammar rule.
+          units: An instance of Amount for the units.
+          cost: An instance of CostSpec for the cost.
           price: Either None, or an instance of Amount that is the cost of the position.
           istotal: A bool, True if the price is for the total amount being parsed, or
                    False if the price is for each lot of the position.
@@ -793,18 +797,18 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
+        meta = new_metadata(filename, lineno)
+
         # Prices may not be negative.
-        if not __allow_negative_prices__:
-            if price and isinstance(price.number, Decimal) and price.number < ZERO:
-                meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    ParserError(meta, (
-                        "Negative prices are not allowed: {} "
-                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                        "for workaround)"
-                    ).format(price), None))
-                # Fix it and continue.
-                price = Amount(abs(price.number), price.currency)
+        if price and isinstance(price.number, Decimal) and price.number < ZERO:
+            self.errors.append(
+                ParserError(meta, (
+                    "Negative prices are not allowed: {} "
+                    "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                    "for workaround)"
+                ).format(price), None))
+            # Fix it and continue.
+            price = Amount(abs(price.number), price.currency)
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
@@ -812,10 +816,9 @@ class Builder(lexer.LexBuilder):
             if units.number == ZERO:
                 number = ZERO
             else:
-                if __allow_negative_prices__:
-                    number = price.number/units.number
-                else:
-                    number = price.number/abs(units.number)
+                number = price.number
+                if number is not MISSING:
+                    number = number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -825,7 +828,18 @@ class Builder(lexer.LexBuilder):
         #     self.errors.append(
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        meta = new_metadata(filename, lineno)
+        # If both cost and price are specified, the currencies must match, or
+        # that is an error.
+        if (cost is not None and
+            price is not None and
+            isinstance(cost.currency, str) and
+            isinstance(price.currency, str) and
+            cost.currency != price.currency):
+            self.errors.append(
+                ParserError(meta,
+                            "Cost and price currencies must match: {} != {}".format(
+                                cost.currency, price.currency), None))
+
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
     def tag_link_new(self, _):
@@ -897,30 +911,19 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def process_tags_links(self, tags_links):
-        """Process tags and links, include tags from the tag stack if present.
+    def finalize_tags_links(self, tags, links):
+        """Finally amend tags and links and return final objects to be inserted.
 
         Args:
-          tags_links: The current TagsLinks accumulator.
+          tags: A set of tag strings (warning: this gets mutated in-place).
+          links: A set of link strings.
         Returns:
           A sanitized pair of (tags, links).
         """
-        if tags_links is None:
-            return None, None
-
-        # Merge the tags from the stack with the explicit tags of this
-        # transaction, or make None.
-        tags = tags_links.tags
-        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
-        tags = frozenset(tags) if tags else EMPTY_SET
-
-        # Make links to None if empty.
-        links = tags_links.links
-        links = frozenset(links) if links else EMPTY_SET
-
-        return tags, links
+        return (frozenset(tags) if tags else EMPTY_SET,
+                frozenset(links) if links else EMPTY_SET)
 
     def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
                     posting_or_kv_list):
@@ -951,12 +954,22 @@ class Builder(lexer.LexBuilder):
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []
+        tags, links = tags_links.tags, tags_links.links
         if posting_or_kv_list:
             last_posting = None
             for posting_or_kv in posting_or_kv_list:
                 if isinstance(posting_or_kv, Posting):
                     postings.append(posting_or_kv)
                     last_posting = posting_or_kv
+                elif isinstance(posting_or_kv, TagsLinks):
+                    if postings:
+                        self.errors.append(ParserError(
+                            meta,
+                            "Tags or links not allowed after first " +
+                            "Posting: {}".format(posting_or_kv), None))
+                    else:
+                        tags.update(posting_or_kv.tags)
+                        links.update(posting_or_kv.links)
                 else:
                     if last_posting is None:
                         value = explicit_meta.setdefault(posting_or_kv.key,
@@ -978,7 +991,8 @@ class Builder(lexer.LexBuilder):
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
 
-
+        # Freeze the tags & links or set to default empty values.
+        tags, links = self.finalize_tags_links(tags, links)
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
@@ -1010,8 +1024,6 @@ class Builder(lexer.LexBuilder):
         # If there are no postings, make sure we insert a list object.
         if postings is None:
             postings = []
-
-        tags, links = self.process_tags_links(tags_links)
 
         # Create the transaction.
         return Transaction(meta, date, chr(flag),

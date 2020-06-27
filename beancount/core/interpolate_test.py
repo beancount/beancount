@@ -20,6 +20,11 @@ from beancount.parser import cmptest
 from beancount.utils import defdict
 from beancount import loader
 
+# TODO(blais): Remove this dependency from upstream.
+try:
+    from beancount.plugins import split_expenses
+except ImportError:
+    split_expenses = None
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'inferred_tolerance_default': {},
@@ -552,6 +557,7 @@ class TestInferTolerances(cmptest.TestCase):
                          transactions[0].meta['__tolerances__'])
         self.assertFalse(errors)
 
+    @unittest.skipIf(split_expenses is None, "split_expenses needs to be build with bazel")
     @loader.load_doc()
     def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
         """
@@ -572,7 +578,6 @@ class TestInferTolerances(cmptest.TestCase):
         # also marked as automatic, so if cannot use inference there either. So
         # all legs end up being automatic... and we have to fall back on the
         # default tolerance.
-        pass
 
     @loader.load_doc()
     def test_tolerances__missing_units_only(self, entries, errors, options_map):
@@ -588,7 +593,8 @@ class TestInferTolerances(cmptest.TestCase):
 class TestQuantize(unittest.TestCase):
 
     def test_quantize_with_tolerance(self):
-        tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')},
+                                                      default=D('0.000005'))
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
@@ -596,10 +602,14 @@ class TestQuantize(unittest.TestCase):
             D('100.12312'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
 
-        tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')}, default=ZERO)
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
         self.assertEqual(
             D('100.123123123'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,14 @@
+language: python
+python:
+  - "3.8"
+addons:
+  apt:
+    packages:
+      - gnupg
+      - zip
+install:
+  - pip install -r requirements_dev.txt
+script:
+  - make build
+  - make test
+  - make lint

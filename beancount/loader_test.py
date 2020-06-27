@@ -1,6 +1,7 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import functools
 import logging
 import unittest
 import tempfile
@@ -12,6 +13,7 @@ from os import path
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount.utils import encryption_test
 
 
 TEST_INPUT = """
@@ -112,6 +114,7 @@ class TestLoadDoc(unittest.TestCase):
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
+        self.assertFalse(errors)
         self.assertTrue(isinstance(options_map, dict))
 
     @loader.load_doc(expect_errors=True)
@@ -122,6 +125,24 @@ class TestLoadDoc(unittest.TestCase):
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(options_map, dict))
         self.assertTrue([loader.LoadError], list(map(type, errors)))
+
+    def test_load_doc_plugin_auto_pythonpath(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger_fn = path.join(tmpdir, 'my.beancount')
+            with open(ledger_fn, 'w') as ledger_file:
+                ledger_file.write('option "insert_pythonpath" "TRUE"\n')
+                ledger_file.write('plugin "localplugin"\n')
+
+            plugin_fn = path.join(tmpdir, 'localplugin.py')
+            with open(plugin_fn, 'w') as plugin_file:
+                plugin_file.write(textwrap.dedent("""\
+                  __plugins__ = ()
+                """))
+            entries, errors, options_map = loader.load_file(ledger_fn)
+            self.assertTrue(isinstance(entries, list))
+            self.assertTrue(isinstance(errors, list))
+            self.assertTrue(isinstance(options_map, dict))
+            self.assertFalse(errors)
 
 
 class TestLoadIncludes(unittest.TestCase):
@@ -153,7 +174,7 @@ class TestLoadIncludes(unittest.TestCase):
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'does not exist')
+            self.assertRegex(errors[0].message, 'does not (match any|exist)')
         self.assertEqual(['root.beancount'],
                          list(map(path.basename, options_map['include'])))
 
@@ -290,12 +311,44 @@ class TestLoadIncludes(unittest.TestCase):
                          list(map(path.basename, options_map['include'])))
 
 
+class TestLoadIncludesEncrypted(encryption_test.TestEncryptedBase):
+
+    def test_include_encrypted(self):
+        with test_utils.tempdir() as tmpdir:
+            test_utils.create_temporary_files(tmpdir, {
+                'apples.beancount': """
+                  include "oranges.beancount.asc"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+
+            # Encrypt the oranges file and remove the unencrypted file.
+            with open(path.join(tmpdir, 'oranges.beancount')) as infile:
+                self.encrypt_as_file(infile.read(),
+                                     path.join(tmpdir, 'oranges.beancount.asc'))
+            os.remove(path.join(tmpdir, 'oranges.beancount'))
+
+            # Load the top-level file which includes the encrypted file.
+            with test_utils.environ('GNUPGHOME', self.ringdir):
+                entries, errors, options_map = loader.load_file(
+                    path.join(tmpdir, 'apples.beancount'))
+
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertRegex(entries[0].meta['filename'], 'apples.beancount')
+        self.assertRegex(entries[1].meta['filename'], 'oranges.+count.asc')
+
+
 class TestLoadCache(unittest.TestCase):
 
     def setUp(self):
         self.num_calls = 0
+        cache_getter = functools.partial(loader.get_cache_filename,
+                                         loader.PICKLE_CACHE_FILENAME)
         mock.patch('beancount.loader._load_file',
-                   loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
+                   loader.pickle_cache_function(cache_getter,
                                                 0,  # No time threshold.
                                                 self._load_file)).start()
     def tearDown(self):
@@ -369,7 +422,7 @@ class TestLoadCache(unittest.TestCase):
             # Make sure the cache was created.
             self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
 
-            # CHeck that it doesn't need refresh
+            # Check that it doesn't need refresh
             self.assertFalse(loader.needs_refresh(options_map))
 
             # Move the input file.
@@ -399,12 +452,10 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, len(warn_mock.mock_calls))
 
     @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
-    def test_load_cache_override_filename_pattern(self):
-        orig_load_file = loader._load_file
-        prev_env = os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME')
-        os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = '__{filename}__'
-        loader.initialize()
-        try:
+    @mock.patch.object(loader, 'load_file', loader.load_file)
+    def test_load_cache_override_filename_pattern_by_env_var(self):
+        with test_utils.environ('BEANCOUNT_LOAD_CACHE_FILENAME', '__{filename}__'):
+            loader.initialize(use_cache=True)
             with test_utils.tempdir() as tmp:
                 test_utils.create_temporary_files(tmp, {
                     'apples.beancount': """
@@ -414,13 +465,37 @@ class TestLoadCache(unittest.TestCase):
                 entries, errors, options_map = loader.load_file(filename)
                 self.assertEqual({'__apples.beancount__', 'apples.beancount'},
                                  set(os.listdir(tmp)))
-        finally:
-            # Restore pre-test values.
-            loader._load_file = orig_load_file
-            if prev_env is None:
-                del os.environ['BEANCOUNT_LOAD_CACHE_FILENAME']
-            else:
-                os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = prev_env
+
+    @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
+    @mock.patch.object(loader, 'load_file', loader.load_file)
+    def test_load_cache_override_filename_pattern_by_argument(self):
+        with test_utils.tempdir() as tmp:
+            cache_filename = path.join(tmp, "__{filename}__")
+            loader.initialize(use_cache=True, cache_filename=cache_filename)
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(filename)
+            self.assertEqual({'__apples.beancount__', 'apples.beancount'},
+                             set(os.listdir(tmp)))
+
+    @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
+    @mock.patch.object(loader, 'load_file', loader.load_file)
+    def test_load_cache_disable(self):
+        with test_utils.tempdir() as tmp:
+            cache_filename = path.join(tmp, "__{filename}__")
+            for kwargs in [dict(use_cache=False),
+                           dict(use_cache=False, cache_filename=cache_filename)]:
+                loader.initialize(**kwargs)
+                test_utils.create_temporary_files(tmp, {
+                    'apples.beancount': """
+                      2014-01-01 open Assets:Apples
+                    """})
+                filename = path.join(tmp, 'apples.beancount')
+                entries, errors, options_map = loader.load_file(filename)
+                self.assertEqual({'apples.beancount'}, set(os.listdir(tmp)))
 
 
 class TestEncoding(unittest.TestCase):
@@ -481,3 +556,7 @@ class TestOptionsAggregation(unittest.TestCase):
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])
+
+
+if __name__ == '__main__':
+    unittest.main()

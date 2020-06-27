@@ -1,0 +1,27 @@
+Various tests for rewriting Beancount in C++.
+
+We'd like to have a working environment with the following tools integrated and
+working well together:
+
+- bazel
+- kythe
+
+C++:
+- abseil
+- protocol buffers
+- gtest
+- gmock
+- Some decimal number representation
+- flex
+- bison
+- grpc
+- riegeli
+
+Python:
+- python3 development
+- protocol buffers (fast cpp for Python)
+- pytest
+- pytype
+- pylint
+- clif or cython
+- protoptr (from nucleus)

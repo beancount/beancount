@@ -1,8 +1,0 @@
-Produce a list of holdings to be uploaded to a Google Sheets doc.
-
-This produces a report that is usable for producing various aggregations. It's
-somewhat custom, so not in the main codebase yet. I'll eventually move the
-functions piecemeal and will attempt to replace this by a SQL query in the end.
-
-The automation of the sheets update is carried out using the update-to-sheets
-tool.

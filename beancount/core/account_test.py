@@ -11,7 +11,7 @@ from os import path
 from beancount.core import account
 
 
-# Note: This should live in beancount.utils.test_utils.
+# TODO(blais): This should live in beancount.utils.test_utils.
 class TmpFilesTestBase(unittest.TestCase):
     """A test utility base class that creates and cleans up a directory hierarchy.
     This convenience is useful for testing functions that work on files, such as the
@@ -52,7 +52,7 @@ class TmpFilesTestBase(unittest.TestCase):
                 parent_dir = path.dirname(abs_filename)
                 if not path.exists(parent_dir):
                     os.makedirs(parent_dir)
-                open(abs_filename, 'w')
+                with open(abs_filename, 'w'): pass
         return tempdir, root
 
 
@@ -150,6 +150,7 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(is_child('Assets:Bank:Checking'))
         self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
         self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+        self.assertFalse(is_child('Assets:Bank:Checking-Old'))
 
     def test_parents(self):
         iterator = account.parents('Assets:Bank:Checking')
@@ -217,3 +218,7 @@ class TestAccountTransformer(unittest.TestCase):
         acc = 'Assets:US:BofA:Checking'
         self.assertEqual(acc, xfr.render(acc))
         self.assertEqual(acc, xfr.parse(acc))
+
+
+if __name__ == '__main__':
+    unittest.main()

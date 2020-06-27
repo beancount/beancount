@@ -11,10 +11,12 @@ import os
 from os import path
 from unittest import mock
 
+from dateutil import tz
+
+from beancount.prices.source import SourcePrice
 from beancount.prices import price
 from beancount.prices import find_prices
-from beancount.prices import source
-from beancount.prices.sources import google
+from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.utils import test_utils
 from beancount.parser import cmptest
@@ -48,7 +50,7 @@ class TestSetupCache(unittest.TestCase):
         with mock.patch('os.remove', remove):
             with tempfile.TemporaryDirectory() as tmpdir:
                 filename = path.join(tmpdir, 'cache.db')
-                open(filename, 'w')
+                with open(filename, 'w'): pass
                 price.setup_cache(filename, True)
                 self.assertEqual(1, mock_remove.call_count)
                 self.assertTrue(any(dirfile.startswith('cache.db')
@@ -59,7 +61,7 @@ class TestSetupCache(unittest.TestCase):
         with mock.patch('os.remove') as mock_remove:
             with tempfile.TemporaryDirectory() as tmpdir:
                 filename = path.join(tmpdir, 'cache.db')
-                open(filename, 'w')
+                with open(filename, 'w'): pass
                 price.setup_cache(None, False)
                 self.assertEqual(0, mock_remove.call_count)
                 self.assertTrue(path.exists(filename))
@@ -88,15 +90,16 @@ class TestCache(unittest.TestCase):
         try:
             price.setup_cache(tmpfile, False)
 
+            srcprice = SourcePrice(D('1.723'), datetime.datetime.now(tz.tzutc()), 'USD')
             source = mock.MagicMock()
-            source.get_latest_price.return_value = 42
+            source.get_latest_price.return_value = srcprice
             source.__file__ = '<module>'
 
             # Cache miss.
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertTrue(source.get_latest_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
             source.get_latest_price.reset_mock()
 
@@ -104,10 +107,12 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertFalse(source.get_latest_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
+            srcprice2 = SourcePrice(
+                D('1.894'), datetime.datetime.now(tz.tzutc()), 'USD')
             source.get_latest_price.reset_mock()
-            source.get_latest_price.return_value = 71
+            source.get_latest_price.return_value = srcprice2
 
             # Cache expired.
             time_beyond = datetime.datetime.now() + price._CACHE.expiration * 2
@@ -115,7 +120,7 @@ class TestCache(unittest.TestCase):
                 result = price.fetch_cached_price(source, 'HOOL', None)
                 self.assertTrue(source.get_latest_price.called)
                 self.assertEqual(1, len(price._CACHE))
-                self.assertEqual(71, result)
+                self.assertEqual(srcprice2, result)
         finally:
             price.reset_cache()
             if path.exists(tmpdir):
@@ -127,8 +132,10 @@ class TestCache(unittest.TestCase):
         try:
             price.setup_cache(tmpfile, False)
 
+            srcprice = SourcePrice(
+                D('1.723'), datetime.datetime.now(tz.tzutc()), 'USD')
             source = mock.MagicMock()
-            source.get_historical_price.return_value = 42
+            source.get_historical_price.return_value = srcprice
             source.__file__ = '<module>'
 
             # Cache miss.
@@ -136,7 +143,7 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertTrue(source.get_historical_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
             source.get_historical_price.reset_mock()
 
@@ -144,7 +151,7 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertFalse(source.get_historical_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
         finally:
             price.reset_cache()
             if path.exists(tmpdir):
@@ -156,7 +163,7 @@ class TestProcessArguments(unittest.TestCase):
     def test_filename_not_exists(self):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
-                args, jobs, _ = test_utils.run_with_args(
+                test_utils.run_with_args(
                     price.process_args, ['--no-cache', '/some/file.beancount'])
 
     @test_utils.docfile
@@ -180,11 +187,11 @@ class TestProcessArguments(unittest.TestCase):
     def test_expressions(self):
         with test_utils.capture('stderr'):
             args, jobs, _, __ = test_utils.run_with_args(
-                price.process_args, ['--no-cache', '-e', 'USD:google/NASDAQ:AAPL'])
+                price.process_args, ['--no-cache', '-e', 'USD:yahoo/AAPL'])
             self.assertEqual(
                 [find_prices.DatedPrice(
-                    'NASDAQ:AAPL', 'USD', None,
-                    [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
+                    'AAPL', 'USD', None,
+                    [find_prices.PriceSource(yahoo, 'AAPL', False)])], jobs)
 
 
 class TestClobber(cmptest.TestCase):
@@ -242,30 +249,47 @@ class TestClobber(cmptest.TestCase):
         """, new_price_entries)
 
 
-class TestInverted(cmptest.TestCase):
+class TestTimezone(unittest.TestCase):
+
+    @mock.patch.object(price, 'fetch_cached_price')
+    def test_fetch_price__naive_time_no_timeozne(self, fetch_cached):
+        fetch_cached.return_value = SourcePrice(
+            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
+        dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
+        with self.assertRaises(ValueError):
+            price.fetch_price(dprice._replace(sources=[
+                find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
+
+
+class TestInverted(unittest.TestCase):
 
     def setUp(self):
         fetch_cached = mock.patch('beancount.prices.price.fetch_cached_price').start()
-        fetch_cached.return_value = source.SourcePrice(
-            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
+        fetch_cached.return_value = SourcePrice(
+            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0, tzinfo=tz.tzlocal()),
+            'JPY')
         self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),
                                              None)
         self.addCleanup(mock.patch.stopall)
 
     def test_fetch_price__normal(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', False)]), False)
+            find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
 
     def test_fetch_price__inverted(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), False)
+            find_prices.PriceSource(yahoo, 'USDJPY', True)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('0.008'), entry.amount.number)
 
     def test_fetch_price__swapped(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), True)
+            find_prices.PriceSource(yahoo, 'USDJPY', True)]), True)
         self.assertEqual(('USD', 'JPY'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
+
+
+if __name__ == '__main__':
+    unittest.main()

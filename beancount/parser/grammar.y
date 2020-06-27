@@ -2,7 +2,7 @@
 /*
  * Parser grammar for beancount 2.0 input syntax.
  *
- * This assumes it feeds off the corresponding lexer in this pacakge. This is
+ * This assumes it feeds off the corresponding lexer in this package. This is
  * meant to be used with the stock "go yacc" command.
  */
 
@@ -13,8 +13,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include "parser.h"
+#include "grammar.h"
 #include "lexer.h"
 
+extern YY_DECL;
 
 /*
  * Call a builder method and detect and handle a Python exception being raised
@@ -25,19 +27,15 @@
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
     clean;                                                                      \
     if (target == NULL) {                                                       \
-        build_grammar_error_from_exception();                                   \
+        build_grammar_error_from_exception(scanner);                            \
         YYERROR;                                                                \
     }
 
-
-/* First line of reported file/line string. This is used as #line. */
-int yy_firstline;
-
-#define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
+#define FILE_LINE_ARGS  yyget_filename(scanner), ((yyloc).first_line + yyget_firstline(scanner))
 
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(void)
+void build_grammar_error_from_exception(yyscan_t scanner)
 {
     TRACE_ERROR("Grammar Builder Exception");
 
@@ -54,11 +52,9 @@ void build_grammar_error_from_exception(void)
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            pvalue, ptype, ptraceback);
-        Py_DECREF(ptype);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptraceback);
 
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
@@ -70,12 +66,16 @@ void build_grammar_error_from_exception(void)
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: No exception");
     }
+
+    Py_XDECREF(ptype);
+    Py_XDECREF(pvalue);
+    Py_XDECREF(ptraceback);
 }
 
 
 
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(char const* message)
+void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
@@ -84,7 +84,8 @@ void yyerror(char const* message)
     else {
         /* Register a syntax error with the builder. */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            message);
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -112,15 +113,13 @@ const char* getTokenName(int token);
 /*--------------------------------------------------------------------------------*/
 /* Bison Declarations */
 
-
 /* Options. */
 %defines
 %error-verbose
 %debug
-%pure-parser
 %locations
-/* %glr-parser */
-
+%define api.pure full
+%param {yyscan_t scanner}
 
 /* Collection of value types. */
 %union {
@@ -177,6 +176,7 @@ const char* getTokenName(int token);
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
+%token <pyobj> NONE        /* A None value (parsed as NULL) */
 %token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
@@ -239,7 +239,7 @@ const char* getTokenName(int token);
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
- * http://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
+ * https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
  */
 %left MINUS PLUS
 %left ASTERISK SLASH
@@ -249,7 +249,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 19
+%expect 17
 
 
 /*--------------------------------------------------------------------------------*/
@@ -282,10 +282,9 @@ eol : EOL
 /* Note: Technically we could have the lexer yield EOF and handle INDENT EOF and
    COMMENT EOF. However this is not necessary. */
 empty_line : EOL
-           | COMMENT EOL
-           | INDENT EOL
-           | INDENT
            | COMMENT
+           | INDENT
+           | SKIPPED
 
 /* FIXME: This needs be made more general, dealing with precedence.
    I just need this right now, so I'm putting it in, in a way that will.
@@ -428,6 +427,7 @@ key_value_value : STRING
                 | CURRENCY
                 | TAG
                 | BOOL
+                | NONE
                 | number_expr
                 | amount
                 {
@@ -443,6 +443,15 @@ posting_or_kv_list : empty
                    {
                        Py_INCREF(Py_None);
                        $$ = Py_None;
+                   }
+                   | posting_or_kv_list INDENT COMMENT EOL
+                   {
+                       $$ = $1;
+                   }
+                   | posting_or_kv_list INDENT tags_links EOL
+                   {
+                       BUILDY(DECREF2($1, $3),
+                              $$, "handle_list", "OO", $1, $3);
                    }
                    | posting_or_kv_list key_value_line
                    {
@@ -790,8 +799,7 @@ plugin : PLUGIN STRING eol
                   $$, "plugin", "siOO", FILE_LINE_ARGS, $2, $3);
        }
 
-directive : SKIPPED
-          | empty_line
+directive : empty_line
           | pushtag
           | poptag
           | pushmeta
@@ -888,6 +896,7 @@ const char* getTokenName(int token)
         case PUSHMETA  : return "PUSHMETA";
         case POPMETA   : return "POPMETA";
         case OPTION    : return "OPTION";
+        case PLUGIN    : return "PLUGIN";
         case DATE      : return "DATE";
         case ACCOUNT   : return "ACCOUNT";
         case CURRENCY  : return "CURRENCY";
@@ -896,6 +905,8 @@ const char* getTokenName(int token)
         case TAG       : return "TAG";
         case LINK      : return "LINK";
         case KEY       : return "KEY";
+        case BOOL      : return "BOOL";
+        case NONE      : return "NULL";
     }
-    return "INVALID_TOKEN";
+    return "<NO_STRING_TRANSLATION>";
 }

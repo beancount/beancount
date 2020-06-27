@@ -61,7 +61,7 @@ def format_dated_price_str(dprice):
 def parse_source_map(source_map_spec):
     """Parse a source map specification string.
 
-    Source map specifications allow the speification of multiple sources for
+    Source map specifications allow the specification of multiple sources for
     multiple quote currencies and follow the following syntax:
 
        <currency1>:<source1>,<source2>,... <currency2>:<source1>,...
@@ -72,7 +72,7 @@ def parse_source_map(source_map_spec):
 
     The <module> is resolved against the Python path, but first looked up under
     the package where the default price extractors lie. The presence of a '^'
-    character indicates that twe should use the inverse of the rate pull from
+    character indicates that we should use the inverse of the rate pull from
     this source.
 
     For example, for prices of AAPL in USD:
@@ -121,7 +121,7 @@ def parse_single_source(source):
     Raises:
       ValueError: If invalid.
     """
-    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\._]+)/(\^?)([a-zA-Z0-9:=_\-\.]+)$', source)
+    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\._]+)/(\^?)([a-zA-Z0-9:=_\-\.\(\)]+)$', source)
     if not match:
         raise ValueError('Invalid source name: "{}"'.format(source))
     short_module_name, invert, symbol = match.groups()
@@ -190,9 +190,9 @@ def find_currencies_declared(entries, date=None):
                 continue
             try:
                 source_map = parse_source_map(source_str)
-            except ValueError:
-                logging.warning("Ignoring currency with invalid 'price' source: %s",
-                                entry.currency)
+            except ValueError as exc:
+                logging.warning("Ignoring currency with invalid 'price' source: %s (%s)",
+                                entry.currency, exc)
             else:
                 for quote, psources in source_map.items():
                     currencies.append((entry.currency, quote, psources))
@@ -304,7 +304,7 @@ def find_balance_currencies(entries, date=None):
                 currencies_on_books.add(pos.units.currency)
 
     # Create currency pairs from the currencies which are on account balances.
-    # In order to figure out the the quote currencies, we use the list of price
+    # In order to figure out the quote currencies, we use the list of price
     # conversions until this date.
     converted = (find_currencies_converted(entries, date) |
                  find_currencies_priced(entries, date))

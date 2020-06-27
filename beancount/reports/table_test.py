@@ -17,7 +17,6 @@ class TestTable(unittest.TestCase):
         self.assertEqual(['A', 'A B', 'Aa Bb Cc'], attributes)
 
     def test_create_table(self):
-        # pylint: disable=invalid-name
         Tup = collections.namedtuple('Tup', 'country capital currency amount')
 
         tuples = [
@@ -141,3 +140,7 @@ class TestTable(unittest.TestCase):
         oss = io.StringIO()
         table.render_table(table_object, oss, 'html')
         self.assertTrue(oss.getvalue())
+
+
+if __name__ == '__main__':
+    unittest.main()

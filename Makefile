@@ -5,9 +5,9 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
-TOOLS=./etc
+TOOLS=./tools
 
-PYTHON=python3
+PYTHON?=python3
 
 all: build
 
@@ -24,8 +24,14 @@ clean:
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
+
+# See
+# https://www.owlfolio.org/possibly-useful/flex-input-scanner-rules-are-too-complicated/
+#LEX = flex -Ca
 LEX = flex
-YACC = bison --report=itemset --verbose
+
+# Note: -Wno-deprecated silences warnings about old directives from upgrading to 3.4.
+YACC = bison -Wno-deprecated --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
 
@@ -34,8 +40,23 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
 	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
+UNICODE_CATEGORY_RANGES_GENERATOR=$(TOOLS)/generate_unicode_category_regexps.py
+UNICODE_CATEGORY_DIR = $(CROOT)/lexer
+UNICODE_CATEGORIES = Lu Ll Lt Lo Nd Nl No
+UNICODE_CATEGORY_SOURCES = $(patsubst %, $(UNICODE_CATEGORY_DIR)/%.l, $(UNICODE_CATEGORIES))
+$(UNICODE_CATEGORY_SOURCES): $(UNICODE_CATEGORY_DIR)/%.l :
+	$(PYTHON) $(UNICODE_CATEGORY_RANGES_GENERATOR) \
+		--format=lex --name=UTF-8-$* --categories=$* >$@
+
+# Note that flex parses the files in the given order.
+#LEXER_SOURCES = $(UNICODE_CATEGORY_SOURCES) $(CROOT)/lexer.l
+#$(CROOT)/lexer.c $(CROOT)/lexer.h: $(LEXER_SOURCES) $(CROOT)/grammar.h
+#	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $(LEXER_SOURCES)
+#	patch -p1 < $(CROOT)/lexer.patch
+FLEX_VERSION=$(shell $(LEX) -V)
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
+
 
 SOURCES =					\
 	$(CROOT)/lexer.c			\
@@ -125,30 +146,22 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-
-# Push to github.
-github:
-	hg bookmark -r default master
-	hg push github
-
 # Bake a release.
 release:
 	$(PYTHON) setup.py register sdist upload
 
 
-# Run the unittests.
-NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	$(NOSE) -v -s beancount
+	$(PYTHON) -m pytest -v -s beancount examples
 
 qtest qtests quiet-test quiet-tests test tests:
-	$(NOSE) beancount
+	$(PYTHON) -m pytest beancount
 
-test-failed:
-	$(NOSE) --failed beancount
+test-last test-last-failed test-failed:
+	$(PYTHON) -m pytest --last-failed beancount
 
-nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x beancount
+test-naked:
+	PATH=/bin:/usr/bin PYTHONPATH= $(PYTHON) -m pytest -x beancount
 
 # Run the parser and measure its performance.
 .PHONY: check
@@ -222,10 +235,14 @@ LINT_SRCS =					\
 
 # Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
 #PYLINT = pylint
-PYLINT = python3.5 $(shell which pylint)
+PYLINT = python3 -m pylint
 
 pylint lint:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	ENABLE_AUTOIMPORTS= $(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+
+LINT_TESTS=useless-suppression,empty-docstring
+pylint-only:
+	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
@@ -247,3 +264,11 @@ sphinx sphinx_odt2rst:
 
 convert_test:
 	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
+
+# This does not work well; import errors just won't go away, it's slow, and it
+# seems you have to pregenerate all .pyi to do anything useful.
+pytype:
+	find $(PWD)/beancount -name '*.py' | parallel -j16  pytype --pythonpath=$(PWD) -o {}i {}
+
+pytype1:
+	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py

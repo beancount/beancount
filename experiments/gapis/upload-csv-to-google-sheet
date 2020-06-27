@@ -42,7 +42,8 @@ spreadsheet using a variant of this script. The CSV data format should be enough
 of a bridge for us to get our work done.
 
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import bisect

@@ -25,6 +25,7 @@ from beancount.reports import price_reports
 from beancount.reports import convert_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+from beancount.utils import version
 
 
 def get_all_reports():
@@ -61,7 +62,7 @@ def get_list_report_string(only_report=None):
         if only_report and only_report not in report_class.names:
             continue
 
-        # Get the texttual description.
+        # Get the textual description.
         description = textwrap.fill(
             re.sub(' +', ' ', ' '.join(report_class.__doc__.splitlines())),
             initial_indent="    ",
@@ -69,7 +70,7 @@ def get_list_report_string(only_report=None):
             width=80)
 
         # Get the report's arguments.
-        parser = argparse.ArgumentParser()
+        parser = version.ArgumentParser()
         report_ = report_class
         report_class.add_args(parser)
 
@@ -123,16 +124,16 @@ class ListFormatsAction(argparse.Action):
                              key=lambda fmt: self.format_order.get(fmt,
                                                                    self.format_order_last))
 
-        # Bulid a list of rows.
+        # Build a list of rows.
         rows = []
         for name, formats in matrix:
             xes = ['X' if fmt in formats else ''
                    for fmt in all_formats]
             rows.append([name] + xes)
 
-        # Build a description of the rows, a field specificaiton.
+        # Build a description of the rows, a field specification.
         header = ['Name'] + all_formats
-        field_spec = [(index, name) for index, name in enumerate(header)]
+        field_spec = list(enumerate(header))
 
         # Create and render an ASCII table.
         table_ = table.create_table(rows, field_spec)
@@ -142,7 +143,7 @@ class ListFormatsAction(argparse.Action):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('--help-reports', '--list-reports',
                         nargs='?',
@@ -254,6 +255,9 @@ def main():
                 sys.exit(1)
     else:
         print(get_list_report_string())
+
+    if errors:
+        sys.exit(1)
 
     return 0
 

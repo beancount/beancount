@@ -8,6 +8,7 @@ import os
 import logging
 import datetime
 import shutil
+import unittest
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
@@ -135,7 +136,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '{}\.ofxdownload\.ofx'.format(date))
+        self.assertRegex(dest_filename, r'{}\.ofxdownload\.ofx'.format(date))
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
@@ -150,7 +151,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '\d\d\d\d-\d\d-\d\d\.final\.ofx')
+        self.assertRegex(dest_filename, r'\d\d\d\d-\d\d-\d\d\.final\.ofx')
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
@@ -321,6 +322,8 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(args[1], 'SomeImporter')
         self.assertEqual(args[2], exc)
 
+    def tearDown(self): pass ## FIXME: remove
+
     def test_file(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(file.main, [
@@ -349,8 +352,13 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         filed_files = []
         for root, dirs, files in os.walk(self.tempdir):
             filed_files.extend(files)
-        self.assertEqual(4, len(filed_files))
+        self.assertEqual(5, len(filed_files))
         self.assertEqual(set(filed_files), set(['test.import',
                                                 'ofxdownload.ofx',
                                                 'bank.csv',
-                                                'readme.txt']))
+                                                'readme.txt',
+                                                'testimport.py']))
+
+
+if __name__ == '__main__':
+    unittest.main()

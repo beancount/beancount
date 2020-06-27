@@ -4,7 +4,6 @@ __license__ = "GNU GPLv2"
 import os
 import unittest
 import subprocess
-import shutil
 import tempfile
 from os import path
 
@@ -85,19 +84,25 @@ INPUT = """\
 """
 
 
-class TestEncryptedFiles(unittest.TestCase):
+class TestEncryptedBase(unittest.TestCase):
 
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
-        self.ringdir = path.join(self.tmpdir, 'keyring')
+        self.tmpdir = tempfile.TemporaryDirectory(prefix='beancount.')
+        self.ringdir = path.join(self.tmpdir.name, 'keyring')
         os.makedirs(self.ringdir)
         os.chmod(self.ringdir, 0o700)
 
-    def tearDown(self):
-        if path.exists(self.ringdir):
-            shutil.rmtree(self.ringdir)
+        # Import secret and public keys.
+        self.run_gpg('--import', stdin=TEST_PUBLIC_KEY.encode('ascii'))
+        self.run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
 
-    def _run_gpg(self, *args, **kw):
+    def tearDown(self):
+        try:
+            self.tmpdir.cleanup()
+        except FileNotFoundError:
+            pass  # Ignore those, GPG agent sometimes causes this problem.
+
+    def run_gpg(self, *args, **kw):
         command = ('gpg',
                    '--batch',
                    '--armor',
@@ -114,22 +119,28 @@ class TestEncryptedFiles(unittest.TestCase):
                                                                   err.decode('utf8')))
         return out.decode('utf8'), err.decode('utf8')
 
+    def encrypt_as_file(self, string, encrypted_filename):
+        # Encrypt the Beancount plaintext file with it.
+        out, err = self.run_gpg('--recipient', 'beancount-test', '--encrypt', '--output=-',
+                                stdin=string.encode('utf8'))
+        with open(encrypted_filename, 'w') as encfile:
+            encfile.write(out)
+
+
+class TestEncryptedFiles(TestEncryptedBase):
+
     @unittest.skipIf(not encryption.is_gpg_installed(), "gpg is not installed")
     def test_read_encrypted_file(self):
-        # Import secret and public keys.
-        self._run_gpg('--import', stdin=TEST_PUBLIC_KEY.encode('ascii'))
-        self._run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
-
-        # Encrypt the Beancount plaintext file with it.
-        out, err = self._run_gpg('--recipient', 'beancount-test', '--encrypt', '--output=-',
-                                 stdin=INPUT.encode('utf8'))
-        encrypted_file = path.join(self.tmpdir, 'test.beancount.asc')
-        with open(encrypted_file, 'w') as encfile:
-            encfile.write(out)
+        encrypted_file = path.join(self.tmpdir.name, 'test.beancount.asc')
+        self.encrypt_as_file(INPUT, encrypted_file)
 
         with test_utils.environ('GNUPGHOME', self.ringdir):
             plaintext = encryption.read_encrypted_file(encrypted_file)
             self.assertEqual(INPUT, plaintext)
+
+
+
+class TestEncryptedFilesCheck(unittest.TestCase):
 
     def test_is_encrypted_file(self):
         with tempfile.NamedTemporaryFile(suffix='.txt') as file:
@@ -152,3 +163,7 @@ class TestEncryptedFiles(unittest.TestCase):
             file.write(b'\n\n\n')
             file.flush()
             self.assertTrue(encryption.is_encrypted_file(file.name))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -9,11 +9,12 @@ __license__ = "GNU GPLv2"
 
 import copy
 import datetime
+import decimal
 import re
 import textwrap
-import warnings
+from decimal import Decimal
 
-from beancount.core.number import Decimal
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import amount
@@ -26,9 +27,34 @@ from beancount.core import getters
 from beancount.core import convert
 from beancount.core import prices
 from beancount.query import query_compile
+from beancount.utils.date_utils import parse_date_liberally
 
 
-# Non-agreggating functions. These functionals maintain no state.
+# Non-aggregating functions. These functionals maintain no state.
+
+class _Neg(query_compile.EvalFunction):
+    "Compute the negative value of the argument. This works on various types."
+    __intypes__ = None
+
+    def __init__(self, operands):
+        super().__init__(operands, self.__intypes__[0])
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return -args[0]
+
+class NegDecimal(_Neg):
+    __intypes__ = [Decimal]
+
+class NegAmount(_Neg):
+    __intypes__ = [amount.Amount]
+
+class NegPosition(_Neg):
+    __intypes__ = [position.Position]
+
+class NegInventory(_Neg):
+    __intypes__ = [inventory.Inventory]
+
 
 class AbsDecimal(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -62,6 +88,23 @@ class AbsInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         return abs(args[0])
+
+class SafeDiv(query_compile.EvalFunction):
+    "A division operation that swallows dbz exceptions and outputs 0 instead."
+    __intypes__ = [Decimal, Decimal]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        try:
+            return args[0] / args[1]
+        except (decimal.DivisionByZero, decimal.InvalidOperation):
+            return ZERO
+
+class SafeDivInt(SafeDiv):
+    __intypes__ = [Decimal, int]
 
 class Length(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -132,6 +175,18 @@ class YearMonth(query_compile.EvalFunction):
         args = self.eval_args(context)
         date = args[0]
         return datetime.date(date.year, date.month, 1)
+
+class Quarter(query_compile.EvalFunction):
+    "Extract the quarter from a date."
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        date = args[0]
+        return '{:04d}-Q{:1d}'.format(date.year, (date.month-1)//3+1)
 
 class Day(query_compile.EvalFunction):
     "Extract the day from a date."
@@ -215,6 +270,32 @@ class Grep(query_compile.EvalFunction):
         if match:
             return match.group(0)
 
+class GrepN(query_compile.EvalFunction):
+    "Match a pattern with subgroups against a string and return the subgroup at the index"
+    __intypes__ = [str, str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        match = re.search(args[0], args[1])
+        if match:
+            return match.group(args[2])
+
+class Subst(query_compile.EvalFunction):
+    "Substitute leftmost non-overlapping occurrences of pattern by replacement."
+    __intypes__ = [str, str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return re.sub(args[0], args[1], args[2])
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -224,7 +305,7 @@ class OpenDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        open_entry, close_entry = context.open_close_map[args[0]]
+        open_entry, _ = context.open_close_map[args[0]]
         return open_entry.date if open_entry else None
 
 class CloseDate(query_compile.EvalFunction):
@@ -236,7 +317,7 @@ class CloseDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        close_entry, close_entry = context.open_close_map[args[0]]
+        _, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
 class Meta(query_compile.EvalFunction):
@@ -314,7 +395,21 @@ class AccountSortKey(query_compile.EvalFunction):
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
 
-class CommodityMeta(query_compile.EvalFunction):
+# Note: Don't provide this, because polymorphic multiplication on Amount,
+# Position, Inventory isn't supported yet.
+#
+# class AccountSign(query_compile.EvalFunction):
+#     "Produce a +1 / -1 signed value to multiply with to correct balances."
+#     __intypes__ = [str]
+#
+#     def __init__(self, operands):
+#         super().__init__(operands, Decimal)
+#
+#     def __call__(self, context):
+#         args = self.eval_args(context)
+#         return Decimal(account_types.get_account_sign(args[0], context.account_types))
+
+class CurrencyMeta(query_compile.EvalFunction):
     "Get the metadata dict of the commodity directive of the currency."
     __intypes__ = [str]
 
@@ -633,12 +728,136 @@ class FilterCurrencyInventory(query_compile.EvalFunction):
                                    if pos.units.currency == currency)
 
 
+class PosSignDecimal(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [Decimal, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        num, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return num if sign >= 0  else -num
+
+class PosSignAmount(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [amount.Amount, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        amt, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return amt if sign >= 0  else -amt
+
+class PosSignPosition(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [position.Position, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return pos if sign >= 0  else -pos
+
+class PosSignInventory(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [inventory.Inventory, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return inv if sign >= 0  else -inv
+
+class Coalesce(query_compile.EvalFunction):
+    "Return the first non-null argument"
+    __intypes__ = [object, object]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        for arg in args:
+            if arg is not None:
+                return arg
+        return None
+
+class Date(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [int, int, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        year, month, day = args
+        return datetime.date(year, month, day)
+
+class ParseDate(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return parse_date_liberally(args[0])
+
+
+class DateDiff(query_compile.EvalFunction):
+    "Calculates the difference (in days) between two dates"
+    __intypes__ = [datetime.date, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return (args[0] - args[1]).days
+
+
+class DateAdd(query_compile.EvalFunction):
+    "Adds/subtracts number of days from the given date"
+    __intypes__ = [datetime.date, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return args[0] + datetime.timedelta(days=args[1])
+
+
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
+    ('neg', Decimal)                                     : NegDecimal,
+    ('neg', amount.Amount)                               : NegAmount,
+    ('neg', position.Position)                           : NegPosition,
+    ('neg', inventory.Inventory)                         : NegInventory,
     ('abs', Decimal)                                     : AbsDecimal,
     ('abs', position.Position)                           : AbsPosition,
     ('abs', inventory.Inventory)                         : AbsInventory,
+    ('safediv', Decimal, Decimal)                        : SafeDiv,
+    ('safediv', Decimal, int)                            : SafeDivInt,
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,
@@ -646,13 +865,16 @@ SIMPLE_FUNCTIONS = {
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
     'grep'                                               : Grep,
+    'grepn'                                              : GrepN,
+    'subst'                                              : Subst,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,
     'entry_meta'                                         : EntryMeta,
     'any_meta'                                           : AnyMeta,
     'open_meta'                                          : OpenMeta,
-    'commodity_meta'                                     : CommodityMeta,
+    'currency_meta'                                      : CurrencyMeta,
+    'commodity_meta'                                     : CurrencyMeta,  # Redundant.
     'account_sortkey'                                    : AccountSortKey,
     ('units', position.Position)                         : UnitsPosition,
     ('units', inventory.Inventory)                       : UnitsInventory,
@@ -661,9 +883,14 @@ SIMPLE_FUNCTIONS = {
     'year'                                               : Year,
     'month'                                              : Month,
     'ymonth'                                             : YearMonth,
+    'quarter'                                            : Quarter,
     'day'                                                : Day,
     'weekday'                                            : Weekday,
     'today'                                              : Today,
+    ('date', int, int, int)                              : Date,
+    ('date', str)                                        : ParseDate,
+    'date_diff'                                          : DateDiff,
+    'date_add'                                           : DateAdd,
     ('convert', amount.Amount, str)                      : ConvertAmount,
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,
@@ -678,9 +905,15 @@ SIMPLE_FUNCTIONS = {
     ('getprice', str, str, datetime.date)                : PriceWithDate,
     'number'                                             : Number,
     'currency'                                           : Currency,
+    'commodity'                                          : Currency,  # Redundant.
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,
+    ('possign', Decimal, str)                            : PosSignDecimal,
+    ('possign', amount.Amount, str)                      : PosSignAmount,
+    ('possign', position.Position, str)                  : PosSignPosition,
+    ('possign', inventory.Inventory, str)                : PosSignInventory,
+    'coalesce'                                           : Coalesce,
 
     # FIXME: 'only' should be removed.
     'only'                                               : OnlyInventory,
@@ -879,8 +1112,8 @@ class IdEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return hash_entry(entry)
+    def __call__(self, context):
+        return hash_entry(context.entry)
 
 class TypeEntryColumn(query_compile.EvalColumn):
     "The data type of the directive."
@@ -889,8 +1122,8 @@ class TypeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return type(entry).__name__.lower()
+    def __call__(self, context):
+        return type(context.entry).__name__.lower()
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
@@ -900,8 +1133,8 @@ class FilenameEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return entry.meta["filename"]
+    def __call__(self, context):
+        return context.entry.meta["filename"]
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
@@ -911,8 +1144,8 @@ class LineNoEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.meta["lineno"]
+    def __call__(self, context):
+        return context.entry.meta["lineno"]
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -922,8 +1155,8 @@ class DateEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
-    def __call__(self, entry):
-        return entry.date
+    def __call__(self, context):
+        return context.entry.date
 
 class YearEntryColumn(query_compile.EvalColumn):
     "The year of the date of the directive."
@@ -933,8 +1166,8 @@ class YearEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.year
+    def __call__(self, context):
+        return context.entry.date.year
 
 class MonthEntryColumn(query_compile.EvalColumn):
     "The month of the date of the directive."
@@ -944,8 +1177,8 @@ class MonthEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.month
+    def __call__(self, context):
+        return context.entry.date.month
 
 class DayEntryColumn(query_compile.EvalColumn):
     "The day of the date of the directive."
@@ -955,8 +1188,8 @@ class DayEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.day
+    def __call__(self, context):
+        return context.entry.date.day
 
 class FlagEntryColumn(query_compile.EvalColumn):
     "The flag the transaction."
@@ -966,9 +1199,9 @@ class FlagEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.flag
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.flag
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class PayeeEntryColumn(query_compile.EvalColumn):
@@ -979,9 +1212,9 @@ class PayeeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.payee or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.payee or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class NarrationEntryColumn(query_compile.EvalColumn):
@@ -992,9 +1225,9 @@ class NarrationEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.narration or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.narration or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 # This is convenient, because many times the payee is empty and using a
@@ -1006,9 +1239,10 @@ class DescriptionEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (' | '.join(filter(None, [entry.payee, entry.narration]))
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (' | '.join(filter(None, [context.entry.payee,
+                                         context.entry.narration]))
+                if isinstance(context.entry, Transaction)
                 else None)
 
 
@@ -1023,9 +1257,9 @@ class TagsEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.tags or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.tags or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 class LinksEntryColumn(query_compile.EvalColumn):
@@ -1036,9 +1270,9 @@ class LinksEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.links or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.links or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 
@@ -1051,10 +1285,10 @@ class MatchAccount(query_compile.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, bool)
 
-    def __call__(self, entry):
-        pattern = self.eval_args(entry)[0]
+    def __call__(self, context):
+        pattern = self.eval_args(context)[0]
         search = re.compile(pattern, re.IGNORECASE).search
-        return any(search(account) for account in getters.get_entry_accounts(entry))
+        return any(search(account) for account in getters.get_entry_accounts(context.entry))
 
 
 # Functions defined only on entries.
@@ -1290,7 +1524,7 @@ class AccountColumn(query_compile.EvalColumn):
         return context.posting.account
 
 class OtherAccountsColumn(query_compile.EvalColumn):
-    "The list of other accounts in the transcation, excluding that of this posting."
+    "The list of other accounts in the transaction, excluding that of this posting."
     __intypes__ = [data.Posting]
 
     def __init__(self):

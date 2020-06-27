@@ -190,7 +190,7 @@ class TestReturnsFunctions(test_utils.TestCase):
 
 class TestReturnsPeriods(test_utils.TestCase):
 
-    # Ensure that prelude and epiloge periods are correctly found and returned.
+    # Ensure that prelude and epilogue periods are correctly found and returned.
     @loader.load_doc()
     def test_segment_periods(self, entries, errors, options_map):
         """
@@ -891,3 +891,7 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         returns_, dates = returns.compute_timeline_and_returns(
             new_entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)
+
+
+if __name__ == '__main__':
+    unittest.main()

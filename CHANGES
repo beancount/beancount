@@ -1,7 +1,890 @@
 ========================
    beancount: CHANGES
 ========================
-Note: This file contains only changes in the 'default' branch.
+Note: This file contains a list changes in the 'master' branch.
+
+
+2020-06-27
+
+  - Merged #484, some parser improvements by dnicolodi@.
+
+
+2020-06-26
+
+  - Merged #480 - parser: Read input data from Python file objects by dnicolodi.
+
+
+2020-06-10
+
+  - Released 2.3.0. See #459.
+
+
+2020-06-03
+
+ - Added a 'hooks' argument to beancount.ingest.scripts_utils.ingest() replacing
+   'detect_duplicates_func'. 'find_duplicate_entries()' is still inserted if no
+   other filter functions are specified (I'd like to remove this eventually; not
+   changing behavior here for now.)
+ - Added an example for how to run the importers explictly via a Python script
+   calling the ingest() function.
+ - Fixed bug with explicit invocation of importers via ingest() function when
+   calling the 'file' sub command.
+ - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjusted
+   ingestion example scripts.
+
+
+2020-06-02
+
+ - Modified recently added --no-cache option to also delete the cache if it
+   exists. Honor the same environment variables. The motivation behind this
+   change is that while --no-cache is useful for debugging plugins, it can be
+   disconcerting that if you remove it on the next run it picks up the old
+   existing cache. Deleting it on usage of --no-cache is reasonable behavior and
+   avoids the introduction of a --clear-cache option; this should be sufficient.
+
+
+2020-05-25
+
+ - Fixed #449: Added options to bean-check: --no-cache and --cache-filename to
+   override the cache location. These are added to bean-check only and are
+   useful during development. The 'BEANCOUNT_DISABLE_LOAD_CACHE' and
+   'BEANCOUNT_LOAD_CACHE_FILENAME' environment variables are still honored by
+   the loader and work across all other programs.
+
+
+2020-05-23
+
+ - Fixed #184: Added explicit test for Inventory.average().
+ - Fixed #404: Iex price source not working any more.
+ - Fixed #281: Query "id" column does not identify transactions uniquely. Made
+   the default hash_entry() function include metadata. Exclude metadata and
+   derived fields explicitly in the context of comparison.
+ - Fixed #182: Eliding an amount with total price raises TypeError.
+ - Added options to filter accounts in "onecommodity" plugin: skip accounts with
+   explicitly declared commodities, metadata of "onecommodity: FALSE" and added
+   regular expression to specify the list of accounts to match (default: all).
+
+
+2020-05-22
+
+ - Migration of code repository to Github.
+
+
+2020-05-02
+
+ - Minor performance improvment by avoiding calling __iadd__ in a few places.
+ - Fixed bug due to the removal of __version__ in apiclient:
+   https://github.com/googleapis/google-api-python-client/commit/1d8ec6874e1c6081893de7cd7cbc86d1f6580320
+ - Changes all imports from 'apiclient' to 'googleapiclient', which is now the
+   recommended way.
+ - Fixed some warnings.
+ - Disabled expensive assertions in Inventory class and implemented a special
+   case for adding to an empty inventory to avoid expensive aggregation. This
+   can occur in aggregation loops and is unnecessarily expensive when adding a
+   single, very large inventory.
+ - Made balance check aggregation avoid an initial empty inventory object, and
+   changed the balance check code to call the realization utility function
+   compute_balance().
+
+
+2020-04-11
+
+ - Fixed #425: Tentative bug fix for crash on decref over null traceback. The
+   Python API for this function may return some null values. Not taking any
+   chances. This should fix this particular bug.
+
+
+2020-03-28
+
+  - Allow the "divert_expenses" plugin to override diversions on postings that
+    aren't for expenses accounts. I needed this to account to a deposit to my
+    kid's daycare, which is an asset account in his diverted ledger.
+
+
+2020-03-22
+
+  - Added docstrings on some import code (while installing a new importer; my
+    stuff is sometimes poorly documented I'm afraid).
+
+
+2020-02-23
+
+  - Added new features to the CSV importer:
+    * A new 'invert_sign' option to invert the sign of the amount.
+    * A new field, 'CATEGORY', which goes unrendered.
+    * Replace newlines from all narrations by semi-colons.
+    These were driven by recent changes to the Amex CSV format.
+
+
+2019-12-29
+
+ - Added a CSV field for a unique reference number. If present, this is set as a
+   link on the transaction.
+
+
+2019-12-25
+
+ - Applied patch from Daniele Nicolodi
+   (https://bitbucket.org/blais/beancount/pull-requests/139/parser-work-around-python38-bug-causing-a)
+   to work around typing constraints around signed size types introduced in
+   Python 3.8. See also https://bugs.python.org/issue38913.
+
+ - Fixed bug with running python3 as a subprocess during testing. Fixes an error
+   that occurs with the tutorial file generation.
+
+
+2019-11-29
+
+ - Added 'encoding' option to CSV importer. Amex encodes as 'latin1', not
+   'utf-8' and this turned out to be necessary.
+
+
+2019-11-10
+
+ - Added an option to upload-to-sheets script to apply a minimum to the number
+   of rows resized to. The problem was I had another sheet longer than the
+   auto-updated data sheet, and when new rows were being inserted, rows in the
+   referencing sheet were being incremented automatically to refer to the now
+   displaced previous rows in the updated data sheet (even if they used to refer
+   to rows after the last row in the data sheet). Avoid resizing in the number
+   of rows up or down sheet should avoid most of these problems (except when at
+   the boundary, but then the minimum number of rows could just be increased).
+   This is quick fix that should work in the medium term.
+
+
+
+2019-10-20
+
+ - More changes to unittest while porting to Bazel build (for C++ support).
+
+
+2019-10-11
+
+ - Added __main__ block to all tests because ongoing port to Bazel build
+   requires it.
+
+
+2019-10-10
+
+ - Moved test data for b.utils.file_type for Bazel support. It otherwise assumes
+   file_type.py is a package.
+
+
+2019-08-21
+
+ - Released 2.2.3.
+ - Fixed bug in split_expenses plugin.
+
+
+2019-06-01
+
+  - Upgraded Bison to 3.4 (built from source). Silenced warnings.
+
+
+2019-05-01
+
+ - Fixed #389: Patch for b.p.forecast improvements.
+
+ - Added rolled back change to default value of flag used when using the 'txn'
+   syntax. See issue #295 for a discussion.
+
+
+2019-03-16
+
+  - Had a very quick shot at implementing trade tracking, added the list of
+    matches positions from the booking methods. This doesn't work yet, I need to
+    make changes to b.c.Inventory in order to make this work. Partial
+    changelist.
+
+
+2019-03-03
+
+  - Fixed #378: Rendering metadata with null values wasn't properly implemented.
+    In the process, I explicit parsing of None values by allowing "NULL".
+
+  - Fixed #309: Catch PermissionError to work around
+    https://bugs.python.org/issue25481.
+
+
+2019-02-27
+
+  - Implemented a quick prototype of the current trading accounts method of
+    Peter Selinger in 'beancount.plugins.currency_accounts'. A few warts remain:
+
+    * FIXME: We need to handle these important cases (they're not frivolous,
+      this is a prototype), probably by inserting some exceptions with
+      collaborating code in the booking (e.g. insert some metadata that
+      disables price conversions on those postings).
+
+    * FIXME(2): Ouch! Some of the residual seeps through here, where there
+      are more than a single currency block. This needs fixing too. You can
+      easily mitigate some of this to some extent, by excluding transactions
+      which don't have any price conversion in them.
+
+
+2019-02-26
+
+  - Fixed #376: Coerce implicit boolean to true boolean.
+
+
+2019-02-10
+
+  - Fixed #374: Option --all treatment was broken in #210. Also catch and print
+    errors.
+
+  - Fixed rare failure of shutil.rmtree() in encryption cleanup test.
+
+
+2019-02-03
+
+  - Fixed #372: Removed formatted string literal to keep compat with Python 3.5.
+
+
+2019-01-29
+
+  - Fixed #362: Predicate matching a parent account was matching accounts with
+    word breaks but not at the boundary of an account name. This was causing
+    a rare (but important) failure in how Pad balances were calculated.
+
+
+2019-01-28
+
+  - Released 2.2.1 for bug fixes.
+
+
+2019-01-25
+
+  - Improve output of tags and links for bean-report ledger and hledger.
+
+
+2019-01-22
+
+  - Fixed problem with invalid format strings with 0-width field when rendering
+    MISSING.
+
+
+2019-01-05
+
+  - Merged pull request #85
+    (https://bitbucket.org/blais/beancount/pull-requests/85) from hardikar,
+    adding function grepn() to the shell.
+
+  - Merged pull request #86
+    (https://bitbucket.org/blais/beancount/pull-requests/86) from hardikar,
+    adding function subst() to the shell.
+
+  - Merged pull request #89
+    (https://bitbucket.org/blais/beancount/pull-requests/89) from hardikar,
+    adding functions date_diff(), date_add() to the shell.
+
+  - Implemented best compression for zipfile in bean-bake as per Justus
+    Pendleton's suggestion. For context, see this:
+    https://groups.google.com/d/msgid/beancount/de75671d-532a-4deb-bd0f-fd9377e63753%40googlegroups.com?utm_medium=email&utm_source=footer
+
+
+2018-12-18
+
+  - Fixed #214: Add directory of current filename to sys.path with new option
+    "insert_pythonpath". When this option is encountered in a file, we prepend
+    the path of the file in which it is encountered at the front of the
+    PYTHONPATH for the rest of the duration of the problem (we could consider
+    resetting this after parsing and processing the plugins; not doing it now).
+
+  - Added detection of hitting the root if the search for the repository root
+    failed.
+
+  - Fixed #341: find_repository_root() fails on source tarball. Renamed PKGINFO
+    to PKG-INFO to match what pip sdist produces.
+
+  - Change version number from 2.2.0-devel to 2.2.0-dev which apparently is
+    recognized by pip (thanks Jakob Schnitzer).
+    https://bitbucket.org/blais/beancount/pull-requests/91/default/diff#comment-85707662
+
+
+2018-12-12
+
+  - Suppressed almost all the Python 3.8 warnings.
+
+
+2018-11-16
+
+  - Added more logging in loader (done while debugging something else).
+
+
+2018-10-26
+
+  - Fixed #302: Fixed second bug with font-locking for account names (starting
+    with digit).
+
+  - Fixed bug ingest that would cause relative filenames to fail.
+    See this thread for details:
+    https://groups.google.com/d/msgid/beancount/709141d5-88a4-444a-acef-94bf43a9b388%40googlegroups.com?utm_medium=email&utm_source=footer
+
+  - Fixed bug in ingest whereby the custom duplicates detection function wasn't
+    being called.
+
+
+2018-10-25
+
+  - Fixed unit test failure on BitBucket pipelines using a temp directory
+    context manager.
+
+  - Applied PR by Richard W to install the mixins package (install was broken).
+
+  - Fixed #302: beancount.el does not fontify account names with single letter
+    components (based on bug report by arianaut@).
+
+
+2018-10-13
+
+  - Fixed #158: Missing MIME type for QFX files.
+
+
+2018-10-04
+
+  - Merged new_ingest_mixins: Added new implementations of mixins for ingestion:
+
+    * beancount.ingest.importers.mixins.identifier which implements identify().
+    * beancount.ingest.importers.mixins.filing which implements file_account()
+      and file_name().
+    * beancount.ingest.importers.mixins.config which implement a simple schema
+      with a configuration.
+
+    These new mixins are intended to be more independent and more easily
+    composable than the older ones. The beancount.ingest.importers.regexp has
+    been removed. If you need it in interim, I made a copy under
+    experiments/ingest/regexp.py.
+
+
+* Version: 2.1.3
+
+2018-10-04
+
+  - Fixed #323: Escape strings in printer.
+
+  - Minor bug fix for beancount.prices.price on null result.
+
+
+2018-09-19
+
+  - Removed TRUNCATE(), after realizing ROOT() can already do the same thing.
+
+
+2018-09-18
+
+  - Added TRUNCATE() function to SQL shell for Vikas Rawal.
+
+
+2018-09-03
+
+  - Added a parameter to the cmptest assertions to disable real booking and
+    allow a weak local form of booking conversion that allows interpolation.
+    (I'm using this in another project to assert some incomplete transactions.)
+
+
+2018-08-30
+
+  - Made assertions on entries off of the TestCase class, as free functions (so
+    that they can be used in another project).
+
+
+2018-08-26
+
+  - Fixed tests for pipeline running pytest (somehow the curses functions fail,
+    probably due to better environment isolation from pytest).
+
+  - Implementation of beancount.ingest.regression_pytest, a pytest replacement
+    for beancount.ingest.regression, which was for nose. This is simpler and
+    better and more straightforward (no conditionals; all regression files must
+    have all accompanying expect files and all must pass). See the module
+    docstring for new instructions on how to use this.
+
+    This should not break the older tests, as I haven't changed the older
+    support. It (beancount.ingest.regression) will be removed eventually.
+
+    (This completes porting Beancount to use pytest instead of nosetests.)
+
+
+2018-08-25
+
+  - Today we're switching to pytest as the official test runner. All the tests
+    pass, and it even runs faster. It's about time!
+
+  - Removed all references and workaround to nose.
+
+
+2018-08-23
+
+  - Oops... removing forgotten trace in bean-web.
+
+  - Fixed #325: Implemented support for including encrypted files (for Milind Kamble
+    and using some of this changes).
+
+
+2018-08-17
+
+  - Added 'issuer' column to the export script. I'm going to use this to produce
+    a deaggregated list of exposure to individual stocks from a list of ETFs.
+
+
+2018-08-25
+
+  - Upgrade requirement to bison-3.0.5 for development.
+
+
+2018-08-12
+
+  - After many years of using something like it to track my investment portfolio
+    using a Google Sheets doc, I cleaned up, rewrote and move the asset list
+    exporting script to beancount.projects.export and deleted the old version
+    under experiments/upload.
+
+
+2018-08-05
+
+  - Fixed #322: Adjustments to StopIteration treatment from within generators
+    were breaking bean-example generation code.
+
+  - Implemented a new plugin which asserts that on accounts with 'NONE' booking
+    method reducing postings' cost basis is within the vicinity of the average
+    cost basis in the account. This allows you to approximate the 'AVERAGE'
+    booking method avoid too much cost basis leakage until it's implemented
+    properly.
+
+
+2018-08-02
+
+  - Created a new 'commodity_attr' plugin to asset the presence and validity
+    (in a set, like an enum) of metadata attributes on Commodity directives.
+
+    I export my holdings joined to a table of per-Commodity attributes and I've
+    made a mistake this week that ended up showing up as an overestimated
+    portfolio value on my portfolio tracking Google Sheets doc.
+
+
+2018-07-31
+
+  - Fixed bug in new ingest() function found as I refactored my importers.
+
+  - Fixed bug with the pipeline making sure to set the CWD of the subprocess
+    when we run an import test.
+
+  - Fixed bug with previous commit containing stray 'string' reference. (My
+    environment has autoimports by default.)
+
+  - Implemented a beancount.ingest.scripts_utils.ingest() function that will act
+    as a main program, so you can write your own importer scripts from top to
+    bottom without having to rely on bean-identiy, bean-extract or bean-file.
+
+    The purpose of this change was to allow the user to insert an optional
+    argument 'detect_duplicates_func' in order to implement their own duplicates
+    detection. See discussion under
+    https://bitbucket.org/blais/beancount/pull-requests/75/. In order to install
+    your duplicates detector, just call ingest at the end of your importer
+    script, like this:
+
+      my_importers = [ ... ]
+      ingest(my_importers, my_duplicates_func)
+
+    I could have chosen to add a "hook" option and such to Beancount, but I
+    preferred moving the whole import framework one level closer to code. I also
+    like that it's not just an imported module; it's really just your script,
+    with three subcommands. You could add more custom import-level stuff in
+    there. The ingest() function is a main program, and commands like
+
+      bean-extract myimporters.py ~/Downloads --reverse -e myledger.beancount
+
+    are invoked similarly by calling the Python script directly, like this:
+
+      ./myimporters.py -d ~/Downloads extract --reverse -e myledger.beancount
+
+    These two should be equivalent.
+
+    The older way of doing things--that is, calling bean-identify, bean-extract
+    and bean-file--are still supported regardless of whether you've inserted a
+    call to ingest() in your importers configuration or not. This is made to
+    work via a rather labyrinthine trampoline of functions calls (in particular,
+    getting the arguments setup right was surprisingly tricky).
+
+    I'm still debating whether this should be "the new way", or just for those
+    wishing to build their own duplicate detection heuristic. Feedback (on the
+    list) would be interesting.
+
+
+2018-07-29
+
+  - Updated to flex-2.6.4.
+
+
+2018-07-28
+
+  - Added a utility to import modules by dotted string name.
+
+
+2018-07-19
+
+  * Fixed #319: Incorrect version number from 2.1.2-devel to 2.1.3-devel.
+
+
+2018-07-28
+
+  - Added automated unit test for calling identify() from the importers test
+    suite, expecting True, always.
+
+
+2018-05-31
+
+  - Created a new plugin: "fill_account" to automatically insert a posting with
+    a default account name where there's a single posting. Will use this while
+    traveling as a lot of the expenses come from cash; this should significantly
+    shorten such files.
+
+  - Changed template for version number from {date|short} to {date(date, "%s%)}
+    as per discussion on #304 (thanks to Jason Chu for looking up the detail for
+    this).
+
+
+2018-05-29
+
+  - Refactored the call to find duplicates in imported files so that it can be
+    called only once with all the results from all the importers. This should
+    eventually allow a user-provided function that can merge entries between
+    importers. Existing behavior should be unaffected (though there may be a
+    small delay until everything gets printed out; all the importers are invoked
+    before any output is written). See #298.
+
+
+2018-05-28
+
+  - Fixed bug with tempdir being a symlink on Mac, which was making one test
+    fail.
+
+  - Fixed unit tests which failed due to timestamps getting rendered with an
+    offset on a Mac while on a train in Japan.
+
+  - Render tags and links on Document directive.
+
+  - Minor bug fix: don't fail on rendering a MISSING instnace.
+
+  - In 'divert_expenses' plugin, allow limiting diversions to one posting only.
+
+  - Fixed unit test for git checkouts. This should fix the Travis-CI build.
+
+
+* Version: 2.1.2
+
+2018-05-12
+
+  - Fixed setup.py to catch exceptions in the absence of git as well.
+
+
+* Version: 2.1.1
+
+2018-05-12
+
+  - Fixed installation with missing version string.
+
+
+* Version: 2.1.0
+
+2018-05-12
+
+  - Added back lexer test from Adrian Medrano Calvo's UTF8 changes to head.
+
+
+2018-05-08
+
+  - Fixed #287: In the price fetcher, store the datetime instances as
+    naive-in-UTC in order to avoid a serialization problem with older Python
+    versions.
+
+
+2018-05-06
+
+  - Changes to support git versioning if hg versioning is not available.
+
+
+2018-05-05
+
+  - Fixed #289: Add option to find beancount version. All scripts now support
+    --version.
+
+  - Amended PR64 to remove the need for __getitem__(). Clarified docstring.
+
+  - Merged PR64 from Jakob Schnitzer: Inventory: use dict instead of list as a
+    base.
+
+
+2018-05-04
+
+  - Fixed #290: Validation of account name components was incorrectly swapped.
+
+
+2018-05-03
+
+  - Amended PR74: Adding a new unit test, fail if tags / link appear after the
+    first posting. Performance amendment to tags/links and clarification to the
+    freezing of tags & links and their default values.
+
+  - Merged PR74 / Fixed #99: Allow tags and links to be spread over several
+    lines.
+
+  - Amended PR14: added simple unit testing for regexp, changes in parsing UTF-8
+    account type to match changes in Beancount head.
+
+  - Merged PR14 by Adrian Medrano Calvo: Support account names to consist of
+    Unicode letters and numbers.
+
+2018-05-02
+
+  - Removed a few accidental __author__ metadatas from files, normalized to
+    __copyright__ as all other files.
+
+
+2018-05-01
+
+  - Added patch for clean build for lexer. 2.6.1 results in a build warning.
+
+  - Merged PR73 (Ethan Glasser-Camp) - Cleanups to lexer and more restrictive
+    syntax for comments within a transaction's indented block.
+
+  - Fixed failing test re. new grammar.
+
+  - Merged PR29: Update grammar to allow comments in the middle of transactions
+    (Ethan Glasser-Camp).
+
+  - Merged PR71: Use enhanced extract method which passes existing entries
+    (Patrick Ruckstuhl).
+
+
+2018-04-29
+
+  - Added polymorphic POSSIGN(_, account) function to the SQL shell in order to
+    support correcting for per-account sign.
+
+  - Implemented polymorphic NEG() function in the SQL shell, which works on
+    instances of Decimal, Amount, Position, Inventory.
+
+  - Changed the SQL shell's operators to dispatch to Python's default operator
+    selection instead of coercing to Decimal instances.
+
+
+2018-04-28
+
+  - Added QUARTER() function to the SQL shell.
+    (See https://groups.google.com/d/msg/beancount/fTlSnQRPayo/1yN8zd76AAAJ.)
+
+  - Updated version of flex on Ubuntu (2.6.1) generates warnings. Fixed a few.
+    But Beancount now fails on account names with a dash in them; added a test
+    for those. (The lexer is not the issue; I suspect a bison update from 4/17.)
+
+
+2018-04-18
+
+  - Fixed #157: Building a price map with zero prices should not fail,
+    especially when done accidentally.
+
+  - Fixed #264: Converted zip compression in bake from using an external zip
+    tool to using the 'zipfile' module packaged with Python. I'm doing this to
+    fix the CI build as well.
+
+
+2018-04-17
+
+  - Fixed #265: Refined the timezone specification of the price sources. In
+    doing this, I documented it in the beancount.prices.source module and now
+    pass in a timezone-aware datetime instance instead of a date, and the source
+    is now required to also require a timezone-aware datetime instance. I fixed
+    all the tests, and added a utility to simulate running them from different
+    timezones.
+
+  - Implemented multi-file support for bean-doctor context command. Use it like
+    this:
+
+      bean-doctor context <toplevel.beancount> <file.beancount>:<lineno>
+
+    The previous syntax is still supported; like this:
+
+      bean-doctor context <toplevel.beancount> <lineno>
+
+
+2018-04-05
+
+  - Since I added a dependency on 'requests', forgot to add to checkdeps. Done.
+
+
+2018-04-04
+
+  - Handle error on an invalid implementation of a price source (e.g., in this
+    case an obsoleted price source string of 'google' imports something else and
+    referenceing .Source fails).
+
+  - Bubble up error from Yahoo price source.
+
+  - Fixed #267: Implemented a price source from the IEX exchange.
+
+
+2018-04-03
+
+  - Implemented Quandl importer on its REST API. Another implementation, based
+    on the Quandl Python client API was proposed by Hugo Ideler (see PR34), but
+    I didn't want to add a dependency on the client library (nor on Pandas), and
+    after reading the description on Quandl API's website, I figured the library
+    was simple enough the output could be parsed directly. I wrote a new
+    implementation from scratch, parsing just the time-series datasets.
+
+  - Merged PR68 from Martin Michlmayr, added Travis Yaml support file.
+
+  - Fixed Emacs functionality to uncomment regions (change submitted by Stefan
+    Monnier on the list).
+
+
+2018-04-02
+
+  - Fixed #193: Removed the broken Google Finance price source importer. Google
+    has removed this service in the favor of a special Search page and this has
+    been broken for the recent little while.
+
+  - Fixed #203: Updated the Yahoo price source implementation to use the
+    undocumented v7 and v8 APIs; moved away from the "ichart" and "download"
+    APIs. The Yahoo importer is back in function.
+
+    This introduced a new dependency on the awesome 'requests' library, which
+    really, was quite inevitable).
+
+
+2018-04-01
+
+  - Merged PR65: Use parse_version to compare versions; then replicated
+    parse_version() locally to avoid the dependency on setuptools.
+
+  - Merged PR15 by Johannes Harms:
+    Added the following features to the forecasting plugin:
+    - Yearly repetition of recurring transactions (instead of just monthly)
+    - Users may optionally specify an end date
+    - Users may optionally specify the number of repetitions
+    "I used this code to calculate scenarios for a possible real estate purchase
+    and I contribute a cleaned-up version as an example file."
+
+  - Merged PR54 & Fixed #232: Align quoted commodities correctly in ledger price
+    statements (from Martin Michlmayr).
+
+  - Merged PR57: query_execute: Allow ordering by columns which may be None
+    (from Jakob Schnitzer). Made some adjustments to generalize on all
+    datatypes.
+
+  - Merged PR62: Also allow 0/0 in SAFEDIV() (from Jakob Schnitzer), with small
+    adjustments to catch only the specific invalid operations on Decimal.
+
+  - Merged PR64 from yagebu@ (Jakob Schnitzer), which makes the Inventory class
+    rely on the fact that Position is immutable in order to avoid unnecessary
+    copies. This yields an 18% speedup with no difference.
+
+  - Removed unused and invalid mutating method Position.set_units(). Amazing
+    obsolete stuff like this can still be found.
+
+
+2018-03-31
+
+  - Fixed #10: "print from close_date" causes problems on account open. This was
+    stemming from a bug in the implementation of the FROM clause execution. I
+    changed the "entry" context functions to also accept a RowContext object, as
+    the simple functions may be called in either entry or posting context.
+
+    (The SQL shell remains the part of Beancount which is severely undertested
+    and wading into that code once again has convinced me I need to rewrite the
+    shell from scratch, it'll be simpler and better. The distinction between
+    entry and posting context will go away in the next version.)
+
+  - Fixed #120: Documents directive with a trailing slash fails.
+
+
+2018-03-28
+
+  - Fixed failing test in amount_test probably due to some recent merges.
+
+
+2018-03-27
+
+  - Completed PR #59 which adds support for globbing patterns in includes,
+    inserting a chdir() around glob.glob() to handle expansion of relative
+    filenames. (Credits to Martin Michlmayr for submitting the patch in the
+    first place.)
+
+
+* Version: 2.0.0
+
+2018-03-27
+
+  - Released 2.0.0. Today we're starting versioning Beancount. Many people have
+    been waiting for this in order to manage their dependencies (e.g. Fava
+    users).
+
+    We're loosely adopting semantic versioning (https://semver.org/) where bug
+    fixes will be posted as 0.0.x releases, and new features that don't break
+    existing functionality (nor change it too much) will be posted as 0.x.0
+    releases.
+
+    Note: There's nothing special about this particular point in time, other
+    than I haven't added much features in the last six months and have mainly
+    been fixing bugs and accepting bug reports in order to make sure things are
+    stable. There are plenty remaining bug reports and it's not perfect.
+    Addressing some of these will involve making changes that could break
+    existing functionality. For this reason, I prefer to release now and make
+    those changes as part of point releases later on.
+
+
+2018-03-26
+
+  - Fixed #245: Synchronized the definition of a valid account regular
+    expression between the lexer and the later enhanced version (in Python)
+    which checks the configured prefixes. A valid subaccount name may start with
+    either a capital letter or a number.
+
+
+2018-03-23
+
+  - Removed deprecated methods from beancount.core (position, inventory,
+    interpolation).
+
+
+2018-03-22
+
+  - Fixed #249: Error messages involving postings should start counting at 1
+    instead of 0. (I agree.)
+
+  - Added aliases for COMMODITY_META() vs. CURRENCY_META() and CURRENCY() and
+    COMMODITY(). These terms are used interchangeably. In the next version of
+    the shell, only one of them will be available.
+
+  - Removed the ability to explicitly set a different price currency than a cost
+    currency. I'm stunned my test for this is gone, I must have removed this by
+    accident? No idea. It should not be allowed.
+
+
+2018-03-19
+
+  - Fixed #218, added a SAFEDIV function to the shell language.
+
+  - Fixed #239, HELP command should tolerate semicolons and whitespace.
+    (Also, don't print shell commands in test (remove docstrings), we want the
+    name of the tests to list, not the input.)
+
+
+2018-03-13
+
+  - Removed SIMPLE booking method and all traces of it, including the
+    'booking_algorithm' option. Only the later (I hesitate to say "newer"
+    because it's been around for years) FULL booking method is supported
+    onwards.
+
+  - Fixed #35: Implemented implicit group-by syntax. That is, if you omit the
+    GROUP BY clause, it is automatically inferred to be the non-aggregate
+    columns. This make writing the type of simple queries we do much more
+    convenient and allows you to be a little sloppy.
+
+  - Fixed bug with unit test util for docutil, which was stripping the first
+    empty line of the docstring (and failing).
 
 
 2018-03-02
@@ -2849,7 +3732,7 @@ Note: This file contains only changes in the 'default' branch.
     the lexer in order to distinguish between "*" as a TAG or as a multiplication
     token, and operator precedence to deal with terms vs. exprs. This will
     probably be done soon. (I need division for a particular task right now, so
-    it is being added in in a backwards-compatilble way).
+    it is being added in a backwards-compatilble way).
 
 
 2015-04-18

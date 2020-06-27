@@ -323,7 +323,7 @@ class SelectParser(Lexer):
     def handle_comma_separated_list(self, p):
         """Handle a list of 0, 1 or more comma-separated values.
         Args:
-          p: A gramar object.
+          p: A grammar object.
         """
         if len(p) == 2:
             return [] if p[1] is None else [p[1]]
@@ -637,15 +637,15 @@ class SelectParser(Lexer):
     def p_error(self, token):
         if token is None:
             raise ParseError("ERROR: unterminated statement. Missing a semicolon?")
-        else:
-            oss = io.StringIO()
-            oss.write("ERROR: Syntax error near '{}' (at {})\n".format(token.value,
-                                                                       token.lexpos))
-            oss.write("  ")
-            oss.write(self._input)
-            oss.write("\n")
-            oss.write("  {}^".format(' ' * token.lexpos))
-            raise ParseError(oss.getvalue())
+
+        oss = io.StringIO()
+        oss.write("ERROR: Syntax error near '{}' (at {})\n".format(token.value,
+                                                                   token.lexpos))
+        oss.write("  ")
+        oss.write(self._input)
+        oss.write("\n")
+        oss.write("  {}^".format(' ' * token.lexpos))
+        raise ParseError(oss.getvalue())
 
 
 class Parser(SelectParser):

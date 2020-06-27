@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import textwrap
+import unittest
 
 from beancount import loader
 from beancount.parser import cmptest
@@ -17,7 +18,7 @@ class TestExampleForecast(cmptest.TestCase):
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
 
-            2011-05-17 # "Something [MONTHLY]"
+            2011-05-17 # "Something [MONTHLY UNTIL 2011-12-31]"
               Expenses:Restaurant   50.02 USD
               Assets:Cash
 
@@ -28,6 +29,10 @@ class TestExampleForecast(cmptest.TestCase):
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
+
+            2011-05-17 # "Something"
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-06-17 # "Something"
               Expenses:Restaurant           50.02 USD
@@ -57,3 +62,7 @@ class TestExampleForecast(cmptest.TestCase):
               Expenses:Restaurant           50.02 USD
               Assets:Cash                  -50.02 USD
         """, entries)
+
+
+if __name__ == '__main__':
+    unittest.main()

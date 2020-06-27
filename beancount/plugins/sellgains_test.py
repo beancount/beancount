@@ -79,3 +79,7 @@ class TestSellGains(unittest.TestCase):
           Income:US:Company:ESPP:PnL    20000 USD
         """
         self.assertEqual([], list(map(type, errors)))
+
+
+if __name__ == '__main__':
+    unittest.main()

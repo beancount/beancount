@@ -3,8 +3,10 @@
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from os import path
 import collections
 import functools
+import glob
 import hashlib
 import importlib
 import io
@@ -16,7 +18,7 @@ import struct
 import textwrap
 import time
 import warnings
-from os import path
+from typing import Optional
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -26,6 +28,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.utils import encryption
+from beancount.utils import file_utils
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -48,7 +51,8 @@ RENAMED_MODULES = {}
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
 
-# The threshold below which we don't bother creating a cache file, in seconds.
+# The runtime threshold below which we don't bother creating a cache file, in
+# seconds.
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
@@ -130,7 +134,25 @@ def _log_errors(errors, log_errors):
             log_errors(error_io.getvalue())
 
 
-def pickle_cache_function(pattern, time_threshold, function):
+def get_cache_filename(pattern: str, filename: str) -> str:
+    """Compute the cache filename from a given pattern and the top-level filename.
+
+    Args:
+      pattern: A cache filename or pattern. If the pattern contains '{filename}' this
+        will get replaced by the top-level filename. This may be absolute or relative.
+      filename: The top-level filename.
+    Returns:
+      The resolved cache filename.
+    """
+    abs_filename = path.abspath(filename)
+    if path.isabs(pattern):
+        abs_pattern = pattern
+    else:
+        abs_pattern = path.join(path.dirname(abs_filename), pattern)
+    return abs_pattern.format(filename=path.basename(filename))
+
+
+def pickle_cache_function(cache_getter, time_threshold, function):
     """Decorate a loader function to make it loads its result from a pickle cache.
 
     This considers the first argument as a top-level filename and assumes the
@@ -141,8 +163,8 @@ def pickle_cache_function(pattern, time_threshold, function):
     recomputed and the cache refreshed.
 
     Args:
-      pattern: A string, the filename pattern for the pickled cache file.
-        A {filename} in it gets replaced by the basename of the input filename.
+      cache_getter: A function of one argument, the top-level filename, which
+        will return the name of the corresponding cache file.
       time_threshold: A float, the number of seconds below which we don't bother
         caching.
       function: A function object to decorate for caching.
@@ -152,10 +174,7 @@ def pickle_cache_function(pattern, time_threshold, function):
     """
     @functools.wraps(function)
     def wrapped(toplevel_filename, *args, **kw):
-        abs_filename = path.abspath(toplevel_filename)
-        cache_filename = path.join(
-            path.dirname(abs_filename),
-            pattern.format(filename=path.basename(toplevel_filename)))
+        cache_filename = cache_getter(toplevel_filename)
 
         # Read the cache if it exists in order to get the list of files whose
         # timestamps to check.
@@ -209,10 +228,31 @@ def pickle_cache_function(pattern, time_threshold, function):
     return wrapped
 
 
-def _load_file(filename, *args, **kw):
+def delete_cache_function(cache_getter, function):
+    """A wrapper that removes the cached filename.
+
+    Args:
+      cache_getter: A function of one argument, the top-level filename, which
+        will return the name of the corresponding cache file.
+      function: A function object to decorate for caching.
+    Returns:
+      A decorated function which will delete the cached filename, if it exists.
+    """
+    @functools.wraps(function)
+    def wrapped(toplevel_filename, *args, **kw):
+        # Delete the cache.
+        cache_filename = cache_getter(toplevel_filename)
+        if path.exists(cache_filename):
+            os.remove(cache_filename)
+
+        # Invoke the original function.
+        return function(toplevel_filename, *args, **kw)
+    return wrapped
+
+
+def _uncached_load_file(filename, *args, **kw):
     """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-_uncached_load_file = _load_file  # pylint: disable=invalid-name
 
 
 def needs_refresh(options_map):
@@ -260,7 +300,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
-      encoding: A string or None, the encoding to decode the input filename with.
+      encoding: A string or None, the encoding to decode the input string with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the string, "errors" a list of error objects
@@ -286,7 +326,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
     Args:
       sources: A list of (filename-or-string, is-filename) where the first
         element is a string, with either a filename or a string to be parsed directly,
-        and the second arugment is a boolean that is true if the first is a filename.
+        and the second argument is a boolean that is true if the first is a filename.
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A function to write timings to, or None, if it should remain quiet.
@@ -311,6 +351,19 @@ def _parse_recursive(sources, log_timings, encoding=None):
         while source_stack:
             source, is_file = source_stack.pop(0)
             is_top_level = options_map is None
+
+            # If the file is encrypted, read it in and process it as a string.
+            if is_file:
+                cwd = path.dirname(source)
+                source_filename = source
+                if encryption.is_encrypted_file(source):
+                    source = encryption.read_encrypted_file(source)
+                    is_file = False
+            else:
+                # If we're parsing a string, the CWD is the current process
+                # working directory.
+                cwd = os.getcwd()
+                source_filename = None
 
             if is_file:
                 # All filenames here must be absolute.
@@ -353,11 +406,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
                                          log_timings, indent=2):
                     (src_entries,
                      src_errors,
-                     src_options_map) = parser.parse_string(source)
-
-                # If we're parsing a string, the CWD is the current process
-                # working directory.
-                cwd = os.getcwd()
+                     src_options_map) = parser.parse_string(source, source_filename)
 
             # Merge the entries resulting from the parsed file.
             entries.extend(src_entries)
@@ -371,8 +420,20 @@ def _parse_recursive(sources, log_timings, encoding=None):
             else:
                 aggregate_options_map(options_map, src_options_map)
 
-            # Add includes to the list of sources to process.
-            for include_filename in src_options_map['include']:
+            # Add includes to the list of sources to process. chdir() for glob,
+            # which uses it indirectly.
+            include_expanded = []
+            with file_utils.chdir(cwd):
+                for include_filename in src_options_map['include']:
+                    matched_filenames = glob.glob(include_filename, recursive=True)
+                    if matched_filenames:
+                        include_expanded.extend(matched_filenames)
+                    else:
+                        parse_errors.append(
+                            LoadError(data.new_metadata("<load>", 0),
+                                      'File glob "{}" does not match any files'.format(
+                                          include_filename), None))
+            for include_filename in include_expanded:
                 if not path.isabs(include_filename):
                     include_filename = path.join(cwd, include_filename)
                 include_filename = path.normpath(include_filename)
@@ -420,7 +481,7 @@ def _load(sources, log_timings, extra_validations, encoding):
     Args:
       sources: A list of (filename-or-string, is-filename) where the first
         element is a string, with either a filename or a string to be parsed directly,
-        and the second arugment is a boolean that is true if the first is a filename.
+        and the second argument is a boolean that is true if the first is a filename.
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A file object or function to write timings to,
@@ -436,18 +497,22 @@ def _load(sources, log_timings, extra_validations, encoding):
     if hasattr(log_timings, 'write'):
         log_timings = log_timings.write
 
-    # Parse all the files recursively.
-    entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
-
-    # Ensure that the entries are sorted before running any processes on them.
-    entries.sort(key=data.entry_sortkey)
+    # Parse all the files recursively. Ensure that the entries are sorted before
+    # running any processes on them.
+    with misc_utils.log_time('parse', log_timings, indent=1):
+        entries, parse_errors, options_map = _parse_recursive(
+            sources, log_timings, encoding)
+        entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
-    entries, balance_errors = booking.book(entries, options_map)
-    parse_errors.extend(balance_errors)
+    with misc_utils.log_time('booking', log_timings, indent=1):
+        entries, balance_errors = booking.book(entries, options_map)
+        parse_errors.extend(balance_errors)
 
     # Transform the entries.
-    entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)
+    with misc_utils.log_time('run_transformations', log_timings, indent=1):
+        entries, errors = run_transformations(entries, parse_errors, options_map,
+                                              log_timings)
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
@@ -509,7 +574,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             if not hasattr(module, '__plugins__'):
                 continue
 
-            with misc_utils.log_time(plugin_name, log_timings, indent=1):
+            with misc_utils.log_time(plugin_name, log_timings, indent=2):
 
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
@@ -531,7 +596,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             # themselves.
             entries.sort(key=data.entry_sortkey)
 
-        except ImportError as exc:
+        except (ImportError, TypeError) as exc:
             # Upon failure, just issue an error.
             errors.append(LoadError(data.new_metadata("<load>", 0),
                                     'Error importing "{}": {}'.format(
@@ -605,17 +670,32 @@ def load_doc(expect_errors=False):
     return decorator
 
 
-def initialize():
+def initialize(use_cache: bool, cache_filename: Optional[str] = None):
     """Initialize the loader."""
 
     # Unless an environment variable disables it, use the pickle load cache
-    # automatically.
+    # automatically. Note that this works across all Python programs running the
+    # loader which is why it's located here.
     # pylint: disable=invalid-name
     global _load_file
-    if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-        _load_file = pickle_cache_function(
-            os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or PICKLE_CACHE_FILENAME,
-            PICKLE_CACHE_THRESHOLD,
-            _uncached_load_file)
 
-initialize()
+    # Make a function to compute the cache filename.
+    cache_pattern = (cache_filename or
+                     os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or
+                     PICKLE_CACHE_FILENAME)
+    cache_getter = functools.partial(get_cache_filename, cache_pattern)
+
+    if use_cache:
+        _load_file = pickle_cache_function(cache_getter, PICKLE_CACHE_THRESHOLD,
+                                           _uncached_load_file)
+    else:
+        if cache_filename is not None:
+            logging.warning("Cache disabled; "
+                            "Explicitly overridden cache filename %s will be ignored.",
+                            cache_filename)
+        _load_file = delete_cache_function(cache_getter,
+                                           _uncached_load_file)
+
+
+# Default is to use the cache every time.
+initialize(os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None)

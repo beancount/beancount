@@ -8,21 +8,23 @@ fetched directory contents to the archive and delete them.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
+from os import path
 import functools
+import importlib
 import logging
 import os
-import subprocess
-import shutil
-import shlex
 import re
-from os import path
+import shlex
+import shutil
+import subprocess
+import zipfile
 
 import lxml.html
 
 from beancount.web import scrape
 from beancount.web import web
 from beancount.utils import file_utils
+from beancount.utils import version
 
 
 # Directories where binary files are allowed.
@@ -117,26 +119,28 @@ def save_scraped_document(output_dir, url, response, contents, html_root, skippe
         outfile.write(contents)
 
 
-def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
+def bake_to_directory(webargs, output_dir, render_all_pages=True):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
       webargs: An argparse parsed options object with the web app arguments.
       output_dir: A directory name. We don't check here whether it exists or not.
       quiet: A boolean, True to suppress web server fetch log.
-      full_mode: If true, fetch the full set of pages, not just the subset that
+      render_all_pages: If true, fetch the full set of pages, not just the subset that
         is palatable.
     Returns:
       True on success, False otherwise.
     """
     callback = functools.partial(save_scraped_document, output_dir)
 
-    if full_mode:
+    if render_all_pages:
         ignore_regexps = None
     else:
         regexps = [
             # Skip the context pages, too slow.
             r'/context/',
+            # Skip the link pages, too slow.
+            r'/link/',
             # Skip the component pages... too many.
             r'/view/component/',
             # Skip served documents.
@@ -146,12 +150,7 @@ def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
         ]
         ignore_regexps = '({})'.format('|'.join(regexps))
 
-    processed_urls, skipped_urls = web.scrape_webapp(webargs.filename,
-                                                     callback,
-                                                     webargs.port,
-                                                     ignore_regexps,
-                                                     quiet,
-                                                     webargs.no_colons)
+    processed_urls, skipped_urls = web.scrape_webapp(webargs, callback, ignore_regexps)
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -192,16 +191,44 @@ def archive(command_template, directory, archive, quiet=False):
         raise OSError("Archive failure")
 
 
+def archive_zip(directory, archive):
+    """Archive the directory to the given tar/gz archive filename.
+
+    Args:
+      directory: A string, the name of the directory to archive.
+      archive: A string, the name of the file to output.
+    """
+    # Figure out optimal level of compression among the supported ones in this
+    # installation.
+    for spec, compression in [
+            ('lzma', zipfile.ZIP_LZMA),
+            ('bz2', zipfile.ZIP_BZIP2),
+            ('zlib', zipfile.ZIP_DEFLATED)]:
+        if importlib.util.find_spec(spec):
+            zip_compression = compression
+            break
+    else:
+        # Default is no compression.
+        zip_compression = zipfile.ZIP_STORED
+
+    with file_utils.chdir(directory), zipfile.ZipFile(
+            archive, 'w', compression=zip_compression) as archfile:
+        for root, dirs, files in os.walk(directory):
+            for filename in files:
+                relpath = path.relpath(path.join(root, filename), directory)
+                archfile.write(relpath)
+
+
 ARCHIVERS = {
     '.tar.gz'  : 'tar -C {dirname} -zcvf {archive} {basename}',
     '.tgz'     : 'tar -C {dirname} -zcvf {archive} {basename}',
     '.tar.bz2' : 'tar -C {dirname} -jcvf {archive} {basename}',
-    '.zip'     : 'zip -r {archive} {basename}',
+    '.zip'     : archive_zip,
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     web_group = web.add_web_arguments(parser)
     web_group.set_defaults(port=9475)
@@ -214,12 +241,9 @@ def main():
                              'we automatically archive the fetched directory '
                              'contents to this archive name and delete them.'))
 
-    group.add_argument('-q', '--quiet', action='store_true',
-                       help="Don't even print out web server log")
-
     # In order to be able to bake in a reasonable amount of time, we need to
     # remove some pages; you can use this switch to do that.
-    group.add_argument('--full-mode', '--full', action='store_true',
+    group.add_argument('--render-all-pages', '--full', action='store_true',
                        help=("Don't ignore some of the more numerious pages, "
                              "like monthly reports."))
 
@@ -245,7 +269,7 @@ def main():
             "ERROR: Output directory already exists '{}'".format(output_directory))
 
     # Bake to a directory hierarchy of files with local links.
-    bake_to_directory(opts, output_directory, opts.quiet, opts.full_mode)
+    bake_to_directory(opts, output_directory, opts.render_all_pages)
 
     # Verify the bake output files. This is just a sanity checking step.
     # You can also use "bean-doctor validate_html <file> to run this manually.
@@ -258,8 +282,24 @@ def main():
         logging.error("Validation error: Empty '%s'", target)
 
     # Archive if requested.
-    if archival_command:
-        archive(archival_command, output_directory, opts.output, True)
+    if archival_command is not None:
+        # Normalize the paths and ensure sanity before we start compression.
+        output_directory = path.abspath(output_directory)
+        archive_filename = path.abspath(opts.output)
+        if not path.exists(output_directory):
+            raise IOError("Directory to archive '{}' does not exist".format(
+                output_directory))
+        if path.exists(archive_filename):
+            raise IOError("Output archive name '{}' already exists".format(
+                archive_filename))
+
+        # Dispatch to a particular compressor.
+        if isinstance(archival_command, str):
+            archive(archival_command, output_directory, archive_filename, True)
+        elif callable(archival_command):
+            archival_command(output_directory, archive_filename)
+
+        # Delete the output directory.
         shutil.rmtree(output_directory)
 
     print("Output in '{}'".format(opts.output))

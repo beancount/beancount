@@ -2,10 +2,13 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+from unittest import mock
+import os
 import re
+import subprocess
+import sys
 import textwrap
 import unittest
-from unittest import mock
 
 from beancount.utils import test_utils
 from beancount.ingest.importer import ImporterProtocol
@@ -70,22 +73,42 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
 class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
     def test_identify(self):
+        regexp = textwrap.dedent("""\
+            \\*\\*\\*\\* .*/Downloads/ofxdownload.ofx
+            Importer: +mybank-checking-ofx
+            Account: +Assets:Checking
+
+            \\*\\*\\*\\* .*/Downloads/Subdir/bank.csv
+            Importer: +mybank-credit-csv
+            Account: +Liabilities:CreditCard
+
+            \\*\\*\\*\\* .*/Downloads/Subdir/readme.txt
+
+            """).strip()
+
+        # Invoke with new-style imports as script, with an ingest() call in the script.
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            env = os.environ.copy()
+            env['PYTHONPATH'] = ':'.join(sys.path)
+            output = subprocess.check_output(
+                [path.join(self.tempdir, 'testimport.py'),
+                 '--downloads', path.join(self.tempdir, 'Downloads'),
+                 'identify'], shell=False, env=env)
+        self.assertTrue(re.match(regexp, output.decode().strip()))
+
+        # Invoke with old-style imports script via tool (with no ingest() call).
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(identify.main,
                                      [path.join(self.tempdir, 'test.import'),
                                       path.join(self.tempdir, 'Downloads')])
-        regexp = textwrap.dedent("""\
-            \*\*\*\* .*/Downloads/ofxdownload.ofx
-            Importer: +mybank-checking-ofx
-            Account: +Assets:Checking
+        output = stdout.getvalue().strip()
+        self.assertTrue(re.match(regexp, output))
 
-            \*\*\*\* .*/Downloads/Subdir/bank.csv
-            Importer: +mybank-credit-csv
-            Account: +Liabilities:CreditCard
-
-            \*\*\*\* .*/Downloads/Subdir/readme.txt
-
-            """).strip()
+        # Invoke with new-style imports script via tool (with an ingest() call).
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            test_utils.run_with_args(identify.main,
+                                     [path.join(self.tempdir, 'testimport.py'),
+                                      path.join(self.tempdir, 'Downloads')])
         output = stdout.getvalue().strip()
         self.assertTrue(re.match(regexp, output))
 
@@ -99,12 +122,16 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertEqual(0, result)
         output = stdout.getvalue()
         errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
 
         self.assertRegex(output, 'Downloads/UTrade20160215.csv')
-        self.assertRegex(output, 'Importer:.*importers.utrade.Importer')
+        self.assertRegex(output, 'Importer:.*importers.utrade.utrade_csv.Importer')
         self.assertRegex(output, 'Account:.*Assets:US:UTrade')
 
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
         self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')
+
+
+if __name__ == '__main__':
+    unittest.main()

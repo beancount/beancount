@@ -1,7 +1,6 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import functools
 import re
 import sys
 import unittest
@@ -12,7 +11,6 @@ from beancount.query import shell
 from beancount import loader
 
 
-# pylint: disable=invalid-name
 entries, errors, options_map = None, None, None
 
 
@@ -26,7 +24,6 @@ def setup_module():
 
 def runshell(function):
     """Decorate a function to run the shell and return the output."""
-    @functools.wraps(function)
     def test_function(self):
         def loadfun():
             return entries, errors, options_map
@@ -108,7 +105,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertRegex(output, 'Assets:US:ETrade:Cash * \d+\.\d+ USD')
+        self.assertRegex(output, r'Assets:US:ETrade:Cash * \d+\.\d+ USD')
 
     @runshell
     def test_income_statement(self, output):
@@ -231,3 +228,9 @@ class TestShell(test_utils.TestCase):
 
 
 __incomplete__ = True
+
+
+if __name__ == '__main__':
+    if re.search(r"\.runfiles\b", __file__):
+        setup_module()
+    unittest.main()

@@ -7,9 +7,9 @@ import collections
 import csv
 import datetime
 import math
+from decimal import Decimal
 from itertools import zip_longest
 
-from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
@@ -258,7 +258,7 @@ class DecimalRenderer(ColumnRenderer):
                 if width > total_width:
                     total_width = width
 
-            self.fmt = '{{:<{}.{}}}'.format(total_width, total_width)
+            self.fmt = '{{:<{total_width}.{total_width}}}'.format(total_width=total_width)
 
         self.total_width = total_width
         self.empty = ' ' * total_width
@@ -398,7 +398,7 @@ class PositionRenderer(ColumnRenderer):
 
 
 class InventoryRenderer(PositionRenderer):
-    """A renderer for Inventoru instances. Inventories renders as a list of position
+    """A renderer for Inventory instances. Inventories renders as a list of position
     strings. Both the unit numbers and the cost numbers are aligned, if any.
     """
     dtype = inventory.Inventory

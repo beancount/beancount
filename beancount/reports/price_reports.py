@@ -75,6 +75,7 @@ class CommodityPricesReport(base.TableReport):
     def get_date_rates(self, entries):
         if not self.args.commodity:
             self.parser.error("Commodity pair must be specified (in BASE/QUOTE format)")
+        self.args.commodity = ''.join(self.args.commodity.split())
         if not re.match('{ccy}/{ccy}$'.format(ccy=amount.CURRENCY_RE),
                         self.args.commodity):
             self.parser.error(('Invalid commodity pair "{}"; '

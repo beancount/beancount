@@ -73,7 +73,6 @@ def main():
 
     for dtime in period:
         date = dtime.date()
-        logging.info(date)
 
         # Append new entries until the given date.
         while True:
@@ -88,7 +87,7 @@ def main():
                                                                             options_map)
 
         # Convert the currencies.
-        for currency in options_map['operating_currency']:
+        for i, currency in enumerate(options_map['operating_currency']):
             holdings_list = holdings.convert_to_currency(price_map,
                                                          currency,
                                                          raw_holdings_list)
@@ -106,6 +105,8 @@ def main():
                 continue
 
             net_worths_dict[currency].append((date, holdings_list[0].market_value))
+            if i == 0:
+                logging.info("{}: {:,.2f}".format(date, holdings_list[0].market_value))
 
     # Extrapolate milestones in various currencies.
     days_interp = args.days_interp

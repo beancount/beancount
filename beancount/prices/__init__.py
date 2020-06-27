@@ -80,7 +80,7 @@ Beancount input file, e.g.:
   bean-price /home/joe/finances/joe.beancount
 
 There are many ways to extract a list of commodities with needed prices from a
-Baancount input file:
+Beancount input file:
 
 - Prices for all the holdings that were seen held-at-cost at a particular date.
 

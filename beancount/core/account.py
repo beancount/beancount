@@ -11,14 +11,24 @@ import re
 import os
 from os import path
 
+from beancount.utils import regexp_utils
+
 
 # Component separator for account names.
 # pylint: disable=invalid-name
 sep = ':'
 
 
-# Regular expression string that matchs a valid account.
-ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]*)+'.format(sep)
+# Regular expression string that matches valid account name components.
+# Categories are:
+#   Lu: Uppercase letters.
+#   L: All letters.
+#   Nd: Decimal numbers.
+ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
+ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+
+# Regular expression string that matches a valid account. {5672c7270e1e}
+ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 
 
 # A dummy object which stands for the account type. Values in custom directives
@@ -92,7 +102,7 @@ def leaf(account_name):
 def sans_root(account_name):
     """Get the name of the account without the root.
 
-    For example, an in put of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
+    For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
 
     Args:
       account_name: A string, the name of the account whose leaf name to return.
@@ -122,12 +132,12 @@ def has_component(account_name, component):
     Args:
       account_name: A string, an account name.
       component: A string, a component of an account name. For instance,
-        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+        ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      A boolean, true if the component is in the account. Note that a component
-      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+      Boolean: true if the component is in the account. Note that a component
+      name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
-    return re.search('(^|:){}(:|$)'.format(component), account_name)
+    return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
 
 
 def commonprefix(accounts):
@@ -174,9 +184,9 @@ def parent_matcher(account_name):
       account_name: The name of the parent account we want to check for.
     Returns:
       A callable, which, when called, will return true if the given account is a
-      child of 'account_name'.
+      child of ``account_name``.
     """
-    return re.compile(r'{}\b'.format(re.escape(account_name))).match
+    return re.compile(r'{}($|{})'.format(re.escape(account_name), sep)).match
 
 
 def parents(account_name):

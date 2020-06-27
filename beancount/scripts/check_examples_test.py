@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import os
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 from beancount.scripts import check
@@ -31,3 +32,7 @@ class TestCheckExamples(test_utils.TestCase):
                 result = test_utils.run_with_args(check.main, [filename])
             self.assertEqual(0, result)
             self.assertLines("", stdout.getvalue())
+
+
+if __name__ == '__main__':
+    unittest.main()

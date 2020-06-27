@@ -143,11 +143,15 @@ class TestEntryPrinter(cmptest.TestCase):
 
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
+        # pylint: disable=line-too-long
         """
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1
         2014-06-08 document Assets:Account1 "/path/to/document.pdf"
         2014-06-08 document Assets:Account1 "path/to/document.csv"
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1 #tag2 ^link1 ^link2
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
         """
         self.assertRoundTrip(entries, errors)
 
@@ -201,6 +205,13 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 event "employer" "Four Square"
         """
         self.assertRoundTrip(entries, errors)
+
+    def test_metadata(self):
+        meta = data.new_metadata('beancount/core/testing.beancount', 12345)
+        meta['something'] = r'a"\c'
+        oss = io.StringIO()
+        printer.EntryPrinter().write_metadata(meta, oss)
+        self.assertEqual('  something: "a\\"\\\\c"\n', oss.getvalue())
 
 
 def characterize_spaces(text):
@@ -509,3 +520,38 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
         self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
+
+    def test_render_missing(self):
+        # We want to make sure we never render with scientific notation.
+        input_string = textwrap.dedent("""
+
+          2019-01-19 * "Fitness First" "Last training session"
+            Expenses:Sports:Gym:Martin
+            Assets:Martin:Cash
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        txn = errors[0].entry
+        oss = io.StringIO()
+        printer.print_entry(txn, file=oss)
+
+    def test_render_meta_with_None(self):
+        # Issue 378.
+        input_string = textwrap.dedent("""
+
+          2019-01-01 open Assets:A
+          2019-01-01 open Assets:B
+
+          2019-02-28 txn "Test"
+            Assets:A                       10.00 USD
+            Assets:B                      -10.00 USD
+            foo:
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        self.assertIs(entries[-1].postings[-1].meta['foo'], None)
+
+
+if __name__ == '__main__':
+    unittest.main()

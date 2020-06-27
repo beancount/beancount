@@ -10,6 +10,8 @@ import textwrap
 import sys
 import subprocess
 
+from pytest import mark
+
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser
@@ -45,37 +47,25 @@ class TestParserDoc(unittest.TestCase):
         """
         self.assertTrue(errors)
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__errors(self):
-        @parser.parse_doc(expect_errors=True)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @mark.xfail
+    @parser.parse_doc(expect_errors=False)
+    def test_parse_doc__errors(self, _, __, ___):
+        """
+        2013-05-40 * "Invalid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__noerrors(self):
-        @parser.parse_doc(expect_errors=False)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @mark.xfail
+    @parser.parse_doc(expect_errors=True)
+    def test_parse_doc__noerrors(self, _, __, ___):
+        """
+        2013-05-01 * "Valid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
 
 class TestParserInputs(unittest.TestCase):
@@ -92,11 +82,19 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual(0, len(errors))
 
-    def test_parse_file(self):
+    def test_parse_filename(self):
         with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
             file.write(self.INPUT)
             file.flush()
             entries, errors, _ = parser.parse_file(file.name)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+
+    def test_parse_file(self):
+        with tempfile.TemporaryFile('w+b', suffix='.beancount') as file:
+            file.write(self.INPUT.encode('utf-8'))
+            file.seek(0)
+            entries, errors, _ = parser.parse_file(file)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
@@ -107,20 +105,23 @@ class TestParserInputs(unittest.TestCase):
         assert not errors, "Errors: {}".format(errors)
 
     def test_parse_stdin(self):
+        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=test_utils.subprocess_env(),
+                                env=env,
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
 
-    def test_parse_string_None(self):
-        input_string = report_filename = None
+    def test_parse_None(self):
+        # None is treated as the empty string...
+        entries, errors, _ = parser.parse_string(None)
+        self.assertEqual(0, len(entries))
+        self.assertEqual(0, len(errors))
+        # ...however None in not a valid file like object
         with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string(input_string)
-        with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string("something", None, report_filename)
+            entries, errors, _ = parser.parse_file(None)
 
 
 class TestUnicodeErrors(unittest.TestCase):
@@ -201,3 +202,7 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertTrue(isinstance(entry, data.Transaction))
+
+
+if __name__ == '__main__':
+    unittest.main()

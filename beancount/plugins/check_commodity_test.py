@@ -66,3 +66,7 @@ class TestCheckCommodity(unittest.TestCase):
 
         """
         self.assertFalse(errors)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -25,7 +25,7 @@ def as_rows(string):
 
 def csv_clean_header(header_row):
     """Create a new class for the following rows from the header line.
-    This both normalizes hte header line and assign
+    This both normalizes the header line and assign
 
     Args:
       header_row: A list of strings, the row with header titles.
@@ -77,7 +77,7 @@ def csv_tuple_reader(fileobj, **kw):
     reader = csv.reader(fileobj, **kw)
     ireader = iter(reader)
     fieldnames = csv_clean_header(next(ireader))
-    Tuple = collections.namedtuple('Row', fieldnames) # pylint: disable=invalid-name
+    Tuple = collections.namedtuple('Row', fieldnames)
     for row in ireader:
         try:
             yield Tuple(*row)

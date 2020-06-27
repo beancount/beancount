@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import atexit
 import cmd
 import codecs
@@ -32,6 +31,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
+from beancount.utils import version
 from beancount import loader
 
 
@@ -73,8 +73,9 @@ def get_history(max_entries):
     """
     num_entries = readline.get_current_history_length()
     assert num_entries >= 0
+    start = max(0, num_entries - max_entries)
     return [readline.get_history_item(index+1)
-            for index in range(min(num_entries, max_entries))]
+            for index in range(start, num_entries)]
 
 
 def convert_bool(string):
@@ -85,7 +86,7 @@ def convert_bool(string):
     Returns:
       The corresponding boolean.
     """
-    return not (string.lower() in ('f', 'false', '0'))
+    return not string.lower() in ('f', 'false', '0')
 
 
 class DispatchingShell(cmd.Cmd):
@@ -170,6 +171,10 @@ class DispatchingShell(cmd.Cmd):
                 break
             except KeyboardInterrupt:
                 print('\n(Interrupted)', file=self.outfile)
+
+    def do_help(self, command):
+        """Strip superfluous semicolon."""
+        super().do_help(command.rstrip('; \t'))
 
     def do_history(self, _):
         "Print the command-line history statement."
@@ -271,7 +276,6 @@ class DispatchingShell(cmd.Cmd):
 
     def emptyline(self):
         """Do nothing on an empty line."""
-        pass
 
     def exit(self, _):
         """Exit the parser."""
@@ -537,14 +541,19 @@ class BQLShell(DispatchingShell):
                 print()
                 print()
         else:
-            try:
+            query = None
+            if name in custom_query_map:
                 query = custom_query_map[name]
-            except KeyError:
-                print("ERROR: Query '{}' not found".format(name))
-            else:
+            else:  # lookup best query match using name as prefix
+                queries = [q for q in custom_query_map if q.startswith(name)]
+                if len(queries) == 1:
+                    name = queries[0]
+                    query = custom_query_map[name]
+            if query:
                 statement = self.parser.parse(query.query_string)
                 self.dispatch(statement)
-
+            else:
+                print("ERROR: Query '{}' not found".format(name))
 
     def help_targets(self):
         template = textwrap.dedent("""
@@ -620,6 +629,7 @@ class BQLShell(DispatchingShell):
             (getattr(column_cls, '__equivalent__', '-'), name)
             for name, column_cls in sorted(self.env_postings.columns.items()))
 
+        # pylint: disable=possibly-unused-variable
         entry_attributes = ''.join(
             "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
         posting_attributes = ''.join(
@@ -764,7 +774,7 @@ _SUPPORTED_FORMATS = ('text', 'csv')
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('-f', '--format', action='store', default=_SUPPORTED_FORMATS[0],
                         choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',

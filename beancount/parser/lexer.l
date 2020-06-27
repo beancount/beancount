@@ -1,25 +1,43 @@
 /* -*- mode: c -*- */
 /* A flex lexer for Beancount. */
 
-/*--------------------------------------------------------------------------------------*/
-/* Definitions */
-
 /* Options */
 %option noyywrap
-/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
 %option bison-bridge
 %option bison-locations
-/* %option reentrant */
+%option reentrant
+%option extra-type="yyextra_t*"
+/* %option nodefault */
 /* %option debug */
 /* %option stack */
 /* %option 8bit */
 
-
-/* Top Code. */
+/* Top Code. This is included in the FLex generated header file. */
 %top{
+
+#include "parser.h"
+
+typedef struct _yyextra_t yyextra_t;
+
+/* Initialize scanner private data. */
+void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+
+/* Free scanner private data */
+void yylex_finalize(yyscan_t yyscanner);
+
+/* Get the current filename from the scanner state. */
+const char* yyget_filename(yyscan_t *scanner);
+
+/* Get the first line from the scanner state. */
+int yyget_firstline(yyscan_t *scanner);
+
+}
+
+/* Definitions. */
+%{
 
 /* Includes. */
 #include <math.h>
@@ -28,6 +46,75 @@
 #include "parser.h"
 #include "grammar.h"
 
+struct buffer {
+    char* buf;
+    char* ptr;
+    char* end;
+};
+
+struct _yyextra_t {
+    /* The number of times EOF has been hit. This is used to
+     * synthesize an EOL at the end of the file. */
+    int n_eof;
+
+    /* Number of tokens since the beginning of the line. */
+    int n_line_tokens;
+
+    /* The filename being tokenized. */
+    const char* filename;
+
+    /* Reporting line offset. This is used like the #line cpp macro */
+    int line;
+
+    /* The encoding to use for converting strings. */
+    const char* encoding;
+
+    /* Variable size buffer used to accumulate string data. */
+    struct buffer str;
+};
+
+static void buffer_init(struct buffer* b, size_t size);
+static void buffer_free(struct buffer* b);
+static void buffer_realloc(struct buffer* b, size_t num_new_chars);
+
+static inline void buffer_push(struct buffer* b, char value)
+{
+    if (b->ptr > b->end)
+        buffer_realloc(b, 1);
+    *b->ptr++ = value;
+}
+
+static inline void buffer_append(struct buffer* b, const char* data, ssize_t len)
+{
+    if (len > (b->end - b->ptr))
+        buffer_realloc(b, len);
+
+    memcpy(b->ptr, data, len);
+
+    b->ptr += len;
+}
+
+static inline size_t buffer_strlen(const struct buffer* b)
+{
+    return b->ptr - b->buf;
+}
+
+static inline char* buffer_data(const struct buffer* b)
+{
+    return b->buf;
+}
+
+static inline void buffer_begin(struct buffer* b)
+{
+    b->ptr = b->buf;
+}
+
+#define strbuf &yyget_extra(yyscanner)->str
+#define yy_eof_times yyget_extra(yyscanner)->n_eof
+#define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
+#define yy_filename yyget_extra(yyscanner)->filename
+#define yy_firstline yyget_extra(yyscanner)->line
+#define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(const char* string, size_t length);
@@ -36,7 +123,10 @@ void build_lexer_error(const char* string, size_t length);
  * exception state. */
 void build_lexer_error_from_exception(void);
 
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
+#define YY_INPUT(buf, result, max_size)                         \
+    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
 
 /* Callback call site with error handling. */
 #define BUILD_LEX(method_name, format, ...)                                             \
@@ -53,56 +143,35 @@ void build_lexer_error_from_exception(void);
         return LEX_ERROR;                                                               \
     }
 
+#define YY_USER_ACTION {                                        \
+        yy_line_tokens++;                                       \
+        yylloc->first_line = yylloc->last_line = yylineno;      \
+        yylloc->first_column = yycolumn;                        \
+        yylloc->last_column = yycolumn+yyleng-1;                \
+        yycolumn += yyleng;                                     \
+    }
 
-/* Initialization/finalization methods. These are separate from the yylex_init()
- * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename, const char* encoding);
-void yylex_finalize(void);
-
-
-/* Global declarations; defined below. */
-extern int yy_eof_times;
-extern const char* yy_filename;
-extern int yycolumn;
-extern const char* yy_encoding;
-
-/* String buffer statics. */
-extern size_t strbuf_size; /* Current buffer size (not including final nul). */
-extern char* strbuf;       /* Current buffer head. */
-extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
-extern char* strbuf_ptr;   /* Current insertion point in buffer. */
-void strbuf_realloc(size_t num_new_chars);
-
-
-
-/* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol. */
-
-#define YY_USER_ACTION  {                               \
-    yy_line_tokens++;                                   \
-    yylloc->first_line = yylloc->last_line = yylineno;  \
-    yylloc->first_column = yycolumn;                    \
-    yylloc->last_column = yycolumn+yyleng-1;            \
-    yycolumn += yyleng;                                 \
-  }
-
-
-/* Skip the rest of the input line. */
-int yy_skip_line(void);
-
+/* Skip the rest of the input line.  This needs to be implemented as a
+ * macro because input() and unput() are themselves macros tha use
+ * variable definitions internal to the yylex() function. */
+#define yy_skip_line()                          \
+    do {                                        \
+        for (;;) {                              \
+            int c = input(yyscanner);           \
+            if (c == EOF || c == -1) {          \
+                break;                          \
+            }                                   \
+            if (c == '\n') {                    \
+                unput(c);                       \
+                break;                          \
+            }                                   \
+        }                                       \
+    } while (0)
 
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
-
-/* Append characters to the static string buffer and verify. */
-#define SAFE_COPY_CHAR(value)                    \
-	if (strbuf_ptr >= strbuf_end) {         \
-            strbuf_realloc(1);                  \
-	}                                       \
-        *strbuf_ptr++ = value;
-
-}
+%}
 
 /* A start condition for chomping an invalid token. */
 %x INVALID
@@ -111,10 +180,19 @@ int strtonl(const char* buf, size_t nchars);
 %x STRLIT
 
 
-/*--------------------------------------------------------------------------------------*/
-/* Rules */
-%%
+ASCII           [\x00-\x7f]
+UTF-8-1         [\x80-\xbf]
+UTF-8-2         [\xc2-\xdf]{UTF-8-1}
+UTF-8-3         \xe0[\xa0-\xbf]{UTF-8-1}|[\xe1-\xec]{UTF-8-1}{UTF-8-1}|\xed[\x80-\x9f]{UTF-8-1}|[\xee-\xef]{UTF-8-1}{UTF-8-1}
+UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{UTF-8-1}|\xf4[\x80-\x8f]{UTF-8-1}{UTF-8-1}
+UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
+UTF-8           {ASCII}|{UTF-8-ONLY}
 
+ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+
+
+%% /* Rules */
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
@@ -123,16 +201,16 @@ int strtonl(const char* buf, size_t nchars);
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line and followed
-    by a non-comment regular character. This is how we detect an initial indent
-    and thus group postings together in the grammar. */
+ /* Ignore whitespace, except when found at the beginning of a line
+    and followed by a regular character. This is how we detect an
+    initial indent and thus group postings and comments together in
+    the grammar. */
 [ \t\r]+	{
-    if ( yy_line_tokens == 1 ) {
+    if (yy_line_tokens == 1) {
         /* If the next character completes the line, skip it. */
-        if ( yy_hold_char == '\n' ||
-             yy_hold_char == '\r' ||
-             yy_hold_char == '\0' ||
-             yy_hold_char == ';' ) {
+        if (yyg->yy_hold_char == '\n' ||
+	    yyg->yy_hold_char == '\r' ||
+	    yyg->yy_hold_char == '\0') {
             return SKIPPED;
         }
         else {
@@ -154,14 +232,13 @@ int strtonl(const char* buf, size_t nchars);
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
-\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
  /* Special handling for characters beginning a line to be ignored.
   * I'd like to improve how this is handled. Needs own lexer, really. */
 \#		{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return HASH;
     }
     else {
@@ -172,7 +249,7 @@ int strtonl(const char* buf, size_t nchars);
 }
 
 \*		{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return ASTERISK;
     }
     else {
@@ -180,6 +257,17 @@ int strtonl(const char* buf, size_t nchars);
         yy_skip_line();
         return SKIPPED;
     }
+}
+
+\:		{
+  if (yy_line_tokens != 1) {
+    return COLON;
+  }
+  else {
+    /* Allow org-mode drawers. */
+    yy_skip_line();
+    return SKIPPED;
+  }
 }
 
  /* Skip commented output (but not the accompanying newline). */
@@ -197,7 +285,7 @@ int strtonl(const char* buf, size_t nchars);
     be possible. {5307d8fa1e7b}
     */
 [!&#?%PSTCURM]	{
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         yylval->character = yytext[0];
         return FLAG;
     }
@@ -241,6 +329,12 @@ FALSE		{
     return BOOL;
 }
 
+NULL		{
+    yylval->pyobj = Py_None;
+    Py_INCREF(Py_None);
+    return NONE;
+}
+
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
     const char* year_str;
@@ -264,7 +358,7 @@ FALSE		{
 }
 
  /* Account names. */
-([A-Z][A-Za-z0-9\-]*)(:[A-Za-z0-9\-]+)+		{
+{ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
@@ -280,7 +374,7 @@ FALSE		{
  /* Note that we use an exclusive start condition.
     See section "Start Conditions" in the GNU Flex manual. */
 \"	{
-    strbuf_ptr = strbuf;
+    buffer_begin(strbuf);
     BEGIN(STRLIT);
 }
 
@@ -289,39 +383,29 @@ FALSE		{
     /* Saw closing quote - all done. */
     \"        {
         BEGIN(INITIAL);
-        *strbuf_ptr = '\0';
-        PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
-                                                 yy_encoding, "ignore");
-        if ( unicode_str == NULL ) {
+        PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
+                                         yy_encoding, "ignore");
+        if (!str) {
             build_lexer_error_from_exception();
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
             return LEX_ERROR;
         }
-        BUILD_LEX("STRING", "O", unicode_str);
-        Py_DECREF(unicode_str);
-        strbuf_ptr = NULL;
+        BUILD_LEX("STRING", "O", str);
+        Py_DECREF(str);
         return STRING;
     }
 
     /* Escape sequences. */
-    \\n       SAFE_COPY_CHAR('\n');
-    \\t       SAFE_COPY_CHAR('\t');
-    \\r       SAFE_COPY_CHAR('\r');
-    \\b       SAFE_COPY_CHAR('\b');
-    \\f       SAFE_COPY_CHAR('\f');
-    \\(.|\n)  SAFE_COPY_CHAR(yytext[1]);
+    \\n       buffer_push(strbuf, '\n');
+    \\t       buffer_push(strbuf, '\t');
+    \\r       buffer_push(strbuf, '\r');
+    \\b       buffer_push(strbuf, '\b');
+    \\f       buffer_push(strbuf, '\f');
+    \\(.|\n)  buffer_push(strbuf, yytext[1]);
 
     /* All other characters. */
-    [^\\\"]+        {
-        if ( yyleng > (yy_size_t)(strbuf_end - strbuf_ptr) ) {
-            strbuf_realloc(yyleng);
-        }
-        size_t i;
-        for (i = 0; i < yyleng; ++i) {
-            *strbuf_ptr++ = yytext[i];
-        }
-    }
+    [^\\\"]+  buffer_append(strbuf, yytext, yyleng);
 }
 
  /* Numbers */
@@ -344,7 +428,7 @@ FALSE		{
 
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
-    BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    BUILD_LEX("KEY", "s#", yytext, (Py_ssize_t)(yyleng-1));
     unput(':');
     return KEY;
 }
@@ -358,7 +442,7 @@ FALSE		{
  /* Fake an EOL at the end of file, to ensure that files without a final newline
   * will process postings right. */
 <<EOF>>     		{
-  if ( yy_eof_times == 0 ) {
+  if (yy_eof_times == 0) {
     yy_eof_times = 1;
     yylloc->first_line = yylineno;
     return EOL;
@@ -379,111 +463,65 @@ FALSE		{
 }
 
 
-%%
-/*--------------------------------------------------------------------------------------*/
-/* User Code */
+%% /* User Code */
 
-
-/* Note: All these globals should be moved to an yylex_extra */
-
-/* The number of times EOF has been hit. This is used to synthesize an EOL at
- * the end of the file. */
-int yy_eof_times = 0;
-
-/* The filename being tokenized. */
-const char* yy_filename = 0;
-
-/* Number of tokens since the beginning of the line. */
-int yy_line_tokens = 0;
-
-/* The current column we're tokenizing at. */
-int yycolumn = 1;
-
-/* The encoding to use for converting strings. */
-const char* yy_encoding = NULL;
-
-/* A buffer for parsing string literals. It is reused and its size is dynamically allocated. */
-size_t strbuf_size = 0;
-char* strbuf = NULL;
-char* strbuf_end;
-char* strbuf_ptr;
-
-/* Initialize the globals before running the lexer. */
-void yylex_initialize(const char* filename, const char* encoding)
+void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner)
 {
-    assert(filename != NULL);
+    yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
+
     yy_eof_times = 0;
-    yy_filename = filename;
     yy_line_tokens = 0;
-    yycolumn = 1;
-    if ( encoding == 0 ) {
-        yy_encoding = "utf8";
-    }
-    else {
-        yy_encoding = encoding;
-    }
-
-    /* Start with a decent small buffer. */
-    strbuf_size = 1024;
-    strbuf = realloc(strbuf, strbuf_size + 1);
-    strbuf_end = strbuf + strbuf_size - 1;
-    strbuf_ptr = NULL;
-
-    /* Note: If we used a reentrant parser, this routine should eventually call
-     * yylex_init(). */
+    yy_filename = filename ? filename : "";
+    yy_firstline = firstline;
+    yy_encoding = encoding ? encoding : "utf-8";
+    buffer_init(strbuf, 1024);
 }
 
-/* Finalize the globals before running the lexer. */
-void yylex_finalize(void)
+void yylex_finalize(yyscan_t yyscanner)
 {
-    yy_filename = NULL;
-
-    /* Finalize our reading buffer. */
-    if ( strbuf != NULL ) {
-        free(strbuf);
-        strbuf = NULL;
-    }
-
-    /* Call the yylex finalization routine. */
-    yylex_destroy();
+    buffer_free(strbuf);
+    free(yyget_extra(yyscanner));
 }
 
-
-/* Reallocate the buffer to accomodate some new characters. */
-void strbuf_realloc(size_t num_new_chars)
+const char* yyget_filename(yyscan_t *scanner)
 {
-    assert(strbuf_ptr != NULL);
-    size_t cur_size = strbuf_ptr - strbuf;
+    return yyget_extra(scanner)->filename;
+}
+
+int yyget_firstline(yyscan_t *scanner)
+{
+    return yyget_extra(scanner)->line;
+}
+
+static void buffer_init(struct buffer* b, size_t size)
+{
+    b->buf = malloc(size);
+    b->end = b->buf + size - 1;
+    b->ptr = b->buf;
+}
+
+static void buffer_free(struct buffer* b)
+{
+    free(b->buf);
+    b->buf = b->ptr = b->end = NULL;
+}
+
+static void buffer_realloc(struct buffer* b, size_t num_new_chars)
+{
+    assert(b->ptr != NULL);
+
+    size_t size = b->end - b->buf + 1;
+    size_t cur_size = b->ptr - b->buf;
     size_t new_size = cur_size + num_new_chars;
-    while ( strbuf_size < new_size ) {
-        strbuf_size <<= 1;
+
+    while (size < new_size) {
+        size <<= 1;
     }
-    strbuf = realloc(strbuf, strbuf_size + 1);
-    strbuf_ptr = strbuf + cur_size;
-    strbuf_end = strbuf + strbuf_size - 1;
-}
 
+    b->buf = realloc(b->buf, size);
 
-
-
-#define LEXEOF 0
-
-int yy_skip_line()
-{
-    int num_chars = 0;
-    for ( ;; ) {
-        int c = input();
-        num_chars++;
-        if ( c == LEXEOF || c == -1 ) {
-            break;
-        }
-        if ( c == '\n' ) {
-            unput(c);
-            num_chars--;
-            break;
-        }
-    }
-    return num_chars;
+    b->ptr = b->buf + cur_size;
+    b->end = b->buf + size - 1;
 }
 
 /* Convert an integer string to a number. */
@@ -491,7 +529,7 @@ int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;
     size_t i;
-    for ( i = 0; i < nchars; ++i ) {
+    for (i = 0; i < nchars; ++i) {
         result *= 10;
         result += (buf[i] - '0');
     }
@@ -505,7 +543,7 @@ void build_lexer_error(const char* string, size_t length)
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, length);
+                                       "s#", string, (Py_ssize_t)length);
     if (rv == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");
@@ -544,4 +582,33 @@ void build_lexer_error_from_exception()
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: No exception");
     }
+}
+
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
+{
+    PyObject* dest = NULL;
+    PyObject* read = NULL;
+    int ret = 0;
+
+    // Note: Eventually we ought to allocate this once in the parser state and
+    // avoid reallocating this on every block read.
+    dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
+    if (!dest) {
+	goto error;
+    }
+
+    read = PyObject_CallMethod(file, "readinto", "O", dest);
+    if (!read) {
+	goto error;
+    }
+
+    ret = PyLong_AsSize_t(read);
+    if (PyErr_Occurred()) {
+	ret = 0;
+    }
+
+error:
+    Py_XDECREF(dest);
+    Py_XDECREF(read);
+    return ret;
 }

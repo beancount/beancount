@@ -1,0 +1,11 @@
+TODO:
+
+- Install clif, check if cross the Python / C++ barrier is done cheaply with
+  use_fast_cpp_protos.
+
+- Figure out how you might represent decimal numbers, try libraries.
+
+- Write a prototype that uses the same lexer/parser but with a C++ grammar and
+  time it.
+
+- Try installing pytype checking in here.

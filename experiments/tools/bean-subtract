@@ -6,7 +6,8 @@ first file, it looks for transactions in the other file which also contain at
 least one of the links. No other content of the transaction is compared. It
 prints the remaining unmatched transactions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

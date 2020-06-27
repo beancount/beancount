@@ -1,0 +1,55 @@
+// -*- mode: protobuf -*-
+// A schema for Beancount a parsed and booked stream of directives.
+
+syntax = "proto3";
+
+message KV {
+  string key = 1;
+  string value = 2; // FIXME: Must support other datatypes.
+}
+
+message Meta {
+  repeated KV kv = 1;
+}
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+message Decimal {
+  string strvalue = 1;
+}
+
+message Amount {
+  Decimal number = 1;
+  string currency = 2;
+}
+
+message Cost {
+  Decimal number = 1;
+  string currency = 2;
+  Date date = 3;
+  string label = 4;
+}
+
+message Posting {
+  Meta meta = 1;
+  bytes flag = 2;
+  string account = 3;
+  Amount units = 4;
+  Cost cost = 5;
+  Amount price = 6;
+}
+
+message Transaction {
+  Meta meta = 1;
+  Date date = 2;
+  bytes flag = 3;
+  string payee = 4;
+  string narration = 5;
+  repeated string tags = 6;
+  repeated string links = 7;
+  repeated Posting postings = 8;
+}

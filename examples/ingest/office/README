@@ -18,8 +18,3 @@ File the files from Download/ under documents/ (you can run the last command
 without moving the files using the -n/--dry-run option):
 
   bean-file example.import ../Downloads/ -o documents/
-
-
-To run the regression tests of the custom importers, use the following command:
-
-  nosetests3 --all-modules -v importers/

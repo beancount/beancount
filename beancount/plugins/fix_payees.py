@@ -4,14 +4,14 @@ This can be used to clean up dirty imported payee names.
 
 This plugin accepts a list of rules in this format:
 
-  plugin "beancount.plugins.fix_payees" "[
-      (PAYEE, MATCH1, MATCH2, ...),
-  ]"
+    plugin "beancount.plugins.fix_payees" "[
+        (PAYEE, MATCH1, MATCH2, ...),
+    ]"
 
 Each of the "MATCH" clauses is a string, in the format:
 
-  "A:<regexp>" : Match the account name.
-  "D:<regexp>" : Match the payee or the narration.
+    "A:<regexp>" : Match the account name.
+    "D:<regexp>" : Match the payee or the narration.
 
 The plugin matches the Transactions in the file and if there is a
 case-insensitive match against the regular expression (we use re.search()),
@@ -20,20 +20,20 @@ is used.
 
 For example:
 
-  plugin "beancount.plugins.fix_payees" "[
+    plugin "beancount.plugins.fix_payees" "[
 
-      ("T-Mobile USA",
-       "A:Expenses:Communications:Phone",
-       "D:t-mobile"),
+        ("T-Mobile USA",
+         "A:Expenses:Communications:Phone",
+         "D:t-mobile"),
 
-      ("Con Edison",
-       "A:Expenses:Home:Electricity",
-       "D:con ?ed"),
+        ("Con Edison",
+         "A:Expenses:Home:Electricity",
+         "D:con ?ed"),
 
-      ("Birreria @ Eataly",
-       "D:EATALY BIRRERIA"),
+        ("Birreria @ Eataly",
+         "D:EATALY BIRRERIA"),
 
-  ]"
+    ]"
 
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
@@ -52,7 +52,7 @@ __plugins__ = ('fix_payees',)
 FixPayeesError = collections.namedtuple('FixPayeesError', 'source message entry')
 
 
-# Set this to true to dump debug outpout.
+# Set this to true to dump debug output.
 _DEBUG = False
 
 
@@ -71,7 +71,7 @@ def fix_payees(entries, options_map, config):
     if config.strip():
         try:
             expr = ast.literal_eval(config)
-        except SyntaxError:
+        except (SyntaxError, ValueError):
             meta = data.new_metadata(options_map['filename'], 0)
             errors.append(FixPayeesError(meta,
                                          "Syntax error in config: {}".format(config),

@@ -5,16 +5,17 @@ This script reads a Beancount file, extracts all transactions with a tag, and
 rewrites them to convert its inflows to a single account.
 """
 
-import collections
-import argparse
-import logging
 from os import path
-import os
-import re
-import pprint
-import typing
-import datetime
 from typing import Dict, List, Tuple, Generator, Optional, Any
+import argparse
+import collections
+import datetime
+import logging
+import os
+import pprint
+import re
+import sys
+import typing
 
 from oauth2client import client
 from oauth2client import tools
@@ -190,13 +191,19 @@ def create_entry(row: List[str], coltypes: Dict[int,int], inflows_account: str,
                  default_account: str='Expenses:Uncategorized'):
     "Create a new entry based on the row contents and inferred types."
     date = parse_date(list_get(row, coltypes[csv.Col.DATE], ''))
-    number_str = list_get(row, coltypes[csv.Col.AMOUNT], '').strip('$')
-    if not date or not number_str:
+    number_orig_str = list_get(row, coltypes[csv.Col.AMOUNT], '')
+    number_str = number_orig_str.strip('$ ')
+    if not date:
         logging.error("Invalid row: {r}", row)
         return
-    number = (D(number_str)
-              if re.match(r'\$?[0-9,]+(\.[0-9]+)', number_str)
-              else ZERO)
+    try:
+        number = (D(number_str)
+                  if number_str and number_str != '?'
+                  else ZERO)
+    except ValueError as exc:
+        raise ValueError("{} (for {})".format(exc, number_str))
+    if not number_str:
+        logging.warning("Zero amount: %s", row)
 
     account = default_account
     if coltypes.get(csv.Col.ACCOUNT):
@@ -241,6 +248,9 @@ def main():
                         default='Expenses:Uncategorized',
                         help="Name of uncategorized account if missing")
 
+    parser.add_argument('-t', '--tag', action='store',
+                        help="Tag all entries with the given tag string")
+
     args = parser.parse_args()
 
     _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
@@ -266,7 +276,13 @@ def main():
         if entry is not None:
             entries.append(entry)
 
-    printer.print_entries(entries)
+    if args.tag:
+        print('pushtag #{}'.format(args.tag))
+        print()
+    printer.print_entries(entries, file=sys.stdout)
+    if args.tag:
+        print()
+        print('poptag #{}'.format(args.tag))
 
 
 if __name__ == '__main__':

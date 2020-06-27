@@ -15,7 +15,7 @@ class Snoop:
 
       snoop = Snoop()
       ...
-      if snoop(re.match("(\d+)-(\d+)-(\d+)", text)):
+      if snoop(re.match(r"(\\d+)-(\\d+)-(\\d+)", text)):
         year, month, date = snoop.value.group(1, 2, 3)
 
     Attributes:
@@ -63,7 +63,7 @@ class Snoop:
 
 # A global instance of a Snoop, for convenience. In many cases you can just
 # import and use this.
-snooper = Snoop()  # pylint: disable=invalid-name
+snooper = Snoop()
 
 
 def snoopify(function):
@@ -111,5 +111,6 @@ class _Saver(threading.local):
         """
         self.value = value
         return value
+
 
 save = _Saver()
