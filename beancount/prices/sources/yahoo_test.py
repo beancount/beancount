@@ -5,6 +5,7 @@ import datetime
 import json
 import textwrap
 import unittest
+from decimal import Decimal
 from unittest import mock
 
 from dateutil import tz
@@ -12,7 +13,6 @@ import requests
 
 from beancount.prices.sources import yahoo
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.utils import date_utils
 
 

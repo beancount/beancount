@@ -75,12 +75,12 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import enum
+from decimal import Decimal
 from typing import Text
 import uuid
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
 from beancount.core.amount import Amount

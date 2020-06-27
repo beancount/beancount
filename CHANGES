@@ -4,8 +4,62 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-06-27
+
+  - Merged #484, some parser improvements by dnicolodi@.
+
+
+2020-06-26
+
+  - Merged #480 - parser: Read input data from Python file objects by dnicolodi.
+
+
+2020-06-10
+
+  - Released 2.3.0. See #459.
+
+
+2020-06-03
+
+ - Added a 'hooks' argument to beancount.ingest.scripts_utils.ingest() replacing
+   'detect_duplicates_func'. 'find_duplicate_entries()' is still inserted if no
+   other filter functions are specified (I'd like to remove this eventually; not
+   changing behavior here for now.)
+ - Added an example for how to run the importers explictly via a Python script
+   calling the ingest() function.
+ - Fixed bug with explicit invocation of importers via ingest() function when
+   calling the 'file' sub command.
+ - Some installations of pdfminer install 'pdf2txt.py' as 'pdf2txt'. Adjusted
+   ingestion example scripts.
+
+
+2020-06-02
+
+ - Modified recently added --no-cache option to also delete the cache if it
+   exists. Honor the same environment variables. The motivation behind this
+   change is that while --no-cache is useful for debugging plugins, it can be
+   disconcerting that if you remove it on the next run it picks up the old
+   existing cache. Deleting it on usage of --no-cache is reasonable behavior and
+   avoids the introduction of a --clear-cache option; this should be sufficient.
+
+
+2020-05-25
+
+ - Fixed #449: Added options to bean-check: --no-cache and --cache-filename to
+   override the cache location. These are added to bean-check only and are
+   useful during development. The 'BEANCOUNT_DISABLE_LOAD_CACHE' and
+   'BEANCOUNT_LOAD_CACHE_FILENAME' environment variables are still honored by
+   the loader and work across all other programs.
+
+
 2020-05-23
 
+ - Fixed #184: Added explicit test for Inventory.average().
+ - Fixed #404: Iex price source not working any more.
+ - Fixed #281: Query "id" column does not identify transactions uniquely. Made
+   the default hash_entry() function include metadata. Exclude metadata and
+   derived fields explicitly in the context of comparison.
+ - Fixed #182: Eliding an amount with total price raises TypeError.
  - Added options to filter accounts in "onecommodity" plugin: skip accounts with
    explicitly declared commodities, metadata of "onecommodity: FALSE" and added
    regular expression to specify the list of accounts to match (default: all).
@@ -118,6 +172,7 @@ Note: This file contains a list changes in the 'master' branch.
 
 2019-08-21
 
+ - Released 2.2.3.
  - Fixed bug in split_expenses plugin.
 
 
@@ -3677,7 +3732,7 @@ Note: This file contains a list changes in the 'master' branch.
     the lexer in order to distinguish between "*" as a TAG or as a multiplication
     token, and operator precedence to deal with terms vs. exprs. This will
     probably be done soon. (I need division for a particular task right now, so
-    it is being added in in a backwards-compatilble way).
+    it is being added in a backwards-compatilble way).
 
 
 2015-04-18

@@ -27,11 +27,11 @@ __license__ = "GNU GPLv2"
 
 import collections
 from collections.abc import Iterable
+from decimal import Decimal
 import enum
 import re
 
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import same_sign
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
@@ -327,6 +327,9 @@ class Inventory(dict):
         for (currency, cost_currency), positions in groups.items():
             total_units = sum(position.units.number
                               for position in positions)
+            # Explicitly skip aggregates when resulting in zero units.
+            if total_units == ZERO:
+                continue
             units_amount = Amount(total_units, currency)
 
             if cost_currency:

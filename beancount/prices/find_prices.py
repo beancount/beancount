@@ -304,7 +304,7 @@ def find_balance_currencies(entries, date=None):
                 currencies_on_books.add(pos.units.currency)
 
     # Create currency pairs from the currencies which are on account balances.
-    # In order to figure out the the quote currencies, we use the list of price
+    # In order to figure out the quote currencies, we use the list of price
     # conversions until this date.
     converted = (find_currencies_converted(entries, date) |
                  find_currencies_priced(entries, date))

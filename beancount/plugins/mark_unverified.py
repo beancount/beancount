@@ -6,7 +6,7 @@ of that last Balance directives. One way to do that is to use this plugin to
 mark the postings which occur after and to then filter them out using a WHERE
 clause on that metadata:
 
-  SELECT account, sum(position) WHERE NOT meta("unverified")
+    SELECT account, sum(position) WHERE NOT meta("unverified")
 
 Note that doing such a filtering may result in a list of balances which may not
 add to zero.

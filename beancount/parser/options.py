@@ -402,7 +402,7 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_processing_mode)]),
 
     OptGroup("""
-      The number of lines beyond which a multi-line string will trigger a
+      The number of lines beyond which a multi-line string will trigger an
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
     """, [Opt("long_string_maxlines", 64)]),

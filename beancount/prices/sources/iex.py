@@ -22,19 +22,25 @@ class IEXError(ValueError):
 
 
 def fetch_quote(ticker):
-    """Fetch"""
-    url = "https://api.iextrading.com/1.0/stock/{}/quote".format(ticker.lower())
+    """Fetch the latest price for the given ticker."""
+
+    url = "https://api.iextrading.com/1.0/tops/last?symbols={}".format(ticker.upper())
     response = requests.get(url)
     if response.status_code != requests.codes.ok:
-        raise IEXError("Invalid response ({}): {}".format(response.status_code,
-                                                          response.text))
-    result = response.json()
+        raise IEXError("Invalid response ({}): {}".format(
+            response.status_code, response.text))
 
-    price = D(result['latestPrice']).quantize(D('0.01'))
+    results = response.json()
+    if len(results) != 1:
+        raise IEXError("Invalid number of responses from IEX: {}".format(
+            response.text))
+    result = results[0]
+
+    price = D(result['price']).quantize(D('0.01'))
 
     # IEX is American markets.
     us_timezone = tz.gettz("America/New_York")
-    time = datetime.datetime.fromtimestamp(result['latestUpdate'] / 1000)
+    time = datetime.datetime.fromtimestamp(result['time'] / 1000)
     time = time.astimezone(us_timezone)
 
     # As far as can tell, all the instruments on IEX are priced in USD.
@@ -51,6 +57,5 @@ class Source(source.Source):
     def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
         raise NotImplementedError(
-            "As of April 2018, historical prices are not supported on IEX. "
-            "Please check the API to see if this has changed: "
-            "https://iextrading.com/developer/docs")
+            "This is now implemented at https://iextrading.com/developers/docs/#hist and "
+            "needs to be added here.")

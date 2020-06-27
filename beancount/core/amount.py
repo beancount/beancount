@@ -11,11 +11,11 @@ __license__ = "GNU GPLv2"
 
 import re
 
+from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import D
 
 

@@ -6,8 +6,9 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 
+from decimal import Decimal
+
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING

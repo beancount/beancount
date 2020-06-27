@@ -11,6 +11,7 @@ import runpy
 import stat
 import sys
 import unittest
+import warnings
 
 from beancount.ingest import importer
 from beancount.ingest import cache
@@ -25,7 +26,7 @@ DESCRIPTION = ("Identify, extract or file away data downloaded from "
                "financial institutions.")
 
 
-def ingest(importers_list, detect_duplicates_func=None):
+def ingest(importers_list, detect_duplicates_func=None, hooks=None):
     """Driver function that calls all the ingestion tools.
 
     Put a call to this function at the end of your importer configuration to
@@ -57,11 +58,22 @@ def ingest(importers_list, detect_duplicates_func=None):
     Args:
       importers_list: A list of importer instances. This is used as a
         chain-of-responsibility, called on each file.
-      detect_duplicates_func: An optional function which accepts a list of
-        lists of imported entries and a list of entries already existing in
-        the user's ledger. See function find_duplicate_entries(), which is the
-        default implementation for this.
+      detect_duplicates_func: (DEPRECATED) An optional function which accepts a
+        list of lists of imported entries and a list of entries already existing
+        in the user's ledger. See function find_duplicate_entries(), which is
+        the default implementation for this. Use 'filter_funcs' instead.
+      hooks: An optional list of hook functions to apply to the list of extract
+        (filename, entries) pairs, in order. This replaces
+        'detect_duplicates_func'.
     """
+    if detect_duplicates_func is not None:
+        warnings.warn("Argument 'detect_duplicates_func' is deprecated.")
+        # Fold it in hooks.
+        if hooks is None:
+            hooks = []
+        hooks.insert(0, detect_duplicates_func)
+        del detect_duplicates_func
+
     if ingest.args is not None:
         # The script has been called from one of the bean-* ingestion tools.
         # 'ingest.args' is only set when we're being invoked from one of the
@@ -110,8 +122,7 @@ def ingest(importers_list, detect_duplicates_func=None):
                 parser.error("Subcommand is required.")
 
     abs_downloads = list(map(path.abspath, args.downloads))
-    args.command(args, parser, importers_list, abs_downloads,
-                 detect_duplicates_func=detect_duplicates_func)
+    args.command(args, parser, importers_list, abs_downloads, hooks=hooks)
     return 0
 
 

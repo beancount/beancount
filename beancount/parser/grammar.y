@@ -2,7 +2,7 @@
 /*
  * Parser grammar for beancount 2.0 input syntax.
  *
- * This assumes it feeds off the corresponding lexer in this pacakge. This is
+ * This assumes it feeds off the corresponding lexer in this package. This is
  * meant to be used with the stock "go yacc" command.
  */
 
@@ -13,8 +13,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include "parser.h"
+#include "grammar.h"
 #include "lexer.h"
 
+extern YY_DECL;
 
 /*
  * Call a builder method and detect and handle a Python exception being raised
@@ -25,19 +27,15 @@
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
     clean;                                                                      \
     if (target == NULL) {                                                       \
-        build_grammar_error_from_exception();                                   \
+        build_grammar_error_from_exception(scanner);                            \
         YYERROR;                                                                \
     }
 
-
-/* First line of reported file/line string. This is used as #line. */
-int yy_firstline;
-
-#define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
+#define FILE_LINE_ARGS  yyget_filename(scanner), ((yyloc).first_line + yyget_firstline(scanner))
 
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(void)
+void build_grammar_error_from_exception(yyscan_t scanner)
 {
     TRACE_ERROR("Grammar Builder Exception");
 
@@ -54,8 +52,10 @@ void build_grammar_error_from_exception(void)
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            pvalue, ptype, ptraceback);
+
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
             /* PyErr_SetString(PyExc_RuntimeError, */
@@ -75,7 +75,7 @@ void build_grammar_error_from_exception(void)
 
 
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(char const* message)
+void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
@@ -84,7 +84,8 @@ void yyerror(char const* message)
     else {
         /* Register a syntax error with the builder. */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            message);
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -112,15 +113,13 @@ const char* getTokenName(int token);
 /*--------------------------------------------------------------------------------*/
 /* Bison Declarations */
 
-
 /* Options. */
 %defines
 %error-verbose
 %debug
-%pure-parser
 %locations
-/* %glr-parser */
-
+%define api.pure full
+%param {yyscan_t scanner}
 
 /* Collection of value types. */
 %union {

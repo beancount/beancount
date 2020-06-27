@@ -541,14 +541,19 @@ class BQLShell(DispatchingShell):
                 print()
                 print()
         else:
-            try:
+            query = None
+            if name in custom_query_map:
                 query = custom_query_map[name]
-            except KeyError:
-                print("ERROR: Query '{}' not found".format(name))
-            else:
+            else:  # lookup best query match using name as prefix
+                queries = [q for q in custom_query_map if q.startswith(name)]
+                if len(queries) == 1:
+                    name = queries[0]
+                    query = custom_query_map[name]
+            if query:
                 statement = self.parser.parse(query.query_string)
                 self.dispatch(statement)
-
+            else:
+                print("ERROR: Query '{}' not found".format(name))
 
     def help_targets(self):
         template = textwrap.dedent("""

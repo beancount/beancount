@@ -82,11 +82,19 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual(0, len(errors))
 
-    def test_parse_file(self):
+    def test_parse_filename(self):
         with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
             file.write(self.INPUT)
             file.flush()
             entries, errors, _ = parser.parse_file(file.name)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+
+    def test_parse_file(self):
+        with tempfile.TemporaryFile('w+b', suffix='.beancount') as file:
+            file.write(self.INPUT.encode('utf-8'))
+            file.seek(0)
+            entries, errors, _ = parser.parse_file(file)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
@@ -106,12 +114,14 @@ class TestParserInputs(unittest.TestCase):
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
 
-    def test_parse_string_None(self):
-        input_string = report_filename = None
+    def test_parse_None(self):
+        # None is treated as the empty string...
+        entries, errors, _ = parser.parse_string(None)
+        self.assertEqual(0, len(entries))
+        self.assertEqual(0, len(errors))
+        # ...however None in not a valid file like object
         with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string(input_string)
-        with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string("something", None, report_filename)
+            entries, errors, _ = parser.parse_file(None)
 
 
 class TestUnicodeErrors(unittest.TestCase):

@@ -9,8 +9,8 @@ import io
 import re
 import sys
 import textwrap
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import position
 from beancount.core import convert
 from beancount.core import inventory

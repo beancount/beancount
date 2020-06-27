@@ -278,14 +278,18 @@ def add_arguments(parser):
                         help="Don't overwrite destination files with the same name.")
 
 
-def run(args, parser, importers_list, files_or_directories, detect_duplicates_func=None):
+def run(args, parser, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
 
-    # If the output directory is not specified, move the files at the root of
-    # the configuration file. (Providing this default seems better than using a
-    # required option.)
+    # If the output directory is not specified, move the files at the root where
+    # the import configuration file is located. (Providing this default seems
+    # better than using a required option.)
     if args.output_dir is None:
-        args.output_dir = path.dirname(path.abspath(args.config))
+        if hasattr(args, 'config'):
+            args.output_dir = path.dirname(path.abspath(args.config))
+        else:
+            import __main__ # pylint: disable=import-outside-toplevel
+            args.output_dir = path.dirname(path.abspath(__main__.__file__))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):

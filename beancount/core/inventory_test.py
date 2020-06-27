@@ -323,9 +323,16 @@ class TestInventory(unittest.TestCase):
         inv = I('2 HOOL {500 USD}, 3 HOOL {520 USD}, 4 HOOL {530 USD}')
         self.assertEqual(inv.average(), I('9 HOOL {520 USD}'))
 
-        # Test DBZ case
-        inv = I('2 HOOL {100 USD}, -2 HOOL {102 USD}')
-        inv.average()
+        # Average on zero amount, same costs
+        inv = I('2 HOOL {500 USD}')
+        inv.add_amount(A('-2 HOOL'), Cost(D('500'), 'USD', None, None))
+        self.assertEqual(inv.average(), I(''))
+
+        # Average on zero amount, different costs
+        inv = I('2 HOOL {500 USD}')
+        inv.add_amount(A('-2 HOOL'),
+                       Cost(D('500'), 'USD', datetime.date(2000, 1, 1), None))
+        self.assertEqual(inv.average(), I(''))
 
     def test_currencies(self):
         inv = Inventory()
