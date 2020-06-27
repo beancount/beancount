@@ -116,7 +116,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 126 "beancount/parser/grammar.y"
+#line 125 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -150,6 +150,6 @@ struct YYLTYPE
 
 
 
-int yyparse (void);
+int yyparse (yyscan_t scanner);
 
 #endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */

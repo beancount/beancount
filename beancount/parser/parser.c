@@ -5,18 +5,17 @@
 #include <Python.h>
 
 #include "parser.h"
+#include "grammar.h"
 #include "lexer.h"
+
+extern YY_DECL;
 
 #define XSTRINGIFY(s) STRINGIFY(s)
 #define STRINGIFY(s) #s
 
-/* The bison header file does not contain this... silly. */
-extern int yyparse(void);
-
 extern const char* getTokenName(int token);
 
-extern int yy_firstline;
-
+yyscan_t _scanner;
 
 /* The current builder during parsing (as a global variable for now). */
 PyObject* builder = 0;
@@ -80,20 +79,19 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(report_filename, encoding);
-    yyset_in((void*)file);
-
-    /* Initialize the parser. */
-    yy_firstline = report_firstline;
+    yylex_init(&_scanner);
+    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
+    yyset_in((void*)file, _scanner);
 
     /* Parse! This will call back methods on the builder instance. */
-    result = yyparse();
+    result = yyparse(_scanner);
 
     /* Finalize the parser. */
     /* Noop. */
 
     /* Finalize the lexer. */
-    yylex_finalize();
+    yylex_finalize(_scanner);
+    yylex_destroy(_scanner);
 
     Py_XDECREF(name);
     builder = NULL;
@@ -103,12 +101,12 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
 {
-    return PyUnicode_FromString(yy_filename);
+    return PyUnicode_FromString(yyget_filename(_scanner));
 }
 
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
-    return PyLong_FromLong(yylineno + yy_firstline);
+    return PyLong_FromLong(yyget_lineno(_scanner) + yyget_firstline(_scanner));
 }
 
 /* Inititalize the lexer to start running in debug mode. */
@@ -145,11 +143,9 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(report_filename, encoding);
-    yyset_in((void*)file);
-
-    /* Initialize the parser. */
-    yy_firstline = report_firstline;
+    yylex_init(&_scanner);
+    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
+    yyset_in((void*)file, _scanner);
 
     /* We need to keep those objects alive after we leave this function. */
     Py_INCREF(file);
@@ -162,11 +158,12 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
 PyObject* lexer_finalize(PyObject *self, PyObject *args)
 {
     /* Now we can let those objects go. */
-    Py_XDECREF((void*)yyget_in());
+    Py_XDECREF((void*)yyget_in(_scanner));
     Py_XDECREF(builder);
 
     /* Finalize the lexer. */
-    yylex_finalize();
+    yylex_finalize(_scanner);
+    yylex_destroy(_scanner);
 
     Py_RETURN_NONE;
 }
@@ -181,9 +178,8 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
     PyObject* obj;
 
     /* Run the lexer. */
-    token = yylex(&yylval, &yylloc);
+    token = yylex(&yylval, &yylloc, _scanner);
     if (token == 0) {
-        yylex_destroy();
         Py_RETURN_NONE;
     }
 
@@ -201,7 +197,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
     }
 
     tokenName = getTokenName(token);
-    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yytext, (Py_ssize_t)yyleng, obj);
+    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yyget_text(_scanner), (Py_ssize_t)yyget_leng(_scanner), obj);
 }
 
 
