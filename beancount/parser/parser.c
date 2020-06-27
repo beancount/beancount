@@ -37,10 +37,10 @@ PyObject* handle_yyparse_result(int result)
     /* Check for internal errors during parsing (which would be the result of
      * calling YYABORT, which we don't call), and this should raise an
      * exception. */
-    if ( result == 1 ) {
+    if (result == 1) {
         return PyErr_Format(PyExc_RuntimeError, "Parser aborted (internal error)");
     }
-    else if ( result == 2 ) {
+    else if (result == 2) {
         return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
     }
     assert(result == 0);
@@ -61,10 +61,10 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     static char* kwlist[] = {"file", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                      &file, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
+                                     &file, &builder,
+                                     &report_filename, &report_firstline,
+                                     &encoding, &yydebug)) {
         return NULL;
     }
 
@@ -125,10 +125,10 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
     static char* kwlist[] = {"file", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
-                                      &file, &builder,
-                                      &report_filename, &report_firstline,
-                                      &encoding, &yydebug)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|zizp", kwlist,
+                                     &file, &builder,
+                                     &report_filename, &report_firstline,
+                                     &encoding, &yydebug)) {
         return NULL;
     }
 
@@ -182,7 +182,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
     /* Run the lexer. */
     token = yylex(&yylval, &yylloc);
-    if ( token == 0 ) {
+    if (token == 0) {
         yylex_destroy();
         Py_RETURN_NONE;
     }
@@ -266,7 +266,7 @@ void initialize_metadata(PyObject* module) {
 PyMODINIT_FUNC PyInit__parser(void)
 {
     PyObject* module = PyModule_Create(&moduledef);
-    if ( module == NULL ) {
+    if (module == NULL) {
         Py_RETURN_NONE;
     }
 
@@ -274,11 +274,11 @@ PyMODINIT_FUNC PyInit__parser(void)
 
     /* Import the module that defines the missing object constant. */
     PyObject* number_module = PyImport_ImportModule("beancount.core.number");
-    if ( number_module == NULL ) {
+    if (number_module == NULL) {
         Py_RETURN_NONE;
     }
     missing_obj = PyObject_GetAttrString(number_module, "MISSING");
-    if ( missing_obj == NULL ) {
+    if (missing_obj == NULL) {
         Py_RETURN_NONE;
     }
 

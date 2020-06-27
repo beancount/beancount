@@ -2,7 +2,7 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "beancount/parser/lexer.h"
+#line 6 "beancount/parser/lexer.h"
 
 /* Includes. */
 #include <math.h>
@@ -80,7 +80,7 @@ int strtonl(const char* buf, size_t nchars);
 	}                                       \
         *strbuf_ptr++ = value;
 
-#line 83 "beancount/parser/lexer.h"
+#line 84 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -584,6 +584,6 @@ extern int yylex \
 #line 415 "beancount/parser/lexer.l"
 
 
-#line 587 "beancount/parser/lexer.h"
+#line 588 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

@@ -1,4 +1,4 @@
-#line 1 "beancount/parser/lexer.c"
+#line 2 "beancount/parser/lexer.c"
 
 /* Includes. */
 #include <math.h>
@@ -76,7 +76,7 @@ int strtonl(const char* buf, size_t nchars);
 	}                                       \
         *strbuf_ptr++ = value;
 
-#line 79 "beancount/parser/lexer.c"
+#line 80 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1060,7 +1060,7 @@ char *yytext;
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
-#line 1063 "beancount/parser/lexer.c"
+#line 1064 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1303,7 +1303,7 @@ YY_DECL
 
 #line 136 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1306 "beancount/parser/lexer.c"
+#line 1307 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1384,12 +1384,12 @@ case 2:
 YY_RULE_SETUP
 #line 147 "beancount/parser/lexer.l"
 {
-    if ( yy_line_tokens == 1 ) {
+    if (yy_line_tokens == 1) {
         /* If the next character completes the line, skip it. */
-        if ( yy_hold_char == '\n' ||
-             yy_hold_char == '\r' ||
-             yy_hold_char == '\0' ) {
-            return SKIPPED;
+        if (yy_hold_char == '\n' ||
+            yy_hold_char == '\r' ||
+            yy_hold_char == '\0') {
+          return SKIPPED;
         }
         else {
             return INDENT;
@@ -1474,7 +1474,7 @@ case 17:
 YY_RULE_SETUP
 #line 179 "beancount/parser/lexer.l"
 {
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return HASH;
     }
     else {
@@ -1488,7 +1488,7 @@ case 18:
 YY_RULE_SETUP
 #line 190 "beancount/parser/lexer.l"
 {
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         return ASTERISK;
     }
     else {
@@ -1533,7 +1533,7 @@ case 21:
 YY_RULE_SETUP
 #line 226 "beancount/parser/lexer.l"
 {
-    if ( yy_line_tokens != 1 ) {
+    if (yy_line_tokens != 1) {
         yylval->character = yytext[0];
         return FLAG;
     }
@@ -1732,7 +1732,7 @@ YY_RULE_SETUP
         *strbuf_ptr = '\0';
         PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
                                                  yy_encoding, "ignore");
-        if ( unicode_str == NULL ) {
+        if (unicode_str == NULL) {
             build_lexer_error_from_exception();
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
@@ -1782,7 +1782,7 @@ case 55:
 YY_RULE_SETUP
 #line 349 "beancount/parser/lexer.l"
 {
-        if ( yyleng > (strbuf_end - strbuf_ptr) ) {
+        if (yyleng > (strbuf_end - strbuf_ptr)) {
             strbuf_realloc(yyleng);
         }
         ssize_t i;
@@ -1845,7 +1845,7 @@ case YY_STATE_EOF(INVALID):
 case YY_STATE_EOF(STRLIT):
 #line 393 "beancount/parser/lexer.l"
 {
-  if ( yy_eof_times == 0 ) {
+  if (yy_eof_times == 0) {
     yy_eof_times = 1;
     yylloc->first_line = yylineno;
     return EOL;
@@ -1873,7 +1873,7 @@ YY_RULE_SETUP
 #line 415 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1876 "beancount/parser/lexer.c"
+#line 1877 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2927,7 +2927,7 @@ void yylex_initialize(const char* filename, const char* encoding)
     yy_filename = filename ? filename : "";
     yy_line_tokens = 0;
     yycolumn = 1;
-    if ( encoding == 0 ) {
+    if (encoding == 0) {
         yy_encoding = "utf8";
     }
     else {
@@ -2950,7 +2950,7 @@ void yylex_finalize(void)
     yy_filename = NULL;
 
     /* Finalize our reading buffer. */
-    if ( strbuf != NULL ) {
+    if (strbuf != NULL) {
         free(strbuf);
         strbuf = NULL;
     }
@@ -2966,7 +2966,7 @@ void strbuf_realloc(size_t num_new_chars)
     assert(strbuf_ptr != NULL);
     size_t cur_size = strbuf_ptr - strbuf;
     size_t new_size = cur_size + num_new_chars;
-    while ( strbuf_size < new_size ) {
+    while (strbuf_size < new_size) {
         strbuf_size <<= 1;
     }
     strbuf = realloc(strbuf, strbuf_size + 1);
@@ -2982,13 +2982,13 @@ void strbuf_realloc(size_t num_new_chars)
 int yy_skip_line()
 {
     int num_chars = 0;
-    for ( ;; ) {
+    for (;;) {
         int c = input();
         num_chars++;
-        if ( c == LEXEOF || c == -1 ) {
+        if (c == LEXEOF || c == -1) {
             break;
         }
-        if ( c == '\n' ) {
+        if (c == '\n') {
             unput(c);
             num_chars--;
             break;
@@ -3002,7 +3002,7 @@ int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;
     size_t i;
-    for ( i = 0; i < nchars; ++i ) {
+    for (i = 0; i < nchars; ++i) {
         result *= 10;
         result += (buf[i] - '0');
     }
@@ -3063,7 +3063,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     PyObject* read = NULL;
     int ret = 0;
 
-    // Note: Eventually we ought to allocatee this once in the parser state and
+    // Note: Eventually we ought to allocate this once in the parser state and
     // avoid reallocating this on every block read.
     dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
     if (!dest) {
