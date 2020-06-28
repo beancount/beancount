@@ -7,7 +7,6 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import os
-import logging
 import subprocess
 
 
@@ -21,7 +20,7 @@ def benchmark_revision(beancount_file: str, revision: str):
 
     # Build from scratch.
     subprocess.check_call(["make", "clean", "build"], **args)
-    
+
     # Run a number of iterations.
     meta_command = ["hyperfine", "--warmup=2", "--min-runs=30"]
     run_command = ["bean-check --no-cache $L"]
