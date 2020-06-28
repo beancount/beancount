@@ -102,28 +102,23 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
     const char* encoding = NULL;
-    const char* filename = NULL;
+    PyObject* filename = NULL;
     PyObject* file;
     int lineno = 0;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ziz", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
                                      &file, &filename, &lineno, &encoding)) {
         return NULL;
     }
 
-    /* If we are provided a buffer object, try to get the filename from the
-     * '.name' attribute. */
-    if (!filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            PyObject* name = PyUnicode_EncodeFSDefault(p);
-            if (name) {
-                filename = PyBytes_AsString(name);
-            }
-            Py_DECREF(p);
+    if (!filename || filename == Py_None) {
+        /* Try to get the filename from the 'name' attribute. */
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename) {
+            filename = PyUnicode_FromString("");
+            PyErr_Clear();
         }
-        PyErr_Clear();
     }
 
     /* Initialize the scanner state. */
@@ -165,28 +160,22 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
     const char* encoding = NULL;
-    const char* filename = NULL;
+    PyObject* filename = NULL;
     PyObject* file;
     int lineno = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ziz", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
                                      &file, &filename, &lineno, &encoding)) {
         return NULL;
     }
 
-    /* If we are provided a buffer object, try to get the filename from the
-     * '.name' attribute. */
-    /* TODO(blais): Refactor this block. */
-    if (!filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            PyObject* name = PyUnicode_EncodeFSDefault(p);
-            if (name) {
-                filename = PyBytes_AsString(name);
-            }
-            Py_DECREF(p);
+    if (!filename || filename == Py_None) {
+        /* Try to get the filename from the 'name' attribute. */
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename) {
+            filename = PyUnicode_FromString("");
+            PyErr_Clear();
         }
-        PyErr_Clear();
     }
 
     /* Initialize the scanner state. */

@@ -23,7 +23,7 @@
 typedef struct _yyextra_t yyextra_t;
 
 /* Initialize scanner private data. */
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner);
 
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
@@ -53,7 +53,7 @@ struct _yyextra_t {
     int n_line_tokens;
 
     /* The filename being tokenized. */
-    const char* filename;
+    PyObject* filename;
 
     /* Reporting line offset. This is used like the #line cpp macro */
     int line;
@@ -461,13 +461,15 @@ NULL		{
 
 %% /* User Code */
 
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner)
+void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner)
 {
     yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
 
+    Py_XDECREF(yy_filename);
+    yy_filename = filename;
+
     yy_eof_times = 0;
     yy_line_tokens = 0;
-    yy_filename = filename ? filename : "";
     yy_firstline = firstline;
     yy_encoding = encoding ? encoding : "utf-8";
     buffer_init(strbuf, 1024);
@@ -528,7 +530,7 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size
     TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "sis#",
+    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
 				       loc->file_name, loc->first_line,
 				       string, (Py_ssize_t)length);
     /* Note: If there was an exception in the callback, let it bubble up. */
@@ -551,7 +553,7 @@ void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "siOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
 					   loc->file_name, loc->first_line,
 					   pvalue, ptype);
         Py_XDECREF(ptype);

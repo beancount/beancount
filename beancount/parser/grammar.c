@@ -81,7 +81,7 @@ extern YY_DECL;
  * reduced rule. {05bb0fb60e86}
  */
 #define BUILDY(clean, target, method_name, format, ...)                         \
-    target = PyObject_CallMethod(builder, method_name, "si" format,             \
+    target = PyObject_CallMethod(builder, method_name, "Oi" format,             \
                                  FILENAME, LINENO, ## __VA_ARGS__);             \
     clean;                                                                      \
     if (target == NULL) {                                                       \
@@ -109,7 +109,7 @@ void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
                                            loc->file_name, loc->first_line,
                                            pvalue, ptype, ptraceback);
         if (rv == NULL) {
@@ -137,7 +137,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
     }
     else {
         /* Register a syntax error with the builder. */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
+        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
                                            loc->file_name, loc->first_line,
                                            message);
         if (rv == NULL) {
@@ -209,7 +209,7 @@ typedef struct YYLTYPE {
     int first_column;
     int last_line;
     int last_column;
-    const char* file_name;
+    PyObject* file_name;
 } YYLTYPE;
 
 #define YYLTYPE_IS_DECLARED 1

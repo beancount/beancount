@@ -1,16 +1,16 @@
-#line 2 "beancount/parser/lexer.c"
+#line 1 "beancount/parser/lexer.c"
 
 #include "parser.h"
 
 typedef struct _yyextra_t yyextra_t;
 
 /* Initialize scanner private data. */
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner);
 
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
-#line 14 "beancount/parser/lexer.c"
+#line 13 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -985,7 +985,7 @@ struct _yyextra_t {
     int n_line_tokens;
 
     /* The filename being tokenized. */
-    const char* filename;
+    PyObject* filename;
 
     /* Reporting line offset. This is used like the #line cpp macro */
     int line;
@@ -1098,12 +1098,12 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
-#line 1102 "beancount/parser/lexer.c"
+#line 1101 "beancount/parser/lexer.c"
 /* A start condition for chomping an invalid token. */
 
 /* Exclusive start condition for parsing escape sequences in string literals. */
 
-#line 1107 "beancount/parser/lexer.c"
+#line 1106 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1392,7 +1392,7 @@ YY_DECL
 
 #line 193 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1396 "beancount/parser/lexer.c"
+#line 1395 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1955,7 +1955,7 @@ YY_RULE_SETUP
 #line 463 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1959 "beancount/parser/lexer.c"
+#line 1958 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3161,13 +3161,15 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 #line 463 "beancount/parser/lexer.l"
 
 
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner)
+void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner)
 {
     yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
 
+    Py_XDECREF(yy_filename);
+    yy_filename = filename;
+
     yy_eof_times = 0;
     yy_line_tokens = 0;
-    yy_filename = filename ? filename : "";
     yy_firstline = firstline;
     yy_encoding = encoding ? encoding : "utf-8";
     buffer_init(strbuf, 1024);
@@ -3228,7 +3230,7 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size
     TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "sis#",
+    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
 				       loc->file_name, loc->first_line,
 				       string, (Py_ssize_t)length);
     /* Note: If there was an exception in the callback, let it bubble up. */
@@ -3251,7 +3253,7 @@ void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "siOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
 					   loc->file_name, loc->first_line,
 					   pvalue, ptype);
         Py_XDECREF(ptype);
