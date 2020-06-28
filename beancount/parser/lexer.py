@@ -99,6 +99,8 @@ class LexBuilder:
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
+            # Note: This exception gets caught by BUILD_LEX() and converted into
+            # a logged error.
             raise ValueError("Invalid account name: {}".format(account_name))
 
         # Reuse (intern) account strings as much as possible. This potentially
@@ -131,6 +133,8 @@ class LexBuilder:
         if '\n' in string:
             num_lines = string.count('\n') + 1
             if num_lines > self.long_string_maxlines_default:
+                # Note: This exception gets caught by BUILD_LEX() and converted
+                # into a logged error.
                 raise ValueError("String too long ({} lines)".format(num_lines))
         return string
 
@@ -146,7 +150,17 @@ class LexBuilder:
         # The lexer will only yield valid number strings.
         if ',' in number:
             # Check for a number with optional commas as thousands separator.
+            #
+            # Note: The regexp is liberally accepting commas in any position and
+            # does not check for locale-specific placement of commas. This code
+            # used to honor the user's locale by verifying that commas match
+            # those the environment but we prefer to make parsing
+            # locale-independent. An improvement would be to add an option to
+            # specify the locale within Beancount itself and check numbers for
+            # validity against that locale.
             if not self.number_regexp.match(number):
+                # Note: This exception gets caught by BUILD_LEX() and converted
+                # into a logged error.
                 raise ValueError("Invalid number format: '{}'".format(number))
             # Remove commas.
             number = number.replace(',', '')

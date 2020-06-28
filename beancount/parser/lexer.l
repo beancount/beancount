@@ -123,7 +123,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 /* Callback call site with error handling. */
 #define BUILD_LEX(method_name, format, ...)                                             \
     yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
+    /* Handle a Python exception raised by the driver {3cfb2739349a} */                 \
     if (yylval->pyobj == NULL) {                                                        \
 	build_lexer_error_from_exception(yylloc);			                \
 	return LEX_ERROR;						                \
