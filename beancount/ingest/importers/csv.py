@@ -72,7 +72,7 @@ class Col(enum.Enum):
     CATEGORY = '[CATEGORY]'
 
 
-def get_amounts(iconfig, row, allow_zero_amounts=False):
+def get_amounts(iconfig, row, allow_zero_amounts, parse_amount):
     """Get the amount columns of a row.
 
     Args:
@@ -92,13 +92,13 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
 
     # If zero amounts aren't allowed, return null value.
-    is_zero_amount = ((credit is not None and D(credit) == ZERO) and
-                      (debit is not None and D(debit) == ZERO))
+    is_zero_amount = ((credit is not None and parse_amount(credit) == ZERO) and
+                      (debit is not None and parse_amount(debit) == ZERO))
     if not allow_zero_amounts and is_zero_amount:
         return (None, None)
 
-    return (-D(debit) if debit else None,
-            D(credit) if credit else None)
+    return (-parse_amount(debit) if debit else None,
+            parse_amount(credit) if credit else None)
 
 
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
@@ -180,7 +180,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         iconfig, has_header = normalize_config(
             self.config, file.head(), self.csv_dialect, self.skip_lines)
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+            reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                     dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
                 next(reader)
             if has_header:
@@ -272,7 +273,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
             if balance is not None:
-                meta['balance'] = D(balance)
+                meta['balance'] = self.parse_amount(balance)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
                 meta['card'] = last4_friendly if last4_friendly else last4
@@ -281,7 +282,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    tags, links, [])
 
             # Attach one posting to the transaction
-            amount_debit, amount_credit = self.get_amounts(iconfig, row)
+            amount_debit, amount_credit = self.get_amounts(iconfig, row,
+                                                           False, self.parse_amount)
 
             # Skip empty transactions
             if amount_debit is None and amount_credit is None:
@@ -335,19 +337,25 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         if not isinstance(self.categorizer, collections.abc.Callable):
             return txn
 
+        # TODO(blais): Remove introspection here, just commit to the two
+        # parameter version.
         params = signature(self.categorizer).parameters
         if len(params) < 2:
             return self.categorizer(txn)
         else:
             return self.categorizer(txn, row)
 
-    def get_amounts(self, iconfig, row, allow_zero_amounts=False):
+    def parse_amount(self, string):
+        """The method used to create Decimal instances. You can override this."""
+        return D(string)
+
+    def get_amounts(self, iconfig, row, allow_zero_amounts, parse_amount):
         """See function get_amounts() for details.
 
         This method is present to allow clients to override it in order to deal
         with special cases, e.g., columns with currency symbols in them.
         """
-        return get_amounts(iconfig, row, allow_zero_amounts)
+        return get_amounts(iconfig, row, allow_zero_amounts, parse_amount)
 
 
 def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
