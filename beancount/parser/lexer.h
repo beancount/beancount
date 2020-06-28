@@ -2,7 +2,7 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "beancount/parser/lexer.h"
+#line 6 "beancount/parser/lexer.h"
 
 #include "parser.h"
 
@@ -14,7 +14,7 @@ void yylex_initialize(const char* filename, int firstline, const char* encoding,
 /* Free scanner private data */
 void yylex_finalize(yyscan_t yyscanner);
 
-#line 17 "beancount/parser/lexer.h"
+#line 18 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -531,6 +531,6 @@ extern int yylex \
 #line 463 "beancount/parser/lexer.l"
 
 
-#line 534 "beancount/parser/lexer.h"
+#line 535 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
