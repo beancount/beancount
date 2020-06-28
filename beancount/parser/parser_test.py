@@ -278,6 +278,28 @@ class TestReferenceCounting(unittest.TestCase):
         self.assertEqual(sys.getrefcount(name), 2)
         self.assertEqual(sys.getrefcount(f), 2)
 
+    def test_parser_lex_multi(self):
+        file1 = io.BytesIO(b"")
+        file1.name = object()
+        self.assertEqual(sys.getrefcount(file1.name), 2)
+
+        file2 = io.BytesIO(b"")
+        file2.name = object()
+        self.assertEqual(sys.getrefcount(file2.name), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(file1))
+        tokens = list(parser.lex(file2))
+
+        del parser
+        # Once the Parser object is gone we should have just the local
+        # references to the file objects and one references to the names.
+        self.assertEqual(sys.getrefcount(file1), 2)
+        self.assertEqual(sys.getrefcount(file1.name), 2)
+        self.assertEqual(sys.getrefcount(file2), 2)
+        self.assertEqual(sys.getrefcount(file2.name), 2)
+
     def test_parser_parse(self):
         # Do not use a string to avoid issues due to string interning.
         name = object()

@@ -43,7 +43,7 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    yylex_init(&self->scanner);
+    self->scanner = yylex_new();
     if (!self->scanner) {
         Py_XDECREF(self);
         return NULL;
@@ -81,8 +81,7 @@ static void parser_dealloc(Parser* self)
     Py_XDECREF(self->builder);
 
     /* Finalize the scanner state. */
-    yylex_finalize(self->scanner);
-    yylex_destroy(self->scanner);
+    yylex_free(self->scanner);
 
     Py_TYPE(self)->tp_free((PyObject*)self);
 }

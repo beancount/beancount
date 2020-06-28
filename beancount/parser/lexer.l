@@ -23,6 +23,21 @@
 typedef struct _yyextra_t yyextra_t;
 
 /**
+ * Allocate a new scanner object including private data.
+ *
+ * This encapsulates the native yylex_init_extra() API.
+ */
+yyscan_t yylex_new(void);
+
+/**
+ * Free scanner object including private data.
+ *
+ * This encapsulated the native yylex_destroy() API. Python objects
+ * references stored in the @scanner are decremented.
+ */
+yyscan_t yylex_free(yyscan_t scanner);
+
+/**
  * Allocate and initialize scanner private data.
  *
  * Setup @scanner to read from the Python file-like object @file. Set
@@ -31,16 +46,9 @@ typedef struct _yyextra_t yyextra_t;
  * the @file object. If this fails, use the empty string. @encoding is
  * used to decode strings read from the input file, if not NULL,
  * otherwise the default UTF-8 encoding is used. Python objects
- * references are incremented.
+ * references are incremented. It is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
-
-/**
- * Free scanner private data.
- *
- * Python objects references stored in the @scanner are decremented.
- */
-void yylex_finalize(yyscan_t scanner);
 
 }
 
@@ -475,10 +483,53 @@ NULL		{
 
 %% /* User Code */
 
+yyscan_t yylex_new(void)
+{
+    yyscan_t scanner;
+    yyextra_t* extra;
+
+    extra = malloc(sizeof(*extra));
+    if (!extra)
+        return NULL;
+
+    extra->filename = NULL;
+    buffer_init(&extra->str, 1024);
+
+    yylex_init_extra(extra, &scanner);
+    if (!scanner) {
+        free(extra);
+        return NULL;
+    }
+
+    return scanner;
+}
+
+yyscan_t yylex_free(yyscan_t scanner)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(extra->filename);
+    buffer_free(&extra->str);
+    free(extra);
+
+    Py_XDECREF(yyget_in(scanner));
+    yylex_destroy(scanner);
+
+    return NULL;
+}
+
+/* yyrestart() does not reset the scanner back to INITIAL state and
+ * Flex does not provide a way of doing so outside a scanner
+ * rule. This function does just that accessing Flex internals. */
+static void yybegin(yyscan_t scanner)
+{
+    struct yyguts_t* yyg = (struct yyguts_t*)scanner;
+    BEGIN(INITIAL);
+}
+
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
 {
-    yyextra_t* extra = malloc(sizeof(yyextra_t));
-    yyset_extra(extra, scanner);
+    yyextra_t* extra = yyget_extra(scanner);
 
     if (!filename || filename == Py_None) {
         /* If a filename has not been specified, get it from the 'name'
@@ -494,7 +545,9 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
         Py_INCREF(filename);
     }
 
+    Py_XDECREF(extra->filename);
     extra->filename = filename;
+
     extra->n_eof = 0;
     extra->n_line_tokens = 0;
     extra->line = lineno;
@@ -502,19 +555,9 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     buffer_init(&extra->str, 1024);
 
     Py_XDECREF(yyget_in(scanner));
-    yyset_in((void*)file, scanner);
     Py_INCREF(file);
-}
-
-void yylex_finalize(yyscan_t scanner)
-{
-    yyextra_t* extra = yyget_extra(scanner);
-
-    Py_XDECREF(extra->filename);
-    buffer_free(&extra->str);
-    free(extra);
-
-    Py_XDECREF(yyget_in(scanner));
+    yyrestart((void *)file, scanner);
+    yybegin(scanner);
 }
 
 static void buffer_init(struct buffer* b, size_t size)
