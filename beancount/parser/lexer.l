@@ -22,11 +22,25 @@
 
 typedef struct _yyextra_t yyextra_t;
 
-/* Initialize scanner private data. */
-void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+/**
+ * Allocate and initialize scanner private data.
+ *
+ * Setup @scanner to read from the Python file-like object @file. Set
+ * the reported file name to @filename, if not NULL and not None.
+ * Otherwise try to obtain the file name from the @name attribute of
+ * the @file object. If this fails, use the empty string. @encoding is
+ * used to decode strings read from the input file, if not NULL,
+ * otherwise the default UTF-8 encoding is used. Python objects
+ * references are incremented.
+ */
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
-/* Free scanner private data */
-void yylex_finalize(yyscan_t yyscanner);
+/**
+ * Free scanner private data.
+ *
+ * Python objects references stored in the @scanner are decremented.
+ */
+void yylex_finalize(yyscan_t scanner);
 
 }
 
@@ -55,7 +69,7 @@ struct _yyextra_t {
     /* The filename being tokenized. */
     PyObject* filename;
 
-    /* Reporting line offset. This is used like the #line cpp macro */
+    /* Reporting line offset. This is used like the #line cpp macro. */
     int line;
 
     /* The encoding to use for converting strings. */
@@ -461,24 +475,46 @@ NULL		{
 
 %% /* User Code */
 
-void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner)
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
 {
-    yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
+    yyextra_t* extra = malloc(sizeof(yyextra_t));
+    yyset_extra(extra, scanner);
 
-    Py_XDECREF(yy_filename);
-    yy_filename = filename;
+    if (!filename || filename == Py_None) {
+        /* If a filename has not been specified, get it from the 'name'
+	 * attribute of the input file object. */
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename) {
+	    /* No 'name' attribute. */
+	    PyErr_Clear();
+            /* Use the empty string. */
+            filename = PyUnicode_FromString("");
+        }
+    } else {
+        Py_INCREF(filename);
+    }
 
-    yy_eof_times = 0;
-    yy_line_tokens = 0;
-    yy_firstline = firstline;
-    yy_encoding = encoding ? encoding : "utf-8";
-    buffer_init(strbuf, 1024);
+    extra->filename = filename;
+    extra->n_eof = 0;
+    extra->n_line_tokens = 0;
+    extra->line = lineno;
+    extra->encoding = encoding ? encoding : "utf-8";
+    buffer_init(&extra->str, 1024);
+
+    Py_XDECREF(yyget_in(scanner));
+    yyset_in((void*)file, scanner);
+    Py_INCREF(file);
 }
 
-void yylex_finalize(yyscan_t yyscanner)
+void yylex_finalize(yyscan_t scanner)
 {
-    buffer_free(strbuf);
-    free(yyget_extra(yyscanner));
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(extra->filename);
+    buffer_free(&extra->str);
+    free(extra);
+
+    Py_XDECREF(yyget_in(scanner));
 }
 
 static void buffer_init(struct buffer* b, size_t size)

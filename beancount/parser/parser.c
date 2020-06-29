@@ -112,18 +112,8 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    if (!filename || filename == Py_None) {
-        /* Try to get the filename from the 'name' attribute. */
-        filename = PyObject_GetAttrString(file, "name");
-        if (!filename) {
-            filename = PyUnicode_FromString("");
-            PyErr_Clear();
-        }
-    }
-
     /* Initialize the scanner state. */
-    yylex_initialize(filename, lineno, encoding, self->scanner);
-    yyset_in((void*)file, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -169,18 +159,8 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    if (!filename || filename == Py_None) {
-        /* Try to get the filename from the 'name' attribute. */
-        filename = PyObject_GetAttrString(file, "name");
-        if (!filename) {
-            filename = PyUnicode_FromString("");
-            PyErr_Clear();
-        }
-    }
-
     /* Initialize the scanner state. */
-    yylex_initialize(filename, lineno, encoding, self->scanner);
-    yyset_in((void*)file, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;

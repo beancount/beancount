@@ -8,13 +8,27 @@
 
 typedef struct _yyextra_t yyextra_t;
 
-/* Initialize scanner private data. */
-void yylex_initialize(PyObject* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+/**
+ * Allocate and initialize scanner private data.
+ *
+ * Setup @scanner to read from the Python file-like object @file. Set
+ * the reported file name to @filename, if not NULL and not None.
+ * Otherwise try to obtain the file name from the @name attribute of
+ * the @file object. If this fails, use the empty string. @encoding is
+ * used to decode strings read from the input file, if not NULL,
+ * otherwise the default UTF-8 encoding is used. Python objects
+ * references are incremented.
+ */
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
-/* Free scanner private data */
-void yylex_finalize(yyscan_t yyscanner);
+/**
+ * Free scanner private data.
+ *
+ * Python objects references stored in the @scanner are decremented.
+ */
+void yylex_finalize(yyscan_t scanner);
 
-#line 17 "beancount/parser/lexer.h"
+#line 31 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -528,9 +542,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 463 "beancount/parser/lexer.l"
+#line 477 "beancount/parser/lexer.l"
 
 
-#line 534 "beancount/parser/lexer.h"
+#line 548 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

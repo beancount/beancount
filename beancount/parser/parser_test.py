@@ -4,6 +4,7 @@ Tests for parser.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import io
 import unittest
 import tempfile
 import textwrap
@@ -14,7 +15,7 @@ from pytest import mark
 
 from beancount.core.number import D
 from beancount.core import data
-from beancount.parser import parser
+from beancount.parser import parser, _parser, lexer, grammar
 from beancount.utils import test_utils
 
 
@@ -202,6 +203,107 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertTrue(isinstance(entry, data.Transaction))
+
+
+class TestReferenceCounting(unittest.TestCase):
+
+    def test_parser_lex(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        # Note that passing name as an argument to sys.getrefcount()
+        # counts as one reference, thus the minimum reference count
+        # returned for any object is 2.
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = name
+        # One more refernece from the 'name' attriute.
+        self.assertEqual(sys.getrefcount(name), 3)
+        # Just one reference to the BytesIO object.
+        self.assertEqual(sys.getrefcount(f), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        iterator = parser.lex(f)
+        # The Parser object keeps references to the input file and to
+        # the name while iterating over the tokens in the input file.
+        self.assertEqual(sys.getrefcount(name), 4)
+        self.assertEqual(sys.getrefcount(f), 3)
+        # The iterator holds one reference to the parser.
+        self.assertEqual(sys.getrefcount(parser), 3)
+
+        tokens = list(iterator)
+        # Just the EOL token.
+        self.assertEqual(len(tokens), 1)
+        # Once done scanning is completed the Parser object still has
+        # references to the input file and to the name.
+        self.assertEqual(sys.getrefcount(name), 4)
+        self.assertEqual(sys.getrefcount(f), 3)
+
+        del parser
+        del iterator
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 2)
+
+        del f
+        # With the file object gone there is one reference to name.
+        self.assertEqual(sys.getrefcount(name), 2)
+
+    def test_parser_lex_filename(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = object()
+        self.assertEqual(sys.getrefcount(f.name), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        iterator = parser.lex(f, filename=name)
+        tokens = list(iterator)
+        # The Parser object keeps references to the input file and to
+        # the name while iterating over the tokens in the input file.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 3)
+        # The name attribute of the file object is not referenced.
+        self.assertEqual(sys.getrefcount(f.name), 2)
+
+        del parser
+        del iterator
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 2)
+        self.assertEqual(sys.getrefcount(f), 2)
+
+    def test_parser_parse(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = name
+        self.assertEqual(sys.getrefcount(f.name), 3)
+
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f)
+        # The Parser object keeps a reference to the input file.
+        self.assertEqual(sys.getrefcount(f), 3)
+        # There are references to the file name from the Parser object
+        # and from the the parsing results. In the case of an empty
+        # input file from the options dictionary stored in the builder.
+        self.assertEqual(sys.getrefcount(name), 5)
+        builder.options = {}
+        self.assertEqual(sys.getrefcount(name), 4)
+
+        del parser
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 2)
 
 
 if __name__ == '__main__':
