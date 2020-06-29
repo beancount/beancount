@@ -735,14 +735,7 @@ class TestLexerUnicode(unittest.TestCase):
     def test_bytes_encoded_utf16_invalid(self):
         utf16_bytes = self.test_utf8_string.encode('utf16')
         builder = lexer.LexBuilder()
-        with self.assertRaises(SystemError):
-            tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
-
-    # Test providing utf16 bytes to the lexer with an encoding.
-    def test_bytes_encoded_utf16(self):
-        utf16_bytes = self.test_utf8_string.encode('utf16')
-        builder = lexer.LexBuilder()
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UnicodeDecodeError):
             tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
 
 

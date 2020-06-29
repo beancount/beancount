@@ -531,10 +531,7 @@ void build_lexer_error(YYLTYPE* loc, const char* string, size_t length)
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "sis#",
 				       loc->file_name, loc->first_line,
 				       string, (Py_ssize_t)length);
-    if (rv == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: Building exception from default rule");
-    }
+    /* Note: If there was an exception in the callback, let it bubble up. */
     Py_XDECREF(rv);
 }
 
@@ -561,9 +558,13 @@ void build_lexer_error_from_exception(YYLTYPE* loc)
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
 
+        /* If there was an exception during the handling of the lexer error, add
+         * a prefix to the message to make it clear this wasn't expected. */
         if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: While building exception");
+            PyObject* message = PyUnicode_FromFormat(
+                "Internal error while building exception for: %S", pvalue);
+            PyErr_SetObject(PyExc_RuntimeError, message);
+            Py_DECREF(message);
         }
     }
     else {

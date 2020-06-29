@@ -170,7 +170,9 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
     /* Run the lexer. */
     token = yylex(&yylval, &yylloc, _scanner);
-    if (token == 0) {
+    if (PyErr_Occurred()) {
+        return NULL;
+    } else if (token == 0) {
         Py_RETURN_NONE;
     }
 
