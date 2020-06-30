@@ -112,21 +112,15 @@ void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
 /* Error-handling function. {ca6aab8b9748} */
 void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* message)
 {
-    /* Skip lex errors: they have already been registered the lexer itself. */
-    if (strstr(message, "LEX_ERROR") != NULL) {
-        return;
+    /* Register a syntax error with the builder. */
+    PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
+                                       loc->file_name, loc->first_line,
+                                       message);
+    if (rv == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: Building exception from yyerror()");
     }
-    else {
-        /* Register a syntax error with the builder. */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
-                                           loc->file_name, loc->first_line,
-                                           message);
-        if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: Building exception from yyerror()");
-        }
-        Py_XDECREF(rv);
-    }
+    Py_XDECREF(rv);
 }
 
 /* Macros to clean up memory for temporaries in rule reductions. */
@@ -165,7 +159,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 }
 
 /* Types for terminal symbols */
-%token <string> LEX_ERROR  /* Error occurred in the lexer; value is text of error */
 %token <string> INDENT     /* Initial indent IF at the beginning of a line */
 %token <string> EOL        /* End-of-line */
 %token <string> COMMENT    /* A comment */
@@ -862,7 +855,7 @@ declarations : declarations directive
                   *
                   * Note: Adding EOL after the "error" rule above works to
                   * reduce the number of calls to this rule resulting from the
-                  * appearance of a LEX_ERROR token but makes the parser errors
+                  * appearance of an error but makes the parser errors
                   * skip the next valid directive, so we just have to make sure
                   * repeated runs of this rule's handling code are idempotent.
                   */
