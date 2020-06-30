@@ -145,10 +145,11 @@ const char* getTokenName(int token);
 /* Bison Declarations */
 
 /* Options. */
+%require "3.6"
 %defines
-%error-verbose
 %debug
 %locations
+%define parse.error verbose
 %define api.pure full
 %param {yyscan_t scanner}
 %param {PyObject* builder}

@@ -155,7 +155,7 @@ typedef struct YYLTYPE {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 157 "beancount/parser/grammar.y"
+#line 158 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
