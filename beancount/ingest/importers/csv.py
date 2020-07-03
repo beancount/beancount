@@ -256,10 +256,10 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                 field.strip() for field in fields).replace('\n', '; ')
 
             tag = get(row, Col.TAG)
-            tags = {tag} if tag is not None else data.EMPTY_SET
+            tags = {tag} if tag else data.EMPTY_SET
 
             link = get(row, Col.REFERENCE_ID)
-            links = {link} if link is not None else data.EMPTY_SET
+            links = {link} if link else data.EMPTY_SET
 
             last4 = get(row, Col.LAST4)
 
