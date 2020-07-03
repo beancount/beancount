@@ -177,6 +177,54 @@ class TestCSVImporter(cmptest.TestCase):
 
 
     @test_utils.docfile
+    def test_links(self, filename):
+        """\
+          Date,Description,Amount,Link
+          2020-07-03,A,2,
+          2020-07-03,B,3,123
+        """
+        file = cache.get_file(filename)
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount',
+                                 Col.REFERENCE_ID: 'Link'},
+                                'Assets:Bank', 'EUR', [])
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-07-03 * "A"
+            Assets:Bank  2 EUR
+
+          2020-07-03 * "B" ^123
+            Assets:Bank  3 EUR
+        """, entries)
+
+
+    @test_utils.docfile
+    def test_tags(self, filename):
+        """\
+          Date,Description,Amount,Tag
+          2020-07-03,A,2,
+          2020-07-03,B,3,foo
+        """
+        file = cache.get_file(filename)
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount',
+                                 Col.TAG: 'Tag'},
+                                'Assets:Bank', 'EUR', [])
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-07-03 * "A"
+            Assets:Bank  2 EUR
+
+          2020-07-03 * "B" #foo
+            Assets:Bank  3 EUR
+        """, entries)
+
+
+    @test_utils.docfile
     def test_zero_balance_produces_assertion(self, filename):
         # pylint: disable=line-too-long
         """\
