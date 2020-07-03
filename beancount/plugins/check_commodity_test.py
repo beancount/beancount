@@ -9,6 +9,36 @@ from beancount.plugins import check_commodity
 
 class TestCheckCommodity(unittest.TestCase):
 
+    @loader.load_doc()
+    def test_get_commodity_map_ex(self, entries, _, __):
+        """
+            2011-01-01 commodity BAZ
+
+            2011-01-01 open Expenses:Test  TEST1, TEST2, TEST7
+            2011-01-01 open Expenses:Other
+            2011-01-01 open Assets:Test
+            2011-01-01 open Assets:Investments
+            2011-01-01 open Equity:Opening-Balances
+
+            2011-05-17 * "Something"
+              foo: TEST3
+              Expenses:Other  1.00 TEST4
+                bar: TEST5
+              Assets:Test
+
+            2011-05-17 * "Something"
+              Assets:Investments  5.00 FOO @ 1.00 TEST6
+              Assets:Test
+
+            2011-05-18 pad Assets:Test Equity:Opening-Balances
+            2011-05-19 balance Assets:Test -1.00 TEST7
+
+            2011-05-20 price BAR 1.00 TEST6
+        """
+        commodities = check_commodity.get_commodity_map_ex(entries)
+        self.assertEqual(commodities.keys(), {'TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5',
+                                              'TEST6', 'TEST7', 'FOO', 'BAR', 'BAZ'})
+
     @loader.load_doc(expect_errors=True)
     def test_check_commodity_transaction(self, _, errors, __):
         """
