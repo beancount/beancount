@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-07-04
+
+  - Fixed #494, invalid account used for clamping the period view
+    (Equity:Conversions:Previous instead of Equity:Conversions:Current).
+
+
 2020-06-27
 
   - Merged PR #484, some parser improvements by @dnicolodi.

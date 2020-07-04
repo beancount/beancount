@@ -279,12 +279,16 @@ def clamp_opt(entries, begin_date, end_date, options_map):
       Same as clamp().
     """
     account_types = options.get_account_types(options_map)
-    previous_accounts = options.get_previous_accounts(options_map)
+    previous_earnings, previous_balances, _ = options.get_previous_accounts(options_map)
+    _, current_conversions = options.get_current_accounts(options_map)
+
     conversion_currency = options_map['conversion_currency']
     return clamp(entries, begin_date, end_date,
                  account_types,
                  conversion_currency,
-                 *previous_accounts)
+                 previous_earnings,
+                 previous_balances,
+                 current_conversions)
 
 
 def cap(entries,
