@@ -10,20 +10,19 @@ test_utils.remove_alt_csv_path()
 # pylint: disable=wrong-import-order
 import csv
 
+import collections
 import datetime
 import enum
 import io
-import collections
-from typing import Union, Dict, Callable, Optional
+from inspect import signature
+from typing import Callable, Dict, Optional, Union
 
 import dateutil.parser
 
 from beancount.core import data
 from beancount.core.amount import Amount
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.ingest.importers.mixins import filing
-from beancount.ingest.importers.mixins import identifier
+from beancount.core.number import ZERO, D
+from beancount.ingest.importers.mixins import filing, identifier
 from beancount.utils.date_utils import parse_date_liberally
 
 
@@ -79,7 +78,7 @@ class Col(enum.Enum):
     CATEGORY = '[CATEGORY]'
 
 
-def get_amounts(iconfig, row, allow_zero_amounts=False):
+def get_amounts(iconfig, row, allow_zero_amounts, parse_amount):
     """Get the amount columns of a row.
 
     Args:
@@ -99,13 +98,13 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
 
     # If zero amounts aren't allowed, return null value.
-    is_zero_amount = ((credit is not None and D(credit) == ZERO) and
-                      (debit is not None and D(debit) == ZERO))
+    is_zero_amount = ((credit is not None and parse_amount(credit) == ZERO) and
+                      (debit is not None and parse_amount(debit) == ZERO))
     if not allow_zero_amounts and is_zero_amount:
         return (None, None)
 
-    return (-D(debit) if debit else None,
-            D(credit) if credit else None)
+    return (-parse_amount(debit) if debit else None,
+            parse_amount(credit) if credit else None)
 
 
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
@@ -134,8 +133,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
           regexps: A list of regular expression strings.
           skip_lines: Skip first x (garbage) lines of file.
           last4_map: A dict that maps last 4 digits of the card to a friendly string.
-          categorizer: A callable that attaches the other posting (usually expenses)
-            to a transaction with only single posting.
+          categorizer: A callable with two arguments (transaction, row) that can attach
+            the other posting (usually expenses) to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
           csv_dialect: A `csv` dialect given either as string or as instance or
@@ -187,7 +186,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         iconfig, has_header = normalize_config(
             self.config, file.head(), self.csv_dialect, self.skip_lines)
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+            reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                     dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
                 next(reader)
             if has_header:
@@ -262,10 +262,10 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                 field.strip() for field in fields).replace('\n', '; ')
 
             tag = get(row, Col.TAG)
-            tags = {tag} if tag is not None else data.EMPTY_SET
+            tags = {tag} if tag else data.EMPTY_SET
 
             link = get(row, Col.REFERENCE_ID)
-            links = {link} if link is not None else data.EMPTY_SET
+            links = {link} if link else data.EMPTY_SET
 
             last4 = get(row, Col.LAST4)
 
@@ -279,7 +279,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
             if balance is not None:
-                meta['balance'] = D(balance)
+                meta['balance'] = self.parse_amount(balance)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
                 meta['card'] = last4_friendly if last4_friendly else last4
@@ -288,7 +288,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    tags, links, [])
 
             # Attach one posting to the transaction
-            amount_debit, amount_credit = self.get_amounts(iconfig, row)
+            amount_debit, amount_credit = self.get_amounts(iconfig, row,
+                                                           False, self.parse_amount)
 
             # Skip empty transactions
             if amount_debit is None and amount_credit is None:
@@ -304,8 +305,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                     data.Posting(account, units, None, None, None, None))
 
             # Attach the other posting(s) to the transaction.
-            if isinstance(self.categorizer, collections.abc.Callable):
-                txn = self.categorizer(txn)
+            txn = self.call_categorizer(txn, row)
 
             # Add the transaction to the output list
             entries.append(txn)
@@ -339,13 +339,29 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
         return entries
 
-    def get_amounts(self, iconfig, row, allow_zero_amounts=False):
+    def call_categorizer(self, txn, row):
+        if not isinstance(self.categorizer, collections.abc.Callable):
+            return txn
+
+        # TODO(blais): Remove introspection here, just commit to the two
+        # parameter version.
+        params = signature(self.categorizer).parameters
+        if len(params) < 2:
+            return self.categorizer(txn)
+        else:
+            return self.categorizer(txn, row)
+
+    def parse_amount(self, string):
+        """The method used to create Decimal instances. You can override this."""
+        return D(string)
+
+    def get_amounts(self, iconfig, row, allow_zero_amounts, parse_amount):
         """See function get_amounts() for details.
 
         This method is present to allow clients to override it in order to deal
         with special cases, e.g., columns with currency symbols in them.
         """
-        return get_amounts(iconfig, row, allow_zero_amounts)
+        return get_amounts(iconfig, row, allow_zero_amounts, parse_amount)
 
 
 def normalize_config(config, head, dialect='excel', skip_lines: int = 0):

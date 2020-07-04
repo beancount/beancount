@@ -9,7 +9,7 @@ import io
 import re
 from decimal import Decimal
 
-from beancount.core import data
+from beancount.core.data import new_metadata
 from beancount.core import account
 from beancount.parser import _parser
 
@@ -34,13 +34,16 @@ class LexBuilder:
         # A regexp for valid account names.
         self.account_regexp = re.compile(account.ACCOUNT_RE)
 
+        # A regexp for valid numbers.
+        self.number_regexp = re.compile(r'(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$')
+
         # A set of all the commodities that we have seen in the file.
         self.commodities = set()
 
         # Errors that occurred during lexing and parsing.
         self.errors = []
 
-        # Default number of lines as threshold to warn over long strings.
+        # Default number of lines in string literals.
         self.long_string_maxlines_default = 64
 
     def get_invalid_account(self):
@@ -55,13 +58,9 @@ class LexBuilder:
         """
         return 'Equity:InvalidAccountName'
 
-    def get_lexer_location(self):
-        return data.new_metadata(_parser.get_yyfilename(),
-                                 _parser.get_yylineno())
-
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, message, exc_type=None): # {0e31aeca3363}
+    def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}
         """Build a lexer error and appends it to the list of pending errors.
 
         Args:
@@ -73,7 +72,7 @@ class LexBuilder:
         if exc_type is not None:
             message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(self.get_lexer_location(), message, None))
+            LexerError(new_metadata(filename, lineno), message, None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -100,6 +99,8 @@ class LexBuilder:
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
+            # Note: This exception gets caught by BUILD_LEX() and converted into
+            # a logged error.
             raise ValueError("Invalid account name: {}".format(account_name))
 
         # Reuse (intern) account strings as much as possible. This potentially
@@ -132,12 +133,9 @@ class LexBuilder:
         if '\n' in string:
             num_lines = string.count('\n') + 1
             if num_lines > self.long_string_maxlines_default:
-                # This is just a warning; accept the string anyhow.
-                self.errors.append(
-                    LexerError(
-                        self.get_lexer_location(),
-                        "String too long ({} lines); possible error".format(num_lines),
-                        None))
+                # Note: This exception gets caught by BUILD_LEX() and converted
+                # into a logged error.
+                raise ValueError("String too long ({} lines)".format(num_lines))
         return string
 
     def NUMBER(self, number):
@@ -151,24 +149,20 @@ class LexBuilder:
         # Note: We don't use D() for efficiency here.
         # The lexer will only yield valid number strings.
         if ',' in number:
-            # Extract the integer part and check the commas match the
-            # locale-aware formatted version. This
-            match = re.match(r"([\d,]*)(\.\d*)?$", number)
-            if not match:
-                # This path is never taken because the lexer will parse a comma
-                # in the fractional part as two NUMBERs with a COMMA token in
-                # between.
-                self.errors.append(
-                    LexerError(self.get_lexer_location(),
-                               "Invalid number format: '{}'".format(number), None))
-            else:
-                int_string, float_string = match.groups()
-                reformatted_number = r"{:,.0f}".format(int(int_string.replace(",", "")))
-                if int_string != reformatted_number:
-                    self.errors.append(
-                        LexerError(self.get_lexer_location(),
-                                   "Invalid commas: '{}'".format(number), None))
-
+            # Check for a number with optional commas as thousands separator.
+            #
+            # Note: The regexp is liberally accepting commas in any position and
+            # does not check for locale-specific placement of commas. This code
+            # used to honor the user's locale by verifying that commas match
+            # those the environment but we prefer to make parsing
+            # locale-independent. An improvement would be to add an option to
+            # specify the locale within Beancount itself and check numbers for
+            # validity against that locale.
+            if not self.number_regexp.match(number):
+                # Note: This exception gets caught by BUILD_LEX() and converted
+                # into a logged error.
+                raise ValueError("Invalid number format: '{}'".format(number))
+            # Remove commas.
             number = number.replace(',', '')
         return Decimal(number)
 
@@ -225,15 +219,8 @@ def lex_iter(file, builder=None, encoding=None):
         file = open(file, 'rb')
     if builder is None:
         builder = LexBuilder()
-    _parser.lexer_initialize(file, builder, encoding=encoding)
-    try:
-        while 1:
-            token_tuple = _parser.lexer_next()
-            if token_tuple is None:
-                break
-            yield token_tuple
-    finally:
-        _parser.lexer_finalize()
+    parser = _parser.Parser(builder)
+    yield from parser.lex(file, encoding=encoding)
 
 
 def lex_iter_string(string, builder=None, encoding=None):
@@ -247,7 +234,7 @@ def lex_iter_string(string, builder=None, encoding=None):
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
-    if isinstance(string, str):
-        string = string.encode('utf-8')
+    if not isinstance(string, bytes):
+        string = string.encode('utf8')
     file = io.BytesIO(string)
-    return lex_iter(file, builder, encoding)
+    yield from lex_iter(file, builder, encoding)

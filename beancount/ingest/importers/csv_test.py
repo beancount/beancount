@@ -3,9 +3,11 @@ __license__ = "GNU GPLv2"
 
 import textwrap
 import unittest
+from pprint import pformat
 
-from beancount.ingest.importers import csv
+from beancount.core import data
 from beancount.ingest import cache
+from beancount.ingest.importers import csv
 from beancount.parser import cmptest
 from beancount.utils import test_utils
 
@@ -175,6 +177,54 @@ class TestCSVImporter(cmptest.TestCase):
 
 
     @test_utils.docfile
+    def test_links(self, filename):
+        """\
+          Date,Description,Amount,Link
+          2020-07-03,A,2,
+          2020-07-03,B,3,123
+        """
+        file = cache.get_file(filename)
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount',
+                                 Col.REFERENCE_ID: 'Link'},
+                                'Assets:Bank', 'EUR', [])
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-07-03 * "A"
+            Assets:Bank  2 EUR
+
+          2020-07-03 * "B" ^123
+            Assets:Bank  3 EUR
+        """, entries)
+
+
+    @test_utils.docfile
+    def test_tags(self, filename):
+        """\
+          Date,Description,Amount,Tag
+          2020-07-03,A,2,
+          2020-07-03,B,3,foo
+        """
+        file = cache.get_file(filename)
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount',
+                                 Col.TAG: 'Tag'},
+                                'Assets:Bank', 'EUR', [])
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-07-03 * "A"
+            Assets:Bank  2 EUR
+
+          2020-07-03 * "B" #foo
+            Assets:Bank  3 EUR
+        """, entries)
+
+
+    @test_utils.docfile
     def test_zero_balance_produces_assertion(self, filename):
         # pylint: disable=line-too-long
         """\
@@ -202,6 +252,77 @@ class TestCSVImporter(cmptest.TestCase):
 
           2016-03-19 balance Assets:Bank                                     0 USD
 
+        """, entries)
+
+    @test_utils.docfile
+    def test_categorizer_one_argument(self, filename):
+        """\
+          Date,Amount,Payee,Description
+          6/2/2020,30.00,"Payee here","Description"
+          7/2/2020,-25.00,"Supermarket","Groceries"
+        """
+        file = cache.get_file(filename)
+
+        def categorizer(txn):
+            if txn.narration == "Groceries":
+                txn.postings.append(
+                    data.Posting("Expenses:Groceries",
+                                 -txn.postings[0].units,
+                                 None, None, None, None))
+
+            return txn
+
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount'},
+                                 'Assets:Bank',
+                                 'EUR',
+                                 ('Date,Amount,Payee,Description'),
+                                 categorizer=categorizer,
+                                 institution='foobar')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-06-02 * "Description"
+            Assets:Bank  30.00 EUR
+        
+          2020-07-02 * "Groceries"
+            Assets:Bank  -25.00 EUR
+            Expenses:Groceries  25.00 EUR
+        """, entries)
+
+    @test_utils.docfile
+    def test_categorizer_two_arguments(self, filename):
+        """\
+          Date,Amount,Payee,Description
+          6/2/2020,30.00,"Payee here","Description"
+          7/2/2020,-25.00,"Supermarket","Groceries"
+        """
+        file = cache.get_file(filename)
+
+        def categorizer(txn, row):
+            txn = txn._replace(payee=row[2])
+            txn.meta['source'] = pformat(row)
+            return txn
+
+        importer = csv.Importer({Col.DATE: 'Date',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount'},
+                                 'Assets:Bank',
+                                 'EUR',
+                                 ('Date,Amount,Payee,Description'),
+                                 categorizer=categorizer,
+                                 institution='foobar')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-06-02 * "Payee here" "Description"
+            source: "['6/2/2020', '30.00', 'Supermarket', 'Groceries']"
+            Assets:Bank  30.00 EUR
+        
+          2020-07-02 * "Supermarket" "Groceries"
+            source: "['7/2/2020', '-25.00', 'Supermarket', 'Groceries']"
+            Assets:Bank  -25.00 EUR
         """, entries)
 
 # TODO: Test things out with/without payee and with/without narration.

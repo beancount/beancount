@@ -18,6 +18,7 @@ from beancount.core.number import MISSING
 from beancount.core.amount import from_string as A
 from beancount.core.amount import Amount
 from beancount.core.position import CostSpec
+from beancount.parser import grammar
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
@@ -293,7 +294,7 @@ class TestUglyBugs(unittest.TestCase):
             ';; End of file',
         ])
 
-        entries, errors, _ = parser.parse_string(input_, yydebug=0)
+        entries, errors, _ = parser.parse_string(input_)
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
@@ -2537,6 +2538,21 @@ class TestDocument(unittest.TestCase):
         """
         check_list(self, entries, [data.Document])
         self.assertEqual({'something'}, entries[0].links)
+
+
+class TestMethodsSignature(unittest.TestCase):
+
+    def test_signatures(self):
+        # Enforce that all "public" methods of the Builder class have
+        # 'filename' and 'lineno' as the first two arguments.
+        for name, func in inspect.getmembers(grammar.Builder, inspect.isfunction):
+            if (name.isupper() or
+                name.startswith('_') or
+                name.startswith('get_') or
+                name == 'finalize'):
+                continue
+            parameters = inspect.signature(func).parameters.keys()
+            self.assertEqual(list(parameters)[:3], ['self', 'filename', 'lineno'])
 
 
 if __name__ == '__main__':

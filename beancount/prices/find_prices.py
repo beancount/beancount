@@ -121,7 +121,7 @@ def parse_single_source(source):
     Raises:
       ValueError: If invalid.
     """
-    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\._]+)/(\^?)([a-zA-Z0-9:=_\-\.]+)$', source)
+    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\._]+)/(\^?)([a-zA-Z0-9:=_\-\.\(\)]+)$', source)
     if not match:
         raise ValueError('Invalid source name: "{}"'.format(source))
     short_module_name, invert, symbol = match.groups()
@@ -190,9 +190,9 @@ def find_currencies_declared(entries, date=None):
                 continue
             try:
                 source_map = parse_source_map(source_str)
-            except ValueError:
-                logging.warning("Ignoring currency with invalid 'price' source: %s",
-                                entry.currency)
+            except ValueError as exc:
+                logging.warning("Ignoring currency with invalid 'price' source: %s (%s)",
+                                entry.currency, exc)
             else:
                 for quote, psources in source_map.items():
                     currencies.append((entry.currency, quote, psources))

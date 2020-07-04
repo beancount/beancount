@@ -26,8 +26,15 @@ def response(contents, status_code=requests.codes.ok):
 class QuandlPriceFetcher(unittest.TestCase):
 
     def test_parse_ticker(self):
-        self.assertEqual(('WIKI', 'FB'), quandl.parse_ticker('WIKI:FB'))
-        for test in 'WIKI/FB', 'FB', 'WIKI.FB', 'WIKI,FB':
+        # NOTE(pmarciniak): "LBMA:GOLD:USD (PM)" is a valid ticker in Quandl
+        # requests, but since space is not allowed in price source syntax, we're
+        # representing space with an underscore.
+        self.assertEqual(quandl.TickerSpec('WIKI', 'FB', None),
+                         quandl.parse_ticker('WIKI:FB'))
+        self.assertEqual(quandl.TickerSpec('LBMA', 'GOLD', 'USD (PM)'),
+                         quandl.parse_ticker('LBMA:GOLD:USD_(PM)'))
+        for test in ['WIKI/FB', 'FB', 'WIKI.FB', 'WIKI,FB',
+                     'LBMA:GOLD:USD (PM)', 'LBMA:GOLD:col:umn']:
             with self.assertRaises(ValueError):
                 quandl.parse_ticker(test)
 
@@ -123,6 +130,40 @@ class QuandlPriceFetcher(unittest.TestCase):
         for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
             with date_utils.intimezone(tzname):
                 self._test_valid_response()
+
+    def test_non_standard_columns(self):
+        contents = {
+            'dataset': {'collapse': None,
+                        'column_index': None,
+                        'column_names': ['Date',
+                                         'USD (AM)',
+                                         'USD (PM)',
+                                         'GBP (AM)',
+                                         'GBP (PM)',
+                                         'EURO (AM)',
+                                         'EURO (PM)'],
+                        'data': [['2019-06-18',
+                                  1344.55,
+                                  1341.35,
+                                  1073.22,
+                                  1070.67,
+                                  1201.89,
+                                  1198.09]],
+                        'end_date': '2019-06-18',
+                        'frequency': 'daily',
+                        'order': None,
+                        'limit': 1,
+                        'start_date': '2019-06-08',
+                        'transform': None}}
+        with response(contents):
+            srcprice = quandl.fetch_time_series('LBMA:GOLD:USD_(PM)', None)
+            self.assertIsInstance(srcprice, source.SourcePrice)
+
+            self.assertEqual(D('1341.35'), srcprice.price)
+            self.assertEqual(datetime.datetime(2019, 6, 18, 0, 0, 0,
+                                               tzinfo=tz.tzutc()),
+                             srcprice.time.astimezone(tz.tzutc()))
+            self.assertEqual(None, srcprice.quote_currency)
 
 
 if __name__ == '__main__':
