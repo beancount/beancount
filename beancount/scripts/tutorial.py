@@ -11,7 +11,7 @@ from beancount.parser import version
 from beancount.reports import report
 
 
-# pylint: disable=bad-whitespace,line-too-long
+# pylint: disable=bad-whitespace
 COMMANDS = [
     ('balances'                 , "bean-report {} balances"),
     ('help-reports'             , "bean-report --help-reports"),
@@ -20,7 +20,7 @@ COMMANDS = [
     ('help-formats'             , "bean-report --help-formats"),
     ('balances-restrict'        , "bean-report {} balances -e ETrade"),
     ('balances-restrict-cost'   , "bean-report {} balances -e ETrade -c"),
-    ('balances-tree'            , "bean-report {} balances"), ### TODO(blais) | treeify"),
+    ('balances-tree'            , "bean-report {} balances"),  # TODO(blais): Add treeify.
     ('balsheet'                 , "bean-report {} balsheet"),
     ('journal'                  , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:BofA:Checking")),
