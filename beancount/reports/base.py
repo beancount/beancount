@@ -11,7 +11,7 @@ import io
 import re
 from os import path
 
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization

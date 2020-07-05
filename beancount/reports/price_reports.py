@@ -7,7 +7,7 @@ import datetime
 import re
 
 from beancount.reports import base
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data

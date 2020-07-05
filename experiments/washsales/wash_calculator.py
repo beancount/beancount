@@ -29,7 +29,7 @@ from beancount.core import inventory
 from beancount.core import account_types
 from beancount.parser import printer
 from beancount.parser import options
-from beancount.reports import table
+from beancount.utils import table
 
 
 

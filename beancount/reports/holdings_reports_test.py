@@ -6,7 +6,7 @@ import io
 
 from beancount.core.number import Decimal
 from beancount.reports import holdings_reports
-from beancount.reports import table
+from beancount.utils import table
 from beancount.ops import holdings
 from beancount import loader
 

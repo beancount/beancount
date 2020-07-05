@@ -17,7 +17,7 @@ import sys
 from os import path
 
 from beancount.parser import printer
-from beancount.reports import table
+from beancount.utils import table
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import data

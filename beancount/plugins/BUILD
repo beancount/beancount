@@ -86,7 +86,7 @@ py_library(
         "//beancount/core:inventory",
         "//beancount/core:account",
         "//beancount/core:data",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount/parser:version",
         "//beancount:loader",
     ],

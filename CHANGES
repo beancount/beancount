@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-07-05
+
+ - Moved beancount.reports.table to beancount.utils.table in preparation of
+   removing beancount.reports and beancount.web.
+
+
 2020-07-04
 
   - Fixed #494, invalid account used for clamping the period view

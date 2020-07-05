@@ -16,7 +16,7 @@ from beancount.core import prices
 from beancount.core import convert
 from beancount.ops import holdings
 from beancount.ops import summarize
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import base
 
 

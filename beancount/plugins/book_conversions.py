@@ -99,7 +99,7 @@ from beancount.core import inventory
 from beancount.core import account
 from beancount.core import data
 from beancount import loader
-from beancount.reports import table
+from beancount.utils import table
 from beancount.parser import version
 
 
