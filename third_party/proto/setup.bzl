@@ -9,9 +9,9 @@ def setup_proto():
     if not native.existing_rule("com_google_protobuf"):
         http_archive(
             name = "com_google_protobuf",
-            urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.tar.gz"],
-            sha256 = "a79d19dcdf9139fa4b81206e318e33d245c4c9da1ffed21c87288ed4380426f9",
-            strip_prefix = "protobuf-3.11.4",
+            urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.12.3.tar.gz"],
+            sha256 = "71030a04aedf9f612d2991c1c552317038c3c5a2b578ac4745267a45e7037c29",
+            strip_prefix = "protobuf-3.12.3",
         )
 
     # Rules for building protos.
