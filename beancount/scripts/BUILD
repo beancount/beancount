@@ -91,7 +91,7 @@ py_library(
         "//beancount/core:realization",
         "//beancount/core:display_context",
         "//beancount/parser:printer",
-        "//beancount/reports:context",
+        "//beancount/parser:context",
         "//beancount/scripts:deps",
         "//beancount/utils:misc_utils",
         "//beancount/parser:version",

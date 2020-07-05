@@ -53,36 +53,6 @@ py_test(
 )
 
 py_library(
-    name = "context",
-    srcs = ["context.py"],
-    visibility = [
-        "//beancount/scripts:__pkg__",
-        "//beancount/web:__pkg__",
-    ],
-    deps = [
-        "//beancount/core:compare",
-        "//beancount/core:convert",
-        "//beancount/core:data",
-        "//beancount/core:getters",
-        "//beancount/core:interpolate",
-        "//beancount/core:inventory",
-        "//beancount/parser:printer",
-    ],
-)
-
-py_test(
-    name = "context_test",
-    srcs = ["context_test.py"],
-    deps = [
-        "//beancount:loader",
-        "//beancount/reports:context",
-        "//beancount/utils:test_utils",
-        "//beancount:plugins_for_tests",
-        "//beancount/plugins:implicit_prices",
-    ],
-)
-
-py_library(
     name = "convert_reports",
     srcs = ["convert_reports.py"],
     deps = [

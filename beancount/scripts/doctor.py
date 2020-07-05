@@ -202,7 +202,7 @@ def do_context(filename, args):
         to be a string which contains either a lineno integer or a filename:lineno
         combination (which can be used if the location is not in the top-level file).
     """
-    from beancount.reports import context
+    from beancount.parser import context
     from beancount import loader
 
     # Check we have the required number of arguments.

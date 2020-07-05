@@ -5,7 +5,7 @@ import textwrap
 import unittest
 
 from beancount.utils import test_utils
-from beancount.reports import context
+from beancount.parser import context
 from beancount import loader
 
 

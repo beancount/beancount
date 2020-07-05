@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-05
 
+ - Moved beancount.reports.context to beancount.parser.context in preparation of
+   removing beancount.reports and beancount.web.
  - Moved beancount.reports.table to beancount.utils.table in preparation of
    removing beancount.reports and beancount.web.
 
