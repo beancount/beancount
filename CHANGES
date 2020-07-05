@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-05
 
+ - Removed experiments/portfolio for its dependency on beancount.reports code
+   (this script was obsolete anyway).
  - Moved get_assets_holdings() function out of reports code to preserve it for
    use by an experimental script (in preparation for removing beancount.reports).
  - Moved beancount.scripts.tutorial to beancount.reports.tutorial in preparation
