@@ -22,7 +22,7 @@ from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import inventory
 from beancount.parser import printer
-from beancount.reports import table
+from beancount.utils import table
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
 from beancount import loader

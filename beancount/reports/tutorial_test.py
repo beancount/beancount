@@ -8,7 +8,7 @@ from os import path
 import unittest
 
 from beancount.utils import test_utils
-from beancount.scripts import tutorial
+from beancount.reports import tutorial
 
 
 class TestTutorial(test_utils.TestCase):

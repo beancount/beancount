@@ -91,7 +91,7 @@ py_library(
         "//beancount/core:realization",
         "//beancount/core:display_context",
         "//beancount/parser:printer",
-        "//beancount/reports:context",
+        "//beancount/parser:context",
         "//beancount/scripts:deps",
         "//beancount/utils:misc_utils",
         "//beancount/parser:version",
@@ -191,28 +191,6 @@ py_test(
     srcs = ["sql_test.py"],
     deps = [
         "//beancount/scripts:sql",
-        "//beancount/utils:test_utils",
-    ],
-)
-
-py_library(
-    name = "tutorial",
-    srcs = ["tutorial.py"],
-    deps = [
-        "//beancount/utils:test_utils",
-        "//beancount/parser:version",
-        "//beancount/reports:report",
-    ],
-)
-
-py_test(
-    name = "tutorial_test",
-    srcs = ["tutorial_test.py"],
-    data = [
-        "//examples:example",
-    ],
-    deps = [
-        ":tutorial",
         "//beancount/utils:test_utils",
     ],
 )

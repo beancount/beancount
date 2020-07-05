@@ -103,6 +103,7 @@ py_library(
         "//beancount/core:getters",
         "//beancount/core:prices",
         "//beancount/ops:summarize",
+        "//beancount/parser:options",
         "//beancount/utils:misc_utils",
     ],
 )

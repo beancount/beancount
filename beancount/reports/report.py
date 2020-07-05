@@ -15,7 +15,7 @@ import textwrap
 from beancount import loader
 from beancount.ops import validation
 from beancount.reports import base
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import misc_reports
 from beancount.reports import balance_reports
 from beancount.reports import journal_reports

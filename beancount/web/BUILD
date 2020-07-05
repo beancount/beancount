@@ -90,7 +90,7 @@ py_library(
         "//beancount/parser:options",
         "//beancount/parser:printer",
         "//beancount/reports:balance_reports",
-        "//beancount/reports:context",
+        "//beancount/parser:context",
         "//beancount/reports:holdings_reports",
         "//beancount/reports:html_formatter",
         "//beancount/reports:journal_html",

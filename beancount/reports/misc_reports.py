@@ -10,7 +10,7 @@ import textwrap
 import functools
 
 from beancount.reports import base
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import tree_table
 from beancount.parser import printer
 from beancount.parser import options

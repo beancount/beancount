@@ -8,6 +8,7 @@ from beancount.core.number import D
 from beancount.core import getters
 from beancount.reports import export_reports
 from beancount.reports import holdings_reports
+from beancount.ops import holdings
 from beancount import loader
 
 
@@ -46,7 +47,7 @@ class TestCommodityClassifications(unittest.TestCase):
         @loader.load_doc()
         @functools.wraps(fun)
         def wrapped(self, entries, unused_errors, options_map):
-            holdings_list, _ = holdings_reports.get_assets_holdings(entries, options_map)
+            holdings_list, _ = holdings.get_assets_holdings(entries, options_map)
             commodities_map = getters.get_commodity_map(entries)
             action_holdings = export_reports.classify_holdings_for_export(holdings_list,
                                                                           commodities_map)

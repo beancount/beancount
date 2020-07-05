@@ -136,7 +136,7 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
           not convert them to a money vehicle matching the holding's cost-currency.
     """
     # Get the desired list of holdings.
-    holdings_list, price_map = holdings_reports.get_assets_holdings(entries, options_map)
+    holdings_list, price_map = holdings.get_assets_holdings(entries, options_map)
     commodities_map = getters.get_commodity_map(entries)
     dcontext = options_map['dcontext']
 

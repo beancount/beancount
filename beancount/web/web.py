@@ -42,7 +42,7 @@ from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
 from beancount.reports import price_reports
 from beancount.reports import misc_reports
-from beancount.reports import context
+from beancount.parser import context
 
 
 # The default view page to redirect to.

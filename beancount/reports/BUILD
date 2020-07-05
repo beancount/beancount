@@ -32,7 +32,7 @@ py_library(
         "//beancount/core:realization",
         "//beancount/parser:options",
         "//beancount/reports:html_formatter",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount/parser:version",
     ],
 )
@@ -47,38 +47,8 @@ py_test(
         "//beancount:loader",
         "//beancount/parser:options",
         "//beancount/reports:base",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount:plugins_for_tests",
-    ],
-)
-
-py_library(
-    name = "context",
-    srcs = ["context.py"],
-    visibility = [
-        "//beancount/scripts:__pkg__",
-        "//beancount/web:__pkg__",
-    ],
-    deps = [
-        "//beancount/core:compare",
-        "//beancount/core:convert",
-        "//beancount/core:data",
-        "//beancount/core:getters",
-        "//beancount/core:interpolate",
-        "//beancount/core:inventory",
-        "//beancount/parser:printer",
-    ],
-)
-
-py_test(
-    name = "context_test",
-    srcs = ["context_test.py"],
-    deps = [
-        "//beancount:loader",
-        "//beancount/reports:context",
-        "//beancount/utils:test_utils",
-        "//beancount:plugins_for_tests",
-        "//beancount/plugins:implicit_prices",
     ],
 )
 
@@ -133,6 +103,7 @@ py_test(
         "//beancount/core:getters",
         "//beancount/core:number",
         "//beancount:loader",
+        "//beancount/ops:holdings",
         "//beancount/reports:export_reports",
         "//beancount/reports:holdings_reports",
         "//beancount:plugins_for_tests",
@@ -169,7 +140,7 @@ py_library(
         "//beancount/parser:options",
         "//beancount/parser:printer",
         "//beancount/reports:base",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
     ],
 )
 
@@ -180,7 +151,7 @@ py_test(
         "//beancount:loader",
         "//beancount/ops:holdings",
         "//beancount/reports:holdings_reports",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount:plugins_for_tests",
     ],
 )
@@ -293,7 +264,7 @@ py_library(
         "//beancount/parser:options",
         "//beancount/parser:printer",
         "//beancount/reports:base",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount/reports:tree_table",
         "//beancount/utils:date_utils",
         "//beancount/utils:misc_utils",
@@ -323,7 +294,7 @@ py_library(
         "//beancount/parser:printer",
         "//beancount/reports:base",
         "//beancount/reports:gviz",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
     ],
 )
 
@@ -355,7 +326,7 @@ py_library(
         "//beancount/reports:journal_reports",
         "//beancount/reports:misc_reports",
         "//beancount/reports:price_reports",
-        "//beancount/reports:table",
+        "//beancount/utils:table",
         "//beancount/utils:file_utils",
         "//beancount/utils:misc_utils",
         "//beancount/parser:version",
@@ -374,21 +345,6 @@ py_test(
         "//beancount/utils:test_utils",
         "//beancount:plugins_for_tests",
         "//beancount/plugins:implicit_prices",
-    ],
-)
-
-py_library(
-    name = "table",
-    srcs = ["table.py"],
-    visibility = ["//beancount/plugins:__pkg__"],
-)
-
-py_test(
-    name = "table_test",
-    srcs = ["table_test.py"],
-    deps = [
-        "//beancount/core:number",
-        "//beancount/reports:table",
     ],
 )
 
@@ -415,5 +371,27 @@ py_test(
         "//beancount/reports:html_formatter",
         "//beancount/reports:tree_table",
         "//beancount:plugins_for_tests",
+    ],
+)
+
+py_library(
+    name = "tutorial",
+    srcs = ["tutorial.py"],
+    deps = [
+        ":report",
+        "//beancount/utils:test_utils",
+        "//beancount/parser:version",
+    ],
+)
+
+py_test(
+    name = "tutorial_test",
+    srcs = ["tutorial_test.py"],
+    data = [
+        "//examples:example",
+    ],
+    deps = [
+        ":tutorial",
+        "//beancount/utils:test_utils",
     ],
 )

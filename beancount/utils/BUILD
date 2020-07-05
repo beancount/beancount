@@ -240,3 +240,16 @@ py_test(
         ":text_utils",
     ],
 )
+
+py_library(
+    name = "table",
+    srcs = ["table.py"],
+)
+
+py_test(
+    name = "table_test",
+    srcs = ["table_test.py"],
+    deps = [
+        ":table",
+    ],
+)
