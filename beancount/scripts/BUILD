@@ -194,25 +194,3 @@ py_test(
         "//beancount/utils:test_utils",
     ],
 )
-
-py_library(
-    name = "tutorial",
-    srcs = ["tutorial.py"],
-    deps = [
-        "//beancount/utils:test_utils",
-        "//beancount/parser:version",
-        "//beancount/reports:report",
-    ],
-)
-
-py_test(
-    name = "tutorial_test",
-    srcs = ["tutorial_test.py"],
-    data = [
-        "//examples:example",
-    ],
-    deps = [
-        ":tutorial",
-        "//beancount/utils:test_utils",
-    ],
-)

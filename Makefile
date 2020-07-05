@@ -174,14 +174,10 @@ demo:
 	bin/bean-web --debug examples/demo.beancount
 
 
-# Generate the tutorial files from the example file.
+# Generate the example file.
 EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
-
-TUTORIAL=examples/tutorial
-tutorial: $(EXAMPLE)
-	$(PYTHON) beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.

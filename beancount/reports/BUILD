@@ -372,3 +372,25 @@ py_test(
         "//beancount:plugins_for_tests",
     ],
 )
+
+py_library(
+    name = "tutorial",
+    srcs = ["tutorial.py"],
+    deps = [
+        ":report",
+        "//beancount/utils:test_utils",
+        "//beancount/parser:version",
+    ],
+)
+
+py_test(
+    name = "tutorial_test",
+    srcs = ["tutorial_test.py"],
+    data = [
+        "//examples:example",
+    ],
+    deps = [
+        ":tutorial",
+        "//beancount/utils:test_utils",
+    ],
+)
