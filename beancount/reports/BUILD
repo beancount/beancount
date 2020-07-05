@@ -92,7 +92,6 @@ py_library(
         "//beancount/core:prices",
         "//beancount/ops:holdings",
         "//beancount/reports:base",
-        "//beancount/reports:holdings_reports",
     ],
 )
 
@@ -105,7 +104,6 @@ py_test(
         "//beancount:loader",
         "//beancount/ops:holdings",
         "//beancount/reports:export_reports",
-        "//beancount/reports:holdings_reports",
         "//beancount:plugins_for_tests",
     ],
 )

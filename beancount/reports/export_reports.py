@@ -22,7 +22,6 @@ from beancount.core import amount
 from beancount.core import prices
 from beancount.ops import holdings
 from beancount.reports import base
-from beancount.reports import holdings_reports
 
 
 # The name of the metadata field used by this report.
