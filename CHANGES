@@ -1,4 +1,4 @@
-========================
+ho========================
    beancount: CHANGES
 ========================
 Note: This file contains a list changes in the 'master' branch.
@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-05
 
+ - Moved get_assets_holdings() function out of reports code to preserve it for
+   use by an experimental script (in preparation for removing beancount.reports).
  - Moved beancount.scripts.tutorial to beancount.reports.tutorial in preparation
    of removing beancount.reports and beancount.web.
  - Moved beancount.reports.context to beancount.parser.context in preparation of

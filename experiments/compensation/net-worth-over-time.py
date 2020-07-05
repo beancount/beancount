@@ -18,7 +18,7 @@ import numpy
 from beancount.core import data
 from beancount.ops import holdings
 from beancount import loader
-from beancount.reports import holdings_reports
+from beancount.ops import holdings
 
 
 EXTRAPOLATE_WORTHS = 1000000, 1500000, 2000000, 2500000, 3000000, 4000000, 5000000, 6000000
@@ -83,8 +83,8 @@ def main():
             index += 1
 
         # Get the list of holdings.
-        raw_holdings_list, price_map = holdings_reports.get_assets_holdings(current_entries,
-                                                                            options_map)
+        raw_holdings_list, price_map = holdings.get_assets_holdings(current_entries,
+                                                                    options_map)
 
         # Convert the currencies.
         for i, currency in enumerate(options_map['operating_currency']):

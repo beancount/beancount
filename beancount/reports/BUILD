@@ -103,6 +103,7 @@ py_test(
         "//beancount/core:getters",
         "//beancount/core:number",
         "//beancount:loader",
+        "//beancount/ops:holdings",
         "//beancount/reports:export_reports",
         "//beancount/reports:holdings_reports",
         "//beancount:plugins_for_tests",

@@ -36,12 +36,6 @@ class TestHoldingsReports(unittest.TestCase):
     # Basically just call these functions below, to exercise them.
     # Very basic tests, but still worthwhile. Running the code is a minimum.
 
-    def test_get_assets_holdings(self):
-        holdings_list, price_map = holdings_reports.get_assets_holdings(self.entries,
-                                                                        self.options_map)
-        self.assertTrue(isinstance(holdings_list, list))
-        self.assertTrue(isinstance(price_map, dict))
-
     def test_report_holdings(self):
         for args in [[],
                      ['--currency=USD'],

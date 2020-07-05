@@ -10,42 +10,14 @@ from beancount.core.number import ZERO
 from beancount.core import account
 from beancount.core import data
 from beancount.core import flags
-from beancount.parser import options
 from beancount.parser import printer
+from beancount.parser import options
 from beancount.core import prices
 from beancount.core import convert
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.utils import table
 from beancount.reports import base
-
-
-def get_assets_holdings(entries, options_map, currency=None):
-    """Return holdings for all assets and liabilities.
-
-    Args:
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-      currency: If specified, a string, the target currency to convert all
-        holding values to.
-    Returns:
-      A list of Holding instances and a price-map.
-    """
-    # Compute a price map, to perform conversions.
-    price_map = prices.build_price_map(entries)
-
-    # Get the list of holdings.
-    account_types = options.get_account_types(options_map)
-    holdings_list = holdings.get_final_holdings(entries,
-                                                (account_types.assets,
-                                                 account_types.liabilities),
-                                                price_map)
-
-    # Convert holdings to a unified currency.
-    if currency:
-        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
-
-    return holdings_list, price_map
 
 
 # A field spec that renders all fields.
@@ -91,7 +63,7 @@ def get_holdings_entries(entries, options_map):
     _, equity_account, _ = options.get_previous_accounts(options_map)
 
     # Get all the assets.
-    holdings_list, _ = get_assets_holdings(entries, options_map)
+    holdings_list, _ = holdings.get_assets_holdings(entries, options_map)
 
     # Create synthetic entries for them.
     holdings_entries = []
@@ -146,7 +118,7 @@ def report_holdings(currency, relative, entries, options_map,
     Returns:
       A Table instance.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
+    holdings_list, _ = holdings.get_assets_holdings(entries, options_map, currency)
     if aggregation_key:
         holdings_list = holdings.aggregate_holdings_by(holdings_list, aggregation_key)
 
@@ -286,7 +258,7 @@ class CashReport(base.TableReport):
                             help="Only report on operating currencies")
 
     def generate_table(self, entries, errors, options_map):
-        holdings_list, price_map = get_assets_holdings(entries, options_map)
+        holdings_list, price_map = holdings.get_assets_holdings(entries, options_map)
         holdings_list_orig = holdings_list
 
         # Keep only the holdings where currency is the same as the cost-currency.
@@ -316,7 +288,7 @@ class CashReport(base.TableReport):
 
 
 def calculate_net_worths(entries, options_map):
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
+    holdings_list, price_map = holdings.get_assets_holdings(entries, options_map)
     net_worths = []
     for currency in options_map['operating_currency']:
 
