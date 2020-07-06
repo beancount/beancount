@@ -34,7 +34,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
-from beancount.web import scrape
+from beancount.utils import scrape
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_html

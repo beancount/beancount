@@ -42,27 +42,6 @@ py_test(
 )
 
 py_library(
-    name = "scrape",
-    srcs = ["scrape.py"],
-    visibility = [
-        "//beancount/scripts:__pkg__",
-    ],
-    deps = [
-        # Add lxml here?
-    ],
-)
-
-py_test(
-    name = "scrape_test",
-    srcs = ["scrape_test.py"],
-    deps = [
-        "//beancount/utils:test_utils",
-        "//beancount/web:scrape",
-    ],
-)
-
-
-py_library(
     name = "web",
     srcs = ["web.py"],
     data = [
@@ -101,7 +80,7 @@ py_library(
         "//beancount/utils:text_utils",
         "//beancount/parser:version",
         "//beancount/web:bottle_utils",
-        "//beancount/web:scrape",
+        "//beancount/utils:scrape",
         "//beancount/web:views",
         "//beancount:loader",
     ],

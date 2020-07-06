@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-05
 
+ - Moved beancount.web.scrape to beancount.utils.scrape in preparation of
+   removing beancount.web.
  - Removed experiments/portfolio for its dependency on beancount.reports code
    (this script was obsolete anyway).
  - Moved get_assets_holdings() function out of reports code to preserve it for

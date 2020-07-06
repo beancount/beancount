@@ -6,7 +6,7 @@ py_library(
     deps = [
         "//beancount/utils:file_utils",
         "//beancount/parser:version",
-        "//beancount/web:scrape",
+        "//beancount/utils:scrape",
         "//beancount/web:web",
     ],
 )

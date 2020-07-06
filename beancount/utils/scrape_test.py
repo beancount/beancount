@@ -13,7 +13,7 @@ import unittest
 import lxml.html
 
 from beancount.utils import test_utils
-from beancount.web import scrape
+from beancount.utils import scrape
 
 
 class TestScrapeFunctions(test_utils.TestCase):

@@ -375,7 +375,7 @@ def do_validate_html(directory, args):
       directory: A string, the root directory whose contents to validate.
       args: A tuple of the rest of arguments.
     """
-    from beancount.web import scrape
+    from beancount.utils import scrape
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
     for target in missing:
