@@ -101,7 +101,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 10, b'\n', None),
             ('LINK', 10, b'^sometag123', 'sometag123'),
             ('EOL', 11, b'\n', None),
-            ('KEY', 11, b'somekey:', 'somekey'),
+            ('KEY', 11, b'somekey', 'somekey'),
             ('COLON', 11, b':', None),
             ('EOL', 12, b'\n', None),
             ('EOL', 12, b'\x00', None)
@@ -117,7 +117,7 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 1, b'Other:Bank', 'Other:Bank'),
             ('ACCOUNT', 1, 'Óthяr:Bあnk'.encode('utf8'), 'Óthяr:Bあnk'),
             ('EOL', 2, b'\n', None),
-            ('KEY', 2, b'abc1:', 'abc1'),
+            ('KEY', 2, b'abc1', 'abc1'),
             ('COLON', 2, b':', None),
             ('error', 2, b'abc1', None),
             ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ'.encode('utf8'), 'ΑβγⅠ:ΑβγⅠ'),
@@ -405,7 +405,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('POPMETA', 2, b'popmeta', None),
-            ('KEY', 2, b'location:', 'location'),
+            ('KEY', 2, b'location', 'location'),
             ('COLON', 2, b':', None),
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None),

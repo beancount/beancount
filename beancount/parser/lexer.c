@@ -1,4 +1,4 @@
-#line 2 "beancount/parser/lexer.c"
+#line 1 "beancount/parser/lexer.c"
 
 #include "parser.h"
 
@@ -32,7 +32,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
-#line 36 "beancount/parser/lexer.c"
+#line 35 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1036,10 +1036,10 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         }                                       \
     } while (0)
 
-#line 1040 "beancount/parser/lexer.c"
+#line 1039 "beancount/parser/lexer.c"
 /* A start condition for chomping an invalid token. */
 
-#line 1043 "beancount/parser/lexer.c"
+#line 1042 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1327,7 +1327,7 @@ YY_DECL
 
 #line 145 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1331 "beancount/parser/lexer.c"
+#line 1330 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1757,18 +1757,20 @@ YY_RULE_SETUP
 	YY_BREAK
 /* Key */
 case 51:
+*yy_cp = yyg->yy_hold_char; /* undo effects of setting up yytext */
+yyg->yy_c_buf_p = yy_cp -= 1;
+YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 327 "beancount/parser/lexer.l"
 {
-    token(KEY, yytext, yyleng - 1);
-    unput(':');
+    token(KEY, yytext, yyleng);
     return KEY;
 }
 	YY_BREAK
 /* Default rule. {bf253a29a820} */
 case 52:
 YY_RULE_SETUP
-#line 334 "beancount/parser/lexer.l"
+#line 333 "beancount/parser/lexer.l"
 {
     unput(*yytext);
     BEGIN(INVALID);
@@ -1778,7 +1780,7 @@ YY_RULE_SETUP
   * will process postings right. */
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
-#line 341 "beancount/parser/lexer.l"
+#line 340 "beancount/parser/lexer.l"
 {
     if (yy_eof_times == 0) {
 	yy_eof_times = 1;
@@ -1795,7 +1797,7 @@ case YY_STATE_EOF(INVALID):
     this and more. {bba169a1d35a} */
 case 53:
 YY_RULE_SETUP
-#line 355 "beancount/parser/lexer.l"
+#line 354 "beancount/parser/lexer.l"
 {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
@@ -1806,10 +1808,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 364 "beancount/parser/lexer.l"
+#line 363 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1813 "beancount/parser/lexer.c"
+#line 1814 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3012,7 +3014,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 364 "beancount/parser/lexer.l"
+#line 363 "beancount/parser/lexer.l"
 
 
 yyscan_t yylex_new(void)

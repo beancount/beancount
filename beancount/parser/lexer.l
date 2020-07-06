@@ -323,9 +323,8 @@ NULL		{
 }
 
  /* Key */
-[a-z][a-zA-Z0-9\-_]+: 		{
-    token(KEY, yytext, yyleng - 1);
-    unput(':');
+[a-z][a-zA-Z0-9\-_]+/: 		{
+    token(KEY, yytext, yyleng);
     return KEY;
 }
 
