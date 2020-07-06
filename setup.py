@@ -105,7 +105,6 @@ setup(name="beancount",
 
       package_data = {
           'beancount': ['VERSION'],
-          'beancount.reports': ['*.html'],
           'beancount.utils.file_type_testdata': ['*'],
       },
 
@@ -186,7 +185,6 @@ setup(name="beancount",
               'bean-format = beancount.scripts.format:main',
               'bean-price = beancount.prices.price:main',
               'bean-query = beancount.query.shell:main',
-              'bean-report = beancount.reports.report:main',
               'bean-sql = beancount.scripts.sql:main',
               'bean-identify = beancount.ingest.scripts_utils:identify_main',
               'bean-extract = beancount.ingest.scripts_utils:extract_main',

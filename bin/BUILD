@@ -166,22 +166,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_report_py",
-    srcs = ["bean-report"],
-    outs = ["bean_report.py"],
-    cmd = "cat $(locations :bean-report) > $@",
-)
-
-py_binary(
-    name = "bean_report",
-    srcs = ["bean_report.py"],
-    deps = [
-        "//beancount/reports:report",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "treeify_py",
     srcs = ["treeify"],
     outs = ["bean_treeify.py"],
