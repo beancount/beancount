@@ -1,5 +1,8 @@
+import datetime
 import unittest
+
 from unittest import mock
+from dateutil import tz
 
 import requests
 
@@ -30,10 +33,23 @@ class CoinbasePriceFetcher(unittest.TestCase):
                              "currency": "USD",
                              "amount": 101.23}}
         with response(contents):
-            srcprice = coinbase.fetch_quote('BTC-GBP')
+            srcprice = coinbase.Source().get_latest_price('BTC-GBP')
             self.assertIsInstance(srcprice, source.SourcePrice)
             self.assertEqual(D('101.23'), srcprice.price)
             self.assertEqual('USD', srcprice.quote_currency)
+
+    def test_historical_price(self):
+        contents = {"data": {"base": "BTC",
+                             "currency": "USD",
+                             "amount": 101.23}}
+        with response(contents):
+            time = datetime.datetime(2018, 3, 27, 0, 0, 0, tzinfo=tz.tzutc())
+            srcprice = coinbase.Source().get_historical_price('BTC-GBP', time)
+            self.assertIsInstance(srcprice, source.SourcePrice)
+            self.assertEqual(D('101.23'), srcprice.price)
+            self.assertEqual('USD', srcprice.quote_currency)
+            self.assertEqual(datetime.datetime(2018, 3, 27, 0, 0, 0, tzinfo=tz.tzutc()),
+                             srcprice.time)
 
 
 if __name__ == '__main__':
