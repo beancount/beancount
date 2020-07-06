@@ -70,7 +70,7 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    yylex_init(&self->scanner);
+    self->scanner = yylex_new();
     if (!self->scanner) {
         Py_XDECREF(self);
         return NULL;
@@ -108,8 +108,7 @@ static void parser_dealloc(Parser* self)
     Py_XDECREF(self->builder);
 
     /* Finalize the scanner state. */
-    yylex_finalize(self->scanner);
-    yylex_destroy(self->scanner);
+    yylex_free(self->scanner);
 
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
@@ -129,33 +128,18 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
     const char* encoding = NULL;
-    const char* filename = NULL;
+    PyObject* filename = NULL;
     PyObject* file;
     int lineno = 0;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ziz", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
                                      &file, &filename, &lineno, &encoding)) {
         return NULL;
     }
 
-    /* If we are provided a buffer object, try to get the filename from the
-     * '.name' attribute. */
-    if (!filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            PyObject* name = PyUnicode_EncodeFSDefault(p);
-            if (name) {
-                filename = PyBytes_AsString(name);
-            }
-            Py_DECREF(p);
-        }
-        PyErr_Clear();
-    }
-
     /* Initialize the scanner state. */
-    yylex_initialize(filename, lineno, encoding, self->scanner);
-    yyset_in((void*)file, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -192,33 +176,17 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
     const char* encoding = NULL;
-    const char* filename = NULL;
+    PyObject* filename = NULL;
     PyObject* file;
     int lineno = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ziz", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
                                      &file, &filename, &lineno, &encoding)) {
         return NULL;
     }
 
-    /* If we are provided a buffer object, try to get the filename from the
-     * '.name' attribute. */
-    /* TODO(blais): Refactor this block. */
-    if (!filename) {
-        PyObject* p = PyObject_GetAttrString(file, "name");
-        if (p) {
-            PyObject* name = PyUnicode_EncodeFSDefault(p);
-            if (name) {
-                filename = PyBytes_AsString(name);
-            }
-            Py_DECREF(p);
-        }
-        PyErr_Clear();
-    }
-
     /* Initialize the scanner state. */
-    yylex_initialize(filename, lineno, encoding, self->scanner);
-    yyset_in((void*)file, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;

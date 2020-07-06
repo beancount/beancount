@@ -112,7 +112,7 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
-    def __init__(self, filename):
+    def __init__(self):
         lexer.LexBuilder.__init__(self)
 
         # A stack of the current active tags.
@@ -126,9 +126,6 @@ class Builder(lexer.LexBuilder):
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
-
-        # Set the filename we're processing.
-        self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
         # types. Warning: This overrides the value in the base class.
@@ -219,6 +216,8 @@ class Builder(lexer.LexBuilder):
         """
         if entries:
             self.entries = entries
+        # Also record the name of the processed file.
+        self.options['filename'] = filename
 
     def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):
