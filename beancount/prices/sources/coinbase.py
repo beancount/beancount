@@ -25,17 +25,22 @@ class CoinbaseError(ValueError):
     "An error from the Coinbase API."
 
 
-def fetch_quote(ticker):
+def fetch_quote(ticker, time=None):
     """Fetch a quote from Coinbase."""
     url = "https://api.coinbase.com/v2/prices/{}/spot".format(ticker.lower())
-    response = requests.get(url)
+    options = {}
+    if time is not None:
+        options['date'] = time.astimezone(tz.tzutc()).date().isoformat()
+
+    response = requests.get(url, options)
     if response.status_code != requests.codes.ok:
         raise CoinbaseError("Invalid response ({}): {}".format(response.status_code,
                                                                response.text))
     result = response.json()
 
     price = D(result['data']['amount']).quantize(D('0.01'))
-    time = datetime.datetime.now(tz.tzutc())
+    if time is None:
+        time = datetime.datetime.now(tz.tzutc())
     currency = result['data']['currency']
 
     return source.SourcePrice(price, time, currency)
@@ -50,7 +55,4 @@ class Source(source.Source):
 
     def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
-        raise NotImplementedError(
-            "As of Feb 2019, historical prices are not supported on Coinbase. "
-            "Please check the API to see if this has changed: "
-            "https://developers.coinbase.com/apo/v2")
+        return fetch_quote(ticker, time)
