@@ -105,10 +105,6 @@ setup(name="beancount",
 
       package_data = {
           'beancount': ['VERSION'],
-          'beancount.web': ['*.ico',
-                            '*.html',
-                            '*.css',
-                            'third_party/*.js'],
           'beancount.reports': ['*.html'],
           'beancount.utils.file_type_testdata': ['*'],
       },
@@ -184,7 +180,6 @@ setup(name="beancount",
 
       entry_points = {
           'console_scripts': [
-              'bean-bake = beancount.scripts.bake:main',
               'bean-check = beancount.scripts.check:main',
               'bean-doctor = beancount.scripts.doctor:main',
               'bean-example = beancount.scripts.example:main',
@@ -193,7 +188,6 @@ setup(name="beancount",
               'bean-query = beancount.query.shell:main',
               'bean-report = beancount.reports.report:main',
               'bean-sql = beancount.scripts.sql:main',
-              'bean-web = beancount.web.web:main',
               'bean-identify = beancount.ingest.scripts_utils:identify_main',
               'bean-extract = beancount.ingest.scripts_utils:extract_main',
               'bean-file = beancount.ingest.scripts_utils:file_main',
@@ -209,7 +203,7 @@ setup(name="beancount",
 # Development setup requires two tools IFF you need to change the grammar:
 #
 # - flex-2.6.4
-# - bison-3.0.5
+# - bison-3.6.4
 #
 # These versions are related to what's on a recent Ubuntu. If you don't change
 # the grammar nor the tokenizer, the C sources are checked in so you won't need

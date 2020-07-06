@@ -6,6 +6,7 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-05
 
+ - Removed bean-web and bean-bake (for v3). Use Fava instead.
  - Moved beancount.web.scrape to beancount.utils.scrape in preparation of
    removing beancount.web.
  - Removed experiments/portfolio for its dependency on beancount.reports code

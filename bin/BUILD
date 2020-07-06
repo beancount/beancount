@@ -20,22 +20,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_bake_py",
-    srcs = ["bean-bake"],
-    outs = ["bean_bake.py"],
-    cmd = "cat $(locations :bean-bake) > $@",
-)
-
-py_binary(
-    name = "bean_bake",
-    srcs = ["bean_bake.py"],
-    deps = [
-        "//beancount/scripts:bake",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "bean_doctor_py",
     srcs = ["bean-doctor"],
     outs = ["bean_doctor.py"],
@@ -193,22 +177,6 @@ py_binary(
     srcs = ["bean_report.py"],
     deps = [
         "//beancount/reports:report",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
-    name = "bean_web_py",
-    srcs = ["bean-web"],
-    outs = ["bean_web.py"],
-    cmd = "cat $(locations :bean-web) > $@",
-)
-
-py_binary(
-    name = "bean_web",
-    srcs = ["bean_web.py"],
-    deps = [
-        "//beancount/web:web",
         "//beancount:loader_with_plugins",
     ],
 )

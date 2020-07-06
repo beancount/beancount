@@ -1,26 +1,5 @@
 package(default_visibility = ["//visibility:public"])
 
-py_library(
-    name = "bake",
-    srcs = ["bake.py"],
-    deps = [
-        "//beancount/utils:file_utils",
-        "//beancount/parser:version",
-        "//beancount/utils:scrape",
-        "//beancount/web:web",
-    ],
-)
-
-py_test(
-    name = "bake_test",
-    srcs = ["bake_test.py"],
-    deps = [
-        "//beancount/scripts:bake",
-        "//beancount/utils:file_utils",
-        "//beancount/utils:test_utils",
-    ],
-)
-
 py_test(
     name = "check_examples_test",
     srcs = ["check_examples_test.py"],
