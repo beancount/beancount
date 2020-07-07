@@ -37,13 +37,13 @@ def setup_proto():
 
 
 def setup_riegeli():
-    # 2020-05-23
+    # 2020-07-07
     http_archive(
         name = "com_google_riegeli",
-        #sha256 = "94257912684f999ce7f4272878826f3194301a10",
-        strip_prefix = "riegeli-94257912684f999ce7f4272878826f3194301a10",
+        sha256 = "f07218a222be340f3c457abffb5c30908ec4ecb85664148cbb5bb945035ff852",
+        strip_prefix = "riegeli-6eb1d8b0d310fc970da39c63b64a57e8b176e29b",
         urls = [
-            "https://github.com/google/riegeli/archive/94257912684f999ce7f4272878826f3194301a10.zip",
+            "https://github.com/google/riegeli/archive/6eb1d8b0d310fc970da39c63b64a57e8b176e29b.zip",
         ],
     )
 
@@ -71,11 +71,11 @@ def setup_riegeli():
     http_archive(
         name = "net_zstd",
         build_file = "@com_google_riegeli//third_party:net_zstd.BUILD",
-        sha256 = "5a874ba43d1ec6d1c03f070f5fa820ff834ef85d5525b03effa7508c9087ba55",
-        strip_prefix = "zstd-1.4.4/lib",
+        sha256 = "b6c537b53356a3af3ca3e621457751fa9a6ba96daf3aebb3526ae0f610863532",
+        strip_prefix = "zstd-1.4.5/lib",
         urls = [
-            #"https://mirror.bazel.build/github.com/facebook/zstd/archive/v1.4.4.zip",
-            "https://github.com/facebook/zstd/archive/v1.4.4.zip",  # 2019-11-04
+            #"https://mirror.bazel.build/github.com/facebook/zstd/archive/v1.4.5.zip",
+            "https://github.com/facebook/zstd/archive/v1.4.5.zip",  # 2020-05-22
         ],
     )
 
