@@ -148,13 +148,13 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     /* Handle a Python exception raised by the driver {3cfb2739349a} */                 \
     if (yylval->pyobj == NULL) {                                                        \
 	build_lexer_error_from_exception(yylloc, builder);		                \
-	return LEX_ERROR;						                \
+	return YYerror;						                        \
     }                                                                                   \
     /* Lexer builder methods should never return None, check for it. */                 \
     else if (yylval->pyobj == Py_None) {                                                \
         Py_DECREF(Py_None);                                                             \
         build_lexer_error(yylloc, builder, "Unexpected None result from lexer", 34);    \
-        return LEX_ERROR;                                                               \
+        return YYerror;                                                                 \
     }
 
 #define YY_USER_ACTION                                                  \
@@ -406,7 +406,7 @@ NULL		{
             build_lexer_error_from_exception(yylloc, builder);
             yylval->pyobj = Py_None;
             Py_INCREF(Py_None);
-            return LEX_ERROR;
+            return YYerror;
         }
         BUILD_LEX("STRING", "O", str);
         Py_DECREF(str);
@@ -477,7 +477,7 @@ NULL		{
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
     build_lexer_error(yylloc, builder, buffer, length);
     BEGIN(INITIAL);
-    return LEX_ERROR;
+    return YYerror;
 }
 
 

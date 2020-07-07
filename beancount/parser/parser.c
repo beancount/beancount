@@ -37,11 +37,6 @@
 
 extern YY_DECL;
 
-#define XSTRINGIFY(s) STRINGIFY(s)
-#define STRINGIFY(s) #s
-
-extern const char* getTokenName(int token);
-
 /* Placeolder object for missing cost specifications. */
 PyObject* missing_obj;
 
@@ -195,7 +190,6 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 /* Implement iterator protocol on the Parser. */
 static PyObject* parser_iternext(Parser* self)
 {
-    const char* name;
     YYSTYPE yylval;
     YYLTYPE yylloc;
     int token;
@@ -228,11 +222,9 @@ static PyObject* parser_iternext(Parser* self)
         obj = Py_None;
     }
 
-    /* Yield a tuple that contains the token name, line, matched string, and
-     * token value. */
-    name = getTokenName(token);
+    /* Yield a (token name, line, matched string, token value) tuple. */
     return Py_BuildValue("(sis#O)",
-                         name,
+                         token_to_string(token),
                          yylloc.first_line,
                          yyget_text(self->scanner),
                          (Py_ssize_t)yyget_leng(self->scanner),
@@ -312,48 +304,6 @@ static struct PyModuleDef moduledef = {
     NULL,                                 /* m_free */
 };
 
-void initialize_metadata(PyObject* module) {
-    /* Provide the source hash to the parser module for verification that the
-     * extension module is up-to-date. */
-#if _MSC_VER
-    static const char* quoted_hash = "" XSTRINGIFY(PARSER_SOURCE_HASH);
-#else
-    static const char* quoted_hash = XSTRINGIFY(PARSER_SOURCE_HASH);
-#endif
-    PyObject* source_hash = PyUnicode_FromString(quoted_hash);
-    PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
-
-    /* Provide the release version from the build, as it can be propagated there
-     * from setup.py. */
-#if _MSC_VER
-    static const char* release_version_str = "" XSTRINGIFY(BEANCOUNT_VERSION);
-#else
-    static const char* release_version_str = XSTRINGIFY(BEANCOUNT_VERSION);
-#endif
-    PyObject* release_version = PyUnicode_FromString(release_version_str);
-    PyObject_SetAttrString(module, "__version__", release_version);
-
-    /* Provide the Mercurial (or Git mirror) changeset from the build. */
-    /* Note: In the Bazel build, this information is absent. */
-#ifdef VC_CHANGESET
-#ifdef _MSC_VER
-    static const char* vc_changeset_str = "" XSTRINGIFY(VC_CHANGESET);
-#else
-    static const char* vc_changeset_str = XSTRINGIFY(VC_CHANGESET);
-#endif
-    PyObject* vc_changeset = PyUnicode_FromString(vc_changeset_str);
-    PyObject_SetAttrString(module, "__vc_changeset__", vc_changeset);
-#endif
-
-    /* Provide the date of the last changeset. */
-    /* Note: In the Bazel build, this information is absent. */
-#ifdef VC_TIMESTAMP
-    static const int vc_timestamp_int = VC_TIMESTAMP;
-    PyObject* vc_timestamp = PyLong_FromLong(vc_timestamp_int);
-    PyObject_SetAttrString(module, "__vc_timestamp__", vc_timestamp);
-#endif
-}
-
 PyMODINIT_FUNC PyInit__parser(void)
 {
     Py_INCREF(&Parser_Type);
@@ -363,7 +313,37 @@ PyMODINIT_FUNC PyInit__parser(void)
         goto error;
     }
 
-    initialize_metadata(module);
+#define SETATTR(module, name, value)                       \
+    if (!value) {                                          \
+        goto error;                                        \
+    }                                                      \
+    if (PyObject_SetAttrString(module, name, value) < 0) { \
+        goto error;                                        \
+    }
+
+    /* Hash of the this Python extension source code. */
+    SETATTR(module, "SOURCE_HASH",
+            PyUnicode_FromString(Py_STRINGIFY(PARSER_SOURCE_HASH)));
+
+    /* Release versions as defined in setup.py. */
+    SETATTR(module, "__version__",
+            PyUnicode_FromString(Py_STRINGIFY(RELEASE_VERSION)));
+
+#ifdef VC_CHANGESET
+    /* Git changeset from the build source tree.
+     * In the Bazel build, this information is absent. */
+    SETATTR(module, "__vc_changeset__",
+            PyUnicode_FromString(Py_STRINGIFY(VC_CHANGESET)));
+#endif
+
+#ifdef VC_TIMESTAMP
+    /* Date of the last changeset.
+     * In the Bazel build, this information is absent. */
+    SETATTR(module, "__vc_timestamp__",
+            PyLong_FromLong(VC_TIMESTAMP));
+#endif
+
+#undef SETATTR
 
     /* Import the module that defines the missing object constant. */
     PyObject* number_module = PyImport_ImportModule("beancount.core.number");
