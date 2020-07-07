@@ -4,6 +4,13 @@ ho========================
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-07-06
+
+ - Updated export script to honor lowercase "ignore" instead of "IGNORE" and set
+   default tax type to "taxable" instead of "TAXABLE" so that changes in PR 472
+   don't pick up the metadata as currencies.
+
+
 2020-07-05
 
  - Removed bean-report and all associated codes. Use bean-query instead (or

@@ -83,7 +83,7 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
     oc_map = getters.get_account_open_close(entries)
     accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
     header = ['account'] + attributes
-    defaults = {'tax': 'TAXABLE',
+    defaults = {'tax': 'taxable',
                 'liquid': False}
     def getter(entry, key):
         """Lookup the value working up the accounts tree."""
@@ -345,7 +345,7 @@ def main():
     final_table = reorder_columns(joined_table, headers)
 
     # Filter table.
-    rows = [row for row in final_table.rows if row[7] != 'IGNORE']
+    rows = [row for row in final_table.rows if row[7].lower() != 'ignore']
     table = Table(final_table.header, rows)
 
     if args.output is not None:
