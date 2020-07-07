@@ -330,7 +330,7 @@ def get_commodity_directives(entries):
     Returns:
       A map of commodity name strings to Commodity directives.
     """
-    return { entry.currency: entry for entry in entries if isinstance(entry, Commodity) }
+    return {entry.currency: entry for entry in entries if isinstance(entry, Commodity)}
 
 
 def get_values_meta(name_to_entries_map, *meta_keys, default=None):
