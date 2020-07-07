@@ -15,7 +15,6 @@ all: build
 # Clean everything up.
 clean:
 	rm -f core
-	rm -rf build
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
