@@ -31,22 +31,22 @@ class CoinbasePriceFetcher(unittest.TestCase):
     def test_valid_response(self):
         contents = {"data": {"base": "BTC",
                              "currency": "USD",
-                             "amount": 101.23}}
+                             "amount": "101.23456"}}
         with response(contents):
             srcprice = coinbase.Source().get_latest_price('BTC-GBP')
             self.assertIsInstance(srcprice, source.SourcePrice)
-            self.assertEqual(D('101.23'), srcprice.price)
+            self.assertEqual(D('101.23456'), srcprice.price)
             self.assertEqual('USD', srcprice.quote_currency)
 
     def test_historical_price(self):
         contents = {"data": {"base": "BTC",
                              "currency": "USD",
-                             "amount": 101.23}}
+                             "amount": "101.23456"}}
         with response(contents):
             time = datetime.datetime(2018, 3, 27, 0, 0, 0, tzinfo=tz.tzutc())
             srcprice = coinbase.Source().get_historical_price('BTC-GBP', time)
             self.assertIsInstance(srcprice, source.SourcePrice)
-            self.assertEqual(D('101.23'), srcprice.price)
+            self.assertEqual(D('101.23456'), srcprice.price)
             self.assertEqual('USD', srcprice.quote_currency)
             self.assertEqual(datetime.datetime(2018, 3, 27, 0, 0, 0, tzinfo=tz.tzutc()),
                              srcprice.time)
