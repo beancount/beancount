@@ -35,7 +35,7 @@ class TestCheckCommodity(unittest.TestCase):
 
             2011-05-20 price BAR 1.00 TEST6
         """
-        commodities = check_commodity.get_commodity_map_ex(entries)
+        commodities = check_commodity.get_commodity_map_ex(entries, metadata=True)
         self.assertEqual(commodities.keys(), {'TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5',
                                               'TEST6', 'TEST7', 'FOO', 'BAR', 'BAZ'})
 

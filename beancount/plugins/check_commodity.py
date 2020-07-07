@@ -19,7 +19,7 @@ __plugins__ = ('validate_commodity_directives',)
 CheckCommodityError = collections.namedtuple('CheckCommodityError', 'source message entry')
 
 
-def get_commodity_map_ex(entries):
+def get_commodity_map_ex(entries, metadata=False):
 
     ignore = set(['filename', 'lineno', '__automatic__'])
     regexp = re.compile(CURRENCY_RE)
@@ -60,8 +60,9 @@ def get_commodity_map_ex(entries):
                     commodities_map.setdefault(price.currency, None)
 
                 # Currency in posting metadata.
-                for currency in currencies_in_meta(posting):
-                    commodities_map.setdefault(currency, None)
+                if metadata:
+                    for currency in currencies_in_meta(posting):
+                        commodities_map.setdefault(currency, None)
 
         elif isinstance(entry, data.Balance):
             commodities_map.setdefault(entry.amount.currency, None)
@@ -71,8 +72,9 @@ def get_commodity_map_ex(entries):
             commodities_map.setdefault(entry.amount.currency, None)
 
         # Entry metadata.
-        for currency in currencies_in_meta(entry):
-            commodities_map.setdefault(currency, None)
+        if metadata:
+            for currency in currencies_in_meta(entry):
+                commodities_map.setdefault(currency, None)
 
     return commodities_map
 
@@ -90,7 +92,12 @@ def validate_commodity_directives(entries, options_map):
 
     meta = data.new_metadata('<check_commodity>', 0)
 
-    commodity_map = get_commodity_map_ex(entries)
+    # TODO(dnicolodi) Unfortunately detecting commodities in metadata
+    # values may result in false positives: common used string are
+    # matched by the regular expression. Revisit this when commodities
+    # will be represented with their own type.
+    commodity_map = get_commodity_map_ex(entries, metadata=False)
+
     for commodity, commodity_entry in commodity_map.items():
         if commodity_entry is None:
             errors.append(
