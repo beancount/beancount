@@ -38,7 +38,7 @@ def fetch_quote(ticker, time=None):
                                                                response.text))
     result = response.json()
 
-    price = D(result['data']['amount']).quantize(D('0.01'))
+    price = D(result['data']['amount'])
     if time is None:
         time = datetime.datetime.now(tz.tzutc())
     currency = result['data']['currency']
