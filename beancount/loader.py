@@ -464,10 +464,6 @@ def aggregate_options_map(options_map, src_options_map):
         if currency not in op_currencies:
             op_currencies.append(currency)
 
-    commodities = options_map["commodities"]
-    for currency in src_options_map["commodities"]:
-        commodities.add(currency)
-
 
 def _load(sources, log_timings, extra_validations, encoding):
     """Parse Beancount input, run its transformations and validate it.

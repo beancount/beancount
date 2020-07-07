@@ -200,34 +200,26 @@ class TestGetters(unittest.TestCase):
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
         self.assertEqual(sorted(expected_components), components)
 
-    def test_get_commodities_map(self):
+    def test_get_commodity_directives(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
+        commodities = getters.get_commodity_directives(entries)
+        self.assertEqual({'HOOL', 'PIPA'}, commodities.keys())
         self.assertTrue(all(isinstance(value, data.Commodity)
-                            for value in commodity_map.values()))
-        self.assertEqual(commodity_map['HOOL'],
-                         next(entry
-                              for entry in entries
-                              if isinstance(entry, data.Commodity)))
+                            for value in commodities.values()))
 
     def test_get_values_meta__single(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        values = getters.get_values_meta(commodity_map, 'name', default='BLA')
-        self.assertEqual({'USD': 'BLA',
-                          'PIPA': 'Pied Piper',
-                          'HOOL': 'Hooli Corp.'},
-                         values)
+        commodities = getters.get_commodity_directives(entries)
+        values = getters.get_values_meta(commodities, 'name', default='BLA')
+        self.assertEqual({'PIPA': 'Pied Piper',
+                          'HOOL': 'Hooli Corp.'}, values)
 
     def test_get_values_meta__multi(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        values = getters.get_values_meta(commodity_map, 'name', 'ticker')
+        commodities = getters.get_commodity_directives(entries)
+        values = getters.get_values_meta(commodities, 'name', 'ticker')
         self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),
-                          'PIPA': ('Pied Piper', None),
-                          'USD': (None, None)},
-                         values)
+                          'PIPA': ('Pied Piper', None)}, values)
 
 
 if __name__ == '__main__':

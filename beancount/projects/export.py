@@ -71,10 +71,10 @@ def get_metamap_table(metamap: Dict[str, data.Directive],
 
 def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table:
     """Produce a Table of per-commodity attributes."""
-    commodities_map = getters.get_commodity_map(entries)
+    commodities = getters.get_commodity_directives(entries)
     header = ['currency'] + attributes
     getter = lambda entry, key: entry.meta.get(key, None)
-    table = get_metamap_table(commodities_map, header, getter)
+    table = get_metamap_table(commodities, header, getter)
     return table
 
 
