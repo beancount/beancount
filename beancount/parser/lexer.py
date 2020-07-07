@@ -37,9 +37,6 @@ class LexBuilder:
         # A regexp for valid numbers.
         self.number_regexp = re.compile(r'(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$')
 
-        # A set of all the commodities that we have seen in the file.
-        self.commodities = set()
-
         # Errors that occurred during lexing and parsing.
         self.errors = []
 
@@ -117,7 +114,6 @@ class LexBuilder:
           A new currency object; for now, these are simply represented
           as the currency name.
         """
-        self.commodities.add(currency_name)
         return currency_name
 
     def STRING(self, string):

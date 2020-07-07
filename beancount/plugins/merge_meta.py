@@ -55,11 +55,11 @@ def merge_meta(entries, options_map, config):
             close_entry.meta.update(ext_close_entry.meta)
 
     # Map Commodity directives.
-    comm_map = getters.get_commodity_map(entries, False)
-    ext_comm_map = getters.get_commodity_map(ext_entries, False)
-    for currency in set(comm_map) & set(ext_comm_map):
-        comm_entry = comm_map[currency]
-        ext_comm_entry = ext_comm_map[currency]
+    commodities = getters.get_commodity_directives(entries)
+    ext_commodities = getters.get_commodity_directives(ext_entries)
+    for currency in set(commodities) & set(ext_commodities):
+        comm_entry = commodities[currency]
+        ext_comm_entry = ext_commodities[currency]
         if comm_entry and ext_comm_entry:
             comm_entry.meta.update(ext_comm_entry.meta)
 

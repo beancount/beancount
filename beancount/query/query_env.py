@@ -418,7 +418,9 @@ class CurrencyMeta(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        commodity_entry = context.commodity_map[args[0]]
+        commodity_entry = context.commodity_map.get(args[0], None)
+        if commodity_entry is None:
+            return {}
         return commodity_entry.meta
 
 

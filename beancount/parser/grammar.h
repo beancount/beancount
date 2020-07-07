@@ -58,7 +58,7 @@ typedef struct YYLTYPE {
     int first_column;
     int last_line;
     int last_column;
-    const char* file_name;
+    PyObject* file_name;
 } YYLTYPE;
 
 #define YYLTYPE_IS_DECLARED 1

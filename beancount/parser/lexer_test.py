@@ -608,20 +608,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
 
-    def test_lexer_exception_CURRENCY(self):
-        test_input = """
-          USD
-        """
-        builder = lexer.LexBuilder()
-        builder.commodities = {}  # This will force an exception because the
-                                  # parser calls add() on it.
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, 'USD', None),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
-        self.assertEqual(1, len(builder.errors))
-
     def test_lexer_exception_substring_with_quotes(self):
         test_input = """
           2016-07-15 query "hotels" "SELECT * WHERE account ~ 'Expenses:Accommodation'"

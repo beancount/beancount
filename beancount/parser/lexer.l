@@ -22,11 +22,33 @@
 
 typedef struct _yyextra_t yyextra_t;
 
-/* Initialize scanner private data. */
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
+/**
+ * Allocate a new scanner object including private data.
+ *
+ * This encapsulates the native yylex_init_extra() API.
+ */
+yyscan_t yylex_new(void);
 
-/* Free scanner private data */
-void yylex_finalize(yyscan_t yyscanner);
+/**
+ * Free scanner object including private data.
+ *
+ * This encapsulated the native yylex_destroy() API. Python objects
+ * references stored in the @scanner are decremented.
+ */
+yyscan_t yylex_free(yyscan_t scanner);
+
+/**
+ * Allocate and initialize scanner private data.
+ *
+ * Setup @scanner to read from the Python file-like object @file. Set
+ * the reported file name to @filename, if not NULL and not None.
+ * Otherwise try to obtain the file name from the @name attribute of
+ * the @file object. If this fails, use the empty string. @encoding is
+ * used to decode strings read from the input file, if not NULL,
+ * otherwise the default UTF-8 encoding is used. Python objects
+ * references are incremented. It is safe to call this multiple times.
+ */
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
 }
 
@@ -53,9 +75,9 @@ struct _yyextra_t {
     int n_line_tokens;
 
     /* The filename being tokenized. */
-    const char* filename;
+    PyObject* filename;
 
-    /* Reporting line offset. This is used like the #line cpp macro */
+    /* Reporting line offset. This is used like the #line cpp macro. */
     int line;
 
     /* The encoding to use for converting strings. */
@@ -461,22 +483,81 @@ NULL		{
 
 %% /* User Code */
 
-void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner)
+yyscan_t yylex_new(void)
 {
-    yyset_extra(malloc(sizeof(yyextra_t)), yyscanner);
+    yyscan_t scanner;
+    yyextra_t* extra;
 
-    yy_eof_times = 0;
-    yy_line_tokens = 0;
-    yy_filename = filename ? filename : "";
-    yy_firstline = firstline;
-    yy_encoding = encoding ? encoding : "utf-8";
-    buffer_init(strbuf, 1024);
+    extra = malloc(sizeof(*extra));
+    if (!extra)
+        return NULL;
+
+    extra->filename = NULL;
+    buffer_init(&extra->str, 1024);
+
+    yylex_init_extra(extra, &scanner);
+    if (!scanner) {
+        free(extra);
+        return NULL;
+    }
+
+    return scanner;
 }
 
-void yylex_finalize(yyscan_t yyscanner)
+yyscan_t yylex_free(yyscan_t scanner)
 {
-    buffer_free(strbuf);
-    free(yyget_extra(yyscanner));
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(extra->filename);
+    buffer_free(&extra->str);
+    free(extra);
+
+    Py_XDECREF(yyget_in(scanner));
+    yylex_destroy(scanner);
+
+    return NULL;
+}
+
+/* yyrestart() does not reset the scanner back to INITIAL state and
+ * Flex does not provide a way of doing so outside a scanner
+ * rule. This function does just that accessing Flex internals. */
+static void yybegin(yyscan_t scanner)
+{
+    struct yyguts_t* yyg = (struct yyguts_t*)scanner;
+    BEGIN(INITIAL);
+}
+
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+
+    if (!filename || filename == Py_None) {
+        /* If a filename has not been specified, get it from the 'name'
+	 * attribute of the input file object. */
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename) {
+	    /* No 'name' attribute. */
+	    PyErr_Clear();
+            /* Use the empty string. */
+            filename = PyUnicode_FromString("");
+        }
+    } else {
+        Py_INCREF(filename);
+    }
+
+    Py_XDECREF(extra->filename);
+    extra->filename = filename;
+
+    extra->n_eof = 0;
+    extra->n_line_tokens = 0;
+    extra->line = lineno;
+    extra->encoding = encoding ? encoding : "utf-8";
+    buffer_init(&extra->str, 1024);
+
+    Py_XDECREF(yyget_in(scanner));
+    Py_INCREF(file);
+    yyrestart((void *)file, scanner);
+    yybegin(scanner);
 }
 
 static void buffer_init(struct buffer* b, size_t size)
@@ -528,7 +609,7 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size
     TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "sis#",
+    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
 				       loc->file_name, loc->first_line,
 				       string, (Py_ssize_t)length);
     /* Note: If there was an exception in the callback, let it bubble up. */
@@ -551,7 +632,7 @@ void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "siOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
 					   loc->file_name, loc->first_line,
 					   pvalue, ptype);
         Py_XDECREF(ptype);

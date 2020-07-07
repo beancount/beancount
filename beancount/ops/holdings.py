@@ -211,11 +211,11 @@ def get_commodities_at_date(entries, options_map, date=None):
                         for holding in holdings_list}
 
     # Add in the associated ticker symbols.
-    commodities_map = getters.get_commodity_map(entries)
+    commodities = getters.get_commodity_directives(entries)
     commodities_symbols_list = []
     for currency, cost_currency in sorted(commodities_list):
         try:
-            commodity_entry = commodities_map[currency]
+            commodity_entry = commodities[currency]
             ticker = commodity_entry.meta.get('ticker', None)
             quote_currency = commodity_entry.meta.get('quote', None)
         except KeyError:
