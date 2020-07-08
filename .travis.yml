@@ -6,8 +6,6 @@ python:
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
       - gnupg
       - zip
@@ -25,6 +23,6 @@ before_install:
 
 script:
   - /usr/bin/bazel --bazelrc=.bazelrc.travis test //...
-  - make build
+  - python3 setup.py build_ext -i
   - make test
   - make lint
