@@ -38,7 +38,7 @@ yyscan_t yylex_new(void);
 yyscan_t yylex_free(yyscan_t scanner);
 
 /**
- * Allocate and initialize scanner private data.
+ * Initialize scanner private data.
  *
  * Setup @scanner to read from the Python file-like object @file. Set
  * the reported file name to @filename, if not NULL and not None.
