@@ -1670,89 +1670,79 @@ case 41:
 YY_RULE_SETUP
 #line 268 "beancount/parser/lexer.l"
 {
-    token(BOOL, true);
-    return BOOL;
+    return token(BOOL, true);
 }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 273 "beancount/parser/lexer.l"
+#line 272 "beancount/parser/lexer.l"
 {
-    token(BOOL, false);
-    return BOOL;
+    return token(BOOL, false);
 }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 278 "beancount/parser/lexer.l"
+#line 276 "beancount/parser/lexer.l"
 {
-    token(NONE);
-    return NONE;
+    return token(NONE);
 }
 	YY_BREAK
 /* Dates. */
 case 44:
 YY_RULE_SETUP
-#line 284 "beancount/parser/lexer.l"
+#line 281 "beancount/parser/lexer.l"
 {
-    token(DATE, yytext);
-    return DATE;
+    return token(DATE, yytext);
 }
 	YY_BREAK
 /* Account names. */
 case 45:
 YY_RULE_SETUP
-#line 290 "beancount/parser/lexer.l"
+#line 286 "beancount/parser/lexer.l"
 {
-    token(ACCOUNT, yytext);
-    return ACCOUNT;
+    return token(ACCOUNT, yytext);
 }
 	YY_BREAK
 /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 case 46:
 YY_RULE_SETUP
-#line 297 "beancount/parser/lexer.l"
+#line 292 "beancount/parser/lexer.l"
 {
-    token(CURRENCY, yytext, yyleng);
-    return CURRENCY;
+    return token(CURRENCY, yytext, yyleng);
 }
 	YY_BREAK
 /* String literals. */
 case 47:
 /* rule 47 can match eol */
 YY_RULE_SETUP
-#line 303 "beancount/parser/lexer.l"
+#line 297 "beancount/parser/lexer.l"
 {
-    token(STRING, yytext + 1, yyleng - 2, yy_encoding);
-    return STRING;
+    return token(STRING, yytext + 1, yyleng - 2, yy_encoding);
 }
 	YY_BREAK
 /* Numbers */
 case 48:
 YY_RULE_SETUP
-#line 309 "beancount/parser/lexer.l"
+#line 302 "beancount/parser/lexer.l"
 {
-    token(NUMBER, yytext);
-    return NUMBER;
+    return token(NUMBER, yytext);
 }
 	YY_BREAK
 /* Tags */
 case 49:
 YY_RULE_SETUP
-#line 315 "beancount/parser/lexer.l"
+#line 307 "beancount/parser/lexer.l"
 {
-    token(TAG, yytext + 1, yyleng - 1);
-    return TAG;
+    return token(TAG, yytext + 1, yyleng - 1);
 }
 	YY_BREAK
 /* Links */
 case 50:
 YY_RULE_SETUP
-#line 321 "beancount/parser/lexer.l"
+#line 312 "beancount/parser/lexer.l"
 {
-    token(LINK, yytext + 1, yyleng - 1);
-    return LINK;
+    return token(LINK, yytext + 1, yyleng - 1);
 }
 	YY_BREAK
 /* Key */
@@ -1761,16 +1751,15 @@ case 51:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 327 "beancount/parser/lexer.l"
+#line 317 "beancount/parser/lexer.l"
 {
-    token(KEY, yytext, yyleng);
-    return KEY;
+    return token(KEY, yytext, yyleng);
 }
 	YY_BREAK
 /* Default rule. {bf253a29a820} */
 case 52:
 YY_RULE_SETUP
-#line 333 "beancount/parser/lexer.l"
+#line 322 "beancount/parser/lexer.l"
 {
     unput(*yytext);
     BEGIN(INVALID);
@@ -1780,7 +1769,7 @@ YY_RULE_SETUP
   * will process postings right. */
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
-#line 340 "beancount/parser/lexer.l"
+#line 329 "beancount/parser/lexer.l"
 {
     if (yy_eof_times == 0) {
 	yy_eof_times = 1;
@@ -1797,7 +1786,7 @@ case YY_STATE_EOF(INVALID):
     this and more. {bba169a1d35a} */
 case 53:
 YY_RULE_SETUP
-#line 354 "beancount/parser/lexer.l"
+#line 343 "beancount/parser/lexer.l"
 {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
@@ -1808,10 +1797,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 363 "beancount/parser/lexer.l"
+#line 352 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1814 "beancount/parser/lexer.c"
+#line 1803 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3014,7 +3003,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 363 "beancount/parser/lexer.l"
+#line 352 "beancount/parser/lexer.l"
 
 
 yyscan_t yylex_new(void)
