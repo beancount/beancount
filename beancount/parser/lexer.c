@@ -20,7 +20,7 @@ yyscan_t yylex_new(void);
 yyscan_t yylex_free(yyscan_t scanner);
 
 /**
- * Allocate and initialize scanner private data.
+ * Initialize scanner private data.
  *
  * Setup @scanner to read from the Python file-like object @file. Set
  * the reported file name to @filename, if not NULL and not None.
@@ -3086,8 +3086,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length)
 {
-    TRACE_ERROR("Invalid Token");
-
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
 				       loc->file_name, loc->first_line,
@@ -3098,12 +3096,11 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size
 
 void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    TRACE_ERROR("Lexer Builder Exception");
-
     /* Get the exception context. */
     PyObject* ptype = NULL;
     PyObject* pvalue = NULL;
     PyObject* ptraceback = NULL;
+
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
 
