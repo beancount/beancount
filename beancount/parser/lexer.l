@@ -341,7 +341,8 @@ NULL		{
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    build_lexer_error(yylloc, builder, "Invalid token: '%s'", yytext);
+    PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
+    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
     return YYerror;
 }

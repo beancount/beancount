@@ -1789,17 +1789,18 @@ case 53:
 YY_RULE_SETUP
 #line 344 "beancount/parser/lexer.l"
 {
-    build_lexer_error(yylloc, builder, "Invalid token: '%s'", yytext);
+    PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
+    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
     return YYerror;
 }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 351 "beancount/parser/lexer.l"
+#line 352 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1802 "beancount/parser/lexer.c"
+#line 1803 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3002,7 +3003,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 351 "beancount/parser/lexer.l"
+#line 352 "beancount/parser/lexer.l"
 
 
 yyscan_t yylex_new(void)
