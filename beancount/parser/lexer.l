@@ -57,6 +57,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "grammar.h"
 #include "tokens.h"
@@ -82,7 +83,7 @@ struct _yyextra_t {
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length);
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
@@ -340,9 +341,7 @@ NULL		{
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    char buffer[256];
-    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(yylloc, builder, buffer, length);
+    build_lexer_error(yylloc, builder, "Invalid token: '%s'", yytext);
     BEGIN(INITIAL);
     return YYerror;
 }
@@ -428,51 +427,42 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length)
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
 {
+    PyObject* error;
+    PyObject* rv;
+    va_list va;
+
+    va_start(va, format);
+    error = PyUnicode_FromFormatV(format, va);
+    va_end(va);
+
+    if (!error) {
+        return;
+    }
+
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
-				       loc->file_name, loc->first_line,
-				       string, (Py_ssize_t)length);
-    /* Note: If there was an exception in the callback, let it bubble up. */
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
+                             loc->file_name, loc->first_line, error);
+
     Py_XDECREF(rv);
+    Py_XDECREF(error);
 }
 
 void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    /* Get the exception context. */
-    PyObject* ptype = NULL;
-    PyObject* pvalue = NULL;
-    PyObject* ptraceback = NULL;
+    PyObject* type;
+    PyObject* value;
+    PyObject* traceback;
 
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
-    /* Clear the exception. */
-    PyErr_Clear();
+    build_lexer_error(loc, builder, "%s: %S", PyExceptionClass_Name(type), value);
 
-    if (pvalue != NULL) {
-        /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
-					   loc->file_name, loc->first_line,
-					   pvalue, ptype);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-
-        /* If there was an exception during the handling of the lexer error, add
-         * a prefix to the message to make it clear this wasn't expected. */
-        if (rv == NULL) {
-            PyObject* message = PyUnicode_FromFormat(
-                "Internal error while building exception for: %S", pvalue);
-            PyErr_SetObject(PyExc_RuntimeError, message);
-            Py_DECREF(message);
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: No exception");
-    }
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
 }
 
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
