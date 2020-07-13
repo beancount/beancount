@@ -846,7 +846,7 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, filename, lineno, _):
+    def tag_link_new(self, filename, lineno):
         """Create a new TagsLinks instance.
 
         Returns:

@@ -363,11 +363,8 @@ txn_strings : %empty
 
 tags_links : %empty
            {
-               /* Note: We're passing a bogus value here in order to avoid
-                * having to declare a second macro just for this one special
-                * case. */
                BUILDY(,
-                      $$, "tag_link_new", "O", Py_None);
+                      $$, "tag_link_new", "");
            }
            | tags_links LINK
            {
