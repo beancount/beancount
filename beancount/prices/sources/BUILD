@@ -80,3 +80,21 @@ py_test(
         "//beancount/utils:date_utils",
     ],
 )
+
+py_library(
+    name = "tsp",
+    srcs = ["tsp.py"],
+    deps = [
+        "//beancount/core:number",
+        "//beancount/prices:source",
+    ],
+)
+
+py_test(
+    name = "tsp_test",
+    srcs = ["tsp_test.py"],
+    deps = [
+        "//beancount/core:number",
+        "//beancount/prices/sources:tsp",
+    ],
+)
