@@ -1,16 +1,16 @@
 #!/usr/bin/env make
 
-# Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
-
-GREP="grep --include="*.py" -srnE"
 TOOLS=./tools
 
-PYTHON?=python3
+PYTHON ?= python3
+LEX = flex
+YACC = bison
+YFLAGS = --report=itemset --verbose -Wall -Werror
+
 
 all: build
-
 
 # Clean everything up.
 clean:
@@ -25,15 +25,8 @@ clean:
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
 
-# See
-# https://www.owlfolio.org/possibly-useful/flex-input-scanner-rules-are-too-complicated/
-#LEX = flex -Ca
-LEX = flex
-
-YACC = bison --report=itemset --verbose -Wall -Werror
-
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	$(YACC) -o $(CROOT)/grammar.c $<
+	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
