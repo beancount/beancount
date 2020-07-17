@@ -30,8 +30,7 @@ CROOT = beancount/parser
 #LEX = flex -Ca
 LEX = flex
 
-# Note: -Wno-deprecated silences warnings about old directives from upgrading to 3.4.
-YACC = bison -Wno-deprecated --report=itemset --verbose
+YACC = bison --report=itemset --verbose
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
