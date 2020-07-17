@@ -30,7 +30,7 @@ CROOT = beancount/parser
 #LEX = flex -Ca
 LEX = flex
 
-YACC = bison --report=itemset --verbose
+YACC = bison --report=itemset --verbose -Wall -Werror
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
