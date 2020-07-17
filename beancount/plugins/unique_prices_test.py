@@ -45,9 +45,10 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
           Liabilities:Account1  1 HOUSE {101 USD}
         """
         self.assertEqual([], errors)
-        new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
+        entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqual([], errors)
-        _, valid_errors = unique_prices.validate_unique_prices(new_entries, options_map)
+        new_entries, valid_errors = unique_prices.validate_unique_prices(entries, options_map)
+        self.assertGreater(len(new_entries), 0)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
         self.assertRegex(valid_errors[0].message, 'Disagreeing price ent')
 
