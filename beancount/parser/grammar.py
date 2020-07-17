@@ -112,7 +112,7 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
-    def __init__(self, filename):
+    def __init__(self):
         lexer.LexBuilder.__init__(self)
 
         # A stack of the current active tags.
@@ -126,9 +126,6 @@ class Builder(lexer.LexBuilder):
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
-
-        # Set the filename we're processing.
-        self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
         # types. Warning: This overrides the value in the base class.
@@ -189,18 +186,6 @@ class Builder(lexer.LexBuilder):
         # Build and store the inferred DisplayContext instance.
         self.options['dcontext'] = self.dcontext
 
-        # Add the full list of seen commodities.
-        #
-        # IMPORTANT: This is currently where the list of all commodities seen
-        # from the parser lives. The
-        # beancount.core.getters.get_commodities_map() routine uses this to
-        # automatically generate a full list of directives. An alternative would
-        # be to implement a plugin that enforces the generate of these
-        # post-parsing so that they are always guaranteed to live within the
-        # flow of entries. This would allow us to keep all the data in that list
-        # of entries and to avoid depending on the options to store that output.
-        self.options['commodities'] = self.commodities
-
         return self.options
 
     def get_invalid_account(self):
@@ -219,6 +204,8 @@ class Builder(lexer.LexBuilder):
         """
         if entries:
             self.entries = entries
+        # Also record the name of the processed file.
+        self.options['filename'] = filename
 
     def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):

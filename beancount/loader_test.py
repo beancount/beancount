@@ -538,25 +538,6 @@ class TestOptionsAggregation(unittest.TestCase):
 
             self.assertEqual({'USD', 'EUR', 'CAD'}, set(options_map['operating_currency']))
 
-    def test_aggregate_commodities(self):
-        with test_utils.tempdir() as tmp:
-            test_utils.create_temporary_files(tmp, {
-                'apples.beancount': """
-                  include "oranges.beancount"
-                  include "bananas.beancount"
-                  option "operating_currency" "USD"
-                """,
-                'oranges.beancount': """
-                  2015-12-12 open Assets:CA:Checking  CAD
-                """,
-                'bananas.beancount': """
-                  2015-12-13 open Assets:FR:Checking  EUR
-                """})
-            top_filename = path.join(tmp, 'apples.beancount')
-            entries, errors, options_map = loader.load_file(top_filename)
-
-            self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])
-
 
 if __name__ == '__main__':
     unittest.main()

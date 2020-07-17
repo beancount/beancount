@@ -4,6 +4,11 @@ ho========================
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-07-17
+
+ - Fixed bug #508 in beancount.plugins.unique_prices.
+
+
 2020-07-06
 
  - Updated export script to honor lowercase "ignore" instead of "IGNORE" and set

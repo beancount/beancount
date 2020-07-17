@@ -120,9 +120,9 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\n', None),
             ('KEY', 2, 'abc1:', 'abc1'),
             ('COLON', 2, ':', None),
-            ('LEX_ERROR', 2, 'abc1', None),
+            ('error', 2, 'abc1', None),
             ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ', 'ΑβγⅠ:ΑβγⅠ'),
-            ('LEX_ERROR', 2, 'ابجا:ابجا', None),
+            ('error', 2, 'ابجا:ابجا', None),
             ('EOL', 3, '\n', None),
             ('EOL', 3, '\x00', None)
             ], tokens)
@@ -229,7 +229,7 @@ class TestLexer(unittest.TestCase):
           2013-12-98
         """
         self.assertEqual([
-            ('LEX_ERROR', 1, '2013-12-98', None),
+            ('error', 1, '2013-12-98', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
@@ -242,7 +242,7 @@ class TestLexer(unittest.TestCase):
           2013-12-228
         """
         self.assertEqual([
-            ('LEX_ERROR', 1, '2013-12-228', None),
+            ('error', 1, '2013-12-228', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
             ], tokens)
@@ -271,7 +271,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\n', None),
             ('ACCOUNT', 2, 'Assets:99Test', 'Assets:99Test'),
             ('EOL', 3, '\n', None),
-            ('LEX_ERROR', 3, 'Assets:signals', None),
+            ('error', 3, 'Assets:signals', None),
             ('EOL', 4, '\n', None),
             ('EOL', 4, '\x00', None)
         ], tokens)
@@ -296,7 +296,7 @@ class TestLexer(unittest.TestCase):
         """
         self.assertEqual([
             ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
-            ('LEX_ERROR', 1, 'check', None),
+            ('error', 1, 'check', None),
             ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
             ('NUMBER', 1, '2340.19', D('2340.19')),
             ('CURRENCY', 1, 'USD', 'USD'),
@@ -404,7 +404,7 @@ class TestLexer(unittest.TestCase):
         string = '"' + line * 128 + '"'
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(string, builder))
-        self.assertTrue(tokens[0], 'LEX_ERROR')
+        self.assertTrue(tokens[0], 'error')
         self.assertTrue(tokens[1], 'EOL')
 
     @lex_tokens
@@ -412,8 +412,6 @@ class TestLexer(unittest.TestCase):
         '''
         popmeta location:
         '''
-        # Note that this test contains an _actual_ newline, not an escape one as
-        # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('EOL', 2, '\n', None),
             ('POPMETA', 2, 'popmeta', None),
@@ -429,13 +427,11 @@ class TestLexer(unittest.TestCase):
         '''
         TRUE FALSE NULL
         '''
-        # Note that this test contains an _actual_ newline, not an escape one as
-        # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('EOL', 2, '\n', None),
             ('BOOL', 2, 'TRUE', None),
             ('BOOL', 2, 'FALSE', None),
-            ('NULL', 2, 'NULL', None),
+            ('NONE', 2, 'NULL', None),
             ('EOL', 3, '\n', None),
             ('EOL', 3, '\x00', None),
         ], tokens)
@@ -541,7 +537,7 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([('EOL', 2, '\n', None),
                           ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
                           ('OPEN', 2, 'open', None),
-                          ('LEX_ERROR', 2, '`', None),
+                          ('error', 2, '`', None),
                           ('CURRENCY', 2, 'USD', 'USD'),
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)],
@@ -556,7 +552,7 @@ class TestLexerErrors(unittest.TestCase):
           2000-01-02 open Assets:Working
         """
         self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('error', 2, '2000-13-32', None),
                           ('OPEN', 2, 'open', None),
                           ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
                           ('EOL', 3, '\n', None),
@@ -574,7 +570,7 @@ class TestLexerErrors(unittest.TestCase):
             return None
         setattr(builder, 'STRING', return_none)
         tokens = list(lexer.lex_iter_string('"Something"', builder))
-        self.assertEqual([('LEX_ERROR', 1, '"', None),
+        self.assertEqual([('error', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
         self.assertRegex(builder.errors[0].message, "None result from lexer")
@@ -585,7 +581,7 @@ class TestLexerErrors(unittest.TestCase):
           2000-13-32 open Assets:Something
         """
         self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('error', 2, '2000-13-32', None),
                           ('OPEN', 2, 'open', None),
                           ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
                           ('EOL', 3, '\n', None),
@@ -603,21 +599,7 @@ class TestLexerErrors(unittest.TestCase):
                                             '(:[A-Z][A-Za-z0-9-]*)*$')
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, 'Invalid:Something', None),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
-        self.assertEqual(1, len(builder.errors))
-
-    def test_lexer_exception_CURRENCY(self):
-        test_input = """
-          USD
-        """
-        builder = lexer.LexBuilder()
-        builder.commodities = {}  # This will force an exception because the
-                                  # parser calls add() on it.
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, 'USD', None),
+                          ('error', 2, 'Invalid:Something', None),
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
@@ -651,31 +633,31 @@ class TestLexerErrors(unittest.TestCase):
     def test_lexer_exception_STRING(self):
         self._run_lexer_with_raising_builder_method(
             ' "Something" ', 'STRING',
-            [('LEX_ERROR', 1, '"', None),
+            [('error', 1, '"', None),
              ('EOL', 1, '\x00', None)])
 
     def test_lexer_exception_NUMBER(self):
         self._run_lexer_with_raising_builder_method(
             ' 100.23 ', 'NUMBER',
-            [('LEX_ERROR', 1, '100.23', None),
+            [('error', 1, '100.23', None),
              ('EOL', 1, '\x00', None)])
 
     def test_lexer_exception_TAG(self):
         self._run_lexer_with_raising_builder_method(
             ' #the-tag ', 'TAG',
-            [('LEX_ERROR', 1, '#the-tag', None),
+            [('error', 1, '#the-tag', None),
              ('EOL', 1, '\x00', None)])
 
     def test_lexer_exception_LINK(self):
         self._run_lexer_with_raising_builder_method(
             ' ^the-link ', 'LINK',
-            [('LEX_ERROR', 1, '^the-link', None),
+            [('error', 1, '^the-link', None),
              ('EOL', 1, '\x00', None)])
 
     def test_lexer_exception_KEY(self):
         self._run_lexer_with_raising_builder_method(
             ' mykey: ', 'KEY',
-            [('LEX_ERROR', 1, 'mykey:', None),
+            [('error', 1, 'mykey:', None),
              ('EOL', 1, '\x00', None)])
 
 
@@ -760,7 +742,7 @@ class TestLexerMisc(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertEqual([
-            ('LEX_ERROR', 1, '452,34.00', None),
+            ('error', 1, '452,34.00', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)

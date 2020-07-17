@@ -58,7 +58,7 @@ typedef struct YYLTYPE {
     int first_column;
     int last_line;
     int last_column;
-    const char* file_name;
+    PyObject* file_name;
 } YYLTYPE;
 
 #define YYLTYPE_IS_DECLARED 1
@@ -81,8 +81,11 @@ typedef struct YYLTYPE {
         }                                                               \
     } while (0)
 
+/* Get a printable version of a token name. */
+const char* token_to_string(int token);
 
-#line 86 "beancount/parser/grammar.h"
+
+#line 89 "beancount/parser/grammar.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -93,60 +96,59 @@ typedef struct YYLTYPE {
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    LEX_ERROR = 258,               /* LEX_ERROR  */
-    INDENT = 259,                  /* INDENT  */
-    EOL = 260,                     /* EOL  */
-    COMMENT = 261,                 /* COMMENT  */
-    SKIPPED = 262,                 /* SKIPPED  */
-    PIPE = 263,                    /* PIPE  */
-    ATAT = 264,                    /* ATAT  */
-    AT = 265,                      /* AT  */
-    LCURLCURL = 266,               /* LCURLCURL  */
-    RCURLCURL = 267,               /* RCURLCURL  */
-    LCURL = 268,                   /* LCURL  */
-    RCURL = 269,                   /* RCURL  */
-    EQUAL = 270,                   /* EQUAL  */
-    COMMA = 271,                   /* COMMA  */
-    TILDE = 272,                   /* TILDE  */
-    HASH = 273,                    /* HASH  */
-    ASTERISK = 274,                /* ASTERISK  */
-    SLASH = 275,                   /* SLASH  */
-    COLON = 276,                   /* COLON  */
-    PLUS = 277,                    /* PLUS  */
-    MINUS = 278,                   /* MINUS  */
-    LPAREN = 279,                  /* LPAREN  */
-    RPAREN = 280,                  /* RPAREN  */
-    FLAG = 281,                    /* FLAG  */
-    TXN = 282,                     /* TXN  */
-    BALANCE = 283,                 /* BALANCE  */
-    OPEN = 284,                    /* OPEN  */
-    CLOSE = 285,                   /* CLOSE  */
-    COMMODITY = 286,               /* COMMODITY  */
-    PAD = 287,                     /* PAD  */
-    EVENT = 288,                   /* EVENT  */
-    PRICE = 289,                   /* PRICE  */
-    NOTE = 290,                    /* NOTE  */
-    DOCUMENT = 291,                /* DOCUMENT  */
-    QUERY = 292,                   /* QUERY  */
-    CUSTOM = 293,                  /* CUSTOM  */
-    PUSHTAG = 294,                 /* PUSHTAG  */
-    POPTAG = 295,                  /* POPTAG  */
-    PUSHMETA = 296,                /* PUSHMETA  */
-    POPMETA = 297,                 /* POPMETA  */
-    OPTION = 298,                  /* OPTION  */
-    INCLUDE = 299,                 /* INCLUDE  */
-    PLUGIN = 300,                  /* PLUGIN  */
-    NONE = 301,                    /* NONE  */
-    BOOL = 302,                    /* BOOL  */
-    DATE = 303,                    /* DATE  */
-    ACCOUNT = 304,                 /* ACCOUNT  */
-    CURRENCY = 305,                /* CURRENCY  */
-    STRING = 306,                  /* STRING  */
-    NUMBER = 307,                  /* NUMBER  */
-    TAG = 308,                     /* TAG  */
-    LINK = 309,                    /* LINK  */
-    KEY = 310,                     /* KEY  */
-    NEGATIVE = 311                 /* NEGATIVE  */
+    INDENT = 258,                  /* INDENT  */
+    EOL = 259,                     /* EOL  */
+    COMMENT = 260,                 /* COMMENT  */
+    SKIPPED = 261,                 /* SKIPPED  */
+    PIPE = 262,                    /* PIPE  */
+    ATAT = 263,                    /* ATAT  */
+    AT = 264,                      /* AT  */
+    LCURLCURL = 265,               /* LCURLCURL  */
+    RCURLCURL = 266,               /* RCURLCURL  */
+    LCURL = 267,                   /* LCURL  */
+    RCURL = 268,                   /* RCURL  */
+    EQUAL = 269,                   /* EQUAL  */
+    COMMA = 270,                   /* COMMA  */
+    TILDE = 271,                   /* TILDE  */
+    HASH = 272,                    /* HASH  */
+    ASTERISK = 273,                /* ASTERISK  */
+    SLASH = 274,                   /* SLASH  */
+    COLON = 275,                   /* COLON  */
+    PLUS = 276,                    /* PLUS  */
+    MINUS = 277,                   /* MINUS  */
+    LPAREN = 278,                  /* LPAREN  */
+    RPAREN = 279,                  /* RPAREN  */
+    FLAG = 280,                    /* FLAG  */
+    TXN = 281,                     /* TXN  */
+    BALANCE = 282,                 /* BALANCE  */
+    OPEN = 283,                    /* OPEN  */
+    CLOSE = 284,                   /* CLOSE  */
+    COMMODITY = 285,               /* COMMODITY  */
+    PAD = 286,                     /* PAD  */
+    EVENT = 287,                   /* EVENT  */
+    PRICE = 288,                   /* PRICE  */
+    NOTE = 289,                    /* NOTE  */
+    DOCUMENT = 290,                /* DOCUMENT  */
+    QUERY = 291,                   /* QUERY  */
+    CUSTOM = 292,                  /* CUSTOM  */
+    PUSHTAG = 293,                 /* PUSHTAG  */
+    POPTAG = 294,                  /* POPTAG  */
+    PUSHMETA = 295,                /* PUSHMETA  */
+    POPMETA = 296,                 /* POPMETA  */
+    OPTION = 297,                  /* OPTION  */
+    INCLUDE = 298,                 /* INCLUDE  */
+    PLUGIN = 299,                  /* PLUGIN  */
+    NONE = 300,                    /* NONE  */
+    BOOL = 301,                    /* BOOL  */
+    DATE = 302,                    /* DATE  */
+    ACCOUNT = 303,                 /* ACCOUNT  */
+    CURRENCY = 304,                /* CURRENCY  */
+    STRING = 305,                  /* STRING  */
+    NUMBER = 306,                  /* NUMBER  */
+    TAG = 307,                     /* TAG  */
+    LINK = 308,                    /* LINK  */
+    KEY = 309,                     /* KEY  */
+    NEGATIVE = 310                 /* NEGATIVE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -155,7 +157,7 @@ typedef struct YYLTYPE {
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 157 "beancount/parser/grammar.y"
+#line 146 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -165,7 +167,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 169 "beancount/parser/grammar.h"
+#line 171 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

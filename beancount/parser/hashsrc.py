@@ -18,6 +18,7 @@ from os import path
 PARSER_SOURCE_FILES = [
     'lexer.l',
     'grammar.y',
+    'macros.h',
     'parser.h',
     'parser.c',
 ]

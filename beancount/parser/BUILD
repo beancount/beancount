@@ -151,7 +151,10 @@ cc_library(
 
 cc_library(
     name = "grammar_hdr",
-    hdrs = ["grammar.h"],
+    hdrs = [
+        "grammar.h",
+        "macros.h",
+    ],
     deps = [
         "@local_config_python//:python_headers",
     ],
@@ -194,6 +197,7 @@ filegroup(
     srcs = [
         "lexer.l",
         "grammar.y",
+        "macros.h",
         "parser.h",
         "parser.c",
     ],

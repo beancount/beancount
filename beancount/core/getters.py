@@ -10,10 +10,7 @@ from collections import OrderedDict
 from beancount.core.data import Transaction
 from beancount.core.data import Open
 from beancount.core.data import Close
-from beancount.core.data import Balance
-from beancount.core.data import Price
 from beancount.core.data import Commodity
-from beancount.core import data
 from beancount.core import account
 
 
@@ -325,59 +322,15 @@ def get_account_open_close(entries):
     return dict(open_close_map)
 
 
-def get_commodity_map(entries, create_missing=True):
+def get_commodity_directives(entries):
     """Create map of commodity names to Commodity entries.
 
     Args:
       entries: A list of directive instances.
-      create_missing: A boolean, true if you want to automatically generate
-        missing commodity directives if not present in the output map.
     Returns:
       A map of commodity name strings to Commodity directives.
     """
-    if not entries:
-        return {}
-
-    commodities_map = {}
-    for entry in entries:
-        if isinstance(entry, Commodity):
-            commodities_map[entry.currency] = entry
-
-        elif isinstance(entry, Transaction):
-            for posting in entry.postings:
-
-                # Main currency.
-                units = posting.units
-                commodities_map.setdefault(units.currency, None)
-
-                # Currency in cost.
-                cost = posting.cost
-                if cost:
-                    commodities_map.setdefault(cost.currency, None)
-
-                # Currency in price.
-                price = posting.price
-                if price:
-                    commodities_map.setdefault(price.currency, None)
-
-        elif isinstance(entry, Balance):
-            commodities_map.setdefault(entry.amount.currency, None)
-
-        elif isinstance(entry, Price):
-            commodities_map.setdefault(entry.currency, None)
-
-    if create_missing:
-        # Create missing Commodity directives when they haven't been specified explicitly.
-        # (I think it might be better to always do this from the loader.)
-        date = entries[0].date
-        meta = data.new_metadata('<getters>', 0)
-        commodities_map = {
-            commodity: (entry
-                        if entry is not None
-                        else Commodity(meta, date, commodity))
-            for commodity, entry in commodities_map.items()}
-
-    return commodities_map
+    return {entry.currency: entry for entry in entries if isinstance(entry, Commodity)}
 
 
 def get_values_meta(name_to_entries_map, *meta_keys, default=None):
