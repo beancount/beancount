@@ -26,6 +26,7 @@ py_test(
     ],
 )
 
+
 py_library(
     name = "date_utils",
     srcs = ["date_utils.py"],
@@ -69,6 +70,7 @@ py_test(
     ],
 )
 
+
 py_library(
     name = "file_type",
     srcs = ["file_type.py"],
@@ -102,7 +104,6 @@ py_test(
 )
 
 
-
 py_library(
     name = "import_utils",
     srcs = ["import_utils.py"],
@@ -119,6 +120,7 @@ py_test(
     ],
 )
 
+
 py_library(
     name = "invariants",
     srcs = ["invariants.py"],
@@ -129,6 +131,7 @@ py_test(
     srcs = ["invariants_test.py"],
     deps = [":invariants"],
 )
+
 
 py_library(
     name = "memo",
@@ -144,7 +147,6 @@ py_test(
 )
 
 
-
 py_library(
     name = "misc_utils",
     srcs = ["misc_utils.py"],
@@ -156,21 +158,6 @@ py_test(
     deps = [
         ":misc_utils",
         ":test_utils",
-    ],
-)
-
-
-
-py_library(
-    name = "net_utils",
-    srcs = ["net_utils.py"],
-)
-
-py_test(
-    name = "net_utils_test",
-    srcs = ["net_utils_test.py"],
-    deps = [
-        ":net_utils",
     ],
 )
 
@@ -241,6 +228,7 @@ py_test(
     ],
 )
 
+
 py_library(
     name = "table",
     srcs = ["table.py"],
@@ -253,6 +241,7 @@ py_test(
         ":table",
     ],
 )
+
 
 py_library(
     name = "scrape",
