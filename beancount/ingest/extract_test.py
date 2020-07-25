@@ -306,7 +306,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
 
     @mock.patch.object(extract, 'find_duplicate_entries',
-                 wraps=extract.find_duplicate_entries)
+                       wraps=extract.find_duplicate_entries)
     def test_extract_find_dups_once_only_with_many_files(self, mock):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(extract_main,

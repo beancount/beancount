@@ -49,11 +49,11 @@ def handle_ambiguous_matches(entry, posting, matches, method):
     if insufficient:
         errors.append(
             AmbiguousMatchError(entry.meta,
-                           'Not enough lots to reduce "{}": {}'.format(
-                               position.to_string(posting),
-                               ', '.join(position.to_string(match_posting)
-                                         for match_posting in matches)),
-                           entry))
+                                'Not enough lots to reduce "{}": {}'.format(
+                                    position.to_string(posting),
+                                    ', '.join(position.to_string(match_posting)
+                                              for match_posting in matches)),
+                                entry))
 
     return booked_reductions, booked_matches, errors
 

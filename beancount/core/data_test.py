@@ -135,9 +135,9 @@ class TestData(unittest.TestCase):
     def test_posting_sortkey(self):
         entries = self.create_sort_data()
         txn_postings = [(data.TxnPosting(entry, entry.postings[0])
-                     if isinstance(entry, data.Transaction)
-                     else entry)
-                    for entry in entries]
+                         if isinstance(entry, data.Transaction)
+                         else entry)
+                        for entry in entries]
         sorted_txn_postings = sorted(txn_postings, key=data.posting_sortkey)
 
         self.assertEqual([data.TxnPosting,

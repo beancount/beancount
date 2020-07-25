@@ -77,7 +77,6 @@ disable=locally-disabled,
   too-many-lines,
   multiple-statements,
   superfluous-parens,
-  bad-continuation,
   ungrouped-imports,
   wrong-import-position,
   no-self-argument,
@@ -120,7 +119,11 @@ disable=locally-disabled,
   assignment-from-no-return,
   c-extension-no-member,
   cyclic-import,
-  isinstance-second-argument-not-valid-type
+  isinstance-second-argument-not-valid-type,
+  bad-continuation
+
+# Notes:
+#   bad-continuation: Is buggy, see https://github.com/PyCQA/pylint/issues/3512
 
 
 [VARIABLES]

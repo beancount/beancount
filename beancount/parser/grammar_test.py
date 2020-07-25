@@ -483,7 +483,7 @@ class TestPushPopMeta(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message,
-                                 "Attempting to pop absent metadata key")
+                         "Attempting to pop absent metadata key")
 
     @parser.parse_doc(expect_errors=True)
     def test_pushmeta_forgotten(self, entries, errors, _):
@@ -492,7 +492,7 @@ class TestPushPopMeta(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message,
-                                 "Unbalanced metadata key")
+                         "Unbalanced metadata key")
 
 
 class TestMultipleLines(unittest.TestCase):
@@ -1872,7 +1872,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message,
-                                     '(Invalid token|unexpected RPAREN)')
+                             '(Invalid token|unexpected RPAREN)')
 
     @parser.parse_doc(expect_errors=True)
     def test_grammar_syntax_error(self, entries, errors, _):

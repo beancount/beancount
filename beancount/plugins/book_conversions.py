@@ -188,7 +188,7 @@ def reduce_inventory(pending_lots, posting, eindex):
         else:
             errors.append(
                 BookConversionError(posting.meta,
-                          "Could not match position {}".format(posting), None))
+                                    "Could not match position {}".format(posting), None))
             break
 
         # Reduce the pending lots.
