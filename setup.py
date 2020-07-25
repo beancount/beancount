@@ -99,9 +99,9 @@ setup(name="beancount",
       license="GNU GPLv2 only",
       author="Martin Blais",
       author_email="blais@furius.ca",
-      url="http://furius.ca/beancount",
+      url="https://github.com/beancount/beancount",
       download_url="https://github.com/beancount/beancount",
-      packages=find_packages(exclude=['experiments*', ]),
+      packages=find_packages(exclude=['experiments*']),
 
       package_data = {
           'beancount': ['VERSION'],
@@ -149,22 +149,11 @@ setup(name="beancount",
           # The SQL parser uses PLY in order to parse the input syntax.
           'ply',
 
-          # The bean-web web application is built on top of this web
-          # framework.
-          'bottle',
-
-          # This XML parsing library is mainly required to web scrape the
-          # bean-web pages for testing.
-          'lxml',
-
           # This library is needed to identify the type of a file for import.
           'python-magic',
 
           # This library is needed to parse XML files (for the OFX examples).
           'beautifulsoup4',
-
-          # This library is needed to make requests for price sources.
-          'requests',
 
           # This library is needed to identify the character set of a file for
           # import, in order to read its contents and match expressions
