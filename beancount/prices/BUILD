@@ -9,7 +9,6 @@ py_library(
     name = "find_prices",
     srcs = ["find_prices.py"],
     deps = [
-        "//beancount/core:amount",
         "//beancount/core:data",
         "//beancount/ops:summarize",
     ],
@@ -21,8 +20,6 @@ py_test(
     deps = [
         "//beancount:loader",
         "//beancount/prices:find_prices",
-        "//beancount/prices/sources:yahoo",
-        "//beancount/prices/sources:oanda",
         "//beancount:plugins_for_tests",
     ],
 )
@@ -54,6 +51,7 @@ py_test(
         "//beancount/prices:find_prices",
         "//beancount/prices:price",
         "//beancount/prices:source",
+        "//beancount/prices/sources:oanda",
         "//beancount/prices/sources:yahoo",
         "//beancount/utils:test_utils",
         "//beancount:plugins_for_tests",

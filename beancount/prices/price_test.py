@@ -7,6 +7,7 @@ import datetime
 import unittest
 import shutil
 import tempfile
+import types
 import os
 from os import path
 from unittest import mock
@@ -15,12 +16,14 @@ from dateutil import tz
 
 from beancount.prices.source import SourcePrice
 from beancount.prices import price
-from beancount.prices import find_prices
 from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.utils import test_utils
 from beancount.parser import cmptest
 from beancount import loader
+
+
+PS = price.PriceSource
 
 
 class TestSetupCache(unittest.TestCase):
@@ -189,9 +192,9 @@ class TestProcessArguments(unittest.TestCase):
             args, jobs, _, __ = test_utils.run_with_args(
                 price.process_args, ['--no-cache', '-e', 'USD:yahoo/AAPL'])
             self.assertEqual(
-                [find_prices.DatedPrice(
+                [price.DatedPrice(
                     'AAPL', 'USD', None,
-                    [find_prices.PriceSource(yahoo, 'AAPL', False)])], jobs)
+                    [price.PriceSource(yahoo, 'AAPL', False)])], jobs)
 
 
 class TestClobber(cmptest.TestCase):
@@ -255,10 +258,10 @@ class TestTimezone(unittest.TestCase):
     def test_fetch_price__naive_time_no_timeozne(self, fetch_cached):
         fetch_cached.return_value = SourcePrice(
             D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
-        dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
+        dprice = price.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
         with self.assertRaises(ValueError):
             price.fetch_price(dprice._replace(sources=[
-                find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
+                price.PriceSource(yahoo, 'USDJPY', False)]), False)
 
 
 class TestInverted(unittest.TestCase):
@@ -268,27 +271,262 @@ class TestInverted(unittest.TestCase):
         fetch_cached.return_value = SourcePrice(
             D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0, tzinfo=tz.tzlocal()),
             'JPY')
-        self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),
+        self.dprice = price.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),
                                              None)
         self.addCleanup(mock.patch.stopall)
 
     def test_fetch_price__normal(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
+            price.PriceSource(yahoo, 'USDJPY', False)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
 
     def test_fetch_price__inverted(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(yahoo, 'USDJPY', True)]), False)
+            price.PriceSource(yahoo, 'USDJPY', True)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('0.008'), entry.amount.number)
 
     def test_fetch_price__swapped(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(yahoo, 'USDJPY', True)]), True)
+            price.PriceSource(yahoo, 'USDJPY', True)]), True)
         self.assertEqual(('USD', 'JPY'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
+
+
+class TestImportSource(unittest.TestCase):
+
+    def test_import_source_valid(self):
+        for name in 'oanda', 'yahoo':
+            module = price.import_source(name)
+            self.assertIsInstance(module, types.ModuleType)
+        module = price.import_source('beancount.prices.sources.yahoo')
+        self.assertIsInstance(module, types.ModuleType)
+
+    def test_import_source_invalid(self):
+        with self.assertRaises(ImportError):
+            price.import_source('non.existing.module')
+
+
+class TestParseSource(unittest.TestCase):
+
+    def test_source_invalid(self):
+        with self.assertRaises(ValueError):
+            price.parse_single_source('AAPL')
+        with self.assertRaises(ValueError):
+            price.parse_single_source('***//--')
+
+        # The module gets imported at this stage.
+        with self.assertRaises(ImportError):
+            price.parse_single_source('invalid.module.name/NASDAQ:AAPL')
+
+    def test_source_valid(self):
+        psource = price.parse_single_source('yahoo/CNYUSD=X')
+        self.assertEqual(PS(yahoo, 'CNYUSD=X', False), psource)
+
+        # Make sure that an invalid name at the tail doesn't succeed.
+        with self.assertRaises(ValueError):
+            psource = price.parse_single_source('yahoo/CNYUSD&X')
+
+        psource = price.parse_single_source('beancount.prices.sources.yahoo/AAPL')
+        self.assertEqual(PS(yahoo, 'AAPL', False), psource)
+
+
+class TestParseSourceMap(unittest.TestCase):
+
+    def _clean_source_map(self, smap):
+        return {currency: [PS(s[0].__name__, s[1], s[2]) for s in sources]
+                for currency, sources in smap.items()}
+
+    def test_source_map_invalid(self):
+        for expr in 'USD', 'something else', 'USD:NASDAQ:AAPL':
+            with self.assertRaises(ValueError):
+                price.parse_source_map(expr)
+
+    def test_source_map_onecur_single(self):
+        smap = price.parse_source_map('USD:yahoo/AAPL')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.yahoo', 'AAPL', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_onecur_multiple(self):
+        smap = price.parse_source_map('USD:oanda/USDCAD,yahoo/CAD=X')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.oanda', 'USDCAD', False),
+                     PS('beancount.prices.sources.yahoo', 'CAD=X', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_manycur_single(self):
+        smap = price.parse_source_map('USD:yahoo/USDCAD '
+                                            'CAD:yahoo/CAD=X')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.yahoo', 'USDCAD', False)],
+             'CAD': [PS('beancount.prices.sources.yahoo', 'CAD=X', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_manycur_multiple(self):
+        smap = price.parse_source_map('USD:yahoo/GBPUSD,oanda/GBPUSD '
+                                            'CAD:yahoo/GBPCAD')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.yahoo', 'GBPUSD', False),
+                     PS('beancount.prices.sources.oanda', 'GBPUSD', False)],
+             'CAD': [PS('beancount.prices.sources.yahoo', 'GBPCAD', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_inverse(self):
+        smap = price.parse_source_map('USD:yahoo/^GBPUSD')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.yahoo', 'GBPUSD', True)]},
+            self._clean_source_map(smap))
+
+
+class TestFilters(unittest.TestCase):
+
+    @loader.load_doc()
+    def test_get_price_jobs__date(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-08-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+
+        2015-01-15 *
+          Assets:US:Invest:QQQ              10 QQQ {92.32 USD}
+          Assets:US:Invest:VEA            -200 VEA {43.22 USD} @ 41.01 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = price.get_price_jobs_at_date(entries, datetime.date(2014, 1, 1),
+                                                  False, None)
+        self.assertEqual(set(), {(job.base, job.quote) for job in jobs})
+
+        jobs = price.get_price_jobs_at_date(entries, datetime.date(2014, 6, 1),
+                                                  False, None)
+        self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+        jobs = price.get_price_jobs_at_date(entries, datetime.date(2014, 10, 1),
+                                                  False, None)
+        self.assertEqual({('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+        jobs = price.get_price_jobs_at_date(entries, None, False, None)
+        self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__inactive(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-08-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = price.get_price_jobs_at_date(entries, None, False, None)
+        self.assertEqual({('VEA', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+        jobs = price.get_price_jobs_at_date(entries, None, True, None)
+        self.assertEqual({('VEA', 'USD'), ('QQQ', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__undeclared(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+        """
+        jobs = price.get_price_jobs_at_date(entries, None, False, None)
+        self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+        jobs = price.get_price_jobs_at_date(entries, None, False, 'yahoo')
+        self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__default_source(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "NASDAQ:QQQ"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:Margin
+        """
+        jobs = price.get_price_jobs_at_date(entries, None, False, 'yahoo')
+        self.assertEqual(1, len(jobs[0].sources))
+        self.assertIsInstance(jobs[0].sources[0], price.PriceSource)
+
+
+class TestFromFile(unittest.TestCase):
+
+    @loader.load_doc()
+    def setUp(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Investments:QQQ
+        2000-01-10 open Assets:CA:Investments:XSP
+        2000-01-10 open Assets:Cash
+        2000-01-10 open Assets:External
+        2000-01-10 open Expenses:Foreign
+
+        2010-01-01 commodity USD
+
+        2010-01-01 commodity QQQ
+          name: "PowerShares QQQ Trust, Series 1 (ETF)"
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2010-01-01 commodity XSP
+          name: "iShares S&P 500 Index Fund (CAD Hedged)"
+          quote: CAD
+
+        2010-01-01 commodity AMTKPTS
+          quote: USD
+          price: ""
+
+        """
+        self.entries = entries
+
+    def test_find_currencies_declared(self):
+        currencies = price.find_currencies_declared(self.entries, None)
+        currencies2 = [(base, quote) for base, quote, _ in currencies]
+        self.assertEqual([('QQQ', 'USD')], currencies2)
 
 
 if __name__ == '__main__':
