@@ -161,7 +161,7 @@ def get_assets_holdings(entries, options_map, currency=None):
     return holdings_list, price_map
 
 
-# Note: This should use the same routines as in beancount.prices.find_prices.
+# Note: This should use the same routines as in beancount.ops.find_prices.
 def get_commodities_at_date(entries, options_map, date=None):
     """Return a list of commodities present at a particular date.
 

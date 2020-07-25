@@ -208,7 +208,7 @@ LINT_SRCS =					\
 PYLINT = python3 -m pylint
 
 pylint lint:
-	ENABLE_AUTOIMPORTS= $(PYLINT) $(LINT_SRCS)
+	$(PYLINT) $(LINT_SRCS)
 
 LINT_TESTS=useless-suppression,empty-docstring
 pylint-only:

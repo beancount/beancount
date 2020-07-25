@@ -6,25 +6,6 @@ py_library(
 )
 
 py_library(
-    name = "find_prices",
-    srcs = ["find_prices.py"],
-    deps = [
-        "//beancount/core:data",
-        "//beancount/ops:summarize",
-    ],
-)
-
-py_test(
-    name = "find_prices_test",
-    srcs = ["find_prices_test.py"],
-    deps = [
-        "//beancount:loader",
-        "//beancount/prices:find_prices",
-        "//beancount:plugins_for_tests",
-    ],
-)
-
-py_library(
     name = "price",
     srcs = ["price.py"],
     deps = [
@@ -34,7 +15,7 @@ py_library(
         "//beancount:loader",
         "//beancount/parser:printer",
         "//beancount/prices:__init__",
-        "//beancount/prices:find_prices",
+        "//beancount/ops:find_prices",
         "//beancount/utils:date_utils",
         "//beancount/parser:version",
     ],
@@ -48,7 +29,7 @@ py_test(
         "//beancount/core:number",
         "//beancount:loader",
         "//beancount/parser:cmptest",
-        "//beancount/prices:find_prices",
+        "//beancount/ops:find_prices",
         "//beancount/prices:price",
         "//beancount/prices:source",
         "//beancount/prices/sources:oanda",

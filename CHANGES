@@ -4,6 +4,12 @@ ho========================
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-07-25
+
+ - Moved beancount.prices.find_prices to beancount.ops.find_prices in
+   preparation of moving price fetching code to a new 'beanprice' repository.
+
+
 2020-07-17
 
  - Fixed bug #508 in beancount.plugins.unique_prices.

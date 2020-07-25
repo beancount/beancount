@@ -2152,7 +2152,7 @@ http://furius.ca/beancount/doc/proposal-query
 ** Prices Cleanup
 
   - Make the code finding lists of commodities for holdings and price reports
-    use the same code as beancount.prices.find_prices. Also, this should  really
+    use the same code as beancount.ops.find_prices. Also, this should  really
     just be renamed beancount.prices.find_commodities and perhaps be moved up to
     beancount.ops.
 
