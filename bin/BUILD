@@ -118,22 +118,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_price_py",
-    srcs = ["bean-price"],
-    outs = ["bean_price.py"],
-    cmd = "cat $(locations :bean-price) > $@",
-)
-
-py_binary(
-    name = "bean_price",
-    srcs = ["bean_price.py"],
-    deps = [
-        "//beancount/prices:price",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "bean_query_py",
     srcs = ["bean-query"],
     outs = ["bean_query.py"],
