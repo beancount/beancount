@@ -275,17 +275,17 @@ class TestCSVImporter(cmptest.TestCase):
         importer = csv.Importer({Col.DATE: 'Date',
                                  Col.NARRATION: 'Description',
                                  Col.AMOUNT: 'Amount'},
-                                 'Assets:Bank',
-                                 'EUR',
-                                 ('Date,Amount,Payee,Description'),
-                                 categorizer=categorizer,
-                                 institution='foobar')
+                                'Assets:Bank',
+                                'EUR',
+                                ('Date,Amount,Payee,Description'),
+                                categorizer=categorizer,
+                                institution='foobar')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
           2020-06-02 * "Description"
             Assets:Bank  30.00 EUR
-        
+
           2020-07-02 * "Groceries"
             Assets:Bank  -25.00 EUR
             Expenses:Groceries  25.00 EUR
@@ -308,18 +308,18 @@ class TestCSVImporter(cmptest.TestCase):
         importer = csv.Importer({Col.DATE: 'Date',
                                  Col.NARRATION: 'Description',
                                  Col.AMOUNT: 'Amount'},
-                                 'Assets:Bank',
-                                 'EUR',
-                                 ('Date,Amount,Payee,Description'),
-                                 categorizer=categorizer,
-                                 institution='foobar')
+                                'Assets:Bank',
+                                'EUR',
+                                ('Date,Amount,Payee,Description'),
+                                categorizer=categorizer,
+                                institution='foobar')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
           2020-06-02 * "Payee here" "Description"
             source: "['6/2/2020', '30.00', 'Supermarket', 'Groceries']"
             Assets:Bank  30.00 EUR
-        
+
           2020-07-02 * "Supermarket" "Groceries"
             source: "['7/2/2020', '-25.00', 'Supermarket', 'Groceries']"
             Assets:Bank  -25.00 EUR

@@ -30,7 +30,7 @@ class TestCurrencyTradingAccounts(cmptest.TestCase):
         self.assertFalse(errors)
         for entry in data.filter_txns(entries):
             self.assertTrue((currency_accounts.META_PROCESSED in entry.meta) ==
-                             ('processed' in entry.tags))
+                            ('processed' in entry.tags))
 
     @loader.load_doc()
     def test_currency_conversion(self, entries, errors, options_map):

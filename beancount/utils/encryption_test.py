@@ -116,7 +116,7 @@ class TestEncryptedBase(unittest.TestCase):
         out, err = pipe.communicate(stdin)
         if pipe.returncode != 0:
             raise OSError('Error running command "{}":\n{}\n'.format(' '.join(command),
-                                                                  err.decode('utf8')))
+                                                                     err.decode('utf8')))
         return out.decode('utf8'), err.decode('utf8')
 
     def encrypt_as_file(self, string, encrypted_filename):

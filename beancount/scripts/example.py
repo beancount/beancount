@@ -1560,7 +1560,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     destinations.extend(destinations)
     random.shuffle(destinations)
     for (date_trip_begin, date_trip_end), (destination_name, config) in zip(
-        compute_trip_dates(date_begin, date_end), destinations):
+            compute_trip_dates(date_begin, date_end), destinations):
 
         # Compute a suitable tag.
         tag = 'trip-{}-{}'.format(destination_name.lower().replace(' ', '-'),

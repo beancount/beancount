@@ -272,7 +272,7 @@ class TestInventory(unittest.TestCase):
             'USD': I('101.20 USD'),
             'EUR': inventory.Inventory(),
             'HOOL': I('2.2 HOOL {532.43 USD}, '
-                                          '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+                      '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
 
     def test_units1(self):
         inv = Inventory()

@@ -34,8 +34,8 @@ except (ImportError, OSError):
 EXTRA_FILE_TYPES = [
     (re.compile(regexp, re.I), filetype)
     for regexp, filetype in (
-            (r'.*\.qbo$', 'application/vnd.intu.qbo'),
-            (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
+        (r'.*\.qbo$', 'application/vnd.intu.qbo'),
+        (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
     )]
 
 

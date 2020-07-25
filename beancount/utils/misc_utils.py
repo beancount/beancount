@@ -291,7 +291,7 @@ def idify(string):
       The input string, with offending characters replaced.
     """
     for sfrom, sto in [(r'[ \(\)]+', '_'),
-                      (r'_*\._*', '.')]:
+                       (r'_*\._*', '.')]:
         string = re.sub(sfrom, sto, string)
     string = string.strip('_')
     return string

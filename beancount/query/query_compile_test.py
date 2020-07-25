@@ -627,8 +627,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
-            ],
-                 None, None, None, None, None, None, None, None),
+            ], None, None, None, None, None, None, None, None),
             select)
 
     def test_journal_with_account(self):
@@ -646,9 +645,9 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
-                 None,
-                     qp.Match(qp.Column('account'), qp.Constant('liabilities')),
-                     None, None, None, None, None, None),
+                      None,
+                      qp.Match(qp.Column('account'), qp.Constant('liabilities')),
+                      None, None, None, None, None, None),
             select)
 
     def test_journal_with_account_and_from(self):
@@ -666,9 +665,10 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
-                 qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)), None, None, None),
-                     qp.Match(qp.Column('account'), qp.Constant('liabilities')),
-                     None, None, None, None, None, None),
+                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
+                              None, None, None),
+                      qp.Match(qp.Column('account'), qp.Constant('liabilities')),
+                      None, None, None, None, None, None),
             select)
 
     def test_journal_with_account_func_and_from(self):
