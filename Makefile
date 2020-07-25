@@ -1,16 +1,16 @@
 #!/usr/bin/env make
 
-# Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
-
-GREP="grep --include="*.py" -srnE"
 TOOLS=./tools
 
-PYTHON?=python3
+PYTHON ?= python3
+LEX = flex
+YACC = bison
+YFLAGS = --report=itemset --verbose -Wall -Werror
+
 
 all: build
-
 
 # Clean everything up.
 clean:
@@ -25,35 +25,9 @@ clean:
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
 
-# See
-# https://www.owlfolio.org/possibly-useful/flex-input-scanner-rules-are-too-complicated/
-#LEX = flex -Ca
-LEX = flex
-
-# Note: -Wno-deprecated silences warnings about old directives from upgrading to 3.4.
-YACC = bison -Wno-deprecated --report=itemset --verbose
-FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
-TMP=/tmp
-
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	$(YACC) -o $(CROOT)/grammar.c $<
-	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
-	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
+	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
 
-UNICODE_CATEGORY_RANGES_GENERATOR=$(TOOLS)/generate_unicode_category_regexps.py
-UNICODE_CATEGORY_DIR = $(CROOT)/lexer
-UNICODE_CATEGORIES = Lu Ll Lt Lo Nd Nl No
-UNICODE_CATEGORY_SOURCES = $(patsubst %, $(UNICODE_CATEGORY_DIR)/%.l, $(UNICODE_CATEGORIES))
-$(UNICODE_CATEGORY_SOURCES): $(UNICODE_CATEGORY_DIR)/%.l :
-	$(PYTHON) $(UNICODE_CATEGORY_RANGES_GENERATOR) \
-		--format=lex --name=UTF-8-$* --categories=$* >$@
-
-# Note that flex parses the files in the given order.
-#LEXER_SOURCES = $(UNICODE_CATEGORY_SOURCES) $(CROOT)/lexer.l
-#$(CROOT)/lexer.c $(CROOT)/lexer.h: $(LEXER_SOURCES) $(CROOT)/grammar.h
-#	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $(LEXER_SOURCES)
-#	patch -p1 < $(CROOT)/lexer.patch
-FLEX_VERSION=$(shell $(LEX) -V)
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 

@@ -165,7 +165,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %token <string> RCURLCURL  /* }} */
 %token <string> LCURL      /* { */
 %token <string> RCURL      /* } */
-%token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
 %token <string> HASH       /* # */
@@ -276,8 +275,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 /* Grammar Rules */
 %%
 
-empty :
-
 /* A transaction declaration can be either 'txn' or one of the special character flags. */
 txn : TXN
     {
@@ -348,7 +345,7 @@ number_expr : NUMBER
                 $$ = $2;
             }
 
-txn_strings : empty
+txn_strings : %empty
             {
                 Py_INCREF(Py_None);
                 $$ = Py_None;
@@ -365,7 +362,7 @@ txn_strings : empty
                 $$ = $1;
             }
 
-tags_links : empty
+tags_links : %empty
            {
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
@@ -390,7 +387,7 @@ transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
                        $$, "transaction", "ObOOO", $1, $2, $3, $4, $6);
             }
 
-optflag : empty
+optflag : %empty
         {
             $$ = '\0';
         }
@@ -453,13 +450,13 @@ key_value_value : STRING
                 {
                     $$ = $1;
                 }
-                | empty
+                | %empty
                 {
                     Py_INCREF(Py_None);
                     $$ = Py_None;
                 }
 
-posting_or_kv_list : empty
+posting_or_kv_list : %empty
                    {
                        Py_INCREF(Py_None);
                        $$ = Py_None;
@@ -484,7 +481,7 @@ posting_or_kv_list : empty
                               $$, "handle_list", "OO", $1, $2);
                    }
 
-key_value_list : empty
+key_value_list : %empty
                {
                    Py_INCREF(Py_None);
                    $$ = Py_None;
@@ -495,7 +492,7 @@ key_value_list : empty
                           $$, "handle_list", "OO", $1, $2);
                }
 
-currency_list : empty
+currency_list : %empty
               {
                   Py_INCREF(Py_None);
                   $$ = Py_None;
@@ -549,7 +546,7 @@ opt_booking : STRING
             {
                 $$ = $1;
             }
-            | empty
+            | %empty
             {
                 Py_INCREF(Py_None);
                 $$ = Py_None;
@@ -600,7 +597,7 @@ amount_tolerance : number_expr CURRENCY
                      $$.pyobj2 = $3;
                  }
 
-maybe_number : empty
+maybe_number : %empty
              {
                  Py_INCREF(missing_obj);
                  $$ = missing_obj;
@@ -610,7 +607,7 @@ maybe_number : empty
                  $$ = $1;
              }
 
-maybe_currency : empty
+maybe_currency : %empty
              {
                  Py_INCREF(missing_obj);
                  $$ = missing_obj;
@@ -653,13 +650,13 @@ cost_spec : LCURL cost_comp_list RCURL
               BUILDY(DECREF($2),
                      $$, "cost_spec", "OO", $2, Py_True);
           }
-          | empty
+          | %empty
           {
               Py_INCREF(Py_None);
               $$ = Py_None;
           }
 
-cost_comp_list : empty
+cost_comp_list : %empty
                {
                    /* We indicate that there was a cost if there */
                    $$ = PyList_New(0);
@@ -762,7 +759,7 @@ custom_value : STRING
                         $$, "custom_value", "OO", $1, dtype);
              }
 
-custom_value_list : empty
+custom_value_list : %empty
                   {
                       Py_INCREF(Py_None);
                       $$ = Py_None;
@@ -856,7 +853,7 @@ declarations : declarations directive
                   */
                  $$ = $1;
              }
-             | empty
+             | %empty
              {
                   Py_INCREF(Py_None);
                   $$ = Py_None;
