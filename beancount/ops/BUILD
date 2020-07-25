@@ -235,3 +235,22 @@ py_test(
         "//beancount:plugins_for_tests",
     ],
 )
+
+py_library(
+    name = "find_prices",
+    srcs = ["find_prices.py"],
+    deps = [
+        "//beancount/core:data",
+        "//beancount/ops:summarize",
+    ],
+)
+
+py_test(
+    name = "find_prices_test",
+    srcs = ["find_prices_test.py"],
+    deps = [
+        "//beancount:loader",
+        "//beancount/ops:find_prices",
+        "//beancount:plugins_for_tests",
+    ],
+)

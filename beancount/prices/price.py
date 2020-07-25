@@ -24,7 +24,7 @@ from beancount import loader
 from beancount.core import data
 from beancount.core import amount
 from beancount.parser import printer
-from beancount.prices import find_prices
+from beancount.ops import find_prices
 from beancount.utils import date_utils
 from beancount.parser import version
 

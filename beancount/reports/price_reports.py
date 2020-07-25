@@ -160,7 +160,7 @@ class PriceDBReport(base.Report):
             file.write('\n')
 
 
-# Note: This should use the same routines as in beancount.prices.find_prices.
+# Note: This should use the same routines as in beancount.ops.find_prices.
 class TickerReport(base.TableReport):
     """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
 
