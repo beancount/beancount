@@ -71,7 +71,8 @@ class TestFileType(unittest.TestCase):
         self.check_mime_type('example.html', 'text/html')
 
     def test_xhtml(self):
-        self.check_mime_type('example.xhtml', 'application/xhtml+xml')
+        self.check_mime_type('example.xhtml', ['application/xhtml+xml',
+                                               'text/html'])
 
     def test_zip(self):
         self.check_mime_type('example.zip', ['application/zip',
