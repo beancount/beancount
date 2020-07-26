@@ -11,7 +11,7 @@
 #include "absl/base/log_severity.h"
 #include "absl/status/status.h"
 
-#include "experiments/v3/experiments/protos/beancount.pb.h"
+#include "experiments/v3/protos/beancount.pb.h"
 
 
 int main(int argc, char** argv) {
@@ -38,7 +38,8 @@ int main(int argc, char** argv) {
   ABSL_RAW_LOG(ERROR, "Num messages = %d", num_messages);
 
   if (!record_reader.Close()) {
-    ABSL_RAW_LOG(ERROR, "Failed to close record reader: %s", record_reader.status());
+    ABSL_RAW_LOG(ERROR, "Failed to close record reader: %s",
+                 record_reader.status().message().data());
   }
 
   return 0;
