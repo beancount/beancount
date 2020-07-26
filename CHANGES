@@ -6,6 +6,7 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-07-25
 
+ - Release 2.3.1 as dependency for beanprice.
  - Moved beancount.prices.find_prices to beancount.ops.find_prices in
    preparation of moving price fetching code to a new 'beanprice' repository.
 
