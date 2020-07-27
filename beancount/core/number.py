@@ -55,8 +55,10 @@ def D(strord=None):
             return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
         elif isinstance(strord, Decimal):
             return strord
-        elif isinstance(strord, (int, float)):
+        elif isinstance(strord, int):
             return Decimal(strord)
+        elif isinstance(strord, float):
+            return Decimal(str(strord))
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
     except Exception as exc:
