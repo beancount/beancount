@@ -6,7 +6,8 @@ TOOLS=./tools
 
 PYTHON ?= python3
 PYLINT ?= $(PYTHON) -m pylint
-LEX = flex
+LEX ?= reflex
+LFLAGS = --flex --unicode --full
 YACC = bison
 YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
@@ -15,7 +16,8 @@ GRAPHER = dot
 # Support PYTHON being the path to a python interpreter.
 PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
 PYCONFIG = "python$(PYVERSION)-config"
-CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
+CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -UNDEBUG -Wno-unused-function -Wno-unused-variable
+CPPFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -UNDEBUG -Wno-unused-function -Wno-unused-variable
 LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
 LDLIBS += $(shell $(PYCONFIG) --embed --libs)
 
@@ -26,7 +28,7 @@ clean:
 	rm -f core
 	rm -rf build
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
-	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
+	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.cpp
 	rm -f $(CROOT)/*.so
 	rm -f $(CROOT)/tokens_test
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
@@ -38,7 +40,7 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
-	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
+	$(LEX) $(LFLAGS) -o $(CROOT)/lexer.cpp --header-file=$(CROOT)/lexer.h $<
 
 
 SOURCES =					\

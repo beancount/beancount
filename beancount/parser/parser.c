@@ -38,8 +38,6 @@
 #include "beancount/version.h"
 #endif
 
-extern YY_DECL;
-
 /* Placeholder object for missing cost specifications. */
 PyObject* missing_obj;
 
@@ -199,7 +197,7 @@ static PyObject* parser_iternext(Parser* self)
     PyObject* obj;
 
     /* Ensure the scanner has been initialized. */
-    if (!yyget_in(self->scanner)) {
+    if (!yyget_extra(self->scanner)->in) {
         PyErr_SetString(PyExc_ValueError, "Parser not initialized");
         return NULL;
     }
@@ -228,7 +226,7 @@ static PyObject* parser_iternext(Parser* self)
     /* Yield a (token name, line, matched string, token value) tuple. */
     return Py_BuildValue("(siy#O)",
                          token_to_string(token),
-                         yylloc.first_line,
+                         yylloc.last_line,
                          yyget_text(self->scanner),
                          (Py_ssize_t)yyget_leng(self->scanner),
                          obj);

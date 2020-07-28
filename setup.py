@@ -76,6 +76,15 @@ for get_changeset in get_git_changeset, get_hg_changeset:
 else:
     vc_changeset, vc_timestamp = '', 0
 
+def find_reflex_static_library():
+    lex = os.getenv('LEX', 'reflex')
+    path, name = os.path.split(lex)
+    if path:
+        return os.path.abspath(os.path.join(path, '..', 'lib', 'libreflex.a'))
+    for path in '/usr/lib', '/usr/local/lib', '/opt/local/lib':
+        target = os.path.join(path, 'libreflex.a')
+        if os.path.exists(target):
+            return target
 
 install_requires = [
     # Testing support now uses the pytest module.
@@ -173,10 +182,13 @@ setup(name="beancount",
                     include_dirs=["."],
                     sources=[
                         "beancount/parser/decimal.c",
-                        "beancount/parser/lexer.c",
+                        "beancount/parser/lexer.cpp",
                         "beancount/parser/grammar.c",
                         "beancount/parser/parser.c",
                         "beancount/parser/tokens.c",
+                    ],
+                    extra_objects=[
+                        find_reflex_static_library(),
                     ],
                     define_macros=[
                         ('BEANCOUNT_VERSION', version),

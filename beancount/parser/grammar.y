@@ -62,8 +62,6 @@ const char* token_to_string(int token);
 #include "beancount/parser/grammar.h"
 #include "beancount/parser/lexer.h"
 
-extern YY_DECL;
-
 /*
  * Call a builder method and detect and handle a Python exception being raised
  * in the handler. Always run the code to clean the references provided by the
