@@ -63,10 +63,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 #include "beancount/parser/tokens.h"
 
 struct _yyextra_t {
-    /* The number of times EOF has been hit. This is used to
-     * synthesize an EOL at the end of the file. */
-    int n_eof;
-
     /* The filename being tokenized. */
     PyObject* filename;
 
@@ -74,7 +70,6 @@ struct _yyextra_t {
     const char* encoding;
 };
 
-#define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_filename yyget_extra(yyscanner)->filename
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
@@ -251,16 +246,10 @@ NULL		{
     BEGIN(INVALID);
 }
 
- /* Fake an EOL at the end of file, to ensure that files without a final newline
-  * will process postings right. */
 <<EOF>>     		{
-    if (yy_eof_times == 0) {
-	yy_eof_times = 1;
-	/* Ensure location data is populated. */
-	YY_USER_ACTION;
-	return EOL;
-    }
-    return 0;
+    /* Ensure location data is populated. */
+    YY_USER_ACTION;
+    return YYEOF;
 }
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
@@ -343,7 +332,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     Py_XDECREF(extra->filename);
     extra->filename = filename;
 
-    extra->n_eof = 0;
     extra->encoding = encoding ? encoding : "utf-8";
 
     Py_XDECREF(yyget_in(scanner));

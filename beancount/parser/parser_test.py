@@ -233,8 +233,8 @@ class TestReferenceCounting(unittest.TestCase):
         self.assertEqual(sys.getrefcount(parser), 3)
 
         tokens = list(iterator)
-        # Just the EOL token.
-        self.assertEqual(len(tokens), 1)
+        # No tokens returned for an empty input.
+        self.assertEqual(len(tokens), 0)
         # Once done scanning is completed the Parser object still has
         # references to the input file and to the name.
         self.assertEqual(sys.getrefcount(name), 4)

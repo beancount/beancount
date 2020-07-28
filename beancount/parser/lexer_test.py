@@ -104,7 +104,6 @@ class TestLexer(unittest.TestCase):
             ('KEY', 11, b'somekey', 'somekey'),
             ('COLON', 11, b':', None),
             ('EOL', 12, b'\n', None),
-            ('EOL', 12, b'\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -123,7 +122,6 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ'.encode('utf8'), 'ΑβγⅠ:ΑβγⅠ'),
             ('ACCOUNT', 2, 'ابجا:ابجا'.encode('utf8'), 'ابجا:ابجا'),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -139,7 +137,6 @@ class TestLexer(unittest.TestCase):
             ('INDENT', 2, b'  ', None),
             ('ACCOUNT', 2, b'Equity:Something', 'Equity:Something'),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -154,7 +151,6 @@ class TestLexer(unittest.TestCase):
             ('COMMA', 1, b',', None),
             ('CURRENCY', 1, b'AUD', 'AUD'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -207,7 +203,6 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 1, b'555.00', D('555.00')),
             ('CURRENCY', 1, b'CAD.11', 'CAD.11'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -218,7 +213,6 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('CURRENCY', 1, b'TEST-DA', 'TEST-DA'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertEqual(0, len(errors))
 
@@ -230,7 +224,6 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('error', 1, b'2013-12-98', None),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, '(out of range|month must be)')
@@ -243,7 +236,6 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('error', 1, b'2013-12-228', None),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -254,7 +246,6 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('ACCOUNT', 1, b'Assets:A', 'Assets:A'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -272,7 +263,6 @@ class TestLexer(unittest.TestCase):
             ('EOL', 3, b'\n', None),
             ('error', 3, b'Assets:signals', None),
             ('EOL', 4, b'\n', None),
-            ('EOL', 4, b'\x00', None)
         ], tokens)
         self.assertEqual(1, len(errors))
 
@@ -284,7 +274,6 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('ACCOUNT', 1, b'Equity:Beginning-Balances', 'Equity:Beginning-Balances'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -300,7 +289,6 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 1, b'2340.19', D('2340.19')),
             ('CURRENCY', 1, b'USD', 'USD'),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, r'\bcheck\b')
@@ -336,7 +324,6 @@ class TestLexer(unittest.TestCase):
             ('DATE', 1, b'2014-01-01', datetime.date(2014, 1, 1)),
             ('OPEN', 1, b'open', None),
             ('ACCOUNT', 1, b'Assets:Temporary', 'Assets:Temporary'),
-            ('EOL', 1, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -352,7 +339,6 @@ class TestLexer(unittest.TestCase):
             ('EOL', 3, b'\n', None),
             ('STRING', 3, br'"The Great \t\n\r\f\b"', 'The Great \t\n\r\x0c\x08'),
             ('EOL', 4, b'\n', None),
-            ('EOL', 4, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -363,7 +349,6 @@ class TestLexer(unittest.TestCase):
         # in the previous test. This should allow us to parse multiline strings.
         self.assertEqual([
             ('STRING', 2, b'"The Great\nJuju"', 'The Great\nJuju'),
-            ('EOL', 2, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -384,14 +369,13 @@ class TestLexer(unittest.TestCase):
              b'"Forty\nworld\nleaders\nand\nhundreds"',
              'Forty\nworld\nleaders\nand\nhundreds'),
             ('EOL', 7, b'\n', None),
-            ('EOL', 7, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
     def test_string_newline_toolong(self):
         # Testing a string that busts the limits.
         line = 'a' * 127 + '\n'
-        string = '"' + line * 128 + '"'
+        string = '"' + line * 128 + '"\n'
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(string, builder))
         self.assertTrue(tokens[0], 'error')
@@ -408,7 +392,6 @@ class TestLexer(unittest.TestCase):
             ('KEY', 2, b'location', 'location'),
             ('COLON', 2, b':', None),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -423,7 +406,6 @@ class TestLexer(unittest.TestCase):
             ('BOOL', 2, b'FALSE', None),
             ('NONE', 2, b'NULL', None),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -439,7 +421,6 @@ class TestIgnoredLines(unittest.TestCase):
             ('EOL', 2, b'\n', None),
             ('COMMENT', 2, b';; Long comment line about something something.', None),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -458,7 +439,6 @@ class TestIgnoredLines(unittest.TestCase):
             ('INDENT', 3, b'  ', None),
             ('COMMENT', 3, b';; Something something.', None),
             ('EOL', 4, b'\n', None),
-            ('EOL', 4, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -470,7 +450,6 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
             ], tokens)
         self.assertFalse(errors)
 
@@ -489,7 +468,6 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -505,7 +483,6 @@ class TestIgnoredLines(unittest.TestCase):
             ('EOL', 3, b'\n', None),
             ('EOL', 4, b'\n', None),
             ('EOL', 5, b'\n', None),
-            ('EOL', 5, b'\x00', None),
         ], tokens)
         self.assertFalse(errors)
 
@@ -524,9 +501,7 @@ class TestLexerErrors(unittest.TestCase):
                           ('OPEN', 2, b'open', None),
                           ('error', 2, b'`', None),
                           ('CURRENCY', 2, b'USD', 'USD'),
-                          ('EOL', 3, b'\n', None),
-                          ('EOL', 3, b'\x00', None)],
-                         tokens)
+                          ('EOL', 3, b'\n', None)], tokens)
         self.assertEqual(1, len(errors))
 
     @lex_tokens
@@ -545,8 +520,7 @@ class TestLexerErrors(unittest.TestCase):
                           ('DATE', 4, b'2000-01-02', datetime.date(2000, 1, 2)),
                           ('OPEN', 4, b'open', None),
                           ('ACCOUNT', 4, b'Assets:Working', 'Assets:Working'),
-                          ('EOL', 5, b'\n', None),
-                          ('EOL', 5, b'\x00', None)], tokens)
+                          ('EOL', 5, b'\n', None)], tokens)
         self.assertEqual(1, len(errors))
 
     @lex_tokens
@@ -558,8 +532,7 @@ class TestLexerErrors(unittest.TestCase):
                           ('error', 2, b'2000-13-32', None),
                           ('OPEN', 2, b'open', None),
                           ('ACCOUNT', 2, b'Assets:Something', 'Assets:Something'),
-                          ('EOL', 3, b'\n', None),
-                          ('EOL', 3, b'\x00', None)], tokens)
+                          ('EOL', 3, b'\n', None)], tokens)
         self.assertEqual(1, len(errors))
 
     def test_lexer_exception_substring_with_quotes(self):
@@ -575,8 +548,7 @@ class TestLexerErrors(unittest.TestCase):
             ('STRING', 2, b'"hotels"', 'hotels'),
             ('STRING', 2, b'"SELECT * WHERE account ~ \'Expenses:Accommodation\'"',
              'SELECT * WHERE account ~ \'Expenses:Accommodation\''),
-            ('EOL', 3, b'\n', None),
-            ('EOL', 3, b'\x00', None)], tokens)
+            ('EOL', 3, b'\n', None)], tokens)
         self.assertEqual(0, len(builder.errors))
 
 
@@ -650,7 +622,6 @@ class TestLexerMisc(unittest.TestCase):
         self.assertEqual([
             ('NUMBER', 1, b'45,234.00', D('45234.00')),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
         ], tokens)
         self.assertEqual(0, len(errors))
 
@@ -663,7 +634,6 @@ class TestLexerMisc(unittest.TestCase):
         self.assertEqual([
             ('error', 1, b'452,34.00', None),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None),
         ], tokens)
 
     @lex_tokens
@@ -680,7 +650,6 @@ class TestLexerMisc(unittest.TestCase):
             ('COMMA', 1, b',', None),
             ('NUMBER', 1, b'000', D('0')),
             ('EOL', 2, b'\n', None),
-            ('EOL', 2, b'\x00', None)
         ], tokens)
 
 

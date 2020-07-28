@@ -267,7 +267,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 17
+%expect 19
 
 
 /*--------------------------------------------------------------------------------*/
@@ -294,9 +294,9 @@ txn : TXN
 
 eol : EOL
     | COMMENT EOL
+    | YYEOF
+    | COMMENT YYEOF
 
-/* Note: Technically we could have the lexer yield EOF and handle INDENT EOF and
-   COMMENT EOF. However this is not necessary. */
 empty_line : EOL
            | COMMENT
            | INDENT
@@ -462,11 +462,11 @@ posting_or_kv_list : %empty
                        Py_INCREF(Py_None);
                        $$ = Py_None;
                    }
-                   | posting_or_kv_list INDENT COMMENT EOL
+                   | posting_or_kv_list INDENT COMMENT eol
                    {
                        $$ = $1;
                    }
-                   | posting_or_kv_list INDENT tags_links EOL
+                   | posting_or_kv_list INDENT tags_links eol
                    {
                        BUILDY(DECREF($1, $3),
                               $$, "handle_list", "OO", $1, $3);
@@ -861,7 +861,7 @@ declarations : declarations directive
              }
 
 
-file : declarations
+file : declarations YYEOF
      {
          BUILDY(DECREF($1),
                 $$, "store_result", "O", $1);
