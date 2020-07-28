@@ -1,0 +1,14 @@
+[wrap-file]
+directory = RE-flex-5.1.0
+source_url = https://github.com/Genivia/RE-flex/archive/refs/tags/v5.1.0.tar.gz
+source_filename = v5.1.0.tar.gz
+source_hash = 42bb511b6d7e12faf2972c4311534d3cca71cc84d2e9f3dd433e0eefb3b46fd1
+patch_filename = reflex_5.1.0-1_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/reflex_5.1.0-1/get_patch
+patch_hash = b2ca8dbd71ae90ee42d3da9b16d2f24103c8fd3b0ce0265213b96ff6efff6a2a
+source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/reflex_5.1.0-1/v5.1.0.tar.gz
+wrapdb_version = 5.1.0-1
+
+[provide]
+reflex = reflex_dep
+program_names = reflex
