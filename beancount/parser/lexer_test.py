@@ -419,7 +419,6 @@ class TestIgnoredLines(unittest.TestCase):
         """
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('COMMENT', 2, b';; Long comment line about something something.', None),
             ('EOL', 3, b'\n', None),
             ], tokens)
         self.assertFalse(errors)
@@ -437,7 +436,6 @@ class TestIgnoredLines(unittest.TestCase):
             ('STRING', 2, b'"The Title"', 'The Title'),
             ('EOL', 3, b'\n', None),
             ('INDENT', 3, b'  ', None),
-            ('COMMENT', 3, b';; Something something.', None),
             ('EOL', 4, b'\n', None),
         ], tokens)
         self.assertFalse(errors)

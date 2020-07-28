@@ -1475,7 +1475,7 @@ YY_RULE_SETUP
 case 4:
 YY_RULE_SETUP
 #line 137 "beancount/parser/lexer.l"
-{ return COMMENT; }
+{ }
 	YY_BREAK
 /* Characters with special meanings have their own tokens. */
 case 5:

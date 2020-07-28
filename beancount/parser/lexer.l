@@ -133,7 +133,7 @@ FLAGS           [!&#?%PSTCURM]
 [ \t\r]+ 	{ }
 
  /* Comments. */
-;.*		{ return COMMENT; }
+;.*		{ }
 
  /* Characters with special meanings have their own tokens. */
 \|		{ return PIPE; }
