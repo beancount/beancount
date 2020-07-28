@@ -99,55 +99,54 @@ const char* token_to_string(int token);
     INDENT = 258,                  /* INDENT  */
     EOL = 259,                     /* EOL  */
     COMMENT = 260,                 /* COMMENT  */
-    SKIPPED = 261,                 /* SKIPPED  */
-    PIPE = 262,                    /* PIPE  */
-    ATAT = 263,                    /* ATAT  */
-    AT = 264,                      /* AT  */
-    LCURLCURL = 265,               /* LCURLCURL  */
-    RCURLCURL = 266,               /* RCURLCURL  */
-    LCURL = 267,                   /* LCURL  */
-    RCURL = 268,                   /* RCURL  */
-    COMMA = 269,                   /* COMMA  */
-    TILDE = 270,                   /* TILDE  */
-    HASH = 271,                    /* HASH  */
-    ASTERISK = 272,                /* ASTERISK  */
-    SLASH = 273,                   /* SLASH  */
-    COLON = 274,                   /* COLON  */
-    PLUS = 275,                    /* PLUS  */
-    MINUS = 276,                   /* MINUS  */
-    LPAREN = 277,                  /* LPAREN  */
-    RPAREN = 278,                  /* RPAREN  */
-    FLAG = 279,                    /* FLAG  */
-    TXN = 280,                     /* TXN  */
-    BALANCE = 281,                 /* BALANCE  */
-    OPEN = 282,                    /* OPEN  */
-    CLOSE = 283,                   /* CLOSE  */
-    COMMODITY = 284,               /* COMMODITY  */
-    PAD = 285,                     /* PAD  */
-    EVENT = 286,                   /* EVENT  */
-    PRICE = 287,                   /* PRICE  */
-    NOTE = 288,                    /* NOTE  */
-    DOCUMENT = 289,                /* DOCUMENT  */
-    QUERY = 290,                   /* QUERY  */
-    CUSTOM = 291,                  /* CUSTOM  */
-    PUSHTAG = 292,                 /* PUSHTAG  */
-    POPTAG = 293,                  /* POPTAG  */
-    PUSHMETA = 294,                /* PUSHMETA  */
-    POPMETA = 295,                 /* POPMETA  */
-    OPTION = 296,                  /* OPTION  */
-    INCLUDE = 297,                 /* INCLUDE  */
-    PLUGIN = 298,                  /* PLUGIN  */
-    NONE = 299,                    /* NONE  */
-    BOOL = 300,                    /* BOOL  */
-    DATE = 301,                    /* DATE  */
-    ACCOUNT = 302,                 /* ACCOUNT  */
-    CURRENCY = 303,                /* CURRENCY  */
-    STRING = 304,                  /* STRING  */
-    NUMBER = 305,                  /* NUMBER  */
-    TAG = 306,                     /* TAG  */
-    LINK = 307,                    /* LINK  */
-    KEY = 308,                     /* KEY  */
-    NEGATIVE = 309                 /* NEGATIVE  */
+    PIPE = 261,                    /* PIPE  */
+    ATAT = 262,                    /* ATAT  */
+    AT = 263,                      /* AT  */
+    LCURLCURL = 264,               /* LCURLCURL  */
+    RCURLCURL = 265,               /* RCURLCURL  */
+    LCURL = 266,                   /* LCURL  */
+    RCURL = 267,                   /* RCURL  */
+    COMMA = 268,                   /* COMMA  */
+    TILDE = 269,                   /* TILDE  */
+    HASH = 270,                    /* HASH  */
+    ASTERISK = 271,                /* ASTERISK  */
+    SLASH = 272,                   /* SLASH  */
+    COLON = 273,                   /* COLON  */
+    PLUS = 274,                    /* PLUS  */
+    MINUS = 275,                   /* MINUS  */
+    LPAREN = 276,                  /* LPAREN  */
+    RPAREN = 277,                  /* RPAREN  */
+    FLAG = 278,                    /* FLAG  */
+    TXN = 279,                     /* TXN  */
+    BALANCE = 280,                 /* BALANCE  */
+    OPEN = 281,                    /* OPEN  */
+    CLOSE = 282,                   /* CLOSE  */
+    COMMODITY = 283,               /* COMMODITY  */
+    PAD = 284,                     /* PAD  */
+    EVENT = 285,                   /* EVENT  */
+    PRICE = 286,                   /* PRICE  */
+    NOTE = 287,                    /* NOTE  */
+    DOCUMENT = 288,                /* DOCUMENT  */
+    QUERY = 289,                   /* QUERY  */
+    CUSTOM = 290,                  /* CUSTOM  */
+    PUSHTAG = 291,                 /* PUSHTAG  */
+    POPTAG = 292,                  /* POPTAG  */
+    PUSHMETA = 293,                /* PUSHMETA  */
+    POPMETA = 294,                 /* POPMETA  */
+    OPTION = 295,                  /* OPTION  */
+    INCLUDE = 296,                 /* INCLUDE  */
+    PLUGIN = 297,                  /* PLUGIN  */
+    NONE = 298,                    /* NONE  */
+    BOOL = 299,                    /* BOOL  */
+    DATE = 300,                    /* DATE  */
+    ACCOUNT = 301,                 /* ACCOUNT  */
+    CURRENCY = 302,                /* CURRENCY  */
+    STRING = 303,                  /* STRING  */
+    NUMBER = 304,                  /* NUMBER  */
+    TAG = 305,                     /* TAG  */
+    LINK = 306,                    /* LINK  */
+    KEY = 307,                     /* KEY  */
+    NEGATIVE = 308                 /* NEGATIVE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -166,7 +165,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 170 "beancount/parser/grammar.h"
+#line 169 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

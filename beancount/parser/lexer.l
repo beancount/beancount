@@ -182,7 +182,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     else {
         /* Allow org-mode titles. */
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
@@ -193,7 +192,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     else {
         /* Allow org-mode titles. */
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
@@ -204,7 +202,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
   else {
     /* Allow org-mode drawers. */
     yy_skip_line();
-    return SKIPPED;
   }
 }
 
@@ -229,7 +226,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     }
     else {
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
