@@ -166,6 +166,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yylloc->last_column = yycolumn + yyleng - 1;                    \
         yylloc->file_name = yy_filename;                                \
         yycolumn += yyleng;                                             \
+        if (YY_START == AFTERDATE) BEGIN(INITIAL);                      \
     }
 
 /* Skip the rest of the input line.  This needs to be implemented as a
@@ -196,6 +197,9 @@ int strtonl(const char* buf, size_t nchars);
 /* Exclusive start condition for parsing escape sequences in string literals. */
 %x STRLIT
 
+/* A start condition triggered when a date is found, to allow flags to be recognized. */
+%s AFTERDATE
+
 
 ASCII           [\x00-\x7f]
 UTF-8-1         [\x80-\xbf]
@@ -216,6 +220,10 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     yy_line_tokens = 0;
     yycolumn = 1;
     return EOL;
+}
+
+<AFTERDATE>[ \t\r]+ {
+    BEGIN(AFTERDATE);
 }
 
  /* Ignore whitespace, except when found at the beginning of a line
@@ -301,15 +309,13 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-[!&#?%PSTCURM]	{
-    if (yy_line_tokens != 1) {
-        yylval->character = yytext[0];
-        return FLAG;
-    }
-    else {
-        yy_skip_line();
-        return SKIPPED;
-    }
+<AFTERDATE>[!&#?%PSTCURM]  {
+    yylval->character = yytext[0];
+    return FLAG;
+}
+^[!&#?%PSTCURM]    {
+    yy_skip_line();
+    return SKIPPED;
 }
 
  /* Keywords. */
@@ -371,6 +377,7 @@ NULL		{
 
     /* Attempt to create the date. */
     BUILD_LEX("DATE", "iii", year, month, day);
+    BEGIN(AFTERDATE);
     return DATE;
 }
 
@@ -382,7 +389,7 @@ NULL		{
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
+[A-Z][A-Z0-9\'\.\_\-]{0,22}	{
     BUILD_LEX("CURRENCY", "s", yytext);
     return CURRENCY;
 }
