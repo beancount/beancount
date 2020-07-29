@@ -369,7 +369,7 @@ NULL		{
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,22}	{
+[A-Z][A-Z0-9\'\.\_\-]{0,23}	{
     BUILD_LEX("CURRENCY", "s", yytext);
     return CURRENCY;
 }
