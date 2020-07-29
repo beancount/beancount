@@ -72,11 +72,11 @@ class TestParserDoc(unittest.TestCase):
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
-    INPUT = """
+    INPUT = textwrap.dedent("""
       2013-05-18 * "Nice dinner at Mermaid Inn"
         Expenses:Restaurant         100 USD
         Assets:US:Cash
-    """
+    """)
 
     def test_parse_string(self):
         entries, errors, _ = parser.parse_string(self.INPUT)

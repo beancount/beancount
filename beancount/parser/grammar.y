@@ -266,7 +266,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 19
+%expect 7
 
 
 /*--------------------------------------------------------------------------------*/
@@ -295,7 +295,6 @@ eol : EOL
     | YYEOF
 
 empty_line : EOL
-           | INDENT
 
 /* FIXME: This needs be made more general, dealing with precedence.
    I just need this right now, so I'm putting it in, in a way that will.
@@ -482,6 +481,10 @@ key_value_list : %empty
                {
                    Py_INCREF(Py_None);
                    $$ = Py_None;
+               }
+               | key_value_list INDENT eol
+               {
+                   $$ = $1;
                }
                | key_value_list key_value_line
                {
