@@ -284,14 +284,6 @@ txn : TXN
     {
         $$ = $1;
     }
-    | ASTERISK
-    {
-        $$ = '*';
-    }
-    | HASH
-    {
-        $$ = '#';
-    }
 
 eol : EOL
     | COMMENT EOL
@@ -390,14 +382,6 @@ transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
 optflag : %empty
         {
             $$ = '\0';
-        }
-        | ASTERISK
-        {
-            $$ = '*';
-        }
-        | HASH
-        {
-            $$ = '#';
         }
         | FLAG
 

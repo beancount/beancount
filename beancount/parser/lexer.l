@@ -166,7 +166,6 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yylloc->last_column = yycolumn + yyleng - 1;                    \
         yylloc->file_name = yy_filename;                                \
         yycolumn += yyleng;                                             \
-        if (YY_START == AFTERDATE) BEGIN(INITIAL);                      \
     }
 
 /* Skip the rest of the input line.  This needs to be implemented as a
@@ -197,8 +196,8 @@ int strtonl(const char* buf, size_t nchars);
 /* Exclusive start condition for parsing escape sequences in string literals. */
 %x STRLIT
 
-/* A start condition triggered when a date is found, to allow flags to be recognized. */
-%s AFTERDATE
+/* A start condition triggered when a date or indent is found, to allow flags to be recognized. */
+%x POSSIBLEFLAG
 
 
 ASCII           [\x00-\x7f]
@@ -222,9 +221,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     return EOL;
 }
 
-<AFTERDATE>[ \t\r]+ {
-    BEGIN(AFTERDATE);
-}
+
 
  /* Ignore whitespace, except when found at the beginning of a line
     and followed by a regular character. This is how we detect an
@@ -239,6 +236,7 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
             return SKIPPED;
         }
         else {
+            BEGIN(POSSIBLEFLAG);
             return INDENT;
         }
     }
@@ -260,40 +258,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
- /* Special handling for characters beginning a line to be ignored.
-  * I'd like to improve how this is handled. Needs own lexer, really. */
-\#		{
-    if (yy_line_tokens != 1) {
-        return HASH;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-        return SKIPPED;
-    }
-}
-
-\*		{
-    if (yy_line_tokens != 1) {
-        return ASTERISK;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-        return SKIPPED;
-    }
-}
-
-\:		{
-  if (yy_line_tokens != 1) {
-    return COLON;
-  }
-  else {
-    /* Allow org-mode drawers. */
-    yy_skip_line();
-    return SKIPPED;
-  }
-}
 
  /* Skip commented output (but not the accompanying newline). */
 ;+.*		{
@@ -302,21 +266,37 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 }
 
  /* Special characters which may be used in-lieu of a 'txn' keyword in a
-    transaction declaration output as a token. Other lines are just skipped.
-    This allows us to use org-mode or other separators in the input syntax.
+    transaction declaration output as a token.
 
     Note: You need to make sure to include all the values from
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-<AFTERDATE>[!&#?%PSTCURM]  {
+<POSSIBLEFLAG>[*!PSTCURM]  {
     yylval->character = yytext[0];
     return FLAG;
 }
-^[!&#?%PSTCURM]    {
+
+ /* Characters that, when they are at the beginning of the line, cause that line 
+    to be skipped. This allows us to use org-mode or other separators in the input
+    syntax.
+    */
+^[#*:]    {
     yy_skip_line();
     return SKIPPED;
 }
+
+<POSSIBLEFLAG>[ \t\r]+ {
+}
+
+<POSSIBLEFLAG>. {
+    unput(*yytext);
+    BEGIN(INITIAL);
+}
+
+\#		{ return HASH; }
+\*		{ return ASTERISK; }
+\:		{ return COLON; }
 
  /* Keywords. */
 txn		{ return TXN; }
@@ -377,7 +357,7 @@ NULL		{
 
     /* Attempt to create the date. */
     BUILD_LEX("DATE", "iii", year, month, day);
-    BEGIN(AFTERDATE);
+    BEGIN(POSSIBLEFLAG);
     return DATE;
 }
 
