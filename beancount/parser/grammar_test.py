@@ -559,30 +559,6 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertEqual(2, len(entries[0].postings))
 
 
-class TestLineNumbers(unittest.TestCase):
-    """Check that the line numbers line up correctly."""
-
-    @parser.parse_doc()
-    def test_line_numbers(self, entries, errors, _):
-        """
-          2013-05-18 * "Nice dinner at Mermaid Inn"
-            Expenses:Restaurant         100 USD
-            Assets:US:Cash             -100 USD
-
-          2013-05-19 balance  Assets:US:Cash   -100 USD
-
-          2013-05-20 note  Assets:US:Cash   "Something"
-
-        """
-        _, first_line = inspect.getsourcelines(
-            TestLineNumbers.test_line_numbers.__wrapped__)
-        first_line += 1
-
-        self.assertEqual(2, entries[0].meta["lineno"] - first_line)
-        self.assertEqual(6, entries[1].meta["lineno"] - first_line)
-        self.assertEqual(8, entries[2].meta["lineno"] - first_line)
-
-
 class TestParserOptions(unittest.TestCase):
 
     @parser.parse_doc()
