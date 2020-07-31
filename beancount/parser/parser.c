@@ -109,7 +109,7 @@ static void parser_dealloc(Parser* self)
 }
 
 PyDoc_STRVAR(parser_parse_doc,
-             "parse(file, filename=None, lineno=None, encoding='utf8')\n"
+             "parse(file, filename=None, lineno=1, encoding='utf8')\n"
              "\n"
              "Parse input from file object. The filename and lineno keyword\n"
              "arguments allow to specify the file name and start line number to be\n"
@@ -125,7 +125,7 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
     const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
-    int lineno = 0;
+    int lineno = 1;
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
@@ -158,7 +158,7 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(parser_lex_doc,
-             "lex(file, filename=None, lineno=None, encoding='utf8')\n"
+             "lex(file, filename=None, lineno=1, encoding='utf8')\n"
              "\n"
              "Run the input file object trough the Beancount tokenizer. filename and\n"
              "lineno keyword arguments allow to specify the file name and start line\n"
@@ -173,7 +173,7 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
     const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
-    int lineno = 0;
+    int lineno = 1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
                                      &file, &filename, &lineno, &encoding)) {
