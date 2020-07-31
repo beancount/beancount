@@ -4,6 +4,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "macros.h"
 #include "parser.h"
 #include "grammar.h"
 #include "lexer.h"
@@ -323,17 +324,17 @@ PyMODINIT_FUNC PyInit__parser(void)
 
     /* Hash of the this Python extension source code. */
     SETATTR(module, "SOURCE_HASH",
-            PyUnicode_FromString(Py_STRINGIFY(PARSER_SOURCE_HASH)));
+            PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH)));
 
     /* Release versions as defined in setup.py. */
     SETATTR(module, "__version__",
-            PyUnicode_FromString(Py_STRINGIFY(RELEASE_VERSION)));
+            PyUnicode_FromString(STRINGIFY(RELEASE_VERSION)));
 
 #ifdef VC_CHANGESET
     /* Git changeset from the build source tree.
      * In the Bazel build, this information is absent. */
     SETATTR(module, "__vc_changeset__",
-            PyUnicode_FromString(Py_STRINGIFY(VC_CHANGESET)));
+            PyUnicode_FromString(STRINGIFY(VC_CHANGESET)));
 #endif
 
 #ifdef VC_TIMESTAMP
