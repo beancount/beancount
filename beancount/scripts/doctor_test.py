@@ -279,7 +279,8 @@ class TestScriptContextualCommands(cmptest.TestCase):
             """.format(filename)))
             topfile.flush()
             with test_utils.capture() as stdout:
-                test_utils.run_with_args(doctor.main, ['linked', topfile.name, '{}:6'.format(filename)])
+                test_utils.run_with_args(doctor.main, ['linked', topfile.name,
+                                                       '{}:6'.format(filename)])
             self.assertRegex(stdout.getvalue(), 'Apples')
             self.assertRegex(stdout.getvalue(), 'Oranges')
             self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
