@@ -801,7 +801,7 @@ class Date(query_compile.EvalFunction):
     __intypes__ = [int, int, int]
 
     def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
+        super().__init__(operands, datetime.date)
 
     def __call__(self, context):
         args = self.eval_args(context)
@@ -813,7 +813,7 @@ class ParseDate(query_compile.EvalFunction):
     __intypes__ = [str]
 
     def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
+        super().__init__(operands, datetime.date)
 
     def __call__(self, context):
         args = self.eval_args(context)
