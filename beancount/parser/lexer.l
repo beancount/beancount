@@ -175,7 +175,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
     do {                                        \
         for (;;) {                              \
             int c = input(yyscanner);           \
-            if (c == EOF || c == -1) {          \
+            if (c == 0 || c == -1) {		\
                 break;                          \
             }                                   \
             if (c == '\n') {                    \
