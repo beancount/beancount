@@ -261,7 +261,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
         # Skip over decorator invocation and function definition. This
         # is imperfect as it assumes that each consumes exactly one
         # line, but this is by far the most common case, and this is
-        # mainly used in tets, thus it is good enough.
+        # mainly used in test, thus it is good enough.
         lineno += 2
 
         @functools.wraps(fun)
