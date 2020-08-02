@@ -275,7 +275,8 @@ def do_linked(filename, args):
 
     # Find its links.
     if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(search_filename, lineno))
+        raise SystemExit("No entry could be found before {}:{}".format(
+            search_filename, lineno))
     links = (closest_entry.links
              if isinstance(closest_entry, data.Transaction)
              else data.EMPTY_SET)

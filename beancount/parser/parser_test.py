@@ -328,5 +328,72 @@ class TestReferenceCounting(unittest.TestCase):
         self.assertEqual(sys.getrefcount(f), 2)
 
 
+class TestLineno(unittest.TestCase):
+
+    def test_lex(self):
+        f = io.BytesIO(b"1.0")
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(f))
+        token, lineno, matched, value = tokens[0]
+        self.assertEqual(lineno, 1)
+
+    def test_lex_lineno(self):
+        f = io.BytesIO(b"1.0")
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(f, lineno=42))
+        token, lineno, matched, value = tokens[0]
+        self.assertEqual(lineno, 42)
+
+    def test_parse(self):
+        f = io.BytesIO(b"2020-07-30 open Assets:Test")
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f)
+        self.assertEqual(builder.entries[0].meta['lineno'], 1)
+
+    def test_parse_lineno(self):
+        f = io.BytesIO(b"2020-07-30 open Assets:Test")
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f, lineno=42)
+        self.assertEqual(builder.entries[0].meta['lineno'], 42)
+
+    def test_parse_string(self):
+        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")
+        self.assertEqual(entries[0].meta['lineno'], 1)
+
+    def test_parse_string_lineno(self):
+        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test",
+                                                       report_firstline=42)
+        self.assertEqual(entries[0].meta['lineno'], 42)
+
+    @parser.parse_doc()
+    def test_parse_doc(self, entries, errors, _):
+        """
+          2013-01-01 open Assets:US:Cash
+
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash             -100 USD
+
+          2013-05-19 balance  Assets:US:Cash   -100 USD
+
+          2013-05-20 note  Assets:US:Cash   "Something"
+        """
+
+        with open(__file__) as f:
+            for lineno, line in enumerate(f, 1):
+                if line.strip() == "2013-01-01 open Assets:US:Cash":
+                    break
+
+        self.assertEqual(len(entries), 4)
+        self.assertEqual(entries[0].meta['lineno'], lineno)
+        self.assertEqual(entries[1].meta['lineno'], lineno + 2)
+        self.assertEqual(entries[2].meta['lineno'], lineno + 6)
+        self.assertEqual(entries[3].meta['lineno'], lineno + 8)
+
+
 if __name__ == '__main__':
     unittest.main()
