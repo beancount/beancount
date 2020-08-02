@@ -109,7 +109,7 @@ install_requires = [
     # programmatically and to upload lists of holdings to a Google
     # Spreadsheet for live intra-day monitoring.
     'google-api-python-client',
-],
+]
 
 if sys.platform != 'win32':
     install_requires += [
