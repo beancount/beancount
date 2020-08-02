@@ -54,11 +54,11 @@ def setup_googletest():
 def setup_decimal():
     # GoogleTest/GoogleMock framework. Used by most unit-tests.
     if not native.existing_rule("mpdecimal"):
-        # 2016-02-28
+        # 2020-07-25
         http_archive(
             name = "mpdecimal",
-            url = "http://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.4.2.tar.gz",
-            sha256 = "83c628b90f009470981cf084c5418329c88b19835d8af3691b930afccb7d79c7",
-            strip_prefix = "mpdecimal-2.4.2",
+            url = "http://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.0.tar.gz",
+            sha256 = "15417edc8e12a57d1d9d75fa7e3f22b158a3b98f44db9d694cfd2acde8dfa0ca",
+            strip_prefix = "mpdecimal-2.5.0",
             build_file = "//third_party/cppbase:mpdecimal.BUILD",
         )

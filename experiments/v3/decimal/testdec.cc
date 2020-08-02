@@ -6,8 +6,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-int main(int argc, char **argv)
-{
+void misc() {
   mpd_context_t ctx;
   mpd_init(&ctx, 38);
   ctx.traps = 0;
@@ -29,6 +28,9 @@ int main(int argc, char **argv)
   mpd_del(b);
   mpd_del(result);
   mpd_free(rstring);
+}
 
+int main(int argc, char **argv) {
+  misc();
   return 0;
 }

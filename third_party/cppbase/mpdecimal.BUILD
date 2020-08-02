@@ -12,7 +12,7 @@ filegroup(
 
 configure_make(
     name = "mpdecimal",
-    static_libraries = ["libmpdec.a"],
+    static_libraries = ["libmpdec.a", "libmpdec++.a"],
     # Use PIC so we can link Python extension modules to this.
     configure_env_vars = {"CXXFLAGS": "-fPIC"},
     configure_in_place = True,
