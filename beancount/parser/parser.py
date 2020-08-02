@@ -179,7 +179,7 @@ def is_entry_incomplete(entry):
     return False
 
 
-def parse_file(file, report_filename=None, report_firstline=0, **kw):
+def parse_file(file, report_filename=None, report_firstline=1, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -258,10 +258,11 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
         filename = inspect.getfile(fun)
         lines, lineno = inspect.getsourcelines(fun)
 
-        # decorator line + function definition line (I realize this is largely
-        # imperfect, but it's only for reporting in our tests) - empty first line
-        # stripped away.
-        lineno += 1
+        # Skip over decorator invocation and function definition. This
+        # is imperfect as it assumes that each consumes exactly one
+        # line, but this is by far the most common case, and this is
+        # mainly used in tets, thus it is good enough.
+        lineno += 2
 
         @functools.wraps(fun)
         def wrapper(self):
@@ -286,8 +287,6 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
 
             return fun(self, entries, errors, options_map)
 
-        wrapper.__input__ = wrapper.__doc__
-        wrapper.__doc__ = None
         return wrapper
 
     return decorator
