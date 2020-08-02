@@ -125,7 +125,7 @@ def check_python_magic():
             # 'filemagic' is installed; install python-magic.
             raise ImportError
         return ('python-magic', 'OK', True)
-    except ImportError:
+    except (ImportError, OSError):
         return ('python-magic', None, False)
 
 

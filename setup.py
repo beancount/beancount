@@ -77,6 +77,50 @@ else:
     vc_changeset, vc_timestamp = '', 0
 
 
+install_requires = [
+    # Testing support now uses the pytest module.
+    'pytest',
+
+    # This is required to parse dates from command-line options in a
+    # loose, accepting format. Note that we use dateutil for timezone
+    # database definitions as well, although it is inferior to pytz, but
+    # because it can use the OS timezone database in the Windows
+    # registry. See this article for context:
+    # https://www.assert.cc/2014/05/25/which-python-time-zone-library.html
+    # However, for creating offset timezones, we use the datetime.timezone
+    # helper class because it is built-in.
+    # Where this matters is for price source fetchers.
+    # (Note: If pytz supported the Windows registry timezone information,
+    # I would switch to that.)
+    'python-dateutil',
+
+    # The SQL parser uses PLY in order to parse the input syntax.
+    'ply',
+
+    # This library is needed to parse XML files (for the OFX examples).
+    'beautifulsoup4',
+
+    # This library is needed to identify the character set of a file for
+    # import, in order to read its contents and match expressions
+    # against it.
+    'chardet',
+
+    # This library is used to download and convert the documentation
+    # programmatically and to upload lists of holdings to a Google
+    # Spreadsheet for live intra-day monitoring.
+    'google-api-python-client',
+],
+
+if sys.platform != 'win32':
+    install_requires += [
+        # This library is needed to identify the type of a file for
+        # import. It uses ctypes to wrap the libmagic library which is
+        # not generally available on Windows nor is easily installed,
+        # thus the conditional dependency.
+        'python-magic',
+    ]
+
+
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(name="beancount",
@@ -129,42 +173,7 @@ setup(name="beancount",
           ('elisp', ['editors/emacs/beancount.el']),
       ],
 
-      install_requires = [
-          # Testing support now uses the pytest module.
-          'pytest',
-
-          # This is required to parse dates from command-line options in a
-          # loose, accepting format. Note that we use dateutil for timezone
-          # database definitions as well, although it is inferior to pytz, but
-          # because it can use the OS timezone database in the Windows
-          # registry. See this article for context:
-          # https://www.assert.cc/2014/05/25/which-python-time-zone-library.html
-          # However, for creating offset timezones, we use the datetime.timezone
-          # helper class because it is built-in.
-          # Where this matters is for price source fetchers.
-          # (Note: If pytz supported the Windows registry timezone information,
-          # I would switch to that.)
-          'python-dateutil',
-
-          # The SQL parser uses PLY in order to parse the input syntax.
-          'ply',
-
-          # This library is needed to identify the type of a file for import.
-          'python-magic',
-
-          # This library is needed to parse XML files (for the OFX examples).
-          'beautifulsoup4',
-
-          # This library is needed to identify the character set of a file for
-          # import, in order to read its contents and match expressions
-          # against it.
-          'chardet',
-
-          # This library is used to download and convert the documentation
-          # programmatically and to upload lists of holdings to a Google
-          # Spreadsheet for live intra-day monitoring.
-          'google-api-python-client',
-      ],
+      install_requires = install_requires,
 
       entry_points = {
           'console_scripts': [
