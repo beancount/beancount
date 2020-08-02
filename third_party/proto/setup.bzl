@@ -9,9 +9,9 @@ def setup_proto():
     if not native.existing_rule("com_google_protobuf"):
         http_archive(
             name = "com_google_protobuf",
-            urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.12.3.tar.gz"],
-            sha256 = "71030a04aedf9f612d2991c1c552317038c3c5a2b578ac4745267a45e7037c29",
-            strip_prefix = "protobuf-3.12.3",
+            urls = ["https://github.com/protocolbuffers/protobuf/archive/v4.0.0-rc2.tar.gz"],
+            sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
+            strip_prefix = "protobuf-4.0.0-rc2",
         )
 
     # Rules for building protos.
@@ -40,10 +40,10 @@ def setup_riegeli():
     # 2020-07-23
     http_archive(
         name = "com_google_riegeli",
-        sha256 = "b666e1cde2ecb935a4bb2b789c3749f75fcb5603f137d77c2c119a61a70c2292",
-        strip_prefix = "riegeli-105050bdbb2c3a91ae863a1b5f310355d55d16de",
+        sha256 = "63546085584fadb86f6cee3fc28a1ca825b1c4a54bb50b5d53b70c73e0bf52c1",
+        strip_prefix = "riegeli-84d32bec211daf6d0b8ed65eefeb53566b15b07f",
         urls = [
-            "https://github.com/google/riegeli/archive/105050bdbb2c3a91ae863a1b5f310355d55d16de.zip",
+            "https://github.com/google/riegeli/archive/84d32bec211daf6d0b8ed65eefeb53566b15b07f.zip",
         ],
     )
 
