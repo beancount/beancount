@@ -77,9 +77,6 @@ struct _yyextra_t {
     /* The filename being tokenized. */
     PyObject* filename;
 
-    /* Reporting line offset. This is used like the #line cpp macro. */
-    int line;
-
     /* The encoding to use for converting strings. */
     const char* encoding;
 
@@ -127,7 +124,6 @@ static inline void buffer_begin(struct buffer* b)
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
 #define yy_filename yyget_extra(yyscanner)->filename
-#define yy_firstline yyget_extra(yyscanner)->line
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
@@ -160,7 +156,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 #define YY_USER_ACTION                                                  \
     {                                                                   \
         yy_line_tokens++;                                               \
-        yylloc->first_line = yylineno + yy_firstline;                   \
+        yylloc->first_line = yylineno;                                  \
         yylloc->last_line = yylloc->first_line;                         \
         yylloc->first_column = yycolumn;                                \
         yylloc->last_column = yycolumn + yyleng - 1;                    \
@@ -550,7 +546,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 
     extra->n_eof = 0;
     extra->n_line_tokens = 0;
-    extra->line = lineno;
     extra->encoding = encoding ? encoding : "utf-8";
     buffer_init(&extra->str, 1024);
 
@@ -558,6 +553,8 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     Py_INCREF(file);
     yyrestart((void *)file, scanner);
     yybegin(scanner);
+    
+    yyset_lineno(lineno, scanner);
 }
 
 static void buffer_init(struct buffer* b, size_t size)
