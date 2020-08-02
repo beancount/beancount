@@ -1,6 +1,12 @@
 #ifndef BEANCOUNT_PARSER_MACROS_H
 #define BEANCOUNT_PARSER_MACROS_H
 
+#define STRINGIFY(x) XSTRINGIFY(x)
+/* Prepend the empty string to work around MSVC bug for which an empty
+ * define results in no string rather than in the empty string. */
+#define XSTRINGIFY(x) "" #x
+
+
 #define _CC_FUNC_01(FN, X, ...) FN(X)
 #define _CC_FUNC_02(FN, X, ...) FN(X); _CC_FUNC_01(FN, __VA_ARGS__)
 #define _CC_FUNC_03(FN, X, ...) FN(X); _CC_FUNC_02(FN, __VA_ARGS__)
