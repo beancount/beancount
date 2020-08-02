@@ -5,9 +5,11 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= python3
+PYLINT ?= $(PYTHON) -m pylint
 LEX = flex
 YACC = bison
 YFLAGS = --report=itemset --verbose -Wall -Werror
+GRAPHER = dot
 
 
 all: build
@@ -19,7 +21,7 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -exec rm -r "{}" \; -prune
+	find . -name __pycache__ -delete
 
 
 # Targets to generate and compile the C parser.
@@ -94,7 +96,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
 
-GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
 	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
@@ -202,10 +203,6 @@ LINT_SRCS =					\
   examples/ingest/office/importers		\
   bin/*						\
   tools/*.py
-
-# Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
-#PYLINT = pylint
-PYLINT = python3 -m pylint
 
 pylint lint:
 	$(PYLINT) $(LINT_SRCS)

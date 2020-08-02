@@ -2498,8 +2498,6 @@ class TestMisc(cmptest.TestCase):
         """
         self.assertEqual(0, len(errors))
 
-    # FIXME(blais): Ideally this unindented should generate an error.
-    # It would be nicer if only indented comments would be allowed.
     @parser.parse_doc(expect_errors=True)
     def test_comment_in_postings_invalid(self, entries, errors, options_map):
         """
