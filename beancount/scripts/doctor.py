@@ -239,7 +239,8 @@ def do_linked(filename, args):
     Args:
       filename: A string, which consists in the filename.
       args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
+        to be a string which contains either a lineno integer or a filename:lineno
+        combination (which can be used if the location is not in the top-level file).
     """
     from beancount.parser import options
     from beancount.parser import printer
@@ -252,17 +253,29 @@ def do_linked(filename, args):
     # Parse the arguments, get the line number.
     if len(args) != 1:
         raise SystemExit("Missing line number argument.")
-    lineno = int(args[0])
 
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
+    # Parse the arguments, get the line number.
+    match = re.match(r"(.+):(\d+)$", args[0])
+    if match:
+        search_filename = path.abspath(match.group(1))
+        lineno = int(match.group(2))
+    elif re.match(r"(\d+)$", args[0]):
+        # Note: Make sure to use the absolute filename used by the parser to
+        # resolve the file.
+        search_filename = options_map['filename']
+        lineno = int(args[0])
+    else:
+        raise SystemExit("Invalid format for location.")
+
     # Find the closest entry.
-    closest_entry = data.find_closest(entries, options_map['filename'], lineno)
+    closest_entry = data.find_closest(entries, search_filename, lineno)
 
     # Find its links.
     if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+        raise SystemExit("No entry could be found before {}:{}".format(search_filename, lineno))
     links = (closest_entry.links
              if isinstance(closest_entry, data.Transaction)
              else data.EMPTY_SET)
