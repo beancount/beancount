@@ -28,9 +28,6 @@ class LexBuilder:
     # pylint: disable=invalid-name
 
     def __init__(self):
-        # A mapping of all the accounts created.
-        self.accounts = {}
-
         # A regexp for valid account names.
         self.account_regexp = re.compile(account.ACCOUNT_RE)
 
@@ -42,18 +39,6 @@ class LexBuilder:
 
         # Default number of lines in string literals.
         self.long_string_maxlines_default = 64
-
-    def get_invalid_account(self):
-        """Return the name of an invalid account placeholder.
-
-        When an account name is not deemed a valid one, replace it by
-        this account name. This can be overridden by the parser to
-        take into account the options.
-
-        Returns:
-          A string, the name of the root/type for invalid account names.
-        """
-        return 'Equity:InvalidAccountName'
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
@@ -86,24 +71,12 @@ class LexBuilder:
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
 
-        This function attempts to reuse an existing account if one exists,
-        otherwise creates one on-demand.
-
         Args:
-          account_name: a str, the valid name of an account.
+          account_name: a str, the name of an account.
         Returns:
           A string, the name of the account.
         """
-        # Check account name validity.
-        if not self.account_regexp.match(account_name):
-            # Note: This exception gets caught by BUILD_LEX() and converted into
-            # a logged error.
-            raise ValueError("Invalid account name: {}".format(account_name))
-
-        # Reuse (intern) account strings as much as possible. This potentially
-        # reduces memory usage a fair bit, because these strings are repeated
-        # liberally.
-        return self.accounts.setdefault(account_name, account_name)
+        return account_name
 
     def CURRENCY(self, currency_name):
         """Process a CURRENCY token.

@@ -209,6 +209,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 /* Types for non-terminal symbols. */
 %type <character> txn
 %type <character> optflag
+%type <pyobj> account
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> key_value
@@ -406,22 +407,28 @@ price_annotation : incomplete_amount
                      $$ = $1;
                  }
 
-posting : INDENT optflag ACCOUNT incomplete_amount cost_spec eol
+account : ACCOUNT
+        {
+            BUILDY(DECREF($1),
+                   $$, "account", "O", $1);
+        }
+
+posting : INDENT optflag account incomplete_amount cost_spec eol
         {
             BUILDY(DECREF($3, $4, $5),
                    $$, "posting", "OOOOOb", $3, $4, $5, Py_None, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT incomplete_amount cost_spec AT price_annotation eol
+        | INDENT optflag account incomplete_amount cost_spec AT price_annotation eol
         {
             BUILDY(DECREF($3, $4, $5, $7),
                    $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT incomplete_amount cost_spec ATAT price_annotation eol
+        | INDENT optflag account incomplete_amount cost_spec ATAT price_annotation eol
         {
             BUILDY(DECREF($3, $4, $5, $7),
                    $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_True, $2);
         }
-        | INDENT optflag ACCOUNT eol
+        | INDENT optflag account eol
         {
             BUILDY(DECREF($3),
                    $$, "posting", "OOOOOb", $3, missing_obj, Py_None, Py_None, Py_False, $2);
@@ -439,7 +446,7 @@ key_value_line : INDENT key_value eol
                }
 
 key_value_value : STRING
-                | ACCOUNT
+                | account
                 | DATE
                 | CURRENCY
                 | TAG
@@ -535,7 +542,7 @@ popmeta : POPMETA KEY COLON eol
                    $$, "popmeta", "O", $2);
         }
 
-open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
+open : DATE OPEN account currency_list opt_booking eol key_value_list
      {
          BUILDY(DECREF($1, $3, $4, $5, $7),
                 $$, "open", "OOOOO", $1, $3, $4, $5, $7);
@@ -552,7 +559,7 @@ opt_booking : STRING
                 $$ = Py_None;
             }
 
-close : DATE CLOSE ACCOUNT eol key_value_list
+close : DATE CLOSE account eol key_value_list
       {
           BUILDY(DECREF($1, $3, $5),
                  $$, "close", "OOO", $1, $3, $5);
@@ -564,13 +571,13 @@ commodity : DATE COMMODITY CURRENCY eol key_value_list
                      $$, "commodity", "OOO", $1, $3, $5);
           }
 
-pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
+pad : DATE PAD account account eol key_value_list
     {
         BUILDY(DECREF($1, $3, $4, $6),
                $$, "pad", "OOOO", $1, $3, $4, $6);
     }
 
-balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
+balance : DATE BALANCE account amount_tolerance eol key_value_list
         {
             BUILDY(DECREF($1, $3, $6, $4.pyobj1, $4.pyobj2),
                    $$, "balance", "OOOOO", $1, $3, $4.pyobj1, $4.pyobj2, $6);
@@ -709,7 +716,7 @@ query : DATE QUERY STRING STRING eol key_value_list
                     $$, "query", "OOOO", $1, $3, $4, $6);
          }
 
-note : DATE NOTE ACCOUNT STRING eol key_value_list
+note : DATE NOTE account STRING eol key_value_list
       {
           BUILDY(DECREF($1, $3, $4, $6),
                  $$, "note", "OOOO", $1, $3, $4, $6);
@@ -717,7 +724,7 @@ note : DATE NOTE ACCOUNT STRING eol key_value_list
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename tags_links eol key_value_list
+document : DATE DOCUMENT account filename tags_links eol key_value_list
          {
              BUILDY(DECREF($1, $3, $4, $5, $7),
                     $$, "document", "OOOOO", $1, $3, $4, $5, $7);
@@ -749,7 +756,7 @@ custom_value : STRING
                  BUILDY(DECREF($1),
                         $$, "custom_value", "OO", $1, Py_None);
              }
-             | ACCOUNT
+             | account
              {
                  /* Obtain beancount.core.account.TYPE */
                  PyObject* module = PyImport_ImportModule("beancount.core.account");
