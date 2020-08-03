@@ -33,9 +33,10 @@ def handle_ambiguous_matches(entry, posting, matches, method):
       methods: A mapping of account name to their corresponding booking
         method.
     Returns:
-      A pair of
+      A tuple of
         booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
+        booked_matches: A list of matched postings from the given 'matches' candidates.
         errors: A list of errors to be generated.
     """
     assert isinstance(method, Booking), (
@@ -71,6 +72,7 @@ def booking_method_STRICT(entry, posting, matches):
       A triple of
         booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
+        booked_matches: A list of matched postings from the given 'matches' candidates.
         errors: A list of errors to be generated.
         insufficient: A boolean, true if we could not find enough matches
           to fulfill the reduction.

@@ -75,6 +75,7 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import enum
+import hashlib
 from decimal import Decimal
 from typing import Text
 import uuid
@@ -83,6 +84,7 @@ from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
+from beancount.core.data import TxnPosting
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
@@ -91,6 +93,7 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
+from beancount.core import compare
 
 
 def unique_label() -> Text:
@@ -536,11 +539,12 @@ def book_reductions(entry, group_postings, balances,
 
     # A local copy of the balances dictionary which is updated just for the
     # duration of this function's updates, in order to take into account the
-    # cumulative effect of all the postings inferred here
+    # cumulative effect of all the postings inferred here.
     local_balances = {}
 
     empty = inventory.Inventory()
     booked_postings = []
+    trade_postings = []
     for posting in group_postings:
         # Process a single posting.
         units = posting.units
@@ -614,13 +618,22 @@ def book_reductions(entry, group_postings, balances,
                 # Add the reductions to the resulting list of booked postings.
                 booked_postings.extend(reduction_postings)
 
+                # Separately return a list of matched and reduced postings.
+                for pos in matched_postings:
+                    assert isinstance(pos, Position)
+                    assert pos.original_postings, repr(pos)
+                    trade_postings.extend(pos.original_postings)
+                #trade_postings.extend(reduction_postings)
+                # trade_postings.extend(TxnPosting(entry, posting)
+                #                       for posting in reduction_postings)
+
                 # Update the local balance in order to avoid matching against
                 # the same postings twice when processing multiple postings in
                 # the same transaction. Note that we only do this for postings
                 # held at cost because the other postings may need interpolation
                 # in order to be resolved properly.
                 for posting in reduction_postings:
-                    balance.add_position(posting)
+                    balance.add_position(posting, TxnPosting(entry, posting))
             else:
                 # This posting is an augmentation.
                 #
@@ -643,6 +656,28 @@ def book_reductions(entry, group_postings, balances,
                 #         cost=posting.cost._replace(label=unique_label()))
 
                 booked_postings.append(posting)
+
+    # Insert trade ids, if a reduction occurred on a position held at cost.
+    # TODO(blais): What about two trades in the same transaction?
+    if False: # trade_postings:
+        # Resolve Position instance to their postings.
+        resolved_postings = []
+        for pos in trade_postings:
+            if isinstance(pos, Position):
+                assert pos.original_postings, repr(pos)
+                resolved_postings.extend(pos.original_postings)
+            else:
+                assert isinstance(pos, TxnPosting)
+                resolved_postings.append(pos)
+        trade_postings = resolved_postings
+
+        sha = hashlib.sha256()
+        for index, txn_posting in enumerate(trade_postings):
+            sha.update(compare.stable_hash_namedtuple(txn_posting.posting).encode())
+        trade_id = sha.hexdigest()
+        for txn_posting in trade_postings:
+            trade_ids = txn_posting.posting.meta.setdefault("trade_ids", [])
+            trade_ids.append(trade_id)
 
     return booked_postings, errors
 

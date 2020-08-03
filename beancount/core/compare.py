@@ -16,7 +16,8 @@ CompareError = collections.namedtuple('CompareError', 'source message entry')
 IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
 
 
-def stable_hash_namedtuple(objtuple, ignore=frozenset()):
+# TODO(blais): Ideally this is changed to output bytes, not str.
+def stable_hash_namedtuple(objtuple, ignore=frozenset()) -> str:
     """Hash the given namedtuple and its child fields.
 
     This iterates over all the members of objtuple, skipping the attributes from

@@ -10,7 +10,7 @@ import datetime
 import re
 
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import Any, List, NamedTuple, Optional
 
 from beancount.core.number import ZERO
 from beancount.core.number import NUMBER_RE
@@ -153,7 +153,9 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
 
 _Position = NamedTuple('_Position', [
     ('units', Amount),
-    ('cost', Cost)])
+    ('cost', Cost),
+    ('original_postings', List[Any]),
+])
 
 class Position(_Position):
     """A 'Position' is a pair of units and optional cost.
@@ -169,12 +171,12 @@ class Position(_Position):
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __new__(cls, units, cost=None):
+    def __new__(cls, units, cost=None, original_postings=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
         assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
-        return _Position.__new__(cls, units, cost)
+        return _Position.__new__(cls, units, cost, original_postings)
 
     def __hash__(self):
         """Compute a hash for this position.

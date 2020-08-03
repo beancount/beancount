@@ -34,6 +34,7 @@ import re
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
 from beancount.core.amount import Amount
+from beancount.core import data
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
@@ -358,7 +359,7 @@ class Inventory(dict):
     # Methods to build an Inventory instance.
     #
 
-    def add_amount(self, units, cost=None):
+    def add_amount(self, units, cost=None, original_postings=None):
         """Add to this inventory using amount and cost. This adds with strict lot
         matching, that is, no partial matches are done on the arguments to the
         keys of the inventory.
@@ -378,6 +379,9 @@ class Inventory(dict):
                 "Internal error: {!r} (type: {})".format(units, type(units).__name__))
             assert cost is None or isinstance(cost, Cost), (
                 "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
+            assert original_postings is None or isinstance(original_postings, list), (
+                "Internal error: {!r} (type: {})".format(original_postings,
+                                                         type(original_postings).__name__))
 
         # Find the position.
         key = (units.currency, cost)
@@ -398,18 +402,24 @@ class Inventory(dict):
                 del self[key]
             else:
                 # Otherwise update it.
-                self[key] = Position(Amount(number, units.currency), cost)
+                new_original_postings = []
+                if pos.original_postings:
+                    new_original_postings.extend(pos.original_postings)
+                if original_postings:
+                    new_original_postings.extend(original_postings)
+                self[key] = Position(Amount(number, units.currency), cost,
+                                     new_original_postings)
         else:
             # If not found, create a new one.
             if units.number == ZERO:
                 booking = Booking.IGNORED
             else:
-                self[key] = Position(units, cost)
+                self[key] = Position(units, cost, original_postings)
                 booking = Booking.CREATED
 
         return pos, booking
 
-    def add_position(self, position):
+    def add_position(self, position, original_postings=None):
         """Add using a position (with strict lot matching).
         Return True if this position was booked against and reduced another.
 
@@ -425,7 +435,7 @@ class Inventory(dict):
                 "Invalid type for position: {}".format(position))
             assert isinstance(position.cost, (type(None), Cost)), (
                 "Invalid type for cost: {}".format(position.cost))
-        return self.add_amount(position.units, position.cost)
+        return self.add_amount(position.units, position.cost, original_postings)
 
     def add_inventory(self, other):
         """Add all the positions of another Inventory instance to this one.
