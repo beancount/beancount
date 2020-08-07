@@ -43,7 +43,7 @@ class Amount(_Amount):
         """Constructor from a number and currency.
 
         Args:
-          number: A string or Decimal instance. Will get converted automatically.
+          number: A Decimal instance.
           currency: A string, the currency symbol to use.
         """
         assert isinstance(number, Amount.valid_types_number), repr(number)
