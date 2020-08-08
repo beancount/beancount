@@ -325,6 +325,26 @@ class TestCSVImporter(cmptest.TestCase):
             Assets:Bank  -25.00 EUR
         """, entries)
 
+    @test_utils.docfile
+    def test_explict_encoding_utf8(self, filename):
+        """\
+          Posting,Description,Amount
+          2020/08/08,🍏,2
+        """
+        file = cache.get_file(filename)
+        importer = csv.Importer({Col.DATE: 'Posting',
+                                 Col.NARRATION: 'Description',
+                                 Col.AMOUNT: 'Amount'},
+                                'Assets:Bank', 'EUR', [],
+                                encoding='utf-8')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2020-08-08 * "🍏"
+            Assets:Bank  2 EUR
+
+        """, entries)
+
 # TODO: Test things out with/without payee and with/without narration.
 # TODO: Test balance support.
 # TODO: Add balances every month or week.
