@@ -27,7 +27,7 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	rm -f $(CROOT)/tests
+	rm -f $(CROOT)/tokens_test
 	find . -name __pycache__ -exec rm -r -f "{}" \;
 
 # Targets to generate and compile the C parser.
@@ -52,11 +52,11 @@ SOURCES =					\
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
 
-$(CROOT)/tests: $(CROOT)/tests.c
+$(CROOT)/tokens_test: $(CROOT)/tokens_test.c
 
 .PHONY: ctest
-ctest: $(CROOT)/tests
-	$(CROOT)/tests
+ctest: $(CROOT)/tokens_test
+	$(CROOT)/tokens_test
 
 build35: $(SOURCES)
 	python3.5 setup.py build_ext -i

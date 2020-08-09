@@ -2,7 +2,7 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "beancount/parser/lexer.h"
+#line 6 "beancount/parser/lexer.h"
 
 #include "parser.h"
 
@@ -36,7 +36,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
-#line 39 "beancount/parser/lexer.h"
+#line 40 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -552,6 +552,6 @@ extern int yylex \
 #line 364 "beancount/parser/lexer.l"
 
 
-#line 555 "beancount/parser/lexer.h"
+#line 556 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
