@@ -13,8 +13,8 @@ GRAPHER = dot
 
 
 # Support PYTHON being the path to a python interpreter.
-PYVER = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
-PYCONFIG = "python$(PYVER)-config"
+PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
+PYCONFIG = "python$(PYVERSION)-config"
 CFLAGS += $(shell $(PYCONFIG) --cflags) -fPIE -UNDEBUG -Wno-unused-function
 LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
 
