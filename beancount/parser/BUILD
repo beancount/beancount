@@ -242,10 +242,10 @@ cc_library(
     name = "lexer_c",
     hdrs = [
         "lexer.h",
-        "tokens.h",
     ],
     srcs = ["lexer.c"],
     deps = [
+        ":lexer_hdr",
         ":parser_hdr",
         ":grammar_hdr",
         "@local_config_python//:python_headers",
@@ -254,7 +254,10 @@ cc_library(
 
 cc_library(
     name = "lexer_hdr",
-    hdrs = ["lexer.h"],
+    hdrs = [
+        "lexer.h",
+        "tokens.h"
+    ],
     deps = [
         ":parser_hdr",
         ":grammar_hdr",
@@ -279,6 +282,15 @@ py_test(
     deps = [
         ":lexer",
         "//beancount/core:number",
+    ],
+)
+
+cc_test(
+    name = "tokens_test",
+    srcs = ["tokens_test.c"],
+    deps = [
+        ":lexer_hdr",
+        "@local_config_python//:python_headers",
     ],
 )
 
