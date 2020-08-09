@@ -12,6 +12,12 @@ YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
 
 
+# Support PYTHON being the path to a python interpreter.
+PYVER = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
+PYCONFIG = "python$(PYVER)-config"
+CFLAGS += $(shell $(PYCONFIG) --cflags) -fPIE -UNDEBUG -Wno-unused-function
+LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
+
 all: build
 
 # Clean everything up.
@@ -21,8 +27,8 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
+	rm -f $(CROOT)/tests
 	find . -name __pycache__ -exec rm -r -f "{}" \;
-
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
@@ -38,11 +44,19 @@ SOURCES =					\
 	$(CROOT)/lexer.c			\
 	$(CROOT)/lexer.h			\
 	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h
+	$(CROOT)/grammar.h			\
+	$(CROOT)/macros.h			\
+	$(CROOT)/tokens.h
 
 .PHONY: build
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
+
+$(CROOT)/tests: $(CROOT)/tests.c
+
+.PHONY: ctest
+ctest: $(CROOT)/tests
+	$(CROOT)/tests
 
 build35: $(SOURCES)
 	python3.5 setup.py build_ext -i

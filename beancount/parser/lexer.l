@@ -18,7 +18,6 @@
 /* Top Code. This is included in the FLex generated header file. */
 %top{
 
-#include <stdbool.h>
 #include "parser.h"
 
 typedef struct _yyextra_t yyextra_t;
@@ -60,6 +59,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 #include <stdlib.h>
 
 #include "grammar.h"
+#include "tokens.h"
 
 struct _yyextra_t {
     /* The number of times EOF has been hit. This is used to
@@ -75,8 +75,6 @@ struct _yyextra_t {
     /* The encoding to use for converting strings. */
     const char* encoding;
 };
-
-static ssize_t cunescape(const char* string, size_t len, int strict, char** ret);
 
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
@@ -94,21 +92,6 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
 #define YY_INPUT(buf, result, max_size)                         \
     result = pyfile_read_into((PyObject *)yyin, buf, max_size);
-
-/* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the driver {3cfb2739349a} */                 \
-    if (yylval->pyobj == NULL) {                                                        \
-	build_lexer_error_from_exception(yylloc, builder);		                \
-	return YYerror;						                        \
-    }                                                                                   \
-    /* Lexer builder methods should never return None, check for it. */                 \
-    else if (yylval->pyobj == Py_None) {                                                \
-        Py_DECREF(Py_None);                                                             \
-        build_lexer_error(yylloc, builder, "Unexpected None result from lexer", 34);    \
-        return YYerror;                                                                 \
-    }
 
 #define YY_USER_ACTION                                                  \
     {                                                                   \
@@ -137,9 +120,6 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
             }                                   \
         }                                       \
     } while (0)
-
-/* Utility functions. */
-int strtonl(const char* buf, size_t nchars);
 
 %}
 
@@ -285,106 +265,66 @@ include		{ return INCLUDE; }
 
  /* Boolean values. */
 TRUE		{
-    yylval->pyobj = Py_True;
-    Py_INCREF(Py_True);
+    token(BOOL, true);
     return BOOL;
 }
 
 FALSE		{
-    yylval->pyobj = Py_False;
-    Py_INCREF(Py_False);
+    token(BOOL, false);
     return BOOL;
 }
 
 NULL		{
-    yylval->pyobj = Py_None;
-    Py_INCREF(Py_None);
+    token(NONE);
     return NONE;
 }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
-    const char* year_str;
-    const char* month_str;
-    const char* day_str;
-    int year, month, day;
-
-    /* Parse the numbers. */
-    year_str = yytext;
-    month_str = strpbrk(year_str, "-/");
-    year = strtonl(year_str, month_str - year_str);
-    month_str++;
-    day_str = strpbrk(month_str, "-/");
-    month = strtonl(month_str, day_str - month_str);
-    day_str++;
-    day = strtonl(day_str, yytext + yyleng - day_str);
-
-    /* Attempt to create the date. */
-    BUILD_LEX("DATE", "iii", year, month, day);
+    token(DATE, yytext);
     return DATE;
 }
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
-    BUILD_LEX("ACCOUNT", "s", yytext);
+    token(ACCOUNT, yytext);
     return ACCOUNT;
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
-    BUILD_LEX("CURRENCY", "s", yytext);
+    token(CURRENCY, yytext, yyleng);
     return CURRENCY;
 }
 
  /* String literals. */
 \"([^\\\"]|\\.)*\"		{
-    char* unescaped = NULL;
-    ssize_t r;
-
-    r = cunescape(yytext + 1, yyleng - 2, false, &unescaped);
-    if (r < 0) {
-	build_lexer_error(yylloc, builder, "invalid string escape.", 22);
-	yylval->pyobj = Py_None;
-	Py_INCREF(Py_None);
-	return YYerror;
-    }
-
-    PyObject* string = PyUnicode_Decode(unescaped, r, yy_encoding, "ignore");
-    if (!string) {
-	build_lexer_error_from_exception(yylloc, builder);
-	yylval->pyobj = Py_None;
-	Py_INCREF(Py_None);
-        free(unescaped);
-	return YYerror;
-    }
-
-    BUILD_LEX("STRING", "O", string);
-    free(unescaped);
+    token(STRING, yytext + 1, yyleng - 2, yy_encoding);
     return STRING;
 }
 
  /* Numbers */
-([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
-    BUILD_LEX("NUMBER", "s", yytext);
+([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)?	{
+    token(NUMBER, yytext);
     return NUMBER;
 }
 
  /* Tags */
 #[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("TAG", "s", &(yytext[1]));
+    token(TAG, yytext + 1, yyleng - 1);
     return TAG;
 }
 
  /* Links */
 \^[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("LINK", "s", &(yytext[1]));
+    token(LINK, yytext + 1, yyleng - 1);
     return LINK;
 }
 
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
-    BUILD_LEX("KEY", "s#", yytext, (Py_ssize_t)(yyleng-1));
+    token(KEY, yytext, yyleng - 1);
     unput(':');
     return KEY;
 }
@@ -438,6 +378,8 @@ yyscan_t yylex_new(void)
         free(extra);
         return NULL;
     }
+
+    PyDateTime_IMPORT;
 
     return scanner;
 }
@@ -495,93 +437,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     yybegin(scanner);
 
     yyset_lineno(lineno, scanner);
-}
-
-/**
- * Unescape a C-style escaped string.
- *
- * Unescape the string @string of length @len and return the result in
- * a newly allocated buffer @ret. If @strict is true, reject invalid
- * escapes sequences.
- *
- * Returns: the number of lines in the string, -EINVAL if the input
- * string contains is not valid, -ENOMEM if the output string cannot
- * be allocated.
- */
-static ssize_t cunescape(const char* string, size_t len, int strict, char** ret)
-{
-    const char* src;
-    char* buffer;
-    char* dst;
-
-    /* Make sure we have space for the string terminator. */
-    buffer = malloc(len + 1);
-    if (!buffer) {
-        return -ENOMEM;
-    }
-
-    for (src = string, dst = buffer; src < string + len; src++) {
-        if (*src != '\\') {
-            *dst = *src;
-            dst++;
-            continue;
-        }
-
-        if (string + len - src < 2) {
-            free(buffer);
-            return -EINVAL;
-        }
-
-        src++;
-
-        switch (*src) {
-        case '"':
-            *dst++ = '"';
-            break;
-        case 'n':
-            *dst++ = '\n';
-            break;
-        case 't':
-            *dst++ = '\t';
-            break;
-        case 'r':
-            *dst++ = '\r';
-            break;
-        case 'f':
-            *dst++ = '\f';
-            break;
-        case 'b':
-            *dst++ = '\b';
-            break;
-        default:
-            if (strict) {
-                free(buffer);
-                return -EINVAL;
-            }
-            *dst++ = *src;
-        }
-    }
-
-    /* The input string may be not NULL terminated, however it is
-     * safer to handle NULL terminated strings: add the terminator to
-     * the unescaped string. */
-    *dst = '\0';
-
-    *ret = buffer;
-
-    return dst - buffer;
-}
-
-/* Convert an integer string to a number. */
-int strtonl(const char* buf, size_t nchars)
-{
-    int result = 0;
-    size_t i;
-    for (i = 0; i < nchars; ++i) {
-        result *= 10;
-        result += (buf[i] - '0');
-    }
-    return result;
 }
 
 /* Build and accumulate an error on the builder object. */

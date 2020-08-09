@@ -306,36 +306,25 @@ class TestLexer(unittest.TestCase):
         self.assertRegex(errors[0].message, r'\bcheck\b')
 
     def test_string_too_long_warning(self):
-        # This tests the maximum string length implemented in Python, which is used
-        # to detect input errors.
         test_input = """
           ;; This is a typical error that should get detected for long strings.
           2014-01-01 note Assets:Temporary "Bla bla" "
-
           2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
-          2014-02-02 open Liabilities:US:BankWithLongName:Credit-Card:Account02
-          2014-02-03 open Liabilities:US:BankWithLongName:Credit-Card:Account03
-          2014-02-04 open Liabilities:US:BankWithLongName:Credit-Card:Account04
-          2014-02-05 open Liabilities:US:BankWithLongName:Credit-Card:Account05
-          2014-02-06 open Liabilities:US:BankWithLongName:Credit-Card:Account06
-          2014-02-07 open Liabilities:US:BankWithLongName:Credit-Card:Account07
-          2014-02-08 open Liabilities:US:BankWithLongName:Credit-Card:Account08
-          2014-02-09 open Liabilities:US:BankWithLongName:Credit-Card:Account09
-          2014-02-10 open Liabilities:US:BankWithLongName:Credit-Card:Account10
-
+        """ + "\n" * 64 + """
           2014-02-02 note Assets:Temporary "Bla bla"
         """
         builder = lexer.LexBuilder()
-        builder.long_string_maxlines_default = 8
-        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message, 'String too long')
+        self.assertEqual(builder.errors[0].message,
+                         'ValueError: String too long (68 lines)')
 
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
         test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
         builder = lexer.LexBuilder()
-        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual(tokens[0][3], test_input[1:-1])
         self.assertLessEqual(0, len(builder.errors))
 
     @lex_tokens
@@ -565,17 +554,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 5, b'\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
-    def test_lexer_builder_returns_none(self):
-        builder = lexer.LexBuilder()
-        def return_none(string):
-            return None
-        setattr(builder, 'STRING', return_none)
-        tokens = list(lexer.lex_iter_string('"Something"', builder))
-        self.assertEqual([('error', 1, b'"Something"', None),
-                          ('EOL', 1, b'\x00', None)], tokens)
-        self.assertEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message, "None result from lexer")
-
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
         """
@@ -605,46 +583,6 @@ class TestLexerErrors(unittest.TestCase):
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None)], tokens)
         self.assertEqual(0, len(builder.errors))
-
-    def _run_lexer_with_raising_builder_method(self, test_input, method_name,
-                                               expected_tokens):
-        builder = lexer.LexBuilder()
-        def raise_error(string):
-            raise ValueError
-        setattr(builder, method_name, raise_error)
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual(expected_tokens, tokens)
-        self.assertEqual(1, len(builder.errors))
-
-    def test_lexer_exception_STRING(self):
-        self._run_lexer_with_raising_builder_method(
-            ' "Something" ', 'STRING',
-            [('error', 1, b'"Something"', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_NUMBER(self):
-        self._run_lexer_with_raising_builder_method(
-            ' 100.23 ', 'NUMBER',
-            [('error', 1, b'100.23', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_TAG(self):
-        self._run_lexer_with_raising_builder_method(
-            ' #the-tag ', 'TAG',
-            [('error', 1, b'#the-tag', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_LINK(self):
-        self._run_lexer_with_raising_builder_method(
-            ' ^the-link ', 'LINK',
-            [('error', 1, b'^the-link', None),
-             ('EOL', 1, b'\x00', None)])
-
-    def test_lexer_exception_KEY(self):
-        self._run_lexer_with_raising_builder_method(
-            ' mykey: ', 'KEY',
-            [('error', 1, b'mykey:', None),
-             ('EOL', 1, b'\x00', None)])
 
 
 class TestLexerUnicode(unittest.TestCase):
