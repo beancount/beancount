@@ -184,7 +184,11 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
     def file_date(self, file):
         "Get the maximum date from the file."
         iconfig, has_header = normalize_config(
-            self.config, file.head(), self.csv_dialect, self.skip_lines)
+            self.config,
+            file.head(encoding=self.encoding),
+            self.csv_dialect,
+            self.skip_lines,
+        )
         if Col.DATE in iconfig:
             reader = iter(csv.reader(open(file.name, encoding=self.encoding),
                                      dialect=self.csv_dialect))
@@ -210,7 +214,11 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
         # Normalize the configuration to fetch by index.
         iconfig, has_header = normalize_config(
-            self.config, file.head(), self.csv_dialect, self.skip_lines)
+            self.config,
+            file.head(encoding=self.encoding),
+            self.csv_dialect,
+            self.skip_lines,
+        )
 
         reader = iter(csv.reader(open(file.name, encoding=self.encoding),
                                  dialect=self.csv_dialect))

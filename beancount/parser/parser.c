@@ -224,7 +224,7 @@ static PyObject* parser_iternext(Parser* self)
     }
 
     /* Yield a (token name, line, matched string, token value) tuple. */
-    return Py_BuildValue("(sis#O)",
+    return Py_BuildValue("(siy#O)",
                          token_to_string(token),
                          yylloc.first_line,
                          yyget_text(self->scanner),

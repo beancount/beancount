@@ -18,6 +18,7 @@
 /* Top Code. This is included in the FLex generated header file. */
 %top{
 
+#include <stdbool.h>
 #include "parser.h"
 
 typedef struct _yyextra_t yyextra_t;
@@ -60,12 +61,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 
 #include "grammar.h"
 
-struct buffer {
-    char* buf;
-    char* ptr;
-    char* end;
-};
-
 struct _yyextra_t {
     /* The number of times EOF has been hit. This is used to
      * synthesize an EOL at the end of the file. */
@@ -79,48 +74,10 @@ struct _yyextra_t {
 
     /* The encoding to use for converting strings. */
     const char* encoding;
-
-    /* Variable size buffer used to accumulate string data. */
-    struct buffer str;
 };
 
-static void buffer_init(struct buffer* b, size_t size);
-static void buffer_free(struct buffer* b);
-static void buffer_realloc(struct buffer* b, size_t num_new_chars);
+static ssize_t cunescape(const char* string, size_t len, int strict, char** ret);
 
-static inline void buffer_push(struct buffer* b, char value)
-{
-    if (b->ptr > b->end)
-        buffer_realloc(b, 1);
-    *b->ptr++ = value;
-}
-
-static inline void buffer_append(struct buffer* b, const char* data, ssize_t len)
-{
-    if (len > (b->end - b->ptr))
-        buffer_realloc(b, len);
-
-    memcpy(b->ptr, data, len);
-
-    b->ptr += len;
-}
-
-static inline size_t buffer_strlen(const struct buffer* b)
-{
-    return b->ptr - b->buf;
-}
-
-static inline char* buffer_data(const struct buffer* b)
-{
-    return b->buf;
-}
-
-static inline void buffer_begin(struct buffer* b)
-{
-    b->ptr = b->buf;
-}
-
-#define strbuf &yyget_extra(yyscanner)->str
 #define yy_eof_times yyget_extra(yyscanner)->n_eof
 #define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
 #define yy_filename yyget_extra(yyscanner)->filename
@@ -188,9 +145,6 @@ int strtonl(const char* buf, size_t nchars);
 
 /* A start condition for chomping an invalid token. */
 %x INVALID
-
-/* Exclusive start condition for parsing escape sequences in string literals. */
-%x STRLIT
 
 
 ASCII           [\x00-\x7f]
@@ -384,41 +338,30 @@ NULL		{
 }
 
  /* String literals. */
- /* Note that we use an exclusive start condition.
-    See section "Start Conditions" in the GNU Flex manual. */
-\"	{
-    buffer_begin(strbuf);
-    BEGIN(STRLIT);
-}
+\"([^\\\"]|\\.)*\"		{
+    char* unescaped = NULL;
+    ssize_t r;
 
-<STRLIT>{
-
-    /* Saw closing quote - all done. */
-    \"        {
-        BEGIN(INITIAL);
-        PyObject* str = PyUnicode_Decode(buffer_data(strbuf), buffer_strlen(strbuf),
-                                         yy_encoding, "ignore");
-        if (!str) {
-            build_lexer_error_from_exception(yylloc, builder);
-            yylval->pyobj = Py_None;
-            Py_INCREF(Py_None);
-            return YYerror;
-        }
-        BUILD_LEX("STRING", "O", str);
-        Py_DECREF(str);
-        return STRING;
+    r = cunescape(yytext + 1, yyleng - 2, false, &unescaped);
+    if (r < 0) {
+	build_lexer_error(yylloc, builder, "invalid string escape.", 22);
+	yylval->pyobj = Py_None;
+	Py_INCREF(Py_None);
+	return YYerror;
     }
 
-    /* Escape sequences. */
-    \\n       buffer_push(strbuf, '\n');
-    \\t       buffer_push(strbuf, '\t');
-    \\r       buffer_push(strbuf, '\r');
-    \\b       buffer_push(strbuf, '\b');
-    \\f       buffer_push(strbuf, '\f');
-    \\(.|\n)  buffer_push(strbuf, yytext[1]);
+    PyObject* string = PyUnicode_Decode(unescaped, r, yy_encoding, "ignore");
+    if (!string) {
+	build_lexer_error_from_exception(yylloc, builder);
+	yylval->pyobj = Py_None;
+	Py_INCREF(Py_None);
+        free(unescaped);
+	return YYerror;
+    }
 
-    /* All other characters. */
-    [^\\\"]+  buffer_append(strbuf, yytext, yyleng);
+    BUILD_LEX("STRING", "O", string);
+    free(unescaped);
+    return STRING;
 }
 
  /* Numbers */
@@ -489,7 +432,6 @@ yyscan_t yylex_new(void)
         return NULL;
 
     extra->filename = NULL;
-    buffer_init(&extra->str, 1024);
 
     yylex_init_extra(extra, &scanner);
     if (!scanner) {
@@ -505,7 +447,6 @@ yyscan_t yylex_free(yyscan_t scanner)
     yyextra_t* extra = yyget_extra(scanner);
 
     Py_XDECREF(extra->filename);
-    buffer_free(&extra->str);
     free(extra);
 
     Py_XDECREF(yyget_in(scanner));
@@ -547,45 +488,88 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     extra->n_eof = 0;
     extra->n_line_tokens = 0;
     extra->encoding = encoding ? encoding : "utf-8";
-    buffer_init(&extra->str, 1024);
 
     Py_XDECREF(yyget_in(scanner));
     Py_INCREF(file);
     yyrestart((void *)file, scanner);
     yybegin(scanner);
-    
+
     yyset_lineno(lineno, scanner);
 }
 
-static void buffer_init(struct buffer* b, size_t size)
+/**
+ * Unescape a C-style escaped string.
+ *
+ * Unescape the string @string of length @len and return the result in
+ * a newly allocated buffer @ret. If @strict is true, reject invalid
+ * escapes sequences.
+ *
+ * Returns: the number of lines in the string, -EINVAL if the input
+ * string contains is not valid, -ENOMEM if the output string cannot
+ * be allocated.
+ */
+static ssize_t cunescape(const char* string, size_t len, int strict, char** ret)
 {
-    b->buf = malloc(size);
-    b->end = b->buf + size - 1;
-    b->ptr = b->buf;
-}
+    const char* src;
+    char* buffer;
+    char* dst;
 
-static void buffer_free(struct buffer* b)
-{
-    free(b->buf);
-    b->buf = b->ptr = b->end = NULL;
-}
-
-static void buffer_realloc(struct buffer* b, size_t num_new_chars)
-{
-    assert(b->ptr != NULL);
-
-    size_t size = b->end - b->buf + 1;
-    size_t cur_size = b->ptr - b->buf;
-    size_t new_size = cur_size + num_new_chars;
-
-    while (size < new_size) {
-        size <<= 1;
+    /* Make sure we have space for the string terminator. */
+    buffer = malloc(len + 1);
+    if (!buffer) {
+        return -ENOMEM;
     }
 
-    b->buf = realloc(b->buf, size);
+    for (src = string, dst = buffer; src < string + len; src++) {
+        if (*src != '\\') {
+            *dst = *src;
+            dst++;
+            continue;
+        }
 
-    b->ptr = b->buf + cur_size;
-    b->end = b->buf + size - 1;
+        if (string + len - src < 2) {
+            free(buffer);
+            return -EINVAL;
+        }
+
+        src++;
+
+        switch (*src) {
+        case '"':
+            *dst++ = '"';
+            break;
+        case 'n':
+            *dst++ = '\n';
+            break;
+        case 't':
+            *dst++ = '\t';
+            break;
+        case 'r':
+            *dst++ = '\r';
+            break;
+        case 'f':
+            *dst++ = '\f';
+            break;
+        case 'b':
+            *dst++ = '\b';
+            break;
+        default:
+            if (strict) {
+                free(buffer);
+                return -EINVAL;
+            }
+            *dst++ = *src;
+        }
+    }
+
+    /* The input string may be not NULL terminated, however it is
+     * safer to handle NULL terminated strings: add the terminator to
+     * the unescaped string. */
+    *dst = '\0';
+
+    *ret = buffer;
+
+    return dst - buffer;
 }
 
 /* Convert an integer string to a number. */
