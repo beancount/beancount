@@ -200,6 +200,7 @@ filegroup(
         "macros.h",
         "parser.h",
         "parser.c",
+        "tokens.h",
     ],
 )
 
@@ -239,7 +240,10 @@ py_test(
 
 cc_library(
     name = "lexer_c",
-    hdrs = ["lexer.h"],
+    hdrs = [
+        "lexer.h",
+        "tokens.h",
+    ],
     srcs = ["lexer.c"],
     deps = [
         ":parser_hdr",

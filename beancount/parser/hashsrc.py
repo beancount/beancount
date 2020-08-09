@@ -21,6 +21,7 @@ PARSER_SOURCE_FILES = [
     'macros.h',
     'parser.h',
     'parser.c',
+    'tokens.h',
 ]
 
 def hash_parser_source_files():

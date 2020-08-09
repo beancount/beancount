@@ -24,5 +24,6 @@ before_install:
 script:
   - /usr/bin/bazel --bazelrc=.bazelrc.travis test //...
   - python3 setup.py build_ext -i
+  - make ctest
   - make test
   - make lint

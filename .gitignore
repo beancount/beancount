@@ -13,6 +13,7 @@ TAGS
 bazel-*
 beancount.egg-info
 beancount/parser/grammar.output
+beancount/parser/tests
 build
 dist
 examples/generated/*
