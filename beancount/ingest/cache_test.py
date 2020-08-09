@@ -47,6 +47,14 @@ class TestFileMemo(unittest.TestCase):
             mimetype = wrap.convert(cache.mimetype)
             self.assertRegex(mimetype, r'text/(x-(python|c\+\+)|plain)')
 
+    def test_cache_head_obeys_explict_utf8_encoding_avoids_chardet_exception(self):
+        emoji_header = 'asciiHeader1,🍏Header1,asciiHeader2'.encode('utf-8')
+        with mock.patch('builtins.open',
+                mock.mock_open(read_data=emoji_header)):
+            try:
+                function_return = cache._FileMemo('anyFile').head(encoding='utf-8')
+            except UnicodeDecodeError:
+                self.fail("Failed to decode emoji")
 
 if __name__ == '__main__':
     unittest.main()
