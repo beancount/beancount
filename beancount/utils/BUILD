@@ -11,7 +11,6 @@ py_test(
     deps = [":bisect_key"],
 )
 
-
 py_library(
     name = "csv_utils",
     srcs = ["csv_utils.py"],
@@ -40,7 +39,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "defdict",
     srcs = ["defdict.py"],
@@ -53,7 +51,6 @@ py_test(
         ":defdict",
     ],
 )
-
 
 py_library(
     name = "encryption",
@@ -86,7 +83,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "file_utils",
     srcs = ["file_utils.py"],
@@ -100,8 +96,6 @@ py_test(
         ":test_utils",
     ],
 )
-
-
 
 py_library(
     name = "import_utils",
@@ -143,8 +137,6 @@ py_test(
     ],
 )
 
-
-
 py_library(
     name = "misc_utils",
     srcs = ["misc_utils.py"],
@@ -159,8 +151,6 @@ py_test(
     ],
 )
 
-
-
 py_library(
     name = "net_utils",
     srcs = ["net_utils.py"],
@@ -173,7 +163,6 @@ py_test(
         ":net_utils",
     ],
 )
-
 
 py_library(
     name = "pager",
@@ -189,7 +178,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "regexp_utils",
     srcs = ["regexp_utils.py"],
@@ -200,7 +188,6 @@ py_test(
     srcs = ["regexp_utils_test.py"],
     deps = [":regexp_utils"],
 )
-
 
 py_library(
     name = "snoop",
@@ -215,7 +202,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "test_utils",
     srcs = ["test_utils.py"],
@@ -226,7 +212,6 @@ py_test(
     srcs = ["test_utils_test.py"],
     deps = [":test_utils"],
 )
-
 
 py_library(
     name = "text_utils",
