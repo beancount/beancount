@@ -66,3 +66,8 @@ py_library(
         "//beancount/plugins:auto_accounts",
     ],
 )
+
+cc_library(
+    name = "defs",
+    hdrs = ["defs.h"],
+)

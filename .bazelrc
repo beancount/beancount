@@ -1,9 +1,12 @@
-# Use C++14.
-build --cxxopt=-std=c++14
-build -c opt
+# Use Clang to build, not gcc.
+build --repo_env=CC=clang
+
+# Use C++17 (for std::string_view).
+build --cxxopt=-std=c++17
+build -c fastbuild
 
 ## Make Python protos faster by backing them with C++ protos.
-##build --define=use_fast_cpp_protos=true
+build --define=use_fast_cpp_protos=true
 
 # # Use local Python3 install.
 # build --python_path=/usr/local/bin/python3
