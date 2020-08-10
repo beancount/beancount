@@ -78,41 +78,42 @@ TEST(TestAccount, AccountRoot) {
   EXPECT_EQ("Liabilities:US:Credit-Card:Blue", AccountRoot(5, name));
 }
 
-//     def test_has_component(self):
-//         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'US'))
-//         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'CA'))
-//         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'Credit-Card'))
-//         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'Liabilities'))
-//         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'Credit'))
-//         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'Card'))
-//
+TEST(TestAccount, HasAccountComponent) {
+  EXPECT_TRUE(HasAccountComponent("Liabilities:US:Credit-Card", "US"));
+  EXPECT_FALSE(HasAccountComponent("Liabilities:US:Credit-Card", "CA"));
+  EXPECT_TRUE(HasAccountComponent("Liabilities:US:Credit-Card", "Credit-Card"));
+  EXPECT_TRUE(HasAccountComponent("Liabilities:US:Credit-Card", "Liabilities"));
+  EXPECT_FALSE(HasAccountComponent("Liabilities:US:Credit-Card", "Credit"));
+  EXPECT_FALSE(HasAccountComponent("Liabilities:US:Credit-Card", "Card"));
+}
+
 //     def test_commonprefix(self):
-//         EXPECT_EQ('Assets:US:TD',
-//                          account.commonprefix(['Assets:US:TD:Checking',
-//                                                'Assets:US:TD:Savings']))
-//         EXPECT_EQ('Assets:US',
-//                          account.commonprefix(['Assets:US:TD:Checking',
-//                                                'Assets:US:BofA:Checking']))
-//         EXPECT_EQ('Assets',
-//                          account.commonprefix(['Assets:US:TD:Checking',
-//                                                'Assets:CA:RBC:Savings']))
-//         EXPECT_EQ('',
-//                          account.commonprefix(['Assets:US:TD:Checking',
-//                                                'Liabilities:US:CreditCard']))
-//         EXPECT_EQ('',
-//                          account.commonprefix(['']))
+//         EXPECT_EQ("Assets:US:TD",
+//                          account.commonprefix(["Assets:US:TD:Checking",
+//                                                "Assets:US:TD:Savings"]))
+//         EXPECT_EQ("Assets:US",
+//                          account.commonprefix(["Assets:US:TD:Checking",
+//                                                "Assets:US:BofA:Checking"]))
+//         EXPECT_EQ("Assets",
+//                          account.commonprefix(["Assets:US:TD:Checking",
+//                                                "Assets:CA:RBC:Savings"]))
+//         EXPECT_EQ("",
+//                          account.commonprefix(["Assets:US:TD:Checking",
+//                                                "Liabilities:US:CreditCard"]))
+//         EXPECT_EQ("",
+//                          account.commonprefix([""]))
 //
 //     def test_parent_matcher(self):
-//         is_child = account.parent_matcher('Assets:Bank:Checking')
-//         self.assertTrue(is_child('Assets:Bank:Checking'))
-//         self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
-//         self.assertFalse(is_child('Assets:Bank:CheckingOld'))
-//         self.assertFalse(is_child('Assets:Bank:Checking-Old'))
+//         is_child = account.parent_matcher("Assets:Bank:Checking")
+//         EXPECT_TRUE(is_child("Assets:Bank:Checking"))
+//         EXPECT_TRUE(is_child("Assets:Bank:Checking:SubAccount"))
+//         EXPECT_FALSE(is_child("Assets:Bank:CheckingOld"))
+//         EXPECT_FALSE(is_child("Assets:Bank:Checking-Old"))
 //
 //     def test_parents(self):
-//         iterator = account.parents('Assets:Bank:Checking')
+//         iterator = account.parents("Assets:Bank:Checking")
 //         self.assertIsInstance(iterator, types.GeneratorType)
-//         EXPECT_EQ(['Assets:Bank:Checking', 'Assets:Bank', 'Assets'],
+//         EXPECT_EQ(["Assets:Bank:Checking", "Assets:Bank", "Assets"],
 //                          list(iterator))
 //
 //
@@ -120,13 +121,13 @@ TEST(TestAccount, AccountRoot) {
 // class TestWalk(test_utils.TmpFilesTestBase):
 //
 //     TEST_DOCUMENTS = [
-//         'root/Assets/US/Bank/Checking/other.txt',
-//         'root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf',
-//         'root/Assets/US/Bank/Checking/otherdir/',
-//         'root/Assets/US/Bank/Checking/otherdir/another.txt',
-//         'root/Assets/US/Bank/Checking/otherdir/2014-06-08.bank-statement.pdf',
-//         'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
-//         'root/Liabilities/US/Bank/',  # Empty directory.
+//         "root/Assets/US/Bank/Checking/other.txt",
+//         "root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf",
+//         "root/Assets/US/Bank/Checking/otherdir/",
+//         "root/Assets/US/Bank/Checking/otherdir/another.txt",
+//         "root/Assets/US/Bank/Checking/otherdir/2014-06-08.bank-statement.pdf",
+//         "root/Assets/US/Bank/Savings/2014-07-01.savings.pdf",
+//         "root/Liabilities/US/Bank/",  # Empty directory.
 //     ]
 //
 //     def test_walk(self):
@@ -135,24 +136,24 @@ TEST(TestAccount, AccountRoot) {
 //             for root, account_, dirs, files in account.walk(self.root)]
 //
 //         EXPECT_EQ([
-//             ('/Assets/US', 'Assets:US',
-//              ['Bank'],
+//             ("/Assets/US", "Assets:US",
+//              ["Bank"],
 //              []),
-//             ('/Assets/US/Bank', 'Assets:US:Bank',
-//              ['Checking', 'Savings'],
+//             ("/Assets/US/Bank", "Assets:US:Bank",
+//              ["Checking", "Savings"],
 //              []),
-//             ('/Assets/US/Bank/Checking', 'Assets:US:Bank:Checking',
-//              ['otherdir'],
-//              ['2014-06-08.bank-statement.pdf', 'other.txt']),
+//             ("/Assets/US/Bank/Checking", "Assets:US:Bank:Checking",
+//              ["otherdir"],
+//              ["2014-06-08.bank-statement.pdf", "other.txt"]),
 //
-//             ('/Assets/US/Bank/Savings', 'Assets:US:Bank:Savings',
+//             ("/Assets/US/Bank/Savings", "Assets:US:Bank:Savings",
 //              [],
-//              ['2014-07-01.savings.pdf']),
+//              ["2014-07-01.savings.pdf"]),
 //
-//             ('/Liabilities/US', 'Liabilities:US',
-//              ['Bank'],
+//             ("/Liabilities/US", "Liabilities:US",
+//              ["Bank"],
 //              []),
-//             ('/Liabilities/US/Bank', 'Liabilities:US:Bank',
+//             ("/Liabilities/US/Bank", "Liabilities:US:Bank",
 //              [],
 //              []),
 //             ], actual_data)
@@ -161,24 +162,20 @@ TEST(TestAccount, AccountRoot) {
 // class TestAccountTransformer(unittest.TestCase):
 //
 //     def test_render(self):
-//         xfr = account.AccountTransformer('__')
-//         EXPECT_EQ('Assets__US__BofA__Checking',
-//                          xfr.render('Assets:US:BofA:Checking'))
+//         xfr = account.AccountTransformer("__")
+//         EXPECT_EQ("Assets__US__BofA__Checking",
+//                          xfr.render("Assets:US:BofA:Checking"))
 //
 //     def test_parse(self):
-//         xfr = account.AccountTransformer('__')
-//         EXPECT_EQ('Assets:US:BofA:Checking',
-//                          xfr.parse('Assets__US__BofA__Checking'))
+//         xfr = account.AccountTransformer("__")
+//         EXPECT_EQ("Assets:US:BofA:Checking",
+//                          xfr.parse("Assets__US__BofA__Checking"))
 //
 //     def test_noop(self):
 //         xfr = account.AccountTransformer()
-//         acc = 'Assets:US:BofA:Checking'
+//         acc = "Assets:US:BofA:Checking"
 //         EXPECT_EQ(acc, xfr.render(acc))
 //         EXPECT_EQ(acc, xfr.parse(acc))
-//
-//
-// if __name__ == '__main__':
-//     unittest.main()
 
 }  // namespace
 }  // namespace beancount

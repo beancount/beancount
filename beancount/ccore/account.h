@@ -47,6 +47,15 @@ string AccountSansRoot(string_view account);
 // integer, the number of components to return.
 string AccountRoot(int num_components, string_view account);
 
+// Return true if one of the account contains a given component. 'component' is
+// A string, a component of an account name. For instance, ``Food`` in
+// ``Expenses:Food:Restaurant``. All components are considered. Returns true if
+// the component is in the account. Note that a component name must be whole,
+// that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
+bool HasAccountComponent(string_view account, string_view component);
+
+// TODO(blais): Continue.
+
 
 
 

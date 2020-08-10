@@ -7,6 +7,7 @@
 #include <initializer_list>
 #include <iostream>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -90,23 +91,17 @@ string AccountRoot(int num_components, string_view account) {
   return absl::StrJoin(components.begin(), iter, kSep);
 }
 
+// Return true if one of the account contains a given component.
+bool HasAccountComponent(string_view account, string_view component) {
+  return RE2::PartialMatch(account, absl::StrCat("(^|:)", component, "(:|$)"));
+}
+
+
+
+
 
 // TODO(blais): Continue here.
 
-// def has_component(account_name, component):
-//     """Return true if one of the account contains a given component.
-//
-//     Args:
-//       account_name: A string, an account name.
-//       component: A string, a component of an account name. For instance,
-//         ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
-//     Returns:
-//       Boolean: true if the component is in the account. Note that a component
-//       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
-//     """
-//     return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
-//
-//
 // def commonprefix(accounts):
 //     """Return the common prefix of a list of account names.
 //
