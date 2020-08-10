@@ -227,6 +227,28 @@ class TestParserEntryTypes(unittest.TestCase):
                           (D('23'), Decimal)],
                          txns[0].values)
 
+class TestWhitespace(unittest.TestCase):
+    """Tests for handling of whitespace and indent."""
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_0(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected DATE")
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_1(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected INDENT")
+
 
 class TestParserComplete(unittest.TestCase):
     """Tests of completion of balance."""
