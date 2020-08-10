@@ -11,7 +11,6 @@ py_test(
     deps = [":bisect_key"],
 )
 
-
 py_library(
     name = "csv_utils",
     srcs = ["csv_utils.py"],
@@ -25,7 +24,6 @@ py_test(
         ":test_utils",
     ],
 )
-
 
 py_library(
     name = "date_utils",
@@ -41,7 +39,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "defdict",
     srcs = ["defdict.py"],
@@ -54,7 +51,6 @@ py_test(
         ":defdict",
     ],
 )
-
 
 py_library(
     name = "encryption",
@@ -69,7 +65,6 @@ py_test(
         ":test_utils",
     ],
 )
-
 
 py_library(
     name = "file_type",
@@ -88,7 +83,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "file_utils",
     srcs = ["file_utils.py"],
@@ -102,7 +96,6 @@ py_test(
         ":test_utils",
     ],
 )
-
 
 py_library(
     name = "import_utils",
@@ -120,7 +113,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "invariants",
     srcs = ["invariants.py"],
@@ -131,7 +123,6 @@ py_test(
     srcs = ["invariants_test.py"],
     deps = [":invariants"],
 )
-
 
 py_library(
     name = "memo",
@@ -145,7 +136,6 @@ py_test(
         ":memo",
     ],
 )
-
 
 py_library(
     name = "misc_utils",
@@ -161,7 +151,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "pager",
     srcs = ["pager.py"],
@@ -176,7 +165,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "regexp_utils",
     srcs = ["regexp_utils.py"],
@@ -187,7 +175,6 @@ py_test(
     srcs = ["regexp_utils_test.py"],
     deps = [":regexp_utils"],
 )
-
 
 py_library(
     name = "snoop",
@@ -202,7 +189,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "test_utils",
     srcs = ["test_utils.py"],
@@ -213,7 +199,6 @@ py_test(
     srcs = ["test_utils_test.py"],
     deps = [":test_utils"],
 )
-
 
 py_library(
     name = "text_utils",
@@ -228,7 +213,6 @@ py_test(
     ],
 )
 
-
 py_library(
     name = "table",
     srcs = ["table.py"],
@@ -241,7 +225,6 @@ py_test(
         ":table",
     ],
 )
-
 
 py_library(
     name = "scrape",
