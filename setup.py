@@ -77,7 +77,8 @@ else:
     vc_changeset, vc_timestamp = '', 0
 
 
-install_requires = [ # Testing support now uses the pytest module.
+install_requires = [
+    # Testing support now uses the pytest module.
     'pytest',
 
     # This is required to parse dates from command-line options in a
