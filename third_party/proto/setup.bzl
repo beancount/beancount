@@ -37,13 +37,13 @@ def setup_proto():
 
 
 def setup_riegeli():
-    # 2020-07-23
+    # 2020-08-11
     http_archive(
         name = "com_google_riegeli",
-        sha256 = "63546085584fadb86f6cee3fc28a1ca825b1c4a54bb50b5d53b70c73e0bf52c1",
-        strip_prefix = "riegeli-84d32bec211daf6d0b8ed65eefeb53566b15b07f",
+        sha256 = "352886d2998f761dfcc5bafeecafac42bb5287d27fe5d8b603f223f1ab7b4909",
+        strip_prefix = "riegeli-c5fa6338336a097bf7b463d52f77d586d52f79ec",
         urls = [
-            "https://github.com/google/riegeli/archive/84d32bec211daf6d0b8ed65eefeb53566b15b07f.zip",
+            "https://github.com/google/riegeli/archive/c5fa6338336a097bf7b463d52f77d586d52f79ec.zip",
         ],
     )
 
