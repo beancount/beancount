@@ -38,7 +38,7 @@ TEST(SerializationTest, RoundTripText) {
   decimal::Decimal a("42e8");
 
   // Serialize.
-  beancount::Number number;
+  beancount::Decimal number;
   number.set_exact(a.to_sci(false));
   cout << "'" << number.exact() << "'" << endl;
 
@@ -53,7 +53,7 @@ TEST(SerializationTest, RoundTripMpd) {
   cout << "A = " << a << endl;
 
   // Serialize.
-  beancount::Number number;
+  beancount::Decimal number;
   {
     auto* mpd = number.mutable_mpd();
     const mpd_t* value = a.getconst();

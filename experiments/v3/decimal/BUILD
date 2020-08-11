@@ -1,5 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 
 package(default_visibility=["//visibility:public"])
 
@@ -12,6 +13,11 @@ proto_library(
 cc_proto_library(
     name = "number_cc_proto",
     deps = [":number_proto"],
+)
+
+py_proto_library(
+    name = "number_py_proto",
+    srcs = [":number.proto"],
 )
 
 cc_binary(
