@@ -1,0 +1,211 @@
+// -*- mode: protobuf -*-
+//
+// A schema for Beancount's fully booked stream of directives. These are the
+// definitions of the API and main artifact produced by the Beancount core, a
+// stream of directives.
+//
+// Note: Unlike in Beancount 2.x, the messages representing the intermediate
+// parsed state (the AST) are defined and located elsewhere.
+
+syntax = "proto2";
+
+package beancount;
+
+import 'experiments/v3/decimal/number.proto';
+
+// A metadata value. This is a simple general variant type intended to keep the
+// values of the metadata key-value pairs.
+message MetaValue {
+  oneof value {
+    string text = 1;
+    string account = 2;
+    Date date = 3;
+    string currency = 4;
+    string tag = 5;
+    bool boolean = 6;
+    bool flag = 7;
+    Decimal number = 8;
+    Amount amount = 9;
+  }
+}
+
+// A metadata dictionary, or key-value pairs.
+message Meta {
+  message KV {
+    optional string key = 1;
+    optional MetaValue value = 2;
+  }
+  repeated KV kv = 1;
+}
+
+// Civil dates.
+// See https://abseil.io/blog/20181010-civil-time.
+message Date {
+  optional int32 year = 1;
+  optional int32 month = 2;
+  optional int32 day = 3;
+}
+
+// An 'Amount' represents a number of a particular unit of something. It's
+// essentially a typed number, with corresponding manipulation operations
+// defined on it.
+message Amount {
+  optional Decimal number = 1;
+  optional string currency = 2;
+}
+
+// A variant of Amount that also includes a date and a label.
+message Cost {
+ // A Decimal, the per-unit cost.
+  optional Decimal number = 1;
+
+  // A string, the cost currency.
+  optional string currency = 2;
+
+  // A datetime.date for the date that the lot was created at. There should
+  // always be a valid date.
+  optional Date date = 3;
+
+  // A string for the label of this lot, or None, if there is no label.
+  optional string label = 4;
+}
+
+// Postings are contained in Transaction entries. These represent the individual
+// legs of a transaction. Note: a posting may only appear within a single entry
+// (multiple transactions may not share a Posting instance), and that's what the
+// entry field should be set to.
+message Posting {
+  // A dict of strings to values, the metadata that was attached specifically to
+  // that posting, or None, if not provided. In practice, most of the instances
+  // will be unlikely to have metadata.
+  optional Meta meta = 1;
+
+  // Optional posting date.
+  optional Date date = 2;
+
+  // An optional flag, a one-character string or None, which is to be associated
+  // with the posting. Most postings don't have a flag, but it can be convenient
+  // to mark a particular posting as problematic or pending to be reconciled for
+  // a future import of its account.
+  optional bytes flag = 3;
+
+  // A string, the account that is modified by this posting.
+  optional string account = 4;
+
+  // An Amount, the units of the position.
+  optional Amount units = 5;
+
+  // A Cost or CostSpec instances, the units of the position.
+  optional Cost cost = 6;
+
+  // An Amount, the price at which the position took place, or None, where not
+  // relevant. Providing a price member to a posting automatically adds a price
+  // in the prices database at the date of the transaction.
+  optional Amount price = 7;
+}
+
+//-------------------------------------------------------------------------------
+// TODO(blais): Continue here with directives.
+
+message Transaction {
+  optional bytes flag = 3;
+  optional string payee = 4;
+  optional string narration = 5;
+  repeated string tags = 6;
+  repeated string links = 7;
+  repeated Posting postings = 8;
+}
+
+message TxnPosting {
+  optional Transaction txn = 1;
+  optional Posting posting = 2;
+}
+
+
+// A set of valid booking method names for positions on accounts.
+// See http://furius.ca/beancount/doc/inventories for a full explanation.
+enum Booking {
+  UNKNOWN = 0;
+  STRICT = 1;  // Reject ambiguous matches with an error.
+  NONE = 2;    // Disable matching and accept the creation of mixed inventories.
+  AVERAGE = 3; // Average cost booking: merge all matching lots before and after.
+  FIFO = 4;    // First-in first-out in the case of ambiguity.
+  LIFO = 5;    // Last-in first-out in the case of ambiguity.
+}
+
+message Open {
+  optional string account = 3;
+  repeated string currencies = 4;
+  optional Booking booking = 5;
+}
+
+message Close {
+  optional string account = 3;
+}
+
+message Commodity {
+  optional string currency = 3;
+}
+
+message Pad {
+  optional string account = 3;
+  optional string source_account = 4;
+}
+
+message Balance {
+  optional string account = 3;
+  optional Amount amount = 4;
+  optional Decimal tolerance = 5;
+  optional Amount diff_amount = 6;
+}
+
+message Note {
+  optional string account = 3;
+  optional string comment = 4;
+}
+
+message Event {
+  optional string type = 3;
+  optional string description = 4;
+}
+
+message Query {
+  optional string name = 3;
+  optional string query_string = 4;
+}
+
+message Price {
+  optional string currency = 3;
+  optional Amount amount = 4;
+}
+
+message Document {
+  optional string account = 3;
+  optional string filename = 4;
+  repeated string tags = 5;
+  repeated string links = 6;
+}
+
+message Custom {
+  optional string type = 3;
+  // TODO(blais): How to link against well_known_protos?
+  // repeated google.protobuf.Any values = 4;
+}
+
+message Directive {
+  optional Meta meta = 1;
+  optional Date date = 2;
+
+  optional Transaction txn = 3;
+  optional Open open = 4;
+  optional Close close = 5;
+  optional Commodity commodity = 6;
+  optional Pad pad = 7;
+  optional Balance balance = 8;
+  optional Note note = 9;
+  optional Event event = 10;
+  optional Query query = 11;
+  optional Price price = 12;
+  optional Document document = 13;
+  optional Custom custom = 14;
+}
