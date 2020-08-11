@@ -171,12 +171,6 @@ Balance = new_directive('Balance', [
 # entry field should be set to.
 #
 # Attributes:
-#   entry: A Transaction instance (see above), which the posting applies to.
-#     It is convenient to have Posting instances point to their parent entries,
-#     because account journals contain lists of Postings and non-Transaction
-#     entries and though it creates a circular dependency between Transaction
-#     and Posting, it allows us to easily resolve the lists of Postings to their
-#     transactions for rendering.
 #   account: A string, the account that is modified by this posting.
 #   units: An Amount, the units of the position.
 #   cost: A Cost or CostSpec instances, the units of the position.
