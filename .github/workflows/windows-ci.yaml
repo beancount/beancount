@@ -1,0 +1,25 @@
+name: windows-ci
+
+on:
+  [push, pull_request]
+
+jobs:
+  compile:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python: ['3.5', '3.6', '3.7', '3.8']
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - run: pip install twine wheel
+
+      - run: python setup.py build_ext --compiler=msvc --define YY_NO_UNISTD_H
+
+      - run: python setup.py bdist_wheel
+
+      - run: twine check dist/*
