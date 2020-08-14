@@ -9,7 +9,7 @@ import enum
 import sys
 
 from decimal import Decimal
-from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 from beancount.core.amount import Amount
 from beancount.core.number import D
@@ -395,8 +395,9 @@ Directive = Union[
     Custom
 ]
 
-# Type for the list of entries.
+# Type for the list of entries and options map.
 Entries = List[Directive]
+Options = Dict[str, Any]
 
 
 def new_metadata(filename, lineno, kvlist=None):
