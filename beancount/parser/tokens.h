@@ -12,11 +12,14 @@
  * are handled and reported as lexing errors.
  */
 #define token(name, ...)                                        \
-    yylval->pyobj = build_##name(__VA_ARGS__);                  \
+    yylval->pyobj = invoke_builder(name, (__VA_ARGS__));        \
     if (yylval->pyobj == NULL) {                                \
         build_lexer_error_from_exception(yylloc, builder);      \
         return YYerror;                                         \
     }
+
+/* MSVC requires this indirection to expand __VA_ARGS__ correctly. */
+#define invoke_builder(name, arg_list) build_##name arg_list
 
 #define build_STR(_ptr, _len) PyUnicode_FromStringAndSize(_ptr, _len)
 #define build_KEY build_STR
@@ -24,7 +27,7 @@
 #define build_LINK build_STR
 #define build_CURRENCY build_STR
 #define build_BOOL(_value) PyBool_FromLong(_value)
-#define build_NONE() ({ Py_INCREF(Py_None); Py_None; })
+#define build_NONE() ( Py_INCREF(Py_None), Py_None )
 #define build_NUMBER(_str) pydecimal_from_cstring(_str)
 #define build_DATE(_str) pydate_from_cstring(_str)
 #define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
