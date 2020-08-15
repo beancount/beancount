@@ -148,7 +148,7 @@ setup(name="beancount",
       packages=find_packages(exclude=['experiments*']),
 
       package_data = {
-          'beancount': ['VERSION'],
+          'beancount': ['VERSION', '*.h'],
           'beancount.utils.file_type_testdata': ['*'],
       },
 
