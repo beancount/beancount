@@ -4,6 +4,13 @@ ho========================
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-08-19
+
+ - Added an option to the printer to allow an arbitraty Python value to be
+   output. This is useful when creating values programmatically with types not
+   supported by the syntax.
+
+
 2020-07-25
 
  - Release 2.3.1 as dependency for beanprice.

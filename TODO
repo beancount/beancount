@@ -4641,6 +4641,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - For Vanguard RothIRA, I need a balance check that applies only to a subset
+    of linked transactions. I'm being provided with this number in the imported
+    file but I have to split the transactions themselves.
+
   - Turn all FIXME into TODO(blais) and NOTE(blais).
 
   - "find $PWD | treeify -F" is broken; used to work. Update and fix this.
