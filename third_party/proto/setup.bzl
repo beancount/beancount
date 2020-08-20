@@ -40,11 +40,9 @@ def setup_riegeli():
     # 2020-08-11
     http_archive(
         name = "com_google_riegeli",
-        sha256 = "352886d2998f761dfcc5bafeecafac42bb5287d27fe5d8b603f223f1ab7b4909",
-        strip_prefix = "riegeli-c5fa6338336a097bf7b463d52f77d586d52f79ec",
-        urls = [
-            "https://github.com/google/riegeli/archive/c5fa6338336a097bf7b463d52f77d586d52f79ec.zip",
-        ],
+        sha256 = "d4861fbd3dd4e711b05ac7d31d1ba6a245cdf57bb22643d4d2395bfdc6f97e9b",
+        strip_prefix = "riegeli-daa182ebac1c008462dc9e05e8fb2c6a05807322",
+        urls = ["https://github.com/google/riegeli/archive/daa182ebac1c008462dc9e05e8fb2c6a05807322.zip"],
     )
 
     http_archive(
