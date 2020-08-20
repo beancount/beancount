@@ -93,18 +93,22 @@ class EntryPrinter:
       render_weight: A boolean, true if we should render the weight of the postings
         as a comment, for debugging.
       min_width_account: An integer, the minimum width to leave for the account name.
+      prefix: User-specific prefix for custom indentation (for Fava).
+      stringify_invalid_types: If a metadata value is invalid, force a conversion to
+        string for printout.
     """
 
     # pylint: disable=invalid-name
 
     def __init__(self, dcontext=None, render_weight=False, min_width_account=None,
-                 prefix=None):
+                 prefix=None, stringify_invalid_types=False):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
         self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
         self.render_weight = render_weight
         self.min_width_account = min_width_account
         self.prefix = prefix or '  '
+        self.stringify_invalid_types = stringify_invalid_types
 
     def __call__(self, obj):
         """Render a directive.
@@ -146,7 +150,13 @@ class EntryPrinter:
                 elif value is None:
                     value_str = ''  # Render null metadata as empty, on purpose.
                 else:
-                    raise ValueError("Unexpected value: '{!r}'".format(value))
+                    if self.stringify_invalid_types:
+                        # This is only intended to be used during development,
+                        # when debugging for custom values of data types
+                        # attached directly and not coming from the parser.
+                        value_str = str(value)
+                    else:
+                        raise ValueError("Unexpected value: '{!r}'".format(value))
                 if value_str is not None:
                     oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
@@ -363,6 +373,9 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
     output.write('\n')
 
 
+# TODO(blais): Change this to a function which accepts the same optional
+# arguments as the printer object. Isolate the spacer/segmentation algorithm to
+# its own function.
 def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None):
     """A convenience function that prints a list of entries to a file.
 
@@ -394,6 +407,8 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         output.write(string)
 
 
+# TODO(blais): Rename to format_source() to be consistent, better:
+# format_location().
 def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.
