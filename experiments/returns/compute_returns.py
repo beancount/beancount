@@ -33,6 +33,7 @@ import copy
 import csv
 import datetime
 import enum
+import itertools
 import functools
 import logging
 import os
@@ -421,6 +422,7 @@ Returns = typing.NamedTuple("Returns", [
     ("total", float),
     ("exdiv", float),
     ("div", float),
+    ("flows", List[CashFlow]),
 ])
 
 
@@ -429,7 +431,7 @@ def compute_returns(flows: List[CashFlow],
                     target_currency: Currency) -> Returns:
     """Compute the returns from a list of cash flows."""
     if not flows:
-        return Returns("?", TODAY, TODAY, 0, 0, 0, 0)
+        return Returns("?", TODAY, TODAY, 0, 0, 0, 0, [])
     flows = sorted(flows)
     irr = compute_irr(flows, price_map, target_currency)
 
@@ -439,7 +441,9 @@ def compute_returns(flows: List[CashFlow],
     first_date = flows[0].date
     last_date = flows[-1].date
     years = (last_date - first_date).days / 365
-    return Returns("?", first_date, last_date, years, irr, irr_exdiv, (irr - irr_exdiv))
+    return Returns("?", first_date, last_date, years,
+                   irr, irr_exdiv, (irr - irr_exdiv),
+                   flows)
 
 
 def copy_and_normalize(entry: data.Transaction) -> data.Transaction:
@@ -496,6 +500,7 @@ def process_account_entries(
         if isinstance(entry, DatedBalance):
             dated_balances.append(entry._replace(actual_date=balance_date,
                                                  value=copy.deepcopy(balance)))
+            #print("XXX", actual_date - date)
             continue
 
         # Update the total position in the asset we're interested in.
@@ -558,7 +563,8 @@ def process_account_cash_flows(
 Result = typing.NamedTuple("Result", [
     ('currency', Currency),
     ('account', Account),
-    ('irrs', List[Returns]),
+    ('irrs_sequential', List[Returns]),
+    ('irrs_trailing', List[Returns]),
     ('final_position', Position),
     ('quote_currency', Currency),
     ('flows', List[CashFlow]),
@@ -585,7 +591,7 @@ def write_details_file(dcontext,
         pos = result.final_position
         fprint("Position: {}".format(pos or "N/A"))
 
-        for irr in result.irrs:
+        for irr in result.irrs_trailing:
             fprint(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
         fprint("\n\n")
 
@@ -613,7 +619,7 @@ def write_summary_byaccount(filename: str, results: List[Result]):
     csv_writer.writerow(Returns._fields)
     for result in results:
         # Note: We use the first interval for output.
-        csv_writer.writerow(result.irrs[0])
+        csv_writer.writerow(result.irrs_trailing[0][:-1])
 
 
 def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
@@ -622,8 +628,9 @@ def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
     # Group by currency.
     currency_flows = collections.defaultdict(list)
     for result in results:
-        if result.final_position:
-            currency_flows[result.currency].extend(result.flows)
+        if not result.final_position:
+            continue
+        currency_flows[result.currency].extend(result.flows)
 
     csv_writer = csv.writer(open(filename, "w"))
     csv_writer.writerow(Returns._fields)
@@ -631,7 +638,36 @@ def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
         flows = currency_flows[currency]
         irr = compute_returns(flows, price_map, target_currency)
         irr = irr._replace(groupname="everything")
-        csv_writer.writerow(irr._replace(groupname=currency))
+        csv_writer.writerow(irr._replace(groupname=currency)[:-1])
+
+
+def write_commodity_intervals(filename: str, price_map: prices.PriceMap,
+                              target_currency: Currency,
+                              results: List[Result], attrname: str):
+    """Compute per-commodity pivots over intervals."""
+
+    # Group by currency.
+    irrs0 = getattr(results[0], attrname)
+    groupnames = [irr.groupname for irr in irrs0]
+    currency_flows = collections.defaultdict(lambda: [list() for _ in irrs0])
+    for result in results:
+        irrs = getattr(result, attrname)
+        assert len(irrs) == len(irrs0)
+        for index, irr in enumerate(irrs):
+            currency_flows[result.currency][index].extend(irr.flows)
+
+    csv_writer = csv.writer(open(filename, "w"))
+    csv_writer.writerow(["currency"] + groupnames)
+    for currency in sorted(currency_flows):
+        flows_list = currency_flows[currency]
+        assert len(flows_list) == len(groupnames)
+        #print(currency, [len(f) for f in flows_list])
+        total_returns = [currency]
+        for groupname, flows in zip(groupnames, flows_list):
+            irr = compute_returns(flows, price_map, target_currency)
+            irr = irr._replace(groupname=groupname)
+            total_returns.append(irr.total)
+        csv_writer.writerow(total_returns)
 
 
 def write_summary_overall(filename: str, price_map: prices.PriceMap,
@@ -644,15 +680,24 @@ def write_summary_overall(filename: str, price_map: prices.PriceMap,
 
     csv_writer = csv.writer(open(filename, "w"))
     csv_writer.writerow(Returns._fields)
-    csv_writer.writerow(irr._replace(groupname="(all)"))
+    csv_writer.writerow(irr._replace(groupname="(all)")[:-1])
 
     return irr
 
 
-def get_time_intervals(date: Date) -> Tuple[Tuple[str, Date, Date], List[Date]]:
+IntervalSets = collections.namedtuple("IntervalSets", ["sequential", "trailing"])
+
+
+def get_time_intervals(date: Date) -> Tuple[IntervalSets, List[Date]]:
     """Return a list of interesting time intervals we will need market values for."""
 
-    intervals = [
+    intervals_sequential = [
+        (str(year), Date(year, 1, 1), Date(year + 1, 1, 1))
+        for year in range(TODAY.year - 15, TODAY.year)]
+    intervals_sequential.append(
+        (str(TODAY.year), Date(TODAY.year, 1, 1), date))
+
+    intervals_trailing = [
         ("15_years_ago", date - relativedelta(years=15), date),
         ("10_years_ago", date - relativedelta(years=10), date),
         ("5_years_ago", date - relativedelta(years=5), date),
@@ -662,16 +707,17 @@ def get_time_intervals(date: Date) -> Tuple[Tuple[str, Date, Date], List[Date]]:
         ("1_year_ago", date - relativedelta(years=1), date),
         ("6_months_ago", date - relativedelta(months=6), date),
         ("3_months_ago", date - relativedelta(months=3), date),
-        #("year_to_date", Date(2020, 1, 1), date),
         ]
 
     # Compute the set of unique dates to gather balance inventories for.
     interval_dates = set()
-    for _, date1, date2 in intervals:
+    for _, date1, date2 in itertools.chain(intervals_sequential,
+                                           intervals_trailing):
         interval_dates.add(date1)
         interval_dates.add(date2)
 
-    return intervals, interval_dates
+    return (IntervalSets(intervals_sequential, intervals_trailing),
+            interval_dates)
 
 
 def main():
@@ -707,7 +753,7 @@ def main():
     price_map = prices.build_price_map(entries)
 
     # A list of time intervals of interest whose value we will need to accumulate.
-    intervals, interval_dates = get_time_intervals(TODAY)
+    interval_sets, interval_dates = get_time_intervals(TODAY)
 
     # Figure out accounts to process.
     account_list = args.accounts or find_accounts(entries, options_map, args.start_date)
@@ -729,28 +775,34 @@ def main():
                 print(entry.meta)
             signature_map[entry.meta["signature"]].append(entry)
 
-        irr_list = []
+        irr_sets = []
+        for intervals in interval_sets:
+            irr_list = []
+            for description, date1, date2 in intervals:
+                # Compute final flows.
+                interval_flows, _ = process_account_cash_flows(
+                    decorated_entries, price_map,
+                    balance_start=balances_map[date1],
+                    balance_end=balances_map[date2])
+
+                # Compute IRR.
+                irr = compute_returns(interval_flows, price_map, args.target_currency)
+                irr = irr._replace(groupname=description)
+
+                # Build a results row.
+                currency = accountlib.leaf(account)
+
+                irr_list.append(irr)
+            irr_sets.append(irr_list)
+
+        # Compute flows for unbounded interval.
         assert TODAY in balances_map, "Intervals must include end date of today"
         flows, final_position = process_account_cash_flows(decorated_entries, price_map,
                                                            balance_end=balances_map[TODAY])
-        for description, date1, date2 in intervals:
-            # Compute final flows.
-            interval_flows, _ = process_account_cash_flows(
-                decorated_entries, price_map,
-                balance_start=balances_map[date1],
-                balance_end=balances_map[date2])
-
-            # Compute IRR.
-            irr = compute_returns(interval_flows, price_map, args.target_currency)
-            irr = irr._replace(groupname=description)
-
-            # Build a results row.
-            currency = accountlib.leaf(account)
-
-            irr_list.append(irr)
 
         result = Result(currency, account,
-                        irr_list,
+                        irr_sets[0],
+                        irr_sets[1],
                         final_position.units.number if final_position else "",
                         final_position.units.currency if final_position else "",
                         flows)
@@ -789,6 +841,12 @@ def main():
                               price_map, args.target_currency, results)
     irr = write_summary_overall(path.join(args.output, "overall.csv"),
                                 price_map, args.target_currency, results)
+
+    # Compute per-commodity pivots over intervals.
+    for setname in IntervalSets._fields:
+        write_commodity_intervals(path.join(args.output, "{}.csv".format(setname)),
+                                  price_map, args.target_currency,
+                                  results, "irrs_{}".format(setname))
 
     # Compute my overall returns.
     print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
