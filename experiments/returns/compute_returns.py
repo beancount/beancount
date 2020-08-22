@@ -558,12 +558,14 @@ def process_account_cash_flows(
 Result = typing.NamedTuple("Result", [
     ('currency', Currency),
     ('account', Account),
-    ('irr', Returns),
+    ('irrs', List[Returns]),
     ('final_position', Position),
     ('quote_currency', Currency),
     ('flows', List[CashFlow]),
 ])
 
+
+IRR_FORMAT = "{:32}: {:6.2%} ({:6.2%} ex-div, {:6.2%} div)"
 
 def write_details_file(dcontext,
                        result: Result,
@@ -582,8 +584,9 @@ def write_details_file(dcontext,
         fprint("Account: {}".format(result.account))
         pos = result.final_position
         fprint("Position: {}".format(pos or "N/A"))
-        fprint("IRR:                {:8.2%}".format(result.irr.total))
-        fprint("IRR (dividends):    {:8.2%}".format(result.irr.div))
+
+        for irr in result.irrs:
+            fprint(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
         fprint("\n\n")
 
         # Print out those details.
@@ -609,7 +612,8 @@ def write_summary_byaccount(filename: str, results: List[Result]):
     num_fields = 6
     csv_writer.writerow(Returns._fields)
     for result in results:
-        csv_writer.writerow(result.irr)
+        # Note: We use the first interval for output.
+        csv_writer.writerow(result.irrs[0])
 
 
 def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
@@ -626,6 +630,7 @@ def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
     for currency in sorted(currency_flows):
         flows = currency_flows[currency]
         irr = compute_returns(flows, price_map, target_currency)
+        irr = irr._replace(groupname="everything")
         csv_writer.writerow(irr._replace(groupname=currency))
 
 
@@ -648,20 +653,19 @@ def get_time_intervals(date: Date) -> Tuple[Tuple[str, Date, Date], List[Date]]:
     """Return a list of interesting time intervals we will need market values for."""
 
     intervals = [
-        # ("1_month_ago", date - relativedelta(months=1), date),
-        # ("2_months_ago", date - relativedelta(months=2), date),
-        # ("3_months_ago", date - relativedelta(months=3), date),
-        # ("6_months_ago", date - relativedelta(months=6), date),
-        # ("1_year_ago", date - relativedelta(years=1), date),
-        # ("2_years_ago", date - relativedelta(years=2), date),
-        # ("3_years_ago", date - relativedelta(years=3), date),
-        # ("4_years_ago", date - relativedelta(years=4), date),
-        # ("5_years_ago", date - relativedelta(years=5), date),
-        # ("year_to_date", Date(2020, 1, 1), date),
-        ("10_years_ago", date - relativedelta(years=15), date),
+        ("15_years_ago", date - relativedelta(years=15), date),
+        ("10_years_ago", date - relativedelta(years=10), date),
+        ("5_years_ago", date - relativedelta(years=5), date),
+        ("4_years_ago", date - relativedelta(years=4), date),
+        ("3_years_ago", date - relativedelta(years=3), date),
+        ("2_years_ago", date - relativedelta(years=2), date),
+        ("1_year_ago", date - relativedelta(years=1), date),
+        ("6_months_ago", date - relativedelta(months=6), date),
+        ("3_months_ago", date - relativedelta(months=3), date),
+        #("year_to_date", Date(2020, 1, 1), date),
         ]
 
-    # Compute the set of unique dates to gather the inventory for.
+    # Compute the set of unique dates to gather balance inventories for.
     interval_dates = set()
     for _, date1, date2 in intervals:
         interval_dates.add(date1)
@@ -694,6 +698,9 @@ def main():
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
     os.makedirs(args.output, exist_ok=True)
 
+    output_accounts = path.join(args.output, "account")
+    os.makedirs(output_accounts, exist_ok=True)
+
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
     entries, _, options_map = loader.load_file(args.ledger)
@@ -722,36 +729,48 @@ def main():
                 print(entry.meta)
             signature_map[entry.meta["signature"]].append(entry)
 
-        for _, date1, date2 in intervals:
+        irr_list = []
+        assert TODAY in balances_map, "Intervals must include end date of today"
+        flows, final_position = process_account_cash_flows(decorated_entries, price_map,
+                                                           balance_end=balances_map[TODAY])
+        for description, date1, date2 in intervals:
             # Compute final flows.
-            flows, final_position = process_account_cash_flows(
+            interval_flows, _ = process_account_cash_flows(
                 decorated_entries, price_map,
                 balance_start=balances_map[date1],
                 balance_end=balances_map[date2])
 
             # Compute IRR.
-            irr = compute_returns(flows, price_map, args.target_currency)
-            irr = irr._replace(groupname=account)
+            irr = compute_returns(interval_flows, price_map, args.target_currency)
+            irr = irr._replace(groupname=description)
 
             # Build a results row.
             currency = accountlib.leaf(account)
-            result = Result(currency, account,
-                            irr,
-                            final_position.units.number if final_position else "",
-                            final_position.units.currency if final_position else "",
-                            flows)
-            results.append(result)
 
-        # Produce a details output file.
-        filename = path.join(args.output, account.replace(":", "_") + ".org")
+            irr_list.append(irr)
+
+        result = Result(currency, account,
+                        irr_list,
+                        final_position.units.number if final_position else "",
+                        final_position.units.currency if final_position else "",
+                        flows)
+        results.append(result)
+
+        # Produce a per-account details output file.
+        filename = path.join(output_accounts, account.replace(":", "_") + ".org")
         write_details_file(options_map['dcontext'],
                            result, catmap, decorated_entries, filename)
 
     # Output transactions for each type.
+    output_signatures = path.join(args.output, "signature")
+    os.makedirs(output_signatures, exist_ok=True)
+
     for sig, sigentries in signature_map.items():
-        filename = "signature.{}.beancount".format(sig)
-        with open(path.join(args.output, filename), "w") as catfile:
+        filename = "{}.org".format(sig)
+        with open(path.join(output_signatures, filename), "w") as catfile:
             fprint = functools.partial(print, file=catfile)
+            fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
+
             description = KNOWN_SIGNATURES[sig]
             fprint("description: {}".format(description))
             fprint("number_entries: {}".format(len(sigentries)))
@@ -772,9 +791,8 @@ def main():
                                 price_map, args.target_currency, results)
 
     # Compute my overall returns.
-    print("Overall IRR:                {:8.2%}".format(irr.total))
-    print("Overall IRR (ex-dividends): {:8.2%}".format(irr.exdiv))
-    print("Overall IRR (dividends):    {:8.2%}".format(irr.div))
+    print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
+    print("\n\n")
 
 
 if __name__ == '__main__':
