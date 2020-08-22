@@ -1,8 +1,17 @@
 # Use Clang to build, not gcc.
 build --repo_env=CC=clang
 
-# Use C++17 (for std::string_view).
+# Use C++17 w/ libc++ (for std::string_view and more).
 build --cxxopt=-std=c++17
+
+# Use LLVM's more modern libc++ instead of GNU libstdc++
+## BAZEL_CXXOPTS="-stdlib=libc++:-isystem$INSTALL_DIR/include" \
+## BAZEL_LINKOPTS="-stdlib=libc++" \
+## BAZEL_LINKLIBS="-L$INSTALL_DIR/lib:-Wl,-rpath,$INSTALL_DIR/lib:-lc++:-lm" \
+## build --cxxopt=-isystem/usr/lib/llvm-12/include/c++/v1
+# build --cxxopt=-stdlib=libc++
+# build --cxxopt=-L/usr/lib/llvm-12/lib
+
 build -c fastbuild
 
 ## Make Python protos faster by backing them with C++ protos.
