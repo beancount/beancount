@@ -52,6 +52,7 @@ from beancount.core.number import ONE
 from beancount.core import account as accountlib
 from beancount.core import account_types as acctypes
 from beancount.core import amount
+from beancount.core import display_context
 from beancount.core import convert
 from beancount.core import data
 from beancount.core import getters
@@ -583,7 +584,7 @@ def process_account_cash_flows(
     return flows
 
 
-Result = typing.NamedTuple("Result", [
+AccountResult = typing.NamedTuple("AccountResult", [
     ('currency', Currency),
     ('account', Account),
     ('irrs_sequential', List[Returns]),
@@ -591,15 +592,15 @@ Result = typing.NamedTuple("Result", [
     ('final_position', Position),
     ('quote_currency', Currency),
     ('flows', List[CashFlow]),
+    ('catmap', Dict[Account, Cat]),
+    ('decorated_entries', data.Entries),
 ])
 
 
 IRR_FORMAT = "{:32}: {:6.2%} ({:6.2%} ex-div, {:6.2%} div)"
 
-def write_details_file(dcontext,
-                       result: Result,
-                       catmap: Dict[Account, Cat],
-                       decorated_entries: data.Entries,
+def write_account_file(dcontext: display_context.DisplayContext,
+                       result: AccountResult,
                        filename: str):
     """Write out a file with details, for inspection and debugging."""
 
@@ -621,11 +622,11 @@ def write_details_file(dcontext,
         # Print out those details.
         fprint("** Category map\n")
         fprint()
-        pprint(catmap, stream=outfile)
+        pprint(result.catmap, stream=outfile)
         fprint("\n\n")
 
         fprint("** Transactions\n")
-        for entry in decorated_entries:
+        for entry in result.decorated_entries:
             fprint(epr(entry))
         fprint("\n\n")
 
@@ -635,7 +636,7 @@ def write_details_file(dcontext,
         fprint("\n\n")
 
 
-def write_summary_byaccount(filename: str, results: List[Result]):
+def write_summary_byaccount(filename: str, results: List[AccountResult]):
     """Write out the summary statistics to a file."""
     csv_writer = csv.writer(open_with_mkdir(filename))
     num_fields = 6
@@ -646,7 +647,7 @@ def write_summary_byaccount(filename: str, results: List[Result]):
 
 
 def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
-                              target_currency: Currency, results: List[Result]):
+                              target_currency: Currency, results: List[AccountResult]):
     """Write out the summary statistics to a file."""
     # Group by currency.
     currency_flows = collections.defaultdict(list)
@@ -666,7 +667,7 @@ def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
 
 def write_commodity_intervals(filename: str, price_map: prices.PriceMap,
                               target_currency: Currency,
-                              results: List[Result], attrname: str):
+                              results: List[AccountResult], attrname: str):
     """Compute per-commodity pivots over intervals."""
 
     # Group by currency.
@@ -692,8 +693,10 @@ def write_commodity_intervals(filename: str, price_map: prices.PriceMap,
         csv_writer.writerow(total_returns)
 
 
-def write_summary_overall(filename: str, price_map: prices.PriceMap,
-                          target_currency: Currency, results: List[Result]) -> Returns:
+def write_summary_overall(filename: str,
+                          price_map: prices.PriceMap,
+                          target_currency: Currency,
+                          results: List[AccountResult]) -> Returns:
     """Write out the summary statistics to a file."""
     flows = []
     for result in results:
@@ -705,6 +708,43 @@ def write_summary_overall(filename: str, price_map: prices.PriceMap,
     csv_writer.writerow(irr._replace(groupname="(all)")[:-1])
 
     return irr
+
+
+def write_transactions_by_type(output_signatures: str,
+                               signature_map: Dict[str, Any],
+                               dcontext: display_context.DisplayContext):
+    """Write files of transactions by signature, for debugging."""
+    for sig, sigentries in signature_map.items():
+        filename = "{}.org".format(sig)
+        with open_with_mkdir(path.join(output_signatures, filename)) as catfile:
+            fprint = functools.partial(print, file=catfile)
+            fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
+
+            description = KNOWN_SIGNATURES[sig]
+            fprint("description: {}".format(description))
+            fprint("number_entries: {}".format(len(sigentries)))
+            fprint()
+
+            epr = printer.EntryPrinter(dcontext=dcontext,
+                                       stringify_invalid_types=True)
+            for entry in sigentries:
+                fprint(epr(entry))
+                fprint()
+
+
+def write_price_directives(filename: str, required_prices: Any, days_price_threshold: int):
+    """Write a list of required price directives as a Beancount file."""
+    price_entries = []
+    for (currency, required_date), found_dates in sorted(required_prices.items()):
+        assert len(found_dates) == 1
+        cost_currency, actual_date, rate = found_dates.pop()
+        days_late = (required_date - actual_date).days
+        if days_late < days_price_threshold:
+            continue
+        price = data.Price({}, required_date, currency, Amount(rate, cost_currency))
+        price_entries.append(price)
+    with open_with_mkdir(filename) as prfile:
+        printer.print_entries(price_entries, file=prfile)
 
 
 IntervalSets = collections.namedtuple("IntervalSets", ["sequential", "trailing"])
@@ -748,6 +788,76 @@ def open_with_mkdir(filename: str):
     return open(filename, "w")
 
 
+def process_accounts(account_list, entries, options_map, price_map, target_currency):
+    """Process the list of accounts, extracting flows and computing IRR for intervals."""
+
+    # A list of time intervals of interest whose value we will need to accumulate.
+    interval_sets, interval_dates = get_time_intervals(TODAY)
+
+    signature_map = {sig: [] for sig in KNOWN_SIGNATURES}
+    results = []
+    required_prices = collections.defaultdict(set)
+    for account in account_list:
+        logging.info("Processing account: %s", account)
+
+        # Categorize each entry and compute local flows for each entry.
+        decorated_entries, catmap, dated_balances = process_account_entries(
+            entries, options_map, account, interval_dates)
+        if not decorated_entries:
+            continue
+        balances_map = {b.date: b for b in dated_balances}
+
+        # Update the global signature map, so we can later output by category.
+        for entry in decorated_entries:
+            signature_map[entry.meta["signature"]].append(entry)
+
+        # Process cash flows for this account.
+        irr_sets = []
+        for intervals in interval_sets:
+            irr_list = []
+            for description, date1, date2 in intervals:
+                # Compute final flows.
+                interval_flows = process_account_cash_flows(
+                    decorated_entries, price_map,
+                    balance_start=balances_map[date1],
+                    balance_end=balances_map[date2],
+                    required_prices=required_prices)
+
+                # Compute IRR.
+                irr = compute_returns(interval_flows, price_map, target_currency)
+                irr = irr._replace(groupname=description)
+
+                # Build a results row.
+                currency = accountlib.leaf(account)
+
+                irr_list.append(irr)
+            irr_sets.append(irr_list)
+
+        # Compute flows for unbounded interval.
+        assert TODAY in balances_map, "Intervals must include end date of today"
+        flows = process_account_cash_flows(decorated_entries, price_map,
+                                           balance_end=balances_map[TODAY],
+                                           required_prices=required_prices)
+
+        # Compute final position.
+        final_dbalance = balances_map[TODAY]
+        final_balance = final_dbalance.value.reduce(convert.get_value, price_map,
+                                                    final_dbalance.date)
+        final_position = final_balance.get_only_position()
+
+        result = AccountResult(currency, account,
+                               irr_sets[0],
+                               irr_sets[1],
+                               final_position.units.number if final_position else "",
+                               final_position.units.currency if final_position else "",
+                               flows,
+                               catmap,
+                               decorated_entries)
+        results.append(result)
+
+    return (results, signature_map, required_prices)
+
+
 def main():
     """Top-level function."""
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -773,115 +883,35 @@ def main():
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    # os.makedirs(args.output, exist_ok=True)
 
     output_accounts = path.join(args.output, "account")
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
     entries, _, options_map = loader.load_file(args.ledger)
+    dcontext = options_map['dcontext']
     price_map = prices.build_price_map(entries)
 
-    # A list of time intervals of interest whose value we will need to accumulate.
-    interval_sets, interval_dates = get_time_intervals(TODAY)
-
-    # Figure out accounts to process.
+    # Find out the list of accounts to be included.
     account_list = args.accounts or find_accounts(entries, options_map, args.start_date)
-    signature_map = {sig: [] for sig in KNOWN_SIGNATURES}
-    results = []
-    required_prices = collections.defaultdict(set)
-    for account in account_list:
-        logging.info("Processing account: %s", account)
 
-        # Categorize each entry and compute local flows for each entry.
-        decorated_entries, catmap, dated_balances = process_account_entries(
-            entries, options_map, account, interval_dates)
-        if not decorated_entries:
-            continue
-        balances_map = {b.date: b for b in dated_balances}
+    # Process each account independently.
+    results, signature_map, required_prices = process_accounts(
+        account_list, entries, options_map, price_map, args.target_currency)
 
-        # Update the global signature map, so we can later output by category.
-        for entry in decorated_entries:
-            signature_map[entry.meta["signature"]].append(entry)
+    # Output a per-account details file.
+    for result in results:
+        filename = path.join(output_accounts, result.account.replace(":", "_") + ".org")
+        write_account_file(dcontext, result, filename)
 
-        irr_sets = []
-        for intervals in interval_sets:
-            irr_list = []
-            for description, date1, date2 in intervals:
-                # Compute final flows.
-                interval_flows = process_account_cash_flows(
-                    decorated_entries, price_map,
-                    balance_start=balances_map[date1],
-                    balance_end=balances_map[date2],
-                    required_prices=required_prices)
+    # Output required price directives (to be filled in the source ledger by
+    # fetching prices).
+    write_price_directives(path.join(args.output, "prices.beancount"), required_prices,
+                           args.days_price_threshold)
 
-                # Compute IRR.
-                irr = compute_returns(interval_flows, price_map, args.target_currency)
-                irr = irr._replace(groupname=description)
-
-                # Build a results row.
-                currency = accountlib.leaf(account)
-
-                irr_list.append(irr)
-            irr_sets.append(irr_list)
-
-        # Compute flows for unbounded interval.
-        assert TODAY in balances_map, "Intervals must include end date of today"
-        flows = process_account_cash_flows(decorated_entries, price_map,
-                                           balance_end=balances_map[TODAY],
-                                           required_prices=required_prices)
-
-        # Compute final position.
-        final_dbalance = balances_map[TODAY]
-        final_balance = final_dbalance.value.reduce(convert.get_value, price_map,
-                                                    final_dbalance.date)
-        final_position = final_balance.get_only_position()
-
-        result = Result(currency, account,
-                        irr_sets[0],
-                        irr_sets[1],
-                        final_position.units.number if final_position else "",
-                        final_position.units.currency if final_position else "",
-                        flows)
-        results.append(result)
-
-        # Produce a per-account details output file.
-        filename = path.join(output_accounts, account.replace(":", "_") + ".org")
-        write_details_file(options_map['dcontext'],
-                           result, catmap, decorated_entries, filename)
-
-    # Output required price directives.
-    price_entries = []
-    for (currency, required_date), found_dates in sorted(required_prices.items()):
-        assert len(found_dates) == 1
-        cost_currency, actual_date, rate = found_dates.pop()
-        days_late = (required_date - actual_date).days
-        if days_late < args.days_price_threshold:
-            continue
-        price = data.Price({}, required_date, currency, Amount(rate, cost_currency))
-        price_entries.append(price)
-    with open_with_mkdir(path.join(args.output, "prices.beancount")) as prfile:
-        printer.print_entries(price_entries, file=prfile)
-
-    # Output transactions for each type.
+    # Output transactions for each type (for debugging).
     output_signatures = path.join(args.output, "signature")
-
-    for sig, sigentries in signature_map.items():
-        filename = "{}.org".format(sig)
-        with open_with_mkdir(path.join(output_signatures, filename)) as catfile:
-            fprint = functools.partial(print, file=catfile)
-            fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
-
-            description = KNOWN_SIGNATURES[sig]
-            fprint("description: {}".format(description))
-            fprint("number_entries: {}".format(len(sigentries)))
-            fprint()
-
-            epr = printer.EntryPrinter(dcontext=options_map['dcontext'],
-                                       stringify_invalid_types=True)
-            for entry in sigentries:
-                fprint(epr(entry))
-                fprint()
+    write_transactions_by_type(output_signatures, signature_map, dcontext)
 
     # Output summary files, by account, by currency, overall.
     write_summary_byaccount(path.join(args.output, "byaccount.csv"),
