@@ -18,7 +18,13 @@
         return YYerror;                                         \
     }
 
-/* MSVC requires this indirection to expand __VA_ARGS__ correctly. */
+/* MSVC cannot pass __VA_ARGS__ from one macro to another in a natural
+ * way: FOO(__VA_ARGS__) will pass the entire __VA_ARGS__ expansion,
+ * including commas, as the first parameter to FOO. To work around this
+ * we add an indirection which forces MSVC to expand __VA_ARGS__ before
+ * it sees the invocation of the build_XXX macro.
+ * See: https://gcc.godbolt.org/z/Gfo4zb, https://bit.ly/3jqi1Vl
+ */
 #define invoke_builder(name, arg_list) build_##name arg_list
 
 #define build_STR(_ptr, _len) PyUnicode_FromStringAndSize(_ptr, _len)
