@@ -55,3 +55,38 @@
 ;; `beancount-number-alignment-column`. Setting it to 0 will cause the
 ;; alignment column to be determined from file content.  Postings in
 ;; transactions are indented with `beancount-transaction-indent` spaces.
+
+
+;; Register support for a 'beancount-account thing for (thing-at-point).
+(put 'beancount-account 'bounds-of-thing-at-point
+     (lambda ()
+       (let ((thing (thing-at-point-looking-at
+		     beancount-account-regexp 500)))
+         (if thing
+             (let ((beginning (match-beginning 0))
+                   (end (match-end 0)))
+               (cons beginning end))))))
+
+(defadvice shell-quote-argument (around dont-quote-already-quoted-args activate)
+  "Avoid quoting argument if it's already quoted."
+  (let ((arg (ad-get-arg 0)))
+    (setq ad-return-value
+          (if (or (string-match "\".*\"$" arg)
+                  (string-match "\'.*\'$" arg))
+              arg ad-do-it))))
+
+(defvar beancount-journal-command
+  (concat
+   "select date, flag, maxwidth(description, 80), position, balance "
+   "where account = '%s'"))I
+
+(defun beancount-query-journal-at-point ()
+  "Run a journal command for the account at point."
+  (interactive)
+  (let* ((account (thing-at-point 'beancount-account))
+         (sql (concat "\"" (format beancount-journal-command account) "\"")))
+    (beancount--run beancount-query-program
+                    (file-relative-name buffer-file-name)
+                    sql)))
+
+(define-key* beancount-mode-map [(control c)(j)] #'beancount-query-journal-at-point)
