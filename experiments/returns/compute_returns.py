@@ -36,6 +36,7 @@ import enum
 import itertools
 import functools
 import logging
+import operator
 import os
 import re
 import typing
@@ -46,8 +47,11 @@ from scipy.optimize import fsolve
 ndarray = numpy.ndarray  # pylint: disable=invalid-name
 
 from beancount import loader
+from beancount.core.number import ZERO
+from beancount.core.number import ONE
 from beancount.core import account as accountlib
 from beancount.core import account_types as acctypes
+from beancount.core import amount
 from beancount.core import convert
 from beancount.core import data
 from beancount.core import getters
@@ -80,7 +84,7 @@ TODAY = Date.today()
 
 DatedBalance = typing.NamedTuple("DatedBalance", [
     ("date", Date), # Requested date.
-    ("actual_date", Date),
+    ("balance_date", Date),
     ("value", Any),
 ])
 
@@ -228,7 +232,6 @@ def categorize_accounts(account: Account,
             move(acc, Cat.OTHERASSET)
 
         else:
-            print("unknown:", acc)
             move(acc, Cat.UNKNOWN)
 
     return catmap
@@ -395,7 +398,6 @@ def compute_irr(dated_flows: List[CashFlow],
         usd_amount = convert.convert_amount(
             flow.amount, target_currency, price_map, date=flow.date)
         usd_flows.append(float(usd_amount.number))
-        #print(date, amount, "->", usd_amount)
     cash_flows = numpy.array(usd_flows)
 
     # Array of time in years.
@@ -498,12 +500,13 @@ def process_account_entries(
     for entry in transactions:
         # Store dated balances.
         if isinstance(entry, DatedBalance):
-            dated_balances.append(entry._replace(actual_date=balance_date,
-                                                 value=copy.deepcopy(balance)))
-            #print("XXX", actual_date - date)
+            db = entry._replace(balance_date=balance_date or entry.date,
+                                value=copy.deepcopy(balance))
+            dated_balances.append(db)
             continue
 
         # Update the total position in the asset we're interested in.
+        balance_date = entry.date
         for posting in entry.postings:
             category = catmap[posting.account]
             if category is Cat.ASSET:
@@ -524,12 +527,15 @@ def process_account_entries(
     return data.sorted(decorated_entries), catmap, dated_balances
 
 
+CurDate = Tuple[Currency, Date]
+
 def process_account_cash_flows(
         decorated_entries: data.Entries,
         price_map: prices.PriceMap,
         balance_start: Optional[DatedBalance] = None,
-        balance_end: Optional[DatedBalance] = None
-) -> Tuple[List[CashFlow], List[CashFlow]]:
+        balance_end: Optional[DatedBalance] = None,
+        required_prices: Optional[Dict[CurDate, Set[CurDate]]] = None,
+) -> List[CashFlow]:
     """Produce the full sequence of cash flows and compute the returns."""
 
     # Gather the list of computed flows.
@@ -538,26 +544,43 @@ def process_account_cash_flows(
         flows.extend(entry.meta['cash_flows'])
 
     # Filter from the front, if specified.
-    if balance_start is not None:
-        cost_balance = balance_start.value.reduce(convert.get_value, price_map,
-                                                  balance_start.date)
-        position = cost_balance.get_only_position()
-        new_flows = [flow for flow in flows if flow.date >= balance_start.date]
-        if position is not None:
-            new_flows.insert(0, CashFlow(balance_start.date, -position.units, False))
+    for dbalance, at_start in [(balance_start, True),
+                               (balance_end, False)]:
+        if dbalance is None:
+            continue
+
+        # Filter flows by date.
+        if at_start:
+            new_flows = [flow for flow in flows if flow.date >= dbalance.date]
+        else:
+            new_flows = [flow for flow in flows if flow.date < dbalance.date]
         flows = new_flows
 
-    # Filter at the back, if specified.
-    if balance_end is not None:
-        cost_balance = balance_end.value.reduce(convert.get_value, price_map,
-                                                balance_end.date)
-        position = cost_balance.get_only_position()
-        new_flows = [flow for flow in flows if flow.date < balance_end.date]
-        if position is not None:
-            new_flows.append(CashFlow(balance_end.date, position.units, False))
-        flows = new_flows
+        # If there are some units in the inventory at date, convert to market
+        # value and insert in the list of flows.
+        units_balance = dbalance.value.reduce(convert.get_units)
+        if not units_balance.is_empty():
+            price_dates = []
+            cost_balance = dbalance.value.reduce(convert.get_value, price_map,
+                                                 dbalance.date, price_dates)
+            cost_position = cost_balance.get_only_position()
+            assert cost_position, units_balance
+            if at_start:
+                flows.insert(
+                    0, CashFlow(dbalance.date, -cost_position.units, False))
+            else:
+                flows.append(
+                    CashFlow(dbalance.date, cost_position.units, False))
 
-    return flows, position
+            if required_prices is not None:
+                units_position = units_balance.get_only_position()
+                assert units_position
+                for date, rate in price_dates:
+                    required_prices[(units_position.units.currency, dbalance.date)].add(
+                        (cost_position.units.currency, date, rate))
+
+    # print("FLOWS", [(cf.date.isoformat(), str(cf.amount.number)) for cf in  flows])
+    return flows
 
 
 Result = typing.NamedTuple("Result", [
@@ -581,7 +604,7 @@ def write_details_file(dcontext,
     """Write out a file with details, for inspection and debugging."""
 
     epr = printer.EntryPrinter(dcontext=dcontext, stringify_invalid_types=True)
-    with open(filename, "w") as outfile:
+    with open_with_mkdir(filename) as outfile:
         fprint = functools.partial(print, file=outfile)
         fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
 
@@ -614,7 +637,7 @@ def write_details_file(dcontext,
 
 def write_summary_byaccount(filename: str, results: List[Result]):
     """Write out the summary statistics to a file."""
-    csv_writer = csv.writer(open(filename, "w"))
+    csv_writer = csv.writer(open_with_mkdir(filename))
     num_fields = 6
     csv_writer.writerow(Returns._fields)
     for result in results:
@@ -632,7 +655,7 @@ def write_summary_bycommodity(filename: str, price_map: prices.PriceMap,
             continue
         currency_flows[result.currency].extend(result.flows)
 
-    csv_writer = csv.writer(open(filename, "w"))
+    csv_writer = csv.writer(open_with_mkdir(filename))
     csv_writer.writerow(Returns._fields)
     for currency in sorted(currency_flows):
         flows = currency_flows[currency]
@@ -656,12 +679,11 @@ def write_commodity_intervals(filename: str, price_map: prices.PriceMap,
         for index, irr in enumerate(irrs):
             currency_flows[result.currency][index].extend(irr.flows)
 
-    csv_writer = csv.writer(open(filename, "w"))
+    csv_writer = csv.writer(open_with_mkdir(filename))
     csv_writer.writerow(["currency"] + groupnames)
     for currency in sorted(currency_flows):
         flows_list = currency_flows[currency]
         assert len(flows_list) == len(groupnames)
-        #print(currency, [len(f) for f in flows_list])
         total_returns = [currency]
         for groupname, flows in zip(groupnames, flows_list):
             irr = compute_returns(flows, price_map, target_currency)
@@ -678,7 +700,7 @@ def write_summary_overall(filename: str, price_map: prices.PriceMap,
         flows.extend(result.flows)
     irr = compute_returns(flows, price_map, target_currency)
 
-    csv_writer = csv.writer(open(filename, "w"))
+    csv_writer = csv.writer(open_with_mkdir(filename))
     csv_writer.writerow(Returns._fields)
     csv_writer.writerow(irr._replace(groupname="(all)")[:-1])
 
@@ -720,6 +742,12 @@ def get_time_intervals(date: Date) -> Tuple[IntervalSets, List[Date]]:
             interval_dates)
 
 
+def open_with_mkdir(filename: str):
+    """Open in write mode ensuring the underlying directory exists."""
+    os.makedirs(path.dirname(filename), exist_ok=True)
+    return open(filename, "w")
+
+
 def main():
     """Top-level function."""
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -733,6 +761,9 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
     parser.add_argument('-c', '--target-currency', action='store', default='USD',
                         help="The target currency to convert flows to.")
+    parser.add_argument('-d', '--days-price-threshold', action='store', type=int,
+                        default=3,
+                        help="The number of days to tolerate price latency.")
     parser.add_argument('-s', '--start-date', action='store',
                         type=datetime.date.fromisoformat,
                         default=Date(TODAY.year - 10, TODAY.month, TODAY.day),
@@ -742,10 +773,9 @@ def main():
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    os.makedirs(args.output, exist_ok=True)
+    # os.makedirs(args.output, exist_ok=True)
 
     output_accounts = path.join(args.output, "account")
-    os.makedirs(output_accounts, exist_ok=True)
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
@@ -759,6 +789,7 @@ def main():
     account_list = args.accounts or find_accounts(entries, options_map, args.start_date)
     signature_map = {sig: [] for sig in KNOWN_SIGNATURES}
     results = []
+    required_prices = collections.defaultdict(set)
     for account in account_list:
         logging.info("Processing account: %s", account)
 
@@ -771,8 +802,6 @@ def main():
 
         # Update the global signature map, so we can later output by category.
         for entry in decorated_entries:
-            if entry.meta["signature"] not in signature_map:
-                print(entry.meta)
             signature_map[entry.meta["signature"]].append(entry)
 
         irr_sets = []
@@ -780,10 +809,11 @@ def main():
             irr_list = []
             for description, date1, date2 in intervals:
                 # Compute final flows.
-                interval_flows, _ = process_account_cash_flows(
+                interval_flows = process_account_cash_flows(
                     decorated_entries, price_map,
                     balance_start=balances_map[date1],
-                    balance_end=balances_map[date2])
+                    balance_end=balances_map[date2],
+                    required_prices=required_prices)
 
                 # Compute IRR.
                 irr = compute_returns(interval_flows, price_map, args.target_currency)
@@ -797,8 +827,15 @@ def main():
 
         # Compute flows for unbounded interval.
         assert TODAY in balances_map, "Intervals must include end date of today"
-        flows, final_position = process_account_cash_flows(decorated_entries, price_map,
-                                                           balance_end=balances_map[TODAY])
+        flows = process_account_cash_flows(decorated_entries, price_map,
+                                           balance_end=balances_map[TODAY],
+                                           required_prices=required_prices)
+
+        # Compute final position.
+        final_dbalance = balances_map[TODAY]
+        final_balance = final_dbalance.value.reduce(convert.get_value, price_map,
+                                                    final_dbalance.date)
+        final_position = final_balance.get_only_position()
 
         result = Result(currency, account,
                         irr_sets[0],
@@ -813,13 +850,25 @@ def main():
         write_details_file(options_map['dcontext'],
                            result, catmap, decorated_entries, filename)
 
+    # Output required price directives.
+    price_entries = []
+    for (currency, required_date), found_dates in sorted(required_prices.items()):
+        assert len(found_dates) == 1
+        cost_currency, actual_date, rate = found_dates.pop()
+        days_late = (required_date - actual_date).days
+        if days_late < args.days_price_threshold:
+            continue
+        price = data.Price({}, required_date, currency, Amount(rate, cost_currency))
+        price_entries.append(price)
+    with open_with_mkdir(path.join(args.output, "prices.beancount")) as prfile:
+        printer.print_entries(price_entries, file=prfile)
+
     # Output transactions for each type.
     output_signatures = path.join(args.output, "signature")
-    os.makedirs(output_signatures, exist_ok=True)
 
     for sig, sigentries in signature_map.items():
         filename = "{}.org".format(sig)
-        with open(path.join(output_signatures, filename), "w") as catfile:
+        with open_with_mkdir(path.join(output_signatures, filename)) as catfile:
             fprint = functools.partial(print, file=catfile)
             fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
 
