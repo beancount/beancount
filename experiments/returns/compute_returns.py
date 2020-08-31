@@ -33,18 +33,21 @@ import copy
 import csv
 import datetime
 import enum
-import itertools
 import functools
+import itertools
 import logging
 import operator
 import os
 import re
+import subprocess
+import tempfile
 import typing
 
-import numpy
+import numpy as np
 #import numpy_financial as npf
 from scipy.optimize import fsolve
-ndarray = numpy.ndarray  # pylint: disable=invalid-name
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from beancount import loader
 from beancount.core.number import ZERO
@@ -68,6 +71,7 @@ from beancount.parser import printer
 Account = str
 Currency = str
 Date = datetime.date
+Array = np.ndarray  # pylint: disable=invalid-name
 
 
 # Al list of dated cash flows. This is the unit that this program operates in,
@@ -383,9 +387,9 @@ def handle_failing(entry: data.Directive) -> List[CashFlow]:
     return flows
 
 
-def net_present_value(irr: float, cash_flows: ndarray, years: ndarray):
+def net_present_value(irr: float, cash_flows: Array, years: Array):
     """Net present value; objective function for optimizer."""
-    return numpy.sum(cash_flows / (1. + irr) ** years)
+    return np.sum(cash_flows / (1. + irr) ** years)
 
 
 def compute_irr(dated_flows: List[CashFlow],
@@ -399,13 +403,13 @@ def compute_irr(dated_flows: List[CashFlow],
         usd_amount = convert.convert_amount(
             flow.amount, target_currency, price_map, date=flow.date)
         usd_flows.append(float(usd_amount.number))
-    cash_flows = numpy.array(usd_flows)
+    cash_flows = np.array(usd_flows)
 
     # Array of time in years.
     years = []
     for flow in dated_flows:
         years.append((flow.date - TODAY).days / 365)
-    years = numpy.array(years)
+    years = np.array(years)
 
     # Start with something reasonably normal.
     estimated_irr = 0.20
@@ -586,6 +590,7 @@ def process_account_cash_flows(
 
 AccountResult = typing.NamedTuple("AccountResult", [
     ('currency', Currency),
+    ('cost_currency', Currency),
     ('account', Account),
     ('irrs_sequential', List[Returns]),
     ('irrs_trailing', List[Returns]),
@@ -634,6 +639,146 @@ def write_account_file(dcontext: display_context.DisplayContext,
         for flow in result.flows:
             fprint(flow)
         fprint("\n\n")
+
+
+RETURNS_TEMPLATE_PRE = """
+<html>
+  <head>
+    <title>{title}</title>
+    <style>
+      @media print {{
+          @page {{ margin: 0; }}
+          body {{ margin: 0.3in; }}
+      }}
+      table td, table th {{ border-collapse: true; border: thin solid black; }}
+      /* p {{ margin-bottom: .1em }} */
+    </style>
+  <head>
+    <body>
+      <h1>{title}</h1>
+"""
+RETURNS_TEMPLATE_POST = """
+    </body>
+</html>
+"""
+
+
+def write_returns(dcontext: display_context.DisplayContext,
+                  price_map: prices.PriceMap,
+                  unused_target_currency: Currency,
+                  results: List[AccountResult],
+                  title: str,
+                  filename: str):
+    """Write out returns for a combined list of account results.."""
+
+    logging.info("Writing results file for %s", title)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(path.join(tmpdir, "index.html"), "w") as indexfile:
+            fprint = functools.partial(print, file=indexfile)
+            fprint(RETURNS_TEMPLATE_PRE.format(title=title))
+
+            cost_currencies = set(r.cost_currency for r in results)
+            cost_currency = cost_currencies.pop()
+            assert not cost_currencies, "Incompatible cost currencies."
+
+            #fprint("<h2>Accounts</h2>")
+            fprint("<p>Cost Currency: {}</p>".format(cost_currency))
+            for result in results:
+                fprint("<p>Account: {}</p>".format(result.account))
+
+            fprint("<h2>Cash Flows</h2>")
+            flows = sorted(f for r in results for f in r.flows)
+            returns = compute_returns(flows, price_map, cost_currency)
+            plots = plot_flows(tmpdir, flows, returns)
+            fprint('<img src={} style="width: 100%"/>'.format(plots["flows"]))
+            fprint('<img src={} style="width: 100%"/>'.format(plots["cumvalue"]))
+
+            fprint("<h2>Returns</h2>")
+            fprint('<table>')
+            fprint("<tr><th>Total</th><th>Ex-Div</th><th>Div</th></tr>")
+            fprint("<tr><td>{r.total:.1%}</td><td>{r.exdiv:.1%}</td><td>{r.div:.1%}</td></tr>".format(r=returns))
+            fprint("</table>")
+
+            fprint(RETURNS_TEMPLATE_POST)
+
+        command = ["google-chrome", "--headless", "--disable-gpu",
+                   "--print-to-pdf={}".format(filename), indexfile.name]
+        subprocess.check_call(command, stderr=open("/dev/null", "w"))
+
+
+def plot_flows(output_dir: str,
+               flows: List[CashFlow],
+               returns: Returns) -> Dict[str, str]:
+    """Plot plotsf rom cash flows and returns."""
+
+    outplots = {}
+
+    # Render cash flows.
+    years = mdates.YearLocator()
+    years_fmt = mdates.DateFormatter('%Y')
+    months = mdates.MonthLocator()
+
+    def set_axis(ax_):
+        ax_.xaxis.set_major_locator(years)
+        ax_.xaxis.set_major_formatter(years_fmt)
+        ax_.xaxis.set_minor_locator(months)
+
+        datemin = np.datetime64(dates[0], 'Y')
+        datemax = np.datetime64(dates[-1], 'Y') + np.timedelta64(1, 'Y')
+        ax_.set_xlim(datemin, datemax)
+
+        ax_.format_xdata = mdates.DateFormatter('%Y-%m-%d')
+        ax_.format_ydata = "{:,}".format
+        ax_.grid(True)
+
+    dates = [f.date for f in flows]
+    dates_exdiv = [f.date for f in flows if not f.is_dividend]
+    dates_div = [f.date for f in flows if f.is_dividend]
+    amounts = np.array([f.amount.number for f in flows])
+    amounts_exdiv = np.array([f.amount.number for f in flows if not f.is_dividend])
+    amounts_div = np.array([f.amount.number for f in flows if f.is_dividend])
+
+    fig, ax = plt.subplots(figsize=[10, 4])
+    set_axis(ax)
+    ax.vlines(dates_exdiv, 0, amounts_exdiv, linewidth=3, color='#000', alpha=0.7)
+    ax.vlines(dates_div, 0, amounts_div, linewidth=3, color='#0A0', alpha=0.7)
+
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    filename = outplots["flows"] = path.join(output_dir, "flows.svg")
+    plt.savefig(filename)
+    plt.close(fig)
+
+    # Render cumulative cash flows, with returns growth.
+    date_min = dates[0] - datetime.timedelta(days=1)
+    date_max = dates[-1]
+    num_days = (date_max - date_min).days
+    dates_all = [dates[0] + datetime.timedelta(days=x) for x in range(num_days)]
+    gamounts = np.zeros(num_days)
+    rate = (1 + returns.total) ** (1./365)
+    for flow in flows:
+        remaining_days = (date_max - flow.date).days
+        amt = -float(flow.amount.number)
+        if remaining_days > 0:
+            gflow = amt * (rate ** np.arange(0, remaining_days))
+            gamounts[-remaining_days:] += gflow
+        else:
+            gamounts[-1] += amt
+
+    fig, ax = plt.subplots(figsize=[10, 4])
+    set_axis(ax)
+
+    ax.scatter(dates_all, gamounts, color='#000', alpha=0.2, s=0.1)
+    ax.plot(dates_all, gamounts, color='#000', alpha=0.7)
+    ax.axhline(0, color='#000', linewidth=0.5)
+
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    filename = outplots["cumvalue"] = path.join(output_dir, "cumvalue.svg")
+    plt.savefig(filename)
+    plt.close(fig)
+
+    return outplots
 
 
 def write_summary_byaccount(filename: str, results: List[AccountResult]):
@@ -772,14 +917,14 @@ def get_time_intervals(date: Date) -> Tuple[IntervalSets, List[Date]]:
         ]
 
     # Compute the set of unique dates to gather balance inventories for.
-    interval_dates = set()
+    all_interval_dates = set()
     for _, date1, date2 in itertools.chain(intervals_sequential,
                                            intervals_trailing):
-        interval_dates.add(date1)
-        interval_dates.add(date2)
+        all_interval_dates.add(date1)
+        all_interval_dates.add(date2)
 
     return (IntervalSets(intervals_sequential, intervals_trailing),
-            interval_dates)
+            all_interval_dates)
 
 
 def open_with_mkdir(filename: str):
@@ -838,6 +983,7 @@ def process_accounts(account_list, entries, options_map, price_map, target_curre
         flows = process_account_cash_flows(decorated_entries, price_map,
                                            balance_end=balances_map[TODAY],
                                            required_prices=required_prices)
+        cost_currency = flows[0].amount.currency
 
         # Compute final position.
         final_dbalance = balances_map[TODAY]
@@ -845,7 +991,7 @@ def process_accounts(account_list, entries, options_map, price_map, target_curre
                                                     final_dbalance.date)
         final_position = final_balance.get_only_position()
 
-        result = AccountResult(currency, account,
+        result = AccountResult(currency, cost_currency, account,
                                irr_sets[0],
                                irr_sets[1],
                                final_position.units.number if final_position else "",
@@ -883,6 +1029,7 @@ def main():
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
+        logging.getLogger('matplotlib.font_manager').disabled = True
 
     output_accounts = path.join(args.output, "account")
 
@@ -903,6 +1050,10 @@ def main():
     for result in results:
         filename = path.join(output_accounts, result.account.replace(":", "_") + ".org")
         write_account_file(dcontext, result, filename)
+
+        filename = path.join(output_accounts, result.account.replace(":", "_") + ".pdf")
+        write_returns(dcontext, price_map, args.target_currency, [result], result.account,
+                      filename)
 
     # Output required price directives (to be filled in the source ledger by
     # fetching prices).
@@ -926,6 +1077,10 @@ def main():
         write_commodity_intervals(path.join(args.output, "{}.csv".format(setname)),
                                   price_map, args.target_currency,
                                   results, "irrs_{}".format(setname))
+
+    # Compute returns for the full set of selected accounts.
+    write_returns(dcontext, price_map, args.target_currency, results, "All accounts",
+                  path.join(args.output, "returns.pdf"))
 
     # Compute my overall returns.
     print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
