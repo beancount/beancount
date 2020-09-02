@@ -103,9 +103,11 @@ RedirectMatch /doc/custom-application$    https://docs.google.com/document/d/1Sn
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
 RedirectMatch /doc/application$           /beancount/doc/custom-application
 
-RedirectMatch /doc/returns$               https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
+RedirectMatch /doc/returns$               https://docs.google.com/document/d/1nPsMIunLnDvdsg6TSsd0PZb7jngojNpFlqnaX36WRp8/
+RedirectMatch /doc/returns-old$           https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
 RedirectMatch /doc/portfolio-returns$     /beancount/doc/returns
 RedirectMatch /doc/calculating-returns$   /beancount/doc/returns
+RedirectMatch /doc/computing-returns$     /beancount/doc/returns
 
 RedirectMatch /doc/proposal-booking$      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
 RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
