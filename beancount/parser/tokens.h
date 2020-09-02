@@ -4,6 +4,21 @@
 #include <stdbool.h>
 #include <datetime.h>
 
+
+/**
+ * Force the preprocessor to expand the argument one more time.
+ *
+ * MSVC expands __VA_ARGS__ in a variadic macro to a single token
+ * instead of a list of arguments resulting in the wrong number of
+ * arguments passed to the function the macro expands to. Adding a
+ * second macro expansion forces the preprocessor to scan again the
+ * input and correctly tokenize the arguments. This is required to
+ * make the defition of token() below work as intended when compiled
+ * with MSVC.
+ */
+#define EXPAND(x) x
+
+
 /**
  * Dispatch to token values build functions.
  *
@@ -12,7 +27,7 @@
  * are handled and reported as lexing errors.
  */
 #define token(name, ...)                                        \
-    yylval->pyobj = build_##name(__VA_ARGS__);                  \
+    yylval->pyobj = EXPAND(build_##name(__VA_ARGS__));          \
     if (yylval->pyobj == NULL) {                                \
         build_lexer_error_from_exception(yylloc, builder);      \
         return YYerror;                                         \
@@ -24,7 +39,7 @@
 #define build_LINK build_STR
 #define build_CURRENCY build_STR
 #define build_BOOL(_value) PyBool_FromLong(_value)
-#define build_NONE() ({ Py_INCREF(Py_None); Py_None; })
+#define build_NONE() ( Py_INCREF(Py_None), Py_None )
 #define build_NUMBER(_str) pydecimal_from_cstring(_str)
 #define build_DATE(_str) pydate_from_cstring(_str)
 #define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
