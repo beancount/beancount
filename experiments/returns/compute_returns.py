@@ -588,6 +588,8 @@ def find_balance_before(cash_flows: List[CashFlow],
         if flow.date >= date:
             break
         balance = flow.balance
+    else:
+        index = len(cash_flows)
     return balance, index
 
 
@@ -1127,6 +1129,11 @@ def main():
     output_signatures = path.join(args.output, "signature")
     write_transactions_by_type(output_signatures, account_data, dcontext)
 
+    # Compute returns for the full set of selected accounts.
+    if args.render_total:
+        write_returns(pricer, account_data, "All accounts",
+                      path.join(args.output, "returns.pdf"), args.target_currency)
+
     # Group assets by currency or by explicit grouping.
     groups = group_accounts(entries, account_data, args.render_open, args.render_closed)
     if args.groups:
@@ -1158,11 +1165,6 @@ def main():
     # fetching prices).
     write_price_directives(path.join(args.output, "prices.beancount"),
                            pricer, args.days_price_threshold)
-
-    # Compute returns for the full set of selected accounts.
-    if args.render_total:
-        write_returns(pricer, account_data, "All accounts",
-                      path.join(args.output, "returns.pdf"), args.target_currency)
 
     # # Compute my overall returns.
     # print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
