@@ -4,19 +4,7 @@
 #include <stdbool.h>
 #include <datetime.h>
 
-
-/**
- * Force the preprocessor to expand the argument one more time.
- *
- * MSVC expands __VA_ARGS__ in a variadic macro to a single token
- * instead of a list of arguments resulting in the wrong number of
- * arguments passed to the function the macro expands to. Adding a
- * second macro expansion forces the preprocessor to scan again the
- * input and correctly tokenize the arguments. This is required to
- * make the defition of token() below work as intended when compiled
- * with MSVC.
- */
-#define EXPAND(x) x
+#include "macros.h"
 
 
 /**
