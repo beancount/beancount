@@ -634,15 +634,20 @@ def truncate_cash_flows(pricer: Pricer,
 
 def group_accounts(entries: data.Entries,
                    accdata_list: List[AccountData],
-                   open_only: bool) -> Dict[str, List[AccountData]]:
+                   render_open: bool,
+                   render_closed: bool) -> Dict[str, List[AccountData]]:
     """Logically group accounts for reporting."""
     groups = collections.defaultdict(list)
     open_close_map = getters.get_account_open_close(entries)
     for accdata in accdata_list:
         opn, cls = open_close_map[accdata.account]
         assert opn
-        if open_only and cls:
-            continue
+        if cls:
+            if not render_closed:
+                continue
+        else:
+            if not render_open:
+                continue
         prefix = "closed" if cls else "open"
         group = "{}.{}".format(prefix, accdata.currency)
         groups[group].append(accdata)
@@ -690,8 +695,8 @@ def write_account_file(dcontext: display_context.DisplayContext,
 
 STYLE = """
 @media print {
-    @page { margin: 0; }
-    body { margin: 0.3in; }
+    @page { margin: 0in; }
+    body { margin: 0.2in; }
 }
 
 body, table { font: 9px Noto Sans, sans-serif; }
@@ -765,6 +770,12 @@ def compute_returns_table(pricer: Pricer,
         header.append(intname)
         cash_flows = truncate_cash_flows(pricer, cash_flows_list,
                                          date1, date2)
+        if 0:
+            print("===;", intname, date1, "->", date2)
+            for cf in cash_flows:
+                print(cf.date, cf.amount)
+            print()
+
         returns = compute_returns(cash_flows, pricer, target_currency)
         rows[0].append(returns.total)
         rows[1].append(returns.exdiv)
@@ -1073,12 +1084,15 @@ def main():
                         help=("Accounts already closed before this date will not be "
                               "included in reporting."))
 
-    parser.add_argument('-g', '--groups', '--additional-groups', action='store',
+    parser.add_argument('-G', '--groups', '--additional-groups', action='store',
                         help=("A JSON filename containing a list of additional account "
                               "groups to compute returns for."))
-
-    parser.add_argument('-O', '--open-only', action='store_true',
-                        help="Don't render closed accounts.")
+    parser.add_argument('-O', '--render-open', action='store_true',
+                        help="Render open accounts.")
+    parser.add_argument('-C', '--render-closed', action='store_true',
+                        help="Render closed accounts.")
+    parser.add_argument('-T', '--render-total', action='store_true',
+                        help="Render total return.")
 
     args = parser.parse_args()
     if args.verbose:
@@ -1114,11 +1128,12 @@ def main():
     write_transactions_by_type(output_signatures, account_data, dcontext)
 
     # Group assets by currency or by explicit grouping.
-    groups = group_accounts(entries, account_data, args.open_only)
+    groups = group_accounts(entries, account_data, args.render_open, args.render_closed)
     if args.groups:
         groups.update(read_groups(args.groups, account_data))
-    # for g, adlist in groups.items():
-    #     print(g, [ad.account for ad in adlist])
+    if 0:
+        for g, adlist in groups.items():
+            pprint((g, [ad.account for ad in adlist]))
 
     # Write out a returns file for every account.
     multiprocessing.set_start_method('fork')
@@ -1145,8 +1160,9 @@ def main():
                            pricer, args.days_price_threshold)
 
     # Compute returns for the full set of selected accounts.
-    write_returns(pricer, account_data, "All accounts",
-                  path.join(args.output, "returns.pdf"), args.target_currency)
+    if args.render_total:
+        write_returns(pricer, account_data, "All accounts",
+                      path.join(args.output, "returns.pdf"), args.target_currency)
 
     # # Compute my overall returns.
     # print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
