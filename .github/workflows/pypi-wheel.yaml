@@ -1,0 +1,26 @@
+name: upload-wheel
+
+on:
+  push:
+    tags:
+      - "2.*"
+
+jobs:
+  maxos-and-windows:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.5', '3.6', '3.7', '3.8']
+        os: [windows, macos]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install wheel twine
+      - run: python setup.py bdist_wheel
+      - run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
