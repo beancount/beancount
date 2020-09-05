@@ -38,7 +38,7 @@ yyscan_t yylex_new(void);
 yyscan_t yylex_free(yyscan_t scanner);
 
 /**
- * Allocate and initialize scanner private data.
+ * Initialize scanner private data.
  *
  * Setup @scanner to read from the Python file-like object @file. Set
  * the reported file name to @filename, if not NULL and not None.
@@ -57,6 +57,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "grammar.h"
 #include "tokens.h"
@@ -82,7 +83,7 @@ struct _yyextra_t {
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length);
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
@@ -265,68 +266,56 @@ include		{ return INCLUDE; }
 
  /* Boolean values. */
 TRUE		{
-    token(BOOL, true);
-    return BOOL;
+    return token(BOOL, true);
 }
 
 FALSE		{
-    token(BOOL, false);
-    return BOOL;
+    return token(BOOL, false);
 }
 
 NULL		{
-    token(NONE);
-    return NONE;
+    return token(NONE);
 }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
-    token(DATE, yytext);
-    return DATE;
+    return token(DATE, yytext);
 }
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
-    token(ACCOUNT, yytext);
-    return ACCOUNT;
+    return token(ACCOUNT, yytext);
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
-    token(CURRENCY, yytext, yyleng);
-    return CURRENCY;
+    return token(CURRENCY, yytext, yyleng);
 }
 
  /* String literals. */
 \"([^\\\"]|\\.)*\"		{
-    token(STRING, yytext + 1, yyleng - 2, yy_encoding);
-    return STRING;
+    return token(STRING, yytext + 1, yyleng - 2, yy_encoding);
 }
 
  /* Numbers */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)?	{
-    token(NUMBER, yytext);
-    return NUMBER;
+    return token(NUMBER, yytext);
 }
 
  /* Tags */
 #[A-Za-z0-9\-_/.]+ 		{
-    token(TAG, yytext + 1, yyleng - 1);
-    return TAG;
+    return token(TAG, yytext + 1, yyleng - 1);
 }
 
  /* Links */
 \^[A-Za-z0-9\-_/.]+ 		{
-    token(LINK, yytext + 1, yyleng - 1);
-    return LINK;
+    return token(LINK, yytext + 1, yyleng - 1);
 }
 
  /* Key */
-[a-z][a-zA-Z0-9\-_]+: 		{
-    token(KEY, yytext, yyleng - 1);
-    unput(':');
-    return KEY;
+[a-z][a-zA-Z0-9\-_]+/: 		{
+    return token(KEY, yytext, yyleng);
 }
 
  /* Default rule. {bf253a29a820} */
@@ -352,9 +341,8 @@ NULL		{
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    char buffer[256];
-    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(yylloc, builder, buffer, length);
+    PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
+    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
     return YYerror;
 }
@@ -380,6 +368,7 @@ yyscan_t yylex_new(void)
     }
 
     PyDateTime_IMPORT;
+    PyDecimal_IMPORT;
 
     return scanner;
 }
@@ -440,54 +429,42 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* string, size_t length)
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
 {
-    TRACE_ERROR("Invalid Token");
+    PyObject* error;
+    PyObject* rv;
+    va_list va;
+
+    va_start(va, format);
+    error = PyUnicode_FromFormatV(format, va);
+    va_end(va);
+
+    if (!error) {
+        return;
+    }
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "Ois#",
-				       loc->file_name, loc->first_line,
-				       string, (Py_ssize_t)length);
-    /* Note: If there was an exception in the callback, let it bubble up. */
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
+                             loc->file_name, loc->first_line, error);
+
     Py_XDECREF(rv);
+    Py_XDECREF(error);
 }
 
 void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    TRACE_ERROR("Lexer Builder Exception");
+    PyObject* type;
+    PyObject* value;
+    PyObject* traceback;
 
-    /* Get the exception context. */
-    PyObject* ptype = NULL;
-    PyObject* pvalue = NULL;
-    PyObject* ptraceback = NULL;
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
-    /* Clear the exception. */
-    PyErr_Clear();
+    build_lexer_error(loc, builder, "%s: %S", PyExceptionClass_Name(type), value);
 
-    if (pvalue != NULL) {
-        /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error", "OiOO",
-					   loc->file_name, loc->first_line,
-					   pvalue, ptype);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-
-        /* If there was an exception during the handling of the lexer error, add
-         * a prefix to the message to make it clear this wasn't expected. */
-        if (rv == NULL) {
-            PyObject* message = PyUnicode_FromFormat(
-                "Internal error while building exception for: %S", pvalue);
-            PyErr_SetObject(PyExc_RuntimeError, message);
-            Py_DECREF(message);
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: No exception");
-    }
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
 }
 
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size)

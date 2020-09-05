@@ -197,6 +197,8 @@ filegroup(
     srcs = [
         "lexer.l",
         "grammar.y",
+        "decimal.h",
+        "decimal.c",
         "macros.h",
         "parser.h",
         "parser.c",
@@ -239,6 +241,27 @@ py_test(
 )
 
 cc_library(
+    name = "decimal_c",
+    hdrs = [
+        "decimal.h",
+    ],
+    srcs = ["decimal.c"],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "decimal_hdr",
+    hdrs = [
+        "decimal.h",
+    ],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
     name = "lexer_c",
     hdrs = [
         "lexer.h",
@@ -248,6 +271,7 @@ cc_library(
         ":lexer_hdr",
         ":parser_hdr",
         ":grammar_hdr",
+        ":decimal_hdr",
         "@local_config_python//:python_headers",
     ],
 )
@@ -256,7 +280,8 @@ cc_library(
     name = "lexer_hdr",
     hdrs = [
         "lexer.h",
-        "tokens.h"
+        "tokens.h",
+        "decimal.h",
     ],
     deps = [
         ":parser_hdr",

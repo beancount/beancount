@@ -77,8 +77,6 @@ extern YY_DECL;
 /* Build a grammar error from the exception context. */
 void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    TRACE_ERROR("Grammar Builder Exception");
-
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;

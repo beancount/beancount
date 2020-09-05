@@ -5,21 +5,22 @@
 #include <datetime.h>
 
 #include "macros.h"
+#include "decimal.h"
 
 
 /**
  * Dispatch to token values build functions.
  *
- * By convention @name is the enum name for to the token. Arguments to
- * the build function follow. Exceptions raised in the build functions
- * are handled and reported as lexing errors.
+ * Build the semantic value for token kind @name. Further arguments
+ * are passed to the factory function. Exceptions raised in the build
+ * functions are handled and reported as lexing errors. Return @name
+ * or %YYerror in case an exception has been raised and handled.
  */
-#define token(name, ...)                                        \
-    yylval->pyobj = EXPAND(build_##name(__VA_ARGS__));          \
-    if (yylval->pyobj == NULL) {                                \
-        build_lexer_error_from_exception(yylloc, builder);      \
-        return YYerror;                                         \
-    }
+#define token(name, ...)                                                \
+    (                                                                   \
+        yylval->pyobj = EXPAND(build_##name(__VA_ARGS__)),              \
+        yylval->pyobj ? name : build_EXCEPTION(yylloc, builder)         \
+    )
 
 #define build_STR(_ptr, _len) PyUnicode_FromStringAndSize(_ptr, _len)
 #define build_KEY build_STR
@@ -32,6 +33,7 @@
 #define build_DATE(_str) pydate_from_cstring(_str)
 #define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
+#define build_EXCEPTION(_loc, _builder) ( build_lexer_error_from_exception(_loc, _builder), YYerror )
 
 #define DIGITS "0123456789"
 #define LONG_STRING_LINES_MAX 64
@@ -107,15 +109,7 @@ static PyObject* pydecimal_from_cstring(const char* str)
         return NULL;
     }
 
-    /* TODO: Cache this somewhere. */
-    PyObject* decimal = PyImport_ImportModule("decimal");
-    if (!decimal)
-        return NULL;
-
-    PyObject* rv = PyObject_CallMethod(decimal, "Decimal", "s#", buffer, len);
-
-    Py_DECREF(decimal);
-    return rv;
+    return PyDec_FromCString(buffer, len);
 }
 
 

@@ -96,8 +96,6 @@ extern YY_DECL;
 /* Build a grammar error from the exception context. */
 void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    TRACE_ERROR("Grammar Builder Exception");
-
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;
@@ -146,7 +144,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 #define DECREF(...) _CC_FUNC(Py_DECREF, __VA_ARGS__)
 
 
-#line 150 "beancount/parser/grammar.c"
+#line 148 "beancount/parser/grammar.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -221,7 +219,7 @@ typedef struct YYLTYPE {
 const char* token_to_string(int token);
 
 
-#line 225 "beancount/parser/grammar.c"
+#line 223 "beancount/parser/grammar.c"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -292,7 +290,7 @@ const char* token_to_string(int token);
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 146 "beancount/parser/grammar.y"
+#line 144 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -302,7 +300,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 306 "beancount/parser/grammar.c"
+#line 304 "beancount/parser/grammar.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -815,20 +813,20 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   280,   280,   284,   288,   292,   297,   298,   302,   303,
-     304,   305,   311,   315,   320,   325,   330,   335,   340,   344,
-     349,   354,   359,   366,   374,   379,   385,   391,   395,   399,
-     403,   405,   410,   416,   421,   426,   431,   437,   443,   448,
-     449,   450,   451,   452,   453,   454,   455,   456,   460,   466,
-     471,   475,   480,   485,   491,   496,   502,   507,   512,   518,
-     524,   530,   539,   545,   552,   556,   562,   568,   574,   580,
-     586,   592,   600,   607,   612,   617,   622,   627,   632,   637,
-     644,   650,   655,   660,   666,   671,   676,   682,   686,   690,
-     694,   701,   707,   713,   719,   725,   727,   734,   739,   744,
-     749,   754,   759,   769,   774,   780,   787,   788,   789,   790,
-     791,   792,   793,   794,   795,   796,   797,   798,   803,   809,
-     815,   820,   826,   827,   828,   829,   830,   831,   832,   833,
-     836,   840,   845,   863,   870
+       0,   278,   278,   282,   286,   290,   295,   296,   300,   301,
+     302,   303,   309,   313,   318,   323,   328,   333,   338,   342,
+     347,   352,   357,   364,   372,   377,   383,   389,   393,   397,
+     401,   403,   408,   414,   419,   424,   429,   435,   441,   446,
+     447,   448,   449,   450,   451,   452,   453,   454,   458,   464,
+     469,   473,   478,   483,   489,   494,   500,   505,   510,   516,
+     522,   528,   537,   543,   550,   554,   560,   566,   572,   578,
+     584,   590,   598,   605,   610,   615,   620,   625,   630,   635,
+     642,   648,   653,   658,   664,   669,   674,   680,   684,   688,
+     692,   699,   705,   711,   717,   723,   725,   732,   737,   742,
+     747,   752,   757,   767,   772,   778,   785,   786,   787,   788,
+     789,   790,   791,   792,   793,   794,   795,   796,   801,   807,
+     813,   818,   824,   825,   826,   827,   828,   829,   830,   831,
+     834,   838,   843,   861,   868
 };
 #endif
 
@@ -1968,136 +1966,136 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 281 "beancount/parser/grammar.y"
+#line 279 "beancount/parser/grammar.y"
     {
         (yyval.character) = '*';
     }
-#line 1976 "beancount/parser/grammar.c"
+#line 1974 "beancount/parser/grammar.c"
     break;
 
   case 3:
-#line 285 "beancount/parser/grammar.y"
+#line 283 "beancount/parser/grammar.y"
     {
         (yyval.character) = (yyvsp[0].character);
     }
-#line 1984 "beancount/parser/grammar.c"
+#line 1982 "beancount/parser/grammar.c"
     break;
 
   case 4:
-#line 289 "beancount/parser/grammar.y"
+#line 287 "beancount/parser/grammar.y"
     {
         (yyval.character) = '*';
     }
-#line 1992 "beancount/parser/grammar.c"
+#line 1990 "beancount/parser/grammar.c"
     break;
 
   case 5:
-#line 293 "beancount/parser/grammar.y"
+#line 291 "beancount/parser/grammar.y"
     {
         (yyval.character) = '#';
     }
-#line 2000 "beancount/parser/grammar.c"
+#line 1998 "beancount/parser/grammar.c"
     break;
 
   case 12:
-#line 312 "beancount/parser/grammar.y"
+#line 310 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = (yyvsp[0].pyobj);
             }
-#line 2008 "beancount/parser/grammar.c"
+#line 2006 "beancount/parser/grammar.c"
     break;
 
   case 13:
-#line 316 "beancount/parser/grammar.y"
+#line 314 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = PyNumber_Add((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 2017 "beancount/parser/grammar.c"
+#line 2015 "beancount/parser/grammar.c"
     break;
 
   case 14:
-#line 321 "beancount/parser/grammar.y"
+#line 319 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = PyNumber_Subtract((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 2026 "beancount/parser/grammar.c"
+#line 2024 "beancount/parser/grammar.c"
     break;
 
   case 15:
-#line 326 "beancount/parser/grammar.y"
+#line 324 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = PyNumber_Multiply((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 2035 "beancount/parser/grammar.c"
+#line 2033 "beancount/parser/grammar.c"
     break;
 
   case 16:
-#line 331 "beancount/parser/grammar.y"
+#line 329 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = PyNumber_TrueDivide((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 2044 "beancount/parser/grammar.c"
+#line 2042 "beancount/parser/grammar.c"
     break;
 
   case 17:
-#line 336 "beancount/parser/grammar.y"
+#line 334 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = PyNumber_Negative((yyvsp[0].pyobj));
                 DECREF((yyvsp[0].pyobj));
             }
-#line 2053 "beancount/parser/grammar.c"
+#line 2051 "beancount/parser/grammar.c"
     break;
 
   case 18:
-#line 341 "beancount/parser/grammar.y"
+#line 339 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = (yyvsp[0].pyobj);
             }
-#line 2061 "beancount/parser/grammar.c"
+#line 2059 "beancount/parser/grammar.c"
     break;
 
   case 19:
-#line 345 "beancount/parser/grammar.y"
+#line 343 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = (yyvsp[-1].pyobj);
             }
-#line 2069 "beancount/parser/grammar.c"
+#line 2067 "beancount/parser/grammar.c"
     break;
 
   case 20:
-#line 350 "beancount/parser/grammar.y"
+#line 348 "beancount/parser/grammar.y"
             {
                 Py_INCREF(Py_None);
                 (yyval.pyobj) = Py_None;
             }
-#line 2078 "beancount/parser/grammar.c"
+#line 2076 "beancount/parser/grammar.c"
     break;
 
   case 21:
-#line 355 "beancount/parser/grammar.y"
+#line 353 "beancount/parser/grammar.y"
             {
                 BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                        (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
             }
-#line 2087 "beancount/parser/grammar.c"
+#line 2085 "beancount/parser/grammar.c"
     break;
 
   case 22:
-#line 360 "beancount/parser/grammar.y"
+#line 358 "beancount/parser/grammar.y"
             {
                 BUILDY(,
                        (yyval.pyobj), "pipe_deprecated_error", "");
                 (yyval.pyobj) = (yyvsp[-1].pyobj);
             }
-#line 2097 "beancount/parser/grammar.c"
+#line 2095 "beancount/parser/grammar.c"
     break;
 
   case 23:
-#line 367 "beancount/parser/grammar.y"
+#line 365 "beancount/parser/grammar.y"
            {
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
@@ -2105,256 +2103,256 @@ yyreduce:
                BUILDY(,
                       (yyval.pyobj), "tag_link_new", "O", Py_None);
            }
-#line 2109 "beancount/parser/grammar.c"
+#line 2107 "beancount/parser/grammar.c"
     break;
 
   case 24:
-#line 375 "beancount/parser/grammar.y"
+#line 373 "beancount/parser/grammar.y"
            {
                BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                       (yyval.pyobj), "tag_link_LINK", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
-#line 2118 "beancount/parser/grammar.c"
+#line 2116 "beancount/parser/grammar.c"
     break;
 
   case 25:
-#line 380 "beancount/parser/grammar.y"
+#line 378 "beancount/parser/grammar.y"
            {
                BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                       (yyval.pyobj), "tag_link_TAG", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
-#line 2127 "beancount/parser/grammar.c"
+#line 2125 "beancount/parser/grammar.c"
     break;
 
   case 26:
-#line 386 "beancount/parser/grammar.y"
+#line 384 "beancount/parser/grammar.y"
             {
                 BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                        (yyval.pyobj), "transaction", "ObOOO", (yyvsp[-5].pyobj), (yyvsp[-4].character), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 2136 "beancount/parser/grammar.c"
+#line 2134 "beancount/parser/grammar.c"
     break;
 
   case 27:
-#line 392 "beancount/parser/grammar.y"
+#line 390 "beancount/parser/grammar.y"
         {
             (yyval.character) = '\0';
         }
-#line 2144 "beancount/parser/grammar.c"
+#line 2142 "beancount/parser/grammar.c"
     break;
 
   case 28:
-#line 396 "beancount/parser/grammar.y"
+#line 394 "beancount/parser/grammar.y"
         {
             (yyval.character) = '*';
         }
-#line 2152 "beancount/parser/grammar.c"
+#line 2150 "beancount/parser/grammar.c"
     break;
 
   case 29:
-#line 400 "beancount/parser/grammar.y"
+#line 398 "beancount/parser/grammar.y"
         {
             (yyval.character) = '#';
         }
-#line 2160 "beancount/parser/grammar.c"
+#line 2158 "beancount/parser/grammar.c"
     break;
 
   case 31:
-#line 406 "beancount/parser/grammar.y"
+#line 404 "beancount/parser/grammar.y"
                  {
                      (yyval.pyobj) = (yyvsp[0].pyobj);
                  }
-#line 2168 "beancount/parser/grammar.c"
+#line 2166 "beancount/parser/grammar.c"
     break;
 
   case 32:
-#line 411 "beancount/parser/grammar.y"
+#line 409 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[0].pyobj)),
                    (yyval.pyobj), "account", "O", (yyvsp[0].pyobj));
         }
-#line 2177 "beancount/parser/grammar.c"
+#line 2175 "beancount/parser/grammar.c"
     break;
 
   case 33:
-#line 417 "beancount/parser/grammar.y"
+#line 415 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj), Py_None, Py_False, (yyvsp[-4].character));
         }
-#line 2186 "beancount/parser/grammar.c"
+#line 2184 "beancount/parser/grammar.c"
     break;
 
   case 34:
-#line 422 "beancount/parser/grammar.y"
+#line 420 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_False, (yyvsp[-6].character));
         }
-#line 2195 "beancount/parser/grammar.c"
+#line 2193 "beancount/parser/grammar.c"
     break;
 
   case 35:
-#line 427 "beancount/parser/grammar.y"
+#line 425 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_True, (yyvsp[-6].character));
         }
-#line 2204 "beancount/parser/grammar.c"
+#line 2202 "beancount/parser/grammar.c"
     break;
 
   case 36:
-#line 432 "beancount/parser/grammar.y"
+#line 430 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-1].pyobj), missing_obj, Py_None, Py_None, Py_False, (yyvsp[-2].character));
         }
-#line 2213 "beancount/parser/grammar.c"
+#line 2211 "beancount/parser/grammar.c"
     break;
 
   case 37:
-#line 438 "beancount/parser/grammar.y"
+#line 436 "beancount/parser/grammar.y"
           {
               BUILDY(DECREF((yyvsp[-1].string), (yyvsp[0].pyobj)),
                      (yyval.pyobj), "key_value", "OO", (yyvsp[-1].string), (yyvsp[0].pyobj));
           }
-#line 2222 "beancount/parser/grammar.c"
+#line 2220 "beancount/parser/grammar.c"
     break;
 
   case 38:
-#line 444 "beancount/parser/grammar.y"
+#line 442 "beancount/parser/grammar.y"
                {
                    (yyval.pyobj) = (yyvsp[-1].pyobj);
                }
-#line 2230 "beancount/parser/grammar.c"
+#line 2228 "beancount/parser/grammar.c"
     break;
 
   case 47:
-#line 457 "beancount/parser/grammar.y"
+#line 455 "beancount/parser/grammar.y"
                 {
                     (yyval.pyobj) = (yyvsp[0].pyobj);
                 }
-#line 2238 "beancount/parser/grammar.c"
+#line 2236 "beancount/parser/grammar.c"
     break;
 
   case 48:
-#line 461 "beancount/parser/grammar.y"
+#line 459 "beancount/parser/grammar.y"
                 {
                     Py_INCREF(Py_None);
                     (yyval.pyobj) = Py_None;
                 }
-#line 2247 "beancount/parser/grammar.c"
+#line 2245 "beancount/parser/grammar.c"
     break;
 
   case 49:
-#line 467 "beancount/parser/grammar.y"
+#line 465 "beancount/parser/grammar.y"
                    {
                        Py_INCREF(Py_None);
                        (yyval.pyobj) = Py_None;
                    }
-#line 2256 "beancount/parser/grammar.c"
+#line 2254 "beancount/parser/grammar.c"
     break;
 
   case 50:
-#line 472 "beancount/parser/grammar.y"
+#line 470 "beancount/parser/grammar.y"
                    {
                        (yyval.pyobj) = (yyvsp[-3].pyobj);
                    }
-#line 2264 "beancount/parser/grammar.c"
+#line 2262 "beancount/parser/grammar.c"
     break;
 
   case 51:
-#line 476 "beancount/parser/grammar.y"
+#line 474 "beancount/parser/grammar.y"
                    {
                        BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                               (yyval.pyobj), "handle_list", "OO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj));
                    }
-#line 2273 "beancount/parser/grammar.c"
+#line 2271 "beancount/parser/grammar.c"
     break;
 
   case 52:
-#line 481 "beancount/parser/grammar.y"
+#line 479 "beancount/parser/grammar.y"
                    {
                        BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                               (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                    }
-#line 2282 "beancount/parser/grammar.c"
+#line 2280 "beancount/parser/grammar.c"
     break;
 
   case 53:
-#line 486 "beancount/parser/grammar.y"
+#line 484 "beancount/parser/grammar.y"
                    {
                        BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                               (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                    }
-#line 2291 "beancount/parser/grammar.c"
+#line 2289 "beancount/parser/grammar.c"
     break;
 
   case 54:
-#line 492 "beancount/parser/grammar.y"
+#line 490 "beancount/parser/grammar.y"
                {
                    Py_INCREF(Py_None);
                    (yyval.pyobj) = Py_None;
                }
-#line 2300 "beancount/parser/grammar.c"
+#line 2298 "beancount/parser/grammar.c"
     break;
 
   case 55:
-#line 497 "beancount/parser/grammar.y"
+#line 495 "beancount/parser/grammar.y"
                {
                    BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                           (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                }
-#line 2309 "beancount/parser/grammar.c"
+#line 2307 "beancount/parser/grammar.c"
     break;
 
   case 56:
-#line 503 "beancount/parser/grammar.y"
+#line 501 "beancount/parser/grammar.y"
               {
                   Py_INCREF(Py_None);
                   (yyval.pyobj) = Py_None;
               }
-#line 2318 "beancount/parser/grammar.c"
+#line 2316 "beancount/parser/grammar.c"
     break;
 
   case 57:
-#line 508 "beancount/parser/grammar.y"
+#line 506 "beancount/parser/grammar.y"
               {
                   BUILDY(DECREF((yyvsp[0].pyobj)),
                          (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
               }
-#line 2327 "beancount/parser/grammar.c"
+#line 2325 "beancount/parser/grammar.c"
     break;
 
   case 58:
-#line 513 "beancount/parser/grammar.y"
+#line 511 "beancount/parser/grammar.y"
               {
                   BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                          (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
               }
-#line 2336 "beancount/parser/grammar.c"
+#line 2334 "beancount/parser/grammar.c"
     break;
 
   case 59:
-#line 519 "beancount/parser/grammar.y"
+#line 517 "beancount/parser/grammar.y"
          {
              BUILDY(DECREF((yyvsp[-1].pyobj)),
                     (yyval.pyobj), "pushtag", "O", (yyvsp[-1].pyobj));
          }
-#line 2345 "beancount/parser/grammar.c"
+#line 2343 "beancount/parser/grammar.c"
     break;
 
   case 60:
-#line 525 "beancount/parser/grammar.y"
+#line 523 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "poptag", "O", (yyvsp[-1].pyobj));
        }
-#line 2354 "beancount/parser/grammar.c"
+#line 2352 "beancount/parser/grammar.c"
     break;
 
   case 61:
-#line 531 "beancount/parser/grammar.y"
+#line 529 "beancount/parser/grammar.y"
          {
              /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
               * within a tuple, so expand in the method (it receives two
@@ -2362,92 +2360,92 @@ yyreduce:
              BUILDY(DECREF((yyvsp[-1].pyobj)),
                     (yyval.pyobj), "pushmeta", "O", (yyvsp[-1].pyobj));
          }
-#line 2366 "beancount/parser/grammar.c"
+#line 2364 "beancount/parser/grammar.c"
     break;
 
   case 62:
-#line 540 "beancount/parser/grammar.y"
+#line 538 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-2].pyobj)),
                    (yyval.pyobj), "popmeta", "O", (yyvsp[-2].pyobj));
         }
-#line 2375 "beancount/parser/grammar.c"
+#line 2373 "beancount/parser/grammar.c"
     break;
 
   case 63:
-#line 546 "beancount/parser/grammar.y"
+#line 544 "beancount/parser/grammar.y"
      {
          BUILDY(DECREF((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                 (yyval.pyobj), "open", "OOOOO", (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
          ;
      }
-#line 2385 "beancount/parser/grammar.c"
+#line 2383 "beancount/parser/grammar.c"
     break;
 
   case 64:
-#line 553 "beancount/parser/grammar.y"
+#line 551 "beancount/parser/grammar.y"
             {
                 (yyval.pyobj) = (yyvsp[0].pyobj);
             }
-#line 2393 "beancount/parser/grammar.c"
+#line 2391 "beancount/parser/grammar.c"
     break;
 
   case 65:
-#line 557 "beancount/parser/grammar.y"
+#line 555 "beancount/parser/grammar.y"
             {
                 Py_INCREF(Py_None);
                 (yyval.pyobj) = Py_None;
             }
-#line 2402 "beancount/parser/grammar.c"
+#line 2400 "beancount/parser/grammar.c"
     break;
 
   case 66:
-#line 563 "beancount/parser/grammar.y"
+#line 561 "beancount/parser/grammar.y"
       {
           BUILDY(DECREF((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "close", "OOO", (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2411 "beancount/parser/grammar.c"
+#line 2409 "beancount/parser/grammar.c"
     break;
 
   case 67:
-#line 569 "beancount/parser/grammar.y"
+#line 567 "beancount/parser/grammar.y"
           {
               BUILDY(DECREF((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                      (yyval.pyobj), "commodity", "OOO", (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
           }
-#line 2420 "beancount/parser/grammar.c"
+#line 2418 "beancount/parser/grammar.c"
     break;
 
   case 68:
-#line 575 "beancount/parser/grammar.y"
+#line 573 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "pad", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2429 "beancount/parser/grammar.c"
+#line 2427 "beancount/parser/grammar.c"
     break;
 
   case 69:
-#line 581 "beancount/parser/grammar.y"
+#line 579 "beancount/parser/grammar.y"
         {
             BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[0].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2),
                    (yyval.pyobj), "balance", "OOOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2, (yyvsp[0].pyobj));
         }
-#line 2438 "beancount/parser/grammar.c"
+#line 2436 "beancount/parser/grammar.c"
     break;
 
   case 70:
-#line 587 "beancount/parser/grammar.y"
+#line 585 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                   (yyval.pyobj), "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
        }
-#line 2447 "beancount/parser/grammar.c"
+#line 2445 "beancount/parser/grammar.c"
     break;
 
   case 71:
-#line 593 "beancount/parser/grammar.y"
+#line 591 "beancount/parser/grammar.y"
                  {
                      BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                             (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
@@ -2455,269 +2453,269 @@ yyreduce:
                      Py_INCREF(Py_None);
                      ;
                  }
-#line 2459 "beancount/parser/grammar.c"
+#line 2457 "beancount/parser/grammar.c"
     break;
 
   case 72:
-#line 601 "beancount/parser/grammar.y"
+#line 599 "beancount/parser/grammar.y"
                  {
                      BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[0].pyobj)),
                             (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-3].pyobj), (yyvsp[0].pyobj));
                      (yyval.pairobj).pyobj2 = (yyvsp[-1].pyobj);
                  }
-#line 2469 "beancount/parser/grammar.c"
+#line 2467 "beancount/parser/grammar.c"
     break;
 
   case 73:
-#line 608 "beancount/parser/grammar.y"
+#line 606 "beancount/parser/grammar.y"
              {
                  Py_INCREF(missing_obj);
                  (yyval.pyobj) = missing_obj;
              }
-#line 2478 "beancount/parser/grammar.c"
+#line 2476 "beancount/parser/grammar.c"
     break;
 
   case 74:
-#line 613 "beancount/parser/grammar.y"
+#line 611 "beancount/parser/grammar.y"
              {
                  (yyval.pyobj) = (yyvsp[0].pyobj);
              }
-#line 2486 "beancount/parser/grammar.c"
+#line 2484 "beancount/parser/grammar.c"
     break;
 
   case 75:
-#line 618 "beancount/parser/grammar.y"
+#line 616 "beancount/parser/grammar.y"
              {
                  Py_INCREF(missing_obj);
                  (yyval.pyobj) = missing_obj;
              }
-#line 2495 "beancount/parser/grammar.c"
+#line 2493 "beancount/parser/grammar.c"
     break;
 
   case 76:
-#line 623 "beancount/parser/grammar.y"
+#line 621 "beancount/parser/grammar.y"
              {
                  (yyval.pyobj) = (yyvsp[0].pyobj);
              }
-#line 2503 "beancount/parser/grammar.c"
+#line 2501 "beancount/parser/grammar.c"
     break;
 
   case 77:
-#line 628 "beancount/parser/grammar.y"
+#line 626 "beancount/parser/grammar.y"
                 {
                     BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                            (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-1].pyobj), Py_None, (yyvsp[0].pyobj));
                 }
-#line 2512 "beancount/parser/grammar.c"
+#line 2510 "beancount/parser/grammar.c"
     break;
 
   case 78:
-#line 633 "beancount/parser/grammar.y"
+#line 631 "beancount/parser/grammar.y"
                 {
                     BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                            (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-1].pyobj), Py_None, (yyvsp[0].pyobj));
                 }
-#line 2521 "beancount/parser/grammar.c"
+#line 2519 "beancount/parser/grammar.c"
     break;
 
   case 79:
-#line 638 "beancount/parser/grammar.y"
+#line 636 "beancount/parser/grammar.y"
                 {
                     BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                            (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                     ;
                 }
-#line 2531 "beancount/parser/grammar.c"
+#line 2529 "beancount/parser/grammar.c"
     break;
 
   case 80:
-#line 645 "beancount/parser/grammar.y"
+#line 643 "beancount/parser/grammar.y"
                   {
                       BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                              (yyval.pyobj), "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                  }
-#line 2540 "beancount/parser/grammar.c"
+#line 2538 "beancount/parser/grammar.c"
     break;
 
   case 81:
-#line 651 "beancount/parser/grammar.y"
+#line 649 "beancount/parser/grammar.y"
           {
               BUILDY(DECREF((yyvsp[-1].pyobj)),
                      (yyval.pyobj), "cost_spec", "OO", (yyvsp[-1].pyobj), Py_False);
           }
-#line 2549 "beancount/parser/grammar.c"
+#line 2547 "beancount/parser/grammar.c"
     break;
 
   case 82:
-#line 656 "beancount/parser/grammar.y"
+#line 654 "beancount/parser/grammar.y"
           {
               BUILDY(DECREF((yyvsp[-1].pyobj)),
                      (yyval.pyobj), "cost_spec", "OO", (yyvsp[-1].pyobj), Py_True);
           }
-#line 2558 "beancount/parser/grammar.c"
+#line 2556 "beancount/parser/grammar.c"
     break;
 
   case 83:
-#line 661 "beancount/parser/grammar.y"
+#line 659 "beancount/parser/grammar.y"
           {
               Py_INCREF(Py_None);
               (yyval.pyobj) = Py_None;
           }
-#line 2567 "beancount/parser/grammar.c"
+#line 2565 "beancount/parser/grammar.c"
     break;
 
   case 84:
-#line 667 "beancount/parser/grammar.y"
+#line 665 "beancount/parser/grammar.y"
                {
                    /* We indicate that there was a cost if there */
                    (yyval.pyobj) = PyList_New(0);
                }
-#line 2576 "beancount/parser/grammar.c"
+#line 2574 "beancount/parser/grammar.c"
     break;
 
   case 85:
-#line 672 "beancount/parser/grammar.y"
+#line 670 "beancount/parser/grammar.y"
                {
                    BUILDY(DECREF((yyvsp[0].pyobj)),
                           (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
                }
-#line 2585 "beancount/parser/grammar.c"
+#line 2583 "beancount/parser/grammar.c"
     break;
 
   case 86:
-#line 677 "beancount/parser/grammar.y"
+#line 675 "beancount/parser/grammar.y"
                {
                    BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                           (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                }
-#line 2594 "beancount/parser/grammar.c"
+#line 2592 "beancount/parser/grammar.c"
     break;
 
   case 87:
-#line 683 "beancount/parser/grammar.y"
+#line 681 "beancount/parser/grammar.y"
           {
               (yyval.pyobj) = (yyvsp[0].pyobj);
           }
-#line 2602 "beancount/parser/grammar.c"
+#line 2600 "beancount/parser/grammar.c"
     break;
 
   case 88:
-#line 687 "beancount/parser/grammar.y"
+#line 685 "beancount/parser/grammar.y"
           {
               (yyval.pyobj) = (yyvsp[0].pyobj);
           }
-#line 2610 "beancount/parser/grammar.c"
+#line 2608 "beancount/parser/grammar.c"
     break;
 
   case 89:
-#line 691 "beancount/parser/grammar.y"
+#line 689 "beancount/parser/grammar.y"
           {
               (yyval.pyobj) = (yyvsp[0].pyobj);
           }
-#line 2618 "beancount/parser/grammar.c"
+#line 2616 "beancount/parser/grammar.c"
     break;
 
   case 90:
-#line 695 "beancount/parser/grammar.y"
+#line 693 "beancount/parser/grammar.y"
           {
               BUILDY(,
                      (yyval.pyobj), "cost_merge", "O", Py_None);
           }
-#line 2627 "beancount/parser/grammar.c"
+#line 2625 "beancount/parser/grammar.c"
     break;
 
   case 91:
-#line 702 "beancount/parser/grammar.y"
+#line 700 "beancount/parser/grammar.y"
       {
           BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "price", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2636 "beancount/parser/grammar.c"
+#line 2634 "beancount/parser/grammar.c"
     break;
 
   case 92:
-#line 708 "beancount/parser/grammar.y"
+#line 706 "beancount/parser/grammar.y"
       {
           BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "event", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2645 "beancount/parser/grammar.c"
+#line 2643 "beancount/parser/grammar.c"
     break;
 
   case 93:
-#line 714 "beancount/parser/grammar.y"
+#line 712 "beancount/parser/grammar.y"
          {
              BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                     (yyval.pyobj), "query", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
          }
-#line 2654 "beancount/parser/grammar.c"
+#line 2652 "beancount/parser/grammar.c"
     break;
 
   case 94:
-#line 720 "beancount/parser/grammar.y"
+#line 718 "beancount/parser/grammar.y"
       {
           BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "note", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2663 "beancount/parser/grammar.c"
+#line 2661 "beancount/parser/grammar.c"
     break;
 
   case 96:
-#line 728 "beancount/parser/grammar.y"
+#line 726 "beancount/parser/grammar.y"
          {
              BUILDY(DECREF((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                     (yyval.pyobj), "document", "OOOOO", (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
          }
-#line 2672 "beancount/parser/grammar.c"
+#line 2670 "beancount/parser/grammar.c"
     break;
 
   case 97:
-#line 735 "beancount/parser/grammar.y"
+#line 733 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[0].pyobj)),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
              }
-#line 2681 "beancount/parser/grammar.c"
+#line 2679 "beancount/parser/grammar.c"
     break;
 
   case 98:
-#line 740 "beancount/parser/grammar.y"
+#line 738 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[0].pyobj)),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
              }
-#line 2690 "beancount/parser/grammar.c"
+#line 2688 "beancount/parser/grammar.c"
     break;
 
   case 99:
-#line 745 "beancount/parser/grammar.y"
+#line 743 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[0].pyobj)),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
              }
-#line 2699 "beancount/parser/grammar.c"
+#line 2697 "beancount/parser/grammar.c"
     break;
 
   case 100:
-#line 750 "beancount/parser/grammar.y"
+#line 748 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[0].pyobj)),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
              }
-#line 2708 "beancount/parser/grammar.c"
+#line 2706 "beancount/parser/grammar.c"
     break;
 
   case 101:
-#line 755 "beancount/parser/grammar.y"
+#line 753 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[0].pyobj)),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
              }
-#line 2717 "beancount/parser/grammar.c"
+#line 2715 "beancount/parser/grammar.c"
     break;
 
   case 102:
-#line 760 "beancount/parser/grammar.y"
+#line 758 "beancount/parser/grammar.y"
              {
                  /* Obtain beancount.core.account.TYPE */
                  PyObject* module = PyImport_ImportModule("beancount.core.account");
@@ -2726,99 +2724,99 @@ yyreduce:
                  BUILDY(DECREF((yyvsp[0].pyobj), dtype),
                         (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), dtype);
              }
-#line 2730 "beancount/parser/grammar.c"
+#line 2728 "beancount/parser/grammar.c"
     break;
 
   case 103:
-#line 770 "beancount/parser/grammar.y"
+#line 768 "beancount/parser/grammar.y"
                   {
                       Py_INCREF(Py_None);
                       (yyval.pyobj) = Py_None;
                   }
-#line 2739 "beancount/parser/grammar.c"
+#line 2737 "beancount/parser/grammar.c"
     break;
 
   case 104:
-#line 775 "beancount/parser/grammar.y"
+#line 773 "beancount/parser/grammar.y"
                   {
                       BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                              (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                   }
-#line 2748 "beancount/parser/grammar.c"
+#line 2746 "beancount/parser/grammar.c"
     break;
 
   case 105:
-#line 781 "beancount/parser/grammar.y"
+#line 779 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                   (yyval.pyobj), "custom", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
        }
-#line 2757 "beancount/parser/grammar.c"
+#line 2755 "beancount/parser/grammar.c"
     break;
 
   case 117:
-#line 799 "beancount/parser/grammar.y"
+#line 797 "beancount/parser/grammar.y"
       {
           (yyval.pyobj) = (yyvsp[0].pyobj);
       }
-#line 2765 "beancount/parser/grammar.c"
+#line 2763 "beancount/parser/grammar.c"
     break;
 
   case 118:
-#line 804 "beancount/parser/grammar.y"
+#line 802 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                   (yyval.pyobj), "option", "OO", (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
        }
-#line 2774 "beancount/parser/grammar.c"
+#line 2772 "beancount/parser/grammar.c"
     break;
 
   case 119:
-#line 810 "beancount/parser/grammar.y"
+#line 808 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "include", "O", (yyvsp[-1].pyobj));
        }
-#line 2783 "beancount/parser/grammar.c"
+#line 2781 "beancount/parser/grammar.c"
     break;
 
   case 120:
-#line 816 "beancount/parser/grammar.y"
+#line 814 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "plugin", "OO", (yyvsp[-1].pyobj), Py_None);
        }
-#line 2792 "beancount/parser/grammar.c"
+#line 2790 "beancount/parser/grammar.c"
     break;
 
   case 121:
-#line 821 "beancount/parser/grammar.y"
+#line 819 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                   (yyval.pyobj), "plugin", "OO", (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
        }
-#line 2801 "beancount/parser/grammar.c"
+#line 2799 "beancount/parser/grammar.c"
     break;
 
   case 130:
-#line 837 "beancount/parser/grammar.y"
+#line 835 "beancount/parser/grammar.y"
              {
                  (yyval.pyobj) = (yyvsp[-1].pyobj);
              }
-#line 2809 "beancount/parser/grammar.c"
+#line 2807 "beancount/parser/grammar.c"
     break;
 
   case 131:
-#line 841 "beancount/parser/grammar.y"
+#line 839 "beancount/parser/grammar.y"
              {
                  BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                         (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
              }
-#line 2818 "beancount/parser/grammar.c"
+#line 2816 "beancount/parser/grammar.c"
     break;
 
   case 132:
-#line 846 "beancount/parser/grammar.y"
+#line 844 "beancount/parser/grammar.y"
              {
                  /*
                   * Ignore the error and continue reducing ({3d95e55b654e}).
@@ -2836,29 +2834,29 @@ yyreduce:
                   */
                  (yyval.pyobj) = (yyvsp[-1].pyobj);
              }
-#line 2840 "beancount/parser/grammar.c"
+#line 2838 "beancount/parser/grammar.c"
     break;
 
   case 133:
-#line 864 "beancount/parser/grammar.y"
+#line 862 "beancount/parser/grammar.y"
              {
                   Py_INCREF(Py_None);
                   (yyval.pyobj) = Py_None;
              }
-#line 2849 "beancount/parser/grammar.c"
+#line 2847 "beancount/parser/grammar.c"
     break;
 
   case 134:
-#line 871 "beancount/parser/grammar.y"
+#line 869 "beancount/parser/grammar.y"
      {
          BUILDY(DECREF((yyvsp[0].pyobj)),
                 (yyval.pyobj), "store_result", "O", (yyvsp[0].pyobj));
      }
-#line 2858 "beancount/parser/grammar.c"
+#line 2856 "beancount/parser/grammar.c"
     break;
 
 
-#line 2862 "beancount/parser/grammar.c"
+#line 2860 "beancount/parser/grammar.c"
 
       default: break;
     }
@@ -3088,7 +3086,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 879 "beancount/parser/grammar.y"
+#line 877 "beancount/parser/grammar.y"
 
 
 /* Get a printable version of a token name. */

@@ -41,6 +41,8 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 
 
 SOURCES =					\
+	$(CROOT)/decimal.c			\
+	$(CROOT)/decimal.h 			\
 	$(CROOT)/lexer.c			\
 	$(CROOT)/lexer.h			\
 	$(CROOT)/grammar.c			\
