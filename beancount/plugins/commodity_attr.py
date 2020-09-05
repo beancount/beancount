@@ -64,7 +64,7 @@ def validate_commodity_attr(entries, unused_options_map, config_str):
             if values and value not in values:
                 errors.append(CommodityError(
                     entry.meta,
-                    "Invalid attribute '{}' for Commodity".format(value) +
+                    "Invalid value '{}' for attribute {}, Commodity".format(value, attr) +
                     " directive {}; valid options: {}".format(
                         entry.currency, ', '.join(values)), None))
 

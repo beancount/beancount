@@ -155,6 +155,7 @@ setup(name="beancount",
       ext_modules = [
           Extension("beancount.parser._parser",
                     sources=[
+                        "beancount/parser/decimal.c",
                         "beancount/parser/lexer.c",
                         "beancount/parser/grammar.c",
                         "beancount/parser/parser.c",

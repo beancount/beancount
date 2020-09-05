@@ -28,19 +28,15 @@ class LexBuilder:
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, filename, lineno, message, exc_type=None): # {0e31aeca3363}
+    def build_lexer_error(self, filename, lineno, message): # {0e31aeca3363}
         """Build a lexer error and appends it to the list of pending errors.
 
         Args:
           message: The message of the error.
           exc_type: An exception type, if an exception occurred.
         """
-        if not isinstance(message, str):
-            message = str(message)
-        if exc_type is not None:
-            message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(new_metadata(filename, lineno), message, None))
+            LexerError(new_metadata(filename, lineno), str(message), None))
 
 
 def lex_iter(file, builder=None, encoding=None):

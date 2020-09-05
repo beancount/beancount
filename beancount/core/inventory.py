@@ -123,7 +123,7 @@ class Inventory(dict):
 
     def __bool__(self):
         # Don't define this, be explicit by using is_empty() instead.
-        raise NotImplementedError
+        raise NotImplementedError("Use explicit is_empty() method instead.")
 
     def __copy__(self):
         """A shallow copy of this inventory object.
