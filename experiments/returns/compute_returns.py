@@ -23,18 +23,20 @@ from functools import partial
 import argparse
 import collections
 import copy
-import json
-import fnmatch
 import datetime
 import enum
+import fnmatch
 import io
+import itertools
+import json
 import logging
+import multiprocessing
 import os
 import re
 import subprocess
 import tempfile
+import time
 import typing
-import multiprocessing
 
 import numpy as np
 #import numpy_financial as npf
@@ -53,8 +55,10 @@ from beancount.core import convert
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import prices
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core.inventory import Inventory
+from beancount.core.inventory import Position
 from beancount.parser import options
 from beancount.parser import printer
 
@@ -74,10 +78,13 @@ TODAY = Date.today()
 # the sanitized time-series that allows us to compute returns.
 CashFlow = typing.NamedTuple("CashFlow", [
     ("date", Date),
-    ("amount", Amount),
-    ("is_dividend", bool),
-    ("balance", Inventory),
+    ("amount", Amount),     # The amount of the cashflow.
+    ("is_dividend", bool),  # True if the flow is a dividend.
+    ("balance", Inventory), # Balance after this cash flow.
 ])
+
+
+CurrencyPair = Tuple[Currency, Currency]
 
 
 class Pricer:
@@ -426,7 +433,8 @@ def handle_failing(entry: data.Directive) -> List[CashFlow]:
     for posting in entry.postings:
         category = posting.meta["category"]
         if category == Cat.ASSET:
-            flows.append(CashFlow(entry.date, -convert.get_weight(posting), False, None))
+            flows.append(CashFlow(entry.date, -convert.get_weight(posting),
+                                  False, None))
         elif category == Cat.OTHERASSET:
             pass
         else:
@@ -485,7 +493,7 @@ def compute_returns(flows: List[CashFlow],
     """Compute the returns from a list of cash flows."""
     if not flows:
         return Returns("?", TODAY, TODAY, 0, 0, 0, 0, [])
-    flows = sorted(flows)
+    flows = sorted(flows, key=lambda cf: cf.date)
     irr = compute_irr(flows, pricer, target_currency)
 
     flows_exdiv = [flow for flow in flows if not flow.is_dividend]
@@ -514,8 +522,8 @@ def copy_and_normalize(entry: data.Transaction) -> data.Transaction:
 AccountData = typing.NamedTuple("AccountData", [
     ('account', Account),
     ('currency', Currency),
-    ('commodity', data.Commodity),
     ('cost_currency', Currency),
+    ('commodity', data.Commodity),
     ("cash_flows", List[CashFlow]),
     ('transactions', data.Entries),
     ('catmap', Dict[Account, Cat]),
@@ -548,10 +556,12 @@ def process_account_entries(entries: data.Entries,
     for entry in transactions:
 
         # Update the total position in the asset we're interested in.
+        positions = []
         for posting in entry.postings:
             category = catmap[posting.account]
             if category is Cat.ASSET:
                 balance.add_position(posting)
+                positions.append(posting)
 
         # Compute the signature of the transaction.
         entry = copy_and_normalize(entry)
@@ -576,7 +586,7 @@ def process_account_entries(entries: data.Entries,
     commodity_map = getters.get_commodity_directives(entries)
     comm = commodity_map[currency]
 
-    return AccountData(account, currency, comm, cost_currency, cash_flows,
+    return AccountData(account, currency, cost_currency, comm, cash_flows,
                        decorated_transactions, catmap)
 
 
@@ -593,15 +603,17 @@ def find_balance_before(cash_flows: List[CashFlow],
     return balance, index
 
 
-def truncate_cash_flows(pricer: Pricer,
-                        cash_flows_list: List[List[CashFlow]],
-                        date_start: Optional[Date] = None,
-                        date_end: Optional[Date] = None) -> List[CashFlow]:
+def truncate_and_merge_cash_flows(
+        pricer: Pricer,
+        cash_flows_list: List[List[CashFlow]],
+        date_start: Optional[Date] = None,
+        date_end: Optional[Date] = None) -> List[CashFlow]:
     """Truncate and merge a list of cash flows for processing, inserting initial
     and/or final cash flows from balances if necessary."""
 
     truncated_flows = []
     for cash_flows in cash_flows_list:
+        cash_flows = list(cash_flows)
 
         # Truncate cash flows before the given interval.
         if date_start is not None:
@@ -634,26 +646,23 @@ def truncate_cash_flows(pricer: Pricer,
     return sorted(truncated_flows, key=lambda cf: cf.date)
 
 
-def group_accounts(entries: data.Entries,
-                   accdata_list: List[AccountData],
-                   render_open: bool,
-                   render_closed: bool) -> Dict[str, List[AccountData]]:
+def get_account_groups(entries: data.Entries,
+                       account_data: List[AccountData],
+                       render_open: bool,
+                       render_closed: bool) -> Dict[str, List[AccountData]]:
     """Logically group accounts for reporting."""
     groups = collections.defaultdict(list)
     open_close_map = getters.get_account_open_close(entries)
-    for accdata in accdata_list:
+    for accdata in account_data:
         opn, cls = open_close_map[accdata.account]
         assert opn
-        if cls:
-            if not render_closed:
-                continue
-        else:
-            if not render_open:
-                continue
-        prefix = "closed" if cls else "open"
+        is_open = cls is None and not accdata.cash_flows[-1].balance.is_empty()
+        if not (render_open if is_open else render_closed):
+            continue
+        prefix = "open" if is_open else "closed"
         group = "{}.{}".format(prefix, accdata.currency)
         groups[group].append(accdata)
-    return groups
+    return dict(groups)
 
 
 IRR_FORMAT = "{:32}: {:6.2%} ({:6.2%} ex-div, {:6.2%} div)"
@@ -770,8 +779,8 @@ def compute_returns_table(pricer: Pricer,
     rows = [["Total"], ["Ex-div"], ["Div"]]
     for intname, date1, date2 in intervals:
         header.append(intname)
-        cash_flows = truncate_cash_flows(pricer, cash_flows_list,
-                                         date1, date2)
+        cash_flows = truncate_and_merge_cash_flows(pricer, cash_flows_list,
+                                                   date1, date2)
         if 0:
             print("===;", intname, date1, "->", date2)
             for cf in cash_flows:
@@ -785,110 +794,151 @@ def compute_returns_table(pricer: Pricer,
     return Table(header, rows)
 
 
-def write_returns(pricer: Pricer,
-                  account_data: List[AccountData],
-                  title: str,
-                  filename: str,
-                  target_currency: Optional[Currency] = None) -> subprocess.Popen:
+def write_returns_pdf(pricer: Pricer,
+                      account_data: List[AccountData],
+                      title: str,
+                      pdf_filename: str,
+                      target_currency: Optional[Currency] = None) -> subprocess.Popen:
     """Write out returns for a combined list of account account_data.."""
 
-    logging.info("Writing returns file for %s: %s", title, filename)
+    logging.info("Writing returns file for %s: %s", title, pdf_filename)
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(path.join(tmpdir, "index.html"), "w") as indexfile:
-            fprint = partial(print, file=indexfile)
-            fprint(RETURNS_TEMPLATE_PRE.format(style=STYLE, title=title))
-
-            if not target_currency:
-                cost_currencies = set(r.cost_currency for r in account_data)
-                target_currency = cost_currencies.pop()
-                assert not cost_currencies, (
-                    "Incompatible cost currencies {} for accounts {}".format(
-                        cost_currencies, ",".join([r.account for r in account_data])))
-
-            #fprint("<h2>Accounts</h2>")
-            fprint("<p>Cost Currency: {}</p>".format(target_currency))
-            for accdata in account_data:
-                fprint("<p>Account: {} ({})</p>".format(accdata.account,
-                                                        accdata.commodity.meta["name"]))
-
-            fprint("<h2>Cash Flows</h2>")
-            cash_flows_list = [ad.cash_flows for ad in account_data]
-            cash_flows = truncate_cash_flows(pricer, cash_flows_list)
-            returns = compute_returns(cash_flows, pricer, target_currency)
-            plots = plot_flows(tmpdir, cash_flows, returns.total)
-            fprint('<img src={} style="width: 100%"/>'.format(plots["flows"]))
-            fprint('<img src={} style="width: 100%"/>'.format(plots["cumvalue"]))
-
-            # price_plots = plot_prices(
-            #     tmpdir, price_map, set((r.currency, r.cost_currency) for r in account_data))
-            # fprint('<img src={} style="width: 100%"/>'.format(plots["price"]))
-
-            fprint("<h2>Returns</h2>")
-            fprint(render_table(Table(["Total", "Ex-Div", "Div"],
-                                      [[returns.total, returns.exdiv, returns.div]]),
-                                floatfmt="{:.2%}"))
-
-            # Compute table of returns over intervals.
-            table = compute_returns_table(pricer, target_currency, cash_flows_list,
-                                          get_calendar_intervals(TODAY))
-            fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
-
-            table = compute_returns_table(pricer, target_currency, cash_flows_list,
-                                          get_trailing_intervals(TODAY))
-            fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
-
-            fprint(RETURNS_TEMPLATE_POST)
-
+        indexfile = write_returns_html(pricer, account_data, title, tmpdir, target_currency)
         command = ["google-chrome", "--headless", "--disable-gpu",
-                   "--print-to-pdf={}".format(filename), indexfile.name]
+                   "--print-to-pdf={}".format(pdf_filename), indexfile]
         subprocess.check_call(command, stderr=open("/dev/null", "w"))
-        assert path.exists(filename)
-        logging.info("Done: file://%s", filename)
+        assert path.exists(pdf_filename)
+        logging.info("Done: file://%s", pdf_filename)
 
 
+def write_returns_html(pricer: Pricer,
+                       account_data: List[AccountData],
+                       title: str,
+                       dirname: str,
+                       target_currency: Optional[Currency] = None) -> subprocess.Popen:
+    """Write out returns report to a directory with files in it."""
 
-def plot_prices(output_dir: str,
-                price_map: prices.PriceMap,
-                pairs: List[Tuple[Currency, Currency]]) -> Dict[str, str]:
-    """Render one or more plots of prices."""
-    series = collections.defaultdict(list)
-    for c, cc in pairs:
-        series[cc].append(cc)
+    logging.info("Writing returns dir for %s: %s", title, dirname)
+    os.makedirs(dirname, exist_ok=True)
+    with open(path.join(dirname, "index.html"), "w") as indexfile:
+        fprint = partial(print, file=indexfile)
+        fprint(RETURNS_TEMPLATE_PRE.format(style=STYLE, title=title))
 
-    for quote_currency, currencies in sorted(series.items()):
-        print(quote_currency)
-        for currency in currencies:
-            prices = prices.get_all_prices(price_map, (currency, quote_currency))
-            print(prices)
+        if not target_currency:
+            cost_currencies = set(r.cost_currency for r in account_data)
+            target_currency = cost_currencies.pop()
+            assert not cost_currencies, (
+                "Incompatible cost currencies {} for accounts {}".format(
+                    cost_currencies, ",".join([r.account for r in account_data])))
 
-    # TODO(blais): Finish implementing this.
+        #fprint("<h2>Accounts</h2>")
+        fprint("<p>Cost Currency: {}</p>".format(target_currency))
+        for ad in account_data:
+            fprint("<p>Account: {} ({})</p>".format(ad.account,
+                                                    ad.commodity.meta["name"]))
+
+        # TOOD(blais): Prices should be plot separately, by currency.
+        # fprint("<h2>Prices</h2>")
+        # pairs = set((r.currency, r.cost_currency) for r in account_data)
+        # plots = plot_prices(dirname, pricer.price_map, pairs)
+        # for _, filename in sorted(plots.items()):
+        #     fprint('<img src={} style="width: 100%"/>'.format(filename))
+
+        fprint("<h2>Cash Flows</h2>")
+        cash_flows_list = [ad.cash_flows for ad in account_data]
+        cash_flows = truncate_and_merge_cash_flows(pricer, cash_flows_list)
+        transactions = data.sorted([txn for ad in account_data for txn in ad.transactions])
+
+        returns = compute_returns(cash_flows, pricer, target_currency)
+        # Note: This is where the vast majority of the time is spent.
+        plots = plot_flows(dirname, pricer.price_map,
+                           cash_flows, transactions, returns.total)
+        fprint('<img src={} style="width: 100%"/>'.format(plots["flows"]))
+        fprint('<img src={} style="width: 100%"/>'.format(plots["cumvalue"]))
+
+        fprint("<h2>Returns</h2>")
+        fprint(render_table(Table(["Total", "Ex-Div", "Div"],
+                                  [[returns.total, returns.exdiv, returns.div]]),
+                            floatfmt="{:.2%}"))
+
+        # Compute table of returns over intervals.
+        table = compute_returns_table(pricer, target_currency, cash_flows_list,
+                                      get_calendar_intervals(TODAY))
+        fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
+
+        table = compute_returns_table(pricer, target_currency, cash_flows_list,
+                                      get_cumulative_intervals(TODAY))
+        fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
+
+        fprint(RETURNS_TEMPLATE_POST)
+
+    return indexfile.name
 
 
-def plot_flows(output_dir: str,
-               flows: List[CashFlow],
-               returns_rate: float) -> Dict[str, str]:
-    """Produce plots from cash flows and returns, and more."""
+def set_axis(ax_, date_min, date_max):
+    """Setup X axis for dates."""
 
-    outplots = {}
-
-    # Render cash flows.
     years = mdates.YearLocator()
     years_fmt = mdates.DateFormatter('%Y')
     months = mdates.MonthLocator()
 
-    def set_axis(ax_):
-        ax_.xaxis.set_major_locator(years)
-        ax_.xaxis.set_major_formatter(years_fmt)
-        ax_.xaxis.set_minor_locator(months)
+    ax_.xaxis.set_major_locator(years)
+    ax_.xaxis.set_major_formatter(years_fmt)
+    ax_.xaxis.set_minor_locator(months)
 
-        datemin = np.datetime64(dates[0], 'Y')
-        datemax = np.datetime64(dates[-1], 'Y') + np.timedelta64(1, 'Y')
-        ax_.set_xlim(datemin, datemax)
+    datemin = np.datetime64(date_min, 'Y')
+    datemax = np.datetime64(date_max, 'Y') + np.timedelta64(1, 'Y')
+    ax_.set_xlim(datemin, datemax)
 
-        ax_.format_xdata = mdates.DateFormatter('%Y-%m-%d')
-        ax_.format_ydata = "{:,}".format
-        ax_.grid(True)
+    ax_.format_xdata = mdates.DateFormatter('%Y-%m-%d')
+    ax_.format_ydata = "{:,}".format
+    ax_.grid(True)
 
+
+def plot_prices(output_dir: str,
+                price_map: prices.PriceMap,
+                pairs: List[CurrencyPair]) -> Dict[str, str]:
+    """Render one or more plots of prices."""
+
+    # Group by quote currencies.
+    outplots = {}
+    series = collections.defaultdict(list)
+    for c, qc in pairs:
+        series[qc].append(c)
+
+    fig, axs = plt.subplots(len(series), 1, sharex=True, figsize=[10, 2 * len(series)])
+    if len(series) == 1: axs = [axs]
+    for index, (qc, currencies) in enumerate(sorted(series.items())):
+        ax = axs[index]
+        for currency in currencies:
+            price_points = prices.get_all_prices(price_map, (currency, qc))
+
+            # Render cash flows.
+            dates = [date for date, _ in price_points]
+            prices_ = [float(price) for _, price in price_points]
+
+            set_axis(ax, dates[0], dates[-1])
+            ax.plot(dates, prices_, linewidth=0.3)
+            ax.scatter(dates, prices_, s=1.2)
+
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    filename = outplots["price"] = path.join(output_dir, "price.svg")
+    plt.savefig(filename)
+    plt.close(fig)
+
+    return outplots
+
+
+def plot_flows(output_dir: str,
+               price_map: prices.PriceMap,
+               flows: List[CashFlow],
+               transactions: data.Entries,
+               returns_rate: float) -> Dict[str, str]:
+    """Produce plots from cash flows and returns, and more."""
+
+    # Render cash flows.
+    outplots = {}
     dates = [f.date for f in flows]
     dates_exdiv = [f.date for f in flows if not f.is_dividend]
     dates_div = [f.date for f in flows if f.is_dividend]
@@ -899,12 +949,14 @@ def plot_flows(output_dir: str,
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=[10, 4],
                             gridspec_kw={'height_ratios': [3, 1]})
     for ax in axs:
-        set_axis(ax)
+        set_axis(ax, dates[0], dates[-1])
+        ax.axhline(0, color='#000', linewidth=0.2)
         ax.vlines(dates_exdiv, 0, amounts_exdiv, linewidth=3, color='#000', alpha=0.7)
         ax.vlines(dates_div, 0, amounts_div, linewidth=3, color='#0A0', alpha=0.7)
-    ax.axhline(0, color='#000', linewidth=0.5)
     axs[1].set_yscale('symlog')
 
+    axs[0].set_title("Cash Flows")
+    axs[1].set_title("Cash Flows (log)")
     fig.autofmt_xdate()
     fig.tight_layout()
     filename = outplots["flows"] = path.join(output_dir, "flows.svg")
@@ -928,11 +980,20 @@ def plot_flows(output_dir: str,
             gamounts[-1] += amt
 
     fig, ax = plt.subplots(figsize=[10, 4])
-    set_axis(ax)
-    #ax.scatter(dates_all, gamounts, color='#000', alpha=0.2, s=1.0)
-    ax.plot(dates_all, gamounts, color='#000', alpha=0.7)
-    ax.axhline(0, color='#000', linewidth=0.5)
+    ax.set_title("Cumulative value")
+    set_axis(ax, dates[0], dates[-1])
+    lw = 0.8
+    ax.axhline(0, color='#000', linewidth=lw)
 
+    #ax.scatter(dates_all, gamounts, color='#000', alpha=0.2, s=1.0)
+    ax.plot(dates_all, gamounts, color='#000', alpha=0.7, linewidth=lw)
+
+    # Overlay value of assets over time.
+    value_dates, value_values = compute_portfolio_values(price_map, transactions)
+    ax.plot(value_dates, value_values, color='#00F', alpha=0.5, linewidth=lw)
+    ax.scatter(value_dates, value_values, color='#00F', alpha=lw, s=2)
+
+    ax.legend(["Amortized value from flows", "Market value"], fontsize="xx-small")
     fig.autofmt_xdate()
     fig.tight_layout()
     filename = outplots["cumvalue"] = path.join(output_dir, "cumvalue.svg")
@@ -942,10 +1003,50 @@ def plot_flows(output_dir: str,
     return outplots
 
 
-    # Render varying price over time.
-    prices.get_all_prices(pricer.price_map)
+def compute_portfolio_values(price_map: prices.PriceMap,
+                             transactions: data.Entries) -> Tuple[List[Date], List[float]]:
+    """Compute a serie of portfolio values over time."""
 
+    # Infer the list of required prices.
+    currency_pairs = set()
+    for entry in transactions:
+        for posting in entry.postings:
+            if posting.meta["category"] is Cat.ASSET:
+                if posting.cost:
+                    currency_pairs.add((posting.units.currency, posting.cost.currency))
 
+    first = lambda x: x[0]
+    price_dates = sorted(itertools.chain(
+        ((date, None)
+         for pair in currency_pairs
+         for date, _ in prices.get_all_prices(price_map, pair)),
+        ((entry.date, entry)
+         for entry in transactions)), key=first)
+
+    # Iterate computing the balance.
+    value_dates = []
+    value_values = []
+    balance = Inventory()
+    for date, group in itertools.groupby(price_dates, key=first):
+        # Update balances.
+        for _, entry in group:
+            if entry is None:
+                continue
+            for posting in entry.postings:
+                if posting.meta["category"] is Cat.ASSET:
+                    balance.add_position(posting)
+
+        # Convert to market value.
+        value_balance = balance.reduce(convert.get_value, price_map, date)
+        cost_balance = value_balance.reduce(convert.convert_position, "USD", price_map)
+        pos = cost_balance.get_only_position()
+        value = pos.units.number if pos else ZERO
+
+        # Add one data point.
+        value_dates.append(date)
+        value_values.append(value)
+
+    return value_dates, value_values
 
 
 def write_transactions_by_type(output_signatures: str,
@@ -1005,7 +1106,7 @@ def get_calendar_intervals(date: Date) -> List[Interval]:
     return intervals
 
 
-def get_trailing_intervals(date: Date) -> List[Interval]:
+def get_cumulative_intervals(date: Date) -> List[Interval]:
     """Return a list of date pairs for sequential intervals."""
     return [
         ("15_years_ago", Date(date.year - 15, 1, 1), date),
@@ -1086,6 +1187,11 @@ def main():
                         help=("Accounts already closed before this date will not be "
                               "included in reporting."))
 
+    parser.add_argument('--pdf', '--pdfs', action='store_true',
+                        help="Render as PDFs. Default is HTML directories.")
+
+    parser.add_argument('-A', '--render-accounts', action='append', default=[],
+                        help=("A list of accounts whose returns to render explicitly."))
     parser.add_argument('-G', '--groups', '--additional-groups', action='store',
                         help=("A JSON filename containing a list of additional account "
                               "groups to compute returns for."))
@@ -1119,6 +1225,7 @@ def main():
     # Process all the accounts.
     account_data = [process_account_entries(pruned_entries, options_map, account)
                     for account in account_list]
+    account_data_map = {ad.account: ad for ad in account_data}
 
     # Write out a details file for each account for debugging.
     for accdata in account_data:
@@ -1129,26 +1236,44 @@ def main():
     output_signatures = path.join(args.output, "signature")
     write_transactions_by_type(output_signatures, account_data, dcontext)
 
+    # List of groups of AccountData to render.
+    groups = collections.defaultdict(list)
+    groups_currency = {}
+
     # Compute returns for the full set of selected accounts.
     if args.render_total:
-        write_returns(pricer, account_data, "All accounts",
-                      path.join(args.output, "returns.pdf"), args.target_currency)
+        groups["ALL"] = account_data
+        groups_currency["ALL"] = args.target_currency
+
+    # Process open and closed individual accounts to produce.
+    groups.update(get_account_groups(entries, account_data,
+                                     args.render_open, args.render_closed))
 
     # Group assets by currency or by explicit grouping.
-    groups = group_accounts(entries, account_data, args.render_open, args.render_closed)
     if args.groups:
         groups.update(read_groups(args.groups, account_data))
-    if 0:
-        for g, adlist in groups.items():
-            pprint((g, [ad.account for ad in adlist]))
+
+    # Render specific accounts explicitly.
+    if args.render_accounts:
+        for account in args.render_accounts:
+            key = account.replace(":", "_")
+            groups[key].append(account_data_map[account])
 
     # Write out a returns file for every account.
     multiprocessing.set_start_method('fork')
     os.makedirs(output_groups, exist_ok=True)
     calls = []
     for group_name, adlist in sorted(groups.items()):
-        filename = path.join(output_groups, "{}.pdf".format(group_name))
-        calls.append((write_returns, (pricer, adlist, group_name, filename)))
+        assert isinstance(adlist, list)
+        assert all(isinstance(ad, AccountData) for ad in adlist)
+        if args.pdf:
+            filename = path.join(output_groups, "{}.pdf".format(group_name))
+            calls.append((write_returns_pdf, (pricer, adlist, group_name, filename,
+                                              groups_currency.get(group_name, None))))
+        else:
+            dirname = path.join(output_groups, group_name)
+            calls.append((write_returns_html, (pricer, adlist, group_name, dirname,
+                                               groups_currency.get(group_name, None))))
     if False:
         with multiprocessing.Pool(5) as pool:
             asyns = []
@@ -1165,10 +1290,6 @@ def main():
     # fetching prices).
     write_price_directives(path.join(args.output, "prices.beancount"),
                            pricer, args.days_price_threshold)
-
-    # # Compute my overall returns.
-    # print(IRR_FORMAT.format(irr.groupname, irr.total, irr.exdiv, irr.div))
-    # print("\n\n")
 
 
 if __name__ == '__main__':
