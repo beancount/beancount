@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """Calculate my true returns, including dividends and real costs.
 
-Notes:
-
-- The calculation without dividends only accounts for cash dividends, not
-  reinvested dividends.
-
 TODO(blais): Compare to a benchmark portfolio with the same cash flows.
+TODO(blais): Estimate after-tax returns, including tax on dividends.
 """
 
 __copyright__ = "Copyright (C) 2020  Martin Blais"
@@ -114,26 +110,9 @@ class Pricer:
         return price
 
     def convert_amount(self, amount, target_currency, date):
+        """Convert an amount to a specific currency."""
         # TODO(blais): Save the amount here too.
         return convert.convert_amount(amount, target_currency, self.price_map, date=date)
-
-
-def find_accounts(entries: data.Entries,
-                  options_map: data.Options,
-                  start: Date) -> List[Account]:
-    """Return a list of account names from the balance sheet which either aren't
-    closed or are closed now but were still open at the given start date.
-    """
-    commodities = getters.get_commodity_directives(entries)
-    open_close_map = getters.get_account_open_close(entries)
-    atypes = options.get_account_types(options_map)
-    return sorted(
-        account
-        for account, (_open, _close) in open_close_map.items()
-        if (accountlib.leaf(account) in commodities and
-            acctypes.is_balance_sheet_account(account, atypes) and
-            not acctypes.is_equity_account(account, atypes) and
-            (_close is None or _close.date > start)))
 
 
 def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
@@ -606,7 +585,6 @@ def process_account_entries(entries: data.Entries,
     seen_accounts = {posting.account
                      for entry in transactions
                      for posting in entry.postings}
-    atypes = options.get_account_types(options_map)
     catmap = categorize_accounts_general(config, seen_accounts)
 
     # Process each of the transactions, adding derived values as metadata.
@@ -701,25 +679,6 @@ def truncate_and_merge_cash_flows(
         truncated_flows.extend(cash_flows)
 
     return sorted(truncated_flows, key=lambda cf: cf.date)
-
-
-def get_account_groups(entries: data.Entries,
-                       account_data: List[AccountData],
-                       render_open: bool,
-                       render_closed: bool) -> Dict[str, List[AccountData]]:
-    """Logically group accounts for reporting."""
-    groups = collections.defaultdict(list)
-    open_close_map = getters.get_account_open_close(entries)
-    for ad in account_data:
-        opn, cls = open_close_map[ad.account]
-        assert opn
-        is_open = cls is None and not ad.cash_flows[-1].balance.is_empty()
-        if not (render_open if is_open else render_closed):
-            continue
-        prefix = "open" if is_open else "closed"
-        group = "{}.{}".format(prefix, ad.currency)
-        groups[group].append(ad)
-    return dict(groups)
 
 
 IRR_FORMAT = "{:32}: {:6.2%} ({:6.2%} ex-div, {:6.2%} div)"
@@ -838,12 +797,6 @@ def compute_returns_table(pricer: Pricer,
         header.append(intname)
         cash_flows = truncate_and_merge_cash_flows(pricer, cash_flows_list,
                                                    date1, date2)
-        if 0:
-            print("===;", intname, date1, "->", date2)
-            for cf in cash_flows:
-                print(cf.date, cf.amount)
-            print()
-
         returns = compute_returns(cash_flows, pricer, target_currency, date2)
         rows[0].append(returns.total)
         rows[1].append(returns.exdiv)
@@ -1194,131 +1147,26 @@ def open_with_mkdir(filename: str):
     return open(filename, "w")
 
 
-def read_groups(filename: str,
-                account_data_map: Dict[Account, AccountData]
-) -> Dict[str, List[AccountData]]:
-    """Read a list of additional account groups to aggregate to."""
-    with open(filename) as groupfile:
-        obj = json.load(groupfile)
-    assert isinstance(obj, dict)
-
-    groups = {}
-    for group_name, account_list in obj.items():
-        adlist = groups[group_name] = []
-        for an in account_list:
-            # Support globbing patterns in account names.
-            if "*" in an:
-                for ann in fnmatch.filter(account_map, an):
-                    adlist.append(account_data_map[ann])
-            else:
-                adlist.append(account_data_map[an])
-
-    return groups
-
-
-# TODO(blais): Fork this out to another script. Separate.
-def infer_configuration(entries: data.Entries,
-                        options_map: data.Options,
-                        start_date: Date) -> Config:
-    """Infer an input configuration from a ledger's contents."""
-
-    # Find out the list of accounts to be included.
-    account_list = find_accounts(entries, options_map, start_date)
-
-    # Figure out the available investments.
-    config = Config()
-    infer_investments_configuration(entries, account_list, config.investments)
-
-    # Create reasonable reporting groups.
-    infer_report_groups(entries, config.investments, config.reports)
-    return config
-
-
-def infer_investments_configuration(entries: data.Entries,
-                                    account_list: List[Account],
-                                    out_config: InvestmentConfig):
-    """Infer a reasonable configuration for input."""
-
-    all_accounts = set(getters.get_account_open_close(entries))
-
-    for account in account_list:
-        aconfig = out_config.investment.add()
-        aconfig.currency = accountlib.leaf(account)
-        aconfig.asset_account = account
-
-        regexp = re.compile(re.sub(r"^[A-Z][^:]+:", "[A-Z][A-Za-z0-9]+:", account) +
-                            ":Dividends?")
-        for maccount in filter(regexp.match, all_accounts):
-            aconfig.dividend_accounts.append(maccount)
-
-        match_accounts = set()
-        match_accounts.add(aconfig.asset_account)
-        match_accounts.update(aconfig.dividend_accounts)
-        match_accounts.update(aconfig.match_accounts)
-
-        # Figure out the total set of accounts seed in those transactions.
-        cash_accounts = set()
-        for entry in data.filter_txns(entries):
-            if any(posting.account in match_accounts for posting in entry.postings):
-                for posting in entry.postings:
-                    if (posting.account == aconfig.asset_account or
-                        posting.account in aconfig.dividend_accounts or
-                        posting.account in aconfig.match_accounts):
-                        continue
-                    if (re.search(r":(Cash|Checking|Receivable|GSURefund)$",
-                                  posting.account) or
-                        re.search(r"Receivable|Payable", posting.account) or
-                        re.match(r"Income:.*:(Match401k)$", posting.account)):
-                        cash_accounts.add(posting.account)
-        aconfig.cash_accounts.extend(cash_accounts)
-
-
-def infer_report_groups(entries: data.Entries,
-                        investments: InvestmentConfig,
-                        out_config: ReportConfig):
-    """Logically group accounts for reporting."""
-    groups = collections.defaultdict(list)
-    open_close_map = getters.get_account_open_close(entries)
-    for investment in investments.investment:
-        opn, cls = open_close_map[investment.asset_account]
-        assert opn, "Missing open directive for '{}'".format(ad.account)
-        groups[investment.currency].append(investment.asset_account)
-    for currency, group_accounts in sorted(groups.items()):
-        report = out_config.report.add()
-        report.name = "currency.{}".format(currency)
-        report.investments.extend(group_accounts)
-
-
 def main():
     """Top-level function."""
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('ledger',
                         help="Beancount ledger file")
+    parser.add_argument('config', action='store',
+                        help='Configuration for accounts and reports.')
     parser.add_argument('output',
                         help="Output directory to write all output files to.")
-    parser.add_argument('accounts', nargs='*',
-                        help=("Name of specific accounts to analyze. "
-                              "Default is all accounts."))
 
-    parser.add_argument('-c', '--config', action='store',
-                        help='Configuration for accounts and reports.')
+    parser.add_argument('filter_reports', nargs='*',
+                        help="Optional names of specific subset of reports to analyze.")
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Verbose mode')
 
-    parser.add_argument('--target-currency', action='store', default='USD',
-                        help="The target currency to convert flows to.")
-
     parser.add_argument('-d', '--days-price-threshold', action='store', type=int,
                         default=5,
                         help="The number of days to tolerate price latency.")
-
-    parser.add_argument('-s', '--start-date', action='store',
-                        type=datetime.date.fromisoformat,
-                        default=Date(TODAY.year - 10, TODAY.month, TODAY.day),
-                        help=("Accounts already closed before this date will not be "
-                              "included in reporting."))
 
     parser.add_argument('-e', '--end-date', action='store',
                         type=datetime.date.fromisoformat,
@@ -1327,25 +1175,17 @@ def main():
     parser.add_argument('--pdf', '--pdfs', action='store_true',
                         help="Render as PDFs. Default is HTML directories.")
 
-    parser.add_argument('-A', '--render-accounts', action='append', default=[],
-                        help=("A list of accounts whose returns to render explicitly."))
-    parser.add_argument('-G', '--groups', '--additional-groups', action='store',
-                        help=("A JSON filename containing a list of additional account "
-                              "groups to compute returns for."))
-    parser.add_argument('-O', '--render-open', action='store_true',
-                        help="Render open accounts.")
-    parser.add_argument('-C', '--render-closed', action='store_true',
-                        help="Render closed accounts.")
-    parser.add_argument('-T', '--render-total', action='store_true',
-                        help="Render total return.")
+    parser.add_argument('-j', '--parallel', action='store_true',
+                        help="Run report generation concurrently.")
+
 
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
         logging.getLogger('matplotlib.font_manager').disabled = True
 
-    output_accounts = path.join(args.output, "investmentsj")
-    output_groups = path.join(args.output, "groups")
+    output_accounts = path.join(args.output, "investments")
+    output_reports = path.join(args.output, "reports")
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
@@ -1353,15 +1193,14 @@ def main():
     dcontext = options_map['dcontext']
     pricer = Pricer(prices.build_price_map(entries))
 
-    if args.config:
-        config = Config()
-        with open(args.config, "r") as infile:
-            text_format.Merge(infile.read(), config)
-    else:
-        # Infer configuration proto.
-        config = infer_configuration(entries, options_map, args.start_date)
-        with open_with_mkdir(path.join(args.output, "config.pbtxt")) as cfgfile:
-            print(config,file=cfgfile)
+    # Load and filter the configuration.
+    config = Config()
+    with open(args.config, "r") as infile:
+        text_format.Merge(infile.read(), config)
+    reports = list(config.reports.report)
+    if args.filter_reports:
+        filter_set = set(args.filter_reports)
+        reports = [report for report in reports if report.name in filter_set]
 
     # Note: It might be useful to have an option for "the end of its history"
     # for Ledger that aren't updated up to today.
@@ -1376,62 +1215,52 @@ def main():
     # Prune the list of entries for performance.
     pruned_entries = prune_entries(entries, config)
 
+    # Filter just the list of instruments needed for the requested reports.
+    used_accounts = set(inv
+                        for report in reports
+                        for inv in report.investments)
+    investment_list = [invest
+                       for invest in config.investments.investment
+                       if invest.asset_account in used_accounts]
+
     # Process all the accounts.
     account_data = [process_account_entries(pruned_entries, options_map, aconfig)
-                    for aconfig in config.investments.investment]
+                    for aconfig in investment_list]
     account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}
 
     # Write out a details file for each account for debugging.
-    for accdata in account_data:
-        basename = path.join(output_accounts, accdata.account.replace(":", "_"))
-        write_account_file(dcontext, accdata, basename + ".org")
+    for ad in account_data:
+        basename = path.join(output_accounts, ad.account.replace(":", "_"))
+        write_account_file(dcontext, ad, basename + ".org")
 
     # Output transactions for each type (for debugging).
     output_signatures = path.join(args.output, "signature")
     write_transactions_by_type(output_signatures, account_data, dcontext)
 
-    # List of groups of AccountData to render.
-    groups = collections.defaultdict(list)
-    groups_currency = {}
-
-    # Compute returns for the full set of selected accounts.
-    if args.render_total:
-        groups["ALL"] = account_data
-        groups_currency["ALL"] = args.target_currency
-
-    # Process open and closed individual accounts to produce.
-    groups.update(get_account_groups(entries, account_data,
-                                     args.render_open, args.render_closed))
-
-    # Group assets by currency or by explicit grouping.
-    if args.groups:
-        groups.update(read_groups(args.groups, account_data_map))
-
-    # Render specific accounts explicitly.
-    if args.render_accounts:
-        for account in args.render_accounts:
-            key = account.replace(":", "_")
-            groups[key].append(account_data_map[account])
+    # Output required price directives (to be filled in the source ledger by
+    # fetching prices).
+    write_price_directives(path.join(args.output, "prices.beancount"),
+                           pricer, args.days_price_threshold)
 
     # Write out a returns file for every account.
     multiprocessing.set_start_method('fork')
-    os.makedirs(output_groups, exist_ok=True)
+    os.makedirs(output_reports, exist_ok=True)
     calls = []
-    for group_name, adlist in sorted(groups.items()):
+    for report in reports:
+        adlist = [account_data_map[name] for name in report.investments]
         assert isinstance(adlist, list)
         assert all(isinstance(ad, AccountData) for ad in adlist)
-        if args.pdf:
-            function = write_returns_pdf
-            filename = path.join(output_groups, "{}.pdf".format(group_name))
-        else:
-            function = write_returns_html
-            filename = path.join(output_groups, group_name)
+
+        function = write_returns_pdf if args.pdf else write_returns_html
+        filename = path.join(output_reports, report.name)
+        if args.pdf: filename = filename + ".pdf"
         calls.append(partial(
-            function, filename, pricer, adlist, group_name,
+            function, filename, pricer, adlist, report.name,
             end_date,
-            groups_currency.get(group_name, None)))
-    if False:
+            report.currency))
+
+    if args.parallel:
         with multiprocessing.Pool(5) as pool:
             asyns = []
             for func in calls:
@@ -1442,11 +1271,6 @@ def main():
     else:
         for func in calls:
             func()
-
-    # Output required price directives (to be filled in the source ledger by
-    # fetching prices).
-    write_price_directives(path.join(args.output, "prices.beancount"),
-                           pricer, args.days_price_threshold)
 
 
 if __name__ == '__main__':
