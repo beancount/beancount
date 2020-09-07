@@ -380,13 +380,16 @@ def produce_cash_flows_general(entry: data.Directive,
         category = posting.meta["category"]
         if category == Cat.CASH:
             assert not posting.cost
-            flows.append(CashFlow(entry.date, posting.units, has_dividend, None))
+            cf = CashFlow(entry.date, posting.units, has_dividend, None)
+            posting.meta["flow"] = cf
+            flows.append(cf)
         elif category == Cat.OTHER:
             # If the account deposits other assets (as evidenced by a cost
             # basis), count those as outflows.
             if posting.cost:
-                flows.append(CashFlow(entry.date, convert.get_weight(posting),
-                                      False, None))
+                cf = CashFlow(entry.date, convert.get_weight(posting), False, None)
+                posting.meta["flow"] = cf
+                flows.append(cf)
     return flows
 
 
@@ -411,7 +414,9 @@ def handle_one_asset(entry: data.Directive) -> List[CashFlow]:
             pass
         elif category == Cat.CASH:
             assert not posting.cost
-            flows.append(CashFlow(entry.date, posting.units, False, None))
+            cf = CashFlow(entry.date, posting.units, False, None)
+            posting.meta["flow"] = cf
+            flows.append(cf)
         elif category == Cat.EXPENSES:
             # Expenses are already accounted for by the cash leg.
             pass
@@ -433,7 +438,9 @@ def handle_dividends(entry: data.Directive) -> List[CashFlow]:
             pass
         elif category == Cat.CASH:
             assert not posting.cost
-            flows.append(CashFlow(entry.date, posting.units, True, None))
+            cf = CashFlow(entry.date, posting.units, True, None)
+            posting.meta["flow"] = cf
+            flows.append(cf)
         else:
             raise ValueError("Unsupported category: {}".format(category))
     return flows
@@ -471,8 +478,9 @@ def handle_failing(entry: data.Directive) -> List[CashFlow]:
         if category == Cat.ASSET:
             pass
         elif category == Cat.OTHERASSET:
-            flows.append(CashFlow(entry.date, convert.get_weight(posting),
-                                  False, None))
+            cf = CashFlow(entry.date, convert.get_weight(posting), False, None)
+            posting.meta["flow"] = cf
+            flows.append(cf)
         else:
             raise ValueError("Unsupported category: {}".format(category))
     return flows
@@ -609,13 +617,12 @@ def process_account_entries(entries: data.Entries,
 
         # Compute the cash flows associated with the transaction.
         flows = produce_cash_flows_general(entry, catmap)
-        entry.meta['cash_flows'] = flows
 
         cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
                           for flow in flows)
         decorated_transactions.append(entry)
 
-    currency = accountlib.leaf(account)
+    currency = config.currency
 
     cost_currencies = set(cf.amount.currency for cf in cash_flows)
     assert len(cost_currencies) == 1, str(cost_currencies)
@@ -965,7 +972,7 @@ def plot_flows(output_dir: str,
     axs[1].set_yscale('symlog')
 
     axs[0].set_title("Cash Flows")
-    axs[1].set_title("Cash Flows (log)")
+    axs[1].set_title("log(Cash Flows)")
     fig.autofmt_xdate()
     fig.tight_layout()
     filename = outplots["flows"] = path.join(output_dir, "flows.svg")
