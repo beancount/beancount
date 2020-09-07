@@ -132,26 +132,7 @@ def find_accounts(entries: data.Entries,
             (_close is None or _close.date > start)))
 
 
-def prune_entries(entries: data.Entries,
-                  account_list: List[Account],
-                  use_account_commodities_only: Optional[bool] = None) -> data.Entries:
-    """Prune the list of entries to exclude all transactions that include a
-    commodity name in at least one of its postings. This speeds up the
-    recovery process by removing the majority of non-trading transactions."""
-    if use_account_commodities_only:
-        commodities = set(accountlib.leaf(account) for account in account_list)
-    else:
-        # All commodities.
-        commodities = getters.get_commodity_directives(entries).keys()
-    regexp = re.compile(r":({})(:|\b)?".format("|".join(commodities))).search
-    return [entry
-            for entry in entries
-            if (isinstance(entry, (data.Open, data.Commodity)) or
-                (isinstance(entry, data.Transaction) and
-                 any(regexp(posting.account) for posting in entry.postings)))]
-
-
-def prune_entries_new(entries: data.Entries, config: Config) -> data.Entries:
+def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
     """Prune the list of entries to exclude all transactions that include a
     commodity name in at least one of its postings. This speeds up the
     recovery process by removing the majority of non-trading transactions."""
@@ -175,29 +156,6 @@ def prune_entries_new(entries: data.Entries, config: Config) -> data.Entries:
 
 
 def extract_transactions_for_account(entries: data.Entries,
-                                     account: Account) -> data.Entries:
-    """Get the list of transactions affecting an investment account."""
-
-    # Main matcher that will pull in related transactions.
-    accounts_regexp = re.sub("[A-Za-z]+:", "(.*):", account, 1) + "(:Dividends?)?$"
-
-    # Check that no other account has the leaf component in its name.
-    # accounts = set(posting.account
-    #                for entry in data.filter_txns(entries)
-    #                for posting in entry.postings)
-    # leaf = accountlib.leaf(account)
-    # for acc in accounts:
-    #     if not re.match(accounts_regexp, acc) and re.match(r"\b{}\b".format(leaf), acc):
-    #         print("XXX", acc)
-
-    # Figure out the total set of accounts seed in those transactions.
-    return [entry
-            for entry in data.filter_txns(entries)
-            if any(re.match(accounts_regexp, posting.account)
-                   for posting in entry.postings)]
-
-
-def extract_transactions_for_account_new(entries: data.Entries,
                                          config: AccountConfig) -> data.Entries:
     """Get the list of transactions affecting an investment account."""
     match_accounts = set([config.asset_account])
@@ -345,8 +303,8 @@ def categorize_accounts(account: Account,
     return catmap
 
 
-def categorize_accounts_new(config: AccountConfig,
-                            accounts: Set[Account]) -> Dict[Account, Cat]:
+def categorize_accounts_general(config: AccountConfig,
+                                accounts: Set[Account]) -> Dict[Account, Cat]:
     """Categorize the type of accounts for a particular stock. Our purpose is to
     make the types of postings generic, so they can be categorized and handled
     generically later on.
@@ -424,8 +382,8 @@ def produce_cash_flows(entry: data.Directive) -> List[CashFlow]:
     return handler(entry)
 
 
-def produce_cash_flows_new(entry: data.Directive,
-                           catmap: Dict[Account, Cat]) -> List[CashFlow]:
+def produce_cash_flows_general(entry: data.Directive,
+                               catmap: Dict[Account, Cat]) -> List[CashFlow]:
     """Produce cash flows using the signature of the transaction."""
 
     for posting in entry.postings:
@@ -629,73 +587,13 @@ AccountData = typing.NamedTuple("AccountData", [
 
 def process_account_entries(entries: data.Entries,
                             options_map: data.Options,
-                            account: Account) -> AccountData:
-    """Process a single account."""
-    logging.info("Processing account: %s", account)
-
-    # Extract the relevant transactions.
-    transactions = extract_transactions_for_account(entries, account)
-    if not transactions:
-        logging.warning("No transactions for %s; skipping.", account)
-        return None
-
-    # Categorize the set of accounts encountered in the filtered transactions.
-    seen_accounts = {posting.account
-                     for entry in transactions
-                     for posting in entry.postings}
-    atypes = options.get_account_types(options_map)
-    catmap = categorize_accounts(account, seen_accounts, atypes)
-
-    # Process each of the transactions, adding derived values as metadata.
-    cash_flows = []
-    balance = Inventory()
-    decorated_transactions = []
-    for entry in transactions:
-
-        # Update the total position in the asset we're interested in.
-        positions = []
-        for posting in entry.postings:
-            category = catmap[posting.account]
-            if category is Cat.ASSET:
-                balance.add_position(posting)
-                positions.append(posting)
-
-        # Compute the signature of the transaction.
-        entry = copy_and_normalize(entry)
-        signature = compute_transaction_signature(catmap, entry)
-        entry.meta["signature"] = signature
-        #entry.meta["description"] = KNOWN_SIGNATURES[signature]
-
-        # Compute the cash flows associated with the transaction.
-        flows = produce_cash_flows(entry)
-        entry.meta['cash_flows'] = flows
-
-        cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
-                          for flow in flows)
-        decorated_transactions.append(entry)
-
-    currency = accountlib.leaf(account)
-
-    cost_currencies = set(cf.amount.currency for cf in cash_flows)
-    assert len(cost_currencies) == 1, str(cost_currencies)
-    cost_currency = cost_currencies.pop()
-
-    commodity_map = getters.get_commodity_directives(entries)
-    comm = commodity_map[currency]
-
-    return AccountData(account, currency, cost_currency, comm, cash_flows,
-                       decorated_transactions, catmap)
-
-
-def process_account_entries_new(entries: data.Entries,
-                                options_map: data.Options,
-                                config: AccountConfig) -> AccountData:
+                            config: AccountConfig) -> AccountData:
     """Process a single account."""
     account = config.asset_account
     logging.info("Processing account: %s", account)
 
     # Extract the relevant transactions.
-    transactions = extract_transactions_for_account_new(entries, config)
+    transactions = extract_transactions_for_account(entries, config)
     if not transactions:
         logging.warning("No transactions for %s; skipping.", account)
         return None
@@ -705,7 +603,7 @@ def process_account_entries_new(entries: data.Entries,
                      for entry in transactions
                      for posting in entry.postings}
     atypes = options.get_account_types(options_map)
-    catmap = categorize_accounts_new(config, seen_accounts)
+    catmap = categorize_accounts_general(config, seen_accounts)
 
     # Process each of the transactions, adding derived values as metadata.
     cash_flows = []
@@ -728,7 +626,7 @@ def process_account_entries_new(entries: data.Entries,
         ##entry.meta["description"] = KNOWN_SIGNATURES[signature]
 
         # Compute the cash flows associated with the transaction.
-        flows = produce_cash_flows_new(entry, catmap)
+        flows = produce_cash_flows_general(entry, catmap)
         entry.meta['cash_flows'] = flows
 
         cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
@@ -1431,19 +1329,15 @@ def main():
 
     # Infer configuration proto.
     config = infer_configuration(entries, account_list)
-    print(config)
+    with open_with_mkdir(path.join(args.output, "config.pbtxt")) as cfgfile:
+        print(config,file=cfgfile)
 
     # Prune the list of entries for performance.
-    pruned_entries = prune_entries(entries, account_list)
-    # pruned_entries = prune_entries_new(entries, config)
+    pruned_entries = prune_entries(entries, config)
 
     # Process all the accounts.
-    if 0:
-        account_data = [process_account_entries(pruned_entries, options_map, account)
-                        for account in account_list]
-    else:
-        account_data = [process_account_entries_new(pruned_entries, options_map, aconfig)
-                        for aconfig in config.account_config]
+    account_data = [process_account_entries(pruned_entries, options_map, aconfig)
+                    for aconfig in config.account_config]
     account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}
 
