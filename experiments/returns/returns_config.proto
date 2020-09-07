@@ -1,0 +1,32 @@
+// -*- mode: protobuf -*-
+// Configuration for the computation of returns.
+
+syntax = "proto2";
+
+package beancount.returns;
+
+// Configuration for returns script.
+message Config {
+  repeated AccountConfig account_config = 1;
+}
+
+// Configuration for extracting returns information for one asset in one
+// account.
+message AccountConfig {
+  // Currency under consideration.
+  optional string currency = 1;
+
+  // Account containing assets.
+  optional string asset_account = 2;
+
+  // Account names allowing us to figure out this is a dividend. Typicaslly the
+  // dividend income account. posting to this account).
+  repeated string dividend_accounts = 3;
+
+  // Other account names to include (if a transaction has at least one posting
+  // to this account).
+  repeated string match_accounts = 4;
+
+  // Cash accounts to generate flows for.
+  repeated string cash_accounts = 5;
+}

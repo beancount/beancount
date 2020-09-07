@@ -62,6 +62,9 @@ from beancount.core.inventory import Position
 from beancount.parser import options
 from beancount.parser import printer
 
+from returns_config_pb2 import Config
+from returns_config_pb2 import AccountConfig
+
 
 # Basic type aliases.
 Account = str
@@ -129,12 +132,18 @@ def find_accounts(entries: data.Entries,
             (_close is None or _close.date > start)))
 
 
-def prune_entries(entries: data.Entries) -> data.Entries:
+def prune_entries(entries: data.Entries,
+                  account_list: List[Account],
+                  use_account_commodities_only: Optional[bool] = None) -> data.Entries:
     """Prune the list of entries to exclude all transactions that include a
     commodity name in at least one of its postings. This speeds up the
     recovery process by removing the majority of non-trading transactions."""
-    commodities = getters.get_commodity_directives(entries)
-    regexp = re.compile(r"\b({})\b".format("|".join(commodities.keys()))).search
+    if use_account_commodities_only:
+        commodities = set(accountlib.leaf(account) for account in account_list)
+    else:
+        # All commodities.
+        commodities = getters.get_commodity_directives(entries).keys()
+    regexp = re.compile(r":({})(:|\b)?".format("|".join(commodities))).search
     return [entry
             for entry in entries
             if (isinstance(entry, (data.Open, data.Commodity)) or
@@ -142,8 +151,31 @@ def prune_entries(entries: data.Entries) -> data.Entries:
                  any(regexp(posting.account) for posting in entry.postings)))]
 
 
-def transactions_for_account(entries: data.Entries,
-                             account: Account) -> data.Entries:
+def prune_entries_new(entries: data.Entries, config: Config) -> data.Entries:
+    """Prune the list of entries to exclude all transactions that include a
+    commodity name in at least one of its postings. This speeds up the
+    recovery process by removing the majority of non-trading transactions."""
+
+    commodities = set(aconfig.currency for aconfig in config.account_config)
+    accounts = set()
+    for aconfig in config.account_config:
+        accounts.add(aconfig.asset_account)
+        accounts.update(aconfig.dividend_accounts)
+        accounts.update(aconfig.match_accounts)
+
+    return [entry
+            for entry in entries
+            if ((isinstance(entry, data.Commodity) and
+                 entry.currency in commodities) or
+                (isinstance(entry, data.Open) and
+                 entry.account in accounts) or
+                (isinstance(entry, data.Transaction) and
+                 any(posting.account in accounts
+                     for posting in entry.postings)))]
+
+
+def extract_transactions_for_account(entries: data.Entries,
+                                     account: Account) -> data.Entries:
     """Get the list of transactions affecting an investment account."""
 
     # Main matcher that will pull in related transactions.
@@ -165,6 +197,18 @@ def transactions_for_account(entries: data.Entries,
                    for posting in entry.postings)]
 
 
+def extract_transactions_for_account_new(entries: data.Entries,
+                                         config: AccountConfig) -> data.Entries:
+    """Get the list of transactions affecting an investment account."""
+    match_accounts = set([config.asset_account])
+    match_accounts.update(config.dividend_accounts)
+    match_accounts.update(config.match_accounts)
+    return [entry
+            for entry in data.filter_txns(entries)
+            if any(posting.account in match_accounts
+                   for posting in entry.postings)]
+
+
 class Cat(enum.Enum):
     """Posting categorization.
 
@@ -180,10 +224,15 @@ class Cat(enum.Enum):
     # contributions.
     CASH = 2
 
+    # Dividend income account.
+    DIVIDEND = 5
+
+    # Any other account (more specific ones come below).
+    OTHER = 13
+
     # Income accounts.
     PNL = 3
     INTEREST = 4
-    DIVIDEND = 5
 
     # Misc adjustment accounts.
     ROUNDING = 6
@@ -296,6 +345,27 @@ def categorize_accounts(account: Account,
     return catmap
 
 
+def categorize_accounts_new(config: AccountConfig,
+                            accounts: Set[Account]) -> Dict[Account, Cat]:
+    """Categorize the type of accounts for a particular stock. Our purpose is to
+    make the types of postings generic, so they can be categorized and handled
+    generically later on.
+    """
+    catmap = {}
+    for account in accounts:
+        if account == config.asset_account:
+            cat = Cat.ASSET
+        elif account in config.dividend_accounts:
+            cat = Cat.DIVIDEND
+        elif account in config.cash_accounts:
+            cat = Cat.CASH
+        else:
+            # Potentially includes other assets.
+            cat = Cat.OTHER
+        catmap[account] = cat
+    return catmap
+
+
 def compute_transaction_signature(catmap: Dict[Account, Cat],
                                   entry: data.Directive) -> Tuple[Cat]:
     """Compute a unique signature for each transaction.
@@ -352,6 +422,31 @@ def produce_cash_flows(entry: data.Directive) -> List[CashFlow]:
     sig = entry.meta["signature"]
     handler = _signature_registry[sig]
     return handler(entry)
+
+
+def produce_cash_flows_new(entry: data.Directive,
+                           catmap: Dict[Account, Cat]) -> List[CashFlow]:
+    """Produce cash flows using the signature of the transaction."""
+
+    for posting in entry.postings:
+        posting.meta["category"] = catmap[posting.account]
+
+    has_dividend = any(posting.meta["category"] == Cat.DIVIDEND
+                       for posting in entry.postings)
+
+    flows = []
+    for posting in entry.postings:
+        category = posting.meta["category"]
+        if category == Cat.CASH:
+            assert not posting.cost
+            flows.append(CashFlow(entry.date, posting.units, has_dividend, None))
+        elif category == Cat.OTHER:
+            # If the account deposits other assets (as evidenced by a cost
+            # basis), count those as outflows.
+            if posting.cost:
+                flows.append(CashFlow(entry.date, convert.get_weight(posting),
+                                      False, None))
+    return flows
 
 
 @register(Cat.ASSET)
@@ -433,10 +528,10 @@ def handle_failing(entry: data.Directive) -> List[CashFlow]:
     for posting in entry.postings:
         category = posting.meta["category"]
         if category == Cat.ASSET:
-            flows.append(CashFlow(entry.date, -convert.get_weight(posting),
-                                  False, None))
-        elif category == Cat.OTHERASSET:
             pass
+        elif category == Cat.OTHERASSET:
+            flows.append(CashFlow(entry.date, convert.get_weight(posting),
+                                  False, None))
         else:
             raise ValueError("Unsupported category: {}".format(category))
     return flows
@@ -449,7 +544,8 @@ def net_present_value(irr: float, cash_flows: Array, years: Array):
 
 def compute_irr(dated_flows: List[CashFlow],
                 pricer: Pricer,
-                target_currency: Currency) -> float:
+                target_currency: Currency,
+                end_date: Date) -> float:
     """Compute the irregularly spaced IRR."""
 
     # Array of cash flows, converted to USD.
@@ -462,7 +558,7 @@ def compute_irr(dated_flows: List[CashFlow],
     # Array of time in years.
     years = []
     for flow in dated_flows:
-        years.append((flow.date - TODAY).days / 365)
+        years.append((flow.date - end_date).days / 365)
     years = np.array(years)
 
     # Start with something reasonably normal.
@@ -489,15 +585,16 @@ Returns = typing.NamedTuple("Returns", [
 
 def compute_returns(flows: List[CashFlow],
                     pricer: Pricer,
-                    target_currency: Currency) -> Returns:
+                    target_currency: Currency,
+                    end_date: Date) -> Returns:
     """Compute the returns from a list of cash flows."""
     if not flows:
         return Returns("?", TODAY, TODAY, 0, 0, 0, 0, [])
     flows = sorted(flows, key=lambda cf: cf.date)
-    irr = compute_irr(flows, pricer, target_currency)
+    irr = compute_irr(flows, pricer, target_currency, end_date)
 
     flows_exdiv = [flow for flow in flows if not flow.is_dividend]
-    irr_exdiv = compute_irr(flows_exdiv, pricer, target_currency)
+    irr_exdiv = compute_irr(flows_exdiv, pricer, target_currency, end_date)
 
     first_date = flows[0].date
     last_date = flows[-1].date
@@ -537,10 +634,10 @@ def process_account_entries(entries: data.Entries,
     logging.info("Processing account: %s", account)
 
     # Extract the relevant transactions.
-    transactions = transactions_for_account(entries, account)
+    transactions = extract_transactions_for_account(entries, account)
     if not transactions:
         logging.warning("No transactions for %s; skipping.", account)
-        return transactions, None, None
+        return None
 
     # Categorize the set of accounts encountered in the filtered transactions.
     seen_accounts = {posting.account
@@ -567,10 +664,71 @@ def process_account_entries(entries: data.Entries,
         entry = copy_and_normalize(entry)
         signature = compute_transaction_signature(catmap, entry)
         entry.meta["signature"] = signature
-        entry.meta["description"] = KNOWN_SIGNATURES[signature]
+        #entry.meta["description"] = KNOWN_SIGNATURES[signature]
 
         # Compute the cash flows associated with the transaction.
         flows = produce_cash_flows(entry)
+        entry.meta['cash_flows'] = flows
+
+        cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
+                          for flow in flows)
+        decorated_transactions.append(entry)
+
+    currency = accountlib.leaf(account)
+
+    cost_currencies = set(cf.amount.currency for cf in cash_flows)
+    assert len(cost_currencies) == 1, str(cost_currencies)
+    cost_currency = cost_currencies.pop()
+
+    commodity_map = getters.get_commodity_directives(entries)
+    comm = commodity_map[currency]
+
+    return AccountData(account, currency, cost_currency, comm, cash_flows,
+                       decorated_transactions, catmap)
+
+
+def process_account_entries_new(entries: data.Entries,
+                                options_map: data.Options,
+                                config: AccountConfig) -> AccountData:
+    """Process a single account."""
+    account = config.asset_account
+    logging.info("Processing account: %s", account)
+
+    # Extract the relevant transactions.
+    transactions = extract_transactions_for_account_new(entries, config)
+    if not transactions:
+        logging.warning("No transactions for %s; skipping.", account)
+        return None
+
+    # Categorize the set of accounts encountered in the filtered transactions.
+    seen_accounts = {posting.account
+                     for entry in transactions
+                     for posting in entry.postings}
+    atypes = options.get_account_types(options_map)
+    catmap = categorize_accounts_new(config, seen_accounts)
+
+    # Process each of the transactions, adding derived values as metadata.
+    cash_flows = []
+    balance = Inventory()
+    decorated_transactions = []
+    for entry in transactions:
+
+        # Update the total position in the asset we're interested in.
+        positions = []
+        for posting in entry.postings:
+            category = catmap[posting.account]
+            if category is Cat.ASSET:
+                balance.add_position(posting)
+                positions.append(posting)
+
+        # Compute the signature of the transaction.
+        entry = copy_and_normalize(entry)
+        signature = compute_transaction_signature(catmap, entry)
+        entry.meta["signature"] = signature
+        ##entry.meta["description"] = KNOWN_SIGNATURES[signature]
+
+        # Compute the cash flows associated with the transaction.
+        flows = produce_cash_flows_new(entry, catmap)
         entry.meta['cash_flows'] = flows
 
         cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
@@ -606,8 +764,8 @@ def find_balance_before(cash_flows: List[CashFlow],
 def truncate_and_merge_cash_flows(
         pricer: Pricer,
         cash_flows_list: List[List[CashFlow]],
-        date_start: Optional[Date] = None,
-        date_end: Optional[Date] = None) -> List[CashFlow]:
+        date_start: Date,
+        date_end: Date) -> List[CashFlow]:
     """Truncate and merge a list of cash flows for processing, inserting initial
     and/or final cash flows from balances if necessary."""
 
@@ -628,9 +786,6 @@ def truncate_and_merge_cash_flows(
                         0, CashFlow(date_start, -cost_position.units, False, balance))
 
         # Truncate cash flows after the given interval.
-        if date_end is None:
-            # If no end date is specified, use today.
-            date_end = TODAY
         balance, index = find_balance_before(cash_flows, date_end)
         if index < len(cash_flows):
             cash_flows = cash_flows[:index]
@@ -787,23 +942,19 @@ def compute_returns_table(pricer: Pricer,
                 print(cf.date, cf.amount)
             print()
 
-        returns = compute_returns(cash_flows, pricer, target_currency)
+        returns = compute_returns(cash_flows, pricer, target_currency, date2)
         rows[0].append(returns.total)
         rows[1].append(returns.exdiv)
         rows[2].append(returns.div)
     return Table(header, rows)
 
 
-def write_returns_pdf(pricer: Pricer,
-                      account_data: List[AccountData],
-                      title: str,
-                      pdf_filename: str,
-                      target_currency: Optional[Currency] = None) -> subprocess.Popen:
+def write_returns_pdf(pdf_filename: str, *args, **kwargs) -> subprocess.Popen:
     """Write out returns for a combined list of account account_data.."""
+    logging.info("Writing returns file: %s", pdf_filename)
 
-    logging.info("Writing returns file for %s: %s", title, pdf_filename)
     with tempfile.TemporaryDirectory() as tmpdir:
-        indexfile = write_returns_html(pricer, account_data, title, tmpdir, target_currency)
+        indexfile = write_returns_html(tmpdir, *args, **kwargs)
         command = ["google-chrome", "--headless", "--disable-gpu",
                    "--print-to-pdf={}".format(pdf_filename), indexfile]
         subprocess.check_call(command, stderr=open("/dev/null", "w"))
@@ -811,10 +962,11 @@ def write_returns_pdf(pricer: Pricer,
         logging.info("Done: file://%s", pdf_filename)
 
 
-def write_returns_html(pricer: Pricer,
+def write_returns_html(dirname: str,
+                       pricer: Pricer,
                        account_data: List[AccountData],
                        title: str,
-                       dirname: str,
+                       end_date: Date,
                        target_currency: Optional[Currency] = None) -> subprocess.Popen:
     """Write out returns report to a directory with files in it."""
 
@@ -846,10 +998,12 @@ def write_returns_html(pricer: Pricer,
 
         fprint("<h2>Cash Flows</h2>")
         cash_flows_list = [ad.cash_flows for ad in account_data]
-        cash_flows = truncate_and_merge_cash_flows(pricer, cash_flows_list)
+        cash_flows = truncate_and_merge_cash_flows(pricer, cash_flows_list,
+                                                   None, end_date)
+
         transactions = data.sorted([txn for ad in account_data for txn in ad.transactions])
 
-        returns = compute_returns(cash_flows, pricer, target_currency)
+        returns = compute_returns(cash_flows, pricer, target_currency, end_date)
         # Note: This is where the vast majority of the time is spent.
         plots = plot_flows(dirname, pricer.price_map,
                            cash_flows, transactions, returns.total)
@@ -1069,7 +1223,7 @@ def write_transactions_by_type(output_signatures: str,
             fprint = partial(print, file=catfile)
             fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
 
-            description = KNOWN_SIGNATURES[sig]
+            description = KNOWN_SIGNATURES.get(sig, "?")
             fprint("description: {}".format(description))
             fprint("number_entries: {}".format(len(sigentries)))
             fprint()
@@ -1139,12 +1293,12 @@ def open_with_mkdir(filename: str):
 
 
 def read_groups(filename: str,
-                account_data: List[AccountData]) -> Dict[str, List[AccountData]]:
+                account_data_map: Dict[Account, AccountData]
+) -> Dict[str, List[AccountData]]:
     """Read a list of additional account groups to aggregate to."""
     with open(filename) as groupfile:
         obj = json.load(groupfile)
     assert isinstance(obj, dict)
-    account_map = {ad.account: ad for ad in account_data}
 
     groups = {}
     for group_name, account_list in obj.items():
@@ -1153,11 +1307,52 @@ def read_groups(filename: str,
             # Support globbing patterns in account names.
             if "*" in an:
                 for ann in fnmatch.filter(account_map, an):
-                    adlist.append(account_map[ann])
+                    adlist.append(account_data_map[ann])
             else:
-                adlist.append(account_map[an])
+                adlist.append(account_data_map[an])
 
     return groups
+
+
+def infer_configuration(entries: data.Entries,
+                        account_list: List[Account]) -> Config:
+    """Infer a reasonable configuration for input."""
+
+    all_accounts = set(getters.get_account_open_close(entries))
+
+    config = Config()
+    for account in account_list:
+        aconfig = config.account_config.add()
+        aconfig.currency = accountlib.leaf(account)
+        aconfig.asset_account = account
+
+        regexp = re.compile(re.sub(r"^[A-Z][^:]+:", "[A-Z][A-Za-z0-9]+:", account) +
+                            ":Dividends?")
+        for maccount in filter(regexp.match, all_accounts):
+            aconfig.dividend_accounts.append(maccount)
+
+        match_accounts = set()
+        match_accounts.add(aconfig.asset_account)
+        match_accounts.update(aconfig.dividend_accounts)
+        match_accounts.update(aconfig.match_accounts)
+
+        # Figure out the total set of accounts seed in those transactions.
+        cash_accounts = set()
+        for entry in data.filter_txns(entries):
+            if any(posting.account in match_accounts for posting in entry.postings):
+                for posting in entry.postings:
+                    if (posting.account == aconfig.asset_account or
+                        posting.account in aconfig.dividend_accounts or
+                        posting.account in aconfig.match_accounts):
+                        continue
+                    if (re.search(r":(Cash|Checking|Receivable|GSURefund)$",
+                                  posting.account) or
+                        re.search(r"Receivable|Payable", posting.account) or
+                        re.match(r"Income:.*:(Match401k)$", posting.account)):
+                        cash_accounts.add(posting.account)
+        aconfig.cash_accounts.extend(cash_accounts)
+
+    return config
 
 
 def main():
@@ -1187,6 +1382,10 @@ def main():
                         help=("Accounts already closed before this date will not be "
                               "included in reporting."))
 
+    parser.add_argument('-e', '--end-date', action='store',
+                        type=datetime.date.fromisoformat,
+                        help="The end date to compute returns up to.")
+
     parser.add_argument('--pdf', '--pdfs', action='store_true',
                         help="Render as PDFs. Default is HTML directories.")
 
@@ -1213,18 +1412,39 @@ def main():
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
     entries, _, options_map = loader.load_file(args.ledger)
+
+    # Note: It might be useful to have an option for "the end of its history"
+    # for Ledger that aren't updated up to today.
+    end_date = args.end_date or TODAY
+
+    # Remove all data after end date, if specified.
+    if end_date < entries[-1].date:
+        entries = [entry
+                   for entry in entries
+                   if entry.date < end_date]
+
     dcontext = options_map['dcontext']
     pricer = Pricer(prices.build_price_map(entries))
 
     # Find out the list of accounts to be included.
     account_list = args.accounts or find_accounts(entries, options_map, args.start_date)
 
+    # Infer configuration proto.
+    config = infer_configuration(entries, account_list)
+    print(config)
+
     # Prune the list of entries for performance.
-    pruned_entries = prune_entries(entries)
+    pruned_entries = prune_entries(entries, account_list)
+    # pruned_entries = prune_entries_new(entries, config)
 
     # Process all the accounts.
-    account_data = [process_account_entries(pruned_entries, options_map, account)
-                    for account in account_list]
+    if 0:
+        account_data = [process_account_entries(pruned_entries, options_map, account)
+                        for account in account_list]
+    else:
+        account_data = [process_account_entries_new(pruned_entries, options_map, aconfig)
+                        for aconfig in config.account_config]
+    account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}
 
     # Write out a details file for each account for debugging.
@@ -1251,7 +1471,7 @@ def main():
 
     # Group assets by currency or by explicit grouping.
     if args.groups:
-        groups.update(read_groups(args.groups, account_data))
+        groups.update(read_groups(args.groups, account_data_map))
 
     # Render specific accounts explicitly.
     if args.render_accounts:
@@ -1267,24 +1487,26 @@ def main():
         assert isinstance(adlist, list)
         assert all(isinstance(ad, AccountData) for ad in adlist)
         if args.pdf:
+            function = write_returns_pdf
             filename = path.join(output_groups, "{}.pdf".format(group_name))
-            calls.append((write_returns_pdf, (pricer, adlist, group_name, filename,
-                                              groups_currency.get(group_name, None))))
         else:
-            dirname = path.join(output_groups, group_name)
-            calls.append((write_returns_html, (pricer, adlist, group_name, dirname,
-                                               groups_currency.get(group_name, None))))
+            function = write_returns_html
+            filename = path.join(output_groups, group_name)
+        calls.append(partial(
+            function, filename, pricer, adlist, group_name,
+            end_date,
+            groups_currency.get(group_name, None)))
     if False:
         with multiprocessing.Pool(5) as pool:
             asyns = []
-            for func, fargs in calls:
-                asyns.append(pool.apply_async(func, fargs))
+            for func in calls:
+                asyns.append(pool.apply_async(func))
             for asyn in asyns:
                 asyn.wait()
                 assert asyn.successful()
     else:
-        for func, fargs in calls:
-            func(*fargs)
+        for func in calls:
+            func()
 
     # Output required price directives (to be filled in the source ledger by
     # fetching prices).

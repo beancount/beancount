@@ -33,13 +33,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('price_ledger',
                         help="Ledger file containing a list of prices to fetch")
-    parser.add_argument('output',
-                        help="Output directory to write all output files to.")
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    os.makedirs(args.output, exist_ok=True)
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.price_ledger)
