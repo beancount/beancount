@@ -622,14 +622,13 @@ def process_account_entries(entries: data.Entries,
                           for flow in flows)
         decorated_transactions.append(entry)
 
-    currency = config.currency
-
     cost_currencies = set(cf.amount.currency for cf in cash_flows)
-    assert len(cost_currencies) == 1, str(cost_currencies)
-    cost_currency = cost_currencies.pop()
+    #assert len(cost_currencies) == 1, str(cost_currencies)
+    cost_currency = cost_currencies.pop() if cost_currencies else None
 
+    currency = config.currency
     commodity_map = getters.get_commodity_directives(entries)
-    comm = commodity_map[currency]
+    comm = commodity_map[currency] if currency else None
 
     return AccountData(account, currency, cost_currency, comm, cash_flows,
                        decorated_transactions, catmap)
@@ -731,6 +730,7 @@ STYLE = """
 @media print {
     @page { margin: 0in; }
     body { margin: 0.2in; }
+    .new-page { page-break-before: always; }
 }
 
 body, table { font: 9px Noto Sans, sans-serif; }
@@ -845,12 +845,6 @@ def write_returns_html(dirname: str,
                 "Incompatible cost currencies {} for accounts {}".format(
                     cost_currencies, ",".join([r.account for r in account_data])))
 
-        #fprint("<h2>Accounts</h2>")
-        fprint("<p>Cost Currency: {}</p>".format(target_currency))
-        for ad in account_data:
-            fprint("<p>Account: {} ({})</p>".format(ad.account,
-                                                    ad.commodity.meta["name"]))
-
         # TOOD(blais): Prices should be plot separately, by currency.
         # fprint("<h2>Prices</h2>")
         # pairs = set((r.currency, r.cost_currency) for r in account_data)
@@ -885,6 +879,13 @@ def write_returns_html(dirname: str,
         table = compute_returns_table(pricer, target_currency, cash_flows_list,
                                       get_cumulative_intervals(TODAY))
         fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
+
+        fprint('<h2 class="new-page">Accounts</h2>')
+        fprint("<p>Cost Currency: {}</p>".format(target_currency))
+        for ad in account_data:
+            fprint("<p>Account: {} ({})</p>".format(
+                ad.account,
+                ad.commodity.meta["name"] if ad.commodity else "N/A"))
 
         fprint(RETURNS_TEMPLATE_POST)
 
@@ -1154,6 +1155,58 @@ def open_with_mkdir(filename: str):
     return open(filename, "w")
 
 
+def is_glob(pattern):
+    return re.compile(r"[*?]").search(pattern)
+
+
+def _expand_globs(patterns: List[str], valid_set: List[str]) -> List[str]:
+    out_values = []
+    for pattern in patterns:
+        if is_glob(pattern):
+            out_values.extend(fnmatch.filter(valid_set, pattern))
+        else:
+            out_values.append(pattern)
+    return out_values
+
+
+def read_config(config_filename: str,
+                filter_reports: List[str],
+                accounts: List[Account]) -> Config:
+    """Read the configuration and perform globbing expansions."""
+
+    # Read the file.
+    config = Config()
+    with open(config_filename, "r") as infile:
+        text_format.Merge(infile.read(), config)
+    reports = list(config.reports.report)
+
+    # Expand account names.
+    for investment in config.investments.investment:
+        assert not is_glob(investment.asset_account)
+        investment.dividend_accounts[:] = _expand_globs(investment.dividend_accounts,
+                                                        accounts)
+        investment.match_accounts[:] = _expand_globs(investment.match_accounts, accounts)
+        investment.cash_accounts[:] = _expand_globs(investment.cash_accounts, accounts)
+
+    # Expand investment names.
+    investment_names = [investment.asset_account
+                        for investment in config.investments.investment]
+    for report in config.reports.report:
+        report.investment[:] = _expand_globs(report.investment, investment_names)
+
+    # Filter down reports.
+    if filter_reports:
+        filter_set = set(filter_reports)
+        reports = [report
+                   for report in config.reports.report
+                   if report.name in filter_set]
+        del config.reports.report[:]
+        config.reports.report.extend(reports)
+
+    return config
+
+
+
 def main():
     """Top-level function."""
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -1185,7 +1238,6 @@ def main():
     parser.add_argument('-j', '--parallel', action='store_true',
                         help="Run report generation concurrently.")
 
-
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
@@ -1197,17 +1249,14 @@ def main():
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
     entries, _, options_map = loader.load_file(args.ledger)
+    accounts = getters.get_accounts(entries)
     dcontext = options_map['dcontext']
     pricer = Pricer(prices.build_price_map(entries))
 
-    # Load and filter the configuration.
-    config = Config()
-    with open(args.config, "r") as infile:
-        text_format.Merge(infile.read(), config)
-    reports = list(config.reports.report)
-    if args.filter_reports:
-        filter_set = set(args.filter_reports)
-        reports = [report for report in reports if report.name in filter_set]
+    # Load, filter and expand the configuration.
+    config = read_config(args.config, args.filter_reports, accounts)
+    with open(path.join(args.output, "config_expanded.pbtxt"), "w") as efile:
+        print(config, file=efile)
 
     # Note: It might be useful to have an option for "the end of its history"
     # for Ledger that aren't updated up to today.
@@ -1224,7 +1273,7 @@ def main():
 
     # Filter just the list of instruments needed for the requested reports.
     used_accounts = set(inv
-                        for report in reports
+                        for report in config.reports.report
                         for inv in report.investment)
     investment_list = [invest
                        for invest in config.investments.investment
@@ -1254,7 +1303,7 @@ def main():
     multiprocessing.set_start_method('fork')
     os.makedirs(output_reports, exist_ok=True)
     calls = []
-    for report in reports:
+    for report in config.reports.report:
         adlist = [account_data_map[name] for name in report.investment]
         assert isinstance(adlist, list)
         assert all(isinstance(ad, AccountData) for ad in adlist)

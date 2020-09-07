@@ -53,6 +53,7 @@ message ReportGroup {
   optional string name = 1;
 
   // A list of investments (asset accounts) to include in the generated report.
+  // This field supports a globbing pattern as well.
   repeated string investment = 2;
 
   // The reporting currency to convert all assets to. This is optional; by
