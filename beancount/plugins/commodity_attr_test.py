@@ -32,7 +32,7 @@ class TestCommodityAttr(unittest.TestCase):
         """
         self.assertEqual(2, len(errors))
         self.assertRegex(errors[0].message, 'Missing attribute.*BNDX')
-        self.assertRegex(errors[1].message, 'Invalid attribute.*for.*VNQ')
+        self.assertRegex(errors[1].message, 'Invalid value.*for attribute.*VNQ')
 
 
     @loader.load_doc(expect_errors=True)
