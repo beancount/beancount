@@ -155,7 +155,7 @@ def infer_report_groups(entries: data.Entries,
     for currency, group_accounts in sorted(groups.items()):
         report = out_config.report.add()
         report.name = "currency.{}".format(currency)
-        report.investments.extend(group_accounts)
+        report.investment.extend(group_accounts)
 
 
 def main():

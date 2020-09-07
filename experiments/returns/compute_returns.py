@@ -1218,7 +1218,7 @@ def main():
     # Filter just the list of instruments needed for the requested reports.
     used_accounts = set(inv
                         for report in reports
-                        for inv in report.investments)
+                        for inv in report.investment)
     investment_list = [invest
                        for invest in config.investments.investment
                        if invest.asset_account in used_accounts]
@@ -1248,7 +1248,7 @@ def main():
     os.makedirs(output_reports, exist_ok=True)
     calls = []
     for report in reports:
-        adlist = [account_data_map[name] for name in report.investments]
+        adlist = [account_data_map[name] for name in report.investment]
         assert isinstance(adlist, list)
         assert all(isinstance(ad, AccountData) for ad in adlist)
 

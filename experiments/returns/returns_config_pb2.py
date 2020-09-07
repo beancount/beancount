@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='returns_config.proto',
   package='beancount.returns',
   syntax='proto2',
-  serialized_pb=_b('\n\x14returns_config.proto\x12\x11\x62\x65\x61ncount.returns\"t\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12\x30\n\x07reports\x18\x02 \x01(\x0b\x32\x1f.beancount.returns.ReportConfig\"E\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\">\n\x0cReportConfig\x12.\n\x06report\x18\x01 \x03(\x0b\x32\x1e.beancount.returns.ReportGroup\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\"B\n\x0bReportGroup\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0binvestments\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t')
+  serialized_pb=_b('\n\x14returns_config.proto\x12\x11\x62\x65\x61ncount.returns\"t\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12\x30\n\x07reports\x18\x02 \x01(\x0b\x32\x1f.beancount.returns.ReportConfig\"E\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\">\n\x0cReportConfig\x12.\n\x06report\x18\x01 \x03(\x0b\x32\x1e.beancount.returns.ReportGroup\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\"A\n\x0bReportGroup\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\ninvestment\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -200,7 +200,7 @@ _REPORTGROUP = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='investments', full_name='beancount.returns.ReportGroup.investments', index=1,
+      name='investment', full_name='beancount.returns.ReportGroup.investment', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -226,7 +226,7 @@ _REPORTGROUP = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=425,
-  serialized_end=491,
+  serialized_end=490,
 )
 
 _CONFIG.fields_by_name['investments'].message_type = _INVESTMENTCONFIG

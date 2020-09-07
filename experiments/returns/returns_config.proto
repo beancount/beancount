@@ -53,7 +53,7 @@ message ReportGroup {
   optional string name = 1;
 
   // A list of investments (asset accounts) to include in the generated report.
-  repeated string investments = 2;
+  repeated string investment = 2;
 
   // The reporting currency to convert all assets to. This is optional; by
   // default, this uses the unique currency of the group of investments. If
