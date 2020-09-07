@@ -7,16 +7,31 @@ package beancount.returns;
 
 // Configuration for returns script.
 message Config {
-  repeated AccountConfig account_config = 1;
+
+  // The list of source investments which each define a series of cash flows.
+  optional InvestmentConfig investments = 1;
+
+  // A list of named report groups which combine previously defined sets of
+  // investments.
+  optional ReportConfig reports = 2;
 }
 
-// Configuration for extracting returns information for one asset in one
-// account.
-message AccountConfig {
+message InvestmentConfig {
+  repeated Investment investment = 1;
+}
+
+message ReportConfig {
+  repeated ReportGroup report = 1;
+}
+
+// Configuration for extracting returns information for one investment
+// (typically stored in one account).
+message Investment {
+
   // Currency under consideration.
   optional string currency = 1;
 
-  // Account containing assets.
+  // Account containing assets of the investmnet. This is the key name for it.
   optional string asset_account = 2;
 
   // Account names allowing us to figure out this is a dividend. Typicaslly the
@@ -29,4 +44,14 @@ message AccountConfig {
 
   // Cash accounts to generate flows for.
   repeated string cash_accounts = 5;
+}
+
+// Configuration for report groups.
+message ReportGroup {
+
+  // Name of the report/group.
+  optional string name = 1;
+
+  // A list of investments (asset accounts) to include in the generated report.
+  repeated string investments = 2;
 }

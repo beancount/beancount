@@ -47,6 +47,8 @@ import matplotlib.dates as mdates
 import seaborn
 seaborn.set()
 
+from google.protobuf import text_format
+
 from beancount import loader
 from beancount.core import account as accountlib
 from beancount.core import account_types as acctypes
@@ -63,7 +65,9 @@ from beancount.parser import options
 from beancount.parser import printer
 
 from returns_config_pb2 import Config
-from returns_config_pb2 import AccountConfig
+from returns_config_pb2 import InvestmentConfig
+from returns_config_pb2 import ReportConfig
+from returns_config_pb2 import Investment
 
 
 # Basic type aliases.
@@ -137,9 +141,9 @@ def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
     commodity name in at least one of its postings. This speeds up the
     recovery process by removing the majority of non-trading transactions."""
 
-    commodities = set(aconfig.currency for aconfig in config.account_config)
+    commodities = set(aconfig.currency for aconfig in config.investments.investment)
     accounts = set()
-    for aconfig in config.account_config:
+    for aconfig in config.investments.investment:
         accounts.add(aconfig.asset_account)
         accounts.update(aconfig.dividend_accounts)
         accounts.update(aconfig.match_accounts)
@@ -156,7 +160,7 @@ def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
 
 
 def extract_transactions_for_account(entries: data.Entries,
-                                         config: AccountConfig) -> data.Entries:
+                                     config: Investment) -> data.Entries:
     """Get the list of transactions affecting an investment account."""
     match_accounts = set([config.asset_account])
     match_accounts.update(config.dividend_accounts)
@@ -303,7 +307,7 @@ def categorize_accounts(account: Account,
     return catmap
 
 
-def categorize_accounts_general(config: AccountConfig,
+def categorize_accounts_general(config: Investment,
                                 accounts: Set[Account]) -> Dict[Account, Cat]:
     """Categorize the type of accounts for a particular stock. Our purpose is to
     make the types of postings generic, so they can be categorized and handled
@@ -587,7 +591,7 @@ AccountData = typing.NamedTuple("AccountData", [
 
 def process_account_entries(entries: data.Entries,
                             options_map: data.Options,
-                            config: AccountConfig) -> AccountData:
+                            config: Investment) -> AccountData:
     """Process a single account."""
     account = config.asset_account
     logging.info("Processing account: %s", account)
@@ -706,15 +710,15 @@ def get_account_groups(entries: data.Entries,
     """Logically group accounts for reporting."""
     groups = collections.defaultdict(list)
     open_close_map = getters.get_account_open_close(entries)
-    for accdata in account_data:
-        opn, cls = open_close_map[accdata.account]
+    for ad in account_data:
+        opn, cls = open_close_map[ad.account]
         assert opn
-        is_open = cls is None and not accdata.cash_flows[-1].balance.is_empty()
+        is_open = cls is None and not ad.cash_flows[-1].balance.is_empty()
         if not (render_open if is_open else render_closed):
             continue
         prefix = "open" if is_open else "closed"
-        group = "{}.{}".format(prefix, accdata.currency)
-        groups[group].append(accdata)
+        group = "{}.{}".format(prefix, ad.currency)
+        groups[group].append(ad)
     return dict(groups)
 
 
@@ -1212,15 +1216,33 @@ def read_groups(filename: str,
     return groups
 
 
+# TODO(blais): Fork this out to another script. Separate.
 def infer_configuration(entries: data.Entries,
-                        account_list: List[Account]) -> Config:
+                        options_map: data.Options,
+                        start_date: Date) -> Config:
+    """Infer an input configuration from a ledger's contents."""
+
+    # Find out the list of accounts to be included.
+    account_list = find_accounts(entries, options_map, start_date)
+
+    # Figure out the available investments.
+    config = Config()
+    infer_investments_configuration(entries, account_list, config.investments)
+
+    # Create reasonable reporting groups.
+    infer_report_groups(entries, config.investments, config.reports)
+    return config
+
+
+def infer_investments_configuration(entries: data.Entries,
+                                    account_list: List[Account],
+                                    out_config: InvestmentConfig):
     """Infer a reasonable configuration for input."""
 
     all_accounts = set(getters.get_account_open_close(entries))
 
-    config = Config()
     for account in account_list:
-        aconfig = config.account_config.add()
+        aconfig = out_config.investment.add()
         aconfig.currency = accountlib.leaf(account)
         aconfig.asset_account = account
 
@@ -1250,7 +1272,21 @@ def infer_configuration(entries: data.Entries,
                         cash_accounts.add(posting.account)
         aconfig.cash_accounts.extend(cash_accounts)
 
-    return config
+
+def infer_report_groups(entries: data.Entries,
+                        investments: InvestmentConfig,
+                        out_config: ReportConfig):
+    """Logically group accounts for reporting."""
+    groups = collections.defaultdict(list)
+    open_close_map = getters.get_account_open_close(entries)
+    for investment in investments.investment:
+        opn, cls = open_close_map[investment.asset_account]
+        assert opn, "Missing open directive for '{}'".format(ad.account)
+        groups[investment.currency].append(investment.asset_account)
+    for currency, group_accounts in sorted(groups.items()):
+        report = out_config.report.add()
+        report.name = "currency.{}".format(currency)
+        report.investments.extend(group_accounts)
 
 
 def main():
@@ -1265,9 +1301,13 @@ def main():
                         help=("Name of specific accounts to analyze. "
                               "Default is all accounts."))
 
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
+    parser.add_argument('-c', '--config', action='store',
+                        help='Configuration for accounts and reports.')
 
-    parser.add_argument('-c', '--target-currency', action='store', default='USD',
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Verbose mode')
+
+    parser.add_argument('--target-currency', action='store', default='USD',
                         help="The target currency to convert flows to.")
 
     parser.add_argument('-d', '--days-price-threshold', action='store', type=int,
@@ -1304,12 +1344,24 @@ def main():
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
         logging.getLogger('matplotlib.font_manager').disabled = True
 
-    output_accounts = path.join(args.output, "account")
+    output_accounts = path.join(args.output, "investmentsj")
     output_groups = path.join(args.output, "groups")
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.ledger)
     entries, _, options_map = loader.load_file(args.ledger)
+    dcontext = options_map['dcontext']
+    pricer = Pricer(prices.build_price_map(entries))
+
+    if args.config:
+        config = Config()
+        with open(args.config, "r") as infile:
+            text_format.Merge(infile.read(), config)
+    else:
+        # Infer configuration proto.
+        config = infer_configuration(entries, options_map, args.start_date)
+        with open_with_mkdir(path.join(args.output, "config.pbtxt")) as cfgfile:
+            print(config,file=cfgfile)
 
     # Note: It might be useful to have an option for "the end of its history"
     # for Ledger that aren't updated up to today.
@@ -1321,23 +1373,12 @@ def main():
                    for entry in entries
                    if entry.date < end_date]
 
-    dcontext = options_map['dcontext']
-    pricer = Pricer(prices.build_price_map(entries))
-
-    # Find out the list of accounts to be included.
-    account_list = args.accounts or find_accounts(entries, options_map, args.start_date)
-
-    # Infer configuration proto.
-    config = infer_configuration(entries, account_list)
-    with open_with_mkdir(path.join(args.output, "config.pbtxt")) as cfgfile:
-        print(config,file=cfgfile)
-
     # Prune the list of entries for performance.
     pruned_entries = prune_entries(entries, config)
 
     # Process all the accounts.
     account_data = [process_account_entries(pruned_entries, options_map, aconfig)
-                    for aconfig in config.account_config]
+                    for aconfig in config.investments.investment]
     account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}
 
