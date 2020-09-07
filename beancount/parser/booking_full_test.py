@@ -968,6 +968,26 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 Assets:Account1  -100 JPY
             """, None)}, options_map=options_map)
 
+    @parser.parse_doc()
+    def test_negative_units(self, entries, errors, options_map):
+        """
+          2010-01-01 open Assets:TDA:Main:Cash             USD
+          2010-01-01 open Assets:TDA:Main:MSFT            MSFT
+          2010-01-01 open Expenses:Financial:Commission    USD
+
+          2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+            Assets:TDA:Main:Cash            2452.53 USD
+            Assets:TDA:Main:MSFT                -23 MSFT {106.935 # 6.90 USD}
+            Expenses:Financial:Commission      13.95 USD
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+                Assets:TDA:Main:Cash            2452.53 USD
+                Assets:TDA:Main:MSFT                -23 MSFT {107.235 USD}
+                Expenses:Financial:Commission      13.95 USD
+            """, None)}, options_map=options_map)
+
 
 class TestComputeCostNumber(unittest.TestCase):
 
@@ -1021,6 +1041,13 @@ class TestComputeCostNumber(unittest.TestCase):
             bf.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), None, self.date, None, False),
                 amount.from_string('12 HOOL')))
+
+    def test_negative_numbers(self):
+        self.assertEqual(
+            D('3.5'),
+            bf.compute_cost_number(
+                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
+                amount.from_string('-12 HOOL')))
 
 
 class TestParseBookingOptions(cmptest.TestCase):
