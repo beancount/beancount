@@ -13,30 +13,19 @@ __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-# pylint: disable=wrong-import-order,wrong-import-position
-
-from typing import List, Tuple
+from typing import List, Optional
 import argparse
 import collections
 import datetime
 import sys
 import logging
 import re
-import typing
-
-import numpy as np
-
-import seaborn
-seaborn.set()
-
 
 from beancount import loader
 from beancount.core import account as accountlib
 from beancount.core import account_types as acctypes
 from beancount.core import data
 from beancount.core import getters
-from beancount.core.amount import Amount
-from beancount.core.inventory import Inventory
 from beancount.parser import options
 
 from returns_config_pb2 import Config
@@ -48,29 +37,11 @@ from returns_config_pb2 import ReportConfig
 Account = str
 Currency = str
 Date = datetime.date
-Array = np.ndarray  # pylint: disable=invalid-name
-
-
-# The date at which we evaluate this.
-TODAY = Date.today()
-
-
-# Al list of dated cash flows. This is the unit that this program operates in,
-# the sanitized time-series that allows us to compute returns.
-CashFlow = typing.NamedTuple("CashFlow", [
-    ("date", Date),
-    ("amount", Amount),     # The amount of the cashflow.
-    ("is_dividend", bool),  # True if the flow is a dividend.
-    ("balance", Inventory), # Balance after this cash flow.
-])
-
-
-CurrencyPair = Tuple[Currency, Currency]
 
 
 def find_accounts(entries: data.Entries,
                   options_map: data.Options,
-                  start: Date) -> List[Account]:
+                  start_date: Optional[Date]) -> List[Account]:
     """Return a list of account names from the balance sheet which either aren't
     closed or are closed now but were still open at the given start date.
     """
@@ -83,12 +54,12 @@ def find_accounts(entries: data.Entries,
         if (accountlib.leaf(account) in commodities and
             acctypes.is_balance_sheet_account(account, atypes) and
             not acctypes.is_equity_account(account, atypes) and
-            (_close is None or _close.date > start)))
+            (_close is None or (start_date and _close.date > start_date))))
 
 
 def infer_configuration(entries: data.Entries,
                         options_map: data.Options,
-                        start_date: Date) -> Config:
+                        start_date: Optional[Date]) -> Config:
     """Infer an input configuration from a ledger's contents."""
 
     # Find out the list of accounts to be included.
@@ -172,7 +143,7 @@ def main():
 
     parser.add_argument('-s', '--start-date', action='store',
                         type=datetime.date.fromisoformat,
-                        default=Date(TODAY.year - 10, TODAY.month, TODAY.day),
+                        default=None,
                         help=("Accounts already closed before this date will not be "
                               "included in reporting."))
 
