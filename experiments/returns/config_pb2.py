@@ -241,35 +241,35 @@ DESCRIPTOR.message_types_by_name['ReportGroup'] = _REPORTGROUP
 
 Config = _reflection.GeneratedProtocolMessageType('Config', (_message.Message,), dict(
   DESCRIPTOR = _CONFIG,
-  __module__ = 'returns_config_pb2'
+  __module__ = 'config_pb2'
   # @@protoc_insertion_point(class_scope:beancount.returns.Config)
   ))
 _sym_db.RegisterMessage(Config)
 
 InvestmentConfig = _reflection.GeneratedProtocolMessageType('InvestmentConfig', (_message.Message,), dict(
   DESCRIPTOR = _INVESTMENTCONFIG,
-  __module__ = 'returns_config_pb2'
+  __module__ = 'config_pb2'
   # @@protoc_insertion_point(class_scope:beancount.returns.InvestmentConfig)
   ))
 _sym_db.RegisterMessage(InvestmentConfig)
 
 ReportConfig = _reflection.GeneratedProtocolMessageType('ReportConfig', (_message.Message,), dict(
   DESCRIPTOR = _REPORTCONFIG,
-  __module__ = 'returns_config_pb2'
+  __module__ = 'config_pb2'
   # @@protoc_insertion_point(class_scope:beancount.returns.ReportConfig)
   ))
 _sym_db.RegisterMessage(ReportConfig)
 
 Investment = _reflection.GeneratedProtocolMessageType('Investment', (_message.Message,), dict(
   DESCRIPTOR = _INVESTMENT,
-  __module__ = 'returns_config_pb2'
+  __module__ = 'config_pb2'
   # @@protoc_insertion_point(class_scope:beancount.returns.Investment)
   ))
 _sym_db.RegisterMessage(Investment)
 
 ReportGroup = _reflection.GeneratedProtocolMessageType('ReportGroup', (_message.Message,), dict(
   DESCRIPTOR = _REPORTGROUP,
-  __module__ = 'returns_config_pb2'
+  __module__ = 'config_pb2'
   # @@protoc_insertion_point(class_scope:beancount.returns.ReportGroup)
   ))
 _sym_db.RegisterMessage(ReportGroup)

@@ -16,7 +16,7 @@ from beancount.core import prices
 
 import investments
 import reports
-import returns_config
+import config as configlib
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
     dcontext = options_map['dcontext']
 
     # Load, filter and expand the configuration.
-    config = returns_config.read_config(args.config, args.filter_reports, accounts)
+    config = configlib.read_config(args.config, args.filter_reports, accounts)
     with open(path.join(args.output, "config.pbtxt"), "w") as efile:
         print(config, file=efile)
 

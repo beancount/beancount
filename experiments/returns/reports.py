@@ -32,7 +32,7 @@ from beancount.core import prices
 from beancount.core.amount import Amount
 from beancount.parser import printer
 
-from returns_config_pb2 import Config
+from config_pb2 import Config
 import returns as returnslib
 from investments import AccountData
 from investments import CashFlow

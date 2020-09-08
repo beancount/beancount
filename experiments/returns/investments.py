@@ -31,8 +31,8 @@ from beancount.core.amount import Amount
 from beancount.core.inventory import Inventory
 from beancount.parser import printer
 
-from returns_config_pb2 import Config
-from returns_config_pb2 import Investment
+from config_pb2 import Config
+from config_pb2 import Investment
 
 
 # Basic type aliases.

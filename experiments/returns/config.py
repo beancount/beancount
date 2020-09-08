@@ -11,7 +11,7 @@ import re
 
 from google.protobuf import text_format
 
-from returns_config_pb2 import Config
+from config_pb2 import Config
 
 
 # Basic type aliases.

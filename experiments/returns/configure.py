@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Calculate my true returns, including dividends and real costs.
-
-Notes:
-
-- The calculation without dividends only accounts for cash dividends, not
-  reinvested dividends.
-
-TODO(blais): Compare to a benchmark portfolio with the same cash flows.
+"""Infer a configuration automatically from a Beancount ledger.
 """
 
 __copyright__ = "Copyright (C) 2020  Martin Blais"
@@ -27,9 +20,9 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.parser import options
 
-from returns_config_pb2 import Config
-from returns_config_pb2 import InvestmentConfig
-from returns_config_pb2 import ReportConfig
+from config_pb2 import Config
+from config_pb2 import InvestmentConfig
+from config_pb2 import ReportConfig
 
 
 # Basic type aliases.

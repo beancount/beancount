@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Download required prices at price intervals from Price directives from anothyer file.
+"""Download required prices from Price directives given in another file.
 
-This script looks into a given ledger and re-fetches prices for all the price
-directives.
+This is used to fetch missing prices identified from running the compute_returns
+script.
 """
 
 __copyright__ = "Copyright (C) 2020  Martin Blais"
