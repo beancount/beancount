@@ -9,17 +9,11 @@ __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-# pylint: disable=wrong-import-order,wrong-import-position
-
 import datetime
-from dateutil import tz
-
 import argparse
 import logging
-import os
 
-import numpy
-ndarray = numpy.ndarray  # pylint: disable=invalid-name
+from dateutil import tz
 
 from beancount import loader
 from beancount.core import data

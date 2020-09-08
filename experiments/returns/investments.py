@@ -10,7 +10,6 @@ this library.
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-
 from os import path
 from pprint import pprint
 from typing import Dict, List, Set, Tuple

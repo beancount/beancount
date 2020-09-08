@@ -5,7 +5,6 @@
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-
 from typing import List
 import fnmatch
 import re

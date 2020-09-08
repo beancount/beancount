@@ -12,7 +12,6 @@ TODO(blais): Compare to a benchmark portfolio with the same cash flows.
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-
 from typing import List, Optional
 import argparse
 import collections

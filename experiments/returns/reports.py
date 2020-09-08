@@ -5,9 +5,6 @@
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-
-# pylint: disable=wrong-import-order
-
 from os import path
 from typing import Any, Dict, List, Tuple, Optional
 from functools import partial
