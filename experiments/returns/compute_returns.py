@@ -705,8 +705,11 @@ def write_account_file(dcontext: display_context.DisplayContext,
         fprint("* Summary\n")
         fprint("Account: {}".format(account_data.account))
 
-        final_cf = account_data.cash_flows[-1]
-        units_balance = final_cf.balance.reduce(convert.get_units)
+        if account_data.cash_flows:
+            final_cf = account_data.cash_flows[-1]
+            units_balance = final_cf.balance.reduce(convert.get_units)
+        else:
+            units_balance = Inventory()
         fprint("Balance: {}".format(units_balance))
 
         # Print out those details.
@@ -903,9 +906,10 @@ def set_axis(ax_, date_min, date_max):
     ax_.xaxis.set_major_formatter(years_fmt)
     ax_.xaxis.set_minor_locator(months)
 
-    datemin = np.datetime64(date_min, 'Y')
-    datemax = np.datetime64(date_max, 'Y') + np.timedelta64(1, 'Y')
-    ax_.set_xlim(datemin, datemax)
+    if date_min and date_max:
+        datemin = np.datetime64(date_min, 'Y')
+        datemax = np.datetime64(date_max, 'Y') + np.timedelta64(1, 'Y')
+        ax_.set_xlim(datemin, datemax)
 
     ax_.format_xdata = mdates.DateFormatter('%Y-%m-%d')
     ax_.format_ydata = "{:,}".format
@@ -934,7 +938,7 @@ def plot_prices(output_dir: str,
             dates = [date for date, _ in price_points]
             prices_ = [float(price) for _, price in price_points]
 
-            set_axis(ax, dates[0], dates[-1])
+            set_axis(ax, dates[0] if dates else None, dates[-1] if dates else None)
             ax.plot(dates, prices_, linewidth=0.3)
             ax.scatter(dates, prices_, s=1.2)
 
@@ -966,7 +970,7 @@ def plot_flows(output_dir: str,
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=[10, 4],
                             gridspec_kw={'height_ratios': [3, 1]})
     for ax in axs:
-        set_axis(ax, dates[0], dates[-1])
+        set_axis(ax, dates[0] if dates else None, dates[-1] if dates else None)
         ax.axhline(0, color='#000', linewidth=0.2)
         ax.vlines(dates_exdiv, 0, amounts_exdiv, linewidth=3, color='#000', alpha=0.7)
         ax.vlines(dates_div, 0, amounts_div, linewidth=3, color='#0A0', alpha=0.7)
@@ -981,29 +985,30 @@ def plot_flows(output_dir: str,
     plt.close(fig)
 
     # Render cumulative cash flows, with returns growth.
-    date_min = dates[0] - datetime.timedelta(days=1)
-    date_max = dates[-1]
-    num_days = (date_max - date_min).days
-    dates_all = [dates[0] + datetime.timedelta(days=x) for x in range(num_days)]
-    gamounts = np.zeros(num_days)
-    rate = (1 + returns_rate) ** (1./365)
-    for flow in flows:
-        remaining_days = (date_max - flow.date).days
-        amt = -float(flow.amount.number)
-        if remaining_days > 0:
-            gflow = amt * (rate ** np.arange(0, remaining_days))
-            gamounts[-remaining_days:] += gflow
-        else:
-            gamounts[-1] += amt
-
-    fig, ax = plt.subplots(figsize=[10, 4])
-    ax.set_title("Cumulative value")
-    set_axis(ax, dates[0], dates[-1])
     lw = 0.8
-    ax.axhline(0, color='#000', linewidth=lw)
+    if dates:
+        date_min = dates[0] - datetime.timedelta(days=1)
+        date_max = dates[-1]
+        num_days = (date_max - date_min).days
+        dates_all = [dates[0] + datetime.timedelta(days=x) for x in range(num_days)]
+        gamounts = np.zeros(num_days)
+        rate = (1 + returns_rate) ** (1./365)
+        for flow in flows:
+            remaining_days = (date_max - flow.date).days
+            amt = -float(flow.amount.number)
+            if remaining_days > 0:
+                gflow = amt * (rate ** np.arange(0, remaining_days))
+                gamounts[-remaining_days:] += gflow
+            else:
+                gamounts[-1] += amt
 
-    #ax.scatter(dates_all, gamounts, color='#000', alpha=0.2, s=1.0)
-    ax.plot(dates_all, gamounts, color='#000', alpha=0.7, linewidth=lw)
+        fig, ax = plt.subplots(figsize=[10, 4])
+        ax.set_title("Cumulative value")
+        set_axis(ax, dates[0] if dates else None, dates[-1] if dates else None)
+        ax.axhline(0, color='#000', linewidth=lw)
+
+        #ax.scatter(dates_all, gamounts, color='#000', alpha=0.2, s=1.0)
+        ax.plot(dates_all, gamounts, color='#000', alpha=0.7, linewidth=lw)
 
     # Overlay value of assets over time.
     value_dates, value_values = compute_portfolio_values(price_map, transactions)
