@@ -20,8 +20,8 @@ from beancount.core import prices
 from beancount.core.number import ZERO
 from beancount.core.inventory import Inventory
 
-from extract_investments import CashFlow
-from extract_investments import Cat
+from investments import CashFlow
+from investments import Cat
 
 
 # Basic type aliases.

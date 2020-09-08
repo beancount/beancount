@@ -14,7 +14,7 @@ from beancount import loader
 from beancount.core import getters
 from beancount.core import prices
 
-import extract_investments
+import investments
 import reports
 import returns_config
 
@@ -70,7 +70,7 @@ def main():
         print(config, file=efile)
 
     # Extract data from the ledger.
-    account_data_map = extract_investments.extract(
+    account_data_map = investments.extract(
         entries, dcontext, config, end_date, path.join(args.output, "investments"))
 
     # Generate output reports.

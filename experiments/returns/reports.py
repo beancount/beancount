@@ -37,8 +37,8 @@ from beancount.parser import printer
 
 from returns_config_pb2 import Config
 import returns as returnslib
-from extract_investments import AccountData
-from extract_investments import CashFlow
+from investments import AccountData
+from investments import CashFlow
 
 
 # Basic type aliases.
