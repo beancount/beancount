@@ -1,2 +1,5 @@
 This directory contains code which computes investment returns on a variety of
 assets, as recorded by Beancount, fed directly from a Beancount file.
+
+See this document for details:
+https://docs.google.com/document/d/1nPsMIunLnDvdsg6TSsd0PZb7jngojNpFlqnaX36WRp8/
