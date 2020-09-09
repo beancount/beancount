@@ -5,7 +5,7 @@
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 import collections
 import datetime
 import itertools
@@ -20,8 +20,10 @@ from beancount.core import prices
 from beancount.core.number import ZERO
 from beancount.core.inventory import Inventory
 
+from investments import AccountData
 from investments import CashFlow
 from investments import Cat
+from investments import compute_balance_at
 
 
 # Basic type aliases.
@@ -124,57 +126,67 @@ def compute_returns(flows: List[CashFlow],
                    flows)
 
 
-def find_balance_before(cash_flows: List[CashFlow],
-                        date: Date) -> Tuple[Inventory, int]:
-    """Return the balance just before the given date in the sorted list of cash flows."""
-    balance = Inventory()
-    for index, flow in enumerate(cash_flows):
-        if flow.date >= date:
-            break
-        balance = flow.balance
-    else:
-        index = len(cash_flows)
-    return balance, index
-
-
-def truncate_and_merge_cash_flows(
+def truncate_cash_flows(
         pricer: Pricer,
-        cash_flows_list: List[List[CashFlow]],
-        date_start: Date,
-        date_end: Date) -> List[CashFlow]:
-    """Truncate and merge a list of cash flows for processing, inserting initial
-    and/or final cash flows from balances if necessary."""
+        account_data: AccountData,
+        date_start: Optional[Date],
+        date_end: Optional[Date]) -> List[CashFlow]:
+    """Truncate the cash flows for the given account data."""
 
-    truncated_flows = []
-    for cash_flows in cash_flows_list:
-        cash_flows = list(cash_flows)
+    start_flows = []
+    end_flows = []
 
-        # Truncate cash flows before the given interval.
-        if date_start is not None:
-            balance, index = find_balance_before(cash_flows, date_start)
-            if index > 0:
-                cash_flows = cash_flows[index:]
-            if not balance.is_empty():
-                cost_balance = balance.reduce(pricer.get_value, date_start)
-                cost_position = cost_balance.get_only_position()
-                if cost_position:
-                    cash_flows.insert(
-                        0, CashFlow(date_start, -cost_position.units, False, balance))
+    if date_start is not None:
+        # Truncate before the start date.
+        balance = compute_balance_at(account_data.transactions, date_start)
+        if not balance.is_empty():
+            cost_balance = balance.reduce(pricer.get_value, date_start)
+            cost_position = cost_balance.get_only_position()
+            if cost_position:
+                start_flows.append(
+                    CashFlow(date_start, -cost_position.units, False,
+                             "open", account_data.account))
 
-        # Truncate cash flows after the given interval.
-        balance, index = find_balance_before(cash_flows, date_end)
-        if index < len(cash_flows):
-            cash_flows = cash_flows[:index]
+    if date_end is not None:
+        # Truncate after the end date.
+        # Note: Avoid redundant balance iteration by computing it once and
+        # caching it on every single transaction.
+        balance = compute_balance_at(account_data.transactions, date_end)
         if not balance.is_empty():
             cost_balance = balance.reduce(pricer.get_value, date_end)
             cost_position = cost_balance.get_only_position()
             if cost_position:
-                cash_flows.append(
-                    CashFlow(date_end, cost_position.units, False, balance))
+                end_flows.append(
+                    CashFlow(date_end, cost_position.units, False,
+                             "close", account_data.account))
 
-        truncated_flows.extend(cash_flows)
+    # Compute truncated flows.
+    truncated_flows = []
+    for flow in account_data.cash_flows:
+        if date_start and flow.date < date_start:
+            continue
+        if date_end and flow.date >= date_end:
+            break
+        truncated_flows.append(flow)
 
-    return sorted(truncated_flows, key=lambda cf: cf.date)
+    cash_flows = start_flows + truncated_flows + end_flows
+
+    cash_flows_dates = [cf.date for cf in cash_flows]
+    assert cash_flows_dates == sorted(cash_flows_dates)
+    return cash_flows
+
+
+def truncate_and_merge_cash_flows(
+        pricer: Pricer,
+        account_data_list: List[AccountData],
+        date_start: Optional[Date],
+        date_end: Optional[Date]) -> List[CashFlow]:
+    """Truncate and merge the cash flows for given list of account data."""
+    cash_flows = []
+    for ad in account_data_list:
+        cash_flows.extend(truncate_cash_flows(pricer, ad, date_start, date_end))
+    cash_flows.sort(key=lambda item: item[0])
+    return cash_flows
 
 
 def compute_portfolio_values(price_map: prices.PriceMap,

@@ -17,7 +17,14 @@ message Config {
 }
 
 message InvestmentConfig {
+
+  // A list of investments.
   repeated Investment investment = 1;
+
+  // Patterns to match income and expenses accounts to for categorization.
+  // These have defaults based on the root of the account name.
+  optional string income_regexp = 2;
+  optional string expenses_regexp = 3;
 }
 
 message ReportConfig {

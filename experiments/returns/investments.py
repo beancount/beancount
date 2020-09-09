@@ -12,7 +12,7 @@ __license__ = "GNU GPLv2"
 
 from os import path
 from pprint import pprint
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 from functools import partial
 import collections
 import copy
@@ -20,7 +20,10 @@ import datetime
 import enum
 import logging
 import re
+import sys
 import typing
+
+import pandas
 
 from beancount.core import account as accountlib
 from beancount.core import display_context
@@ -33,12 +36,18 @@ from beancount.parser import printer
 
 from config_pb2 import Config
 from config_pb2 import Investment
+from config_pb2 import InvestmentConfig
 
 
 # Basic type aliases.
 Account = str
 Currency = str
 Date = datetime.date
+
+
+# Flag that enables a comparison with the general categorization method with the
+# explicit one with individual handlers per signature.
+_CHECK_EXPLICIT_FLOWS = True
 
 
 class Cat(enum.Enum):
@@ -52,38 +61,24 @@ class Cat(enum.Enum):
     # The account holding the commodity.
     ASSET = 1
 
-    # Transfers from other assets, cash accounts, or employer matches or
-    # contributions.
+    # Cash accounts, employer matches, contributions, i.e., anything external to
+    # the investment.
     CASH = 2
 
     # Dividend income account.
-    DIVIDEND = 5
-
-    # Any other account (more specific ones come below).
-    OTHER = 13
-
-    # Income accounts.
-    PNL = 3
-    INTEREST = 4
-
-    # Misc adjustment accounts.
-    ROUNDING = 6
-
-    # Trades in other commodities.
-    OTHERASSET = 7
-    OTHERDIVIDEND = 8
+    DIVIDEND = 3
 
     # Commissions, fees and other expenses.
-    EXPENSES = 9
+    EXPENSES = 4
 
-    # Currency conversion transactions.
-    CONVERSIONS = 10
+    # Commissions, fees and other expenses.
+    INCOME = 5
 
-    # Mirror tracking accounts in other currencies.
-    TRACKING = 11
+    # Other assets than the primary asset for this investment.
+    OTHERASSET = 7
 
-    # Uncategorized.
-    UNKNOWN = 12
+    # Any other account.
+    OTHER = 6
 
 
 # Al list of dated cash flows. This is the unit that this program operates in,
@@ -92,7 +87,8 @@ CashFlow = typing.NamedTuple("CashFlow", [
     ("date", Date),
     ("amount", Amount),     # The amount of the cashflow.
     ("is_dividend", bool),  # True if the flow is a dividend.
-    ("balance", Inventory), # Balance after this cash flow.
+    ("source", str),        # Source of this cash flow
+    ("account", Account),   # Asset account for which this was generated.
 ])
 
 
@@ -108,306 +104,222 @@ AccountData = typing.NamedTuple("AccountData", [
 ])
 
 
-# pylint: disable=too-many-branches
-def categorize_accounts(account: Account,
-                        accounts: Set[Account],
-                        atypes: tuple) -> Dict[Account, Cat]:
-    """Categorize the type of accounts for a particular stock. Our purpose is to
-    make the types of postings generic, so they can be categorized and handled
-    generically later on.
-
-    The patterns used in this file depend on the particular choices of account
-    names in my chart of accounts, and for others to use this, this needs to be
-    specialized somewhat.
-    """
-    accpath = accountlib.join(*accountlib.split(account)[1:-1])
-    currency = accountlib.leaf(account)
-
-    accounts = set(accounts)
-    catmap = {}
-    def move(acc, category):
-        if acc in accounts:
-            accounts.remove(acc)
-            catmap[acc] = category
-
-    # The account itself.
-    move(account, Cat.ASSET)
-
-    # The adjacent cash account.
-    move(accountlib.join(atypes.assets, accpath, "Cash"), Cat.CASH)
-
-    # The adjacent P/L and interest account.
-    move(accountlib.join(atypes.income, accpath, "PnL"), Cat.PNL)
-    move(accountlib.join(atypes.income, accountlib.parent(accpath), "PnL"), Cat.PNL)
-    move(accountlib.join(atypes.income, accpath, "Interest"), Cat.INTEREST)
-
-    # The associated dividend account.
-    move(accountlib.join(atypes.income, accpath, currency, "Dividend"), Cat.DIVIDEND)
-
-    # Rounding error account.
-    move("Equity:RoundingError", Cat.ROUNDING)
-    move("Expenses:Losses", Cat.ROUNDING)
-    move("Income:US:MSSB:RoundingVariance", Cat.ROUNDING)
-
-    for acc in list(accounts):
-
-        # Employer match and corresponding tracking accounts in IRAUSD.
-        if re.match("({}|{}):.*:Match401k".format(atypes.assets, atypes.expenses), acc):
-            move(acc, Cat.TRACKING)
-        elif re.search(r"\b(Vested|Unvested)", acc):
-            move(acc, Cat.TRACKING)
-
-        # Dividends for other stocks.
-        elif re.search(r":Dividends?$", acc):
-            move(acc, Cat.OTHERDIVIDEND)
-
-        # Direct contribution from employer.
-        elif re.match("{}:.*:Match401k$".format(atypes.income), acc):
-            move(acc, Cat.CASH)
-        elif re.search(":GSURefund$", acc):
-            move(acc, Cat.CASH)
-
-        # Expenses accounts.
-        elif acc.startswith(atypes.expenses):
-            move(acc, Cat.EXPENSES)
-        elif acc.endswith(":Commissions"):  # Income..Commissions
-            move(acc, Cat.EXPENSES)
-
-        # Currency accounts.
-        elif acc.startswith("Equity:CurrencyAccounts"):
-            move(acc, Cat.CONVERSIONS)
-
-        # Other cash or checking accounts.
-        elif acc.endswith(":Cash"):
-            move(acc, Cat.CASH)
-        elif acc.endswith(":Checking"):
-            move(acc, Cat.CASH)
-        elif acc.endswith("Receivable"):
-            move(acc, Cat.CASH)
-
-        # Other stock.
-        elif re.match("{}:[A-Z_.]+$".format(accountlib.parent(acc)), acc):
-            move(acc, Cat.OTHERASSET)
-
-        else:
-            print("ERROR: Unknown account: {}".format(acc))
-            move(acc, Cat.UNKNOWN)
-
-    return catmap
-
-
-def categorize_accounts_general(config: Investment,
-                                accounts: Set[Account]) -> Dict[Account, Cat]:
-    """Categorize the type of accounts for a particular stock. Our purpose is to
-    make the types of postings generic, so they can be categorized and handled
-    generically later on.
+def categorize_accounts(config: InvestmentConfig,
+                        investment: Investment,
+                        accounts: Set[Account]) -> Dict[Account, Cat]:
+    """Categorize the type of accounts encountered for a particular investment's
+    transactions. Our purpose is to make the types of postings generic, so they
+    can be categorized and handled generically later on.
     """
     catmap = {}
     for account in accounts:
-        if account == config.asset_account:
+        if account == investment.asset_account:
             cat = Cat.ASSET
-        elif account in config.dividend_accounts:
+        elif account in investment.dividend_accounts:
             cat = Cat.DIVIDEND
-        elif account in config.cash_accounts:
+        elif account in investment.cash_accounts:
             cat = Cat.CASH
+        elif re.match(config.income_regexp or "Income:", account):
+            cat = Cat.INCOME
+        elif re.match(config.expenses_regexp or "Expenses:", account):
+            cat = Cat.EXPENSES
         else:
-            # Potentially includes other assets.
-            cat = Cat.OTHER
+            # Note: When applied, if the corresponding postings has a cost,
+            # OTHERASSET will be assigned; otherwise OTHER will be assigned.
+            cat = None
         catmap[account] = cat
     return catmap
 
 
-IGNORE_CATEGORIES = {Cat.ROUNDING, Cat.TRACKING}
-
-
-def compute_transaction_signature(catmap: Dict[Account, Cat],
-                                  entry: data.Directive) -> Tuple[Cat]:
-    """Compute a unique signature for each transaction.
-    Also annotates (mutates) each posting with its category."""
-    categories = set()
+def categorize_entry(catmap: Dict[Account, Cat],
+                     entry: data.Directive) -> Tuple[Cat]:
+    """Assigns metadata to each posting."""
+    postings = []
     for posting in entry.postings:
         category = catmap[posting.account]
-        posting.meta["category"] = category
-        if category not in IGNORE_CATEGORIES:
-            categories.add(category)
+        if category is None:
+            category = Cat.OTHER if posting.cost is None else Cat.OTHERASSET
+        meta = posting.meta.copy() if posting.meta else {}
+        meta["category"] = category
+        postings.append(posting._replace(meta=meta))
+    return entry._replace(postings=postings)
+
+
+def compute_transaction_signature(entry: data.Directive) -> Tuple[Cat]:
+    """Compute a unique signature for each transaction."""
+    categories = set(posting.meta["category"] for posting in entry.postings)
     sigtuple = tuple(sorted(categories, key=lambda item: item.value))
     return "_".join(s.name for s in sigtuple)
 
 
-_KNOWN_SIGNATURES = {
-    (Cat.ASSET, Cat.CASH): "Purchase or sale",
-    (Cat.ASSET, Cat.CASH, Cat.EXPENSES): "Purchase or sale with commission",
-
-    (Cat.ASSET, Cat.CASH, Cat.PNL): "Purchase or sale and profit",
-    (Cat.ASSET, Cat.CASH, Cat.PNL, Cat.EXPENSES): ("Purchase or sale with commission "
-                                                   "and profit"),
-    (Cat.ASSET, Cat.EXPENSES): "Fee paid from liquidation",
-
-    (Cat.ASSET, Cat.PNL): "Cost basis adjustment (with P/L)",
-    (Cat.ASSET, Cat.PNL, Cat.EXPENSES): "Fee from liquidation (with P/L)",
-    (Cat.ASSET,): "Conversion",
-
-    (Cat.ASSET, Cat.DIVIDEND): "Dividend reinvested",
-
-    (Cat.CASH, Cat.DIVIDEND): "Dividend payment",
-    (Cat.CASH, Cat.PNL, Cat.DIVIDEND): "Dividend payment and gains distribution",
-
-    # This is a split to two stocks (Google), we'll have to do something
-    # special, a single transaction.
-    (Cat.ASSET, Cat.OTHERASSET): "Exchange of stock/symbol",
-}
-KNOWN_SIGNATURES = {"_".join(s.name for s in sig): desc
-                    for sig, desc in _KNOWN_SIGNATURES.items()}
-
-
-
 _signature_registry = {}
-def register(*categories):
+def register(categories, description):
     """Registers a handler for a particular template/signature transaction."""
     def decorator(func):
-        key = "_".join(s.name for s in categories)
-        _signature_registry[key] = func
+        key = "_".join(c.name for c in sorted(categories, key=lambda c: c.value))
+        _signature_registry[key] = (func, description)
         return func
     return decorator
 
 
-def produce_cash_flows(entry: data.Directive) -> List[CashFlow]:
-    """Produce cash flows using the signature of the transaction."""
-    sig = entry.meta["signature"]
-    handler = _signature_registry[sig]
-    return handler(entry)
+def get_description(signature):
+    _, description = _signature_registry.get(signature, (None, None))
+    return description
 
 
 def produce_cash_flows_general(entry: data.Directive,
-                               catmap: Dict[Account, Cat]) -> List[CashFlow]:
-    """Produce cash flows using the signature of the transaction."""
-
-    for posting in entry.postings:
-        posting.meta["category"] = catmap[posting.account]
-
+                               account: Account) -> List[CashFlow]:
+    """Produce cash flows using a generalized rule."""
     has_dividend = any(posting.meta["category"] == Cat.DIVIDEND
                        for posting in entry.postings)
-
     flows = []
     for posting in entry.postings:
         category = posting.meta["category"]
         if category == Cat.CASH:
             assert not posting.cost
-            cf = CashFlow(entry.date, posting.units, has_dividend, None)
+            cf = CashFlow(entry.date, convert.get_weight(posting), has_dividend,
+                          "cash", account)
             posting.meta["flow"] = cf
             flows.append(cf)
-        elif category == Cat.OTHER:
-            # If the account deposits other assets (as evidenced by a cost
-            # basis), count those as outflows.
-            if posting.cost:
-                cf = CashFlow(entry.date, convert.get_weight(posting), False, None)
-                posting.meta["flow"] = cf
-                flows.append(cf)
+
+        elif category == Cat.OTHERASSET:
+            # If the account deposits other assets, count this as an outflow.
+            cf = CashFlow(entry.date, convert.get_weight(posting), False,
+                          "other", account)
+            posting.meta["flow"] = cf
+            flows.append(cf)
+
     return flows
 
 
-@register(Cat.ASSET)
-def handle_empty(_: data.Directive) -> List[CashFlow]:
-    "Assets exchanges create no flows."
+def produce_cash_flows_explicit(entry: data.Directive,
+                                account: Account) -> List[CashFlow]:
+    """Produce cash flows using explicit handlers from signatures."""
+    sig = entry.meta["signature"]
+    try:
+        handler, _ = _signature_registry[sig]
+    except KeyError:
+        epr = printer.EntryPrinter(stringify_invalid_types=True)
+        print(epr(entry), file=sys.stderr)
+        raise
+    return handler(entry, account)
+
+
+@register([Cat.ASSET],
+          "Exchange of assets")
+def handle_no_flows(*args) -> List[CashFlow]:
+    "Exchanges of the same asset produce no cash flows."
     return []
 
 
-@register(Cat.ASSET, Cat.CASH)
-@register(Cat.ASSET, Cat.CASH, Cat.EXPENSES)
-@register(Cat.ASSET, Cat.CASH, Cat.PNL)
-@register(Cat.ASSET, Cat.CASH, Cat.PNL, Cat.EXPENSES)
-def handle_one_asset(entry: data.Directive) -> List[CashFlow]:
-    "Regular purchases or sales."
-    flows = []
-    for posting in entry.postings:
-        category = posting.meta["category"]
-        if category in IGNORE_CATEGORIES:
-            pass
-        elif category in {Cat.ASSET, Cat.PNL, Cat.INTEREST}:
-            pass
-        elif category == Cat.CASH:
-            assert not posting.cost
-            cf = CashFlow(entry.date, posting.units, False, None)
-            posting.meta["flow"] = cf
-            flows.append(cf)
-        elif category == Cat.EXPENSES:
-            # Expenses are already accounted for by the cash leg.
-            pass
-        else:
-            raise ValueError("Unsupported category: {}".format(category))
-    return flows
-
-
-@register(Cat.CASH, Cat.DIVIDEND)
-@register(Cat.CASH, Cat.PNL, Cat.DIVIDEND)
-def handle_dividends(entry: data.Directive) -> List[CashFlow]:
-    "Dividends received, sometimes with P/L for LT or ST gains."
-    flows = []
-    for posting in entry.postings:
-        category = posting.meta["category"]
-        if category in IGNORE_CATEGORIES:
-            pass
-        elif category in {Cat.PNL, Cat.DIVIDEND}:
-            pass
-        elif category == Cat.CASH:
-            assert not posting.cost
-            cf = CashFlow(entry.date, posting.units, True, None)
-            posting.meta["flow"] = cf
-            flows.append(cf)
-        else:
-            raise ValueError("Unsupported category: {}".format(category))
-    return flows
-
-
-@register(Cat.ASSET, Cat.DIVIDEND)
-def handle_dividend_reinvestments(_: data.Directive) -> List[CashFlow]:
-    """This remains internal, the money is moved to more of the asset.
-    Note that because of this, it would make it very difficult to remove the
-    dividend from the performance of this asset. The total returns should
-    still be calculated correctly though."""
+@register([Cat.ASSET, Cat.DIVIDEND],
+          "Asset dividend reinvested")
+@register([Cat.ASSET, Cat.DIVIDEND, Cat.EXPENSES],
+          "Asset dividend reinvested")
+def handle_dividend_reinvestments(*args) -> List[CashFlow]:
+    """Reinvested stock dividends remains internal, the money is just moved to more
+    of the asset. Note that because of this, it would make it difficult to
+    remove the dividend from the performance of this asset."""
     return []
 
 
-@register(Cat.ASSET, Cat.EXPENSES)
-def handle_fee_from_liquidation(_: data.Directive) -> List[CashFlow]:
-    """Fees paid purely from sales (with expenses). No in or out flows, value is reduced."""
+@register([Cat.ASSET, Cat.EXPENSES],
+          "Fee paid from liquidation")
+def handle_fee_from_liquidation(*args) -> List[CashFlow]:
+    """Fees paid purely from sales of assets. No in or out flows, the stock value is
+    simply reduced."""
     return []
 
 
-@register(Cat.ASSET, Cat.PNL)
-@register(Cat.ASSET, Cat.PNL, Cat.EXPENSES)
-def handle_cost_basis_adjustments(_: data.Directive) -> List[CashFlow]:
+@register([Cat.ASSET, Cat.INCOME],
+          "Cost basis adjustment")
+@register([Cat.ASSET, Cat.INCOME, Cat.OTHER],
+          "Cost basis adjustment")
+@register([Cat.ASSET, Cat.INCOME, Cat.EXPENSES],
+          "Fee from liquidation (with P/L)")
+def handle_cost_basis_adjustments(*args) -> List[CashFlow]:
     """No cash is disbursed for these adjustments, just a change in basis. This
     affects tax only. There are no associated cash flows."""
     return []
 
+@register([Cat.EXPENSES, Cat.OTHER],
+          "Internal expense")
+@register([Cat.OTHER],
+          "Movement between internal accounts")
+def handle_cost_basis_adjustments(*args) -> List[CashFlow]:
+    """It's internal changes, no flows."""
+    return []
 
-@register(Cat.ASSET, Cat.OTHERASSET)
-def handle_failing(entry: data.Directive) -> List[CashFlow]:
-    """This is for the GOOG/GOOGL stock exchange."""
+
+@register([Cat.ASSET, Cat.CASH],
+          "Regular purchase or sale")
+@register([Cat.ASSET, Cat.CASH, Cat.OTHER],
+          "Regular purchase or sale")
+@register([Cat.ASSET, Cat.CASH, Cat.INCOME],
+          "Regular purchase or sale, with P/L")
+@register([Cat.ASSET, Cat.CASH, Cat.INCOME, Cat.OTHER],
+          "Regular purchase or sale, with P/L")
+@register([Cat.ASSET, Cat.CASH, Cat.EXPENSES, Cat.INCOME],
+          "Regular purchase or sale, with expense and P/L")
+@register([Cat.ASSET, Cat.CASH, Cat.EXPENSES, Cat.OTHER],
+          "Regular purchase or sale")
+@register([Cat.ASSET, Cat.CASH, Cat.EXPENSES, Cat.INCOME, Cat.OTHER],
+          "Regular purchase or sale")
+@register([Cat.ASSET, Cat.CASH, Cat.EXPENSES], "Regular purchase or sale, with expense")
+def handle_buy_sell(entry: data.Directive, account: Account) -> List[CashFlow]:
+    "In a regular purchase or sale, use the cash component for sales and purchases."
+    return _handle_cash(entry, account, False)
+
+
+@register([Cat.CASH, Cat.DIVIDEND],
+          "Cash dividend")
+@register([Cat.CASH, Cat.DIVIDEND, Cat.INCOME],
+          "Cash dividend")
+@register([Cat.CASH, Cat.EXPENSES, Cat.DIVIDEND],
+          "Cash dividend, with expenses")
+def handle_dividends(entry: data.Directive, account: Account) -> List[CashFlow]:
+    "Dividends received in cash."
+    return _handle_cash(entry, account, True)
+
+
+@register([Cat.CASH, Cat.EXPENSES],
+          "Cash for expense")
+@register([Cat.CASH, Cat.OTHER],
+          "Cash for other internal account")
+@register([Cat.CASH, Cat.EXPENSES, Cat.OTHER],
+          "Cash for expense or something else")
+@register([Cat.CASH, Cat.EXPENSES, Cat.INCOME],
+          "Recoveries from P2P lending")
+def handle_cash_simple(entry: data.Directive, account: Account) -> List[CashFlow]:
+    "Cash for income."
+    return _handle_cash(entry, account, False)
+
+
+def _handle_cash(entry: data.Directive, account: Account,
+                 is_dividend: bool) -> List[CashFlow]:
+    "In a regular purchase or sale, use the cash component for sales and purchases."
     flows = []
     for posting in entry.postings:
-        category = posting.meta["category"]
-        if category == Cat.ASSET:
-            pass
-        elif category == Cat.OTHERASSET:
-            cf = CashFlow(entry.date, convert.get_weight(posting), False, None)
+        if posting.meta["category"] == Cat.CASH:
+            assert not posting.cost
+            cf = CashFlow(entry.date, posting.units, is_dividend, "cash", account)
             posting.meta["flow"] = cf
             flows.append(cf)
-        else:
-            raise ValueError("Unsupported category: {}".format(category))
     return flows
 
 
-def copy_and_normalize(entry: data.Transaction) -> data.Transaction:
-    """Copy entries and make sure all postings have valid metadata."""
-    entry = copy.deepcopy(entry)
-    postings = []
+@register([Cat.ASSET, Cat.OTHERASSET],
+          "Exchange of assets")
+def handle_stock_exchange(entry: data.Directive, account: Account) -> List[CashFlow]:
+    """This is for a stock exchange, similar to the issuance of GOOG from GOOGL."""
+    flows = []
     for posting in entry.postings:
-        if posting.meta is None:
-            posting = posting._replace(meta={})
-        postings.append(posting)
-    return entry._replace(postings=postings)
+        if posting.meta["category"] == Cat.OTHERASSET:
+            cf = CashFlow(entry.date, convert.get_weight(posting), False,
+                          "other", account)
+            posting.meta["flow"] = cf
+            flows.append(cf)
+    return flows
 
 
 def extract_transactions_for_account(entries: data.Entries,
@@ -423,13 +335,14 @@ def extract_transactions_for_account(entries: data.Entries,
 
 
 def process_account_entries(entries: data.Entries,
-                            config: Investment) -> AccountData:
+                            config: InvestmentConfig,
+                            investment: Investment) -> AccountData:
     """Process a single account."""
-    account = config.asset_account
+    account = investment.asset_account
     logging.info("Processing account: %s", account)
 
     # Extract the relevant transactions.
-    transactions = extract_transactions_for_account(entries, config)
+    transactions = extract_transactions_for_account(entries, investment)
     if not transactions:
         logging.warning("No transactions for %s; skipping.", account)
         return None
@@ -438,7 +351,7 @@ def process_account_entries(entries: data.Entries,
     seen_accounts = {posting.account
                      for entry in transactions
                      for posting in entry.postings}
-    catmap = categorize_accounts_general(config, seen_accounts)
+    catmap = categorize_accounts(config, investment, seen_accounts)
 
     # Process each of the transactions, adding derived values as metadata.
     cash_flows = []
@@ -446,32 +359,41 @@ def process_account_entries(entries: data.Entries,
     decorated_transactions = []
     for entry in transactions:
 
-        # Update the total position in the asset we're interested in.
-        positions = []
-        for posting in entry.postings:
-            category = catmap[posting.account]
-            if category is Cat.ASSET:
-                balance.add_position(posting)
-                positions.append(posting)
-
         # Compute the signature of the transaction.
-        entry = copy_and_normalize(entry)
-        signature = compute_transaction_signature(catmap, entry)
+        entry = categorize_entry(catmap, entry)
+        signature = compute_transaction_signature(entry)
         entry.meta["signature"] = signature
-        ##entry.meta["description"] = KNOWN_SIGNATURES[signature]
+
+        # TODO(blais): Cache balance in every transaction?
+        if 0:
+            # Update the total position in the asset we're interested in.
+            for posting in entry.postings:
+                if posting.meta["category"] is Cat.ASSET:
+                    balance.add_position(posting)
 
         # Compute the cash flows associated with the transaction.
-        flows = produce_cash_flows_general(entry, catmap)
+        flows_general = produce_cash_flows_general(entry, account)
+        if _CHECK_EXPLICIT_FLOWS:
+            # Attempt the explicit method.
+            flows_explicit = produce_cash_flows_explicit(entry, account)
+            if flows_explicit != flows_general:
+                print("Differences found between general and explicit methods:")
+                print("Explicit handlers:")
+                for flow in flows_explicit:
+                    print("  ", flow)
+                print("General handler:")
+                for flow in flows_general:
+                    print("  ", flow)
+                raise ValueError("Differences found between general and explicit methods:")
 
-        cash_flows.extend(flow._replace(balance=copy.deepcopy(balance))
-                          for flow in flows)
+        cash_flows.extend(flows_general)
         decorated_transactions.append(entry)
 
     cost_currencies = set(cf.amount.currency for cf in cash_flows)
     #assert len(cost_currencies) == 1, str(cost_currencies)
     cost_currency = cost_currencies.pop() if cost_currencies else None
 
-    currency = config.currency
+    currency = investment.currency
     commodity_map = getters.get_commodity_directives(entries)
     comm = commodity_map[currency] if currency else None
 
@@ -502,6 +424,19 @@ def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
                      for posting in entry.postings)))]
 
 
+def compute_balance_at(transactions: data.Entries,
+                       date: Optional[Date] = None) -> Inventory:
+    """Compute the balance at a specific date."""
+    balance = Inventory()
+    for entry in transactions:
+        if date is not None and entry.date >= date:
+            break
+        for posting in entry.postings:
+            if posting.meta["category"] is Cat.ASSET:
+                balance.add_position(posting)
+    return balance
+
+
 def write_account_file(dcontext: display_context.DisplayContext,
                        account_data: AccountData,
                        filename: str):
@@ -517,11 +452,9 @@ def write_account_file(dcontext: display_context.DisplayContext,
         fprint("* Summary\n")
         fprint("Account: {}".format(account_data.account))
 
-        if account_data.cash_flows:
-            final_cf = account_data.cash_flows[-1]
-            units_balance = final_cf.balance.reduce(convert.get_units)
-        else:
-            units_balance = Inventory()
+        # Print the final balance of the account.
+        balance = compute_balance_at(account_data.transactions)
+        units_balance = balance.reduce(convert.get_units)
         fprint("Balance: {}".format(units_balance))
 
         # Print out those details.
@@ -535,10 +468,26 @@ def write_account_file(dcontext: display_context.DisplayContext,
             fprint(epr(entry))
         fprint("\n\n")
 
+        # Flatten cash flows to a table.
         fprint("** Cash flows\n")
-        for flow in account_data.cash_flows:
-            fprint(flow)
+        df = cash_flows_to_table(account_data.cash_flows)
+        fprint(df.to_string())
         fprint("\n\n")
+
+
+def cash_flows_to_table(cash_flows: List[CashFlow]) -> pandas.DataFrame:
+    """Flatten a list of cash flows to an HTML table string."""
+    import reports
+    header = ["date", "amount", "currency", "is_dividend", "source", "investment"]
+    rows = []
+    for flow in cash_flows:
+        rows.append((flow.date,
+                     float(flow.amount.number),
+                     flow.amount.currency,
+                     flow.is_dividend,
+                     flow.source,
+                     flow.account))
+    return pandas.DataFrame(columns=header, data=rows)
 
 
 def write_transactions_by_type(output_signatures: str,
@@ -561,7 +510,7 @@ def write_transactions_by_type(output_signatures: str,
             fprint = partial(print, file=catfile)
             fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
 
-            description = KNOWN_SIGNATURES.get(sig, "?")
+            description = get_description(sig) or "?"
             fprint("description: {}".format(description))
             fprint("number_entries: {}".format(len(sigentries)))
             fprint()
@@ -592,7 +541,7 @@ def extract(entries: data.Entries,
     pruned_entries = prune_entries(entries, config)
 
     # Process all the accounts.
-    account_data = [process_account_entries(pruned_entries, aconfig)
+    account_data = [process_account_entries(pruned_entries, config.investments, aconfig)
                     for aconfig in config.investments.investment]
     account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}

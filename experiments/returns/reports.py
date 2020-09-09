@@ -33,9 +33,10 @@ from beancount.core.amount import Amount
 from beancount.parser import printer
 
 from config_pb2 import Config
-import returns as returnslib
 from investments import AccountData
 from investments import CashFlow
+import investments
+import returns as returnslib
 
 
 # Basic type aliases.
@@ -124,14 +125,14 @@ Interval = Tuple[str, Date, Date]
 
 def compute_returns_table(pricer: returnslib.Pricer,
                           target_currency: Currency,
-                          cash_flows_list: List[List[CashFlow]],
+                          account_data: List[AccountData],
                           intervals: List[Interval]):
     """Compute a table of sequential returns."""
     header = ["Return"]
     rows = [["Total"], ["Ex-div"], ["Div"]]
     for intname, date1, date2 in intervals:
         header.append(intname)
-        cash_flows = returnslib.truncate_and_merge_cash_flows(pricer, cash_flows_list,
+        cash_flows = returnslib.truncate_and_merge_cash_flows(pricer, account_data,
                                                               date1, date2)
         returns = returnslib.compute_returns(cash_flows, pricer, target_currency, date2)
         rows[0].append(returns.total)
@@ -182,13 +183,13 @@ def write_returns_html(dirname: str,
         #     fprint('<img src={} style="width: 100%"/>'.format(filename))
 
         fprint("<h2>Cash Flows</h2>")
-        cash_flows_list = [ad.cash_flows for ad in account_data]
-        cash_flows = returnslib.truncate_and_merge_cash_flows(
-            pricer, cash_flows_list, None, end_date)
+
+        cash_flows = returnslib.truncate_and_merge_cash_flows(pricer, account_data,
+                                                              None, end_date)
+        returns = returnslib.compute_returns(cash_flows, pricer, target_currency, end_date)
 
         transactions = data.sorted([txn for ad in account_data for txn in ad.transactions])
 
-        returns = returnslib.compute_returns(cash_flows, pricer, target_currency, end_date)
         # Note: This is where the vast majority of the time is spent.
         plots = plot_flows(dirname, pricer.price_map,
                            cash_flows, transactions, returns.total)
@@ -201,11 +202,11 @@ def write_returns_html(dirname: str,
                             floatfmt="{:.2%}"))
 
         # Compute table of returns over intervals.
-        table = compute_returns_table(pricer, target_currency, cash_flows_list,
+        table = compute_returns_table(pricer, target_currency, account_data,
                                       get_calendar_intervals(TODAY))
         fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
 
-        table = compute_returns_table(pricer, target_currency, cash_flows_list,
+        table = compute_returns_table(pricer, target_currency, account_data,
                                       get_cumulative_intervals(TODAY))
         fprint("<p>", render_table(table, floatfmt="{:.1%}", classes=["full"]), "</p>")
 
@@ -215,6 +216,10 @@ def write_returns_html(dirname: str,
             fprint("<p>Account: {} ({})</p>".format(
                 ad.account,
                 ad.commodity.meta["name"] if ad.commodity else "N/A"))
+
+        fprint('<h2 class="new-page">Cash Flows</h2>')
+        df = investments.cash_flows_to_table(cash_flows)
+        fprint(df.to_html())
 
         fprint(RETURNS_TEMPLATE_POST)
 
@@ -417,9 +422,9 @@ def generate_reports(account_data_map: Dict[Account, AccountData],
 
         function = write_returns_pdf if pdf else write_returns_html
         filename = path.join(output_dir, report.name)
-        if pdf: filename = filename + ".pdf"
         calls.append(partial(
-            function, filename, pricer, adlist, report.name,
+            function, "{}.pdf".format(filename),
+            pricer, adlist, report.name,
             end_date,
             report.currency))
 
