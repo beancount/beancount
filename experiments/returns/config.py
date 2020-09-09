@@ -60,10 +60,10 @@ def read_config(config_filename: str,
 
     # Filter down reports.
     if filter_reports:
-        filter_set = set(filter_reports)
         reports = [report
                    for report in config.reports.report
-                   if report.name in filter_set]
+                   if any(fnmatch.fnmatch(report.name, pattern)
+                          for pattern in filter_reports)]
         del config.reports.report[:]
         config.reports.report.extend(reports)
 
