@@ -19,9 +19,8 @@ import tempfile
 import typing
 
 from dateutil.relativedelta import relativedelta
-
 import numpy as np
-
+import pandas
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn
@@ -212,10 +211,8 @@ def write_returns_html(dirname: str,
 
         fprint('<h2 class="new-page">Accounts</h2>')
         fprint("<p>Cost Currency: {}</p>".format(target_currency))
-        for ad in account_data:
-            fprint("<p>Account: {} ({})</p>".format(
-                ad.account,
-                ad.commodity.meta["name"] if ad.commodity else "N/A"))
+        accounts_df = get_accounts_table(account_data)
+        fprint(accounts_df.to_html())
 
         fprint('<h2 class="new-page">Cash Flows</h2>')
         df = investments.cash_flows_to_table(cash_flows)
@@ -224,6 +221,23 @@ def write_returns_html(dirname: str,
         fprint(RETURNS_TEMPLATE_POST)
 
     return indexfile.name
+
+
+def get_accounts_table(account_data: List[AccountData]) -> pandas.DataFrame:
+    """Build of table of per-account information."""
+    header = ["Investment", "Description", "Status"]
+    rows = []
+    for ad in account_data:
+        if ad.close is not None:
+            status_str = "CLOSED"
+        elif ad.balance.is_empty():
+            status_str = "EMPTY"
+        else:
+            status_str = ""
+        rows.append((ad.account,
+                     ad.commodity.meta["name"] if ad.commodity else "N/A",
+                     status_str))
+    return pandas.DataFrame(data=rows, columns=header)
 
 
 def set_axis(ax_, date_min, date_max):

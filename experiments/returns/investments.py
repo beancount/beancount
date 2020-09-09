@@ -98,8 +98,11 @@ AccountData = typing.NamedTuple("AccountData", [
     ('currency', Currency),
     ('cost_currency', Currency),
     ('commodity', data.Commodity),
+    ('open', data.Open),
+    ('close', data.Close),
     ("cash_flows", List[CashFlow]),
     ('transactions', data.Entries),
+    ('balance', Inventory),
     ('catmap', Dict[Account, Cat]),
 ])
 
@@ -397,8 +400,14 @@ def process_account_entries(entries: data.Entries,
     commodity_map = getters.get_commodity_directives(entries)
     comm = commodity_map[currency] if currency else None
 
-    return AccountData(account, currency, cost_currency, comm, cash_flows,
-                       decorated_transactions, catmap)
+    open_close_map = getters.get_account_open_close(entries)
+    opn, cls = open_close_map[account]
+
+    # Compute the final balance.
+    balance = compute_balance_at(decorated_transactions)
+
+    return AccountData(account, currency, cost_currency, comm, opn, cls,
+                       cash_flows, decorated_transactions, balance, catmap)
 
 
 def prune_entries(entries: data.Entries, config: Config) -> data.Entries:
@@ -453,8 +462,7 @@ def write_account_file(dcontext: display_context.DisplayContext,
         fprint("Account: {}".format(account_data.account))
 
         # Print the final balance of the account.
-        balance = compute_balance_at(account_data.transactions)
-        units_balance = balance.reduce(convert.get_units)
+        units_balance = account_data.balance.reduce(convert.get_units)
         fprint("Balance: {}".format(units_balance))
 
         # Print out those details.
