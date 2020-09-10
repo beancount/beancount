@@ -109,16 +109,31 @@ def infer_report_groups(entries: data.Entries,
                         investments: InvestmentConfig,
                         out_config: ReportConfig):
     """Logically group accounts for reporting."""
+
+    # Create a group for each commodity.
     groups = collections.defaultdict(list)
     open_close_map = getters.get_account_open_close(entries)
     for investment in investments.investment:
         opn, unused_cls = open_close_map[investment.asset_account]
         assert opn, "Missing open directive for '{}'".format(investment.account)
-        groups[investment.currency].append(investment.asset_account)
-    for currency, group_accounts in sorted(groups.items()):
+        name = "currency.{}".format(investment.currency)
+        groups[name].append(investment.asset_account)
+
+    # Join commodities by metadata gropus and create a report for each.
+    for attrname in "assetcls", "strategy":
+        comm_map = getters.get_commodity_directives(entries)
+        for investment in investments.investment:
+            comm = comm_map[investment.currency]
+            value = comm.meta.get(attrname)
+            if value:
+                name = "{}.{}".format(attrname, value)
+                groups[name].append(investment.asset_account)
+
+    for name, group_accounts in sorted(groups.items()):
         report = out_config.report.add()
-        report.name = "currency.{}".format(currency)
+        report.name = name
         report.investment.extend(group_accounts)
+
 
 
 def main():
