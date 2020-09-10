@@ -223,17 +223,40 @@ def write_returns_html(dirname: str,
     return indexfile.name
 
 
+def write_returns_debugfile(filename: str,
+                            pricer: returnslib.Pricer,
+                            account_data: List[AccountData],
+                            title: str,
+                            end_date: Date,
+                            target_currency: Optional[Currency] = None) -> subprocess.Popen:
+    """Write out returns report to a directory with files in it."""
+
+    logging.info("Writing returns dir for %s: %s", title, filename)
+    os.makedirs(path.dirname(filename), exist_ok=True)
+    with open(filename, "w") as indexfile:
+        fprint = partial(print, file=indexfile)
+        fprint("* {}".format(title))
+        fprint("** Cash Flows")
+        fprint()
+        cash_flows = returnslib.truncate_and_merge_cash_flows(pricer, account_data,
+                                                              None, end_date)
+        df = investments.cash_flows_to_table(cash_flows)
+        fprint(df.to_string())
+
+    return indexfile.name
+
+
 def get_accounts_table(account_data: List[AccountData]) -> pandas.DataFrame:
     """Build of table of per-account information."""
     header = ["Investment", "Description", "Status"]
     rows = []
     for ad in account_data:
         if ad.close is not None:
-            status_str = "CLOSED"
+            status_str = "Closed"
         elif ad.balance.is_empty():
-            status_str = "EMPTY"
+            status_str = "Empty"
         else:
-            status_str = ""
+            status_str = "Active"
         rows.append((ad.account,
                      ad.commodity.meta["name"] if ad.commodity else "N/A",
                      status_str))
@@ -438,6 +461,12 @@ def generate_reports(account_data_map: Dict[Account, AccountData],
         filename = path.join(output_dir, report.name)
         calls.append(partial(
             function, "{}.pdf".format(filename),
+            pricer, adlist, report.name,
+            end_date,
+            report.currency))
+
+        calls.append(partial(
+            write_returns_debugfile, "{}.org".format(filename),
             pricer, adlist, report.name,
             end_date,
             report.currency))
