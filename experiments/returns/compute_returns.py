@@ -50,6 +50,11 @@ def main():
     parser.add_argument('-j', '--parallel', action='store_true',
                         help="Run report generation concurrently.")
 
+    parser.add_argument('-E', '--check-explicit-flows', action='store_true',
+                        help=("Enables comparison of the general categorization method "
+                              "with the explicit one with specialized explicit  handlers "
+                              "per signature."))
+
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
@@ -71,7 +76,8 @@ def main():
 
     # Extract data from the ledger.
     account_data_map = investments.extract(
-        entries, dcontext, config, end_date, path.join(args.output, "investments"))
+        entries, dcontext, config, end_date, args.check_explicit_flows,
+        path.join(args.output, "investments"))
 
     # Generate output reports.
     output_reports = path.join(args.output, "reports")

@@ -45,11 +45,6 @@ Currency = str
 Date = datetime.date
 
 
-# Flag that enables a comparison with the general categorization method with the
-# explicit one with individual handlers per signature.
-_CHECK_EXPLICIT_FLOWS = True
-
-
 class Cat(enum.Enum):
     """Posting categorization.
 
@@ -71,7 +66,7 @@ class Cat(enum.Enum):
     # Commissions, fees and other expenses.
     EXPENSES = 4
 
-    # Commissions, fees and other expenses.
+    # Non-dividend income, P/L, gains, or other.
     INCOME = 5
 
     # Other assets than the primary asset for this investment.
@@ -87,7 +82,7 @@ CashFlow = typing.NamedTuple("CashFlow", [
     ("date", Date),
     ("amount", Amount),     # The amount of the cashflow.
     ("is_dividend", bool),  # True if the flow is a dividend.
-    ("source", str),        # Source of this cash flow
+    ("source", str),        # Source of this cash flow.
     ("account", Account),   # Asset account for which this was generated.
 ])
 
@@ -209,7 +204,7 @@ def produce_cash_flows_explicit(entry: data.Directive,
 
 
 @register([Cat.ASSET],
-          "Exchange of assets")
+          "Stock splits, and conversions at same cost basis")
 def handle_no_flows(*args) -> List[CashFlow]:
     "Exchanges of the same asset produce no cash flows."
     return []
@@ -339,7 +334,8 @@ def extract_transactions_for_account(entries: data.Entries,
 
 def process_account_entries(entries: data.Entries,
                             config: InvestmentConfig,
-                            investment: Investment) -> AccountData:
+                            investment: Investment,
+                            check_explicit_flows: bool) -> AccountData:
     """Process a single account."""
     account = investment.asset_account
     logging.info("Processing account: %s", account)
@@ -367,8 +363,9 @@ def process_account_entries(entries: data.Entries,
         signature = compute_transaction_signature(entry)
         entry.meta["signature"] = signature
 
-        # TODO(blais): Cache balance in every transaction?
-        if 0:
+        # TODO(blais): Cache balance in every transaction to speed up
+        # computation? Do this later.
+        if False:
             # Update the total position in the asset we're interested in.
             for posting in entry.postings:
                 if posting.meta["category"] is Cat.ASSET:
@@ -376,7 +373,7 @@ def process_account_entries(entries: data.Entries,
 
         # Compute the cash flows associated with the transaction.
         flows_general = produce_cash_flows_general(entry, account)
-        if _CHECK_EXPLICIT_FLOWS:
+        if check_explicit_flows:
             # Attempt the explicit method.
             flows_explicit = produce_cash_flows_explicit(entry, account)
             if flows_explicit != flows_general:
@@ -534,6 +531,7 @@ def extract(entries: data.Entries,
             dcontext: display_context.DisplayContext,
             config: Config,
             end_date: Date,
+            check_explicit_flows: bool,
             output_dir: str) -> Dict[Account, AccountData]:
     """Extract data from the list of entries."""
     # Note: It might be useful to have an option for "the end of its history"
@@ -549,7 +547,8 @@ def extract(entries: data.Entries,
     pruned_entries = prune_entries(entries, config)
 
     # Process all the accounts.
-    account_data = [process_account_entries(pruned_entries, config.investments, aconfig)
+    account_data = [process_account_entries(pruned_entries, config.investments, aconfig,
+                                            check_explicit_flows)
                     for aconfig in config.investments.investment]
     account_data = list(filter(None, account_data))
     account_data_map = {ad.account: ad for ad in account_data}
