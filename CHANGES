@@ -6,6 +6,12 @@ Note: This file contains a list changes in the 'master' branch.
 
 2020-09-12
 
+ - Added metadata on implicitly generated Price directives (from implicit_prices
+   plugin).
+
+
+2020-09-12
+
  - Released 2.3.2.
 
 
