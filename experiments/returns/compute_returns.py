@@ -9,6 +9,7 @@ from os import path
 import argparse
 import datetime
 import logging
+import os
 
 from beancount import loader
 from beancount.core import getters
@@ -71,6 +72,7 @@ def main():
 
     # Load, filter and expand the configuration.
     config = configlib.read_config(args.config, args.filter_reports, accounts)
+    os.makedirs(args.output, exist_ok=True)
     with open(path.join(args.output, "config.pbtxt"), "w") as efile:
         print(config, file=efile)
 

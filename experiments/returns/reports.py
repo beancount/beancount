@@ -458,15 +458,16 @@ def generate_reports(account_data_map: Dict[Account, AccountData],
         assert all(isinstance(ad, AccountData) for ad in adlist)
 
         function = write_returns_pdf if pdf else write_returns_html
-        filename = path.join(output_dir, report.name)
+        basename = path.join(output_dir, report.name)
+        filename = "{}.pdf".format(basename) if pdf else basename
         calls.append(partial(
-            function, "{}.pdf".format(filename),
+            function, filename,
             pricer, adlist, report.name,
             end_date,
             report.currency))
 
         calls.append(partial(
-            write_returns_debugfile, "{}.org".format(filename),
+            write_returns_debugfile, "{}.org".format(basename),
             pricer, adlist, report.name,
             end_date,
             report.currency))
