@@ -1,7 +1,8 @@
 ========================
    beancount: CHANGES
 ========================
-Note: This file contains a list changes in the 'master' branch.
+Note: This file contains a list changes in the 'v2' branch.
+The master branch will rely on the Git repository history.
 
 
 2020-09-12
