@@ -19,6 +19,7 @@ import copy
 import datetime
 import enum
 import logging
+import os
 import re
 import sys
 import typing
@@ -450,6 +451,7 @@ def write_account_file(dcontext: display_context.DisplayContext,
 
     logging.info("Writing details file: %s", filename)
     epr = printer.EntryPrinter(dcontext=dcontext, stringify_invalid_types=True)
+    os.makedirs(path.dirname(filename), exist_ok=True)
     with open(filename, "w") as outfile:
         fprint = partial(print, file=outfile)
         fprint(";; -*- mode: beancount; coding: utf-8; fill-column: 400 -*-")
@@ -507,6 +509,7 @@ def write_transactions_by_type(output_signatures: str,
             signature_map[entry.meta['signature']].append(entry)
 
     # Render them to files, for debugging.
+    os.makedirs(output_signatures, exist_ok=True)
     for sig, sigentries in signature_map.items():
         sigentries = data.sorted(sigentries)
 
