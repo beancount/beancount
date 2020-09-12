@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'master' branch.
 
 
+2020-09-12
+
+ - Released 2.3.2.
+
+
 2020-09-07
 
  - Fixed #401: Fixed initialization bugs on min() and max() functions for the SQL
