@@ -89,9 +89,15 @@ def main():
                                       output_reports,
                                       args.parallel, args.pdf)
 
+    # Generate price reports.
+    output_prices = path.join(args.output, "prices")
+    reports.generate_price_pages(account_data_map,
+                                 prices.build_price_map(entries),
+                                 output_prices)
+
     # Output required price directives (to be filled in the source ledger by
     # fetching prices).
-    reports.write_price_directives(path.join(args.output, "prices.beancount"),
+    reports.write_price_directives(path.join(output_prices, "prices.beancount"),
                                    pricer, args.days_price_threshold)
 
 

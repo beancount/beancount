@@ -485,3 +485,39 @@ def generate_reports(account_data_map: Dict[Account, AccountData],
             func()
 
     return pricer
+
+
+def generate_price_pages(account_data_map: Dict[Account, AccountData],
+                         price_map: prices.PriceMap,
+                         output_dir: str):
+    """Produce renders of price time series for each currency.
+    This should help us debug issues with price recording, in particulawr,
+    with respect to stock splits."""
+
+    pricer = returnslib.Pricer(price_map)
+
+    # Write out a returns file for every account.
+    os.makedirs(output_dir, exist_ok=True)
+    pairs = set((ad.currency, ad.cost_currency)
+                for ad in account_data_map.values()
+                if ad.currency and ad.cost_currency)
+
+    for base_quote in sorted(pairs):
+        logging.info("Producing price page for %s", base_quote)
+        all_prices = prices.get_all_prices(price_map, base_quote)
+        if not all_prices:
+            continue
+
+        dates = np.array([date for date, _ in all_prices])
+        prices_ = np.array([price for _, price in all_prices])
+
+        fig, ax = plt.subplots(1, 1, figsize=[10, 4])
+        set_axis(ax, dates[0], dates[-1])
+        ax.set_title("Prices for {} ({})".format(*base_quote))
+        ax.plot(dates, prices_, linewidth=0.5)
+        ax.scatter(dates, prices_, s=2.0)
+        fig.autofmt_xdate()
+        fig.tight_layout()
+        filename = path.join(output_dir, "{}_{}.svg".format(*base_quote))
+        plt.savefig(filename)
+        plt.close(fig)
