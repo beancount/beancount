@@ -257,9 +257,10 @@ def get_accounts_table(account_data: List[AccountData]) -> pandas.DataFrame:
             status_str = "Empty"
         else:
             status_str = "Active"
-        rows.append((ad.account,
-                     ad.commodity.meta["name"] if ad.commodity else "N/A",
-                     status_str))
+
+        name = (ad.commodity.meta.get("name", ad.commodity.currency)
+                if ad.commodity else "N/A")
+        rows.append((ad.account, name, status_str))
     return pandas.DataFrame(data=rows, columns=header)
 
 
