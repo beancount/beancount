@@ -1,7 +1,30 @@
-ho========================
+========================
    beancount: CHANGES
 ========================
-Note: This file contains a list changes in the 'master' branch.
+Note: This file contains a list changes in the 'v2' branch.
+The master branch will rely on the Git repository history.
+
+
+2020-09-12
+
+ - Added metadata on implicitly generated Price directives (from implicit_prices
+   plugin).
+
+
+2020-09-12
+
+ - Released 2.3.2.
+
+
+2020-09-07
+
+ - Fixed #401: Fixed initialization bugs on min() and max() functions for the SQL
+   aggregator.
+ - Fixed #364: Fixed important core bug in how the CostSpec were converted to
+   Cost for cost specs with total and per-unit cost numbers, like this {106.935
+   # 6.98 USD}. For short positions, the cost was computed as negative. In a
+   sense this was a naive bug, but a very important one. This occurred only for
+   short positions.
 
 
 2020-08-19

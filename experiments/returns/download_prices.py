@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
-"""Download required prices at price intervals from Price directives from anothyer file.
+"""Download required prices from Price directives given in another file.
 
-This script looks into a given ledger and re-fetches prices for all the price
-directives.
+This is used to fetch missing prices identified from running the compute_returns
+script.
 """
 
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-# pylint: disable=wrong-import-order,wrong-import-position
-
 import datetime
-from dateutil import tz
-
 import argparse
 import logging
-import os
 
-import numpy
-ndarray = numpy.ndarray  # pylint: disable=invalid-name
+from dateutil import tz
 
 from beancount import loader
 from beancount.core import data
@@ -33,13 +27,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('price_ledger',
                         help="Ledger file containing a list of prices to fetch")
-    parser.add_argument('output',
-                        help="Output directory to write all output files to.")
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    os.makedirs(args.output, exist_ok=True)
 
     # Load the example file.
     logging.info("Reading ledger: %s", args.price_ledger)

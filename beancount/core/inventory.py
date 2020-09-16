@@ -21,6 +21,17 @@ This is meant to accommodate both booked and non-booked amounts. The clever
 trick that we pull to do this is that for positions which aren't booked, we
 simply leave the 'cost' as None. This is the case for most of the transactions.
 
+= Conversions =
+
+If it often desired to convert this inventory into an equivalent position for
+its cost, or to just flatten all the positions with the same currency and count
+the number of units, or to compute the market value for the inventory at a
+specific date. You do these conversions using the reduce() method:
+
+  inventory.reduce(convert.get_cost)
+  inventory.reduce(convert.get_units)
+  inventory.reduce(convert.get_value, price_map, date)
+
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"

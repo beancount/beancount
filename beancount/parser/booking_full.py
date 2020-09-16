@@ -665,10 +665,10 @@ def compute_cost_number(costspec, units):
         # Compute the per-unit cost if there is some total cost
         # component involved.
         cost_total = number_total
-        units_number = units.number
+        units_number = abs(units.number)
         if number_per is not None:
             cost_total += number_per * units_number
-        unit_cost = cost_total / abs(units_number)
+        unit_cost = cost_total / units_number
     elif number_per is None:
         return None
     else:
@@ -689,16 +689,16 @@ def convert_costspec_to_cost(posting):
     cost = posting.cost
     if isinstance(cost, position.CostSpec):
         if cost is not None:
-            units_number = posting.units.number
             number_per = cost.number_per
             number_total = cost.number_total
             if number_total is not None:
                 # Compute the per-unit cost if there is some total cost
                 # component involved.
+                units_number = abs(posting.units.number)
                 cost_total = number_total
                 if number_per is not MISSING:
                     cost_total += number_per * units_number
-                unit_cost = cost_total / abs(units_number)
+                unit_cost = cost_total / units_number
             else:
                 unit_cost = number_per
             new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)

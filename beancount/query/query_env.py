@@ -1059,11 +1059,12 @@ class Min(query_compile.EvalAggregator):
         self.handle = allocator.allocate()
 
     def initialize(self, store):
-        store[self.handle] = self.dtype()
+        store[self.handle] = None
 
     def update(self, store, context):
         value = self.eval_args(context)[0]
-        if value < store[self.handle]:
+        cur_value = store[self.handle]
+        if cur_value is None or value < cur_value:
             store[self.handle] = value
 
     def __call__(self, context):
@@ -1080,11 +1081,13 @@ class Max(query_compile.EvalAggregator):
         self.handle = allocator.allocate()
 
     def initialize(self, store):
-        store[self.handle] = self.dtype()
+        store[self.handle] = None
 
     def update(self, store, context):
         value = self.eval_args(context)[0]
-        if value > store[self.handle]:
+        value = self.eval_args(context)[0]
+        cur_value = store[self.handle]
+        if cur_value is None or value > cur_value:
             store[self.handle] = value
 
     def __call__(self, context):

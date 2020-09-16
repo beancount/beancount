@@ -755,20 +755,21 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
       A list of directives.
     """
     account = 'Assets:CC:Investment'
+    income = 'Income:CC:Investment'
     account_cash = join(account, 'Cash')
-    account_gains = 'Income:CC:Investment:Gains'
-    account_dividends = 'Income:CC:Investment:Dividends'
+    account_gains = '{income}:PnL'.format(income=income)
+    dividends = 'Dividend'
     accounts_stocks = ['Assets:CC:Investment:{}'.format(commodity)
                        for commodity in stocks]
 
     open_entries = parse("""
       {date_begin} open {account}:Cash    CCY
       {date_begin} open {account_gains}    CCY
-      {date_begin} open {account_dividends}    CCY
     """, **locals())
     for stock in stocks:
         open_entries.extend(parse("""
           {date_begin} open {account}:{stock} {stock}
+          {date_begin} open {income}:{stock}:{dividends}    CCY
         """, **locals()))
 
     # Figure out dates at which dividends should be distributed, near the end of
@@ -814,12 +815,13 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             portfolio_cost = total.reduce(convert.get_cost).get_currency_units('CCY').number
             amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
             amount_cash_neg = -amount_cash
-            dividend = parse("""
+            stock = random.choice(stocks)
+            cash_dividend = parse("""
               {next_dividend_date} * "Dividends on portfolio"
                 {account}:Cash        {amount_cash:.2f} CCY
-                {account_dividends}   {amount_cash_neg:.2f} CCY
+                {income}:{stock}:{dividends}   {amount_cash_neg:.2f} CCY
             """, **locals())[0]
-            new_entries.append(dividend)
+            new_entries.append(cash_dividend)
 
             # Advance the next dividend date.
             try:
