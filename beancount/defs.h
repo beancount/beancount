@@ -13,6 +13,7 @@ namespace beancount {
 using std::string;
 using std::string_view;
 using std::vector;
+using std::size_t;
 
 }  // namespace beancount
 

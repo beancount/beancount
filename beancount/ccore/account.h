@@ -44,8 +44,9 @@ string LeafAccount(string_view account);
 string AccountSansRoot(string_view account);
 
 // Return the first few components of an account's name. num_components is an
-// integer, the number of components to return.
-string AccountRoot(int num_components, string_view account);
+// integer, the number of components to return. Note that the lifetime of the
+// returned value is tied to that of the "account" argument.
+string_view AccountRoot(string_view account, int num_components);
 
 // Return true if one of the account contains a given component. 'component' is
 // A string, a component of an account name. For instance, ``Food`` in
@@ -53,6 +54,9 @@ string AccountRoot(int num_components, string_view account);
 // the component is in the account. Note that a component name must be whole,
 // that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
 bool HasAccountComponent(string_view account, string_view component);
+
+//Return the common prefix of a list of account names.
+string CommonPrefix(const vector<string_view>& accounts);
 
 // TODO(blais): Continue.
 

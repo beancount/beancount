@@ -70,12 +70,12 @@ TEST(TestAccount, AccountSansRoot) {
 
 TEST(TestAccount, AccountRoot) {
   string name = "Liabilities:US:Credit-Card:Blue";
-  EXPECT_EQ("", AccountRoot(0, name));
-  EXPECT_EQ("Liabilities", AccountRoot(1, name));
-  EXPECT_EQ("Liabilities:US", AccountRoot(2, name));
-  EXPECT_EQ("Liabilities:US:Credit-Card", AccountRoot(3, name));
-  EXPECT_EQ("Liabilities:US:Credit-Card:Blue", AccountRoot(4, name));
-  EXPECT_EQ("Liabilities:US:Credit-Card:Blue", AccountRoot(5, name));
+  EXPECT_EQ("", AccountRoot(name, 0));
+  EXPECT_EQ("Liabilities", AccountRoot(name, 1));
+  EXPECT_EQ("Liabilities:US", AccountRoot(name, 2));
+  EXPECT_EQ("Liabilities:US:Credit-Card", AccountRoot(name, 3));
+  EXPECT_EQ("Liabilities:US:Credit-Card:Blue", AccountRoot(name, 4));
+  EXPECT_EQ("Liabilities:US:Credit-Card:Blue", AccountRoot(name, 5));
 }
 
 TEST(TestAccount, HasAccountComponent) {
@@ -85,6 +85,34 @@ TEST(TestAccount, HasAccountComponent) {
   EXPECT_TRUE(HasAccountComponent("Liabilities:US:Credit-Card", "Liabilities"));
   EXPECT_FALSE(HasAccountComponent("Liabilities:US:Credit-Card", "Credit"));
   EXPECT_FALSE(HasAccountComponent("Liabilities:US:Credit-Card", "Card"));
+}
+
+TEST(TestAccount, CommonPrefix) {
+  EXPECT_EQ("", CommonPrefix({
+        "Assets:US:Bank",
+        "Liabilities:US:Mortgage"}));
+  EXPECT_EQ("", CommonPrefix({}));
+  EXPECT_EQ("Liabilities:US", CommonPrefix({
+        "Liabilities:US:Credit-Card",
+        "Liabilities:US:Mortgage"}));
+  EXPECT_EQ("Liabilities:US", CommonPrefix({
+        "Liabilities:US",
+        "Liabilities:US:Mortgage"}));
+  EXPECT_EQ("Liabilities:US", CommonPrefix({
+        "Liabilities:US:Mortgage",
+        "Liabilities:US"}));
+  EXPECT_EQ("Liabilities", CommonPrefix({
+        "Liabilities",
+        "Liabilities:US:Mortgage"}));
+  EXPECT_EQ("", CommonPrefix({
+        "Liabilities",
+        "Liabilit"}));
+  EXPECT_EQ("", CommonPrefix({
+        "Liabilit",
+        "Liabilities"}));
+  EXPECT_EQ("Liabilities:US", CommonPrefix({
+        "Liabilities:US:Mort",
+        "Liabilities:US:Mortgage"}));
 }
 
 //     def test_commonprefix(self):

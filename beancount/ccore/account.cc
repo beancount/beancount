@@ -3,6 +3,7 @@
 
 #include "beancount/ccore/account.h"
 
+#include <algorithm>
 #include <string>
 #include <initializer_list>
 #include <iostream>
@@ -70,8 +71,6 @@ string LeafAccount(string_view account) {
   return string(begin, account.end() - begin);
 }
 
-// Get the name of the account without the root. For example, an input of
-// 'Assets:BofA:Checking' will produce 'BofA:Checking'.
 string AccountSansRoot(string_view account) {
   if (account.empty()) {
     return "";
@@ -81,44 +80,52 @@ string AccountSansRoot(string_view account) {
   return absl::StrJoin(iter, components.end(), kSep);
 }
 
-// Return the first few components of an account's name.
-string AccountRoot(int num_components, string_view account) {
-  vector<string_view> components = absl::StrSplit(account, kSep);
-  if (components.size() < num_components) {
-    return string(account);
+string_view AccountRoot(string_view account, int num_components) {
+  size_t pos = 0;
+  for (int c = 0; c < num_components; ++c) {
+    pos = account.find(kSep, pos + 1);
+    if (pos == string::npos) {
+      return account;
+    }
   }
-  auto iter = components.begin() + num_components;
-  return absl::StrJoin(components.begin(), iter, kSep);
+  return account.substr(0, pos);
 }
 
-// Return true if one of the account contains a given component.
 bool HasAccountComponent(string_view account, string_view component) {
   return RE2::PartialMatch(account, absl::StrCat("(^|:)", component, "(:|$)"));
 }
 
-
+string CommonPrefix(const vector<string_view>& accounts) {
+  if (accounts.empty()) {
+    return string{};
+  }
+  const string_view& first_account = accounts.front();
+  size_t pos = 0;
+  size_t newpos = 0;
+  bool done = false;
+  while (pos != string::npos) {
+    newpos = first_account.find(kSep, pos + 1);
+    size_t count = (newpos != string::npos) ? newpos - pos : string::npos;
+    string_view component = first_account.substr(pos, count);
+    for (const auto& account : accounts) {
+      size_t fpos = account.find(kSep, pos + 1);
+      size_t count = (fpos != string::npos) ? fpos - pos : string::npos;
+      if (account.substr(pos, count) != component) {
+        done = true;
+        break;
+      }
+    }
+    if (done)
+      break;
+    pos = newpos;
+  }
+  return string(first_account.substr(0, pos));
+}
 
 
 
 // TODO(blais): Continue here.
 
-// def commonprefix(accounts):
-//     """Return the common prefix of a list of account names.
-//
-//     Args:
-//       accounts: A sequence of account name strings.
-//     Returns:
-//       A string, the common parent account. If none, returns an empty string.
-//     """
-//     accounts_lists = [account_.split(sep)
-//                       for account_ in accounts]
-//     # Note: the os.path.commonprefix() function just happens to work here.
-//     # Inspect its code, and even the special case of no common prefix
-//     # works well with str.join() below.
-//     common_list = path.commonprefix(accounts_lists)
-//     return sep.join(common_list)
-//
-//
 // def walk(root_directory):
 //     """A version of os.walk() which yields directories that are valid account names.
 //
