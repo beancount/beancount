@@ -469,7 +469,6 @@ class TestIgnoredLines(unittest.TestCase):
         """
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('SKIPPED', 2, b'R', None),
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None),
             ], tokens)
@@ -489,7 +488,6 @@ class TestIgnoredLines(unittest.TestCase):
         """
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('SKIPPED', 2, b'*', None),
             ('EOL', 3, b'\n', None),
             ('EOL', 3, b'\x00', None),
         ], tokens)
@@ -504,11 +502,8 @@ class TestIgnoredLines(unittest.TestCase):
         """
         self.assertEqual([
             ('EOL', 2, b'\n', None),
-            ('SKIPPED', 2, b':', None),
             ('EOL', 3, b'\n', None),
-            ('SKIPPED', 3, b':', None),
             ('EOL', 4, b'\n', None),
-            ('SKIPPED', 4, b':', None),
             ('EOL', 5, b'\n', None),
             ('EOL', 5, b'\x00', None),
         ], tokens)

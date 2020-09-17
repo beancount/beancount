@@ -153,19 +153,9 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     and followed by a regular character. This is how we detect an
     initial indent and thus group postings and comments together in
     the grammar. */
-[ \t\r]+	{
-    if (yy_line_tokens == 1) {
-        /* If the next character completes the line, skip it. */
-        if (yyg->yy_hold_char == '\n' ||
-	    yyg->yy_hold_char == '\r' ||
-	    yyg->yy_hold_char == '\0') {
-            return SKIPPED;
-        }
-        else {
-            return INDENT;
-        }
-    }
-}
+^[ \t]+/[^ \t\r\n]	{ return INDENT; }
+
+[ \t\r]+ { }
 
  /* Characters with special meanings have their own tokens. */
 \|		{ return PIPE; }
@@ -192,7 +182,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     else {
         /* Allow org-mode titles. */
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
@@ -203,7 +192,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     else {
         /* Allow org-mode titles. */
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
@@ -214,7 +202,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
   else {
     /* Allow org-mode drawers. */
     yy_skip_line();
-    return SKIPPED;
   }
 }
 
@@ -239,7 +226,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     }
     else {
         yy_skip_line();
-        return SKIPPED;
     }
 }
 
