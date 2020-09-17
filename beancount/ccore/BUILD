@@ -1,3 +1,4 @@
+load("//third_party/python:py_extension.bzl", "py_extension")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
@@ -29,6 +30,16 @@ cc_test(
     ],
 )
 
+py_test(
+    name = "account_test_py",
+    srcs = ["account_test.py"],
+    main = "account_test.py",
+    deps = [
+        ":extmodule",
+        "//beancount/utils:test_utils",
+    ],
+)
+
 proto_library(
     name = "data_proto",
     srcs = ["data.proto"],
@@ -49,5 +60,15 @@ py_proto_library(
     srcs = ["data.proto"],
     deps = [
         "//experiments/v3/decimal:number_py_proto",
+    ],
+)
+
+py_extension(
+    name = "extmodule",
+    srcs = ["extmodule.cc"],
+    deps = [
+        "@local_config_python//:python_headers",
+        "@pybind11",
+        ":account",
     ],
 )

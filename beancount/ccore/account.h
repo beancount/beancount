@@ -28,7 +28,7 @@ extern RE2 kAccountRE;
 bool IsAccountValid(string_view account);
 
 // Join the names with the account separator.
-string JoinAccount(std::initializer_list<string_view> il);
+string JoinAccount(const vector<string_view>& components);
 
 // Split an account's name into its components.
 vector<string> SplitAccount(string_view account);
@@ -59,7 +59,6 @@ bool HasAccountComponent(string_view account, string_view component);
 string CommonPrefix(const vector<string_view>& accounts);
 
 // TODO(blais): Continue.
-
 
 
 

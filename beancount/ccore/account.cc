@@ -40,7 +40,7 @@ bool IsAccountValid(string_view account) {
   return RE2::FullMatch(account, kAccountRE);
 }
 
-string JoinAccount(std::initializer_list<string_view> il) {
+string JoinAccount(const vector<string_view>& il) {
   return absl::StrJoin(il, kSep);
 }
 
