@@ -846,7 +846,7 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, filename, lineno, _):
+    def tag_link_new(self, filename, lineno):
         """Create a new TagsLinks instance.
 
         Returns:
@@ -876,18 +876,6 @@ class Builder(lexer.LexBuilder):
           An updated TagsLinks instance.
         """
         tags_links.links.add(link)
-        return tags_links
-
-    def tag_link_STRING(self, filename, lineno, tags_links, string):
-        """Add a string to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          string: A string, the new string to insert in the list.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.strings.append(string)
         return tags_links
 
     def _unpack_txn_strings(self, txn_strings, meta):

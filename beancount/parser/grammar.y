@@ -155,7 +155,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %token <string> INDENT     /* Initial indent IF at the beginning of a line */
 %token <string> EOL        /* End-of-line */
 %token <string> COMMENT    /* A comment */
-%token <string> SKIPPED    /* A line skipped because not a directive nor a comment */
 %token <string> PIPE       /* | */
 %token <string> ATAT       /* @@ */
 %token <string> AT         /* @ */
@@ -300,7 +299,6 @@ eol : EOL
 empty_line : EOL
            | COMMENT
            | INDENT
-           | SKIPPED
 
 /* FIXME: This needs be made more general, dealing with precedence.
    I just need this right now, so I'm putting it in, in a way that will.
@@ -363,11 +361,8 @@ txn_strings : %empty
 
 tags_links : %empty
            {
-               /* Note: We're passing a bogus value here in order to avoid
-                * having to declare a second macro just for this one special
-                * case. */
                BUILDY(,
-                      $$, "tag_link_new", "O", Py_None);
+                      $$, "tag_link_new", "");
            }
            | tags_links LINK
            {
