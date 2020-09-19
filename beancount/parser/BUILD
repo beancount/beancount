@@ -351,6 +351,7 @@ py_extension(
     deps = [
         ":grammar_c",
         ":lexer_c",
+        ":decimal_c",
         "@local_config_python//:python_headers",
     ],
 )
