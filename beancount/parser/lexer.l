@@ -18,7 +18,7 @@
 /* Top Code. This is included in the FLex generated header file. */
 %top{
 
-#include "parser.h"
+#include "beancount/parser/parser.h"
 
 typedef struct _yyextra_t yyextra_t;
 
@@ -59,8 +59,8 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "grammar.h"
-#include "tokens.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/tokens.h"
 
 struct _yyextra_t {
     /* The number of times EOF has been hit. This is used to

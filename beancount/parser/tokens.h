@@ -2,10 +2,12 @@
 #define BEANCOUNT_TOKENS_H
 
 #include <stdbool.h>
+
+// Note: From python headers.
 #include <datetime.h>
 
-#include "macros.h"
-#include "decimal.h"
+#include "beancount/parser/macros.h"
+#include "beancount/parser/decimal.h"
 
 
 /**
@@ -34,7 +36,6 @@
 #define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
 #define build_EXCEPTION(_loc, _builder) ( build_lexer_error_from_exception(_loc, _builder), YYerror )
-
 #define DIGITS "0123456789"
 #define LONG_STRING_LINES_MAX 64
 
