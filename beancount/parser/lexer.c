@@ -3031,9 +3031,6 @@ yyscan_t yylex_new(void)
         return NULL;
     }
 
-    PyDateTime_IMPORT;
-    PyDecimal_IMPORT;
-
     return scanner;
 }
 
