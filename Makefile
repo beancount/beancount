@@ -54,7 +54,7 @@ SOURCES =					\
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
 
-$(CROOT)/tokens_test: $(CROOT)/tokens_test.c
+$(CROOT)/tokens_test: $(CROOT)/tokens_test.c $(CROOT)/tokens.c $(CROOT)/datetime.c $(CROOT)/decimal.c
 
 .PHONY: ctest
 ctest: $(CROOT)/tokens_test
