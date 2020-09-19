@@ -28,7 +28,7 @@ clean:
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
 	rm -f $(CROOT)/tokens_test
-	find . -name __pycache__ -exec rm -r -f "{}" \;
+	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
