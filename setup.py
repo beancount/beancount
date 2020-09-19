@@ -171,10 +171,12 @@ setup(name="beancount",
       ext_modules = [
           Extension("beancount.parser._parser",
                     sources=[
+                        "beancount/parser/datetime.c",
                         "beancount/parser/decimal.c",
                         "beancount/parser/lexer.c",
                         "beancount/parser/grammar.c",
                         "beancount/parser/parser.c",
+                        "beancount/parser/tokens.c",
                     ],
                     define_macros=[
                         ('BEANCOUNT_VERSION', version),

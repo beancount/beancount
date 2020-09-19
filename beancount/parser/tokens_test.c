@@ -3,8 +3,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <Python.h>
-
 #include "tokens.h"
 
 
