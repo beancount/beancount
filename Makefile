@@ -15,8 +15,9 @@ GRAPHER = dot
 # Support PYTHON being the path to a python interpreter.
 PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
 PYCONFIG = "python$(PYVERSION)-config"
-CFLAGS += $(shell $(PYCONFIG) --cflags) -fPIE -UNDEBUG -Wno-unused-function
+CFLAGS += $(shell $(PYCONFIG) --cflags) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
 LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
+LDLIBS += $(shell $(PYCONFIG) --embed --libs)
 
 all: build
 
@@ -54,7 +55,7 @@ SOURCES =					\
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
 
-$(CROOT)/tokens_test: $(CROOT)/tokens_test.c $(CROOT)/tokens.c $(CROOT)/datetime.c $(CROOT)/decimal.c
+$(CROOT)/tokens_test: $(CROOT)/tokens_test.o $(CROOT)/tokens.o $(CROOT)/datetime.o $(CROOT)/decimal.o
 
 .PHONY: ctest
 ctest: $(CROOT)/tokens_test

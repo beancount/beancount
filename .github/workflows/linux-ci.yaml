@@ -18,6 +18,8 @@ jobs:
       - run: pip install -r requirements_dev.txt
       - run: python setup.py build_ext -i
       - run: make ctest
+        env:
+          LD_LIBRARY_PATH: ${{ env.pythonLocation }}/lib
         # The Makefile does not handle older python-config versions.
         # These tests are however about the pure C code, thus there is
         # little value in running them for different Python version.
