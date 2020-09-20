@@ -156,7 +156,6 @@ setup(name="beancount",
           Extension("beancount.parser._parser",
                     include_dirs=["."],
                     sources=[
-                        "beancount/parser/datetime.c",
                         "beancount/parser/decimal.c",
                         "beancount/parser/lexer.c",
                         "beancount/parser/grammar.c",

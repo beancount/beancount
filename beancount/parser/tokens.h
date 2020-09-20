@@ -3,7 +3,10 @@
 
 #include <stdbool.h>
 
-#include "beancount/parser/datetime.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#include "beancount/parser/parser.h"
 #include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 
@@ -81,26 +84,6 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
  * or if the string contains more than 64 lines.
  */
 PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* encoding);
-
-
-/**
- * Convert ASCII string to an integer.
- *
- * Converts the @string string of length @len to int. The input is
- * assumed to be a valid representation of an integer number. No input
- * validation or error checking is performed.
- */
-int strtonl(const char* string, size_t len);
-
-
-/**
- * Convert an ASCII string to a PyDate object.
- *
- * The @string is assumed to be a valid date represetation in the
- * format YYYY-MM-DD allowing for any character to divide the three
- * digits groups.
- */
-PyObject* pydate_from_cstring(const char* string);
 
 
 #endif /* BEANCOUNT_TOKENS_H */
