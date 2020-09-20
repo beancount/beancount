@@ -163,20 +163,21 @@ PyDoc_STRVAR(parser_parse_doc,
 
 static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    static char* kwlist[] = {"file", "filename", "lineno", "encoding", "strict", NULL};
     const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
+    int strict = 0;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oizp", kwlist,
+                                     &file, &filename, &lineno, &encoding, &strict)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, strict, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -211,19 +212,20 @@ PyDoc_STRVAR(parser_lex_doc,
 
 static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
+    static char* kwlist[] = {"file", "filename", "lineno", "encoding", "strict", NULL};
     const char* encoding = NULL;
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
+    int strict = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oizp", kwlist,
+                                     &file, &filename, &lineno, &encoding, &strict)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, strict, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;

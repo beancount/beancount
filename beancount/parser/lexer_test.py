@@ -9,6 +9,8 @@ import functools
 import textwrap
 import unittest
 
+from functools import partial
+
 from beancount.core.number import D
 from beancount.parser import lexer
 
@@ -26,7 +28,7 @@ def print_tokens(tokens):
     print('`--------------------------------')
 
 
-def lex_tokens(fun):
+def lex_tokens(fun=None, strict=False):
     """Decorator for test functions that will invoke a lexer on them.
 
     The lexer passes the list of tokens and errors to the test function.
@@ -36,15 +38,18 @@ def lex_tokens(fun):
     Returns:
       The decorated function.
     """
+    if not fun:
+        return partial(lex_tokens, strict=strict)
+
     @functools.wraps(fun)
     def wrapped(self):
-        string = fun.__doc__
+        string = textwrap.dedent(fun.__doc__)
         builder = lexer.LexBuilder()
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
-                                            builder))
+        tokens = list(lexer.lex_iter_string(string, builder=builder, strict=strict))
         return fun(self, tokens, builder.errors)
     wrapped.__doc__ = None
     return wrapped
+
 
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
@@ -448,20 +453,46 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('EOL', 3, b'\n', None),
-            ], tokens)
+        ], tokens)
         self.assertFalse(errors)
+
+    @lex_tokens(strict=True)
+    def test_ignored__something_else_strict(self, tokens, errors):
+        """
+        Regular prose appearing mid-file which starts with a flag character.
+        """
+        self.assertEqual([
+            ('EOL', 2, b'\n', None),
+            ('error', 2, b'Regular', None),
+        ], tokens[:2])
+        self.assertTrue(errors)
 
     @lex_tokens
     def test_ignored__something_else_non_flag(self, tokens, errors):
         """
         Xxx this sentence starts with a non-flag character.
         """
+        self.assertEqual([
+            ('EOL', 2, b'\n', None),
+            ('error', 2, b'Xxx', None),
+        ], tokens[:2])
         self.assertTrue(errors)
 
     @lex_tokens
-    def test_ignored__org_mode_title(self, tokens, errors):
+    def test_ignored__headline(self, tokens, errors):
         """
-        * This sentence is an org-mode title.
+        * This sentence is an outline headline.
+        """
+        self.assertEqual([
+            ('EOL', 2, b'\n', None),
+            ('EOL', 3, b'\n', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens(strict=True)
+    def test_ignored__headline_strict(self, tokens, errors):
+        """
+        * This sentence is an outline headline.
         """
         self.assertEqual([
             ('EOL', 2, b'\n', None),
@@ -483,6 +514,19 @@ class TestIgnoredLines(unittest.TestCase):
             ('EOL', 5, b'\n', None),
         ], tokens)
         self.assertFalse(errors)
+
+    @lex_tokens(strict=True)
+    def test_ignored__org_mode_drawer_strict(self, tokens, errors):
+        """
+        :PROPERTIES:
+        :this: is an org-mode property drawer
+        :END:
+        """
+        self.assertEqual([
+            ('EOL', 2, b'\n', None),
+            ('error', 2, b':PROPERTIES:', None),
+        ], tokens[:2])
+        self.assertTrue(errors)
 
 
 class TestLexerErrors(unittest.TestCase):

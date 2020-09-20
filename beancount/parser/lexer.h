@@ -34,7 +34,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  * otherwise the default UTF-8 encoding is used. Python objects
  * references are incremented. It is safe to call this multiple times.
  */
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, int strict, yyscan_t scanner);
 
 #line 39 "beancount/parser/lexer.h"
 
@@ -550,7 +550,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 263 "beancount/parser/lexer.l"
+#line 280 "beancount/parser/lexer.l"
 
 
 #line 556 "beancount/parser/lexer.h"

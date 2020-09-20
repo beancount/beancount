@@ -32,7 +32,7 @@ class LexBuilder:
             LexerError(new_metadata(filename, lineno), str(message), None))
 
 
-def lex_iter(file, builder=None, encoding=None):
+def lex_iter(file, builder=None, encoding=None, strict=False):
     """An iterator that yields all the tokens in the given file.
 
     Args:
@@ -56,7 +56,7 @@ def lex_iter(file, builder=None, encoding=None):
     if builder is None:
         builder = LexBuilder()
     parser = _parser.Parser(builder)
-    yield from parser.lex(file, encoding=encoding)
+    yield from parser.lex(file, encoding=encoding, strict=strict)
 
 
 def lex_iter_string(string, builder=None, **kwargs):

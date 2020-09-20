@@ -48,7 +48,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  * otherwise the default UTF-8 encoding is used. Python objects
  * references are incremented. It is safe to call this multiple times.
  */
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, int strict, yyscan_t scanner);
 
 }
 
@@ -68,6 +68,9 @@ struct _yyextra_t {
 
     /* The encoding to use for converting strings. */
     const char* encoding;
+
+    /* When true enable strict parsing mode. */
+    bool strict;
 };
 
 /* Build and accumulate an error on the builder object. */
@@ -206,7 +209,9 @@ NULL		{
 
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
-    return token(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
+    return token(STRING, yytext + 1, yyleng - 2,
+                 yyget_extra(yyscanner)->encoding,
+                 yyget_extra(yyscanner)->strict);
 }
 
  /* Numbers. */
@@ -229,11 +234,23 @@ NULL		{
     return token(KEY, yytext, yyleng);
 }
 
- /* Lines starting with an asterisk, a colon, an hash, or a character
-  * in the FLAGS characters set are ignored. This rule is inserted
-  * here to give higher precedence to rules matching valid tokens. */
-^[\*\:\#]/.	{ BEGIN(IGNORE); }
-^{FLAGS}/.	{ BEGIN(IGNORE); }
+ /* Lines starting with an asterisk are ignored. */
+^\*/.			{
+    BEGIN(IGNORE);
+}
+
+ /* Lines starting with a colon, an hash, or a character in the FLAGS
+  * characters set are ignored, when not in strict parsing mode. In
+  * strict parsing mode, they are invalid. This rule is inserted here
+  * to give higher precedence to rules matching valid tokens. */
+^([\:\#]|{FLAGS})/.	{
+    if (yyget_extra(yyscanner)->strict) {
+        unput(*yytext);
+        BEGIN(INVALID);
+    } else {
+        BEGIN(IGNORE);
+    }
+}
 
  /* Default rule. {bf253a29a820} */
 .		{
@@ -271,6 +288,7 @@ yyscan_t yylex_new(void)
         return NULL;
 
     extra->filename = NULL;
+    extra->strict = false;
 
     yylex_init_extra(extra, &scanner);
     if (!scanner) {
@@ -303,7 +321,7 @@ static void yybegin(yyscan_t scanner)
     BEGIN(INITIAL);
 }
 
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, int strict, yyscan_t scanner)
 {
     yyextra_t* extra = yyget_extra(scanner);
 
@@ -325,6 +343,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     extra->filename = filename;
 
     extra->encoding = encoding ? encoding : "utf-8";
+    extra->strict = !!strict;
 
     Py_XDECREF(yyget_in(scanner));
     Py_INCREF(file);
