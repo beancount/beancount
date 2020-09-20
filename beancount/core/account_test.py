@@ -8,7 +8,7 @@ try:
     from beancount.core import account
     ccore = False
 except:
-    from beancount.ccore import extmodule as account
+    from beancount.ccore import _core as account
     ccore = True
 from beancount.utils import test_utils
 

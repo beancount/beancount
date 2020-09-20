@@ -34,7 +34,7 @@ py_test(
     name = "account_test",
     srcs = ["//beancount/core:account_test.py"],
     deps = [
-        ":extmodule",
+        ":_core",
         "//beancount/utils:test_utils",
     ],
 )
@@ -63,8 +63,8 @@ py_proto_library(
 )
 
 py_extension(
-    name = "extmodule",
-    srcs = ["extmodule.cc"],
+    name = "_core",
+    srcs = ["_core.cc"],
     deps = [
         "@local_config_python//:python_headers",
         "@pybind11",

@@ -69,7 +69,7 @@ void ExportAccount(py::module& mod) {
 
 }  // namespace beancount
 
-PYBIND11_MODULE(extmodule, mod) {
+PYBIND11_MODULE(_core, mod) {
   mod.doc() = "Python bindings for Beancount";
   beancount::ExportAccount(mod);
 }
