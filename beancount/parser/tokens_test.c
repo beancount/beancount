@@ -3,9 +3,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #include "beancount/parser/tokens.h"
 
 

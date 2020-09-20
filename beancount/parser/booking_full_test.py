@@ -1730,7 +1730,6 @@ class TestBookReductions(_BookingTestBase):
 
 class TestHasSelfReductions(cmptest.TestCase):
 
-    # pylint: disable=invalid-name
     BM = collections.defaultdict(lambda: Booking.STRICT)
 
     @loader.load_doc()

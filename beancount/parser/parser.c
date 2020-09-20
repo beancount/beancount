@@ -4,6 +4,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "beancount/parser/datetime.h"
+#include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 #include "beancount/parser/parser.h"
 #include "beancount/parser/grammar.h"
@@ -313,6 +315,9 @@ PyMODINIT_FUNC PyInit__parser(void)
     if (!module) {
         goto error;
     }
+
+    PyDateTime_IMPORT;
+    PyDecimal_IMPORT;
 
 #define SETATTR(module, name, value)                       \
     if (!value) {                                          \

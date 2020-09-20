@@ -10,7 +10,6 @@ from beancount.core.data import Transaction
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import inventory
-from beancount.core.number import ZERO
 
 __plugins__ = ('add_implicit_prices',)
 
