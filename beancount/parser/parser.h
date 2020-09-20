@@ -17,4 +17,13 @@ typedef void* yyscan_t;
 /* A global constant pointing to the special 'MISSING' object. */
 extern PyObject* missing_obj;
 
+/**
+ * Convert an ASCII string to a PyDate object.
+ *
+ * The @string is assumed to be a valid date represetation in the
+ * format YYYY-MM-DD allowing for any character to divide the three
+ * digits groups.
+ */
+PyObject* pydate_from_cstring(const char* string);
+
 #endif /* BEANCOUNT_PARSER_H */
