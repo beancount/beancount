@@ -44,7 +44,7 @@ TEST(TestAccount, SplitAccount) {
             SplitAccount("Expenses:Toys:Computer"));
   EXPECT_EQ(vector<string>({"Expenses"}),
             SplitAccount("Expenses"));
-  EXPECT_EQ(vector<string>(),
+  EXPECT_EQ(vector<string>({""}),
             SplitAccount(""));
 }
 

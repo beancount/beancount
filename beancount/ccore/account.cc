@@ -45,9 +45,9 @@ string JoinAccount(const vector<string_view>& il) {
 }
 
 vector<string> SplitAccount(string_view account) {
-  if (account.empty()) {
-    return {};
-  }
+  // if (account.empty()) {
+  //   return {};
+  // }
   return absl::StrSplit(account, kSep);
 }
 
