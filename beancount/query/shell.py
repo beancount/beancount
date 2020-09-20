@@ -489,7 +489,6 @@ class BQLShell(DispatchingShell):
         """
         Compile and print a compiled statement for debugging.
         """
-        # pylint: disable=invalid-name
         pr = lambda *args: print(*args, file=self.outfile)
         pr("Parsed statement:")
         pr("  {}".format(explain.statement))

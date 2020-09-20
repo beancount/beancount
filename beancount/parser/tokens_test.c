@@ -3,9 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <Python.h>
-
-#include "tokens.h"
+#include "beancount/parser/tokens.h"
 
 
 void test_validate_decimal_number()
@@ -96,14 +94,14 @@ void test_cunescape()
     assert(lines == 1);
     assert(memcmp(unescaped, "something longer", len) == 0);
     free(unescaped);
-    
+
     s = "more\nthan\none\nline";
     len = cunescape(s, strlen(s), true, &unescaped, &lines);
     assert(len == (ssize_t)strlen(s));
     assert(lines == 4);
     assert(memcmp(unescaped, "more\nthan\none\nline", len) == 0);
     free(unescaped);
-    
+
     s = "escaping\\n\\r";
     len = cunescape(s, strlen(s), true, &unescaped, &lines);
     assert(len == (ssize_t)strlen(s) - 2);

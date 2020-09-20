@@ -13,7 +13,8 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include "parser.h"
+
+#include "beancount/parser/parser.h"
 
 /* Extend default location type with file name information. */
 typedef struct YYLTYPE {
@@ -51,9 +52,9 @@ const char* token_to_string(int token);
 
 %{
 
-#include "macros.h"
-#include "grammar.h"
-#include "lexer.h"
+#include "beancount/parser/macros.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/lexer.h"
 
 extern YY_DECL;
 

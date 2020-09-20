@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.5', '3.6', '3.7', '3.8']
+        python: ['3.6', '3.7', '3.8']
         os: [windows, macos]
     steps:
       - uses: actions/checkout@v2

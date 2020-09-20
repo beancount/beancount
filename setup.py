@@ -154,11 +154,14 @@ setup(name="beancount",
 
       ext_modules = [
           Extension("beancount.parser._parser",
+                    include_dirs=["."],
                     sources=[
+                        "beancount/parser/datetime.c",
                         "beancount/parser/decimal.c",
                         "beancount/parser/lexer.c",
                         "beancount/parser/grammar.c",
                         "beancount/parser/parser.c",
+                        "beancount/parser/tokens.c",
                     ],
                     define_macros=[
                         ('BEANCOUNT_VERSION', version),
@@ -192,7 +195,7 @@ setup(name="beancount",
           ]
       },
 
-      python_requires='>=3.5',
+      python_requires='>=3.6',
 )
 
 

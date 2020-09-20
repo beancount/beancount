@@ -241,6 +241,27 @@ py_test(
 )
 
 cc_library(
+    name = "datetime_c",
+    hdrs = [
+        "datetime.h",
+    ],
+    srcs = ["datetime.c"],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "datetime_hdr",
+    hdrs = [
+        "datetime.h",
+    ],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
     name = "decimal_c",
     hdrs = [
         "decimal.h",
@@ -271,6 +292,7 @@ cc_library(
         ":lexer_hdr",
         ":parser_hdr",
         ":grammar_hdr",
+        ":datetime_hdr",        
         ":decimal_hdr",
         "@local_config_python//:python_headers",
     ],
@@ -310,11 +332,26 @@ py_test(
     ],
 )
 
+cc_library(
+    name = "tokens_c",
+    hdrs = [
+        "tokens.h",
+    ],
+    srcs = ["tokens.c"],
+    deps = [
+        ":datetime_c",    
+        ":decimal_c",
+        ":grammar_hdr",
+        "@local_config_python//:python_headers",
+    ],
+)
+
 cc_test(
     name = "tokens_test",
     srcs = ["tokens_test.c"],
     deps = [
         ":lexer_hdr",
+        ":tokens_c",
         "@local_config_python//:python_headers",
     ],
 )
@@ -351,6 +388,7 @@ py_extension(
     deps = [
         ":grammar_c",
         ":lexer_c",
+        ":decimal_c",
         "@local_config_python//:python_headers",
     ],
 )

@@ -1,6 +1,6 @@
-#line 1 "beancount/parser/lexer.c"
+#line 2 "beancount/parser/lexer.c"
 
-#include "parser.h"
+#include "beancount/parser/parser.h"
 
 typedef struct _yyextra_t yyextra_t;
 
@@ -32,7 +32,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
-#line 35 "beancount/parser/lexer.c"
+#line 36 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -984,8 +984,8 @@ static const flex_int32_t yy_rule_can_match_eol[56] =
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "grammar.h"
-#include "tokens.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/tokens.h"
 
 struct _yyextra_t {
     /* The number of times EOF has been hit. This is used to
@@ -1047,10 +1047,10 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         }                                       \
     } while (0)
 
-#line 1050 "beancount/parser/lexer.c"
+#line 1051 "beancount/parser/lexer.c"
 /* A start condition for chomping an invalid token. */
 
-#line 1053 "beancount/parser/lexer.c"
+#line 1054 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1341,7 +1341,7 @@ YY_DECL
 
 #line 146 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1344 "beancount/parser/lexer.c"
+#line 1345 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1806,7 +1806,7 @@ YY_RULE_SETUP
 #line 338 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1809 "beancount/parser/lexer.c"
+#line 1810 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3030,9 +3030,6 @@ yyscan_t yylex_new(void)
         free(extra);
         return NULL;
     }
-
-    PyDateTime_IMPORT;
-    PyDecimal_IMPORT;
 
     return scanner;
 }

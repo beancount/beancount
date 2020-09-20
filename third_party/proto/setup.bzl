@@ -21,7 +21,7 @@ def setup_proto():
             sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
             strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
             urls = [
-                "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+                #"https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
                 "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
             ],
         )
@@ -51,7 +51,7 @@ def setup_riegeli():
         sha256 = "cf891e024699c82aabce528a024adbe16e529f2b4e57f954455e0bf53efae585",
         strip_prefix = "highwayhash-276dd7b4b6d330e4734b756e97ccfb1b69cc2e12",
         urls = [
-            "https://mirror.bazel.build/github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",
+            #"https://mirror.bazel.build/github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",
             "https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",  # 2019-02-22
         ],
     )
@@ -94,7 +94,7 @@ def setup_riegeli():
         sha256 = "338f1d9d95753dc3cdd882dfb6e176bbb4b18353c29c411ebcb7b890f361722e",
         strip_prefix = "crc32c-1.1.0",
         urls = [
-            "https://mirror.bazel.build/github.com/google/crc32c/archive/1.1.0.zip",
+            #"https://mirror.bazel.build/github.com/google/crc32c/archive/1.1.0.zip",
             "https://github.com/google/crc32c/archive/1.1.0.zip",  # 2019-05-24
         ],
     )
@@ -105,7 +105,7 @@ def setup_riegeli():
     #     sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
     #     strip_prefix = "zlib-1.2.11",
     #     urls = [
-    #         "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+    #         #"http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
     #         "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
     #     ],
     # )

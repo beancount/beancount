@@ -4,10 +4,12 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "macros.h"
-#include "parser.h"
-#include "grammar.h"
-#include "lexer.h"
+#include "beancount/parser/datetime.h"
+#include "beancount/parser/decimal.h"
+#include "beancount/parser/macros.h"
+#include "beancount/parser/parser.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/lexer.h"
 
 /*
   If we're running this from the Bazel environment, a genrule() is used to
@@ -313,6 +315,9 @@ PyMODINIT_FUNC PyInit__parser(void)
     if (!module) {
         goto error;
     }
+
+    PyDateTime_IMPORT;
+    PyDecimal_IMPORT;
 
 #define SETATTR(module, name, value)                       \
     if (!value) {                                          \
