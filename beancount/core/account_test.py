@@ -4,7 +4,12 @@ __license__ = "GNU GPLv2"
 import unittest
 import types
 
-from beancount.core import account
+try:
+    from beancount.core import account
+    ccore = False
+except:
+    from beancount.ccore import extmodule as account
+    ccore = True
 from beancount.utils import test_utils
 
 
@@ -97,6 +102,9 @@ class TestAccount(unittest.TestCase):
         self.assertEqual('',
                          account.commonprefix(['']))
 
+
+class TestAccountCoreOnly(unittest.TestCase):
+
     def test_parent_matcher(self):
         is_child = account.parent_matcher('Assets:Bank:Checking')
         self.assertTrue(is_child('Assets:Bank:Checking'))
@@ -173,4 +181,8 @@ class TestAccountTransformer(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if ccore:
+        del TestAccountTransformer
+        del TestWalk
+        del TestAccountCoreOnly
     unittest.main()

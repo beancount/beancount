@@ -1,6 +1,7 @@
 # This basically excludes //beancount/utils.
 package(default_visibility = [
     "//beancount:__pkg__",
+    "//beancount/ccore:__pkg__",
     "//beancount/ingest:__subpackages__",
     "//beancount/ops:__pkg__",
     "//beancount/parser:__pkg__",
@@ -8,9 +9,7 @@ package(default_visibility = [
     "//beancount/prices:__subpackages__",
     "//beancount/projects:__pkg__",
     "//beancount/query:__pkg__",
-    "//beancount/reports:__pkg__",
     "//beancount/scripts:__pkg__",
-    "//beancount/web:__pkg__",
     "//examples:__subpackages__",
 ])
 

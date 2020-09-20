@@ -21,7 +21,7 @@ cc_library(
 )
 
 cc_test(
-    name = "account_test",
+    name = "account_cc_test",
     srcs = ["account_test.cc"],
     deps = [
         "//beancount:defs",
@@ -31,9 +31,8 @@ cc_test(
 )
 
 py_test(
-    name = "account_test_py",
-    srcs = ["account_test.py"],
-    main = "account_test.py",
+    name = "account_test",
+    srcs = ["//beancount/core:account_test.py"],
     deps = [
         ":extmodule",
         "//beancount/utils:test_utils",

@@ -55,7 +55,7 @@ string_view AccountRoot(string_view account, int num_components);
 // that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
 bool HasAccountComponent(string_view account, string_view component);
 
-//Return the common prefix of a list of account names.
+// Return the common prefix of a list of account names.
 string CommonPrefix(const vector<string_view>& accounts);
 
 // TODO(blais): Continue.
