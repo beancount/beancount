@@ -146,7 +146,7 @@ class TestSetup(test_utils.TestCase):
 
         # Find the set of expected header & C files.
         exp_filenames = set()
-        for root, dirs, files in os.walk(path.join(rootdir, 'beancount')):
+        for root, dirs, files in os.walk(path.join(rootdir, 'beancount/parser')):
             for filename in files:
                 if re.match(r'.*\.[hc]$', filename):
                     exp_filenames.add(path.join(root[len(rootdir)+1:], filename))
