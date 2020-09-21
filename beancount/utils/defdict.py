@@ -29,7 +29,7 @@ class ImmutableDictWithDefault(dict):
     set method is make unavailable to prevent mutation beyond construction.
     """
     def __init__(self, *args, default=None):
-        super(ImmutableDictWithDefault, self).__init__(*args)
+        super().__init__(*args)
         self.default = default
 
     def __setitem__(self, key, value):
@@ -54,7 +54,7 @@ class ImmutableDictWithDefault(dict):
 
     def __setstate__(self, state):
         self.default, items = state
-        super(ImmutableDictWithDefault, self).update(items)
+        super().update(items)
 
     def __reduce__(self):
         return (ImmutableDictWithDefault, (), self.__getstate__())

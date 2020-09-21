@@ -4,10 +4,11 @@ __license__ = "GNU GPLv2"
 import unittest
 import types
 
+# pylint: disable=invalid-name
 try:
     from beancount.core import account
     ccore = False
-except:
+except ImportError:
     from beancount.ccore import _core as account
     ccore = True
 from beancount.utils import test_utils

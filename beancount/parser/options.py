@@ -110,7 +110,7 @@ def options_validate_booking_method(value):
     try:
         return data.Booking[value]
     except KeyError as exc:
-        raise ValueError(str(exc))
+        raise ValueError(str(exc)) from exc
 
 
 # List of option groups, with their description, option names and default

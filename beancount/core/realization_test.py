@@ -537,7 +537,6 @@ class TestRealOther(test_utils.TestCase):
 
         # Surprisingly enough, this covers all the legal cases that occur in
         # practice (checked for full coverage manually if you like).
-        # pylint: disable=bad-whitespace
         rtuple = realization.iterate_with_balance(real_account.txn_postings[:-2])
         self.assertEqual([
             (data.Open        , 0 , '()'          , '()')          ,

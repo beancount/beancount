@@ -351,9 +351,9 @@ class CompilationEnvironment:
         """
         try:
             return self.columns[name]()
-        except KeyError:
+        except KeyError as exc:
             raise CompilationError("Invalid column name '{}' in {} context.".format(
-                name, self.context_name))
+                name, self.context_name)) from exc
 
     def get_function(self, name, operands):
         """Return a function accessor for the given named function.
@@ -367,12 +367,12 @@ class CompilationEnvironment:
             # If not found with the operands, try just looking it up by name.
             try:
                 return self.functions[name](operands)
-            except KeyError:
+            except KeyError as exc:
                 signature = '{}({})'.format(name,
                                             ', '.join(operand.dtype.__name__
                                                       for operand in operands))
                 raise CompilationError("Invalid function '{}' in {} context".format(
-                    signature, self.context_name))
+                    signature, self.context_name)) from exc
 
 
 class AttributeColumn(EvalColumn):

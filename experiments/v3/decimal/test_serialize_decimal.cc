@@ -76,7 +76,7 @@ TEST(SerializationTest, RoundTripMpd) {
     value->digits = mpd.digits();
     value->len = mpd.len();
     value->alloc = mpd.data().size();
-    assert(value->data == nullptr);
+    ///assert(value->data == nullptr);
     // We have no access
     value->data = static_cast<mpd_uint_t*>(
       mpd_alloc(value->alloc, sizeof(*value->data)));
