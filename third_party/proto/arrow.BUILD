@@ -73,6 +73,8 @@ cc_library(
             "cpp/src/generated/parquet_types.h",
         ],
         exclude = [
+            "cpp/src/arrow/util/bpacking_avx512.cc",  # Remove conditionally.
+            "cpp/src/arrow/util/bpacking_avx2.cc",    # Remove conditionally.
             "cpp/src/**/*_benchmark.cc",
             "cpp/src/**/*_main.cc",
             "cpp/src/**/*_nossl.cc",
