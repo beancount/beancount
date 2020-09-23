@@ -1,6 +1,3 @@
-// Copied temporarily from apache-arrow-0.16.0, for testing purposes.
-
-
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements. See the NOTICE file
 // distributed with this work for additional information

@@ -137,6 +137,31 @@ def setup_arrow():
     )
 
     http_archive(
+        name = "arrow",
+        build_file = "//third_party/proto:arrow.BUILD",
+        #build_file = "@org_tensorflow_io//third_party:arrow.BUILD",
+        #sha256 = "d7b3838758a365c8c47d55ab0df1006a70db951c6964440ba354f81f518b8d8d",
+        #strip_prefix = "arrow-apache-arrow-0.16.0",
+        # urls = [
+        #     "https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz",
+        # ],
+        sha256 = "dac59f4d42416224419c020ed2e8f8371e85c1d9ff4368ed5b5c026ee28d3fd4",
+        strip_prefix = "arrow-apache-arrow-1.0.1",
+        urls = [
+            "https://github.com/apache/arrow/archive/apache-arrow-1.0.1.tar.gz",
+        ],
+    )
+    # http_archive(
+    #     name = "arrow",
+    #     build_file = "@org_tensorflow_io//third_party:arrow.BUILD",
+    #     sha256 = "1be2c945c5cf014aee1435f2240cd2bb98f5b6c6625abd7063334c7ed09047f5",
+    #     strip_prefix = "arrow-8563b422bdbaf4fdc48d9691b1f8433ad65c8734",
+    #     urls = [
+    #         "https://github.com/apache/arrow/archive/8563b422bdbaf4fdc48d9691b1f8433ad65c8734.tar.gz",
+    #     ],
+    # )
+
+    http_archive(
         name = "boost",
         build_file = "@org_tensorflow_io//third_party:boost.BUILD",
         sha256 = "c66e88d5786f2ca4dbebb14e06b566fb642a1a6947ad8cc9091f9f445134143f",
@@ -215,25 +240,6 @@ def setup_arrow():
             "https://github.com/apache/thrift/archive/0.12.0.tar.gz",
         ],
     )
-
-    http_archive(
-        name = "arrow",
-        build_file = "@org_tensorflow_io//third_party:arrow.BUILD",
-        sha256 = "d7b3838758a365c8c47d55ab0df1006a70db951c6964440ba354f81f518b8d8d",
-        strip_prefix = "arrow-apache-arrow-0.16.0",
-        urls = [
-            "https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz",
-        ],
-    )
-    # http_archive(
-    #     name = "arrow",
-    #     build_file = "@org_tensorflow_io//third_party:arrow.BUILD",
-    #     sha256 = "1be2c945c5cf014aee1435f2240cd2bb98f5b6c6625abd7063334c7ed09047f5",
-    #     strip_prefix = "arrow-8563b422bdbaf4fdc48d9691b1f8433ad65c8734",
-    #     urls = [
-    #         "https://github.com/apache/arrow/archive/8563b422bdbaf4fdc48d9691b1f8433ad65c8734.tar.gz",
-    #     ],
-    # )
 
     http_archive(
         name = "boringssl",
