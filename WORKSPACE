@@ -17,6 +17,10 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 rules_proto_toolchains()
 
+load("//third_party/proto:setup.bzl", "setup_flatbuffers", "setup_arrow")
+setup_flatbuffers()
+setup_arrow()
+
 load("//third_party/parser:setup.bzl", "setup_parser")
 setup_parser()
 
