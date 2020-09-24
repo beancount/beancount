@@ -9,7 +9,7 @@ import enum
 import sys
 
 from decimal import Decimal
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 from beancount.core.amount import Amount
 from beancount.core.number import D
@@ -52,23 +52,6 @@ class Booking(enum.Enum):
     # Last-in first-out in the case of ambiguity.
     LIFO = 'LIFO'
 
-
-def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
-    """Create a directive class. Do not include default fields.
-    This should probably be carried out through inheritance.
-
-    Args:
-      name: A string, the capitalized name of the directive.
-      fields: A string or the list of strings, names for the fields
-        to add to the base tuple.
-    Returns:
-      A type object for the new directive type.
-    """
-    return NamedTuple(
-        clsname,
-        [('meta', Meta), ('date', datetime.date)] + fields)
-
-
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
@@ -80,6 +63,9 @@ def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
+class _Base(NamedTuple):
+    meta: Meta
+    date: datetime.date
 
 
 # An "open account" directive.
@@ -96,18 +82,18 @@ def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
 #     specification), or None if not specified. In practice, this attribute will
 #     be should be left unspecified (None) in the vast majority of cases. See
 #     Booking below for a selection of valid methods.
-Open = new_directive('Open', [
-    ('account', Account),
-    ('currencies', List[Currency]),
-    ('booking', Booking)])
+class Open(_Base):
+    account: Account
+    currencies: List[Currency]
+    booking: Booking
 
 
 # A "close account" directive.
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = new_directive('Close', [
-    ('account', Account)])
+class Close(_Base):
+    account: Account
 
 # An optional commodity declaration directive. Commodities generally do not need
 # to be declared, but they may, and this is mainly created as intended to be
@@ -122,8 +108,8 @@ Close = new_directive('Close', [
 #   meta: See above.
 #   date: See above.
 #   currency: A string, the commodity under consideration.
-Commodity = new_directive('Commodity', [
-    ('currency', Currency)])
+class Commodity(_Base):
+    currency: Currency
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -137,9 +123,9 @@ Commodity = new_directive('Commodity', [
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the name of the account which is used to debit from
 #     in order to fill 'account'.
-Pad = new_directive('Pad', [
-    ('account', Account),
-    ('source_account', Account)])
+class Pad(_Base):
+    account: Account
+    source_account: Account
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -158,11 +144,11 @@ Pad = new_directive('Pad', [
 #     an Amount instance if the balance fails, the amount of the difference.
 #   tolerance: A Decimal object, the amount of tolerance to use in the
 #     verification.
-Balance = new_directive('Balance', [
-    ('account', Account),
-    ('amount', Amount),
-    ('tolerance', Optional[Decimal]),
-    ('diff_amount', Optional[Amount])])
+class Balance(_Base):
+    account: Account
+    amount: Amount
+    tolerance: Optional[Decimal]
+    diff_amount: Optional[Amount]
 
 
 # Postings are contained in Transaction entries. These represent the individual
@@ -185,13 +171,13 @@ Balance = new_directive('Balance', [
 #   meta: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = NamedTuple('Posting', [
-    ('account', Account),
-    ('units', Amount),
-    ('cost', Optional[Union[Cost, CostSpec]]),
-    ('price', Optional[Amount]),
-    ('flag', Optional[Flag]),
-    ('meta', Optional[Meta])])
+class Posting(_Base):
+    account: Account
+    units: Amount
+    cost: Optional[Union[Cost, CostSpec]]
+    price: Optional[Amount]
+    flag: Optional[Flag]
+    meta: Optional[Meta]
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -212,13 +198,13 @@ Posting = NamedTuple('Posting', [
 #   links: A set of link strings (without the '^'), or EMPTY_SET.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting above.
-Transaction = new_directive('Transaction', [
-    ('flag', Flag),
-    ('payee', Optional[str]),
-    ('narration', str),
-    ('tags', Set),
-    ('links', Set),
-    ('postings', List[Posting])])
+class Transaction(_Base):
+    flag: Flag
+    payee: Optional[str]
+    narration: str
+    tags: Set
+    links: Set
+    postings: List[Posting]
 
 # A pair of a Posting and its parent Transaction. This is inserted as
 # temporaries in lists of postings-of-entries, which is the product of a
@@ -227,9 +213,9 @@ Transaction = new_directive('Transaction', [
 # Attributes:
 #   txn: The parent Transaction instance.
 #   posting: The Posting instance.
-TxnPosting = NamedTuple('TxnPosting', [
-    ('txn', Transaction),
-    ('posting', Posting)])
+class TxnPosting(NamedTuple):
+    txn: Transaction
+    posting: Posting
 
 
 # A note directive, a general note that is attached to an account. These are
@@ -246,9 +232,9 @@ TxnPosting = NamedTuple('TxnPosting', [
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be long if you
 #     want it to.
-Note = new_directive('Note', [
-    ('account', Account),
-    ('comment', str)])
+class Note(_Base):
+    account: Account
+    comment: str
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -277,9 +263,9 @@ Note = new_directive('Note', [
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = new_directive('Event', [
-    ('type', str),
-    ('description', str)])
+class Event(_Base):
+    type: str
+    description: str
 
 # A named query declaration. This directive is used to create pre-canned queries
 # that can then be automatically run or made available to the shell, or perhaps be
@@ -293,9 +279,9 @@ Event = new_directive('Event', [
 #     the CLOSE modifier in the shell syntax.
 #   name: A string, the unique identifier for the query.
 #   query_string: The SQL query string to be run or made available.
-Query = new_directive('Query', [
-    ('name', str),
-    ('query_string', str)])
+class Query(_Base):
+    name: str
+    query_string: str
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -312,9 +298,9 @@ Query = new_directive('Query', [
 #  currency: A string, the currency that is being priced, e.g. HOOL.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = new_directive('Price', [
-    ('currency', Currency),
-    ('amount', Amount)])
+class Price(_Base):
+    currency: Currency
+    amount: Amount
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -334,11 +320,11 @@ Price = new_directive('Price', [
 #   filename: The absolute filename of the document file.
 #   tags: A set of tag strings (without the '#'), or None, if an empty set.
 #   links: A set of link strings (without the '^'), or None, if an empty set.
-Document = new_directive('Document', [
-    ('account', Account),
-    ('filename', str),
-    ('tags', Optional[Set]),
-    ('links', Optional[Set])])
+class Document(_Base):
+    account: Account
+    filename: str
+    tags: Optional[Set]
+    links: Optional[Set]
 
 
 # A custom directive. This directive can be used to implement new experimental
@@ -358,9 +344,9 @@ Document = new_directive('Document', [
 #   values: A list of values of various simple types supported by the grammar.
 #     (Note that this list is not enforced to be consistent for all directives
 #     of the same type by the parser.)
-Custom = new_directive('Custom', [
-    ('type', str),
-    ('values', List)])
+class Custom(_Base):
+    type: str
+    values: List
 
 
 # A list of all the valid directive types.
