@@ -22,7 +22,7 @@ from beancount.parser import options
 
 from config_pb2 import Config
 from config_pb2 import InvestmentConfig
-from config_pb2 import ReportConfig
+from config_pb2 import GroupConfig
 
 
 # Basic type aliases.
@@ -62,7 +62,7 @@ def infer_configuration(entries: data.Entries,
     infer_investments_configuration(entries, account_list, config.investments)
 
     # Create reasonable reporting groups.
-    infer_report_groups(entries, config.investments, config.reports)
+    infer_report_groups(entries, config.investments, config.groups)
     return config
 
 
@@ -107,7 +107,7 @@ def infer_investments_configuration(entries: data.Entries,
 
 def infer_report_groups(entries: data.Entries,
                         investments: InvestmentConfig,
-                        out_config: ReportConfig):
+                        out_config: GroupConfig):
     """Logically group accounts for reporting."""
 
     # Create a group for each commodity.
@@ -130,10 +130,9 @@ def infer_report_groups(entries: data.Entries,
                 groups[name].append(investment.asset_account)
 
     for name, group_accounts in sorted(groups.items()):
-        report = out_config.report.add()
+        report = out_config.group.add()
         report.name = name
         report.investment.extend(group_accounts)
-
 
 
 def main():

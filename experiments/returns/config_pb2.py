@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='config.proto',
   package='beancount.returns',
   syntax='proto2',
-  serialized_pb=_b('\n\x0c\x63onfig.proto\x12\x11\x62\x65\x61ncount.returns\"t\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12\x30\n\x07reports\x18\x02 \x01(\x0b\x32\x1f.beancount.returns.ReportConfig\"u\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\x12\x15\n\rincome_regexp\x18\x02 \x01(\t\x12\x17\n\x0f\x65xpenses_regexp\x18\x03 \x01(\t\">\n\x0cReportConfig\x12.\n\x06report\x18\x01 \x03(\x0b\x32\x1e.beancount.returns.ReportGroup\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\"A\n\x0bReportGroup\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\ninvestment\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t')
+  serialized_pb=_b('\n\x0c\x63onfig.proto\x12\x11\x62\x65\x61ncount.returns\"r\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12.\n\x06groups\x18\x02 \x01(\x0b\x32\x1e.beancount.returns.GroupConfig\"u\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\x12\x15\n\rincome_regexp\x18\x02 \x01(\t\x12\x17\n\x0f\x65xpenses_regexp\x18\x03 \x01(\t\"6\n\x0bGroupConfig\x12\'\n\x05group\x18\x01 \x03(\x0b\x32\x18.beancount.returns.Group\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\";\n\x05Group\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\ninvestment\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -41,7 +41,7 @@ _CONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='reports', full_name='beancount.returns.Config.reports', index=1,
+      name='groups', full_name='beancount.returns.Config.groups', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -60,7 +60,7 @@ _CONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=151,
+  serialized_end=149,
 )
 
 
@@ -104,20 +104,20 @@ _INVESTMENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=153,
-  serialized_end=270,
+  serialized_start=151,
+  serialized_end=268,
 )
 
 
-_REPORTCONFIG = _descriptor.Descriptor(
-  name='ReportConfig',
-  full_name='beancount.returns.ReportConfig',
+_GROUPCONFIG = _descriptor.Descriptor(
+  name='GroupConfig',
+  full_name='beancount.returns.GroupConfig',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='report', full_name='beancount.returns.ReportConfig.report', index=0,
+      name='group', full_name='beancount.returns.GroupConfig.group', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -135,8 +135,8 @@ _REPORTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=272,
-  serialized_end=334,
+  serialized_start=270,
+  serialized_end=324,
 )
 
 
@@ -194,34 +194,34 @@ _INVESTMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=336,
-  serialized_end=463,
+  serialized_start=326,
+  serialized_end=453,
 )
 
 
-_REPORTGROUP = _descriptor.Descriptor(
-  name='ReportGroup',
-  full_name='beancount.returns.ReportGroup',
+_GROUP = _descriptor.Descriptor(
+  name='Group',
+  full_name='beancount.returns.Group',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='beancount.returns.ReportGroup.name', index=0,
+      name='name', full_name='beancount.returns.Group.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='investment', full_name='beancount.returns.ReportGroup.investment', index=1,
+      name='investment', full_name='beancount.returns.Group.investment', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='currency', full_name='beancount.returns.ReportGroup.currency', index=2,
+      name='currency', full_name='beancount.returns.Group.currency', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -239,19 +239,19 @@ _REPORTGROUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=465,
-  serialized_end=530,
+  serialized_start=455,
+  serialized_end=514,
 )
 
 _CONFIG.fields_by_name['investments'].message_type = _INVESTMENTCONFIG
-_CONFIG.fields_by_name['reports'].message_type = _REPORTCONFIG
+_CONFIG.fields_by_name['groups'].message_type = _GROUPCONFIG
 _INVESTMENTCONFIG.fields_by_name['investment'].message_type = _INVESTMENT
-_REPORTCONFIG.fields_by_name['report'].message_type = _REPORTGROUP
+_GROUPCONFIG.fields_by_name['group'].message_type = _GROUP
 DESCRIPTOR.message_types_by_name['Config'] = _CONFIG
 DESCRIPTOR.message_types_by_name['InvestmentConfig'] = _INVESTMENTCONFIG
-DESCRIPTOR.message_types_by_name['ReportConfig'] = _REPORTCONFIG
+DESCRIPTOR.message_types_by_name['GroupConfig'] = _GROUPCONFIG
 DESCRIPTOR.message_types_by_name['Investment'] = _INVESTMENT
-DESCRIPTOR.message_types_by_name['ReportGroup'] = _REPORTGROUP
+DESCRIPTOR.message_types_by_name['Group'] = _GROUP
 
 Config = _reflection.GeneratedProtocolMessageType('Config', (_message.Message,), dict(
   DESCRIPTOR = _CONFIG,
@@ -267,12 +267,12 @@ InvestmentConfig = _reflection.GeneratedProtocolMessageType('InvestmentConfig', 
   ))
 _sym_db.RegisterMessage(InvestmentConfig)
 
-ReportConfig = _reflection.GeneratedProtocolMessageType('ReportConfig', (_message.Message,), dict(
-  DESCRIPTOR = _REPORTCONFIG,
+GroupConfig = _reflection.GeneratedProtocolMessageType('GroupConfig', (_message.Message,), dict(
+  DESCRIPTOR = _GROUPCONFIG,
   __module__ = 'config_pb2'
-  # @@protoc_insertion_point(class_scope:beancount.returns.ReportConfig)
+  # @@protoc_insertion_point(class_scope:beancount.returns.GroupConfig)
   ))
-_sym_db.RegisterMessage(ReportConfig)
+_sym_db.RegisterMessage(GroupConfig)
 
 Investment = _reflection.GeneratedProtocolMessageType('Investment', (_message.Message,), dict(
   DESCRIPTOR = _INVESTMENT,
@@ -281,12 +281,12 @@ Investment = _reflection.GeneratedProtocolMessageType('Investment', (_message.Me
   ))
 _sym_db.RegisterMessage(Investment)
 
-ReportGroup = _reflection.GeneratedProtocolMessageType('ReportGroup', (_message.Message,), dict(
-  DESCRIPTOR = _REPORTGROUP,
+Group = _reflection.GeneratedProtocolMessageType('Group', (_message.Message,), dict(
+  DESCRIPTOR = _GROUP,
   __module__ = 'config_pb2'
-  # @@protoc_insertion_point(class_scope:beancount.returns.ReportGroup)
+  # @@protoc_insertion_point(class_scope:beancount.returns.Group)
   ))
-_sym_db.RegisterMessage(ReportGroup)
+_sym_db.RegisterMessage(Group)
 
 
 # @@protoc_insertion_point(module_scope)

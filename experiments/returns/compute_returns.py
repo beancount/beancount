@@ -82,7 +82,7 @@ def main():
         path.join(args.output, "investments"))
 
     # Generate output reports.
-    output_reports = path.join(args.output, "reports")
+    output_reports = path.join(args.output, "groups")
     pricer = reports.generate_reports(account_data_map, config,
                                       prices.build_price_map(entries),
                                       end_date,

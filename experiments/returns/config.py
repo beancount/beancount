@@ -42,7 +42,7 @@ def read_config(config_filename: str,
     config = Config()
     with open(config_filename, "r") as infile:
         text_format.Merge(infile.read(), config)
-    reports = list(config.reports.report)
+    reports = list(config.groups.group)
 
     # Expand account names.
     for investment in config.investments.investment:
@@ -55,21 +55,21 @@ def read_config(config_filename: str,
     # Expand investment names.
     investment_names = [investment.asset_account
                         for investment in config.investments.investment]
-    for report in config.reports.report:
+    for report in config.groups.group:
         report.investment[:] = expand_globs(report.investment, investment_names)
 
     # Filter down reports.
     if filter_reports:
         reports = [report
-                   for report in config.reports.report
+                   for report in config.groups.group
                    if any(fnmatch.fnmatch(report.name, pattern)
                           for pattern in filter_reports)]
-        del config.reports.report[:]
-        config.reports.report.extend(reports)
+        del config.groups.group[:]
+        config.groups.group.extend(reports)
 
     # Filter just the list of investments needed for the reports defined.
     used_investments = set(inv
-                           for report in config.reports.report
+                           for report in config.groups.group
                            for inv in report.investment)
     investments = [invest
                    for invest in config.investments.investment
