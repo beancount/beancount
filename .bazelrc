@@ -1,5 +1,5 @@
 # Use Clang to build, not gcc.
-build --repo_env=CC=clang
+build --repo_env=CC=c++
 
 # Use C++17 w/ libc++ (for std::string_view and more).
 build --cxxopt=-std=c++17

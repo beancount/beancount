@@ -73,6 +73,7 @@ cc_library(
             "cpp/src/generated/parquet_types.h",
         ],
         exclude = [
+            # TODO(blais): Attempt to add defines instead -DARROW_HAVE_RUNTIME_AVX2 -DARROW_HAVE_RUNTIME_AVX512
             "cpp/src/arrow/util/bpacking_avx512.cc",  # Remove conditionally.
             "cpp/src/arrow/util/bpacking_avx2.cc",    # Remove conditionally.
             "cpp/src/**/*_benchmark.cc",
@@ -102,6 +103,7 @@ cc_library(
         "ARROW_WITH_ZSTD",
         "ARROW_WITH_BZ2",
         "ARROW_STATIC",
+        "ARROW_PYTHON",
         "PARQUET_STATIC",
         "WIN32_LEAN_AND_MEAN",
     ],
