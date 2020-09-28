@@ -211,10 +211,10 @@ def setup_arrow():
     http_archive(
         name = "brotli",
         build_file = "@org_tensorflow_io//third_party:brotli.BUILD",
-        sha256 = "4c61bfb0faca87219ea587326c467b95acb25555b53d1a421ffa3c8a9296ee2c",
-        strip_prefix = "brotli-1.0.7",
+        sha256 = "f9e8d81d0405ba66d181529af42a3354f838c939095ff99930da6aa9cdf6fe46",
+        strip_prefix = "brotli-1.0.9",
         urls = [
-            "https://github.com/google/brotli/archive/v1.0.7.tar.gz",
+            "https://github.com/google/brotli/archive/v1.0.9.tar.gz",
         ],
     )
 
