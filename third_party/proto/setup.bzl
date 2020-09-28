@@ -149,6 +149,8 @@ def setup_arrow():
     #     build_file = "//third_party/proto:arrow.BUILD",
     #     sha256 = "8b231e1eda84aebe6a7ec452f0111256fee8b950db707532965cc6d295406ed1",
     #     strip_prefix = "arrow-66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04",
+    #     patches = ["//third_party/proto:arrow.patch"],
+    #     patch_args = ["-p1"],
     #     urls = [
     #         "https://github.com/apache/arrow/archive/66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04.tar.gz",
     #     ],
