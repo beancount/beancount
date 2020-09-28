@@ -1,5 +1,6 @@
 # Use Clang to build, not gcc.
-build --repo_env=CC=c++
+build --repo_env=CC=cc
+build --repo_env=CXX=c++
 
 # Use C++17 w/ libc++ (for std::string_view and more).
 build --cxxopt=-std=c++17
@@ -11,6 +12,9 @@ build --cxxopt=-std=c++17
 ## build --cxxopt=-isystem/usr/lib/llvm-12/include/c++/v1
 # build --cxxopt=-stdlib=libc++
 # build --cxxopt=-L/usr/lib/llvm-12/lib
+
+# We need this to build Riegeli; see https://github.com/google/riegeli/issues/13
+build --cxxopt=-fsized-deallocation
 
 build -c fastbuild
 
