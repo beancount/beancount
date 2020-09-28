@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A simple converter from CSV to Arrow file format.
+"""A simple converter from CSV to Parquet or Feather file format, via Arrow.
 """
 
 from os import path
@@ -13,7 +13,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('csv_filename', help='CSV filename.')
-    parser.add_argument('arrow_filename', help='Arrow filename.')
+    parser.add_argument('output_filename', help='Output filename (parquet or feather).')
 
     parser.add_argument('-f', '--format', action='store',
                         help="File format to write the file to.")
@@ -28,7 +28,7 @@ def main():
         format = args.format
     else:
         # Try to infer from the filename.
-        format = path.splitext(args.arrow_filename)[1][1:]
+        format = path.splitext(args.output_filename)[1][1:]
         if format not in valid_formats:
             format = default_format
     assert format in valid_formats
@@ -40,8 +40,7 @@ def main():
     print(table)
 
     writer = feather.write_feather if format == 'feather' else parquet.write_table
-    writer(table, args.arrow_filename)
-
+    writer(table, args.output_filename)
 
 
 if __name__ == '__main__':
