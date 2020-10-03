@@ -137,35 +137,27 @@ def setup_arrow():
     )
 
     # Local archive.
-    native.new_local_repository(
-        name = "arrow",
-        path = "/home/blais/src/github/apache/arrow",
-        build_file = "//third_party/proto:arrow.BUILD",
-    )
-    #
-    # Recent commit on master.
-    # http_archive(
-    #     name = "arrow",
-    #     build_file = "//third_party/proto:arrow.BUILD",
-    #     sha256 = "8b231e1eda84aebe6a7ec452f0111256fee8b950db707532965cc6d295406ed1",
-    #     strip_prefix = "arrow-66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04",
-    #     patches = ["//third_party/proto:arrow.patch"],
-    #     patch_args = ["-p1"],
-    #     urls = [
-    #         "https://github.com/apache/arrow/archive/66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04.tar.gz",
-    #     ],
-    # )
-    #
-    # Version 1.0.1
-    # http_archive(
-    #     name = "arrow",
-    #     build_file = "//third_party/proto:arrow.BUILD",
-    #     sha256 = "dac59f4d42416224419c020ed2e8f8371e85c1d9ff4368ed5b5c026ee28d3fd4",
-    #     strip_prefix = "arrow-apache-arrow-1.0.1",
-    #     urls = [
-    #         "https://github.com/apache/arrow/archive/apache-arrow-1.0.1.tar.gz",
-    #     ],
-    # )
+
+    local_arrow = "/home/blais/src/github/apache/arrow"
+    if False:
+        native.new_local_repository(
+            name = "arrow",
+            path = local_arrow,
+            build_file = "//third_party/proto:arrow.BUILD",
+        )
+    else:
+        # Recent commit on master.
+        http_archive(
+            name = "arrow",
+            build_file = "//third_party/proto:arrow.BUILD",
+            sha256 = "8b231e1eda84aebe6a7ec452f0111256fee8b950db707532965cc6d295406ed1",
+            strip_prefix = "arrow-66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04",
+            patches = ["//third_party/proto:arrow.patch"],
+            patch_args = ["-p1"],
+            urls = [
+                "https://github.com/apache/arrow/archive/66aad9db7eea4c69aa97e5c8f5a43da5db2d0d04.tar.gz",
+            ],
+        )
 
     http_archive(
         name = "boost",
