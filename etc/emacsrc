@@ -78,7 +78,7 @@
 (defvar beancount-journal-command
   (concat
    "select date, flag, maxwidth(description, 80), position, balance "
-   "where account = '%s'"))I
+   "where account = '%s'"))
 
 (defun beancount-query-journal-at-point ()
   "Run a journal command for the account at point."

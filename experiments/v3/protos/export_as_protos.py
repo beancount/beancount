@@ -11,6 +11,7 @@ __license__ = "GNU GPLv2"
 import argparse
 import logging
 import datetime
+from os import path
 from decimal import Decimal
 
 from beancount import loader
@@ -19,7 +20,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import position
 
-from experiments.protos import beancount_pb2 as pb
+from experiments.v3.protos import beancount_pb2 as pb
 
 import riegeli
 
@@ -113,9 +114,10 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Ledger filename')
+    parser.add_argument('output', help='Riegeli filename')
     args = parser.parse_args()
 
-    with open('/tmp/ledger.rieg', 'wb') as outfile:
+    with open(args.output, 'wb') as outfile:
         with riegeli.RecordWriter(outfile) as writer:
             entries, errors, options_map = loader.load_file(args.filename)
             for entry in entries:
