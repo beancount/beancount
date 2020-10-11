@@ -186,12 +186,6 @@ setup(name="beancount",
                 extra_compile_args=get_cflags()),
       ],
 
-      # Include the Emacs support for completeness, for packagers not to have to
-      # check out from the repository.
-      data_files = [
-          ('elisp', ['editors/emacs/beancount.el']),
-      ],
-
       install_requires = install_requires,
 
       entry_points = {

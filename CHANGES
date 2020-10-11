@@ -5,6 +5,12 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-10-10
+
+ - Moved Emacs support to its own repository
+   (http://github.com/beancount/beancount-mode).
+
+
 2020-09-12
 
  - Added metadata on implicitly generated Price directives (from implicit_prices
