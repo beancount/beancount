@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
+2020-10-17
+
+ - Fixed #566: Duplicate postings on entries should count toward distinct
+   hashes.
+
 
 2020-10-10
 
