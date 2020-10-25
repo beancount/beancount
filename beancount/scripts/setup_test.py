@@ -93,7 +93,9 @@ class TestSetup(test_utils.TestCase):
         bindir = path.join(installdir, 'bin')
         libdir = path.join(installdir, 'lib')
         while path.basename(libdir) != 'site-packages':
-            libdir = path.join(libdir, os.listdir(libdir)[0])
+            subdirs = [d for d in os.listdir(libdir) if path.isdir(path.join(libdir, d))]
+            assert len(subdirs) == 1, subdirs
+            libdir = path.join(libdir, subdirs[0])
 
         # Run at least with the --help option for all the installed tools.
         for binname in os.listdir(bindir):
@@ -104,7 +106,7 @@ class TestSetup(test_utils.TestCase):
             pipe = subprocess.Popen(command, shell=False,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    env={'PYTHONPATH': path.join(libdir)},
+                                    env={'PYTHONPATH': libdir},
                                     cwd=rootdir)
             stdout, stderr = pipe.communicate()
             self.assertEqual(0, pipe.returncode, stderr)
@@ -117,7 +119,7 @@ class TestSetup(test_utils.TestCase):
         pipe = subprocess.Popen(command, shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                env={'PYTHONPATH': path.join(libdir)},
+                                env={'PYTHONPATH': libdir},
                                 cwd=rootdir)
         stdout, stderr = pipe.communicate()
         self.assertEqual(0, pipe.returncode, stderr)
@@ -127,7 +129,7 @@ class TestSetup(test_utils.TestCase):
         pipe = subprocess.Popen(command, shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                env={'PYTHONPATH': path.join(libdir)},
+                                env={'PYTHONPATH': libdir},
                                 cwd=rootdir)
         stdout, stderr = pipe.communicate()
         self.assertEqual(0, pipe.returncode, stderr)
