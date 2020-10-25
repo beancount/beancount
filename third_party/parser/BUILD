@@ -64,7 +64,6 @@ filegroup(
 cc_library(
     name = "reflex_headers",
     hdrs = ["@reflex//:headers"],
-    strip_include_prefix = "//external/reflex/include",
 )
 
 # configure_make(

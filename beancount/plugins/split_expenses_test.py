@@ -61,7 +61,7 @@ class TestSplitExpenses(cmptest.TestCase):
         expected_input = textwrap.dedent("""
             2011-05-17 open Assets:Cash
             2011-05-17 open Expenses:Restaurant:Martin
-        """) + self.test_work_with_auto_accounts.__input__
+        """ + self.test_work_with_auto_accounts.__input__)
         self.assertEqualEntries(expected_input, entries)
 
     @loader.load_doc(expect_errors=True)
