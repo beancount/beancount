@@ -14,7 +14,7 @@ jobs:
       - name: bazel install
         run: |
           wget https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel_3.7.0-linux-x86_64.deb
-          sha256sum -c tools/bazel_3.7.0-linux-x86_64.deb
+          sha256sum -c bazel_3.7.0-linux-x86_64.deb
           sudo dpkg -i bazel_3.7.0-linux-x86_64.deb
       - run: pip install numpy
       - name: bazel build
