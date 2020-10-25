@@ -63,13 +63,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 #include "beancount/parser/tokens.h"
 
 struct _yyextra_t {
-    /* The number of times EOF has been hit. This is used to
-     * synthesize an EOL at the end of the file. */
-    int n_eof;
-
-    /* Number of tokens since the beginning of the line. */
-    int n_line_tokens;
-
     /* The filename being tokenized. */
     PyObject* filename;
 
@@ -77,8 +70,6 @@ struct _yyextra_t {
     const char* encoding;
 };
 
-#define yy_eof_times yyget_extra(yyscanner)->n_eof
-#define yy_line_tokens yyget_extra(yyscanner)->n_line_tokens
 #define yy_filename yyget_extra(yyscanner)->filename
 #define yy_encoding yyget_extra(yyscanner)->encoding
 
@@ -96,7 +87,6 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
 #define YY_USER_ACTION                                                  \
     {                                                                   \
-        yy_line_tokens++;                                               \
         yylloc->first_line = yylineno;                                  \
         yylloc->last_line = yylloc->first_line;                         \
         yylloc->first_column = yycolumn;                                \
@@ -105,28 +95,10 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yycolumn += yyleng;                                             \
     }
 
-/* Skip the rest of the input line.  This needs to be implemented as a
- * macro because input() and unput() are themselves macros tha use
- * variable definitions internal to the yylex() function. */
-#define yy_skip_line()                          \
-    do {                                        \
-        for (;;) {                              \
-            int c = input(yyscanner);           \
-            if (c == 0 || c == -1) {		\
-                break;                          \
-            }                                   \
-            if (c == '\n') {                    \
-                unput(c);                       \
-                break;                          \
-            }                                   \
-        }                                       \
-    } while (0)
-
 %}
 
-/* A start condition for chomping an invalid token. */
 %x INVALID
-
+%x IGNORE
 
 ASCII           [\x00-\x7f]
 UTF-8-1         [\x80-\xbf]
@@ -139,12 +111,16 @@ UTF-8           {ASCII}|{UTF-8-ONLY}
 ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 
+ /* Characters that may be used as flags. Make sure to include all the
+  * values from beancount.core.flags to allow round-trips between text
+  * and entries. {5307d8fa1e7b} */
+FLAGS           [!&#?%PSTCURM]
+
 
 %% /* Rules */
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
-    yy_line_tokens = 0;
     yycolumn = 1;
     return EOL;
 }
@@ -154,8 +130,10 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
     initial indent and thus group postings and comments together in
     the grammar. */
 ^[ \t]+/[^ \t\r\n]	{ return INDENT; }
+[ \t\r]+ 	{ }
 
-[ \t\r]+ { }
+ /* Comments. */
+;.*		{ }
 
  /* Characters with special meanings have their own tokens. */
 \|		{ return PIPE; }
@@ -172,61 +150,13 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 \/		{ return SLASH; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
+\#		{ return HASH; }
+\*		{ return ASTERISK; }
+\:		{ return COLON; }
 
- /* Special handling for characters beginning a line to be ignored.
-  * I'd like to improve how this is handled. Needs own lexer, really. */
-\#		{
-    if (yy_line_tokens != 1) {
-        return HASH;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-    }
-}
-
-\*		{
-    if (yy_line_tokens != 1) {
-        return ASTERISK;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-    }
-}
-
-\:		{
-  if (yy_line_tokens != 1) {
-    return COLON;
-  }
-  else {
-    /* Allow org-mode drawers. */
-    yy_skip_line();
-  }
-}
-
- /* Skip commented output (but not the accompanying newline). */
-;+.*		{
-    /* yy_skip_line(); */
-    return COMMENT;
-}
-
- /* Special characters which may be used in-lieu of a 'txn' keyword in a
-    transaction declaration output as a token. Other lines are just skipped.
-    This allows us to use org-mode or other separators in the input syntax.
-
-    Note: You need to make sure to include all the values from
-    beancount.core.flags, in order for round-trips between text and entries to
-    be possible. {5307d8fa1e7b}
-    */
-[!&#?%PSTCURM]	{
-    if (yy_line_tokens != 1) {
-        yylval->character = yytext[0];
-        return FLAG;
-    }
-    else {
-        yy_skip_line();
-    }
+{FLAGS}		{
+    yylval->character = yytext[0];
+    return FLAG;
 }
 
  /* Keywords. */
@@ -299,10 +229,16 @@ NULL		{
     return token(LINK, yytext + 1, yyleng - 1);
 }
 
- /* Key */
+ /* Keys */
 [a-z][a-zA-Z0-9\-_]+/: 		{
     return token(KEY, yytext, yyleng);
 }
+
+ /* Lines starting with an asterisk, a colon, an hash, or a character
+  * in the FLAGS characters set are ignored. This rule is inserted
+  * here to give higher precedence to rules matching valid tokens. */
+^[\*\:\#]/.	{ BEGIN(IGNORE); }
+^{FLAGS}/.	{ BEGIN(IGNORE); }
 
  /* Default rule. {bf253a29a820} */
 .			{
@@ -310,29 +246,26 @@ NULL		{
     BEGIN(INVALID);
 }
 
- /* Fake an EOL at the end of file, to ensure that files without a final newline
-  * will process postings right. */
 <<EOF>>     		{
-    if (yy_eof_times == 0) {
-	yy_eof_times = 1;
-	/* Ensure location data is populated. */
-	YY_USER_ACTION;
-	return EOL;
-    }
-    return 0;
+    /* Ensure location data is populated. */
+    YY_USER_ACTION;
+    return YYEOF;
 }
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
     pattern, it would take precedence over valid rules if the matched text is
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
-<INVALID>[^ \t\n\r]+     {
+<INVALID>[^ \t\n\r]+	{
     PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
     build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
     return YYerror;
 }
 
+<IGNORE>.* {
+    BEGIN(INITIAL);
+}
 
 %% /* User Code */
 
@@ -399,8 +332,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     Py_XDECREF(extra->filename);
     extra->filename = filename;
 
-    extra->n_eof = 0;
-    extra->n_line_tokens = 0;
     extra->encoding = encoding ? encoding : "utf-8";
 
     Py_XDECREF(yyget_in(scanner));

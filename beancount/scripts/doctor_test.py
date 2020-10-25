@@ -52,7 +52,6 @@ class TestScriptDoctor(test_utils.TestCase):
             INDENT            7 b'  '
             ACCOUNT           7 b'Assets:Cash'
             EOL               8 b'\\n'
-            EOL               8 b'\\x00'
         """
         self.assertLines(expected_output, stdout.getvalue())
 

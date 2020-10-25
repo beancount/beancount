@@ -72,11 +72,11 @@ class TestParserDoc(unittest.TestCase):
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
-    INPUT = """
+    INPUT = textwrap.dedent("""
       2013-05-18 * "Nice dinner at Mermaid Inn"
         Expenses:Restaurant         100 USD
         Assets:US:Cash
-    """
+    """)
 
     def test_parse_string(self):
         entries, errors, _ = parser.parse_string(self.INPUT)
@@ -233,8 +233,8 @@ class TestReferenceCounting(unittest.TestCase):
         self.assertEqual(sys.getrefcount(parser), 3)
 
         tokens = list(iterator)
-        # Just the EOL token.
-        self.assertEqual(len(tokens), 1)
+        # No tokens returned for an empty input.
+        self.assertEqual(len(tokens), 0)
         # Once done scanning is completed the Parser object still has
         # references to the input file and to the name.
         self.assertEqual(sys.getrefcount(name), 4)
