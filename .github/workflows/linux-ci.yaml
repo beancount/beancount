@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.6', '3.7', '3.8']
+        python: ['3.6', '3.7', '3.8', '3.9']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -23,8 +23,8 @@ jobs:
         # The Makefile does not handle older python-config versions.
         # These tests are however about the pure C code, thus there is
         # little value in running them for different Python version.
-        if: ${{ matrix.python == '3.8' }}
+        if: ${{ matrix.python == '3.9' }}
       - run: make test
       - run: make lint
         # There is no need to run pylint with all Python versions.
-        if: ${{ matrix.python == '3.8' }}
+        if: ${{ matrix.python == '3.9' }}

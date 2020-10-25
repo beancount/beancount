@@ -10,12 +10,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: bazel install
         run: |
-          wget https://github.com/bazelbuild/bazel/releases/download/3.2.0/bazel_3.2.0-linux-x86_64.deb
-          sha256sum -c tools/bazel_3.2.0-linux-x86_64.deb.sha256
-          sudo dpkg -i bazel_3.2.0-linux-x86_64.deb
+          wget https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel_3.7.0-linux-x86_64.deb
+          sha256sum -c tools/bazel_3.7.0-linux-x86_64.deb
+          sudo dpkg -i bazel_3.7.0-linux-x86_64.deb
       - run: pip install numpy
       - name: bazel build
         run: /usr/bin/bazel --bazelrc=.bazelrc.travis test //...
