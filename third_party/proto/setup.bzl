@@ -37,33 +37,29 @@ def setup_proto():
 
 
 def setup_riegeli():
-    # 2020-09-20
+    # 2020-10-23
     http_archive(
         name = "com_google_riegeli",
-        sha256 = "2cc898b39eeedca79d12d9e83f39c81a6049bb8be57e6a864993df6e5ac857cb",
-        strip_prefix = "riegeli-f7a7fbf586cf108c3603857a0d8978a724deb352",
-        urls = ["https://github.com/google/riegeli/archive/f7a7fbf586cf108c3603857a0d8978a724deb352.zip"],
+        sha256 = "73a3b47727a8021a377afb7fcea06ec62e047d90f1799f723eb54c0e44acdf87",
+        strip_prefix = "riegeli-5baa15714c60bbeabb9a1fce5d7e41b3076c068e",
+        urls = ["https://github.com/google/riegeli/archive/5baa15714c60bbeabb9a1fce5d7e41b3076c068e.zip"],
     )
 
+    # 2019-02-22
     http_archive(
         name = "highwayhash",
         build_file = "@com_google_riegeli//third_party:highwayhash.BUILD",
         sha256 = "cf891e024699c82aabce528a024adbe16e529f2b4e57f954455e0bf53efae585",
         strip_prefix = "highwayhash-276dd7b4b6d330e4734b756e97ccfb1b69cc2e12",
-        urls = [
-            #"https://mirror.bazel.build/github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",
-            "https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",  # 2019-02-22
-        ],
+        urls = ["https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip"],
     )
 
+    # 2020-08-27
     http_archive(
         name = "org_brotli",
-        sha256 = "6e69be238ff61cef589a3fa88da11b649c7ff7a5932cb12d1e6251c8c2e17a2f",
-        strip_prefix = "brotli-1.0.7",
-        urls = [
-            #"https://mirror.bazel.build/github.com/google/brotli/archive/v1.0.7.zip",
-            "https://github.com/google/brotli/archive/v1.0.7.zip",  # 2018-10-23
-        ],
+        sha256 = "fe20057c1e5c4d0b4bd318732c0bcf330b4326b486419caf1b91c351a53c5599",
+        strip_prefix = "brotli-1.0.9",
+        urls = ["https://github.com/google/brotli/archive/v1.0.9.zip"],
     )
 
     http_archive(
