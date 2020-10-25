@@ -96,7 +96,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             env = os.environ.copy()
             env['PYTHONPATH'] = ':'.join(sys.path)
             output = subprocess.check_output(
-                [path.join(self.tempdir, 'testimport.py'),
+                [sys.executable, path.join(self.tempdir, 'testimport.py'),
                  '--downloads', path.join(self.tempdir, 'Downloads'),
                  'identify'], shell=False, env=env)
         self.assertTrue(re.match(regexp, output.decode().strip()))
