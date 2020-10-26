@@ -19,5 +19,5 @@ jobs:
       - run: pip install numpy
       - name: bazel build
         run: /usr/bin/bazel --bazelrc=.bazelrc.travis build //...
-      - name: bazel test
+      - name: bazel test --test_output=errors
         run: /usr/bin/bazel --bazelrc=.bazelrc.travis test //...
