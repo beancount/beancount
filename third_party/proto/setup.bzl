@@ -111,14 +111,11 @@ def setup_riegeli():
 
 
 def setup_flatbuffers():
-    # Same as from https://github.com/tensorflow/io/blob/master/WORKSPACE.
     http_archive(
         name = "com_github_google_flatbuffers",
-        sha256 = "12a13686cab7ffaf8ea01711b8f55e1dbd3bf059b7c46a25fefa1250bdd9dd23",
-        strip_prefix = "flatbuffers-b99332efd732e6faf60bb7ce1ce5902ed65d5ba3",
-        urls = [
-            "https://github.com/google/flatbuffers/archive/b99332efd732e6faf60bb7ce1ce5902ed65d5ba3.tar.gz",
-        ],
+        sha256 = "62f2223fb9181d1d6338451375628975775f7522185266cd5296571ac152bc45",
+        strip_prefix = "flatbuffers-1.12.0",
+        urls = ["https://github.com/google/flatbuffers/archive/v1.12.0.tar.gz"],
     )
 
 
