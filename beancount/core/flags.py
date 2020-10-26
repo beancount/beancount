@@ -4,7 +4,7 @@ __copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-# Special flags
+# Special flags.
 #
 # Note: These need to be kept in sync with the lexer's FLAG token, in order to
 # allow round-trips between text and in-memory entries to work.
