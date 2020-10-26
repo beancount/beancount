@@ -11,6 +11,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements_dev.txt
       - name: bazel install
         run: |
           wget https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel_3.7.0-linux-x86_64.deb
