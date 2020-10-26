@@ -54,13 +54,16 @@ def setup_riegeli():
         urls = ["https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip"],
     )
 
-    # 2020-08-27
-    http_archive(
-        name = "org_brotli",
-        sha256 = "fe20057c1e5c4d0b4bd318732c0bcf330b4326b486419caf1b91c351a53c5599",
-        strip_prefix = "brotli-1.0.9",
-        urls = ["https://github.com/google/brotli/archive/v1.0.9.zip"],
-    )
+    if not native.existing_rule("org_brotli"):
+        # 2020-08-27
+        http_archive(
+            name = "org_brotli",
+            sha256 = "fe20057c1e5c4d0b4bd318732c0bcf330b4326b486419caf1b91c351a53c5599",
+            strip_prefix = "brotli-1.0.9",
+            urls = ["https://github.com/google/brotli/archive/v1.0.9.zip"],
+            patches = ["//third_party/proto:brotli.patch"],
+            patch_args = ["-p1"],
+        )
 
     http_archive(
         name = "net_zstd",
@@ -196,15 +199,16 @@ def setup_arrow():
         ],
     )
 
-    http_archive(
-        name = "brotli",
-        build_file = "@org_tensorflow_io//third_party:brotli.BUILD",
-        sha256 = "f9e8d81d0405ba66d181529af42a3354f838c939095ff99930da6aa9cdf6fe46",
-        strip_prefix = "brotli-1.0.9",
-        urls = [
-            "https://github.com/google/brotli/archive/v1.0.9.tar.gz",
-        ],
-    )
+    if not native.existing_rule("org_brotli"):
+        # 2020-08-27
+        http_archive(
+            name = "org_brotli",
+            sha256 = "fe20057c1e5c4d0b4bd318732c0bcf330b4326b486419caf1b91c351a53c5599",
+            strip_prefix = "brotli-1.0.9",
+            urls = ["https://github.com/google/brotli/archive/v1.0.9.zip"],
+            patches = ["//third_party/proto:brotli.patch"],
+            patch_args = ["-p1"],
+        )
 
     http_archive(
         name = "snappy",

@@ -117,7 +117,9 @@ cc_library(
     deps = [
         ":arrow_format",
         "@boringssl//:crypto",
-        "@brotli",
+        "@org_brotli//:brotlicommon",
+        "@org_brotli//:brotlienc",
+        "@org_brotli//:brotlidec",
         "@bzip2",
         "@double-conversion",
         "@lz4",
