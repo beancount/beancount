@@ -93,8 +93,9 @@ class Source(source.Source):
                 result['exchangeTimezoneName'])
             trade_time = datetime.datetime.fromtimestamp(result['regularMarketTime'],
                                                          tz=timezone)
-        except KeyError:
-            raise YahooError("Invalid response from Yahoo: {}".format(repr(result)))
+        except KeyError as exc:
+            raise YahooError("Invalid response from Yahoo: {}".format(
+                repr(result))) from exc
 
         currency = parse_currency(result)
 

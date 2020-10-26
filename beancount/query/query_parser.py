@@ -244,7 +244,6 @@ class Lexer:
         return token
 
     # Constant tokens.
-    # pylint: disable=bad-whitespace
     t_COMMA    = r","
     t_SEMI     = r";"
     t_LPAREN   = r"\("

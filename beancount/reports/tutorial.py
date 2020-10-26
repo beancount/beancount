@@ -11,7 +11,6 @@ from beancount.parser import version
 from beancount.reports import report
 
 
-# pylint: disable=bad-whitespace
 COMMANDS = [
     ('balances'                 , "bean-report {} balances"),
     ('help-reports'             , "bean-report --help-reports"),

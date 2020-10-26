@@ -183,7 +183,7 @@ def import_source(module_name):
             return sys.modules[module_name]
         except ImportError as exc:
             raise ImportError('Could not find price source module "{}": {}'.format(
-                module_name, exc))
+                module_name, exc)) from exc
 
 
 def find_currencies_declared(entries, date=None):

@@ -108,8 +108,8 @@ class Report:
         try:
             render_method = getattr(self, 'render_{}'.format(output_format or
                                                              self.default_format))
-        except AttributeError:
-            raise ReportError("Unsupported format: '{}'".format(output_format))
+        except AttributeError as exc:
+            raise ReportError("Unsupported format: '{}'".format(output_format)) from exc
 
         outfile = io.StringIO() if file is None else file
         result = render_method(entries, errors, options_map, outfile)

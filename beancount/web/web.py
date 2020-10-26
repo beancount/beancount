@@ -1076,7 +1076,6 @@ def incognito(callback):
 
     def wrapper(*posargs, **kwargs):
         contents = callback(*posargs, **kwargs)
-        # pylint: disable=bad-continuation
         if (response.content_type in ('text/html', '') and
             isinstance(contents, str)):
             contents = text_utils.replace_numbers(contents)

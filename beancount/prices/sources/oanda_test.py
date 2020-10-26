@@ -137,7 +137,7 @@ class TestOandaGetHistorical(TimezoneTestBase, unittest.TestCase):
 
     def setUp(self):
         self.fetcher = oanda.Source()
-        super(TestOandaGetHistorical, self).setUp()
+        super().setUp()
 
     def test_invalid_ticker(self):
         srcprice = self.fetcher.get_latest_price('NOTATICKER')
@@ -148,7 +148,6 @@ class TestOandaGetHistorical(TimezoneTestBase, unittest.TestCase):
             self.assertEqual(None, self.fetcher.get_latest_price('USD_CAD'))
 
     def _check_valid(self, query_date, out_time, out_price):
-        # pylint: disable=bad-whitespace
         candles = [
             (datetime.datetime(2017, 1, 21,  0, 0, 0, tzinfo=tz.tzutc()), D('1.3100')),
             (datetime.datetime(2017, 1, 21,  8, 0, 0, tzinfo=tz.tzutc()), D('1.3300')),

@@ -50,7 +50,7 @@ class ImportFileTestCase(unittest.TestCase):
     maxDiff = None
 
     def __init__(self, importer):
-        super(ImportFileTestCase, self).__init__()
+        super().__init__()
         self.importer = importer
 
     @test_utils.skipIfRaises(ToolNotInstalled)

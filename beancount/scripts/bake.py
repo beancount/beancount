@@ -254,8 +254,8 @@ def main():
     if extension:
         try:
             archival_command = ARCHIVERS[extension]
-        except KeyError:
-            raise SystemExit("ERROR: Unknown archiver type '{}'".format(extension))
+        except KeyError as exc:
+            raise SystemExit("ERROR: Unknown archiver type '{}'".format(extension)) from exc
     else:
         archival_command = None
 

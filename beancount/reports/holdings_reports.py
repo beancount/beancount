@@ -170,8 +170,8 @@ def load_from_csv(fileobj):
         try:
             attr_converter = column_dict[header_name]
             attr_converters.append(attr_converter)
-        except KeyError:
-            raise IOError("Invalid file contents for holdings")
+        except KeyError as exc:
+            raise IOError("Invalid file contents for holdings") from exc
 
     for line in reader:
         value_dict = defaults_dict.copy()

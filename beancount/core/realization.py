@@ -501,7 +501,6 @@ def find_last_active_posting(txn_postings):
         if not isinstance(txn_posting, (TxnPosting, Open, Close, Pad, Balance, Note)):
             continue
 
-        # pylint: disable=bad-continuation
         if (isinstance(txn_posting, TxnPosting) and
             txn_posting.txn.flag == flags.FLAG_UNREALIZED):
             continue

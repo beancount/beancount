@@ -140,7 +140,7 @@ class Source(source.Source):
             price = prices[TSP_FUND_NAMES.index(fund)]
 
             trade_time = trade_day[0]
-        except KeyError:
-            raise TSPError("Invalid response from TSP: {}".format(repr(result)))
+        except KeyError as exc:
+            raise TSPError("Invalid response from TSP: {}".format(repr(result))) from exc
 
         return source.SourcePrice(price, trade_time, CURRENCY)
