@@ -5,6 +5,12 @@ on:
     tags:
       - "2.*"
 
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Tag for wheel'
+
+
 jobs:
   macos-and-windows:
     runs-on: ${{ matrix.os }}-latest
