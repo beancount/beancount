@@ -6,7 +6,7 @@ on:
       - "2.*"
 
 jobs:
-  maxos-and-windows:
+  macos-and-windows:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -18,9 +18,9 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install wheel twine
-      - run: python setup.py bdist_wheel
-      - run: twine upload dist/*
+      - run: python3 -m pip install wheel twine
+      - run: python3 setup.py bdist_wheel
+      - run: twine upload dist/*.whl
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
