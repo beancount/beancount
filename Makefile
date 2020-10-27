@@ -138,10 +138,9 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-# Bake a release.
+# Bake a release, upload the source.
 release:
-	$(PYTHON) setup.py register sdist upload
-
+	twine upload dist/*.tar.gz
 
 vtest vtests verbose-test verbose-tests:
 	$(PYTHON) -m pytest -v -s beancount examples
