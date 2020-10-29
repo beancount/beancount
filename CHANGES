@@ -5,6 +5,17 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-10-29
+
+ - Fixed #570: Added a stub for restoring get_commodity_map() API.
+
+
+2020-10-26
+
+ - Fixed Github Actions workflows and Wheel generation.
+ - Released 2.3.3 to trigger new binaries.
+
+
 2020-10-25
 
  - Removed the part of setup_test checks running the binaries with --help, as
