@@ -333,12 +333,6 @@ def get_commodity_directives(entries):
     return {entry.currency: entry for entry in entries if isinstance(entry, Commodity)}
 
 
-# TODO(blais): Deprecated.
-def get_commodity_map(entries, unused_create_missing=True):
-    """Backward-compatible stub for prior version."""
-    return get_commodity_directives(entries)
-
-
 def get_values_meta(name_to_entries_map, *meta_keys, default=None):
     """Get a map of the metadata from a map of entries values.
 
