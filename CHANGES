@@ -5,6 +5,12 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-11-01
+
+ - Fixed #255: Added a new beancount.core.prices.project() method to project
+   prices to another cost currency.
+
+
 2020-10-26
 
  - Fixed Github Actions workflows and Wheel generation.
