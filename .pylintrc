@@ -119,7 +119,15 @@ disable=locally-disabled,
   assignment-from-no-return,
   c-extension-no-member,
   cyclic-import,
-  isinstance-second-argument-not-valid-type
+  isinstance-second-argument-not-valid-type,
+  bad-continuation,
+  inherit-non-class
+
+# Notes:
+#   bad-continuation: Is buggy, see https://github.com/PyCQA/pylint/issues/3512
+#   inherit-non-class: On Python 3.9, NamedTuple is a function that can be
+#                      inherited from, so this throws false positives, see
+#                      https://github.com/PyCQA/pylint/issues/3876
 
 
 [VARIABLES]
