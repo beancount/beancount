@@ -181,13 +181,13 @@ class Balance(NamedTuple):
 #   meta: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = NamedTuple('Posting', [
-    ('account', Account),
-    ('units', Amount),
-    ('cost', Optional[Union[Cost, CostSpec]]),
-    ('price', Optional[Amount]),
-    ('flag', Optional[Flag]),
-    ('meta', Optional[Meta])])
+class Posting(NamedTuple):
+    account: Account
+    units: Amount
+    cost: Optional[Union[Cost, CostSpec]]
+    price: Optional[Amount]
+    flag: Optional[Flag]
+    meta: Optional[Meta]
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -225,9 +225,9 @@ class Transaction(NamedTuple):
 # Attributes:
 #   txn: The parent Transaction instance.
 #   posting: The Posting instance.
-TxnPosting = NamedTuple('TxnPosting', [
-    ('txn', Transaction),
-    ('posting', Posting)])
+class TxnPosting(NamedTuple):
+    txn: Transaction
+    posting: Posting
 
 
 # A note directive, a general note that is attached to an account. These are
