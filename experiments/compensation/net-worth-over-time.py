@@ -28,7 +28,6 @@ from beancount.core import inventory
 from beancount.core import prices
 from beancount.core.data import Currency
 from beancount.core.number import ZERO
-from beancount.ops import holdings
 from beancount.parser import options
 
 
