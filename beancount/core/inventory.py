@@ -285,6 +285,7 @@ class Inventory(dict):
                 total_units += position.units.number
         return Amount(total_units, currency)
 
+    # TODO(blais): Remove this, use split() below instead when needed.
     def segregate_units(self, currencies):
         """Split up the list of positions to the given currencies.
 
@@ -301,6 +302,17 @@ class Inventory(dict):
             key = (currency if currency in currencies else None)
             per_currency_dict[key].add_position(position)
         return per_currency_dict
+
+    def split(self):
+        """Split up the list of positions to their corresponding currencies.
+
+        Returns:
+          A dict of currency to Inventory instances.
+        """
+        per_currency_dict = collections.defaultdict(Inventory)
+        for position in self:
+            per_currency_dict[position.units.currency].add_position(position)
+        return dict(per_currency_dict)
 
 
     #
