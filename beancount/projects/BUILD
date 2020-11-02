@@ -40,7 +40,6 @@ py_library(
         "//beancount/core:data",
         "//beancount/core:flags",
         "//beancount/core:getters",
-        "//beancount/core:inventory",
         "//beancount/core:number",
         "//beancount/core:prices",
         "//beancount:loader",
