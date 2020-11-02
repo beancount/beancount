@@ -7,6 +7,8 @@ The master branch will rely on the Git repository history.
 
 2020-11-01
 
+ - Allow balance_by_account() method to compress positions that aren't booked,
+   as an option.
  - Added split() method to Inventory, like segregate_units but with no
    constraints.
  - Fixed #255: Added a new beancount.core.prices.project() method to project

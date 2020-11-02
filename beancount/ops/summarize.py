@@ -21,6 +21,7 @@ from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import getters
 from beancount.core import interpolate
 from beancount.core import convert
 from beancount.core import prices
@@ -582,7 +583,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
     return new_entries
 
 
-def balance_by_account(entries, date=None):
+# TODO(blais): Reconcile this with beancount.core.realization.realize().
+def balance_by_account(entries, date=None, compress_unbooked=False):
     """Sum up the balance per account for all entries strictly before 'date'.
 
     Args:
@@ -590,11 +592,17 @@ def balance_by_account(entries, date=None):
       date: An optional datetime.date instance. If provided, stop accumulating
         on and after this date. This is useful for summarization before a
         specific date.
+      compress_unbooked: For accounts that have a booking method of NONE,
+        compress their positions into a single average position. This can be
+        used when you export the full list of positions, because those accounts
+        will have a myriad of small positions from fees at negative cost and
+        what-not.
     Returns:
       A pair of a dict of account string to instance Inventory (the balance of
       this account before the given date), and the index in the list of entries
       where the date was encountered. If all entries are located before the
       cutoff date, an index one beyond the last entry is returned.
+
     """
     balances = collections.defaultdict(inventory.Inventory)
     for index, entry in enumerate(entries):
@@ -615,6 +623,25 @@ def balance_by_account(entries, date=None):
                 account_balance.add_position(posting)
     else:
         index = len(entries)
+
+    # If the account has "NONE" booking method, merge all its postings
+    # together in order to obtain an accurate cost basis and balance of
+    # units.
+    #
+    # (This is a complex issue.) If you accrued positions without having them
+    # booked properly against existing cost bases, you have not properly accounted
+    # for the profit/loss to other postings. This means that the resulting
+    # profit/loss is merged in the cost basis of the positive and negative
+    # postings.
+    if compress_unbooked:
+        oc_map = getters.get_account_open_close(entries)
+        accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
+
+        for account, balance in balances.items():
+            dopen = accounts_map.get(account, None)
+            if dopen is not None and dopen.booking is data.Booking.NONE:
+                average_balance = balance.average()
+                balances[account] = inventory.Inventory(pos for pos in average_balance)
 
     return balances, index
 
