@@ -613,6 +613,7 @@ def posting_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
+# TODO(blais): Rename 'txns' to 'transactions' for clarity.
 def filter_txns(entries):
     """A generator that yields only the Transaction instances.
 

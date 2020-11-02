@@ -109,7 +109,9 @@ def get_value(pos, price_map, date=None, output_date_prices=None):
     Note that if the position is not held at cost, this does not convert
     anything, even if a price is available in the 'price_map'. We don't specify
     a target currency here. If you're attempting to make such a conversion, see
-    ``convert_*()`` functions below.
+    ``convert_*()`` functions below. However, is the object is a posting and it
+    has a price, we will use that price to infer the target currency and those
+    will be converted.
 
     Args:
       pos: An instance of Position or Posting, equivalently.
