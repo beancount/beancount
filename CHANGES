@@ -5,9 +5,17 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
-2020-10-29
+2020-11-01
 
- - Fixed #570: Added a stub for restoring get_commodity_map() API.
+ - In the process of removing dependencies to the beancount.ops.holdings module,
+   significantly sped up the net-worth-over-time script by using simple
+   aggregation to an inventory (which is how it should be done).
+ - Allow balance_by_account() method to compress positions that aren't booked,
+   as an option.
+ - Added split() method to Inventory, like segregate_units but with no
+   constraints.
+ - Fixed #255: Added a new beancount.core.prices.project() method to project
+   prices to another cost currency.
 
 
 2020-10-26

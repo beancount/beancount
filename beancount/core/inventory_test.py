@@ -274,6 +274,17 @@ class TestInventory(unittest.TestCase):
             'HOOL': I('2.2 HOOL {532.43 USD}, '
                       '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
 
+    def test_split(self):
+        inv = I('2.2 HOOL {532.43 USD}, '
+                '2.3 HOOL {564.00 USD, 2015-07-14}, '
+                '3.41 CAD, 101.20 USD')
+        ccymap = inv.split()
+        self.assertEqual({
+            'CAD': I('3.41 CAD'),
+            'USD': I('101.20 USD'),
+            'HOOL': I('2.2 HOOL {532.43 USD}, '
+                      '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+
     def test_units1(self):
         inv = Inventory()
         self.assertEqual(inv.reduce(convert.get_units), I(''))

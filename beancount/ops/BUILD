@@ -180,6 +180,7 @@ py_library(
     srcs = ["summarize.py"],
     deps = [
         "//beancount/core:number",
+        "//beancount/core:getters",
         "//beancount/core:data",
         "//beancount/core:account_types",
         "//beancount/core:amount",

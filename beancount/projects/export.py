@@ -134,7 +134,7 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
               'cost_number',
               'cost_currency',
               'cost_date']
-    balances, _ = summarize.balance_by_account(entries)
+    balances, _ = summarize.balance_by_account(entries, compress_unbooked=True)
     acctypes = options.get_account_types(options_map)
     rows = []
     for acc, balance in sorted(balances.items()):
@@ -142,22 +142,6 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
         acctype = account_types.get_account_type(acc)
         if not acctype in (acctypes.assets, acctypes.liabilities):
             continue
-
-        # If the account has "NONE" booking method, merge all its postings
-        # together in order to obtain an accurate cost basis and balance of
-        # units.
-        #
-        # (This is a complex issue.) If you accrued positions without having them
-        # booked properly against existing cost bases, you have not properly accounted
-        # for the profit/loss to other postings. This means that the resulting
-        # profit/loss is merged in the cost basis of the positive and negative
-        # postings.
-        dopen = accounts_map.get(acc, None)
-        if dopen is not None and dopen.booking is data.Booking.NONE:
-            average_balance = balance.average()
-            balance = inventory.Inventory(pos
-                                          for pos in average_balance
-                                          if pos.units.number >= threshold)
 
         # Create a posting for each of the positions.
         for pos in balance:
