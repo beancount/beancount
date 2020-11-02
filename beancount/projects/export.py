@@ -32,7 +32,6 @@ from beancount.core.number import ONE
 from beancount.core.number import D
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import inventory
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import getters

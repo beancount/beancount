@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-import copy
 from typing import Optional, Set
 
 from beancount.core.number import ONE
@@ -232,7 +231,8 @@ def project(orig_price_map: PriceMap,
             projected.sort()
 
             inverted = price_map.setdefault((to_currency, base), [])
-            inverted.extend((date, ZERO if rate == ZERO else ONE/rate) for date, rate in new_projected)
+            inverted.extend((date, ZERO if rate == ZERO else ONE/rate)
+                            for date, rate in new_projected)
             inverted.sort()
 
     return price_map
