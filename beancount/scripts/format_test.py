@@ -213,6 +213,29 @@ class TestScriptFormat(test_utils.TestCase):
           Assets:Test
         """), stdout.getvalue())
 
+    @test_utils.docfile
+    def test_metadata_issue400(self, filename):
+        """
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test   10.00 EUR
+          Assets:Test  -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(
+                format.main, [filename, '--currency-column=50'])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test                              10.00 EUR
+          Assets:Test                             -10.00 EUR
+        """), stdout.getvalue())
+
     @unittest.skip("Eventually we will want to support arithmetic expressions. "
                    "It will require to invoke the expression parser because "
                    "expressions are not guaranteed to be surrounded by matching "
