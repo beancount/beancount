@@ -44,8 +44,8 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     match_pairs = []
     for line in contents.splitlines():
         match = re.match(
-            r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(amount.CURRENCY_RE),
-            line)
+            r'(^\d[^";]*?|\s+{})\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(
+                account.ACCOUNT_RE, amount.CURRENCY_RE), line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
