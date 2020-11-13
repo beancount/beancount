@@ -6,4 +6,4 @@
  * objects. This avoid having to import the Python module and look up
  * the type object at each object instantiation.
  */
-const PyObject* decimal_type;
+const PyObject* decimal_type = NULL;
