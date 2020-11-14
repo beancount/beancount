@@ -246,6 +246,7 @@ cc_library(
         "decimal.h",
     ],
     srcs = ["decimal.c"],
+    alwayslink = 1,
     deps = [
         "@local_config_python//:python_headers",
     ],
