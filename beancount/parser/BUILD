@@ -139,27 +139,6 @@ py_test(
     ],
 )
 
-cc_library(
-    name = "grammar_c",
-    srcs = ["grammar.c"],
-    deps = [
-        ":parser_hdr",
-        ":lexer_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "grammar_hdr",
-    hdrs = [
-        "grammar.h",
-        "macros.h",
-    ],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
 py_library(
     name = "grammar",
     srcs = ["grammar.py"],
@@ -240,56 +219,6 @@ py_test(
     ],
 )
 
-cc_library(
-    name = "decimal_c",
-    hdrs = [
-        "decimal.h",
-    ],
-    srcs = ["decimal.c"],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "decimal_hdr",
-    hdrs = [
-        "decimal.h",
-    ],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "lexer_c",
-    hdrs = [
-        "lexer.h",
-    ],
-    srcs = ["lexer.c"],
-    deps = [
-        ":lexer_hdr",
-        ":parser_hdr",
-        ":grammar_hdr",
-        ":decimal_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "lexer_hdr",
-    hdrs = [
-        "lexer.h",
-        "tokens.h",
-        "decimal.h",
-    ],
-    deps = [
-        ":parser_hdr",
-        ":grammar_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
 py_library(
     name = "lexer",
     srcs = ["lexer.py"],
@@ -310,26 +239,11 @@ py_test(
     ],
 )
 
-cc_library(
-    name = "tokens_c",
-    hdrs = [
-        "tokens.h",
-    ],
-    srcs = ["tokens.c"],
-    deps = [
-        ":parser_hdr",
-        ":decimal_c",
-        ":grammar_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
 # cc_test(
 #     name = "tokens_test",
 #     srcs = ["tokens_test.c"],
 #     deps = [
-#         ":lexer_hdr",
-#         ":tokens_c",
+#         ":_parser",
 #         "@local_config_python//:python_headers",
 #     ],
 # )
@@ -359,22 +273,22 @@ py_test(
 py_extension(
     name = "_parser",
     srcs = [
+        "decimal.c",
+        "grammar.c",
+        "lexer.c",
         "parser.c",
+        "tokens.c",
         ":parser_source_hash",
         "//beancount:version_header",
     ],
-    deps = [
-        ":grammar_c",
-        ":lexer_c",
-        ":decimal_c",
-        ":tokens_c",
-        "@local_config_python//:python_headers",
+    hdrs = [
+        "decimal.h",
+        "grammar.h",
+        "lexer.h",
+        "macros.h",
+        "parser.h",
+        "tokens.h",
     ],
-)
-
-cc_library(
-    name = "parser_hdr",
-    hdrs = ["parser.h"],
     deps = [
         "@local_config_python//:python_headers",
     ],
