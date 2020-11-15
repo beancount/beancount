@@ -27,6 +27,15 @@ py_proto_library(
     srcs = [":number.proto"],
 )
 
+cc_library(
+    name = "number",
+    hdrs = ["number.h"],
+    deps = [
+        "@com_google_absl//absl/hash",
+        "//beancount/ccore:number_cc_proto",
+    ],
+)
+
 #----------------------------------------
 
 proto_library(
@@ -49,6 +58,17 @@ py_proto_library(
     srcs = ["data.proto"],
     deps = [
         "//beancount/ccore:number_py_proto",
+    ],
+)
+
+cc_library(
+    name = "data",
+    hdrs = ["data.h"],
+    deps = [
+        "@com_google_absl//absl/hash",
+        ":number",
+        ":number_cc_proto",
+        ":data_cc_proto",
     ],
 )
 
@@ -116,6 +136,8 @@ cc_library(
     srcs = ["inventory.cc"],
     deps = [
         "//beancount:defs",
+        ":number",
+        ":data",
         ":data_cc_proto",
         ":account",
         "@com_google_absl//absl/strings",

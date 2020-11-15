@@ -25,6 +25,15 @@ using std::make_pair;
 using std::tuple;
 using std::make_tuple;
 
+// Generic hash for generic pair.
+struct pair_hash
+{
+  template <typename T1, typename T2>
+  std::size_t operator()(const std::pair<T1, T2> &pair) const {
+    return std::hash<T1>{}(pair.first) ^ std::hash<T2>{}(pair.second);
+  }
+};
+
 }  // namespace beancount
 
 #endif // _BEANCOUNT_CCORE_ACCOUNT_H_

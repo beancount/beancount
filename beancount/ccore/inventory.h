@@ -39,10 +39,15 @@
 #define _BEANCOUNT_CCORE_INVENTORY_H_
 
 #include <string>
+#include <utility>
 #include <unordered_map>
 
 #include "beancount/defs.h"
 #include "beancount/ccore/data.pb.h"
+#include "beancount/ccore/data.h"
+#include "beancount/ccore/number.h"
+#include "beancount/ccore/number.pb.h"
+
 
 namespace beancount {
 
@@ -65,29 +70,14 @@ class Inventory {
 public:
   Inventory();
 
+  // TODO(blais): Continue here.
+
+
 
 private:
-  // std::unordered_map<string, Decimal> positions_;
-  // std::unordered_map<Cost, Decimal> positions_;
-  //std::unordered_map<pair<string, Cost>, Decimal> positions_;
+  std::unordered_map<pair<string, Cost>, Decimal, pair_hash> positions_;
 };
 
 }  // namespace beancount
 
-namespace std {
-
-// Hashing function for Cost type.
-template<>
-struct hash<beancount::Cost> {
-  size_t operator()(const beancount::Cost& cost) const {
-    return (hash(cost.number()) ^
-            hash(cost.currency()) ^
-            hash(cost.date()) ^
-            hash(cost.label()));
-  }
-};
-
-}  // namespace std
-
-
-#endif // _BEANCOUNT_CCORE_ACCOUNT_H_
+#endif // _BEANCOUNT_CCORE_INVENTORY_H_
