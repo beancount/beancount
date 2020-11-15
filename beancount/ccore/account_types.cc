@@ -24,14 +24,13 @@ AccountTypes kDefaultAccountTypes = {
   .expenses = kExpenses,
 };
 
-string GetAccountType(string_view account) {
-  return string(*absl::StrSplit(account, kSep).begin());
+string_view GetAccountType(string_view account) {
+  return *absl::StrSplit(account, kSep).begin();
 }
 
 pair<int, string_view> GetAccountSortKey(const AccountTypes& account_types,
                                          string_view account_name) {
-  string atype = GetAccountType(account_name);
-
+  auto atype = GetAccountType(account_name);
   int itype = -1;
   if (atype == account_types.assets)
     itype = 0;
@@ -57,6 +56,26 @@ bool IsAccountType(string_view account_type, string_view account_name) {
 bool IsRootAccount(string_view account_name) {
   return !absl::StrContains(account_name, kSep);
 }
+
+bool IsBalanceSheetAccount(string_view account_name, const AccountTypes& account_types) {
+  auto atype = GetAccountType(account_name);
+  return (atype == account_types.assets ||
+          atype == account_types.liabilities ||
+          atype == account_types.equity);
+}
+
+bool IsIncomeStatementAccount(string_view account_name, const AccountTypes& account_types) {
+  auto atype = GetAccountType(account_name);
+  return (atype == account_types.income ||
+          atype == account_types.expenses);
+}
+
+bool IsEquityAccount(string_view account_name, const AccountTypes& account_types) {
+  auto atype = GetAccountType(account_name);
+  return atype == account_types.equity;
+}
+
+
 
 // TODO(blais): Continue.
 

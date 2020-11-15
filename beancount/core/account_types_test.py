@@ -87,10 +87,6 @@ class TestAccountTypes(unittest.TestCase):
 
         self.assertTrue(account_types.is_root_account('Invalid'))
 
-
-# TODO(blais): Move these above as they get ported.
-class TestAccountTypesAdv(unittest.TestCase):
-
     OPTIONS = {'name_assets'      : 'Assets',
                'name_liabilities' : 'Liabilities',
                'name_equity'      : 'Equity',
@@ -114,6 +110,12 @@ class TestAccountTypesAdv(unittest.TestCase):
                 not expected,
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
+
+
+
+# TODO(blais): Move these above as they get ported.
+class TestAccountTypesAdv(unittest.TestCase):
+
 
     def test_get_account_sign(self):
         for account_name, expected in [
