@@ -73,7 +73,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # e.g.
                 #      Assets:Account    100 HOOL {564.20}
                 elif (cost is not None and
-                      booking != inventory.Booking.REDUCED):
+                      booking != inventory.MatchResult.REDUCED):
                     # TODO(blais): What happens here if the account has no
                     # booking strategy? Do we end up inserting a price for the
                     # reducing leg?  Check.

@@ -15,7 +15,7 @@ from beancount.core import amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
-from beancount.core.inventory import Booking
+from beancount.core.inventory import MatchResult
 from beancount.core import convert
 from beancount.core import position
 from beancount.core import inventory
@@ -398,16 +398,16 @@ class TestInventory(unittest.TestCase):
     def test_add_amount__booking(self):
         inv = Inventory()
         _, booking = inv.add_amount(A('100.00 USD'))
-        self.assertEqual(Booking.CREATED, booking)
+        self.assertEqual(MatchResult.CREATED, booking)
 
         _, booking = inv.add_amount(A('20.00 USD'))
-        self.assertEqual(Booking.AUGMENTED, booking)
+        self.assertEqual(MatchResult.AUGMENTED, booking)
 
         _, booking = inv.add_amount(A('-20 USD'))
-        self.assertEqual(Booking.REDUCED, booking)
+        self.assertEqual(MatchResult.REDUCED, booking)
 
         _, booking = inv.add_amount(A('-100 USD'))
-        self.assertEqual(Booking.REDUCED, booking)
+        self.assertEqual(MatchResult.REDUCED, booking)
 
     def test_add_amount__multi_currency(self):
         inv = Inventory()

@@ -56,7 +56,7 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 ASSERTS_TYPES = False
 
 
-class Booking(enum.Enum):
+class MatchResult(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
     # A new lot was created.
     CREATED = 1
@@ -71,10 +71,7 @@ class Booking(enum.Enum):
 # FIXME: You should disallow __getitem__, __delitem__ and __setitem__.
 # Move the dict inside the container.
 class Inventory(dict):
-    """An Inventory is a set of positions.
-
-    Attributes:
-      positions: A list of Position instances, held in this Inventory object.
+    """An Inventory is a set of positions, indexed for efficiency.
     """
 
     def __init__(self, positions=None):
@@ -390,9 +387,9 @@ class Inventory(dict):
           units: An Amount instance to add.
           cost: An instance of Cost or None, as a key to the inventory.
         Returns:
-          A pair of (position, booking) where 'position' is the position that
-          that was modified BEFORE it was modified, and where 'booking' is a
-          Booking enum that hints at how the lot was booked to this inventory.
+          A pair of (position, matched) where 'position' is the position that
+          that was modified BEFORE it was modified, and where 'matched' is a
+          MatchResult enum that hints at how the lot was booked to this inventory.
           Position may be None if there is no corresponding Position object,
           e.g. the position was deleted.
         """
@@ -410,9 +407,9 @@ class Inventory(dict):
             # Note: In order to augment or reduce, all the fields have to match.
 
             # Check if reducing.
-            booking = (Booking.REDUCED
+            booking = (MatchResult.REDUCED
                        if not same_sign(pos.units.number, units.number)
-                       else Booking.AUGMENTED)
+                       else MatchResult.AUGMENTED)
 
             # Compute the new number of units.
             number = pos.units.number + units.number
@@ -425,10 +422,10 @@ class Inventory(dict):
         else:
             # If not found, create a new one.
             if units.number == ZERO:
-                booking = Booking.IGNORED
+                booking = MatchResult.IGNORED
             else:
                 self[key] = Position(units, cost)
-                booking = Booking.CREATED
+                booking = MatchResult.CREATED
 
         return pos, booking
 
@@ -440,8 +437,8 @@ class Inventory(dict):
           position: The Posting or Position to add to this inventory.
         Returns:
           A pair of (position, booking) where 'position' is the position that
-          that was modified, and where 'booking' is a Booking enum that hints at
-          how the lot was booked to this inventory.
+          that was modified, and where 'matched' is a MatchResult enum that
+          hints at how the lot was booked to this inventory.
         """
         if ASSERTS_TYPES:
             assert hasattr(position, 'units') and hasattr(position, 'cost'), (
