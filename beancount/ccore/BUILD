@@ -110,6 +110,34 @@ py_test(
 
 #----------------------------------------
 
+cc_library(
+    name = "inventory",
+    hdrs = ["inventory.h"],
+    srcs = ["inventory.cc"],
+    deps = [
+        "//beancount:defs",
+        ":data_cc_proto",
+        ":account",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_test(
+    name = "inventory_test",
+    srcs = ["//beancount/core:inventory_test.py"],
+    deps = [
+        ":_core",
+        "//beancount/core:number",
+        "//beancount/core:amount",
+        "//beancount/core:position",
+        "//beancount/core:inventory",
+        "//beancount/core:convert",
+        "//beancount/utils:invariants",
+    ],
+)
+
+#----------------------------------------
+
 py_extension(
     name = "_core",
     srcs = ["_core.cc"],
