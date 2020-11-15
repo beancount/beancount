@@ -75,8 +75,10 @@ bool IsEquityAccount(string_view account_name, const AccountTypes& account_types
   return atype == account_types.equity;
 }
 
-
-
-// TODO(blais): Continue.
+int GetAccountSign(string_view account_name, const AccountTypes& account_types) {
+  auto atype = GetAccountType(account_name);
+  return (atype == account_types.assets ||
+          atype == account_types.expenses) ? +1 : -1;
+}
 
 }  // namespace beancount

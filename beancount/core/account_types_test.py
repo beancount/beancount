@@ -111,12 +111,6 @@ class TestAccountTypes(unittest.TestCase):
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
 
-
-
-# TODO(blais): Move these above as they get ported.
-class TestAccountTypesAdv(unittest.TestCase):
-
-
     def test_get_account_sign(self):
         for account_name, expected in [
                 ("Assets:US:RBS:Savings", +1),
@@ -125,10 +119,9 @@ class TestAccountTypesAdv(unittest.TestCase):
                 ("Income:US:ETrade:Dividends", -1),
                 ("Expenses:Toys:Computer", +1),
         ]:
-            self.assertEqual(expected, account_types.get_account_sign(account_name))
+            self.assertEqual(expected, account_types.get_account_sign(
+                account_name, account_types.DEFAULT_ACCOUNT_TYPES))
 
 
 if __name__ == '__main__':
-    if not hasattr(account_types, "__copyright__"):
-        del TestAccountTypesAdv
     unittest.main()

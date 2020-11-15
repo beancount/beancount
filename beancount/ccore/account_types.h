@@ -67,30 +67,9 @@ bool IsIncomeStatementAccount(string_view account_name, const AccountTypes& acco
 // Return true if the given account is an equity account.
 bool IsEquityAccount(string_view account_name, const AccountTypes& account_types);
 
-
-
-
-// TODO(blais): Continue.
-#if 0
-
-def get_account_sign(account_name: Account, account_types: AccountTypes=None):
-    """Return the sign of the normal balance of a particular account.
-
-    Args:
-      account_name: A string, the name of the account whose sign is to return.
-      account_types: An optional instance of the current account_types.
-    Returns:
-      +1 or -1, depending on the account's type.
-    """
-    if account_types is None:
-        account_types = DEFAULT_ACCOUNT_TYPES
-    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    account_type = get_account_type(account_name)
-    return (+1
-            if account_type in (account_types.assets,
-                                account_types.expenses)
-            else -1)
-#endif
+// Return the sign of the normal balance of a particular account. +1 or -1,
+// depending on the account's type.
+int GetAccountSign(string_view account_name, const AccountTypes& account_types);
 
 }  // namespace beancount
 
