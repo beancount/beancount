@@ -5,6 +5,11 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-11-15
+
+ - Render the tolerance in Balance directives (merged from Aaron Lindsay).
+
+
 2020-11-01
 
  - In the process of removing dependencies to the beancount.ops.holdings module,
