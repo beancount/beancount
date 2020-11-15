@@ -6,7 +6,53 @@ load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 # This basically excludes //beancount/utils.
 package(default_visibility = [
     "//beancount:__subpackages__",
+    "//experiments/v3:__subpackages__",
 ])
+
+#----------------------------------------
+
+proto_library(
+    name = "number_proto",
+    srcs = ["number.proto"],
+    features = ["proto3_optional"],
+)
+
+cc_proto_library(
+    name = "number_cc_proto",
+    deps = [":number_proto"],
+)
+
+py_proto_library(
+    name = "number_py_proto",
+    srcs = [":number.proto"],
+)
+
+#----------------------------------------
+
+proto_library(
+    name = "data_proto",
+    srcs = ["data.proto"],
+    deps = [
+        "//beancount/ccore:number_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "data_cc_proto",
+    deps = [
+      ":data_proto",
+    ],
+)
+
+py_proto_library(
+    name = "data_py_proto",
+    srcs = ["data.proto"],
+    deps = [
+        "//beancount/ccore:number_py_proto",
+    ],
+)
+
+#----------------------------------------
 
 cc_library(
     name = "account",
@@ -59,31 +105,6 @@ py_test(
     deps = [
         ":_core",
         "//beancount/utils:test_utils",
-    ],
-)
-
-#----------------------------------------
-
-proto_library(
-    name = "data_proto",
-    srcs = ["data.proto"],
-    deps = [
-        "//experiments/v3/decimal:number_proto",
-    ],
-)
-
-cc_proto_library(
-    name = "data_cc_proto",
-    deps = [
-      ":data_proto",
-    ],
-)
-
-py_proto_library(
-    name = "data_py_proto",
-    srcs = ["data.proto"],
-    deps = [
-        "//experiments/v3/decimal:number_py_proto",
     ],
 )
 

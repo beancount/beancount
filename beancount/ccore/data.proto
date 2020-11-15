@@ -11,7 +11,7 @@ syntax = "proto2";
 
 package beancount;
 
-import 'experiments/v3/decimal/number.proto';
+import 'beancount/ccore/number.proto';
 
 // Container for account types.
 message AccountTypes {

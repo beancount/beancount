@@ -9,7 +9,7 @@
 #include "decimal.hh"
 #include "mpdecimal.h"
 
-#include "experiments/v3/decimal/number.pb.h"
+#include "beancount/ccore/number.pb.h"
 
 namespace {
 using std::cout;
