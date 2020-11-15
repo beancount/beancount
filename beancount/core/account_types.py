@@ -12,8 +12,10 @@ __license__ = "GNU GPLv2"
 
 import re
 from collections import namedtuple
+from typing import Tuple
 
 from beancount.core import account
+from beancount.core.account import Account
 
 
 # A tuple that contains the names of the root accounts.
@@ -33,20 +35,7 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Expenses")
 
 
-def get_account_sort_key(account_types, account_name):
-    """Return a tuple that can be used to order/sort account names.
-
-    Args:
-      account_types: An instance of AccountTypes, a tuple of account type names.
-    Returns:
-      A function object to use as the optional 'key' argument to the sort
-      function. It accepts a single argument, the account name to sort and
-      produces a sortable key.
-    """
-    return (account_types.index(get_account_type(account_name)), account_name)
-
-
-def get_account_type(account_name):
+def get_account_type(account_name: Account):
     """Return the type of this account's name.
 
     Warning: No check is made on the validity of the account type. This merely
@@ -62,7 +51,21 @@ def get_account_type(account_name):
     return account.split(account_name)[0]
 
 
-def is_account_type(account_type, account_name):
+def get_account_sort_key(account_types: AccountTypes,
+                         account_name: Account) -> Tuple[str, Account]:
+    """Return a tuple that can be used to order/sort account names.
+
+    Args:
+      account_types: An instance of AccountTypes, a tuple of account type names.
+    Returns:
+      A function object to use as the optional 'key' argument to the sort
+      function. It accepts a single argument, the account name to sort and
+      produces a sortable key.
+    """
+    return (account_types.index(get_account_type(account_name)), account_name)
+
+
+def is_account_type(account_type: str, account_name: Account):
     """Return the type of this account's name.
 
     Warning: No check is made on the validity of the account type. This merely
@@ -77,7 +80,7 @@ def is_account_type(account_type, account_name):
     return bool(re.match('^{}{}'.format(account_type, account.sep), account_name))
 
 
-def is_root_account(account_name, account_types=None):
+def is_root_account(account_name: Account, account_types: str=None):
     """Return true if the account name is a root account.
     This function does not verify whether the account root is a valid
     one, just that it is a root account or not.
@@ -102,7 +105,7 @@ def is_root_account(account_name, account_types=None):
 
 
 
-def is_balance_sheet_account(account_name, account_types):
+def is_balance_sheet_account(account_name: Account, account_types: AccountTypes):
     """Return true if the given account is a balance sheet account.
     Assets, liabilities and equity accounts are balance sheet accounts.
 
@@ -121,7 +124,7 @@ def is_balance_sheet_account(account_name, account_types):
                             account_types.equity)
 
 
-def is_income_statement_account(account_name, account_types):
+def is_income_statement_account(account_name: Account, account_types: AccountTypes):
     """Return true if the given account is an income statement account.
     Income and expense accounts are income statement accounts.
 
@@ -139,7 +142,7 @@ def is_income_statement_account(account_name, account_types):
                             account_types.expenses)
 
 
-def is_equity_account(account_name, account_types):
+def is_equity_account(account_name: Account, account_types: AccountTypes):
     """Return true if the given account is an equity account.
 
     Args:
@@ -155,7 +158,7 @@ def is_equity_account(account_name, account_types):
     return account_type == account_types.equity
 
 
-def get_account_sign(account_name, account_types=None):
+def get_account_sign(account_name: Account, account_types: AccountTypes=None):
     """Return the sign of the normal balance of a particular account.
 
     Args:

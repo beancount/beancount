@@ -10,8 +10,13 @@ __license__ = "GNU GPLv2"
 import re
 import os
 from os import path
+from typing import Any, Callable, Iterable, Iterator, List, Tuple
 
 from beancount.utils import regexp_utils
+
+
+# Public type for accounts.
+Account = str
 
 
 # Component separator for account names.
@@ -36,7 +41,7 @@ ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 TYPE = '<AccountDummy>'
 
 
-def is_valid(string):
+def is_valid(string: Account) -> bool:
     """Return true if the given string is a valid account name.
     This does not check for the root account types, just the general syntax.
 
@@ -49,7 +54,7 @@ def is_valid(string):
             bool(re.match('{}$'.format(ACCOUNT_RE), string)))
 
 
-def join(*components):
+def join(*components: Tuple[str]) -> Account:
     """Join the names with the account separator.
 
     Args:
@@ -60,7 +65,7 @@ def join(*components):
     return sep.join(components)
 
 
-def split(account_name):
+def split(account_name: Account) -> List[str]:
     """Split an account's name into its components.
 
     Args:
@@ -71,7 +76,7 @@ def split(account_name):
     return account_name.split(sep)
 
 
-def parent(account_name):
+def parent(account_name: Account) -> Account:
     """Return the name of the parent account of the given account.
 
     Args:
@@ -87,7 +92,7 @@ def parent(account_name):
     return sep.join(components)
 
 
-def leaf(account_name):
+def leaf(account_name: Account) -> Account:
     """Get the name of the leaf of this account.
 
     Args:
@@ -99,7 +104,7 @@ def leaf(account_name):
     return account_name.split(sep)[-1] if account_name else None
 
 
-def sans_root(account_name):
+def sans_root(account_name: Account)-> Account:
     """Get the name of the account without the root.
 
     For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
@@ -114,7 +119,7 @@ def sans_root(account_name):
     return join(*components) if account_name else None
 
 
-def root(num_components, account_name):
+def root(num_components: int, account_name: Account) -> str:
     """Return the first few components of an account's name.
 
     Args:
@@ -126,7 +131,7 @@ def root(num_components, account_name):
     return join(*(split(account_name)[:num_components]))
 
 
-def has_component(account_name, component):
+def has_component(account_name: Account, component: str) -> bool:
     """Return true if one of the account contains a given component.
 
     Args:
@@ -140,7 +145,7 @@ def has_component(account_name, component):
     return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
 
 
-def commonprefix(accounts):
+def commonprefix(accounts: Iterable[Account]) -> Account:
     """Return the common prefix of a list of account names.
 
     Args:
@@ -157,7 +162,7 @@ def commonprefix(accounts):
     return sep.join(common_list)
 
 
-def walk(root_directory):
+def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], List[str]]]:
     """A version of os.walk() which yields directories that are valid account names.
 
     This only yields directories that are accounts... it skips the other ones.
@@ -177,7 +182,7 @@ def walk(root_directory):
             yield (root, account_name, dirs, files)
 
 
-def parent_matcher(account_name):
+def parent_matcher(account_name: Account) -> Callable[[str], Any]:
     """Build a predicate that returns whether an account is under the given one.
 
     Args:
@@ -189,7 +194,7 @@ def parent_matcher(account_name):
     return re.compile(r'{}($|{})'.format(re.escape(account_name), sep)).match
 
 
-def parents(account_name):
+def parents(account_name: Account) -> Iterator[Account]:
     """A generator of the names of the parents of this account, including this account.
 
     Args:
@@ -211,16 +216,16 @@ class AccountTransformer:
     Attributes:
       rsep: A character string, the new separator to use in link names.
     """
-    def __init__(self, rsep=None):
+    def __init__(self, rsep: str=None):
         self.rsep = rsep
 
-    def render(self, account_name):
+    def render(self, account_name: Account) -> str:
         "Convert the account name to a transformed account name."
         return (account_name
                 if self.rsep is None
                 else account_name.replace(sep, self.rsep))
 
-    def parse(self, transformed_name):
+    def parse(self, transformed_name: str) -> Account:
         "Convert the transform account name to an account name."
         return (transformed_name
                 if self.rsep is None
