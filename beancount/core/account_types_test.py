@@ -63,16 +63,16 @@ class TestAccountTypes(unittest.TestCase):
                                   account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
-
-
-# TODO(blais): Move these above as they get ported.
-class TestAccountTypesAdv(unittest.TestCase):
-
     def test_is_account_type(self):
         self.assertTrue(account_types.is_account_type("Assets", "Assets:US:RBS:Checking"))
         self.assertFalse(account_types.is_account_type("Expenses",
                                                        "Assets:US:RBS:Checking"))
         self.assertFalse(account_types.is_account_type("Assets", "AssetsUS:RBS:Checking"))
+
+
+
+# TODO(blais): Move these above as they get ported.
+class TestAccountTypesAdv(unittest.TestCase):
 
     def test_is_root_account(self):
         for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):

@@ -83,6 +83,7 @@ void ExportAccountTypes(py::module& mod) {
 
   mod.def("get_account_type", &GetAccountType);
   mod.def("get_account_sort_key", &GetAccountSortKey);
+  mod.def("is_account_type", &IsAccountType);
 }
 
 }  // beancount

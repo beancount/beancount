@@ -5,6 +5,7 @@
 #include "beancount/ccore/account.h"
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/match.h"
 
 namespace beancount {
 
@@ -44,6 +45,13 @@ pair<int, string_view> GetAccountSortKey(const AccountTypes& account_types,
     itype = 4;
 
   return make_pair(itype, account_name);
+}
+
+bool IsAccountType(string_view account_type, string_view account_name) {
+  return absl::StartsWith(account_name, account_type) &&
+    (account_name.size() == account_type.size() ||
+     (account_name.size() > account_type.size() &&
+      absl::StartsWith(&account_name[account_type.size()], kSep)));
 }
 
 // TODO(blais): Continue.

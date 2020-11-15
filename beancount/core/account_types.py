@@ -63,7 +63,7 @@ def get_account_sort_key(account_types: AccountTypes,
     return (account_types.index(get_account_type(account_name)), account_name)
 
 
-def is_account_type(account_type: str, account_name: Account):
+def is_account_type(account_type: str, account_name: Account) -> bool:
     """Return the type of this account's name.
 
     Warning: No check is made on the validity of the account type. This merely
@@ -78,8 +78,9 @@ def is_account_type(account_type: str, account_name: Account):
     return bool(re.match('^{}{}'.format(account_type, account.sep), account_name))
 
 
-def is_root_account(account_name: Account, account_types: str=None):
+def is_root_account(account_name: Account, account_types: str=None) -> bool:
     """Return true if the account name is a root account.
+
     This function does not verify whether the account root is a valid
     one, just that it is a root account or not.
 
@@ -102,8 +103,7 @@ def is_root_account(account_name: Account, account_types: str=None):
                 bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
-
-def is_balance_sheet_account(account_name: Account, account_types: AccountTypes):
+def is_balance_sheet_account(account_name: Account, account_types: AccountTypes) -> bool:
     """Return true if the given account is a balance sheet account.
     Assets, liabilities and equity accounts are balance sheet accounts.
 
@@ -122,7 +122,7 @@ def is_balance_sheet_account(account_name: Account, account_types: AccountTypes)
                             account_types.equity)
 
 
-def is_income_statement_account(account_name: Account, account_types: AccountTypes):
+def is_income_statement_account(account_name: Account, account_types: AccountTypes) -> bool:
     """Return true if the given account is an income statement account.
     Income and expense accounts are income statement accounts.
 
@@ -140,7 +140,7 @@ def is_income_statement_account(account_name: Account, account_types: AccountTyp
                             account_types.expenses)
 
 
-def is_equity_account(account_name: Account, account_types: AccountTypes):
+def is_equity_account(account_name: Account, account_types: AccountTypes) -> bool:
     """Return true if the given account is an equity account.
 
     Args:
@@ -156,7 +156,7 @@ def is_equity_account(account_name: Account, account_types: AccountTypes):
     return account_type == account_types.equity
 
 
-def get_account_sign(account_name: Account, account_types: AccountTypes=None):
+def get_account_sign(account_name: Account, account_types: AccountTypes=None) -> int:
     """Return the sign of the normal balance of a particular account.
 
     Args:
