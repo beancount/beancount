@@ -3508,6 +3508,23 @@ http://furius.ca/beancount/doc/proposal-query
        Expenses:US:TY2014:SocSec      <= 7254 USD  ;; 6.2% of 117,000 USD
        Expenses:US:TY2015:SocSec      <= 7347 USD  ;; 6.2% of 118,500 USD
 
+  - "Envelope budgeting" is easily implemented like this:
+
+    * A sub-account of a real assets account is market as special.
+    * Those sub-accounts are used to transfer funds from their parent account.
+      They are constrained to only ever transfer funds to and from that parent
+      account.
+    * Their transactions can simply be filtered out in order to remove the
+      budgeting aspect.
+    * You should be able to report balances on these accounts. In fact, since
+      they're marked as special, you should be able to gather all of them and
+      report the balances of all the envelopes. That's the summarization for the
+      budgeting function.
+    * Finally, some level of automation should be provided to automatically
+      replenish the enveloped at some set frequency (e.g. the beginning of each
+      month), including rolling unspent amounts.
+
+
 ** Plugin: budget
 
   - Implement a plugin that defines and enforces budget constraints.
@@ -4640,6 +4657,9 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Plugin idea: A plugin that ensures that there is no residual commodity in an
+    account as of its closing.
 
   - For Vanguard RothIRA, I need a balance check that applies only to a subset
     of linked transactions. I'm being provided with this number in the imported
