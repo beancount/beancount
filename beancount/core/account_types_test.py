@@ -36,9 +36,6 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual("Invalid",
                          account_types.get_account_type("Invalid:Toys:Computer"))
 
-
-class TestAccountTypesAdv(unittest.TestCase):
-
     def test_get_account_sort_key(self):
         account_names_input = [
             "Expenses:Toys:Computer",
@@ -65,6 +62,11 @@ class TestAccountTypesAdv(unittest.TestCase):
             key=functools.partial(account_types.get_account_sort_key,
                                   account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
+
+
+
+# TODO(blais): Move these above as they get ported.
+class TestAccountTypesAdv(unittest.TestCase):
 
     def test_is_account_type(self):
         self.assertTrue(account_types.is_account_type("Assets", "Assets:US:RBS:Checking"))

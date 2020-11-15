@@ -39,6 +39,10 @@ extern AccountTypes kDefaultAccountTypes;
 // returns the root account of the corresponding account name.
 string GetAccountType(string_view account_name);
 
+// Return a tuple that can be used to order/sort account names.
+pair<int, string_view> GetAccountSortKey(const AccountTypes& account_types,
+                                         string_view account_name);
+
 // TODO(blais): Continue.
 
 }  // namespace beancount

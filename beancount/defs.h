@@ -19,7 +19,10 @@ using std::string_view;
 using std::vector;
 using std::size_t;
 using std::optional;
+using std::pair;
+using std::make_pair;
 using std::tuple;
+using std::make_tuple;
 
 }  // namespace beancount
 
