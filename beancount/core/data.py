@@ -103,6 +103,7 @@ class Close(NamedTuple):
     date: datetime.date
     account: Account
 
+
 class Commodity(NamedTuple):
     """
     An optional commodity declaration directive. Commodities generally do not need
@@ -123,6 +124,7 @@ class Commodity(NamedTuple):
     date: datetime.date
     currency: Currency
 
+
 class Pad(NamedTuple):
     """
     A "pad this account with this other account" directive. This directive
@@ -142,6 +144,7 @@ class Pad(NamedTuple):
     date: datetime.date
     account: Account
     source_account: Account
+
 
 class Balance(NamedTuple):
     """
@@ -201,6 +204,7 @@ class Posting(NamedTuple):
     flag: Optional[Flag]
     meta: Optional[Meta]
 
+
 class Transaction(NamedTuple):
     """
     A transaction! This is the main type of object that we manipulate, and the
@@ -231,6 +235,7 @@ class Transaction(NamedTuple):
     tags: Set
     links: Set
     postings: List[Posting]
+
 
 class TxnPosting(NamedTuple):
     """
@@ -268,6 +273,7 @@ class Note(NamedTuple):
     account: Account
     comment: str
 
+
 class Event(NamedTuple):
     """
     An "event value change" directive. These directives are used as string
@@ -303,6 +309,7 @@ class Event(NamedTuple):
     type: str
     description: str
 
+
 class Query(NamedTuple):
     """
     A named query declaration. This directive is used to create pre-canned queries
@@ -322,6 +329,7 @@ class Query(NamedTuple):
     date: datetime.date
     name: str
     query_string: str
+
 
 class Price(NamedTuple):
     """
@@ -345,6 +353,7 @@ class Price(NamedTuple):
     date: datetime.date
     currency: Currency
     amount: Amount
+
 
 class Document(NamedTuple):
     """
