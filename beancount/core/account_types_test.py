@@ -4,14 +4,40 @@ __license__ = "GNU GPLv2"
 import unittest
 import functools
 
-from beancount.core import account_types
+try:
+    from beancount.core import account_types
+except ImportError:
+    from beancount.ccore import _core as account_types
 
 
 class TestAccountTypes(unittest.TestCase):
 
     def test_basics(self):
-        self.assertEqual(5, len(account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertTrue(account_types.DEFAULT_ACCOUNT_TYPES is not None)
+        self.assertEqual("Assets", account_types.DEFAULT_ACCOUNT_TYPES.assets)
+
+    def test_get_account_type(self):
+        self.assertEqual("Assets",
+                         account_types.get_account_type("Assets:US:RBS:Checking"))
+        self.assertEqual("Assets",
+                         account_types.get_account_type("Assets:US:RBS:Savings"))
+        self.assertEqual("Liabilities",
+                         account_types.get_account_type("Liabilities:US:RBS:MortgageLoan"))
+        self.assertEqual("Equity",
+                         account_types.get_account_type("Equity:NetIncome"))
+        self.assertEqual("Equity",
+                         account_types.get_account_type("Equity:Opening-Balances"))
+        self.assertEqual("Income",
+                         account_types.get_account_type("Income:US:ETrade:Dividends"))
+        self.assertEqual("Income",
+                         account_types.get_account_type("Income:US:Intel"))
+        self.assertEqual("Expenses",
+                         account_types.get_account_type("Expenses:Toys:Computer"))
+        self.assertEqual("Invalid",
+                         account_types.get_account_type("Invalid:Toys:Computer"))
+
+
+class TestAccountTypesAdv(unittest.TestCase):
 
     def test_get_account_sort_key(self):
         account_names_input = [
@@ -39,26 +65,6 @@ class TestAccountTypes(unittest.TestCase):
             key=functools.partial(account_types.get_account_sort_key,
                                   account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
-
-    def test_get_account_type(self):
-        self.assertEqual("Assets",
-                         account_types.get_account_type("Assets:US:RBS:Checking"))
-        self.assertEqual("Assets",
-                         account_types.get_account_type("Assets:US:RBS:Savings"))
-        self.assertEqual("Liabilities",
-                         account_types.get_account_type("Liabilities:US:RBS:MortgageLoan"))
-        self.assertEqual("Equity",
-                         account_types.get_account_type("Equity:NetIncome"))
-        self.assertEqual("Equity",
-                         account_types.get_account_type("Equity:Opening-Balances"))
-        self.assertEqual("Income",
-                         account_types.get_account_type("Income:US:ETrade:Dividends"))
-        self.assertEqual("Income",
-                         account_types.get_account_type("Income:US:Intel"))
-        self.assertEqual("Expenses",
-                         account_types.get_account_type("Expenses:Toys:Computer"))
-        self.assertEqual("Invalid",
-                         account_types.get_account_type("Invalid:Toys:Computer"))
 
     def test_is_account_type(self):
         self.assertTrue(account_types.is_account_type("Assets", "Assets:US:RBS:Checking"))
@@ -123,4 +129,6 @@ class TestAccountTypes(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if not hasattr(account_types, "__copyright__"):
+        del TestAccountTypesAdv
     unittest.main()

@@ -8,6 +8,10 @@
 #ifndef _BEANCOUNT_DEFS_H_
 #define _BEANCOUNT_DEFS_H_
 
+#include <optional>
+#include <string>
+#include <tuple>
+
 namespace beancount {
 
 using std::string;
@@ -15,6 +19,7 @@ using std::string_view;
 using std::vector;
 using std::size_t;
 using std::optional;
+using std::tuple;
 
 }  // namespace beancount
 

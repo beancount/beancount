@@ -19,6 +19,9 @@
 
 namespace beancount {
 
+// Component separator for account names.
+extern const char* kSep;
+
 // Regular expression string that matches a valid account.
 // TODO(blais): Can I bury this?
 extern RE2 kAccountRE;

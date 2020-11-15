@@ -49,6 +49,40 @@ py_test(
     ],
 )
 
+#----------------------------------------
+
+cc_library(
+    name = "account_types",
+    hdrs = ["account_types.h"],
+    srcs = ["account_types.cc"],
+    deps = [
+        "//beancount:defs",
+        ":account",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+# cc_library(
+#     name = "account_types_mod",
+#     hdrs = ["account_types_mod.h"],
+#     srcs = ["account_types_mod.cc"],
+#     deps = [
+#         ":account_types",
+#         "@pybind11",
+#     ],
+# )
+
+py_test(
+    name = "account_types_test",
+    srcs = ["//beancount/core:account_types_test.py"],
+    deps = [
+        ":_core",
+        "//beancount/utils:test_utils",
+    ],
+)
+
+#----------------------------------------
+
 proto_library(
     name = "data_proto",
     srcs = ["data.proto"],
@@ -72,6 +106,8 @@ py_proto_library(
     ],
 )
 
+#----------------------------------------
+
 py_extension(
     name = "_core",
     srcs = ["_core.cc"],
@@ -79,5 +115,6 @@ py_extension(
         "@local_config_python//:python_headers",
         "@pybind11",
         ":account_mod",
+        ":account_types",
     ],
 )

@@ -7,10 +7,8 @@ import types
 # pylint: disable=invalid-name
 try:
     from beancount.core import account
-    ccore = False
 except ImportError:
     from beancount.ccore import _core as account
-    ccore = True
 from beancount.utils import test_utils
 
 
@@ -182,7 +180,7 @@ class TestAccountTransformer(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if ccore:
+    if not hasattr(account, "__copyright__"):
         del TestAccountTransformer
         del TestWalk
         del TestAccountCoreOnly

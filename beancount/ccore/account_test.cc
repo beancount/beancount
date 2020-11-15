@@ -1,3 +1,6 @@
+// A translation of the corresponding Python test.
+// (First experiment with doing this; perhaps we'll stick with the Python-level testing.)
+//
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 

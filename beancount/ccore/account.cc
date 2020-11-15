@@ -16,7 +16,6 @@
 
 namespace beancount {
 
-// Component separator for account names.
 const char* kSep = ":";
 
 // Regular expression string that matches valid account name components.
