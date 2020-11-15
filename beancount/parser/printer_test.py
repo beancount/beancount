@@ -134,6 +134,20 @@ class TestEntryPrinter(cmptest.TestCase):
         self.assertRoundTrip(entries, errors)
 
     @loader.load_doc()
+    def test_BalanceTolerance(self, entries, errors, __):
+        """
+        2014-06-01 open Assets:Account1
+        2014-06-01 open Assets:Cash
+
+        2014-06-02 * "Deposit"
+          Assets:Account1       199.95 USD
+          Assets:Cash          -199.95 USD
+
+        2014-06-04 balance Assets:Account1     200.00 ~0.05 USD
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
     def test_Note(self, entries, errors, __):
         """
         2014-06-01 open Assets:Account1

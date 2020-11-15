@@ -267,9 +267,21 @@ class EntryPrinter:
 
     def Balance(self, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
-        oss.write(('{e.date} balance {e.account:47} {amount}'
+        number_str = (self.dformat.format(entry.amount.number, entry.amount.currency)
+                      if isinstance(entry.amount.number, Decimal)
+                      else str(self.number))
+
+        # Render optional tolerance.
+        tolerance = ''
+        if entry.tolerance:
+            tolerance_fmt = self.dformat.format(entry.tolerance, entry.amount.currency)
+            tolerance = '~ {tolerance} '.format(tolerance=tolerance_fmt)
+
+        oss.write(('{e.date} balance {e.account:47} {amount} {tolerance}{currency}'
                    '{comment}\n').format(e=entry,
-                                         amount=entry.amount.to_string(self.dformat),
+                                         amount=number_str,
+                                         tolerance=tolerance,
+                                         currency=entry.amount.currency,
                                          comment=comment))
         self.write_metadata(entry.meta, oss)
 
