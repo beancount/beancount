@@ -49,6 +49,13 @@ pair<int, string_view> GetAccountSortKey(const AccountTypes& account_types,
 // returns the root account of the corresponding account name.
 bool IsAccountType(string_view account_type, string_view account_name);
 
+// Return true if the account name is a root account.
+//
+// This function does not verify whether the account root is a valid
+// one, just that it is a root account or not.
+bool IsRootAccount(string_view account_name);
+
+
 
 
 
@@ -58,28 +65,6 @@ bool IsAccountType(string_view account_type, string_view account_name);
 
 
 
-def is_root_account(account_name: Account, account_types: str=None):
-    """Return true if the account name is a root account.
-    This function does not verify whether the account root is a valid
-    one, just that it is a root account or not.
-
-    Args:
-      account_name: A string, the name of the account to check for.
-      account_types: An optional instance of the current account_types;
-        if provided, we check against these values. If not provided, we
-        merely check that name pattern is that of an account component with
-        no separator.
-    Returns:
-      A boolean, true if the account is root account.
-    """
-    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    if account_types is not None:
-        assert isinstance(account_types, AccountTypes), (
-            "Account types has invalid type: {}".format(account_types))
-        return account_name in account_types
-    else:
-        return (account_name and
-                bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
 def is_balance_sheet_account(account_name: Account, account_types: AccountTypes):

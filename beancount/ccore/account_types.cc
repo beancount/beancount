@@ -54,6 +54,10 @@ bool IsAccountType(string_view account_type, string_view account_name) {
       absl::StartsWith(&account_name[account_type.size()], kSep)));
 }
 
+bool IsRootAccount(string_view account_name) {
+  return !absl::StrContains(account_name, kSep);
+}
+
 // TODO(blais): Continue.
 
 }  // namespace beancount

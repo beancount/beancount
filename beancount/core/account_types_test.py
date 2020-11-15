@@ -69,31 +69,27 @@ class TestAccountTypes(unittest.TestCase):
                                                        "Assets:US:RBS:Checking"))
         self.assertFalse(account_types.is_account_type("Assets", "AssetsUS:RBS:Checking"))
 
+    def test_is_root_account(self):
+        for account_name, expected in [
+                ("Assets:US:RBS:Checking", False),
+                ("Equity:Opening-Balances", False),
+                ("Income:US:ETrade:Dividends-USD", False),
+                ("Assets", True),
+                ("Liabilities", True),
+                ("Equity", True),
+                ("Income", True),
+                ("Expenses", True),
+                ("_invalid_", True),
+        ]:
+            self.assertEqual(
+                expected,
+                account_types.is_root_account(account_name))
+
+        self.assertTrue(account_types.is_root_account('Invalid'))
 
 
 # TODO(blais): Move these above as they get ported.
 class TestAccountTypesAdv(unittest.TestCase):
-
-    def test_is_root_account(self):
-        for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):
-            for account_name, expected in [
-                    ("Assets:US:RBS:Checking", False),
-                    ("Equity:Opening-Balances", False),
-                    ("Income:US:ETrade:Dividends-USD", False),
-                    ("Assets", True),
-                    ("Liabilities", True),
-                    ("Equity", True),
-                    ("Income", True),
-                    ("Expenses", True),
-                    ("_invalid_", False),
-            ]:
-                self.assertEqual(
-                    expected,
-                    account_types.is_root_account(account_name, types))
-
-        self.assertTrue(account_types.is_root_account('Invalid'))
-        self.assertFalse(account_types.is_root_account(
-            'Invalid', account_types.DEFAULT_ACCOUNT_TYPES))
 
     OPTIONS = {'name_assets'      : 'Assets',
                'name_liabilities' : 'Liabilities',

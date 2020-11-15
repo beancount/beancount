@@ -46,7 +46,6 @@ optional<string> ParentAccount_(string_view account) {
 
 }  // namespace
 
-// Shallow read-only interface to protobuf schema.
 void ExportAccount(py::module& mod) {
   mod.def("is_valid", &IsAccountValid,
           "Return true if the given string is a valid account name.");
@@ -68,7 +67,10 @@ void ExportAccount(py::module& mod) {
           "Return the common prefix of a list of account names.");
 }
 
-// Shallow read-only interface to protobuf schema.
+namespace {
+
+}  // namespace
+
 void ExportAccountTypes(py::module& mod) {
   py::class_<AccountTypes>(mod, "AccountTypes")
     .def_readonly("assets", &AccountTypes::assets)
@@ -84,6 +86,7 @@ void ExportAccountTypes(py::module& mod) {
   mod.def("get_account_type", &GetAccountType);
   mod.def("get_account_sort_key", &GetAccountSortKey);
   mod.def("is_account_type", &IsAccountType);
+  mod.def("is_root_account", &IsRootAccount);
 }
 
 }  // beancount
