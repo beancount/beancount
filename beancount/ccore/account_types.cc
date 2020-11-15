@@ -6,6 +6,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/match.h"
+#include "re2/re2.h"
 
 namespace beancount {
 
@@ -58,7 +59,7 @@ bool IsAccountType(string_view account_type, string_view account_name) {
 }
 
 bool IsRootAccount(string_view account_name) {
-  return !absl::StrContains(account_name, kSep);
+  return RE2::FullMatch(account_name, "([A-Z][A-Za-z0-9\\-]+)$");
 }
 
 bool IsBalanceSheetAccount(string_view account_name, const AccountTypes& account_types) {

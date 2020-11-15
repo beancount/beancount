@@ -11,6 +11,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "re2/re2.h"
 
 namespace beancount {
 namespace {

@@ -79,7 +79,8 @@ class TestAccountTypes(unittest.TestCase):
                 ("Equity", True),
                 ("Income", True),
                 ("Expenses", True),
-                ("_invalid_", True),
+                ("_invalid_", False),
+                ("Invalid", True),
         ]:
             self.assertEqual(
                 expected,
