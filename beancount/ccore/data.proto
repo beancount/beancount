@@ -13,6 +13,15 @@ package beancount;
 
 import 'experiments/v3/decimal/number.proto';
 
+// Container for account types.
+message AccountTypes {
+  optional string assets = 1;
+  optional string liabilities = 2;
+  optional string equity = 3;
+  optional string income = 4;
+  optional string expenses = 5;
+}
+
 // A metadata value. This is a simple general variant type intended to keep the
 // values of the metadata key-value pairs.
 message MetaValue {

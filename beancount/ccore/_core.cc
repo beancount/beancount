@@ -73,11 +73,11 @@ namespace {
 
 void ExportAccountTypes(py::module& mod) {
   py::class_<AccountTypes>(mod, "AccountTypes")
-    .def_readonly("assets", &AccountTypes::assets)
-    .def_readonly("liabilities", &AccountTypes::liabilities)
-    .def_readonly("equity", &AccountTypes::equity)
-    .def_readonly("incopme", &AccountTypes::income)
-    .def_readonly("expenses", &AccountTypes::expenses);
+    .def_property_readonly("assets", &AccountTypes::assets)
+    .def_property_readonly("liabilities", &AccountTypes::liabilities)
+    .def_property_readonly("equity", &AccountTypes::equity)
+    .def_property_readonly("income", &AccountTypes::income)
+    .def_property_readonly("expenses", &AccountTypes::expenses);
 
   mod.attr("DEFAULT_ACCOUNT_TYPES") = kDefaultAccountTypes;
   // py::setattr(mod, "DEFAULT_ACCOUNT_TYPES", kDefaultAccountTypes);

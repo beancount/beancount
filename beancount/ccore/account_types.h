@@ -16,19 +16,10 @@
 #include <vector>
 #include <string>
 
+#include "beancount/ccore/data.pb.h"
 #include "beancount/defs.h"
 
 namespace beancount {
-
-// Container for account types.
-// TODO(blais): Storing this in data.proto might make more sense?
-struct AccountTypes {
-  string assets;
-  string liabilities;
-  string equity;
-  string income;
-  string expenses;
-};
 
 // Default values for root accounts.
 extern AccountTypes kDefaultAccountTypes;

@@ -14,6 +14,7 @@ cc_library(
     srcs = ["account.cc"],
     deps = [
         "//beancount:defs",
+        "//beancount/ccore:data_cc_proto",
         "@com_google_re2//:re2",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings",

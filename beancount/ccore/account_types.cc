@@ -16,13 +16,17 @@ const char* kEquity = "Equity";
 const char* kIncome = "Income";
 const char* kExpenses = "Expenses";
 
-AccountTypes kDefaultAccountTypes = {
-  .assets = kAssets,
-  .liabilities = kLiabilities,
-  .equity = kEquity,
-  .income = kIncome,
-  .expenses = kExpenses,
+AccountTypes GetDefaultAccountTypes() {
+  AccountTypes types;
+  types.set_assets(kAssets);
+  types.set_liabilities(kLiabilities);
+  types.set_equity(kEquity);
+  types.set_income(kIncome);
+  types.set_expenses(kExpenses);
+  return types;
 };
+
+AccountTypes kDefaultAccountTypes = GetDefaultAccountTypes();
 
 string_view GetAccountType(string_view account) {
   return *absl::StrSplit(account, kSep).begin();
@@ -32,15 +36,15 @@ pair<int, string_view> GetAccountSortKey(const AccountTypes& account_types,
                                          string_view account_name) {
   auto atype = GetAccountType(account_name);
   int itype = -1;
-  if (atype == account_types.assets)
+  if (atype == account_types.assets())
     itype = 0;
-  else if (atype == account_types.liabilities)
+  else if (atype == account_types.liabilities())
     itype = 1;
-  else if (atype == account_types.equity)
+  else if (atype == account_types.equity())
     itype = 2;
-  else if (atype == account_types.income)
+  else if (atype == account_types.income())
     itype = 3;
-  else if (atype == account_types.expenses)
+  else if (atype == account_types.expenses())
     itype = 4;
 
   return make_pair(itype, account_name);
@@ -59,26 +63,26 @@ bool IsRootAccount(string_view account_name) {
 
 bool IsBalanceSheetAccount(string_view account_name, const AccountTypes& account_types) {
   auto atype = GetAccountType(account_name);
-  return (atype == account_types.assets ||
-          atype == account_types.liabilities ||
-          atype == account_types.equity);
+  return (atype == account_types.assets() ||
+          atype == account_types.liabilities() ||
+          atype == account_types.equity());
 }
 
 bool IsIncomeStatementAccount(string_view account_name, const AccountTypes& account_types) {
   auto atype = GetAccountType(account_name);
-  return (atype == account_types.income ||
-          atype == account_types.expenses);
+  return (atype == account_types.income() ||
+          atype == account_types.expenses());
 }
 
 bool IsEquityAccount(string_view account_name, const AccountTypes& account_types) {
   auto atype = GetAccountType(account_name);
-  return atype == account_types.equity;
+  return atype == account_types.equity();
 }
 
 int GetAccountSign(string_view account_name, const AccountTypes& account_types) {
   auto atype = GetAccountType(account_name);
-  return (atype == account_types.assets ||
-          atype == account_types.expenses) ? +1 : -1;
+  return (atype == account_types.assets() ||
+          atype == account_types.expenses()) ? +1 : -1;
 }
 
 }  // namespace beancount
