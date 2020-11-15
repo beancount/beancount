@@ -30,16 +30,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "account_mod",
-    hdrs = ["account_mod.h"],
-    srcs = ["account_mod.cc"],
-    deps = [
-        ":account",
-        "@pybind11",
-    ],
-)
-
 py_test(
     name = "account_test",
     srcs = ["//beancount/core:account_test.py"],
@@ -61,16 +51,6 @@ cc_library(
         "@com_google_absl//absl/strings",
     ],
 )
-
-# cc_library(
-#     name = "account_types_mod",
-#     hdrs = ["account_types_mod.h"],
-#     srcs = ["account_types_mod.cc"],
-#     deps = [
-#         ":account_types",
-#         "@pybind11",
-#     ],
-# )
 
 py_test(
     name = "account_types_test",
@@ -114,7 +94,7 @@ py_extension(
     deps = [
         "@local_config_python//:python_headers",
         "@pybind11",
-        ":account_mod",
+        ":account",
         ":account_types",
     ],
 )
