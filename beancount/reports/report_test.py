@@ -121,6 +121,7 @@ class TestScriptPositions(test_utils.TestCase):
         output = stdout.getvalue()
         self.assertLines("""
            2014-01-15 price HOOL             512.01 USD
+             __implicit_prices__: "from_price"
            2014-02-01 price HOOL             524.02 USD
            2014-02-10 price HOOL             536.03 USD
         """, output)
@@ -161,3 +162,7 @@ class TestScriptPositions(test_utils.TestCase):
         self.assertRegex(output, 'OFXHEADER:100')
         self.assertRegex(output, '<SIGNONMSGSRSV1>')
         self.assertRegex(output, '</OFX>')
+
+
+if __name__ == '__main__':
+    unittest.main()

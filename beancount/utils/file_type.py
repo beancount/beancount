@@ -1,6 +1,6 @@
 """Code that can guess a MIME type for a filename.
 
-This attempts to identify the mim-type of a file suing
+This attempts to identify the mime-type of a file suing
 
 1. The built-in mimetypes library, then
 2. python-magic (if available), and finally
@@ -26,7 +26,7 @@ try:
         warnings.warn("You have installed 'filemagic' instead of 'python-magic'; "
                       "disabling.")
         magic = None # pylint: disable=invalid-name
-except ImportError:
+except (ImportError, OSError):
     magic = None
 
 
@@ -34,8 +34,8 @@ except ImportError:
 EXTRA_FILE_TYPES = [
     (re.compile(regexp, re.I), filetype)
     for regexp, filetype in (
-            (r'.*\.qbo$', 'application/vnd.intu.qbo'),
-            (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
+        (r'.*\.qbo$', 'application/vnd.intu.qbo'),
+        (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
     )]
 
 
@@ -43,7 +43,7 @@ def guess_file_type(filename):
     """Attempt to guess the type of the input file.
 
     Args:
-      filename: A string, the name of the file to ugess the type for.
+      filename: A string, the name of the file to guess the type for.
     Returns:
       A suitable mimetype string, or None if we could not guess.
     """

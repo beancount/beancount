@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import collections
 import functools
+import threading
 
 
 class Snoop:
@@ -14,7 +15,7 @@ class Snoop:
 
       snoop = Snoop()
       ...
-      if snoop(re.match("(\d+)-(\d+)-(\d+)", text)):
+      if snoop(re.match(r"(\\d+)-(\\d+)-(\\d+)", text)):
         year, month, date = snoop.value.group(1, 2, 3)
 
     Attributes:
@@ -62,7 +63,7 @@ class Snoop:
 
 # A global instance of a Snoop, for convenience. In many cases you can just
 # import and use this.
-snooper = Snoop()  # pylint: disable=invalid-name
+snooper = Snoop()
 
 
 def snoopify(function):
@@ -84,3 +85,32 @@ def snoopify(function):
         return value
     wrapper.value = None
     return wrapper
+
+
+class _Saver(threading.local):
+    """A thread-local side-effects variable saver.
+
+    This is intended to capture return values in conditionals, e.g., like this:
+
+       ...
+       elif save(re.match(...)):
+         ... = save.value.group(1)
+
+    This lives here because there's a generous amount of such condition matching
+    in the typical importer implementation. It can function as an alternative to
+    the Snoop code above.
+    """
+
+    def __call__(self, value):
+        """Save the given value to a thread-local.
+
+        Args:
+          value: Any value to be saved. A reference is saved in thread-local values.
+        Returns:
+          Its argument.
+        """
+        self.value = value
+        return value
+
+
+save = _Saver()

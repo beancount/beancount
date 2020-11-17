@@ -52,11 +52,8 @@ class QueryParserTestBase(unittest.TestCase):
             print()
             print(actual)
             print()
-        try:
-            self.assertEqual(expected, actual)
-            return actual
-        except AssertionError:
-            raise
+        self.assertEqual(expected, actual)
+        return actual
 
 
 class TestSelectTarget(QueryParserTestBase):
@@ -152,7 +149,7 @@ class TestSelectExpression(QueryParserTestBase):
         self.assertParse(
             qSelect([
                 qp.Target(qp.Not(qp.Equal(qp.Column('a'), qp.Constant(42))),
-                         None)]),
+                          None)]),
             "SELECT a != 42;")
 
     def test_expr_gt(self):
@@ -219,7 +216,7 @@ class TestSelectExpression(QueryParserTestBase):
                     qp.Not(qp.Equal(
                         qp.Column('b'),
                         qp.And(qp.Constant(42),
-                              qp.Constant(17)))))),
+                               qp.Constant(17)))))),
                 None)]),
             "SELECT a != (b != (42 AND 17));")
 
@@ -357,8 +354,8 @@ class TestSelectFrom(TestSelectFromBase):
 
     def test_from_open_default(self):
         self.assertParse(qSelect(self.targets, qp.From(self.expr,
-                                                      datetime.date(2014, 1, 1),
-                                                      None, None)),
+                                                       datetime.date(2014, 1, 1),
+                                                       None, None)),
                          "SELECT a, b FROM d = (max(e) and 17) OPEN ON 2014-01-01;")
 
     def test_from_close_default(self):
@@ -368,7 +365,7 @@ class TestSelectFrom(TestSelectFromBase):
     def test_from_close_dated(self):
         self.assertParse(qSelect(self.targets,
                                  qp.From(self.expr, None, datetime.date(2014, 10, 18),
-                                        None)),
+                                         None)),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
 
     def test_from_close_no_expr(self):
@@ -422,7 +419,7 @@ class TestSelectFromSelect(QueryParserTestBase):
             qp.Wildcard(),
             qp.From(qp.Equal(qp.Column('date'),
                              qp.Constant(datetime.date(2014, 5, 2))),
-                   None, None, None))
+                    None, None, None))
 
         expected = qSelect([qp.Target(qp.Column('a'), None),
                             qp.Target(qp.Column('b'), None)],
@@ -665,3 +662,7 @@ class TestExplain(QueryParserTestBase):
         self.assertParse(qp.Explain(
             qp.Journal('Assets:ETrade', 'units', None)
             ), "EXPLAIN JOURNAL 'Assets:ETrade' AT units;")
+
+
+if __name__ == '__main__':
+    unittest.main()

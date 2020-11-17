@@ -3,7 +3,10 @@
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import hashlib
+import textwrap
+import types
 import warnings
 from os import path
 
@@ -15,8 +18,12 @@ from os import path
 PARSER_SOURCE_FILES = [
     'lexer.l',
     'grammar.y',
+    'decimal.h',
+    'decimal.c',
+    'macros.h',
     'parser.h',
     'parser.c',
+    'tokens.h',
 ]
 
 def hash_parser_source_files():
@@ -36,10 +43,13 @@ def hash_parser_source_files():
             return None
         with open(fullname, 'rb') as file:
             md5.update(file.read())
+    # Note: Prepend a character in front of the hash because under Windows MSDEV
+    # removes escapes, and if the hash starts with a number it fails to
+    # recognize this is a string. A small compromise for portability.
     return md5.hexdigest()
 
 
-def check_parser_source_files():
+def check_parser_source_files(parser_module: types.ModuleType):
     """Check the extension module's source hash and issue a warning if the
     current source differs from that of the module.
 
@@ -51,7 +61,29 @@ def check_parser_source_files():
     parser_source_hash = hash_parser_source_files()
     if parser_source_hash is None:
         return
-    from . import _parser
-    if _parser.SOURCE_HASH != parser_source_hash:
-        warnings.warn("The Beancount parser C extension module is out-of-date. "
-                      "You need to rebuild.")
+    if parser_module.SOURCE_HASH and parser_module.SOURCE_HASH != parser_source_hash:
+        warnings.warn(
+            ("The Beancount parser C extension module is out-of-date ('{}' != '{}'). "
+             "You need to rebuild.").format(parser_module.SOURCE_HASH, parser_source_hash))
+
+
+def gen_include():
+    """Generate an include file for the parser source hash."""
+    return textwrap.dedent("""\
+      #ifndef __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+      #define __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+
+      #define PARSER_SOURCE_HASH {source_hash}
+
+      #endif // __BEANCOUNT_PARSER_PARSE_SOURCE_HASH_H__
+    """.format(source_hash=hash_parser_source_files()))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    args = parser.parse_args()
+    print(gen_include())
+
+
+if __name__ == '__main__':
+    main()

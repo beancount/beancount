@@ -11,7 +11,6 @@ from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core import amount
 from beancount.core import account
-from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import getters
 
@@ -109,7 +108,15 @@ def check(entries, options_map):
             # Check that the currency of the balance check is one of the allowed
             # currencies for that account.
             expected_amount = entry.amount
-            open, _ = open_close_map[entry.account]
+            try:
+                open, _ = open_close_map[entry.account]
+            except KeyError:
+                check_errors.append(
+                    BalanceError(entry.meta,
+                                 "Account '{}' does not exist: ".format(entry.account),
+                                 entry))
+                continue
+
             if (expected_amount is not None and
                 open and open.currencies and
                 expected_amount.currency not in open.currencies):
@@ -119,16 +126,19 @@ def check(entries, options_map):
                                      expected_amount.currency),
                                  entry))
 
-            # Check the balance against the check entry.
-            real_account = realization.get(real_root, entry.account)
-            assert real_account is not None, "Missing {}".format(entry.account)
-
             # Sum up the current balances for this account and its
             # sub-accounts. We want to support checks for parent accounts
             # for the total sum of their subaccounts.
-            subtree_balance = inventory.Inventory()
-            for real_child in realization.iter_children(real_account, False):
-                subtree_balance += real_child.balance
+            #
+            # FIXME: Improve the performance further by computing the balance
+            # for the desired currency only. This won't allow us to cache in
+            # this way but may be faster, if we're not asserting all the
+            # currencies. Furthermore, we could probably avoid recomputing the
+            # balance if a subtree of positions hasn't been invalidated by a new
+            # position added to the realization. Do this.
+            real_account = realization.get(real_root, entry.account)
+            assert real_account is not None, "Missing {}".format(entry.account)
+            subtree_balance = realization.compute_balance(real_account, leaf_only=False)
 
             # Get only the amount in the desired currency.
             balance_amount = subtree_balance.get_currency_units(expected_amount.currency)

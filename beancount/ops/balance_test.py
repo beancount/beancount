@@ -288,8 +288,6 @@ class TestBalance(unittest.TestCase):
     @loader.load_doc()
     def test_balance_mixed_cost_and_no_cost(self, entries, errors, __):
         """
-          option "booking_algorithm" "FULL"
-
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:Opening-Balances
 
@@ -304,6 +302,16 @@ class TestBalance(unittest.TestCase):
           2013-05-10 balance Assets:Invest   0 HOOL
         """
         self.assertEqual([], list(map(type, errors)))
+
+    @loader.load_doc(expect_errors=True)
+    def test_balance_account_does_not_exist(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Invest
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-10 balance Assets:Invest:Invalid   0 HOOL
+        """
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
 
 
 class TestBalancePrecision(unittest.TestCase):
@@ -370,3 +378,7 @@ class TestBalancePrecision(unittest.TestCase):
         self.assertEqual(2, len(errors))
         self.assertRegex(errors[0].message, '23.022')
         self.assertRegex(errors[1].message, '23.026')
+
+
+if __name__ == '__main__':
+    unittest.main()

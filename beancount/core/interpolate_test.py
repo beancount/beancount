@@ -362,7 +362,8 @@ class TestInferTolerances(cmptest.TestCase):
         # An example of a transaction that would fail without the inferred
         # tolerances and succeed with them.
         input_string = textwrap.dedent("""
-          plugin "beancount.plugins.auto_accounts"
+          2014-01-01 open Assets:Account3
+          2014-01-01 open Assets:Account4
 
           2014-02-25 *
             Assets:Account3       5.111 VHT {1000.00 USD}
@@ -553,32 +554,21 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertFalse(errors)
 
     @loader.load_doc()
-    def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
+    def test_tolerances__missing_units_only(self, entries, errors, options_map):
         """
-        plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
+        2017-01-01 open Assets:Checking USD
+        2017-01-01 open Assets:Cash     CAD
 
-        option "inferred_tolerance_default" "USD:0.005"
-
-        1970-01-01 open Expenses:Food
-        1970-01-01 open Assets:Caroline
-
-        2010-01-01 * "Balances"
-          Expenses:Food      -8.00 USD
-          Assets:Caroline
+        2017-06-23 * "Taking out cash from RBC machine"
+          Assets:Checking     USD @ 1.32 CAD
+          Assets:Cash     400 CAD
         """
-        # Interesting case: The Assets leg is filled in with 8.00 USD
-        # automatically here, so it is not used in inference. Further forward,
-        # the split_expenses plugin splits the first leg as well, and that is
-        # also marked as automatic, so if cannot use inference there either. So
-        # all legs end up being automatic... and we have to fall back on the
-        # default tolerance.
-        pass
-
 
 class TestQuantize(unittest.TestCase):
 
     def test_quantize_with_tolerance(self):
-        tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')},
+                                                      default=D('0.000005'))
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
@@ -586,10 +576,14 @@ class TestQuantize(unittest.TestCase):
             D('100.12312'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
 
-        tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')}, default=ZERO)
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
         self.assertEqual(
             D('100.123123123'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+
+
+if __name__ == '__main__':
+    unittest.main()

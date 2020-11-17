@@ -36,7 +36,7 @@ def build_price_map_util(date_currency_price_tuples):
 
 
 class TestPositionConversions(unittest.TestCase):
-    """Test conversionos to units, cost, weight and market-value for Position objects."""
+    """Test conversions to units, cost, weight and market-value for Position objects."""
 
     def _pos(self, units, cost=None, price=None):
         # Note: 'price' is only used in Posting class which derives from this test.
@@ -315,3 +315,7 @@ class TestMarketValue(unittest.TestCase):
         market_value = balances.reduce(convert.get_value, self.price_map,
                                        datetime.date(2013, 6, 6))
         self.assertEqual(inventory.from_string('2 MSFT'), market_value)
+
+
+if __name__ == '__main__':
+    unittest.main()

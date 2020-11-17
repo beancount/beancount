@@ -1,0 +1,4 @@
+include requirements.txt
+include COPYING
+include beancount/parser/*.c
+include beancount/parser/*.h

@@ -15,7 +15,7 @@ import textwrap
 from beancount import loader
 from beancount.ops import validation
 from beancount.reports import base
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import misc_reports
 from beancount.reports import balance_reports
 from beancount.reports import journal_reports
@@ -25,6 +25,7 @@ from beancount.reports import price_reports
 from beancount.reports import convert_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+from beancount.parser import version
 
 
 def get_all_reports():
@@ -61,7 +62,7 @@ def get_list_report_string(only_report=None):
         if only_report and only_report not in report_class.names:
             continue
 
-        # Get the texttual description.
+        # Get the textual description.
         description = textwrap.fill(
             re.sub(' +', ' ', ' '.join(report_class.__doc__.splitlines())),
             initial_indent="    ",
@@ -69,7 +70,7 @@ def get_list_report_string(only_report=None):
             width=80)
 
         # Get the report's arguments.
-        parser = argparse.ArgumentParser()
+        parser = version.ArgumentParser()
         report_ = report_class
         report_class.add_args(parser)
 
@@ -123,16 +124,16 @@ class ListFormatsAction(argparse.Action):
                              key=lambda fmt: self.format_order.get(fmt,
                                                                    self.format_order_last))
 
-        # Bulid a list of rows.
+        # Build a list of rows.
         rows = []
         for name, formats in matrix:
             xes = ['X' if fmt in formats else ''
                    for fmt in all_formats]
             rows.append([name] + xes)
 
-        # Build a description of the rows, a field specificaiton.
+        # Build a description of the rows, a field specification.
         header = ['Name'] + all_formats
-        field_spec = [(index, name) for index, name in enumerate(header)]
+        field_spec = list(enumerate(header))
 
         # Create and render an ASCII table.
         table_ = table.create_table(rows, field_spec)
@@ -141,8 +142,8 @@ class ListFormatsAction(argparse.Action):
         sys.exit(0)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(argv=None):
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('--help-reports', '--list-reports',
                         nargs='?',
@@ -199,7 +200,7 @@ def main():
             'filters', nargs='*',
             help='Filter expression(s) to select the subset of transactions.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=argv)
 
     # Warn on filters--not supported at this time.
     if hasattr(args, 'filters') and args.filters:
@@ -251,12 +252,12 @@ def main():
                 chosen_report.render(entries, errors, options_map, args.format, outfile)
             except base.ReportError as exc:
                 sys.stderr.write("Error: {}\n".format(exc))
-                sys.exit(1)
+                return 1
     else:
         print(get_list_report_string())
 
-    return 0
+    return (1 if errors else 0)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

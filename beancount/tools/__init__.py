@@ -1,7 +1,7 @@
 """Standalone tools that aren't linked to Beancount but that are useful with it.
 
 The beancount.scripts package contains the implementation of scripts which
-invoke the Beancount library code. This beancount.tools pacakge implements other
+invoke the Beancount library code. This beancount.tools package implements other
 tools which aren't directly invoking Beancount library code and which could be
 theoretically copied and used independently. However, these are to be
 distributed with Beancount and in order to maintain all the source code together

@@ -26,7 +26,6 @@ class TestAmount(unittest.TestCase):
         amount1 = Amount(D('100'), 'USD')
 
         # Test how changing existing attributes should fail.
-        # pylint: disable=assigning-non-slot
         with self.assertRaises(AttributeError) as ctx:
             amount1.currency = 'CAD'
         self.assertRegex("can't set attribute", str(ctx.exception))
@@ -45,6 +44,10 @@ class TestAmount(unittest.TestCase):
         amount2 = Amount.from_string('100 USD')
         self.assertEqual(amount1, amount2)
 
+        amount3 = Amount(D('0.00000001'), 'BTC')
+        amount4 = Amount.from_string('0.00000001 BTC')
+        self.assertEqual(amount3, amount4)
+
         Amount.from_string('  100.00 USD  ')
 
         with self.assertRaises(ValueError):
@@ -57,13 +60,15 @@ class TestAmount(unittest.TestCase):
             Amount.from_string('100.00 U')
 
     def test_tostring(self):
-        amount = Amount(D('100034.023'), 'USD')
+        amount1 = Amount(D('100034.023'), 'USD')
+        self.assertEqual('100034.023 USD', str(amount1))
 
-        self.assertEqual('100034.023 USD', str(amount))
+        amount2 = Amount(D('0.00000001'), 'BTC')
+        self.assertEqual('0.00000001 BTC', str(amount2))
 
         dcontext = display_context.DisplayContext()
         dformat = dcontext.build(commas=True)
-        self.assertEqual('100,034.023 USD', amount.to_string(dformat))
+        self.assertEqual('100,034.023 USD', amount1.to_string(dformat))
 
     def test_comparisons(self):
         amount1 = Amount(D('100'), 'USD')
@@ -146,16 +151,16 @@ class TestAmount(unittest.TestCase):
                          amount.add(Amount(D('100'), 'CAD'),
                                     Amount(D('17.02'), 'CAD')))
         with self.assertRaises(ValueError):
-            amount.sub(Amount(D('100'), 'USD'),
+            amount.add(Amount(D('100'), 'USD'),
                        Amount(D('17.02'), 'CAD'))
 
     def test_sub(self):
         self.assertEqual(Amount(D('82.98'), 'CAD'),
                          amount.sub(Amount(D('100'), 'CAD'),
-                                           Amount(D('17.02'), 'CAD')))
+                                    Amount(D('17.02'), 'CAD')))
         with self.assertRaises(ValueError):
             amount.sub(Amount(D('100'), 'USD'),
-                              Amount(D('17.02'), 'CAD'))
+                       Amount(D('17.02'), 'CAD'))
 
     def test_abs(self):
         self.assertEqual(Amount(D('82.98'), 'CAD'),
@@ -164,3 +169,7 @@ class TestAmount(unittest.TestCase):
                          amount.abs(Amount(D('0'), 'CAD')))
         self.assertEqual(Amount(D('82.98'), 'CAD'),
                          amount.abs(Amount(D('-82.98'), 'CAD')))
+
+
+if __name__ == '__main__':
+    unittest.main()

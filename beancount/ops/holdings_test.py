@@ -522,3 +522,39 @@ class TestHoldings(unittest.TestCase):
 
         expected_price = A('60.00 USD')
         self.assertEqual(expected_price, posting.price)
+
+
+class TestHoldingsMisc(unittest.TestCase):
+
+    @loader.load_doc()
+    def setUp(self, entries, errors, options_map):
+        """
+        2014-01-01 open Assets:Bank1
+        2014-01-01 open Assets:Bank2
+        2014-01-01 open Assets:Bank3
+        2014-01-01 open Income:Something
+
+        2014-05-31 *
+          Assets:Bank1         100 MSFT {200.01 USD}
+          Income:Something
+
+        2014-05-31 *
+          Assets:Bank2         1000 INR @ 200 USD
+          Income:Something
+        """
+        self.entries = entries
+        self.errors = errors
+        self.options_map = options_map
+
+    # Basically just call these functions below, to exercise them.
+    # Very basic tests, but still worthwhile. Running the code is a minimum.
+
+    def test_get_assets_holdings(self):
+        holdings_list, price_map = holdings.get_assets_holdings(self.entries,
+                                                                self.options_map)
+        self.assertTrue(isinstance(holdings_list, list))
+        self.assertTrue(isinstance(price_map, dict))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -11,10 +11,10 @@ from beancount.query import shell
 from beancount import loader
 
 
-# pylint: disable=invalid-name
 entries, errors, options_map = None, None, None
 
-def setUp(self):
+
+def setup_module():
     example_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', 'example.beancount')
     global entries, errors, options_map  # pylint: disable=invalid-name
@@ -32,7 +32,6 @@ def runshell(function):
             shell_obj.on_Reload()
             shell_obj.onecmd(function.__doc__)
         return function(self, stdout.getvalue())
-    test_function.__name__ = function.__name__
     return test_function
 
 
@@ -106,7 +105,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertRegex(output, 'Assets:US:ETrade:Cash * \d+\.\d+ USD')
+        self.assertRegex(output, r'Assets:US:ETrade:Cash * \d+\.\d+ USD')
 
     @runshell
     def test_income_statement(self, output):
@@ -229,3 +228,9 @@ class TestShell(test_utils.TestCase):
 
 
 __incomplete__ = True
+
+
+if __name__ == '__main__':
+    if re.search(r"\.runfiles\b", __file__):
+        setup_module()
+    unittest.main()

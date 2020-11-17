@@ -6,16 +6,17 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import textwrap
+import unittest
 from os import path
 
-from beancount.core import account_test
+from beancount.utils import test_utils
 from beancount.core import data
 from beancount.ops import documents
 from beancount.parser import cmptest
 from beancount import loader
 
 
-class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/other.txt',
@@ -29,17 +30,18 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
 
     def test_process_documents(self):
         input_filename = path.join(self.root, 'input.beancount')
-        open(input_filename, 'w').write(textwrap.dedent("""
+        with open(input_filename, 'w') as f:
+            f.write(textwrap.dedent("""
 
-          option "plugin_processing_mode" "raw"
-          option "documents" "ROOT"
+              option "plugin_processing_mode" "raw"
+              option "documents" "ROOT"
 
-          2014-01-01 open Assets:US:Bank:Checking
-          2014-01-01 open Liabilities:US:Bank
+              2014-01-01 open Assets:US:Bank:Checking
+              2014-01-01 open Liabilities:US:Bank
 
-          2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
+              2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
-        """).replace('ROOT', self.root))
+            """).replace('ROOT', self.root))
         entries, _, options_map = loader.load_file(input_filename)
 
         # In this test we set the root to the directory root, but only the
@@ -63,6 +65,23 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
                                  if isinstance(entry, data.Document)])
 
         self.assertEqual(0, len(errors))
+
+    def test_process_documents_trailing_slash(self):
+        input_filename = path.join(self.root, 'input.beancount')
+        with open(input_filename, 'w') as f:
+            f.write(textwrap.dedent("""
+
+              option "plugin_processing_mode" "raw"
+              option "documents" "ROOT/"
+
+              2014-01-01 open Assets:US:Bank:Checking
+              2014-01-01 open Liabilities:US:Bank
+
+            """).replace('ROOT', self.root))
+        entries, _, options_map = loader.load_file(input_filename)
+        entries, errors = documents.process_documents(entries, options_map)
+        doc_entries = [entry for entry in entries if isinstance(entry, data.Document)]
+        self.assertEqual(1, len(doc_entries))
 
     def test_verify_document_files_exist(self):
         entries, _, options_map = loader.load_string(textwrap.dedent("""
@@ -100,7 +119,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual(datetime.date(2014, 7, 1), entry.date)
 
         # Test with a relative directory name, the entries should be the same,
-        # as all the filenames attached to document directivesa are absolute
+        # as all the filenames attached to document directives are absolute
         # paths.
         entries2, errors2 = documents.find_documents(
             'root', path.join(self.tempdir, 'input.beancount'))
@@ -131,7 +150,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual([], errors1)
 
 
-class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocumentsDate(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/',
@@ -145,7 +164,7 @@ class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
 
 
 
-class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
+class TestDocumentsConstraints(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
         'root/Assets/',
@@ -193,3 +212,7 @@ class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
             self.root, '/tmp/input.beancount', {'Assets:US:Bank'}, False)
         self.assertEqual(0, len(errors))
         self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+
+if __name__ == '__main__':
+    unittest.main()

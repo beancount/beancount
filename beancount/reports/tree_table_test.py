@@ -73,7 +73,9 @@ class TestTables(unittest.TestCase):
 
     def test_table_of_balances(self):
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
-        html = tree_table.table_of_balances(self.real_root, ['USD', 'CAD'], formatter,
+        price_map, price_date = {}, None
+        html = tree_table.table_of_balances(self.real_root, price_map, price_date,
+                                            ['USD', 'CAD'], formatter,
                                             classes=['586e8200b379'])
         self.assertRegex(html, '<table')
         self.assertRegex(html, 'USD')
@@ -83,3 +85,7 @@ class TestTables(unittest.TestCase):
 
         # Check that an inactive account is being skipped.
         self.assertNotRegex(html, 'Inactive')
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -94,9 +94,11 @@ class TestScriptFormat(test_utils.TestCase):
         with test_utils.capture():
             result = test_utils.run_with_args(format.main, [filename])
         self.assertEqual(0, result)
+        with open(filename) as infile:
+            actual = infile.read()
         self.assertEqual("""
           2015-07-16 open Assets:BoA:checking USD
-        """.strip(), open(filename).read().strip())
+        """.strip(), actual.strip())
 
     @test_utils.docfile
     def test_commas(self, filename):
@@ -164,6 +166,76 @@ class TestScriptFormat(test_utils.TestCase):
             Equity:Opening-balances
         """), stdout.getvalue())
 
+    @test_utils.docfile
+    def test_fixed_width(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test     10.00 USD
+          Assets:Test
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(format.main, [filename, '--prefix-width=40'])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test                           10.00 USD
+          Assets:Test
+        """), stdout.getvalue())
+
+    @test_utils.docfile
+    def test_fixed_column(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+        2016-08-01 balance Assets:Test  0.00 USD
+
+        2016-08-02 * "" ""
+          Expenses:Test     10.00 USD
+          Assets:Test
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(
+                format.main, [filename, '--currency-column=50'])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+        2016-08-01 balance Assets:Test              0.00 USD
+
+        2016-08-02 * "" ""
+          Expenses:Test                            10.00 USD
+          Assets:Test
+        """), stdout.getvalue())
+
+    @test_utils.docfile
+    def test_metadata_issue400(self, filename):
+        """
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test   10.00 EUR
+          Assets:Test  -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(
+                format.main, [filename, '--currency-column=50'])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test                              10.00 EUR
+          Assets:Test                             -10.00 EUR
+        """), stdout.getvalue())
+
     @unittest.skip("Eventually we will want to support arithmetic expressions. "
                    "It will require to invoke the expression parser because "
                    "expressions are not guaranteed to be surrounded by matching "
@@ -191,3 +263,7 @@ class TestScriptFormat(test_utils.TestCase):
           Assets:Test
 
         """), stdout.getvalue())
+
+
+if __name__ == '__main__':
+    unittest.main()

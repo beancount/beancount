@@ -4,7 +4,9 @@ __license__ = "GNU GPLv2"
 import tempfile
 import datetime
 import re
+import shutil
 import subprocess
+import unittest
 
 from beancount.core import data
 from beancount.utils import test_utils
@@ -157,9 +159,9 @@ class TestLedgerConversion(test_utils.TestCase):
           account Assets:Cash
             assert commodity == "USD" | commodity == "CAD"
 
-          P 2014/02/15 00:00:00 HOOL                   500.00 USD
+          P 2014-02-15 00:00:00 HOOL                   500.00 USD
 
-          2014/03/02 * Something
+          2014-03-02 * Something
             Expenses:Restaurant                                                     50.02 USD
             Assets:Cash                                                            -50.02 USD
 
@@ -190,16 +192,41 @@ class TestLedgerConversion(test_utils.TestCase):
 
           account Assets:CA:Investment:Cash
 
-          2014/11/02 * Buy some stock with foreign currency funds
+          2014-11-02 * Buy some stock with foreign currency funds
             Assets:CA:Investment:HOOL           5 HOOL {520.0 USD} @ 520.0 USD
             Expenses:Commissions             9.95 USD
             Assets:CA:Investment:Cash    -2939.46 CAD @ 0.8879 USD
             Equity:Rounding             -0.003466 USD
 
-          P 2014/11/02 00:00:00 HOOL    520.0 USD
+          P 2014-11-02 00:00:00 HOOL    520.0 USD
 
-          P 2014/11/02 00:00:00 CAD    0.8879 USD
+          P 2014-11-02 00:00:00 CAD    0.8879 USD
 
+        """, stdout.getvalue())
+
+    @test_utils.docfile
+    def test_tags_links(self, filename):
+        """
+          2019-01-25 open Assets:A
+          2019-01-25 open Assets:B
+
+          2019-01-25 * "Test tags" #foo ^link2 #bar #baz ^link1
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(report.main, [filename, 'ledger'])
+        self.assertEqual(0, result)
+        self.assertLines("""
+          account Assets:A
+
+          account Assets:B
+
+          2019-01-25 * Test tags
+            ; :bar:baz:foo:
+            ; Link: link1, link2
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
         """, stdout.getvalue())
 
     def test_example(self):
@@ -221,11 +248,37 @@ class TestLedgerConversion(test_utils.TestCase):
                         report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
 
-                import shutil; shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
+                # FIXME: Use a proper temp dir.
+                shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
                 self.check_parses_ledger(lgrfile.name)
 
 
 class TestHLedgerConversion(test_utils.TestCase):
+
+    @test_utils.docfile
+    def test_tags_links(self, filename):
+        """
+          2019-01-25 open Assets:A
+          2019-01-25 open Assets:B
+
+          2019-01-25 * "Test tags" #foo ^link2 #bar #baz ^link1
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(report.main, [filename, 'hledger'])
+        self.assertEqual(0, result)
+        self.assertLines("""
+          ;; Open: 2019-01-25 close Assets:A
+
+          ;; Open: 2019-01-25 close Assets:B
+
+          2019-01-25 * Test tags
+            ; bar:, baz:, foo:
+            ; Link: link1 link2
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """, stdout.getvalue())
 
     def test_example(self):
         with tempfile.NamedTemporaryFile('w',
@@ -248,3 +301,7 @@ class TestHLedgerConversion(test_utils.TestCase):
                     result = test_utils.run_with_args(
                         report.main, [beanfile.name, '-o', lgrfile.name, 'hledger'])
                 self.assertEqual(0, result)
+
+
+if __name__ == '__main__':
+    unittest.main()

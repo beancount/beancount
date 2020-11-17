@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import unittest
 import datetime
+from collections import OrderedDict
 
 from beancount.core import getters
 from beancount.core import data
@@ -95,6 +96,11 @@ class TestGetters(unittest.TestCase):
         payees = getters.get_all_payees(entries)
         self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
+    def test_get_all_links(self):
+        entries = loader.load_string(TEST_INPUT)[0]
+        links = getters.get_all_links(entries)
+        self.assertEqual(['ee89ada94a39'], links)
+
     def test_get_leveln_parent_accounts(self):
         account_names = ['Assets:US:Cash',
                          'Assets:US:Credit-Card',
@@ -110,6 +116,41 @@ class TestGetters(unittest.TestCase):
 
         levels = getters.get_leveln_parent_accounts(account_names, 2, 0)
         self.assertEqual({'Cash', 'Credit-Card'}, set(levels))
+
+    def test_get_dict_accounts(self):
+        account_names = ['Assets:US:Cash',
+                         'Assets:US:Credit-Card',
+                         'Expenses:Grocery',
+                         'Expenses:Grocery:Bean',
+                         'Expenses:Coffee',
+                         'Expenses:Restaurant']
+
+        label = getters.get_dict_accounts.ACCOUNT_LABEL
+        root = OrderedDict([(label, True)])
+        account_dict = OrderedDict([
+            ('Assets', OrderedDict([
+                ('US', OrderedDict([
+                    ('Cash', root),
+                    ('Credit-Card', root),
+                ])),
+            ])),
+            ('Expenses', OrderedDict([
+                ('Grocery', OrderedDict([
+                    ('Bean', root), # Wrong order here
+                    (label, True),
+                ])),
+                ('Coffee', root),
+                ('Restaurant', root),
+            ])),
+        ])
+        self.assertNotEqual(
+            getters.get_dict_accounts(account_names),
+            account_dict
+        )
+        account_dict['Expenses']['Grocery'] = OrderedDict([
+            (label, True),
+            ('Bean', root),
+        ])
 
     def test_get_min_max_dates(self):
         entries = loader.load_string(TEST_INPUT)[0]
@@ -159,31 +200,27 @@ class TestGetters(unittest.TestCase):
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
         self.assertEqual(sorted(expected_components), components)
 
-    def test_get_commodities_map(self):
+    def test_get_commodity_directives(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
+        commodities = getters.get_commodity_directives(entries)
+        self.assertEqual({'HOOL', 'PIPA'}, commodities.keys())
         self.assertTrue(all(isinstance(value, data.Commodity)
-                            for value in commodity_map.values()))
-        self.assertEqual(commodity_map['HOOL'],
-                         next(entry
-                              for entry in entries
-                              if isinstance(entry, data.Commodity)))
+                            for value in commodities.values()))
 
     def test_get_values_meta__single(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        values = getters.get_values_meta(commodity_map, 'name', default='BLA')
-        self.assertEqual({'USD': 'BLA',
-                          'PIPA': 'Pied Piper',
-                          'HOOL': 'Hooli Corp.'},
-                         values)
+        commodities = getters.get_commodity_directives(entries)
+        values = getters.get_values_meta(commodities, 'name', default='BLA')
+        self.assertEqual({'PIPA': 'Pied Piper',
+                          'HOOL': 'Hooli Corp.'}, values)
 
     def test_get_values_meta__multi(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries)
-        values = getters.get_values_meta(commodity_map, 'name', 'ticker')
+        commodities = getters.get_commodity_directives(entries)
+        values = getters.get_values_meta(commodities, 'name', 'ticker')
         self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),
-                          'PIPA': ('Pied Piper', None),
-                          'USD': (None, None)},
-                         values)
+                          'PIPA': ('Pied Piper', None)}, values)
+
+
+if __name__ == '__main__':
+    unittest.main()

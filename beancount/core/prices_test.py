@@ -86,6 +86,17 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(5, len(price_map[('CAD', 'USD')]))
 
     @loader.load_doc()
+    def test_build_price_map_zero_prices(self, entries, _, __):
+        """
+        1999-12-27 commodity EFA
+        2010-10-01 price EFA                                 57.53 EFA
+        2010-11-01 price EFA                                     0 EFA
+        2011-03-01 price EFA                                 60.69 EFA
+        """
+        price_map = prices.build_price_map(entries)
+        self.assertIsNotNone(price_map)
+
+    @loader.load_doc()
     def test_lookup_price_and_inverse(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD
@@ -209,3 +220,81 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(exp_value, act_value.quantize(D('0.01')))
 
         self.assertEqual(1, len(price_map[('CAD', 'USD')]))
+
+    @loader.load_doc()
+    def test_project(self, entries, _, __):
+        """
+        2013-06-01 price  USD      1.12 CAD
+        2013-06-15 price  HOOL  1000.00 USD
+        2013-06-15 price  MFFT   200.00 USD
+
+        2013-07-01 price  USD      1.13 CAD
+        2013-07-15 price  HOOL  1010.00 USD
+        """
+        price_map = prices.build_price_map(entries)
+
+        # Check that a degenerate request does nothing.
+        noop_price_map = prices.project(price_map, "USD", "USD")
+        self.assertIs(noop_price_map, price_map)
+
+        # Project and make sure the old price map hasn't been mutated.
+        new_price_map = prices.project(price_map, "USD", "CAD")
+        self.assertFalse(("HOOL", "CAD") in price_map)
+
+        # Check that the prices were converted. Note that this also checks that
+        # no price was synthesized at 2013-07-01 (see {c1bd24f8d4b7}).
+        self.assertEqual([(datetime.date(2013, 6, 15), D('1120.0000')),
+                          (datetime.date(2013, 7, 15), D('1141.3000'))],
+                         prices.get_all_prices(new_price_map, ("HOOL", "CAD")))
+
+        # Make sure the inverted database has been updated.
+        self.assertEqual([
+            (datetime.date(2013, 6, 15), D('0.0008928571428571428571428571429')),
+            (datetime.date(2013, 7, 15), D('0.0008761938140716726539910628231'))],
+                         prices.get_all_prices(new_price_map, ("CAD", "HOOL")))
+
+        # Check constraint on currencies. {4bb702d82c8a}
+        cons_price_map = prices.project(price_map, "USD", "CAD", {"MFFT"})
+        self.assertTrue(("HOOL", "CAD") in new_price_map)
+        self.assertFalse(("HOOL", "CAD") in cons_price_map)
+
+        # Check that the resulting price mapis sorted.
+        for prices_ in new_price_map.values():
+            self.assertTrue(all(x <= y for x, y in zip(prices_[:-1], prices_[1:])))
+
+    @loader.load_doc()
+    def test_project_missing(self, entries, _, __):
+        """
+        2013-06-15 price  HOOL  1000.00 USD
+        2013-07-01 price  USD      1.12 CAD
+        2013-07-15 price  HOOL  1100.00 USD
+        """
+        price_map = prices.build_price_map(entries)
+        new_price_map = prices.project(price_map, "USD", "CAD")
+
+        # Check that there haven't been conversions before a price was
+        # available. {b2b23353275d}
+        self.assertEqual([(datetime.date(2013, 7, 15), D('1232.0000'))],
+                         prices.get_all_prices(new_price_map, ("HOOL", "CAD")))
+
+
+    @loader.load_doc()
+    def test_project_collisions(self, entries, _, __):
+        """
+        2013-06-01 price  USD      1.12 CAD
+        2013-06-15 price  HOOL  1000.00 USD
+        2013-06-15 price  HOOL  1125.00 CAD
+        """
+        price_map = prices.build_price_map(entries)
+
+        new_price_map = prices.project(price_map, "USD", "CAD")
+
+        # Check that the original prices in the database were not overridden.
+        # See {97a5703ac517}.
+        self.assertEqual([(datetime.date(2013, 6, 15), D('1120.0000')),
+                          (datetime.date(2013, 6, 15), D('1125.00'))],
+                         prices.get_all_prices(new_price_map, ("HOOL", "CAD")))
+
+
+if __name__ == '__main__':
+    unittest.main()

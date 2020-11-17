@@ -1,4 +1,4 @@
-"""Helpers to automate regression testing of a custom importer.
+"""Support for implementing regression tests on sample files using nose.
 
 NOTE: This itself is not a regression test. It's a library used to create
 regression tests for your importers. Use it like this in your own importer code:
@@ -9,6 +9,9 @@ regression tests for your importers. Use it like this in your own importer code:
        })
        yield from regression.compare_sample_files(importer, __file__)
 
+WARNING: This is deprecated. Nose itself has been deprecated for a while and
+Beancount is now using only pytest. Ignore this and use
+beancount.ingest.regression_ptest instead.
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -24,6 +27,7 @@ from os import path
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import printer
 from beancount.utils import test_utils
+from beancount.utils.misc_utils import deprecated
 from beancount.ingest import extract
 from beancount.ingest import cache
 
@@ -46,12 +50,25 @@ class ImportFileTestCase(unittest.TestCase):
     maxDiff = None
 
     def __init__(self, importer):
-        super(ImportFileTestCase, self).__init__()
+        super().__init__()
         self.importer = importer
 
     @test_utils.skipIfRaises(ToolNotInstalled)
+    def test_expect_identify(self, filename, msg):
+        """Attempt to identify a file and expect results to be true.
+
+        Args:
+          filename: A string, the name of the file to import using self.importer.
+        Raises:
+          AssertionError: If the contents differ from the expected file.
+        """
+        file = cache.get_file(filename)
+        matched = self.importer.identify(file)
+        self.assertTrue(matched)
+
+    @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_extract(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Extract entries from a test file and compare against expected output.
 
         If an expected file (as <filename>.extract) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -64,8 +81,7 @@ class ImportFileTestCase(unittest.TestCase):
 
         """
         # Import the file.
-        entries, duplicate_entries = extract.extract_from_file(filename, self.importer,
-                                                               None, None)
+        entries = extract.extract_from_file(filename, self.importer, None, None)
 
         # Render the entries to a string.
         oss = io.StringIO()
@@ -84,7 +100,7 @@ class ImportFileTestCase(unittest.TestCase):
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_date(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Compute the imported file date and compare to an expected output.
 
         If an expected file (as <filename>.file_date) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -115,7 +131,7 @@ class ImportFileTestCase(unittest.TestCase):
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_name(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Compute the imported file name and compare to an expected output.
 
         If an expected file (as <filename>.file_name) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -158,11 +174,12 @@ def find_input_files(directory):
     """
     for sroot, dirs, files in os.walk(directory):
         for filename in files:
-            if re.match(r'.*\.(extract|file_date|file_name|py|pyc)$', filename):
+            if re.match(r'.*\.(extract|file_date|file_name|py|pyc|DS_Store)$', filename):
                 continue
             yield path.join(sroot, filename)
 
 
+@deprecated("Use beancount.ingest.regression_pytest instead")
 def compare_sample_files(importer, directory=None, ignore_cls=None):
     """Compare the sample files under a directory.
 
@@ -191,15 +208,16 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
     for filename in find_input_files(directory):
         # For each of the methods to be tested, check if there is an actual
         # implementation and if so, run a comparison with an expected file.
-        for name in ['extract',
+        for name in ['identify',
+                     'extract',
                      'file_date',
                      'file_name']:
-            # Check if the method has been overrriden from the protocol
+            # Check if the method has been overridden from the protocol
             # interface. If so, even if it's provided by concretely inherited
             # method, we want to require a test against that method.
             func = getattr(importer, name).__func__
             if (func is not getattr(ImporterProtocol, name) and
-                (ignore_cls is None or (func is not getattr(ignore_cls, name)))):
+                (ignore_cls is None or (func is not getattr(ignore_cls, name, None)))):
                 method = getattr(ImportFileTestCase(importer),
                                  'test_expect_{}'.format(name))
                 yield (method, filename, name)

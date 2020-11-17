@@ -16,7 +16,14 @@ class TestPedantic(unittest.TestCase):
         2010-01-01 commodity USD
         2010-01-01 commodity CAD
 
+        2012-01-01 open Assets:US:Bank:Checking  USD
+        2012-01-01 open Assets:US:Bank:Savings   CAD
+
         2014-02-01 *
           Assets:US:Bank:Checking     100 USD @ 1.01 CAD
           Assets:US:Bank:Savings     -101 CAD
         """
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -75,10 +75,12 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import enum
+from decimal import Decimal
+from typing import Text
+import uuid
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
@@ -89,9 +91,11 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
-from beancount.core import convert
-from beancount.parser import printer
-from beancount.utils import misc_utils
+
+
+def unique_label() -> Text:
+    "Return a globally unique label for cost entries."
+    return str(uuid.uuid4())
 
 
 # An error of disallowed self-reduction.
@@ -151,7 +155,8 @@ def _book(entries, options_map, methods):
                 # group in this block; Summary: We will need to run the
                 # reductions prior to the augmentations in order to support
                 # reductions between the postings of a single transaction.)
-                if False: ## Disabled.
+                # Disabled.
+                if False:  # pylint: disable=using-constant-test
                     if has_self_reduction(group_postings, methods):
                         errors.append(SelfReduxError(
                             entry.meta, "Self-reduction is not allowed", entry))
@@ -251,7 +256,7 @@ def categorize_by_currency(entry, balances):
 
     - First we apply the constraint that cost-currency and price-currency must
       match, if there is both a cost and a price. This reduces the space of
-      possibilities somewahte.
+      possibilities somewhat.
 
     - If the currency is explicitly specified, we put the posting in that
       currency's bucket.
@@ -377,7 +382,7 @@ def categorize_by_currency(entry, balances):
         else:
             errors.append(
                 CategorizationError(posting.meta,
-                                    "Failed to categorize posting {}".format(index),
+                                    "Failed to categorize posting {}".format(index + 1),
                                     entry))
 
     # Fill in missing units currencies if some remain as missing. This may occur
@@ -446,7 +451,7 @@ def replace_currencies(postings, refer_groups):
         for refer in sorted(refers, key=lambda r: r.index):
             posting = postings[refer.index]
             units = posting.units
-            if units is MISSING:
+            if units is MISSING or units is None:
                 posting = posting._replace(units=Amount(MISSING, refer.units_currency))
             else:
                 replace = False
@@ -554,9 +559,8 @@ def book_reductions(entry, group_postings, balances,
         balance = local_balances.setdefault(account, copy.copy(previous_balance))
 
         # Check if this is a lot held at cost.
-        if costspec is None:
-            # This posting is not held at cost. Just check that it's not
-            # incompatible with the sign of the inventory
+        if costspec is None or units.number is MISSING:
+            # This posting is not held at cost; we do nothing.
             booked_postings.append(posting)
         else:
             # This posting is held at cost; figure out if it's a reduction or an
@@ -601,8 +605,9 @@ def book_reductions(entry, group_postings, balances,
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
-                reduction_postings, ambi_errors = booking_method.handle_ambiguous_matches(
-                    entry, posting, matches, method)
+                reduction_postings, matched_postings, ambi_errors = (
+                    booking_method.handle_ambiguous_matches(entry, posting, matches,
+                                                            method))
                 if ambi_errors:
                     errors.extend(ambi_errors)
                     return [], errors
@@ -630,6 +635,14 @@ def book_reductions(entry, group_postings, balances,
                 if costspec.date is None:
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
+
+                # FIXME: Insert unique ids for trade tracking; right now this
+                # creates ambiguous matches errors (and it shouldn't).
+                # # Insert a unique label if there isn't one.
+                # if posting.cost is not None and posting.cost.label is None:
+                #     posting = posting._replace(
+                #         cost=posting.cost._replace(label=unique_label()))
+
                 booked_postings.append(posting)
 
     return booked_postings, errors
@@ -653,10 +666,10 @@ def compute_cost_number(costspec, units):
         # Compute the per-unit cost if there is some total cost
         # component involved.
         cost_total = number_total
-        units_number = units.number
+        units_number = abs(units.number)
         if number_per is not None:
             cost_total += number_per * units_number
-        unit_cost = cost_total / abs(units_number)
+        unit_cost = cost_total / units_number
     elif number_per is None:
         return None
     else:
@@ -677,16 +690,16 @@ def convert_costspec_to_cost(posting):
     cost = posting.cost
     if isinstance(cost, position.CostSpec):
         if cost is not None:
-            units_number = posting.units.number
             number_per = cost.number_per
             number_total = cost.number_total
             if number_total is not None:
                 # Compute the per-unit cost if there is some total cost
                 # component involved.
+                units_number = abs(posting.units.number)
                 cost_total = number_total
                 if number_per is not MISSING:
                     cost_total += number_per * units_number
-                unit_cost = cost_total / abs(units_number)
+                unit_cost = cost_total / units_number
             else:
                 unit_cost = number_per
             new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
@@ -800,7 +813,7 @@ def interpolate_group(postings, balances, currency, tolerances):
                                                 if posting is not incomplete_posting)
         assert len(residual) < 2, "Internal error in grouping postings by currencies."
         if not residual.is_empty():
-            respos = residual[0]
+            respos = next(iter(residual))
             assert respos.cost is None, (
                 "Internal error; cost appears in weight calculation.")
             assert respos.units.currency == currency, (
@@ -896,6 +909,8 @@ def interpolate_group(postings, balances, currency, tolerances):
         # Replace the number in the posting.
         if new_posting is not None:
             # Set meta-data on the new posting to indicate it was interpolated.
+            if new_posting.meta is None:
+                new_posting = new_posting._replace(meta={})
             new_posting.meta[interpolate.AUTOMATIC_META] = True
 
             # Convert augmenting posting costs from CostSpec to a corresponding

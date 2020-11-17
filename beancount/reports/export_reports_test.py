@@ -7,7 +7,7 @@ import functools
 from beancount.core.number import D
 from beancount.core import getters
 from beancount.reports import export_reports
-from beancount.reports import holdings_reports
+from beancount.ops import holdings
 from beancount import loader
 
 
@@ -46,10 +46,10 @@ class TestCommodityClassifications(unittest.TestCase):
         @loader.load_doc()
         @functools.wraps(fun)
         def wrapped(self, entries, unused_errors, options_map):
-            holdings_list, _ = holdings_reports.get_assets_holdings(entries, options_map)
-            commodities_map = getters.get_commodity_map(entries)
+            holdings_list, _ = holdings.get_assets_holdings(entries, options_map)
+            commodities = getters.get_commodity_directives(entries)
             action_holdings = export_reports.classify_holdings_for_export(holdings_list,
-                                                                          commodities_map)
+                                                                          commodities)
             return fun(self, action_holdings)
         return wrapped
 
@@ -157,10 +157,10 @@ class TestCommodityClassifications(unittest.TestCase):
         1900-01-01 commodity IGI806
           export: "(MONEY:CAD)"
         """
-        commodities_map = getters.get_commodity_map(entries)
+        commodities = getters.get_commodity_directives(entries)
         self.assertEqual({'USD': 'MUTF:VMMXX',
                           'CAD': 'IGI806'},
-                         export_reports.get_money_instruments(commodities_map))
+                         export_reports.get_money_instruments(commodities))
 
 
 EE = export_reports.ExportEntry
@@ -380,3 +380,7 @@ class TestCommodityExport(unittest.TestCase):
             ], exported)
         self.assertFalse(converted)
         self.assertFalse(ignored)
+
+
+if __name__ == '__main__':
+    unittest.main()

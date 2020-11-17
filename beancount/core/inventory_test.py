@@ -17,8 +17,8 @@ from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
 from beancount.core import convert
-from beancount.core import position as position
-from beancount.core import inventory as inventory
+from beancount.core import position
+from beancount.core import inventory
 from beancount.utils import invariants
 
 
@@ -145,6 +145,24 @@ class TestInventory(unittest.TestCase):
         inv5 = I('100 JPY, 100 USD')
         self.assertEqual(inv4, inv5)
 
+    def test_op_lt(self):
+        inv1 = I('100 USD, 100 CAD')
+        inv2 = I('100 CAD, 100 USD')
+        self.assertFalse(inv1 < inv2)
+        self.assertFalse(inv2 < inv1)
+
+        inv3 = I('200 USD, 100 CAD')
+        self.assertTrue(inv1 < inv3)
+        self.assertTrue(inv2 < inv3)
+        self.assertFalse(inv3 < inv1)
+
+        inv4 = I('100 USD, 100 JPY')
+        self.assertTrue(inv1 > inv4)
+
+        inv5 = I('100 JPY, 100 USD')
+        self.assertTrue(inv1 > inv5)
+        self.assertFalse(inv4 < inv5)
+
     def test_is_small__value(self):
         test_inv = I('1.50 JPY, 1.51 USD, 1.52 CAD')
         for inv in test_inv, -test_inv:
@@ -218,10 +236,23 @@ class TestInventory(unittest.TestCase):
         ninv = I('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
+    def test_op_abs(self):
+        inv = I('1.50 USD, 2.00 USD, -1.52 CAD')
+        self.assertEqual(abs(inv), I('3.50 USD, 1.52 CAD'))
+
     def test_op_mul(self):
         inv = I('10 HOOL {1.11 USD}, 2.22 CAD')
         inv2 = inv * D('3')
         self.assertEqual(I('30 HOOL {1.11 USD}, 6.66 CAD'), inv2)
+
+    def test_get_only_position(self):
+        inv = I('10 HOOL {1.11 USD}, 2.22 CAD')
+        with self.assertRaises(AssertionError):
+            inv.get_only_position()
+        inv = I('10 HOOL {1.11 USD}')
+        self.assertEqual(A('10 HOOL'), inv.get_only_position().units)
+        inv = I('')
+        self.assertIsNone(inv.get_only_position())
 
     def test_get_currency_units(self):
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
@@ -241,7 +272,18 @@ class TestInventory(unittest.TestCase):
             'USD': I('101.20 USD'),
             'EUR': inventory.Inventory(),
             'HOOL': I('2.2 HOOL {532.43 USD}, '
-                                          '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+                      '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+
+    def test_split(self):
+        inv = I('2.2 HOOL {532.43 USD}, '
+                '2.3 HOOL {564.00 USD, 2015-07-14}, '
+                '3.41 CAD, 101.20 USD')
+        ccymap = inv.split()
+        self.assertEqual({
+            'CAD': I('3.41 CAD'),
+            'USD': I('101.20 USD'),
+            'HOOL': I('2.2 HOOL {532.43 USD}, '
+                      '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
 
     def test_units1(self):
         inv = Inventory()
@@ -291,6 +333,17 @@ class TestInventory(unittest.TestCase):
         # Aggregation, more units.
         inv = I('2 HOOL {500 USD}, 3 HOOL {520 USD}, 4 HOOL {530 USD}')
         self.assertEqual(inv.average(), I('9 HOOL {520 USD}'))
+
+        # Average on zero amount, same costs
+        inv = I('2 HOOL {500 USD}')
+        inv.add_amount(A('-2 HOOL'), Cost(D('500'), 'USD', None, None))
+        self.assertEqual(inv.average(), I(''))
+
+        # Average on zero amount, different costs
+        inv = I('2 HOOL {500 USD}')
+        inv.add_amount(A('-2 HOOL'),
+                       Cost(D('500'), 'USD', datetime.date(2000, 1, 1), None))
+        self.assertEqual(inv.average(), I(''))
 
     def test_currencies(self):
         inv = Inventory()
@@ -378,7 +431,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'),
                                       Cost(D('700'), 'USD', None, None))
-        self.assertTrue(inv[0].is_negative_at_cost())
+        self.assertTrue(next(iter(inv)).is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
@@ -390,7 +443,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'), Cost(D('700'), 'USD',
                                                           date(2000, 1, 1), None))
-        self.assertTrue(inv[0].is_negative_at_cost())
+        self.assertTrue(next(iter(inv)).is_negative_at_cost())
 
     def test_add_amount__allow_negative(self):
         inv = Inventory()
@@ -406,8 +459,9 @@ class TestInventory(unittest.TestCase):
         self.assertIsNone(position_)
 
         # Check for reductions.
-        self.assertTrue(inv[1].is_negative_at_cost())
-        self.assertTrue(inv[2].is_negative_at_cost())
+        invlist = list(inv)
+        self.assertTrue(invlist[1].is_negative_at_cost())
+        self.assertTrue(invlist[2].is_negative_at_cost())
         inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
         inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
         self.assertEqual(3, len(inv))
@@ -459,3 +513,7 @@ class TestInventory(unittest.TestCase):
         inv = I('100.00 USD, 101.00 CAD, 100 HOOL {300.00 USD}')
         inv_units = inv.reduce(lambda posting: posting.units)
         self.assertEqual(I('100.00 USD, 101.00 CAD, 100 HOOL'), inv_units)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -17,6 +17,7 @@ from beancount.core.position import CostSpec
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
+
 from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
@@ -28,8 +29,9 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
-from beancount.parser import booking_simple as bs
+from beancount.parser import booking
 from beancount.parser import cmptest
+from beancount.parser import options
 from beancount import loader
 
 
@@ -40,7 +42,7 @@ def _gen_missing_combinations(template, args):
     """Generate all possible expansions of args in template.
 
     Args:
-      template: A string, the template in new-sytle formatting.
+      template: A string, the template in new-style formatting.
       args: A list of strings to be included or excluded from the template.
     Yields:
       Strings of formatted template.
@@ -597,7 +599,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             # Check the expected postings.
             if exp_string is not None:
                 exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
-                exp_entries, err2 = bs.convert_lot_specs_to_lots(exp_entries)
+                exp_entries, err2 = booking.convert_lot_specs_to_lots(exp_entries)
                 self.assertFalse(err1 or err2, "Internal error in test")
                 self.assertEqual(1, len(exp_entries),
                                  "Internal error, expected one entry")
@@ -950,7 +952,6 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
         """
-          option "booking_algorithm" "FULL"
           option "inferred_tolerance_default" "USD:0.00005"
           option "inferred_tolerance_default" "JPY:0.5"
 
@@ -985,6 +986,26 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
               2016-04-25 * ""
                 Assets:Account1   100.123412341234 JPY
                 Assets:Account1  -100 JPY
+            """, None)}, options_map=options_map)
+
+    @parser.parse_doc()
+    def test_negative_units(self, entries, errors, options_map):
+        """
+          2010-01-01 open Assets:TDA:Main:Cash             USD
+          2010-01-01 open Assets:TDA:Main:MSFT            MSFT
+          2010-01-01 open Expenses:Financial:Commission    USD
+
+          2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+            Assets:TDA:Main:Cash            2452.53 USD
+            Assets:TDA:Main:MSFT                -23 MSFT {106.935 # 6.90 USD}
+            Expenses:Financial:Commission      13.95 USD
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+                Assets:TDA:Main:Cash            2452.53 USD
+                Assets:TDA:Main:MSFT                -23 MSFT {107.235 USD}
+                Expenses:Financial:Commission      13.95 USD
             """, None)}, options_map=options_map)
 
 
@@ -1041,29 +1062,15 @@ class TestComputeCostNumber(unittest.TestCase):
                 position.CostSpec(D('3'), D('6'), None, self.date, None, False),
                 amount.from_string('12 HOOL')))
 
+    def test_negative_numbers(self):
+        self.assertEqual(
+            D('3.5'),
+            bf.compute_cost_number(
+                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
+                amount.from_string('-12 HOOL')))
+
 
 class TestParseBookingOptions(cmptest.TestCase):
-
-    @loader.load_doc()
-    def test_booking_algorithm__simple(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "SIMPLE"
-        """
-        self.assertEqual("SIMPLE", options_map["booking_algorithm"])
-
-    @loader.load_doc()
-    def test_booking_algorithm__full(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "FULL"
-        """
-        self.assertEqual("FULL", options_map["booking_algorithm"])
-
-    @loader.load_doc(expect_errors=True)
-    def test_booking_algorithm__invalid(self, entries, errors, options_map):
-        """
-          option "booking_algorithm" "XXX"
-        """
-        self.assertEqual(1, len(errors))
 
     @loader.load_doc()
     def test_booking_method__strict(self, entries, _, options_map):
@@ -1110,8 +1117,7 @@ def find_first_with_tag(tag, entries, default=_UNSET):
         return found_entry
     if default is _UNSET:
         raise KeyError("Entry with tag #{} is missing".format(tag))
-    else:
-        return default
+    return default
 
 
 @test_utils.nottest
@@ -1132,7 +1138,7 @@ def _BM(method):
 
 
 class _BookingTestBase(unittest.TestCase):
-    """A base class for all booking scenario tsts.
+    """A base class for all booking scenario tests.
 
     This reuses Beancount's input syntax to create a DSL for writing tests. The
     purpose is to easily write a single test per booking scenario for the
@@ -1187,7 +1193,7 @@ class _BookingTestBase(unittest.TestCase):
               postings provided to handle_ambiguous_matches().
 
             - An entry with #ambi-resolved describes and asserts the list of
-              postings which were resolved from the call fo
+              postings which were resolved from the call of
               handle_ambiguous_matches().
 
             - An entry with #reduced describes and asserts the list of postings
@@ -1284,8 +1290,8 @@ class _BookingTestBase(unittest.TestCase):
             inv_expected = inventory.Inventory()
             for posting in entry_ex.postings:
                 inv_expected.add_amount(posting.units,
-                                        bs.convert_spec_to_cost(posting.units,
-                                                                posting.cost))
+                                        booking.convert_spec_to_cost(
+                                            posting.units, posting.cost))
             self.assertEqual(inv_expected, balances[account])
 
         # If requested, check the output values to the last call to
@@ -1313,15 +1319,15 @@ class _BookingTestBase(unittest.TestCase):
             if entry_matches:
                 actual_matches = call.args[2]
                 expected_matches = [Position(posting.units,
-                                             bs.convert_spec_to_cost(posting.units,
-                                                                     posting.cost))
+                                             booking.convert_spec_to_cost(
+                                                 posting.units, posting.cost))
                                     for posting in entry_matches.postings]
                 self.assertEqual(sorted(expected_matches), sorted(actual_matches))
 
             # Convert the list of expected resolved postings to those returned
             # by handle_ambiguous_matches().
             if entry_resolved:
-                resolved_actual, resolved_errors = call.return_value
+                resolved_actual, resolved_matches, resolved_errors = call.return_value
                 self.assertPostings(entry_resolved.postings, resolved_actual)
 
     def assertErrors(self, entry, errors):
@@ -1362,8 +1368,8 @@ class _BookingTestBase(unittest.TestCase):
                              flag=None,
                              cost=(posting.cost
                                    if posting.flag == 'S' else
-                                   bs.convert_spec_to_cost(posting.units,
-                                                           posting.cost)))
+                                   booking.convert_spec_to_cost(
+                                       posting.units, posting.cost)))
             for posting in expected_postings]
 
         actual_postings = [
@@ -1727,6 +1733,17 @@ class TestBookReductions(_BookingTestBase):
 
         2016-05-02 * #booked
           error: "No position matches"
+        """
+
+    @book_test(Booking.STRICT)
+    def test_reduce__missing_units_number(self, _, __):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account              HOOL {115.00 USD}
+
+        2016-01-01 * #booked
         """
 
     @book_test(Booking.FIFO)
@@ -2425,6 +2442,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
+@unittest.skip('Booking.AVERAGE is disabled.')
 class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @book_test(Booking.AVERAGE)
@@ -2777,6 +2795,31 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
 
+class TestBookingApi(unittest.TestCase):
+    def test_book_single(self):
+        txn = data.Transaction(data.new_metadata(__file__, 0),
+                               datetime.date(2018, 12, 31),
+                               '*',
+                               'Payee',
+                               'Narration',
+                               None,
+                               None,
+                               [])
+        data.create_simple_posting(txn, 'Assets:Cash', 100.00, 'USD')
+        data.create_simple_posting(txn, 'Expenses:Stuff', None, None)
+        for method in Booking:
+            methods = collections.defaultdict(lambda m=method: m)
+            entries, errors = bf.book([txn], options.OPTIONS_DEFAULTS.copy(), methods)
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(len(errors), 0)
+
+            entry = entries[0]
+            self.assertEqual(len(entry.postings), 2)
+            self.assertEqual(entry.postings[0], txn.postings[0])
+            self.assertNotEqual(entry.postings[1], txn.postings[1])
+            self.assertEqual(entry.postings[1].account, 'Expenses:Stuff')
+            self.assertEqual(entry.postings[1].units, A('-100.00 USD'))
+
 
 # FIXME: TODO - Rewrite these tests. See average_test.py.
 class TestBook(unittest.TestCase):
@@ -2814,7 +2857,7 @@ class TestBook(unittest.TestCase):
           Assets:Account1          1 HOOL {100.00 USD}
           Assets:Other          -100.00 USD
 
-        2015-10-01 * "Held-at-cost, positive, differnt cost"
+        2015-10-01 * "Held-at-cost, positive, different cost"
           Assets:Account1          2 HOOL {101.00 USD}
           Assets:Other          -204.00 USD
         """
@@ -3036,3 +3079,7 @@ class TestBook(unittest.TestCase):
                 None, None, None),
             data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
             ], postings)
+
+
+if __name__ == '__main__':
+    unittest.main()

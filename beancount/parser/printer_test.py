@@ -117,6 +117,10 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
 
+        2014-06-10 * "Entry with escaped \\"symbols\\" \\ \\r \\n"
+          Assets:Account1       111.00 BEAN
+          Assets:Cash          -111.00 BEAN
+
         2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
         self.assertRoundTrip(entries, errors)
@@ -130,6 +134,20 @@ class TestEntryPrinter(cmptest.TestCase):
         self.assertRoundTrip(entries, errors)
 
     @loader.load_doc()
+    def test_BalanceTolerance(self, entries, errors, __):
+        """
+        2014-06-01 open Assets:Account1
+        2014-06-01 open Assets:Cash
+
+        2014-06-02 * "Deposit"
+          Assets:Account1       199.95 USD
+          Assets:Cash          -199.95 USD
+
+        2014-06-04 balance Assets:Account1     200.00 ~0.05 USD
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
     def test_Note(self, entries, errors, __):
         """
         2014-06-01 open Assets:Account1
@@ -139,11 +157,15 @@ class TestEntryPrinter(cmptest.TestCase):
 
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
+        # pylint: disable=line-too-long
         """
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1
         2014-06-08 document Assets:Account1 "/path/to/document.pdf"
         2014-06-08 document Assets:Account1 "path/to/document.csv"
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1 #tag2 ^link1 ^link2
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
         """
         self.assertRoundTrip(entries, errors)
 
@@ -197,6 +219,13 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 event "employer" "Four Square"
         """
         self.assertRoundTrip(entries, errors)
+
+    def test_metadata(self):
+        meta = data.new_metadata('beancount/core/testing.beancount', 12345)
+        meta['something'] = r'a"\c'
+        oss = io.StringIO()
+        printer.EntryPrinter().write_metadata(meta, oss)
+        self.assertEqual('  something: "a\\"\\\\c"\n', oss.getvalue())
 
 
 def characterize_spaces(text):
@@ -484,3 +513,59 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
         self.assertLines(input_string, oss.getvalue())
+
+    def test_very_small_number(self):
+        # We want to make sure we never render with scientific notation.
+        input_string = textwrap.dedent("""
+
+          2016-11-05 open Expenses:Bank:Conversion
+          2016-11-05 open Expenses:Gifts
+          2016-11-05 open Expenses:Entertainment:Travel
+          2016-11-05 open Assets:Current:Bank:SomeBank
+
+          2016-11-05 * "Aquarium"
+              Expenses:Gifts                               435 DKK
+              Expenses:Entertainment:Travel                340 DKK
+              Expenses:Bank:Conversion
+              Assets:Current:Bank:SomeBank            -204.17 BGN @@ 775.00 DKK
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
+
+    def test_render_missing(self):
+        # We want to make sure we never render with scientific notation.
+        input_string = textwrap.dedent("""
+
+          2019-01-19 * "Fitness First" "Last training session"
+            Expenses:Sports:Gym:Martin
+            Assets:Martin:Cash
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        txn = errors[0].entry
+        oss = io.StringIO()
+        printer.print_entry(txn, file=oss)
+
+    def test_render_meta_with_None(self):
+        # Issue 378.
+        input_string = textwrap.dedent("""
+
+          2019-01-01 open Assets:A
+          2019-01-01 open Assets:B
+
+          2019-02-28 txn "Test"
+            Assets:A                       10.00 USD
+            Assets:B                      -10.00 USD
+            foo:
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        self.assertIs(entries[-1].postings[-1].meta['foo'], None)
+
+
+if __name__ == '__main__':
+    unittest.main()

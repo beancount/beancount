@@ -20,12 +20,15 @@ def find_similar_entries(entries, source_entries, comparator=None, window_days=2
     """Find which entries from a list are potential duplicates of a set.
 
     Note: If there are multiple entries from 'source_entries' matching an entry
-    in 'entries', only the first match is returned.
+    in 'entries', only the first match is returned. Note that this function
+    could in theory decide to merge some of the imported entries with each
+    other.
 
     Args:
       entries: The list of entries to classify as duplicate or note.
       source_entries: The list of entries against which to match. This is the
-        previous, or existing set of entries to compare against.
+        previous, or existing set of entries to compare against. This may be null
+        or empty.
       comparator: A functor used to establish the similarity of two entries.
       window_days: The number of days (inclusive) before or after to scan the
         entries to classify against.
@@ -33,7 +36,6 @@ def find_similar_entries(entries, source_entries, comparator=None, window_days=2
       A list of pairs of entries (entry, source_entry) where entry is from
       'entries' and is deemed to be a duplicate of source_entry, from
       'source_entries'.
-
     """
     window_head = datetime.timedelta(days=window_days)
     window_tail = datetime.timedelta(days=window_days + 1)
@@ -41,16 +43,17 @@ def find_similar_entries(entries, source_entries, comparator=None, window_days=2
     if comparator is None:
         comparator = SimilarityComparator()
 
-    # For each of the new entries, look at entries at a nearby date.
+    # For each of the new entries, look at existing entries at a nearby date.
     duplicates = []
-    for entry in data.filter_txns(entries):
-        for source_entry in data.filter_txns(
-                data.iter_entry_dates(source_entries,
-                                      entry.date - window_head,
-                                      entry.date + window_tail)):
-            if comparator(entry, source_entry):
-                duplicates.append((entry, source_entry))
-                break
+    if source_entries is not None:
+        for entry in data.filter_txns(entries):
+            for source_entry in data.filter_txns(
+                    data.iter_entry_dates(source_entries,
+                                          entry.date - window_head,
+                                          entry.date + window_tail)):
+                if comparator(entry, source_entry):
+                    duplicates.append((entry, source_entry))
+                    break
     return duplicates
 
 
@@ -122,7 +125,7 @@ class SimilarityComparator:
 
         # Here, we have found at least one common account with a close
         # amount. Now, we require that the set of accounts are equal or that
-        # one be a subet of the other.
+        # one be a subset of the other.
         accounts1 = set(posting.account for posting in entry1.postings)
         accounts2 = set(posting.account for posting in entry2.postings)
         return accounts1.issubset(accounts2) or accounts2.issubset(accounts1)

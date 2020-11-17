@@ -41,16 +41,16 @@ Notes:
                   1 {21.23 USD}
 
   (Eventually we might support the conversion of cost amounts as well, but they
-  may contain other informations, such as a label or a date, so for now we don't
+  may contain other information, such as a label or a date, so for now we don't
   convert them. I'm not sure there's a good practical use case in doing that
   yet.)
 
 * We may provide some options to break out only some of the currencies into
   columns, in order to handle the case where an inventory contains a large
-  number of currencies and we want to only operate on a restricte set of
+  number of currencies and we want to only operate on a restricted set of
   operating currencies.
 
-* If you provide a DisplayForamtter object to the numberification routine, they
+* If you provide a DisplayFormatter object to the numberification routine, they
   quantize each column according to their currency's precision. It is
   recommended that you do that.
 
@@ -59,8 +59,8 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory

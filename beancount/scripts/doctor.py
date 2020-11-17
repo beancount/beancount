@@ -18,7 +18,11 @@ from os import path
 # under the assumption that not all third-party dependencies are installed.
 # Import what you need as late as possible.
 from beancount.utils import misc_utils
+from beancount.parser import version
 from beancount.core import display_context
+
+
+# pylint: disable=import-outside-toplevel
 
 
 def do_lex(filename, unused_args):
@@ -32,7 +36,7 @@ def do_lex(filename, unused_args):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
 
-do_dump_lexer = do_lex  # pylint: disable=invalid-name
+do_dump_lexer = do_lex
 
 
 def do_parse(filename, unused_args):
@@ -186,7 +190,6 @@ def do_deps(*unused_args):
     print('Use "pip3 install <package>" to install new packages.')
 
 # Alias old name.
-# pylint: disable=invalid-name
 do_checkdeps = do_deps
 
 
@@ -196,23 +199,34 @@ def do_context(filename, args):
     Args:
       filename: A string, which consists in the filename.
       args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
+        to be a string which contains either a lineno integer or a filename:lineno
+        combination (which can be used if the location is not in the top-level file).
     """
-    from beancount.reports import context
+    from beancount.parser import context
     from beancount import loader
 
-    # Parse the arguments, get the line number.
+    # Check we have the required number of arguments.
     if len(args) != 1:
         raise SystemExit("Missing line number argument.")
-    lineno = int(args[0])
 
-    # Load the input file.
+    # Load the input files.
     entries, errors, options_map = loader.load_file(filename)
 
-    # Note: Make sure to use the absolute filename used by the parser to resolve
-    # the file.
+    # Parse the arguments, get the line number.
+    match = re.match(r"(.+):(\d+)$", args[0])
+    if match:
+        search_filename = path.abspath(match.group(1))
+        lineno = int(match.group(2))
+    elif re.match(r"(\d+)$", args[0]):
+        # Note: Make sure to use the absolute filename used by the parser to
+        # resolve the file.
+        search_filename = options_map['filename']
+        lineno = int(args[0])
+    else:
+        raise SystemExit("Invalid format for location.")
+
     str_context = context.render_file_context(entries, options_map,
-                                              options_map['filename'], lineno)
+                                              search_filename, lineno)
     sys.stdout.write(str_context)
 
 
@@ -225,7 +239,8 @@ def do_linked(filename, args):
     Args:
       filename: A string, which consists in the filename.
       args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
+        to be a string which contains either a lineno integer or a filename:lineno
+        combination (which can be used if the location is not in the top-level file).
     """
     from beancount.parser import options
     from beancount.parser import printer
@@ -238,17 +253,30 @@ def do_linked(filename, args):
     # Parse the arguments, get the line number.
     if len(args) != 1:
         raise SystemExit("Missing line number argument.")
-    lineno = int(args[0])
 
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
+    # Parse the arguments, get the line number.
+    match = re.match(r"(.+):(\d+)$", args[0])
+    if match:
+        search_filename = path.abspath(match.group(1))
+        lineno = int(match.group(2))
+    elif re.match(r"(\d+)$", args[0]):
+        # Note: Make sure to use the absolute filename used by the parser to
+        # resolve the file.
+        search_filename = options_map['filename']
+        lineno = int(args[0])
+    else:
+        raise SystemExit("Invalid format for location.")
+
     # Find the closest entry.
-    closest_entry = data.find_closest(entries, options_map['filename'], lineno)
+    closest_entry = data.find_closest(entries, search_filename, lineno)
 
     # Find its links.
     if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+        raise SystemExit("No entry could be found before {}:{}".format(
+            search_filename, lineno))
     links = (closest_entry.links
              if isinstance(closest_entry, data.Transaction)
              else data.EMPTY_SET)
@@ -355,13 +383,13 @@ def do_display_context(filename, args):
 
 
 def do_validate_html(directory, args):
-    """Validate all the HTML files under a directory hierachy.
+    """Validate all the HTML files under a directory hierarchy.
 
     Args:
-      directory: A string, the root directory whose contents to validte.
+      directory: A string, the root directory whose contents to validate.
       args: A tuple of the rest of arguments.
     """
-    from beancount.web import scrape
+    from beancount.utils import scrape
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
     for target in missing:
@@ -373,9 +401,9 @@ def do_validate_html(directory, args):
 def main():
     commands_doc = ('Available Commands:\n' +
                     '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    argparser = argparse.ArgumentParser(description=__doc__,
-                                        formatter_class=argparse.RawTextHelpFormatter,
-                                        epilog=commands_doc)
+    argparser = version.ArgumentParser(description=__doc__,
+                                       formatter_class=argparse.RawTextHelpFormatter,
+                                       epilog=commands_doc)
     argparser.add_argument('command', action='store',
                            help="The command to run.")
     argparser.add_argument('filename', nargs='?', help='Beancount input filename.')

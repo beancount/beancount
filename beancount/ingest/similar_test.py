@@ -2,13 +2,13 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import unittest
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount import loader
-
 from beancount.ingest import similar
 
 
@@ -169,3 +169,7 @@ class TestSimilarityComparator(cmptest.TestCase):
         compare(False, 'base', 'out-bounds')
         compare(False, 'base', 'too-late')
         compare(False, 'base', 'non-accounts')
+
+
+if __name__ == '__main__':
+    unittest.main()

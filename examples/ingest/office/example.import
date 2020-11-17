@@ -7,8 +7,8 @@ import sys
 from os import path
 sys.path.insert(0, path.join(path.dirname(__file__)))
 
-from importers import utrade
-from importers import acme_pdf
+from importers.utrade import utrade_csv
+from importers.acme import acme_pdf
 
 from beancount.ingest import extract
 from beancount.ingest.importers import ofx
@@ -16,13 +16,13 @@ from beancount.ingest.importers import ofx
 
 # Setting this variable provides a list of importer instances.
 CONFIG = [
-    utrade.Importer("USD",
-                    "Assets:US:UTrade",
-                    "Assets:US:UTrade:Cash",
-                    "Income:US:UTrade:{}:Dividend",
-                    "Income:US:UTrade:{}:Gains",
-                    "Expenses:Financial:Fees",
-                    "Assets:US:BofA:Checking"),
+    utrade_csv.Importer("USD",
+                        "Assets:US:UTrade",
+                        "Assets:US:UTrade:Cash",
+                        "Income:US:UTrade:{}:Dividend",
+                        "Income:US:UTrade:{}:Gains",
+                        "Expenses:Financial:Fees",
+                        "Assets:US:BofA:Checking"),
 
     ofx.Importer("379700001111222",
                  "Liabilities:US:CreditCard",

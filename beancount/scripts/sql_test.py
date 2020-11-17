@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import tempfile
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 from beancount.scripts import sql
@@ -65,3 +66,7 @@ class TestScriptSQL(test_utils.TestCase):
         root_dir = test_utils.find_repository_root(__file__)
         filename = path.join(root_dir, 'examples/example.beancount')
         self.convert_to_sql(filename)
+
+
+if __name__ == '__main__':
+    unittest.main()

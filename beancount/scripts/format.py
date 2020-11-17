@@ -17,25 +17,35 @@ import sys
 
 from beancount.core import amount
 from beancount.core import account
+from beancount.parser import version
 
 
-def align_beancount(contents):
+def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):
     """Reformat Beancount input to align all the numbers at the same column.
 
     Args:
       contents: A string, Beancount input syntax to reformat.
+      prefix_width: An integer, the width in characters to render the account
+        name to. If this is not specified, a good value is selected
+        automatically from the contents of the file.
+      num_width: An integer, the width to render each number. If this is not
+        specified, a good value is selected automatically from the contents of
+        the file.
+      currency_column: An integer, the column at which to align the currencies.
+        If given, this overrides the other options.
     Returns:
       A string, reformatted Beancount input with all the number aligned.
       No other changes than whitespace changes should be present between that
       return value and the input contents.
+
     """
     # Find all lines that have a number in them and calculate the maximum length
     # of the stripped prefix and the number.
     match_pairs = []
-    for index, line in enumerate(contents.splitlines()):
+    for line in contents.splitlines():
         match = re.match(
-            r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(amount.CURRENCY_RE),
-            line)
+            r'(^\d[^";]*?|\s+{})\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(
+                account.ACCOUNT_RE, amount.CURRENCY_RE), line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
@@ -45,6 +55,18 @@ def align_beancount(contents):
     # Normalize whitespace before lines that has some indent and an account
     # name.
     norm_match_pairs = normalize_indent_whitespace(match_pairs)
+
+    if currency_column:
+        output = io.StringIO()
+        for prefix, number, rest in norm_match_pairs:
+            if number is None:
+                output.write(prefix)
+            else:
+                num_of_spaces = currency_column - len(prefix) - len(number) - 4
+                spaces = ' ' * num_of_spaces
+                output.write(prefix + spaces + '  ' + number + ' ' + rest)
+            output.write('\n')
+        return output.getvalue()
 
     # Compute the maximum widths.
     filtered_pairs = [(prefix, number)
@@ -57,6 +79,12 @@ def align_beancount(contents):
     else:
         max_prefix_width = 0
         max_num_width = 0
+
+    # Use user-supplied overrides, if available
+    if prefix_width:
+        max_prefix_width = prefix_width
+    if num_width:
+        max_num_width = num_width
 
     # Create a format that will admit the maximum width of all prefixes equally.
     line_format = '{{:<{prefix_width}}}  {{:>{num_width}}} {{}}'.format(
@@ -95,9 +123,7 @@ def compute_most_frequent(iterable):
       The most frequent element. If there are no elements in the iterable,
       return None.
     """
-    frequencies = collections.defaultdict(int)
-    for element in iterable:
-        frequencies[element] += 1
+    frequencies = collections.Counter(iterable)
     if not frequencies:
         return None
     counts = sorted((count, element)
@@ -114,7 +140,7 @@ def normalize_indent_whitespace(match_pairs):
       match_pairs: A list of (prefix, number, rest) tuples.
     Returns:
       Another list of (prefix, number, rest) tuples, where prefix may have been
-      adjusted with a different whitespace prefi.
+      adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
     match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
@@ -137,22 +163,34 @@ def normalize_indent_whitespace(match_pairs):
 
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('filename', nargs='?', help='Beancount filename')
 
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
 
+    parser.add_argument('-w', '--prefix-width', action='store', type=int,
+                        help=("Use this prefix width instead of determining an optimal "
+                              "value automatically"))
+
+    parser.add_argument('-W', '--num-width', action='store', type=int,
+                        help=("Use this width to render numbers instead of determining "
+                              "an optimal value"))
+
+    parser.add_argument('-c', '--currency-column', action='store', type=int,
+                        help=("Align currencies in this column."))
+
     opts = parser.parse_args()
 
     # Read the original contents.
     file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
     contents = file.read()
+    file.close()
 
     # Align the contents.
-    formatted_contents = align_beancount(contents)
+    formatted_contents = align_beancount(
+        contents, opts.prefix_width, opts.num_width, opts.currency_column)
 
     # Make sure not to open the output file until we've passed out sanity
     # checks. We want to allow overwriting the input file, but want to avoid

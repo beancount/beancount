@@ -431,6 +431,9 @@ class TestRealOther(test_utils.TestCase):
 
         2013-04-21 event "location" "Somewhere, USA"
 
+        2013-04-22 custom "customentry" Assets:Bank:Checking
+        2013-04-22 custom "customentry" "just a string, no account"
+
         2013-05-01 close Assets:Bank:Checking
         """
         real_account = realization.realize(entries)
@@ -454,6 +457,7 @@ class TestRealOther(test_utils.TestCase):
                 (data.TxnPosting, 'Liabilities:CreditCard', '33.33'),
                 (data.Note, 'Assets:Bank:Checking', None),
                 (data.Balance, 'Assets:Bank:Checking', None),
+                (data.Custom, None, None),
                 (data.Close, 'Assets:Bank:Checking', None),
         ], postings):
             self.assertEqual(exp_type, type(entpost))
@@ -531,9 +535,8 @@ class TestRealOther(test_utils.TestCase):
             return [(type(entry), len(postings), str(change), str(balance))
                     for entry, postings, change, balance in rtuple]
 
-        # Surprinsingly enough, this covers all the legal cases that occur in
+        # Surprisingly enough, this covers all the legal cases that occur in
         # practice (checked for full coverage manually if you like).
-        # pylint: disable=bad-whitespace
         rtuple = realization.iterate_with_balance(real_account.txn_postings[:-2])
         self.assertEqual([
             (data.Open        , 0 , '()'          , '()')          ,
@@ -722,3 +725,7 @@ class TestComputeBalance(unittest.TestCase):
                                                   datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)
+
+
+if __name__ == '__main__':
+    unittest.main()

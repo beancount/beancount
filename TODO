@@ -533,7 +533,7 @@ Improve this bit:
   - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
   - Add a "target num columns" instead of a "min_width_account" to the
     EntryPrinter and figure out the min_width_account automatically from it,
-    depending on whether we've got render_weights on or not. Use hte longest
+    depending on whether we've got render_weights on or not. Use the longest
     possible number of integral digits required from the DisplayContext in
     order to make this tight.
 
@@ -1078,6 +1078,14 @@ http://furius.ca/beancount/doc/proposal-query
     https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
     Try to reproduce this specific use case.
 
+  - Generate balance auto-columns by referencing existing columns in the query,
+    not as a hard-coded column. Something like this:
+
+      SELECT position, SUM(convert(position, "USD", date)) as usd_amount, BALANCE(usd_amount) as usd_balance WHERE ...
+
+    For a compelling example, see
+    https://groups.google.com/d/msgid/beancount/20181207161308.56ivkgujculalx7g%40jirafa.cyrius.com.
+
 
 ** V2
 
@@ -1152,6 +1160,9 @@ http://furius.ca/beancount/doc/proposal-query
 
     * The new rendering code should use the DisplayContext. This would close the
       "display_context" branch.
+
+    * Type checking should be implemented using type annotations, but it should
+      also be implemented on the basic operators (see #6, for instance).
 
 
 *** SQLite3 Integration
@@ -1463,7 +1474,7 @@ http://furius.ca/beancount/doc/proposal-query
     - This causes a problem because a tag is parsed in '#9.95':
       10 AAPL {45.23#9.95 USD}
 
-    - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
+    - Make sure parsing {3.00 # USD} does not produce the same CostSpec as {3.00 USD}.
 
     - Remove OLD comments from parser.py and update the description to use the
       xposition class.
@@ -1536,15 +1547,7 @@ http://furius.ca/beancount/doc/proposal-query
     unique throughout the entire file, not just on the inventory the lot is
     being inserted into.
 
-  - Consider whether beancount.core.interpolate.balance_incomplete_postings()
-    and beancount.core.interpolate.get_incomplete_postings() still deserve to be
-    in beancount.core.interpolate. I believe we may be able to remove them along
-    with the "SIMPLE" booking method, and if anything, to move them to
-    beancount.parser.booking_simple. I think you could probably
-
-    * Rename beancount.core.interpolate to beancount.core.tolerances
-    * Move balance_incomplete_postings & get_incomplete_postings to beancount.parser.booking_simple.
-    * Move the corresponding unit tests to beancount.parser.booking_simple_test.
+  - Rename beancount.core.interpolate to beancount.core.tolerances
 
   - An important question: on an empty inventory, does the following transaction
     work?
@@ -1656,7 +1659,7 @@ http://furius.ca/beancount/doc/proposal-query
       Down the road, the inventory booking would use that and implement all methods,
       but for now, only the balance check would consult that value and disable the
       check if the default booking method is "NONE". I think I could easily hack that
-      in in a few hours."
+      in a few hours."
 
 
 
@@ -2149,7 +2152,7 @@ http://furius.ca/beancount/doc/proposal-query
 ** Prices Cleanup
 
   - Make the code finding lists of commodities for holdings and price reports
-    use the same code as beancount.prices.find_prices. Also, this should  really
+    use the same code as beancount.ops.find_prices. Also, this should  really
     just be renamed beancount.prices.find_commodities and perhaps be moved up to
     beancount.ops.
 
@@ -2695,47 +2698,8 @@ http://furius.ca/beancount/doc/proposal-query
   - In the balance sheet and income statement, we need to render the amounts
     inverted (and in a slightly different style).
 
-* Trading Accounts (over Conversions)
 
-  Beancount deals with exact balances by inserting a special "conversion"
-  entries for the particular subset of transactions under consideration. The
-  goal is to make the balance sheet sum up to zero exactly. It turns out it's a
-  bit of a kludge and it's not obvious to explain. A better method would be to
-  automatically insert postings to "Trading Accounts" as has been described
-  somewhere else. This obviates the need to insert conversion entries. However,
-  our first implementation should simply add the feature as optional and keep
-  the conversion entries insertion behavior, we want to introduce this better
-  alternative mechanism gradually.
-
-  - Implement the Trading Accounts method, it should work entirely
-    automatically. You'll have to insert a new option for specifying the root of
-    the trading accounts. This is a better solution than my current
-    reporting-dependent auto-insertion of a special conversion transaction. With
-    the "trading accounts" solution, any subset of transactions will naturally
-    balance to zero because each transaction is coerced to balance to zero.
-
-  - Write a document to explain how conversion entries work.
-
-  - Idea for a plugin: Create a new plugin that automatically inserts legs for
-    the "Trading Accounts" methods described here:
-    http://wiki.gnucash.org/wiki/Trading_Accounts
-    http://www.mscs.dal.ca/~selinger/accounting/tutorial.html
-    http://www.mscs.dal.ca/~selinger/accounting/gnucash.html
-    This should be implementable via a plugin.
-    The resulting Conversions entry should be empty...
-
-  - Make the conversions report sum up to zero by adding a similar conversion
-    entry as for the balance sheet.
-
-  - This is an older idea, which is related but which becomes obsolete if we
-    implement the Trading Accounts method: In order to zero out the "trial
-    balance" report perfectly, you could insert a conversion entry at the end of
-    it, in the same way that I do for the balance sheet. There is no reason that
-    this is any different; this should be done the same as for the balance
-    sheet.
-
-
-** Sanity Check For Conversions
+* Sanity Check For Conversions
 
   - Insert a validation check when transferring amounts to the balance sheet
     that the implied rate of the conversion entries is within certain bounds of
@@ -2811,7 +2775,7 @@ http://furius.ca/beancount/doc/proposal-query
 * Gains Sans Commissions
 
   How do I take into account the commissions and fees adjustment on the cost
-  basis for a position? You need to be able to accomodate commissions as not
+  basis for a position? You need to be able to accommodate commissions as not
   being part of the gain.
 
   BRANCH: 'sanscost'
@@ -3898,7 +3862,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
 
     * Follow this:
-      http://www.lemoda.net/c/reentrant-parser/
+      https://www.lemoda.net/c/reentrant-parser/
       http://flex.sourceforge.net/manual/Extra-Data.html
       to remove all globals from my lexer and make it truly reentrant and free of globals.
 
@@ -3913,7 +3877,7 @@ http://furius.ca/beancount/doc/proposal-query
 
       You also need to redefine yyerror() accordingly. I've done it and it
       works, it's simple, it's a 20 minute change:
-      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+      https://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
 
     * You also need to make the lexer reentrant:
       http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
@@ -3968,7 +3932,7 @@ http://furius.ca/beancount/doc/proposal-query
 * Reports
 ** Text Statements
 
-  - Complete text-statements branch, printing out balanace sheet and income
+  - Complete text-statements branch, printing out balance sheet and income
     statement to text for bean-report and ELI, complete with --date on those
     reports.
 
@@ -4073,7 +4037,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Financial Ratio Analysis
 
-  - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+  - Add these: https://www.csun.edu/~bjc20362/Controlling-2.pdf
 
 ** Trades
 
@@ -4265,7 +4229,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Move the TreeMaps experimental script for Expenses and Assets subtrees into
     the bean-web codebase:
-    http://bost.ocks.org/mike/treemap/
+    https://bost.ocks.org/mike/treemap/
     (Or maybe that would just be left for fava.)
 
 ** Rendering Documents
@@ -4677,6 +4641,153 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - For Vanguard RothIRA, I need a balance check that applies only to a subset
+    of linked transactions. I'm being provided with this number in the imported
+    file but I have to split the transactions themselves.
+
+  - Turn all FIXME into TODO(blais) and NOTE(blais).
+
+  - "find $PWD | treeify -F" is broken; used to work. Update and fix this.
+
+  - Make the spreadsheets <-> beancount upload/download conversion scripts more
+    general and flexible and provide them to the general public. These are
+    really powerful.
+
+  - When env var L is set to a directory, failure just says that the Lex scanner
+    fails; this should mention the name of the file, so it's clear. Sometimes I
+    override "L".
+
+  - The bean-query --numberify option does not split columns when the output is
+    text (default). Only for csv. This is inconsistent.
+
+  - In order to render all linked transactions, support pulling the referenced
+    link or tag name under the cursor (in Emacs).
+
+  - In beancount.plugins.auto_accounts: It would be really nice to constraint
+    which types accounts can be auto-created, for example, don't auto-create
+    Assets/Income accounts. This would be helpful in trip files.
+
+  - Idea! Add original conversion rate on an augmenting leg with cost basis, in
+    order to be able to partition profits due to appreciate vs. currency drift.
+    See https://groups.google.com/d/msgid/beancount/939fe47e-382a-4272-94e6-dd29f660d519%40googlegroups.com?utm_medium=email&utm_source=footer
+
+    "This brings up an interesting point, one which I had never given much
+    though before: if we wanted to solve this problem - and I think it may be
+    worthwhile to do so - couldn't we just (optionally) store the original
+    exchange rate at the time the lot was converted, with the lot (i.e.,
+    Position object) itself? That is, each lot would store:
+    - units (amount, currency)
+    - cost (amount, currency, acquistion-date, label, rate*)
+    (*) This being the new bit.
+
+    Given those rates, we should be able to compute the current value of the
+    cost basis in the local currency, and that against how much it cost us
+    originally, should tell us the proportion of gain/loss due solely to
+    currency appreciation/depreciation (ignore the effect relative interest
+    differences between the two currencies)."
+
+  - Three interesting ideas for extending booking further here:
+    https://groups.google.com/d/msgid/beancount/9c9dcc5f-72bf-44b2-aaf9-4e0c07cbff77%40googlegroups.com?utm_medium=email&utm_source=footer
+
+    1. When you apply the partial booking specification, it could be applied
+       against the booked legs of the transaction in order to select cost bases.
+       I'm not sure if this generalizes.
+
+        "Finally, the partial specification, say, just specifying the date, is
+         used to narrow down the lot against the list of possible lots in the
+         Inventory of the account before applying the transaction, but NOT against
+         the list of other postings. That would be an interesting power to add to
+         the booking system, as it could disambiguate this case."
+
+    2. One could assume a single currency group in each transaction when there's
+       at least one posting at cost.
+
+    3. One could also assume that in that account a commodity is never priced in
+       terms of two different currencies.
+
+  - Allow plugins to run before and after booking; this would make it possible
+    for plugins to run on CostSpec and fill in more information. In fact, maybe
+    the booking process itself could be moved to a plugin. This coudl be a
+    powerful idea, in that it would clarify the distinction between the two
+    streams of transactions.
+
+  - Add support for this data source: https://www.alphavantage.co/documentation/
+
+
+  - Sometimes it might be useful to end the stream of useful transactions at a
+    particular point in the input file. Normally this is best done by filtering
+    in the queries themselves, but there are times where having an End
+    directives specified temporarily in the input file would have been useful
+    (e.g. when traveling and running temporary balances while editing the input
+    file). Consider adding this facility, it might be a convenience, especially
+    to get around some of the absence of time issues.
+
+  - In the new SQL shell, allow the plugins to define new subsets of postings
+    (transactions), so that they can be queries separately. For instance, when
+    I'm traveling, it should be possible to query the set of transactions before
+    or after the split_expenses plugin ran. This would actually have been useful
+    while traveling, because the split_expenses plugin doubles up a lot of the
+    postings (that's what it does...).
+
+  - Document the "{ <num> # <num> <ccy> }" syntax properly, in a dedicated place.
+
+  - New currency sources:
+    https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html
+    https://news.ycombinator.com/item?id=15616880
+
+  - Idea: Add "contra" as a new column, when the sign posted in the wrong
+    direction based on the account type. Or add a boolean "contra" virtual
+    column (or function, from account name).
+
+  - Here's another way to implement an intra-day balance: define a new balance
+    directive type, whose semantic is tp sort all the entries, but the entries
+    on the same day of the balance are sorted in file order. I think this would
+    handle the most common use case. Try it (experiment).
+
+  - It might be interesting to support some sort of transfer syntax that would
+    allow the movement of Position's across accounts, without converting to the
+    cost, something like this:
+
+      2000-01-01 * "Transfer shares from BrokerOne to BrokerTwo to sell at BrokerTwo"
+        Assets:BrokerOne     -10 HOOL {}
+        Assets:BrokerTwo
+
+    While this example is simple enough, a fully general version of this might
+    not be, but it's worth prototyping. This would require some sort of new
+    syntax for these "transfers."
+
+  - Rationalize the strategy for reporting errors.
+
+  - Rendering idea: If a posting moved the balance in the unusual direction
+    (positive for Income, negative for Expenses), it could be rendered with a
+    highlight or a different color. These are rare and unusualy. One could also
+    do the same for Assets (when the amount moves up) or Liabilities (when it
+    moves down).
+
+  - Create a new "AssertQuery" directive to assert that the result of a
+    particular query produces a particular Inventory. For example, you could
+    check your total contributions to an account over a period of time like
+    this:
+
+       2018-03-11 assert_query "
+         select sum(position)
+         where year = 2018
+           and account ~ 'Assets:US:Vanguard:Retire:AfterTax:Cash'
+           and number > 0" == 27250 USD
+
+  - In the account name completion function in Emacs, don't include the name of
+    closed accounts.
+
+  - Ingest should sort the transaction using a secondary "txndate:" metadata
+    field and document this somewhere.
+
+  - Idea: Upon an irrecoverable error in the postings, instead of skipping a
+    transaction, record it without any postings. This will allow "bean-doctor
+    context" to at least find the offending transaction.
+
+  - Idea: Limit the absolute value that can be posted to rounding accounts. The
+    limits could be automatically derived from the tolerance values.
+
   - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
 
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
@@ -4979,6 +5090,13 @@ http://furius.ca/beancount/doc/proposal-query
         Income:US:Rewards                -650 VERIPTS
         Assets:US:Points:Verizon
 
+  - You should definitely do some anomaly detection on the list of prices, when
+    prices go out of whack with the rest of the time series. I had this happen
+    with a rewritten and buggy new price source. This could be done in a plugin
+    and would be useful, as invalid prices can manifest in some wildly incorrect
+    totals, and this is a common error. Easy with good payoff on correctness.
+    Make this part of the pedantic list as well.
+
 
 ** Google Keep Tickets
 
@@ -5195,8 +5313,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Definitely make a teaching video? this will be useful for applications to
     other things!
 
-  - Implement currency trading accounts as a prototype; see Conversions doc.
-
   - Write a doc specifically on handling the vesting of shares, including the
     tracking of unvested shares.
 
@@ -5408,8 +5524,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Look into TAB problem:
     https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
 
-      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
-      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+      "Ben, en fait j'attendais de r?soudre le probl?me du TAB, et pour ?a j'ai
+      besoin d'un "recipe" vu que ce que j'ai essay? fonctionne."
 
 ** Open Tickets - TODO
 

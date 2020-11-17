@@ -57,4 +57,4 @@ def validate_unique_prices(entries, unused_options_map):
                                       "Disagreeing price entries",
                                       price_entries))
 
-    return new_entries, errors
+    return entries, errors

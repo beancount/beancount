@@ -17,5 +17,5 @@ def validate_no_duplicates(entries, unused_options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    unused_hashes, errors = compare.hash_entries(entries)
+    unused_hashes, errors = compare.hash_entries(entries, exclude_meta=True)
     return entries, errors

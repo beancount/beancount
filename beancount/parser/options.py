@@ -110,7 +110,7 @@ def options_validate_booking_method(value):
     try:
         return data.Booking[value]
     except KeyError as exc:
-        raise ValueError(str(exc))
+        raise ValueError(str(exc)) from exc
 
 
 # List of option groups, with their description, option names and default
@@ -130,7 +130,7 @@ OptGroup = collections.namedtuple('OptGroup',
 #    example string for the user to model itself on.
 #  converter: A function object to be called to convert or validate the
 #    option during parsing, or None, if no conversion is necessary. The
-#    callable must either succesfully return with the parsed value, or
+#    callable must either successfully return with the parsed value, or
 #    raise a ValueError for the handler to report an error to the parser.
 #  deprecated: A string, a message set if the option is deprecated. This is
 #    used to issue suitable warnings when options aren't honored or about
@@ -304,21 +304,20 @@ PUBLIC_OPTION_GROUPS = [
       Mappings of currency to the tolerance used when it cannot be inferred
       automatically. The tolerance at hand is the one used for verifying (1)
       that transactions balance, (2) explicit balance checks from 'balance'
-      directives balance, and (3) in the precision used for padding (from the
+      directives balance, and (3) in the tolerance used for padding (from the
       'pad' directive).
 
       The values must be strings in the following format:
         <currency>:<tolerance>
       for example, 'USD:0.005'.
 
-      By default, the tolerance used for currencies without an inferred value is
-      zero (which means infinite precision). As a special case, this value, that
-      is, the fallabck value used for all currencies without an explicit default
-      can be overridden using the '*' currency, like this:  '*:0.5'. Used by
-      itself, this last example sets the fallabck tolerance as '0.5' for all
-      currencies.
+      By default, the tolerance allowed for currencies without an inferred value
+      is zero. As a special case, this value, that is, the fallback value used
+      for all currencies without an explicit default can be overridden using the
+      '*' currency, like this:  '*:0.5'. Used by itself, this last example sets
+      the fallabck tolerance as '0.5' for all currencies.
 
-      For detailed documentation about how precision is handled, see this doc:
+      For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
               converter=options_validate_tolerance_map)]),
@@ -341,7 +340,7 @@ PUBLIC_OPTION_GROUPS = [
       for example, if you deal with institutions with bad of unexpected rounding
       behaviour.
 
-      For detailed documentation about how precision is handled, see this doc:
+      For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
               converter=D)]),
@@ -403,56 +402,10 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_processing_mode)]),
 
     OptGroup("""
-      The number of lines beyond which a multi-line string will trigger a
+      The number of lines beyond which a multi-line string will trigger an
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
     """, [Opt("long_string_maxlines", 64)]),
-
-    OptGroup("""
-      The booking algorithm implementation, new (FULL) or old (SIMPLE).
-
-      By default Beancount matches using a powerful matching algorithm ("FULL"):
-      the cost specification (e.g., {...}) in reducing postings is interpreted
-      as a filter to match against existing position in the inventory of the
-      account prior to the transaction taking place. Whatever information you
-      provide:  cost amount, lot-date, label, will be used to reduce the set of
-      valid positions to reduce, and if the resulting set has more than one
-      position, a booking_method is applied.
-
-      Note: Don't confuse this with the booking "method". Beancount also has
-      global and per-account booking methods, which provides instructions on
-      what to do in case a reducing posting matches multiple lots. The default
-      booking "method" is STRICT, which raises an error on ambiguous matching
-      positions, but you can set the booking method default to FIFO or LIFO (see
-      "booking_method" option) to choose which positions to reduce to
-      automatically resolve the ambiguity, either globally (for all accounts),
-      or per account (see the Open directive).
-
-      Interpolation is also significantly more powerful than previously and many
-      parts of a posting can often be elided and automatically inferred.
-
-      For a limited time, you will be able to revert Beancount to use its older
-      algorithm ("SIMPLE") which merges together all positions at cost with an
-      exact match on the cost basis pair defined by (cost-amount, lot-date).
-      Lots without a lot-date will match against each other; controversely, if
-      you provide a lot-date in an augmenting posting, the reducing posting must
-      also provide the same lot-date in order to match. This old method is
-      inferior, and only supported in order to ease the transition to the newer,
-      more powerful method. It will be removed eventually, and correspondingly
-      this option will be deprecated.
-
-      If you find yourself experiencing errors while making the transition, it
-      is possible that previous lots matched each other that don't match
-      anymore; to resolve this, inspect the specific error and consider whether
-      it is appropriate to set the corresponding account's booking method to
-      "FIFO", which will automatically resolve the ambiguous matches. One
-      provides the booking method by inserting a string in the Open directive,
-      like this:
-
-         2016-10-11 open Assets:Invest:MoneyMarket   VIIIX   "FIFO"
-
-      See the Open directive for details.
-    """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
 
     OptGroup("""
       The booking method to apply to ambiguous reductions of inventory lots.
@@ -462,8 +415,6 @@ PUBLIC_OPTION_GROUPS = [
       error, "FIFO" which selects the oldest lot, and "NONE" which allows any
       reduction to be added to the inventory despite the absence of a match
       (resulting in mixed inventories).
-
-      (Note that this is only used with the new "FULL" booking algorithm.)
 
       See the following documents for details:
         http://furius.ca/beancount/doc/inventories
@@ -493,6 +444,11 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_boolean,
               deprecated=('Allowing None for tags and link '
                           'will go away eventually.'))]),
+
+    OptGroup("""
+      A boolean, if true, prepend the directory name of the top-level file to
+      the PYTHONPATH.
+    """, [Opt("insert_pythonpath", False, "TRUE")]),
     ]
 
 

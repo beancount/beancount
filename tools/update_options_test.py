@@ -10,7 +10,7 @@ try:
 except ImportError:
     apiclient = None
 else:
-    import update_options
+    from tools import update_options
 
 
 @unittest.skipIf(apiclient is None, "google-api-python-client not installed")
@@ -25,3 +25,7 @@ class TestUpdateOptions(unittest.TestCase):
     def test_replace_gdocs_document(self, build):
         docid = update_options.get_options_docid()
         update_options.replace_gdocs_document(None, docid, "Title", "Contents")
+
+
+if __name__ == '__main__':
+    unittest.main()

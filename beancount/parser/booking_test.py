@@ -4,13 +4,15 @@ __license__ = "GNU GPLv2"
 import collections
 import re
 import textwrap
+import unittest
 
 from beancount.core.data import Booking
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
-from beancount.parser import booking_simple
-from beancount import loader
+
+
+BookingTestError = collections.namedtuple('BookingTestError', 'source message entry')
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):
@@ -92,7 +94,7 @@ class TestBookingValidation(cmptest.TestCase):
     BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
-        entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
+        entries, _ = booking.convert_lot_specs_to_lots(entries)
         return booking.validate_inventory_booking(entries, options_map, self.BOOKMETH)
 
     def do_validate_inventory_booking(self, input_str):
@@ -172,21 +174,5 @@ class TestBookingValidation(cmptest.TestCase):
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
 
-class TestMissingEliminated(cmptest.TestCase):
-
-    @loader.load_doc(expect_errors=True)
-    def test_missing_data(self, entries, errors, options_map):
-        """
-          option "booking_algorithm" "SIMPLE"
-
-          2013-05-01 open Assets:Test
-          2013-05-01 open Expenses:Test
-
-          2016-06-10 * "" ""
-            Expenses:Test       10.00
-            Assets:Test
-        """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(
-            all(re.search('Missing number or currency.*not handled', error.message)
-                for error in errors))
+if __name__ == '__main__':
+    unittest.main()

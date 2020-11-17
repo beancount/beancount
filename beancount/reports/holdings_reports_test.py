@@ -4,8 +4,9 @@ __license__ = "GNU GPLv2"
 import unittest
 import io
 
+from beancount.core.number import Decimal
 from beancount.reports import holdings_reports
-from beancount.reports import table
+from beancount.utils import table
 from beancount.ops import holdings
 from beancount import loader
 
@@ -34,12 +35,6 @@ class TestHoldingsReports(unittest.TestCase):
 
     # Basically just call these functions below, to exercise them.
     # Very basic tests, but still worthwhile. Running the code is a minimum.
-
-    def test_get_assets_holdings(self):
-        holdings_list, price_map = holdings_reports.get_assets_holdings(self.entries,
-                                                                        self.options_map)
-        self.assertTrue(isinstance(holdings_list, list))
-        self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
         for args in [[],
@@ -71,3 +66,37 @@ class TestHoldingsReports(unittest.TestCase):
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
+
+
+class TestMultiCurrencyNetWorthCalculation(unittest.TestCase):
+
+    @loader.load_doc()
+    def setUp(self, entries, errors, options_map):
+        """
+        option "operating_currency" "CHF"
+        option "operating_currency" "USD"
+
+        2014-01-01 open Assets:Bank1
+        2014-01-01 open Income:Something
+
+        2014-05-31 *
+          Assets:Bank1         100 CAD
+          Income:Something
+
+        2014-05-31 price CAD  1.2 CHF
+        2014-05-31 price USD  5 CHF
+        2014-05-31 price USD  0.5 CAD
+        """
+        self.entries = entries
+        self.errors = errors
+        self.options_map = options_map
+
+    def test_calculate_net_worths(self):
+        net_worths = holdings_reports.calculate_net_worths(self.entries,
+                                                           self.options_map)
+        self.assertTrue(isinstance(net_worths, list))
+        self.assertListEqual(
+            [('CHF', Decimal('120.0')), ('USD', Decimal('200'))], net_worths)
+
+if __name__ == '__main__':
+    unittest.main()

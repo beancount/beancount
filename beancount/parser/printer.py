@@ -1,6 +1,6 @@
 """Conversion from internal data structures to text.
 """
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
@@ -9,8 +9,8 @@ import io
 import re
 import sys
 import textwrap
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import position
 from beancount.core import convert
 from beancount.core import inventory
@@ -19,6 +19,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import display_context
+from beancount.utils import misc_utils
 
 
 def align_position_strings(strings):
@@ -48,7 +49,7 @@ def align_position_strings(strings):
     max_before = 0
     # Maximum length after the alignment character.
     max_after = 0
-    # Maxmimum length of unknown strings.
+    # Maximum length of unknown strings.
     max_unknown = 0
 
     string_items = []
@@ -87,21 +88,27 @@ def align_position_strings(strings):
 class EntryPrinter:
     """A multi-method interface for printing all directive types.
 
-    Atributes:
+    Attributes:
       dcontext: An instance of DisplayContext with which to render all the numbers.
       render_weight: A boolean, true if we should render the weight of the postings
         as a comment, for debugging.
       min_width_account: An integer, the minimum width to leave for the account name.
+      prefix: User-specific prefix for custom indentation (for Fava).
+      stringify_invalid_types: If a metadata value is invalid, force a conversion to
+        string for printout.
     """
 
     # pylint: disable=invalid-name
 
-    def __init__(self, dcontext=None, render_weight=False, min_width_account=None):
+    def __init__(self, dcontext=None, render_weight=False, min_width_account=None,
+                 prefix=None, stringify_invalid_types=False):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
         self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
         self.render_weight = render_weight
         self.min_width_account = min_width_account
+        self.prefix = prefix or '  '
+        self.stringify_invalid_types = stringify_invalid_types
 
     def __call__(self, obj):
         """Render a directive.
@@ -118,7 +125,7 @@ class EntryPrinter:
 
     META_IGNORE = set(['filename', 'lineno', '__automatic__'])
 
-    def write_metadata(self, meta, oss, prefix='  '):
+    def write_metadata(self, meta, oss, prefix=None):
         """Write metadata to the file object, excluding filename and line number.
 
         Args:
@@ -127,19 +134,29 @@ class EntryPrinter:
         """
         if meta is None:
             return
+        if prefix is None:
+            prefix = self.prefix
         for key, value in sorted(meta.items()):
             if key not in self.META_IGNORE:
                 value_str = None
                 if isinstance(value, str):
-                    value_str = '"{}"'.format(value)
+                    value_str = '"{}"'.format(misc_utils.escape_string(value))
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
                 elif isinstance(value, bool):
                     value_str = 'TRUE' if value else 'FALSE'
                 elif isinstance(value, (dict, inventory.Inventory)):
                     pass # Ignore dicts, don't print them out.
+                elif value is None:
+                    value_str = ''  # Render null metadata as empty, on purpose.
                 else:
-                    raise ValueError("Unexpected value: '{!r}'".format(value))
+                    if self.stringify_invalid_types:
+                        # This is only intended to be used during development,
+                        # when debugging for custom values of data types
+                        # attached directly and not coming from the parser.
+                        value_str = str(value)
+                    else:
+                        raise ValueError("Unexpected value: '{!r}'".format(value))
                 if value_str is not None:
                     oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
@@ -147,9 +164,9 @@ class EntryPrinter:
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
-            strings.append('"{}"'.format(entry.payee))
+            strings.append('"{}"'.format(misc_utils.escape_string(entry.payee)))
         if entry.narration:
-            strings.append('"{}"'.format(entry.narration))
+            strings.append('"{}"'.format(misc_utils.escape_string(entry.narration)))
         elif entry.payee:
             # Ensure we append an empty string for narration if we have a payee.
             strings.append('""')
@@ -180,8 +197,8 @@ class EntryPrinter:
                                if self.render_weight
                                else False)
         if non_trivial_balance:
-            fmt = "  {{:{0}}}  {{:{1}}}  ; {{:{2}}}\n".format(
-                width_account, width_position, width_weight).format
+            fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
+                self.prefix, width_account, width_position, width_weight).format
             for posting, account, position_str, weight_str in zip(entry.postings,
                                                                   strs_account,
                                                                   strs_position,
@@ -192,7 +209,8 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position)
+            fmt_str = "{0}{{:{1}}}  {{:{2}}}\n".format(
+                self.prefix, width_account, max(1, width_position))
             fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
@@ -214,7 +232,7 @@ class EntryPrinter:
             position_str: A string, the rendered position string.
             weight_str: A string, the rendered weight of the posting.
         """
-        # Render a string of the flag and hte account.
+        # Render a string of the flag and the account.
         flag = '{} '.format(posting.flag) if posting.flag else ''
         flag_account = flag + posting.account
 
@@ -240,7 +258,8 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} ; {}\n'.format(flag_account,
+        oss.write('{}{:64} {} ; {}\n'.format(self.prefix,
+                                             flag_account,
                                              position_str,
                                              weight_str).rstrip())
         if posting.meta:
@@ -248,9 +267,21 @@ class EntryPrinter:
 
     def Balance(self, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
-        oss.write(('{e.date} balance {e.account:47} {amount}'
+        number_str = (self.dformat.format(entry.amount.number, entry.amount.currency)
+                      if isinstance(entry.amount.number, Decimal)
+                      else str(self.number))
+
+        # Render optional tolerance.
+        tolerance = ''
+        if entry.tolerance:
+            tolerance_fmt = self.dformat.format(entry.tolerance, entry.amount.currency)
+            tolerance = '~ {tolerance} '.format(tolerance=tolerance_fmt)
+
+        oss.write(('{e.date} balance {e.account:47} {amount} {tolerance}{currency}'
                    '{comment}\n').format(e=entry,
-                                         amount=entry.amount.to_string(self.dformat),
+                                         amount=number_str,
+                                         tolerance=tolerance,
+                                         currency=entry.amount.currency,
                                          comment=comment))
         self.write_metadata(entry.meta, oss)
 
@@ -259,7 +290,14 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Document(self, entry, oss):
-        oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
+        oss.write('{e.date} document {e.account} "{e.filename}"'.format(e=entry))
+        if entry.tags or entry.links:
+            oss.write(' ')
+            for tag in sorted(entry.tags):
+                oss.write('#{}'.format(tag))
+            for link in sorted(entry.links):
+                oss.write('^{}'.format(link))
+        oss.write('\n')
         self.write_metadata(entry.meta, oss)
 
     def Pad(self, entry, oss):
@@ -318,7 +356,7 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
 
-def format_entry(entry, dcontext=None, render_weights=False):
+def format_entry(entry, dcontext=None, render_weights=False, prefix=None):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
@@ -328,7 +366,7 @@ def format_entry(entry, dcontext=None, render_weights=False):
     Returns:
       A string, the formatted entry.
     """
-    return EntryPrinter(dcontext, render_weights)(entry)
+    return EntryPrinter(dcontext, render_weights, prefix=prefix)(entry)
 
 
 def print_entry(entry, dcontext=None, render_weights=False, file=None):
@@ -340,11 +378,16 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
+    output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                      if hasattr(sys.stdout, 'buffer') else
+                      sys.stdout)
     output.write(format_entry(entry, dcontext, render_weights))
     output.write('\n')
 
 
+# TODO(blais): Change this to a function which accepts the same optional
+# arguments as the printer object. Isolate the spacer/segmentation algorithm to
+# its own function.
 def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None):
     """A convenience function that prints a list of entries to a file.
 
@@ -376,6 +419,8 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         output.write(string)
 
 
+# TODO(blais): Rename to format_source() to be consistent, better:
+# format_location().
 def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.

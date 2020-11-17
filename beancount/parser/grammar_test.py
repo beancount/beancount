@@ -9,24 +9,22 @@ import unittest
 import inspect
 import textwrap
 import re
+from decimal import Decimal
 from unittest import mock
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import from_string as A
 from beancount.core.amount import Amount
 from beancount.core.position import CostSpec
+from beancount.parser import grammar
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import interpolate
 from beancount.utils import test_utils
-from beancount.parser import grammar
 from beancount.parser import cmptest
-from beancount.parser import booking_simple_test
 
 
 def check_list(test, objlist, explist):
@@ -46,7 +44,7 @@ def check_list(test, objlist, explist):
     elif isinstance(explist, (tuple, list)):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
-            test.assertTrue(isinstance(type(obj), type(exp)))
+            test.assertIsInstance(obj, exp)
 
 
 def raise_exception(*args, **kwargs):
@@ -230,6 +228,29 @@ class TestParserEntryTypes(unittest.TestCase):
                          txns[0].values)
 
 
+class TestWhitespace(unittest.TestCase):
+    """Tests for handling of whitespace and indent."""
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_0(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected DATE")
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_1(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected INDENT")
+
+
 class TestParserComplete(unittest.TestCase):
     """Tests of completion of balance."""
 
@@ -249,7 +270,7 @@ class TestParserComplete(unittest.TestCase):
             Expenses:Restaurant         100 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, 1 if booking_simple_test.ERRORS_ON_RESIDUAL else 0)
+        check_list(self, errors, 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -281,9 +302,12 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    def test_extra_whitespace_note(self):
-        input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
-        entries, errors, _ = parser.parse_string(input_)
+    @parser.parse_doc()
+    def test_extra_whitespace_note(self, entries, errors, _):
+        """
+        2013-07-11 note Assets:Cash "test"
+          ;;
+        """
         check_list(self, entries, [data.Note])
         check_list(self, errors, [])
 
@@ -296,7 +320,7 @@ class TestUglyBugs(unittest.TestCase):
             ';; End of file',
         ])
 
-        entries, errors, _ = parser.parse_string(input_, yydebug=0)
+        entries, errors, _ = parser.parse_string(input_)
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
@@ -329,7 +353,7 @@ class TestUglyBugs(unittest.TestCase):
         """
           2013-05-01 open Assets:Cash   USD,CAD,EUR
           2013-05-02 close Assets:US:BestBank:Checking
-          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
+          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
           2013-05-04 event "location" "New York, USA"
           2013-05-05 * "Payee" "Narration"
             Assets:US:BestBank:Checking   100.00 USD
@@ -339,6 +363,67 @@ class TestUglyBugs(unittest.TestCase):
         """
         self.assertEqual(7, len(entries))
         self.assertEqual([], errors)
+
+
+class TestComment(unittest.TestCase):
+
+    @parser.parse_doc()
+    def test_comment_before_transaction(self, entries, errors, _):
+        """
+        ; Hi
+        2015-06-07 *
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_transaction(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        ; Hi
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_between_postings(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD
+          ; Hi
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_posting(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD    ; Hi
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_transaction_start(self, entries, errors, _):
+        """
+        2015-06-07 *     ; Hi
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
 
 
 class TestPushPopTag(unittest.TestCase):
@@ -424,7 +509,7 @@ class TestPushPopMeta(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message,
-                                 "Attempting to pop absent metadata key")
+                         "Attempting to pop absent metadata key")
 
     @parser.parse_doc(expect_errors=True)
     def test_pushmeta_forgotten(self, entries, errors, _):
@@ -433,7 +518,7 @@ class TestPushPopMeta(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message,
-                                 "Unbalanced metadata key")
+                         "Unbalanced metadata key")
 
 
 class TestMultipleLines(unittest.TestCase):
@@ -498,30 +583,6 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(1, len(entries))
         self.assertEqual(2, len(entries[0].postings))
-
-
-class TestLineNumbers(unittest.TestCase):
-    """Check that the line numbers line up correctly."""
-
-    @parser.parse_doc()
-    def test_line_numbers(self, entries, errors, _):
-        """
-          2013-05-18 * "Nice dinner at Mermaid Inn"
-            Expenses:Restaurant         100 USD
-            Assets:US:Cash             -100 USD
-
-          2013-05-19 balance  Assets:US:Cash   -100 USD
-
-          2013-05-20 note  Assets:US:Cash   "Something"
-
-        """
-        _, first_line = inspect.getsourcelines(
-            TestLineNumbers.test_line_numbers.__wrapped__)
-        first_line += 1
-
-        self.assertEqual(2, entries[0].meta["lineno"] - first_line)
-        self.assertEqual(6, entries[1].meta["lineno"] - first_line)
-        self.assertEqual(8, entries[2].meta["lineno"] - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -594,9 +655,7 @@ class TestParserInclude(unittest.TestCase):
                          options_map['include'])
 
     def test_include_relative_from_string(self):
-        input_string = """
-          include "some/relative/filename.beancount"
-        """
+        input_string = 'include "some/relative/filename.beancount"'
         entries, errors, options_map = parser.parse_string(input_string)
         self.assertFalse(errors)
         self.assertEqual(['some/relative/filename.beancount'],
@@ -842,7 +901,7 @@ class TestTransactions(unittest.TestCase):
             Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
     @parser.parse_doc()
     def test_zero_prices(self, entries, errors, _):
@@ -884,9 +943,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Checking         -99 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors,
-                   [interpolate.BalanceError]
-                   if booking_simple_test.ERRORS_ON_RESIDUAL else [])
+        check_list(self, errors, [])
 
     @parser.parse_doc()
     def test_no_postings(self, entries, errors, _):
@@ -894,6 +951,65 @@ class TestTransactions(unittest.TestCase):
           2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
         """
         self.assertTrue(isinstance(entries[0].postings, list))
+
+    @parser.parse_doc(expect_errors=True)
+    def test_blank_line_not_allowed(self, entries, errors, _):
+        """
+          2014-04-20 * "Busted!"
+            Assets:Checking         100 USD
+
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting])
+        check_list(self, errors, [parser.ParserSyntaxError])
+
+    def test_blank_line_with_spaces_not_allowed(self):
+        input_ = '\n'.join([
+            '2014-04-20 * "Busted!"',
+            '  Assets:Checking         100 USD',
+            '  ',  # This cuts off the transaction
+            '  Assets:Checking         -99 USD'
+        ])
+        entries, errors, _ = parser.parse_string(input_)
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting])
+        check_list(self, errors, [parser.ParserSyntaxError])
+
+    @parser.parse_doc()
+    def test_tags_after_first_line(self, entries, errors, _):
+        """
+          2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+            #tag1 #tag2
+            ^link1 #tag3
+            #tag4 ^link2
+            ^link3 ^link4
+            #tag6
+            ^link5
+            Assets:Checking         100 USD
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting, data.Posting])
+        check_list(self, errors, [])
+        self.assertEqual({"basetag", "tag1", "tag2", "tag3", "tag4", "tag6"},
+                         entries[0].tags)
+        self.assertEqual({"baselink", "link1", "link2", "link3", "link4", "link5"},
+                         entries[0].links)
+
+    @parser.parse_doc(expect_errors=True)
+    def test_tags_after_first_posting(self, entries, errors, _):
+        """
+          2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+            Assets:Checking         100 USD
+            #tag1 ^link1
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting, data.Posting])
+        check_list(self, errors, [parser.ParserError])
+        self.assertEqual({"basetag"}, entries[0].tags)
+        self.assertEqual({"baselink"}, entries[0].links)
 
 
 class TestParseLots(unittest.TestCase):
@@ -967,7 +1083,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_merge(self, entries, errors, _):
         """
           2014-01-01 *
@@ -1045,7 +1161,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(2, len(errors))
         self.assertTrue(any(re.search("Duplicate merge", error.message)
                             for error in errors))
 
@@ -1120,6 +1236,14 @@ class TestCurrencies(unittest.TestCase):
         """
         self.assertFalse(errors)
 
+    @parser.parse_doc(expect_errors=True)
+    def test_different_cost_and_price_currency(self, entries, errors, _):
+        """
+          2018-03-21 * "Convert MR to KrisFlyer"
+            Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
+            Assets:Krisflyer            100 KRISFLYER
+        """
+
 
 class TestTotalsAndSigns(unittest.TestCase):
 
@@ -1130,7 +1254,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      0 MSFT {200.00 USD}
             Assets:Investments:Cash      0 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
 
     @parser.parse_doc(expect_errors=False)
     def test_zero_cost(self, entries, errors, _):
@@ -1139,7 +1263,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {0.00 USD}
             Assets:Investments:Cash     0.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
 
     @parser.parse_doc(expect_errors=False)
     def test_cost_negative(self, entries, errors, _):
@@ -1148,7 +1272,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
             Assets:Investments:Cash  2000.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
         # Note: This error is caught only at booking time.
 
     @parser.parse_doc()
@@ -1196,7 +1320,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {{-200.00 USD}}
             Assets:Investments:Cash   200.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
         # Note: This error is caught only at booking time.
 
     @parser.parse_doc(expect_errors=True)
@@ -1238,71 +1362,6 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash   20000.00 USD
         """
         self.assertRegex(errors[0].message, 'Negative.*allowed')
-
-
-class TestAllowNegativePrices(unittest.TestCase):
-
-    def setUp(self):
-        self.__allow_negative_prices__ = grammar.__allow_negative_prices__
-        grammar.__allow_negative_prices__ = True
-
-    def tearDown(self):
-        grammar.__allow_negative_prices__ = self.__allow_negative_prices__
-
-    @parser.parse_doc()
-    def test_total_cost(self, entries, errors, _):
-        """
-          2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash  -20000 USD
-
-          2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
-            Assets:Investments:Cash  -20000 USD
-
-          2013-06-01 * ""
-            Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash    20000 USD
-        """
-        self.assertFalse(errors)
-        for entry in entries:
-            posting = entry.postings[0]
-            self.assertEqual(D('2000'), posting.cost.number_total)
-            self.assertEqual('USD', posting.cost.currency)
-            self.assertEqual(None, posting.price)
-
-    @parser.parse_doc()
-    def test_price_negative(self, entries, errors, _):
-        """
-          2013-05-18 * ""
-            Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
-            Assets:Investments:Cash  2000.00 USD
-        """
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.cost)
-
-    @parser.parse_doc()
-    def test_total_price_negative(self, entries, errors, _):
-        """
-          2013-05-18 * ""
-            Assets:Investments:MSFT        -10 MSFT @@ 2000.00 USD
-            Assets:Investments:Cash   20000.00 USD
-        """
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.cost)
-
-    @parser.parse_doc()
-    def test_total_price_inverted(self, entries, errors, _):
-        """
-          2013-05-18 * ""
-            Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
-            Assets:Investments:Cash  -20000.00 USD
-        """
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.cost)
 
 
 class TestBalance(unittest.TestCase):
@@ -1710,11 +1769,11 @@ class TestLexerAndParserErrors(cmptest.TestCase):
       build_grammar_error() to register the error. Error recovery proceeds
       similarly to what was described previously.
 
-    * Grammar Builder Exception: A grammar rule is reduced succesfully, a
+    * Grammar Builder Exception: A grammar rule is reduced successfully, a
       builder method is invoked and raises a Python exception. A macro in the
       code that invokes this method is used to catch this error and calls
       build_grammar_error_from_exception() to register an error and makes the
-      parser issue an error wth YYERROR (see {05bb0fb60e86}).
+      parser issue an error with YYERROR (see {05bb0fb60e86}).
 
     We never call YYABORT anywhere so the yyparse() function should never return
     anything else than 0. If it does, we translate that into a Python
@@ -1813,7 +1872,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message,
-                                     '(Invalid token|unexpected RPAREN)')
+                             '(Invalid token|unexpected RPAREN)')
 
     @parser.parse_doc(expect_errors=True)
     def test_grammar_syntax_error(self, entries, errors, _):
@@ -2391,7 +2450,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2402,7 +2461,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_missing_basis(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2414,7 +2473,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_with_other(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2425,6 +2484,30 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(CostSpec(D("100.00"), None, "CAD",
                                   datetime.date(2015, 9, 21), "blablabla", True),
                          posting.cost)
+
+
+class TestMisc(cmptest.TestCase):
+
+    @parser.parse_doc(expect_errors=False)
+    def test_comment_in_postings(self, entries, errors, options_map):
+        """
+          2017-06-27 * "Bitcoin network fee"
+            ; Account: Pocket money
+            Expenses:Crypto:NetworkFees           0.00082487 BTC
+            Assets:Crypto:Bitcoin                -0.00082487 BTC
+        """
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc(expect_errors=True)
+    def test_comment_in_postings_invalid(self, entries, errors, options_map):
+        """
+          2017-06-27 * "Bitcoin network fee"
+            Expenses:Crypto:NetworkFees           0.00082487 BTC
+          ; Account: Pocket money
+            Assets:Crypto:Bitcoin                -0.00082487 BTC
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "unexpected INDENT")
 
 
 class TestDocument(unittest.TestCase):
@@ -2453,3 +2536,22 @@ class TestDocument(unittest.TestCase):
         """
         check_list(self, entries, [data.Document])
         self.assertEqual({'something'}, entries[0].links)
+
+
+class TestMethodsSignature(unittest.TestCase):
+
+    def test_signatures(self):
+        # Enforce that all "public" methods of the Builder class have
+        # 'filename' and 'lineno' as the first two arguments.
+        for name, func in inspect.getmembers(grammar.Builder, inspect.isfunction):
+            if (name.isupper() or
+                name.startswith('_') or
+                name.startswith('get_') or
+                name == 'finalize'):
+                continue
+            parameters = inspect.signature(func).parameters.keys()
+            self.assertEqual(list(parameters)[:3], ['self', 'filename', 'lineno'])
+
+
+if __name__ == '__main__':
+    unittest.main()

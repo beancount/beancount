@@ -3,9 +3,9 @@
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import urllib.error
 import logging
 from urllib import request
+from urllib import error
 
 
 def retrying_urlopen(url, timeout=5, max_retry=5):
@@ -25,7 +25,7 @@ def retrying_urlopen(url, timeout=5, max_retry=5):
             response = request.urlopen(url, timeout=timeout)
             if response:
                 break
-        except urllib.error.URLError:
+        except error.URLError:
             return None
     if response and response.getcode() != 200:
         return None

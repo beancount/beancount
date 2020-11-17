@@ -4,15 +4,18 @@ Tests for parser.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import io
 import unittest
 import tempfile
 import textwrap
 import sys
 import subprocess
 
+from pytest import mark
+
 from beancount.core.number import D
 from beancount.core import data
-from beancount.parser import parser
+from beancount.parser import parser, _parser, lexer, grammar
 from beancount.utils import test_utils
 
 
@@ -45,58 +48,54 @@ class TestParserDoc(unittest.TestCase):
         """
         self.assertTrue(errors)
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__errors(self):
-        @parser.parse_doc(expect_errors=True)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @mark.xfail
+    @parser.parse_doc(expect_errors=False)
+    def test_parse_doc__errors(self, _, __, ___):
+        """
+        2013-05-40 * "Invalid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__noerrors(self):
-        @parser.parse_doc(expect_errors=False)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @mark.xfail
+    @parser.parse_doc(expect_errors=True)
+    def test_parse_doc__noerrors(self, _, __, ___):
+        """
+        2013-05-01 * "Valid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
 
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
-    INPUT = """
+    INPUT = textwrap.dedent("""
       2013-05-18 * "Nice dinner at Mermaid Inn"
         Expenses:Restaurant         100 USD
         Assets:US:Cash
-    """
+    """)
 
     def test_parse_string(self):
         entries, errors, _ = parser.parse_string(self.INPUT)
         self.assertEqual(1, len(entries))
         self.assertEqual(0, len(errors))
 
-    def test_parse_file(self):
+    def test_parse_filename(self):
         with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
             file.write(self.INPUT)
             file.flush()
             entries, errors, _ = parser.parse_file(file.name)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+
+    def test_parse_file(self):
+        with tempfile.TemporaryFile('w+b', suffix='.beancount') as file:
+            file.write(self.INPUT.encode('utf-8'))
+            file.seek(0)
+            entries, errors, _ = parser.parse_file(file)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
@@ -107,20 +106,23 @@ class TestParserInputs(unittest.TestCase):
         assert not errors, "Errors: {}".format(errors)
 
     def test_parse_stdin(self):
+        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=test_utils.subprocess_env(),
+                                env=env,
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
 
-    def test_parse_string_None(self):
-        input_string = report_filename = None
+    def test_parse_None(self):
+        # None is treated as the empty string...
+        entries, errors, _ = parser.parse_string(None)
+        self.assertEqual(0, len(entries))
+        self.assertEqual(0, len(errors))
+        # ...however None in not a valid file like object
         with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string(input_string)
-        with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string("something", None, report_filename)
+            entries, errors, _ = parser.parse_file(None)
 
 
 class TestUnicodeErrors(unittest.TestCase):
@@ -201,3 +203,197 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertTrue(isinstance(entry, data.Transaction))
+
+
+class TestReferenceCounting(unittest.TestCase):
+
+    def test_parser_lex(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        # Note that passing name as an argument to sys.getrefcount()
+        # counts as one reference, thus the minimum reference count
+        # returned for any object is 2.
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = name
+        # One more refernece from the 'name' attriute.
+        self.assertEqual(sys.getrefcount(name), 3)
+        # Just one reference to the BytesIO object.
+        self.assertEqual(sys.getrefcount(f), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        iterator = parser.lex(f)
+        # The Parser object keeps references to the input file and to
+        # the name while iterating over the tokens in the input file.
+        self.assertEqual(sys.getrefcount(name), 4)
+        self.assertEqual(sys.getrefcount(f), 3)
+        # The iterator holds one reference to the parser.
+        self.assertEqual(sys.getrefcount(parser), 3)
+
+        tokens = list(iterator)
+        # No tokens returned for an empty input.
+        self.assertEqual(len(tokens), 0)
+        # Once done scanning is completed the Parser object still has
+        # references to the input file and to the name.
+        self.assertEqual(sys.getrefcount(name), 4)
+        self.assertEqual(sys.getrefcount(f), 3)
+
+        del parser
+        del iterator
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 2)
+
+        del f
+        # With the file object gone there is one reference to name.
+        self.assertEqual(sys.getrefcount(name), 2)
+
+    def test_parser_lex_filename(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = object()
+        self.assertEqual(sys.getrefcount(f.name), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        iterator = parser.lex(f, filename=name)
+        tokens = list(iterator)
+        # The Parser object keeps references to the input file and to
+        # the name while iterating over the tokens in the input file.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 3)
+        # The name attribute of the file object is not referenced.
+        self.assertEqual(sys.getrefcount(f.name), 2)
+
+        del parser
+        del iterator
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 2)
+        self.assertEqual(sys.getrefcount(f), 2)
+
+    def test_parser_lex_multi(self):
+        file1 = io.BytesIO(b"")
+        file1.name = object()
+        self.assertEqual(sys.getrefcount(file1.name), 2)
+
+        file2 = io.BytesIO(b"")
+        file2.name = object()
+        self.assertEqual(sys.getrefcount(file2.name), 2)
+
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(file1))
+        tokens = list(parser.lex(file2))
+
+        del parser
+        # Once the Parser object is gone we should have just the local
+        # references to the file objects and one references to the names.
+        self.assertEqual(sys.getrefcount(file1), 2)
+        self.assertEqual(sys.getrefcount(file1.name), 2)
+        self.assertEqual(sys.getrefcount(file2), 2)
+        self.assertEqual(sys.getrefcount(file2.name), 2)
+
+    def test_parser_parse(self):
+        # Do not use a string to avoid issues due to string interning.
+        name = object()
+        self.assertEqual(sys.getrefcount(name), 2)
+
+        f = io.BytesIO(b"")
+        f.name = name
+        self.assertEqual(sys.getrefcount(f.name), 3)
+
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f)
+        # The Parser object keeps a reference to the input file.
+        self.assertEqual(sys.getrefcount(f), 3)
+        # There are references to the file name from the Parser object
+        # and from the the parsing results. In the case of an empty
+        # input file from the options dictionary stored in the builder.
+        self.assertEqual(sys.getrefcount(name), 5)
+        builder.options = {}
+        self.assertEqual(sys.getrefcount(name), 4)
+
+        del parser
+        # Once the Parser object is gone we should have just the local
+        # reference to the file object and two references to name.
+        self.assertEqual(sys.getrefcount(name), 3)
+        self.assertEqual(sys.getrefcount(f), 2)
+
+
+class TestLineno(unittest.TestCase):
+
+    def test_lex(self):
+        f = io.BytesIO(b"1.0")
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(f))
+        token, lineno, matched, value = tokens[0]
+        self.assertEqual(lineno, 1)
+
+    def test_lex_lineno(self):
+        f = io.BytesIO(b"1.0")
+        builder = lexer.LexBuilder()
+        parser = _parser.Parser(builder)
+        tokens = list(parser.lex(f, lineno=42))
+        token, lineno, matched, value = tokens[0]
+        self.assertEqual(lineno, 42)
+
+    def test_parse(self):
+        f = io.BytesIO(b"2020-07-30 open Assets:Test")
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f)
+        self.assertEqual(builder.entries[0].meta['lineno'], 1)
+
+    def test_parse_lineno(self):
+        f = io.BytesIO(b"2020-07-30 open Assets:Test")
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(f, lineno=42)
+        self.assertEqual(builder.entries[0].meta['lineno'], 42)
+
+    def test_parse_string(self):
+        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")
+        self.assertEqual(entries[0].meta['lineno'], 1)
+
+    def test_parse_string_lineno(self):
+        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test",
+                                                       report_firstline=42)
+        self.assertEqual(entries[0].meta['lineno'], 42)
+
+    @parser.parse_doc()
+    def test_parse_doc(self, entries, errors, _):
+        """
+          2013-01-01 open Assets:US:Cash
+
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash             -100 USD
+
+          2013-05-19 balance  Assets:US:Cash   -100 USD
+
+          2013-05-20 note  Assets:US:Cash   "Something"
+        """
+
+        with open(__file__) as f:
+            for lineno, line in enumerate(f, 1):
+                if line.strip() == "2013-01-01 open Assets:US:Cash":
+                    break
+
+        self.assertEqual(len(entries), 4)
+        self.assertEqual(entries[0].meta['lineno'], lineno)
+        self.assertEqual(entries[1].meta['lineno'], lineno + 2)
+        self.assertEqual(entries[2].meta['lineno'], lineno + 6)
+        self.assertEqual(entries[3].meta['lineno'], lineno + 8)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -5,15 +5,18 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import warnings
+
+from decimal import Decimal
 
 from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
+from beancount.core.amount import Amount
+from beancount.core.position import CostSpec
+from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
-from beancount.core import position
 from beancount.core import convert
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
@@ -49,38 +52,6 @@ def is_tolerance_user_specified(tolerance):
 
 # An error from balancing the postings.
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
-
-
-def get_posting_weight(posting):
-    """Get the amount that will need to be balanced from a posting of a transaction.
-
-    Deprecated; see convert.get_weight().
-
-    Args:
-      posting: A Posting instance.
-    Returns:
-      An amount, required to balance this posting.
-    """
-    warnings.warn("get_posting_weight() is deprecated; "
-                  "use convert.get_weight() instead")
-    return convert.get_weight(posting)
-
-
-def compute_cost_basis(postings):
-    """Compute the sum of the cost basis from all the given postings.
-
-    This only includes legs which have a cost on them.
-
-    Args:
-      postings: A list of Posting instances.
-    Returns:
-      An Inventory instance.
-    """
-    warnings.warn("compute_cost_basis() is deprecated; "
-                  "use Inventory(positions).reduce(convert.get_cost) instead")
-    return Inventory(pos
-                     for pos in postings
-                     if pos.cost is not None).reduce(convert.get_cost)
 
 
 def has_nontrivial_balance(posting):
@@ -171,7 +142,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
-    default_tolerances = options_map['inferred_tolerance_default']
+    default_tolerances = options_map["inferred_tolerance_default"]
     tolerances = default_tolerances.copy()
 
     cost_tolerances = collections.defaultdict(D)
@@ -180,7 +151,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
         units = posting.units
-        if units is MISSING or units is None:
+        if not (isinstance(units, Amount) and isinstance(units.number, Decimal)):
             continue
 
         # Compute bounds on the number.
@@ -191,6 +162,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
             tolerances[currency] = max(tolerance,
                                        tolerances.get(currency, -1024))
+
             if not use_cost:
                 continue
 
@@ -198,10 +170,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
             cost = posting.cost
             if cost is not None:
                 cost_currency = cost.currency
-                if isinstance(cost, position.Cost):
+                if isinstance(cost, Cost):
                     cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
                 else:
-                    assert isinstance(cost, position.CostSpec)
+                    assert isinstance(cost, CostSpec)
                     cost_tolerance = MAXIMUM_TOLERANCE
                     for cost_number in cost.number_total, cost.number_per:
                         if cost_number is None or cost_number is MISSING:
@@ -211,7 +183,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
             # Compute bounds on the smallest digit of the number implied as cost.
             price = posting.price
-            if price is not None:
+            if isinstance(price, Amount) and isinstance(price.number, Decimal):
                 price_currency = price.currency
                 price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
                 cost_tolerances[price_currency] += price_tolerance
@@ -220,7 +192,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     default = tolerances.pop('*', ZERO)
-    return defdict.ImmutableDictWithDefault(default, tolerances)
+    return defdict.ImmutableDictWithDefault(tolerances, default=default)
 
 
 # Meta-data field appended to automatically inserted postings.
@@ -257,7 +229,7 @@ def fill_residual_posting(entry, account_rounding):
 
     Note: This was developed in order to tweak transactions before exporting
     them to Ledger. A better method would be to enable the feature that
-    autoamtically inserts these rounding postings on all transactions, and so
+    automatically inserts these rounding postings on all transactions, and so
     maybe this method can be deprecated if we do so.
 
     Args:
@@ -354,7 +326,7 @@ def quantize_with_tolerance(tolerances, currency, number):
     Args:
       tolerances: A dict of currency to tolerance Decimalvalues.
       number: A number to quantize.
-      currency: A string currecy.
+      currency: A string currency.
     Returns:
       A Decimal, the number possibly quantized.
     """

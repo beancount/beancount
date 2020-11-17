@@ -12,10 +12,15 @@ import copy
 import datetime
 import re
 import operator
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
+
+
+# A global constant which sets whether we support inferred/implicit group-by
+# semantics.
+SUPPORT_IMPLICIT_GROUPBY = True
 
 
 class CompilationError(Exception):
@@ -180,25 +185,33 @@ class EvalContains(EvalBinaryOp):
 # Note: We ought to implement implicit type promotion here,
 # e.g., int -> float -> Decimal.
 
+# Note(2): This does not support multiplication on Amount, Position, Inventory.
+# We need to rewrite the evaluator to support types in order to do this
+# properly.
+
 class EvalMul(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__mul__, left, right, Decimal)
+        f = lambda x, y: Decimal(x * y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalDiv(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__truediv__, left, right, Decimal)
+        f = lambda x, y: Decimal(x / y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalAdd(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__add__, left, right, Decimal)
+        f = lambda x, y: Decimal(x + y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalSub(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__sub__, left, right, Decimal)
+        f = lambda x, y: Decimal(x - y)
+        super().__init__(f, left, right, Decimal)
 
 
 # Interpreter nodes.
@@ -338,9 +351,9 @@ class CompilationEnvironment:
         """
         try:
             return self.columns[name]()
-        except KeyError:
+        except KeyError as exc:
             raise CompilationError("Invalid column name '{}' in {} context.".format(
-                name, self.context_name))
+                name, self.context_name)) from exc
 
     def get_function(self, name, operands):
         """Return a function accessor for the given named function.
@@ -354,12 +367,12 @@ class CompilationEnvironment:
             # If not found with the operands, try just looking it up by name.
             try:
                 return self.functions[name](operands)
-            except KeyError:
+            except KeyError as exc:
                 signature = '{}({})'.format(name,
                                             ', '.join(operand.dtype.__name__
                                                       for operand in operands))
                 raise CompilationError("Invalid function '{}' in {} context".format(
-                    signature, self.context_name))
+                    signature, self.context_name)) from exc
 
 
 class AttributeColumn(EvalColumn):
@@ -424,7 +437,7 @@ def get_columns_and_aggregates(node):
     Returns:
       A pair of (columns, aggregates), both of which are lists of EvalNode instances.
         columns: The list of all columns accessed not under an aggregate node.
-        aggregates: The lis tof all aggregate nodes.
+        aggregates: The list of all aggregate nodes.
     """
     columns = []
     aggregates = []
@@ -651,10 +664,20 @@ def compile_group_by(group_by, c_targets, environ):
         if any(aggregate_bools):
             # If the query is an aggregate query, check that all the targets are
             # aggregates.
-            if not all(aggregate_bools):
-                raise CompilationError(
-                    "Aggregate query without a GROUP-BY should have only aggregates")
-            assert group_indexes == []
+            if all(aggregate_bools):
+                assert group_indexes == []
+            else:
+                # If some of the targets aren't aggregates, automatically infer
+                # that they are to be implicit group by targets. This makes for
+                # a much more convenient syntax for our lightweight SQL, where
+                # grouping is optional.
+                if SUPPORT_IMPLICIT_GROUPBY:
+                    group_indexes = [index
+                                     for index, c_target in enumerate(c_targets)
+                                     if not c_target.is_aggregate]
+                else:
+                    raise CompilationError(
+                        "Aggregate query without a GROUP-BY should have only aggregates")
         else:
             # This is not an aggregate query; don't set group_indexes to
             # anything useful, we won't need it.
@@ -800,8 +823,8 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     Args:
       select: An instance of query_parser.Select.
       targets_environ: A compilation environment for evaluating targets.
-      postings_environ: : A compilation environment for evaluating postings filters.
-      entries_environ: : A compilation environment for evaluating entry filters.
+      postings_environ: A compilation environment for evaluating postings filters.
+      entries_environ: A compilation environment for evaluating entry filters.
     Returns:
       An instance of EvalQuery, ready to be executed.
     """
@@ -810,14 +833,14 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets and the where clause.
     from_clause = select.from_clause
     if isinstance(from_clause, query_parser.Select):
-        c_from = compile_select(from_clause) if from_clause is not None else None
+        c_from = None
         environ_target = ResultSetEnvironment()
         environ_where = ResultSetEnvironment()
 
         # Remove this when we add support for nested queries.
         raise CompilationError("Queries from nested SELECT are not supported yet")
 
-    elif from_clause is None or isinstance(from_clause, query_parser.From):
+    if from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.
         c_from = compile_from(from_clause, entries_environ)
         environ_target = targets_environ
@@ -866,12 +889,15 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets to the list of group-by expressions and should have resolved all
     # the indexes.
     if group_indexes is not None:
-        non_aggregate_indexes = [index
-                                 for index, c_target in enumerate(c_targets)
-                                 if not c_target.is_aggregate]
-        if set(non_aggregate_indexes) != set(group_indexes):
+        non_aggregate_indexes = set(index
+                                    for index, c_target in enumerate(c_targets)
+                                    if not c_target.is_aggregate)
+        if non_aggregate_indexes != set(group_indexes):
+            missing_names = ['"{}"'.format(c_targets[index].name)
+                             for index in non_aggregate_indexes - set(group_indexes)]
             raise CompilationError(
-                "All non-aggregates must be covered by GROUP-BY clause in aggregate query")
+                "All non-aggregates must be covered by GROUP-BY clause in aggregate query; "
+                "the following targets are missing: {}".format(",".join(missing_names)))
 
     # Check that PIVOT-BY is not supported yet.
     if select.pivot_by is not None:

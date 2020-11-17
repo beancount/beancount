@@ -17,6 +17,9 @@ __plugins__ = ('add_implicit_prices',)
 ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'source message entry')
 
 
+METADATA_FIELD = "__implicit_prices__"
+
+
 def add_implicit_prices(entries, unused_options_map):
     """Insert implicitly defined prices from Transactions.
 
@@ -60,6 +63,7 @@ def add_implicit_prices(entries, unused_options_map):
                 #      Assets:Account    100 HOOL {564.20} @ {581.97} USD
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
+                    meta[METADATA_FIELD] = "from_price"
                     price_entry = data.Price(meta, entry.date,
                                              units.currency,
                                              posting.price)
@@ -70,12 +74,14 @@ def add_implicit_prices(entries, unused_options_map):
                 #      Assets:Account    100 HOOL {564.20}
                 elif (cost is not None and
                       booking != inventory.Booking.REDUCED):
+                    # TODO(blais): What happens here if the account has no
+                    # booking strategy? Do we end up inserting a price for the
+                    # reducing leg?  Check.
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
+                    meta[METADATA_FIELD] = "from_cost"
                     price_entry = data.Price(meta, entry.date,
                                              units.currency,
-                                             amount.Amount(cost.number,
-                                                           cost.currency))
-
+                                             amount.Amount(cost.number, cost.currency))
                 else:
                     price_entry = None
 

@@ -62,6 +62,21 @@ def get_account_type(account_name):
     return account.split(account_name)[0]
 
 
+def is_account_type(account_type, account_name):
+    """Return the type of this account's name.
+
+    Warning: No check is made on the validity of the account type. This merely
+    returns the root account of the corresponding account name.
+
+    Args:
+      account_type: A string, the prefix type of the account.
+      account_name: A string, the name of the account whose type is to return.
+    Returns:
+      A boolean, true if the account is of the given type.
+    """
+    return bool(re.match('^{}{}'.format(account_type, account.sep), account_name))
+
+
 def is_root_account(account_name, account_types=None):
     """Return true if the account name is a root account.
     This function does not verify whether the account root is a valid
@@ -83,7 +98,7 @@ def is_root_account(account_name, account_types=None):
         return account_name in account_types
     else:
         return (account_name and
-                bool(re.match('([A-Z][A-Za-z0-9\-]+)$', account_name)))
+                bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
 
@@ -131,7 +146,7 @@ def is_equity_account(account_name, account_types):
       account_name: A string, an account name.
       account_types: An instance of AccountTypes.
     Returns:
-      A boolean, true if the account is an equityaccount.
+      A boolean, true if the account is an equity account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     assert isinstance(account_types, AccountTypes), (

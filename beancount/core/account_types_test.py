@@ -60,6 +60,12 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual("Invalid",
                          account_types.get_account_type("Invalid:Toys:Computer"))
 
+    def test_is_account_type(self):
+        self.assertTrue(account_types.is_account_type("Assets", "Assets:US:RBS:Checking"))
+        self.assertFalse(account_types.is_account_type("Expenses",
+                                                       "Assets:US:RBS:Checking"))
+        self.assertFalse(account_types.is_account_type("Assets", "AssetsUS:RBS:Checking"))
+
     def test_is_root_account(self):
         for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):
             for account_name, expected in [
@@ -114,3 +120,7 @@ class TestAccountTypes(unittest.TestCase):
                 ("Expenses:Toys:Computer", +1),
         ]:
             self.assertEqual(expected, account_types.get_account_sign(account_name))
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -7,16 +7,17 @@ supports some subset of formats.
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import io
 import re
 from os import path
 
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization
+from beancount.core import prices
 from beancount.core import display_context
+from beancount.parser import version
 
 
 class ReportError(Exception):
@@ -37,7 +38,7 @@ class Report:
     # The names of this report. Must be overridden by derived classes.
     names = None
 
-    # The defaault format to use.
+    # The default format to use.
     default_format = None
 
     def __init__(self, args, parser):
@@ -54,12 +55,12 @@ class Report:
         and invokes add_args() and creates an appropriate instance directly.
 
         Args:
-          argv: A list of strings, command-line arguments to use to construct tbe report.
+          argv: A list of strings, command-line arguments to use to construct the report.
           kwds: A dict of other keyword arguments to pass to the report's constructor.
         Returns:
-          A new instace of the report.
+          A new instance of the report.
         """
-        parser = argparse.ArgumentParser()
+        parser = version.ArgumentParser()
         cls.add_args(parser)
         return cls(parser.parse_args(argv or []), parser, **kwds)
 
@@ -95,7 +96,7 @@ class Report:
           entries: A list of directives to render.
           errors: A list of errors that occurred during processing.
           options_map: A dict of options, as produced by the parser.
-          output_format: A string, the name of the format. I fnot specified, use
+          output_format: A string, the name of the format. If not specified, use
             the default format.
           file: The file to write the output to.
         Returns:
@@ -107,8 +108,8 @@ class Report:
         try:
             render_method = getattr(self, 'render_{}'.format(output_format or
                                                              self.default_format))
-        except AttributeError:
-            raise ReportError("Unsupported format: '{}'".format(output_format))
+        except AttributeError as exc:
+            raise ReportError("Unsupported format: '{}'".format(output_format)) from exc
 
         outfile = io.StringIO() if file is None else file
         result = render_method(entries, errors, options_map, outfile)
@@ -217,7 +218,9 @@ class RealizationMeta(type):
             def forward_method(self, entries, errors, options_map, file, fwdfunc=value):
                 account_types = options.get_account_types(options_map)
                 real_root = realization.realize(entries, account_types)
-                return fwdfunc(self, real_root, options_map, file)
+                price_map = prices.build_price_map(entries)
+                # Note: When we forward, use the latest date (None).
+                return fwdfunc(self, real_root, price_map, None, options_map, file)
             forward_method.__name__ = render_function_name
             new_methods[render_function_name] = forward_method
 
@@ -231,17 +234,19 @@ class RealizationMeta(type):
 
         return new_type
 
-    def render_real_html(cls, real_root, options_map, file):
+    def render_real_html(cls, real_root, price_map, price_date, options_map, file):
         """Wrap an htmldiv into our standard HTML template.
 
         Args:
           real_root: An instance of RealAccount.
+          price_map: A price database.
+          price_date: A date for evaluating prices.
           options_map: A dict, options as produced by the parser.
           file: A file object to write the output to.
         """
         template = get_html_template()
         oss = io.StringIO()
-        cls.render_real_htmldiv(real_root, options_map, oss)
+        cls.render_real_htmldiv(real_root, price_map, price_date, options_map, oss)
         file.write(template.format(body=oss.getvalue(),
                                    title=''))
 
@@ -254,4 +259,5 @@ def get_html_template():
         {title}: for the title of the page.
         {body}: for the body, where the div goes.
     """
-    return open(path.join(path.dirname(__file__), 'template.html')).read()
+    with open(path.join(path.dirname(__file__), 'template.html')) as infile:
+        return infile.read()

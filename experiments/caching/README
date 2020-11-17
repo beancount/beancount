@@ -5,7 +5,7 @@ Prototype for a new caching mechanism, where all cached files would be under a
 
 - Caching of the price source lookup tool (bean-price)
 
-- Caching for the shell's commmand-line history.
+- Caching for the shell's command-line history.
 
 - Caching for the conversion of downloaded files during ingest.
 

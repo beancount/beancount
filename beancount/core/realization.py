@@ -18,10 +18,11 @@ list of desired directives to display and call the realize() function with them.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import io
 import collections
-import operator
 import copy
+import functools
+import io
+import operator
 
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
@@ -32,6 +33,7 @@ from beancount.core.data import Close
 from beancount.core.data import Pad
 from beancount.core.data import Note
 from beancount.core.data import Document
+from beancount.core.data import Custom
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
@@ -206,7 +208,7 @@ def contains(real_account, account_name):
 
 
 def realize(entries, min_accounts=None, compute_balance=True):
-    """Group entries by account, into a "tree" of realized accounts. RealAccount's
+    r"""Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
     accounts into a hierarchy). This is then used to issue reports.
@@ -304,6 +306,12 @@ def postings_by_account(entries):
             # Insert the pad entry in both realized accounts.
             txn_postings_map[entry.account].append(entry)
             txn_postings_map[entry.source_account].append(entry)
+
+        elif isinstance(entry, Custom):
+            # Insert custom entry for each account in its values.
+            for custom_value in entry.values:
+                if custom_value.dtype == account.TYPE:
+                    txn_postings_map[custom_value.value].append(entry)
 
     return txn_postings_map
 
@@ -462,18 +470,17 @@ def iterate_with_balance(txn_postings):
     date_entries.clear()
 
 
-def compute_balance(real_account):
+def compute_balance(real_account, leaf_only=False):
     """Compute the total balance of this account and all its subaccounts.
 
     Args:
       real_account: A RealAccount instance.
+      leaf_only: A boolean flag, true if we should yield only leaves.
     Returns:
       An Inventory.
     """
-    total_balance = inventory.Inventory()
-    for real_acc in iter_children(real_account):
-        total_balance += real_acc.balance
-    return total_balance
+    return functools.reduce(operator.add, [
+        ra.balance for ra in iter_children(real_account, leaf_only)])
 
 
 def find_last_active_posting(txn_postings):
@@ -494,7 +501,6 @@ def find_last_active_posting(txn_postings):
         if not isinstance(txn_posting, (TxnPosting, Open, Close, Pad, Balance, Note)):
             continue
 
-        # pylint: disable=bad-continuation
         if (isinstance(txn_posting, TxnPosting) and
             txn_posting.txn.flag == flags.FLAG_UNREALIZED):
             continue
@@ -553,7 +559,7 @@ def dump(root_account):
             # For the root node, we don't want to render any prefix.
             first = cont = ''
         else:
-            # Compute the string that precedes the name directly and the one belwo
+            # Compute the string that precedes the name directly and the one below
             # that for the continuation lines.
             #  |
             #  @@@ Bank1    <----------------

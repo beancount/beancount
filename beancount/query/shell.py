@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import atexit
 import cmd
 import codecs
@@ -11,22 +10,28 @@ import io
 import logging
 import os
 import re
-import readline
 import sys
 import shlex
 import textwrap
 import traceback
 from os import path
 
+try:
+    import readline
+except ImportError:
+    readline = None
+
 from beancount.query import query_parser
 from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.query import query_render
+from beancount.query import numberify
 from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
+from beancount.parser import version
 from beancount import loader
 
 
@@ -68,8 +73,9 @@ def get_history(max_entries):
     """
     num_entries = readline.get_current_history_length()
     assert num_entries >= 0
+    start = max(0, num_entries - max_entries)
     return [readline.get_history_item(index+1)
-            for index in range(min(num_entries, max_entries))]
+            for index in range(start, num_entries)]
 
 
 def convert_bool(string):
@@ -80,7 +86,7 @@ def convert_bool(string):
     Returns:
       The corresponding boolean.
     """
-    return not (string.lower() in ('f', 'false', '0'))
+    return not string.lower() in ('f', 'false', '0')
 
 
 class DispatchingShell(cmd.Cmd):
@@ -93,7 +99,7 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser, outfile, default_format):
+    def __init__(self, is_interactive, parser, outfile, default_format, do_numberify):
         """Create a shell with history.
 
         Args:
@@ -103,15 +109,15 @@ class DispatchingShell(cmd.Cmd):
           default_format: A string, the default output format.
         """
         super().__init__()
-        if is_interactive:
+        if is_interactive and readline is not None:
             load_history(path.expanduser(HISTORY_FILENAME))
         self.is_interactive = is_interactive
         self.parser = parser
-        self.initialize_vars(default_format)
+        self.initialize_vars(default_format, do_numberify)
         self.add_help()
         self.outfile = outfile
 
-    def initialize_vars(self, default_format):
+    def initialize_vars(self, default_format, do_numberify):
         """Initialize the setting variables of the interactive shell."""
         self.vars_types = {
             'pager': str,
@@ -119,6 +125,7 @@ class DispatchingShell(cmd.Cmd):
             'boxed': convert_bool,
             'spaced': convert_bool,
             'expand': convert_bool,
+            'numberify': convert_bool,
             }
         self.vars = {
             'pager': os.environ.get('PAGER', None),
@@ -126,6 +133,7 @@ class DispatchingShell(cmd.Cmd):
             'boxed': False,
             'spaced': False,
             'expand': False,
+            'numberify': do_numberify,
             }
 
     def add_help(self):
@@ -164,10 +172,15 @@ class DispatchingShell(cmd.Cmd):
             except KeyboardInterrupt:
                 print('\n(Interrupted)', file=self.outfile)
 
+    def do_help(self, command):
+        """Strip superfluous semicolon."""
+        super().do_help(command.rstrip('; \t'))
+
     def do_history(self, _):
         "Print the command-line history statement."
-        for index, line in enumerate(get_history(self.max_entries)):
-            print(line, file=self.outfile)
+        if readline is not None:
+            for index, line in enumerate(get_history(self.max_entries)):
+                print(line, file=self.outfile)
 
     def do_clear(self, _):
         "Clear the history."
@@ -263,7 +276,6 @@ class DispatchingShell(cmd.Cmd):
 
     def emptyline(self):
         """Do nothing on an empty line."""
-        pass
 
     def exit(self, _):
         """Exit the parser."""
@@ -281,8 +293,10 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, loadfun, outfile, default_format='text'):
-        super().__init__(is_interactive, query_parser.Parser(), outfile, default_format)
+    def __init__(self, is_interactive, loadfun, outfile,
+                 default_format='text', do_numberify=False):
+        super().__init__(is_interactive, query_parser.Parser(), outfile,
+                         default_format, do_numberify)
 
         self.loadfun = loadfun
         self.entries = None
@@ -399,12 +413,12 @@ class BQLShell(DispatchingShell):
             return
 
         # Execute it to obtain the result rows.
-        result_types, result_rows = query_execute.execute_query(c_query,
-                                                                self.entries,
-                                                                self.options_map)
+        rtypes, rrows = query_execute.execute_query(c_query,
+                                                    self.entries,
+                                                    self.options_map)
 
         # Output the resulting rows.
-        if not result_rows:
+        if not rrows:
             print("(empty)", file=self.outfile)
         else:
             output_format = self.vars['format']
@@ -414,18 +428,23 @@ class BQLShell(DispatchingShell):
                             expand=self.vars['expand'])
                 if self.outfile is sys.stdout:
                     with self.get_pager() as file:
-                        query_render.render_text(result_types, result_rows,
+                        query_render.render_text(rtypes, rrows,
                                                  self.options_map['dcontext'],
                                                  file,
                                                  **kwds)
                 else:
-                    query_render.render_text(result_types, result_rows,
+                    query_render.render_text(rtypes, rrows,
                                              self.options_map['dcontext'],
                                              self.outfile,
                                              **kwds)
 
             elif output_format == 'csv':
-                query_render.render_csv(result_types, result_rows,
+                # Numberify CSV output if requested.
+                if self.vars['numberify']:
+                    dformat = self.options_map['dcontext'].build()
+                    rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
+
+                query_render.render_csv(rtypes, rrows,
                                         self.options_map['dcontext'],
                                         self.outfile,
                                         expand=self.vars['expand'])
@@ -470,7 +489,6 @@ class BQLShell(DispatchingShell):
         """
         Compile and print a compiled statement for debugging.
         """
-        # pylint: disable=invalid-name
         pr = lambda *args: print(*args, file=self.outfile)
         pr("Parsed statement:")
         pr("  {}".format(explain.statement))
@@ -522,14 +540,19 @@ class BQLShell(DispatchingShell):
                 print()
                 print()
         else:
-            try:
+            query = None
+            if name in custom_query_map:
                 query = custom_query_map[name]
-            except KeyError:
-                print("ERROR: Query '{}' not found".format(name))
-            else:
+            else:  # lookup best query match using name as prefix
+                queries = [q for q in custom_query_map if q.startswith(name)]
+                if len(queries) == 1:
+                    name = queries[0]
+                    query = custom_query_map[name]
+            if query:
                 statement = self.parser.parse(query.query_string)
                 self.dispatch(statement)
-
+            else:
+                print("ERROR: Query '{}' not found".format(name))
 
     def help_targets(self):
         template = textwrap.dedent("""
@@ -605,6 +628,7 @@ class BQLShell(DispatchingShell):
             (getattr(column_cls, '__equivalent__', '-'), name)
             for name, column_cls in sorted(self.env_postings.columns.items()))
 
+        # pylint: disable=possibly-unused-variable
         entry_attributes = ''.join(
             "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
         posting_attributes = ''.join(
@@ -749,11 +773,14 @@ _SUPPORTED_FORMATS = ('text', 'csv')
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('-f', '--format', action='store', default=_SUPPORTED_FORMATS[0],
                         choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',
                         help="Output format.")
+
+    parser.add_argument('-m', '--numberify', action='store_true', default=False,
+                        help="Numberify the output, removing the currencies.")
 
     parser.add_argument('-o', '--output', action='store',
                         help=("Output filename. If not specified, the output goes "
@@ -783,8 +810,8 @@ def main():
     outfile = sys.stdout if args.output is None else open(args.output, 'w')
 
     # Create the shell.
-    is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
-    shell_obj = BQLShell(is_interactive, load, outfile, args.format)
+    is_interactive = sys.stdin.isatty() and not args.query
+    shell_obj = BQLShell(is_interactive, load, outfile, args.format, args.numberify)
     shell_obj.on_Reload()
 
     # Run interactively if we're a TTY and no query is supplied.

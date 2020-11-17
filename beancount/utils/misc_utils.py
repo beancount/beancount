@@ -4,13 +4,29 @@ Generic utility packages and functions.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from collections import defaultdict
+from time import time
 import collections
+import contextlib
+import functools
 import io
 import re
 import sys
-from time import time
-import contextlib
-from collections import defaultdict
+import warnings
+
+
+def deprecated(message):
+    """A decorator generator to mark functions as deprecated and log a warning."""
+    def decorator(func):
+        @functools.wraps(func)
+        def new_func(*args, **kwargs):
+            warnings.warn("Call to deprecated function {}: {}".format(func.__name__,
+                                                                      message),
+                          category=DeprecationWarning,
+                          stacklevel=2)
+            return func(*args, **kwargs)
+        return new_func
+    return decorator
 
 
 @contextlib.contextmanager
@@ -134,22 +150,28 @@ def skipiter(iterable, num_skip):
       iterable: An iterator.
       num_skip: The number of elements in the period.
     Yields:
-      Elemnets from the iterable, with num_skip elements skipped.
+      Elements from the iterable, with num_skip elements skipped.
       For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
     """
     assert num_skip > 0
     sit = iter(iterable)
     while 1:
-        value = next(sit)
+        try:
+            value = next(sit)
+        except StopIteration:
+            return
         yield value
         for _ in range(num_skip-1):
-            next(sit)
+            try:
+                next(sit)
+            except StopIteration:
+                return
 
 
 def get_tuple_values(ntuple, predicate, memo=None):
     """Return all members referred to by this namedtuple instance that satisfy the
     given predicate. This function also works recursively on its members which
-    are lists or typles, and so it can be used for Transaction instances.
+    are lists or tuples, and so it can be used for Transaction instances.
 
     Args:
       ntuple: A tuple or namedtuple.
@@ -196,7 +218,7 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         memo = set()
     id_ntuple = id(ntuple)
     if id_ntuple in memo:
-        return
+        return None
     memo.add(id_ntuple)
 
     # pylint: disable=unidiomatic-typecheck
@@ -243,9 +265,21 @@ def compute_unique_clean_ids(strings):
         else:
             break
     else:
-        return # Could not find a unique mapping.
+        return None # Could not find a unique mapping.
 
     return idmap
+
+
+def escape_string(string):
+    """Escape quotes and backslashes in payee and narration.
+
+    Args:
+      string: Any string.
+    Returns.
+      The input string, with offending characters replaced.
+    """
+    return string.replace('\\', r'\\')\
+                 .replace('"', r'\"')
 
 
 def idify(string):
@@ -257,7 +291,7 @@ def idify(string):
       The input string, with offending characters replaced.
     """
     for sfrom, sto in [(r'[ \(\)]+', '_'),
-                      (r'_*\._*', '.')]:
+                       (r'_*\._*', '.')]:
         string = re.sub(sfrom, sto, string)
     string = string.strip('_')
     return string
@@ -339,11 +373,27 @@ def import_curses():
     """
     # Note: There's a recipe for getting terminal size on Windows here, without
     # curses, I should probably implement that at some point:
-    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
+    # pylint: disable=import-outside-toplevel
     import curses
     return curses
+
+
+def _get_screen_value(attrname, default=0):
+    """Return the width or height of the terminal that runs this program."""
+    try:
+        curses = import_curses()
+    except ImportError:
+        value = default
+    else:
+        try:
+            curses.setupterm()
+            value = curses.tigetnum(attrname)
+        except (io.UnsupportedOperation, curses.error):
+            value = default
+    return value
 
 
 def get_screen_width():
@@ -353,13 +403,7 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
       Return 0 if the terminal cannot be initialized.
     """
-    try:
-        curses = import_curses()
-        curses.setupterm()
-        columns = curses.tigetnum('cols')
-    except (io.UnsupportedOperation, ImportError):
-        columns = 0
-    return columns
+    return _get_screen_value('cols', 0)
 
 
 def get_screen_height():
@@ -369,13 +413,7 @@ def get_screen_height():
       An integer, the number of characters the screen is high.
       Return 0 if the terminal cannot be initialized.
     """
-    try:
-        curses = import_curses()
-        lines = curses.setupterm()
-        lines = curses.tigetnum('lines')
-    except (io.UnsupportedOperation, ImportError):
-        lines = 0
-    return lines
+    return _get_screen_value('lines', 0)
 
 
 class TypeComparable:

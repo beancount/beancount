@@ -2,58 +2,10 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
-import tempfile
-import os
-import shutil
 import types
-from os import path
 
 from beancount.core import account
-
-
-# Note: This should live in beancount.utils.test_utils.
-class TmpFilesTestBase(unittest.TestCase):
-    """A test utility base class that creates and cleans up a directory hierarchy.
-    This convenience is useful for testing functions that work on files, such as the
-    documents tests, or the accounts walk.
-    """
-
-    # The list of strings, documents to create.
-    # Filenames ending with a '/' will be created as directories.
-    TEST_DOCUMENTS = None
-
-    def setUp(self):
-        self.tempdir, self.root = self.create_file_hierarchy(self.TEST_DOCUMENTS)
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir, ignore_errors=True)
-
-    @staticmethod
-    def create_file_hierarchy(test_files, subdir='root'):
-        """A test utility that creates a hierarchy of files.
-
-        Args:
-          test_files: A list of strings, relative filenames to a temporary root
-            directory. If the filename ends with a '/', we create a directory;
-            otherwise, we create a regular file.
-          subdir: A string, the subdirectory name under the temporary directory
-            location, to create the hierarchy under.
-        Returns:
-          A pair of strings, the temporary directory, and the subdirectory under
-            that which hosts the root of the tree.
-        """
-        tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
-        root = path.join(tempdir, subdir)
-        for filename in test_files:
-            abs_filename = path.join(tempdir, filename)
-            if filename.endswith('/'):
-                os.makedirs(abs_filename)
-            else:
-                parent_dir = path.dirname(abs_filename)
-                if not path.exists(parent_dir):
-                    os.makedirs(parent_dir)
-                open(abs_filename, 'w')
-        return tempdir, root
+from beancount.utils import test_utils
 
 
 class TestAccount(unittest.TestCase):
@@ -150,6 +102,7 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(is_child('Assets:Bank:Checking'))
         self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
         self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+        self.assertFalse(is_child('Assets:Bank:Checking-Old'))
 
     def test_parents(self):
         iterator = account.parents('Assets:Bank:Checking')
@@ -159,7 +112,7 @@ class TestAccount(unittest.TestCase):
 
 
 
-class TestWalk(TmpFilesTestBase):
+class TestWalk(test_utils.TmpFilesTestBase):
 
     TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/other.txt',
@@ -198,3 +151,26 @@ class TestWalk(TmpFilesTestBase):
              [],
              []),
             ], actual_data)
+
+
+class TestAccountTransformer(unittest.TestCase):
+
+    def test_render(self):
+        xfr = account.AccountTransformer('__')
+        self.assertEqual('Assets__US__BofA__Checking',
+                         xfr.render('Assets:US:BofA:Checking'))
+
+    def test_parse(self):
+        xfr = account.AccountTransformer('__')
+        self.assertEqual('Assets:US:BofA:Checking',
+                         xfr.parse('Assets__US__BofA__Checking'))
+
+    def test_noop(self):
+        xfr = account.AccountTransformer()
+        acc = 'Assets:US:BofA:Checking'
+        self.assertEqual(acc, xfr.render(acc))
+        self.assertEqual(acc, xfr.parse(acc))
+
+
+if __name__ == '__main__':
+    unittest.main()

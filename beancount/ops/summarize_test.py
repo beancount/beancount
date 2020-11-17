@@ -9,6 +9,7 @@ from datetime import date
 import datetime
 import collections
 import re
+import unittest
 
 from beancount.core import inventory
 from beancount.core import data
@@ -890,7 +891,7 @@ class TestConversions(cmptest.TestCase):
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
-                                                             date=date)
+                                                                date=date)
         self.assertTrue(converted_balance.reduce(convert.get_cost).is_empty())
 
     def test_conversions__needed_middle(self):
@@ -907,7 +908,7 @@ class TestConversions(cmptest.TestCase):
         """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
-                                                             date=date)
+                                                                date=date)
         self.assertTrue(converted_balance.reduce(convert.get_cost).is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
@@ -924,7 +925,7 @@ class TestConversions(cmptest.TestCase):
         """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
-                                                             date=date)
+                                                                date=date)
         self.assertTrue(converted_balance.reduce(convert.get_cost).is_empty())
 
     def test_conversions__multiple(self):
@@ -1296,3 +1297,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
+
+
+if __name__ == '__main__':
+    unittest.main()

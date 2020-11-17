@@ -11,8 +11,8 @@ __copyright__ = "Copyright (C) 2013, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from decimal import Decimal
 
-from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import data
 
@@ -34,7 +34,7 @@ def compress(entries, predicate):
 
     Args:
       entries: A list of directives.
-      predicate: A callbable which accepts an entry and return true if the entry
+      predicate: A callable which accepts an entry and return true if the entry
           is intended to be compressed.
     Returns:
       A list of directives, with compressible transactions replaced by a summary

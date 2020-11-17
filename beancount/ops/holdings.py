@@ -17,6 +17,7 @@ from beancount.core import getters
 from beancount.core import prices
 from beancount.ops import summarize
 from beancount.utils import misc_utils
+from beancount.parser import options
 
 
 # A holding, a flattened position with an account, and optionally, price and
@@ -132,7 +133,35 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     return holdings
 
 
-# Note: This should use the same routines as in beancount.prices.find_prices.
+def get_assets_holdings(entries, options_map, currency=None):
+    """Return holdings for all assets and liabilities.
+
+    Args:
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+      currency: If specified, a string, the target currency to convert all
+        holding values to.
+    Returns:
+      A list of Holding instances and a price-map.
+    """
+    # Compute a price map, to perform conversions.
+    price_map = prices.build_price_map(entries)
+
+    # Get the list of holdings.
+    account_types = options.get_account_types(options_map)
+    holdings_list = get_final_holdings(entries,
+                                       (account_types.assets,
+                                        account_types.liabilities),
+                                       price_map)
+
+    # Convert holdings to a unified currency.
+    if currency:
+        holdings_list = convert_to_currency(price_map, currency, holdings_list)
+
+    return holdings_list, price_map
+
+
+# Note: This should use the same routines as in beancount.ops.find_prices.
 def get_commodities_at_date(entries, options_map, date=None):
     """Return a list of commodities present at a particular date.
 
@@ -154,7 +183,7 @@ def get_commodities_at_date(entries, options_map, date=None):
       Commodity directive from its 'quote' metadata field.
 
     This is used in a routine that fetches prices from a data source on the
-    internet (either from Ledgerhub, but you can reuse this in your own script
+    internet (either from LedgerHub, but you can reuse this in your own script
     if you build one).
 
     Args:
@@ -182,11 +211,11 @@ def get_commodities_at_date(entries, options_map, date=None):
                         for holding in holdings_list}
 
     # Add in the associated ticker symbols.
-    commodities_map = getters.get_commodity_map(entries)
+    commodities = getters.get_commodity_directives(entries)
     commodities_symbols_list = []
     for currency, cost_currency in sorted(commodities_list):
         try:
-            commodity_entry = commodities_map[currency]
+            commodity_entry = commodities[currency]
             ticker = commodity_entry.meta.get('ticker', None)
             quote_currency = commodity_entry.meta.get('quote', None)
         except KeyError:

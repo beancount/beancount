@@ -1,0 +1,10 @@
+python-dateutil>=2.6.0
+bottle>=0.12
+ply>=3.4
+lxml>=3.0
+google-api-python-client>=1.8.2
+oauth2client>=4.0
+httplib2>=0.10
+requests>=2.0
+beautifulsoup4>=4
+python-magic>=0.4.12; sys_platform != 'win32'

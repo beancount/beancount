@@ -11,11 +11,11 @@ __license__ = "GNU GPLv2"
 
 import re
 
+from decimal import Decimal
 from typing import NamedTuple, Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
-from beancount.core.number import Decimal
 from beancount.core.number import D
 
 
@@ -23,7 +23,6 @@ from beancount.core.number import D
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
-# pylint: disable=invalid-name
 _Amount = NamedTuple('_Amount', [
     ('number', Optional[Decimal]),
     ('currency', str)])
@@ -59,8 +58,10 @@ class Amount(_Amount):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return "{} {}".format(dformat.format(self.number, self.currency),
-                              self.currency)
+        number_fmt = (dformat.format(self.number, self.currency)
+                      if isinstance(self.number, Decimal)
+                      else str(self.number))
+        return "{} {}".format(number_fmt, self.currency)
 
     def __str__(self):
         """Convert an Amount instance to a printable string with the defaults.
@@ -157,7 +158,7 @@ def mul(amount, number):
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number))
     assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(amount.number))
+        "Number is not a Decimal instance: {}".format(number))
     return Amount(amount.number * number, amount.currency)
 
 def div(amount, number):
@@ -172,7 +173,7 @@ def div(amount, number):
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number))
     assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(amount.number))
+        "Number is not a Decimal instance: {}".format(number))
     return Amount(amount.number / number, amount.currency)
 
 def add(amount1, amount2):
@@ -228,5 +229,5 @@ def abs(amount):
             else Amount(-amount.number, amount.currency))
 
 
-A = from_string = Amount.from_string  # pylint: disable=invalid-name
+A = from_string = Amount.from_string
 NULL_AMOUNT = Amount(ZERO, '')

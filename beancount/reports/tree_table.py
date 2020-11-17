@@ -116,16 +116,20 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
     write('</table>')
 
 
-def table_of_balances(real_root, operating_currencies, formatter, classes=None):
+def table_of_balances(real_root, price_map, price_date,
+                      operating_currencies, formatter,
+                      classes=None):
     """Render a tree table with the balance of each accounts.
 
     Args:
       real_root: A RealAccount node, the root node to render.
+      price_map: A prices map, a built by build_price_map.
+      price_date: A datetime.date instance, the date at which to compute market value.
       operating_currencies: A list of strings, the operating currencies to render
         to their own dedicated columns.
       formatter: A object used to render account names and other links.
-      classes: A list of strings, the CSS classes to attach to the renderd
-        top-level table objet.
+      classes: A list of strings, the CSS classes to attach to the rendered
+        top-level table object.
     Returns:
       A string with HTML contents, the rendered table.
     """
@@ -158,11 +162,12 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
             if real_account.account is None:
                 row_classes.append('parent-node')
 
-            # For each account line, get the final balance of the account (at cost).
-            line_balance = real_account.balance.reduce(convert.get_cost)
+            # For each account line, get the final balance of the account at
+            # latest market value.
+            line_balance = real_account.balance.reduce(convert.get_value, price_map)
 
             # Update the total balance for the totals line.
-            balance_totals += line_balance
+            balance_totals.add_inventory(line_balance)
 
         # Extract all the positions that the user has identified as operating
         # currencies to their own subinventories.

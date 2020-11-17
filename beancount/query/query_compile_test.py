@@ -3,9 +3,9 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
+from decimal import Decimal
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.query import query_parser as qp
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
@@ -61,7 +61,7 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
 
 class TestCompileAggregateChecks(unittest.TestCase):
 
-    def test_is_aggregrate_derived(self):
+    def test_is_aggregate_derived(self):
         columns, aggregates = qc.get_columns_and_aggregates(
             qc.EvalAnd(
                 qc.EvalEqual(qe.PositionColumn(), qc.EvalConstant(42)),
@@ -341,7 +341,7 @@ class TestCompileSelect(CompileSelectBase):
             """)
 
     def test_compile_targets_wildcard(self):
-        # Test the wildcard expandion.
+        # Test the wildcard expansion.
         query = self.compile("SELECT *;")
         self.assertTrue(list, type(query.c_targets))
         self.assertGreater(len(query.c_targets), 3)
@@ -349,7 +349,7 @@ class TestCompileSelect(CompileSelectBase):
                             for target in query.c_targets))
 
     def test_compile_targets_named(self):
-        # Test the wildcard expandion.
+        # Test the wildcard expansion.
         query = self.compile("SELECT length(account), account as a, date;")
         self.assertEqual(
             [qc.EvalTarget(qe.Length([qe.AccountColumn()]), 'length_account', False),
@@ -452,10 +452,9 @@ class TestCompileSelectGroupBy(CompileSelectBase):
             """)
 
     def test_compile_group_by_implicit(self):
-        with self.assertRaises(qc.CompilationError):
-            self.compile("""
-              SELECT payee, last(account);
-            """)
+        self.compile("""
+          SELECT payee, last(account);
+        """)
 
         self.compile("""
           SELECT first(account), last(account);
@@ -628,8 +627,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
-            ],
-                 None, None, None, None, None, None, None, None),
+            ], None, None, None, None, None, None, None, None),
             select)
 
     def test_journal_with_account(self):
@@ -647,9 +645,9 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
-                 None,
-                     qp.Match(qp.Column('account'), qp.Constant('liabilities')),
-                     None, None, None, None, None, None),
+                      None,
+                      qp.Match(qp.Column('account'), qp.Constant('liabilities')),
+                      None, None, None, None, None, None),
             select)
 
     def test_journal_with_account_and_from(self):
@@ -667,9 +665,10 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
-                 qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)), None, None, None),
-                     qp.Match(qp.Column('account'), qp.Constant('liabilities')),
-                     None, None, None, None, None, None),
+                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
+                              None, None, None),
+                      qp.Match(qp.Column('account'), qp.Constant('liabilities')),
+                      None, None, None, None, None, None),
             select)
 
     def test_journal_with_account_func_and_from(self):
@@ -754,3 +753,7 @@ class TestCompilePrint(CompileSelectBase):
             qc.EvalFrom(qc.EvalEqual(qe.YearEntryColumn(), qc.EvalConstant(2014)),
                         None, None, None)
             ), "PRINT FROM year = 2014;")
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,63 @@
+;; -*- mode: org; mode: beancount; -*-
+
+;;; This example beancount file demonstrates use of the beancount.plugins.forecast plugin
+;;; for planning and calculating a potential acquisition of real estate.
+
+; Options
+option "title" "Forecasting Example - Planning a Real Estate Purchase"
+option "operating_currency" "EUR"
+
+; Plugins
+; Note: The auto_accounts plugin must be loaded after the forecast plugin
+plugin "beancount.plugins.forecast"
+plugin "beancount.plugins.auto_accounts" 
+
+
+; Example Transactions
+
+2017-01-01 * "Opening Balances"
+  Assets:Bank:Account  150000 EUR
+  Equity:Opening-Balances
+
+2017-01-01 * "Taking up a Loan"
+  Assets:Bank:Account  180000 EUR
+  Liabilities:Bank:Loan  -180000 EUR
+
+; Example of a monthly recurring transaction until the end of this year:
+2017-01-01 # "Expected income this year [MONTHLY]"
+    Assets:Bank:Account  2000 EUR
+    Income:Employer:Salary
+
+; Example of a recurring transaction at yearly intervals:
+2017-01-01 # "Paying back the loan [YEARLY UNTIL 2036-12-31]" 
+  Liabilities:Bank:Loan  9000 EUR
+  Expenses:Bank:Loan:Interest  1150 EUR
+  Assets:Bank:Account
+
+2017-01-10 * "Purchasing of a house"
+  Assets:Real-Estate  1 HOUSE {300000 EUR}
+  Expenses:Real-Estate:Transaction-Costs  30000 EUR
+  Assets:Bank:Account
+
+; Example of a recurring transaction at monthly intervals:
+2017-02-01 # "Income from rent [MONTHLY UNTIL 2036-10-31]"
+  Assets:Bank:Account 900 EUR
+  Income:Real-Estate:Rent
+
+; Example of a recurring transaction with a certain number of repetitions:
+2017-01-10 # "Maintenance [YEARLY REPEAT 20 TIMES]"
+  Expenses:Real-Estate:Maintenance  1000 EUR
+  Assets:Bank:Account  -1000 EUR
+
+2037-01-20 * "Renovation costs prior to selling the house"
+  Expenses:Real-Estate:Maintenance  20000 EUR
+  Assets:Bank:Account
+
+2037-02-01 price HOUSE  300000 EUR ; Possibility to re-evaluate the house pior to selling it
+
+2037-02-01 * "Selling the house"
+  Assets:Real-Estate  -1 HOUSE
+  Expenses:Real-Estate:Transaction-Costs  30000 EUR
+  Assets:Bank:Account
+
+

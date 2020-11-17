@@ -8,11 +8,16 @@ import os
 import logging
 import datetime
 import shutil
+import unittest
+import functools
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
 from beancount.ingest import file
 from beancount.ingest import scripts_utils
+
+
+file_main = functools.partial(scripts_utils.trampoline_to_ingest, file)
 
 
 class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
@@ -26,19 +31,21 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
     @mock.patch.object(file, 'file')
     def test_file_main__default_output_dir(self, file_mock):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(file.main, [
+            test_utils.run_with_args(file_main, [
                 '--dry-run',
                 path.join(self.tempdir, 'test.import'),
-                self.tempdir])
+                self.tempdir],
+                                     file.__file__)
         self.assertEqual(self.tempdir, file_mock.call_args[0][2])
 
     def test_file_main__output_dir_does_not_exist(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             with self.assertRaises(SystemExit):
-                test_utils.run_with_args(file.main, [
+                test_utils.run_with_args(file_main, [
                     '--output', path.join(self.documents, "Bogus"),
                     path.join(self.tempdir, 'test.import'),
-                    self.tempdir])
+                    self.tempdir],
+                                         file.__file__)
 
     def test_move_xdev_file(self):
         file.move_xdev_file(
@@ -135,7 +142,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '{}\.ofxdownload\.ofx'.format(date))
+        self.assertRegex(dest_filename, r'{}\.ofxdownload\.ofx'.format(date))
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
@@ -150,7 +157,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '\d\d\d\d-\d\d-\d\d\.final\.ofx')
+        self.assertRegex(dest_filename, r'\d\d\d\d-\d\d-\d\d\.final\.ofx')
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
@@ -323,10 +330,11 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
 
     def test_file(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(file.main, [
+            test_utils.run_with_args(file_main, [
                 '--output', self.documents,
                 path.join(self.tempdir, 'test.import'),
-                path.join(self.tempdir, 'Downloads')])
+                path.join(self.tempdir, 'Downloads')],
+                                     file.__file__)
         expected_res = [
             path.join(self.documents, x)
             for x in [r'Liabilities/CreditCard/\d\d\d\d-\d\d-\d\d\.bank\.csv',
@@ -339,18 +347,24 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         config_filename = path.join(test_utils.find_repository_root(__file__),
                                     'examples', 'ingest', 'office', 'example.import')
         with test_utils.capture('stdout', 'stderr') as (_, stderr):
-            result = test_utils.run_with_args(file.main, [
+            result = test_utils.run_with_args(file_main, [
                 config_filename,
                 path.join(self.tempdir, 'Downloads'),
-                '--output={}'.format(self.tempdir)])
+                '--output={}'.format(self.tempdir)],
+                                              file.__file__)
         self.assertEqual(0, result)
         self.assertEqual("", stderr.getvalue())
 
         filed_files = []
         for root, dirs, files in os.walk(self.tempdir):
             filed_files.extend(files)
-        self.assertEqual(4, len(filed_files))
+        self.assertEqual(5, len(filed_files))
         self.assertEqual(set(filed_files), set(['test.import',
                                                 'ofxdownload.ofx',
                                                 'bank.csv',
-                                                'readme.txt']))
+                                                'readme.txt',
+                                                'testimport.py']))
+
+
+if __name__ == '__main__':
+    unittest.main()

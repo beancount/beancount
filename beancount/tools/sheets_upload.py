@@ -32,7 +32,7 @@ This script only requires the latest and official Google client API libraries
 API (current as of 2013-2017-12-15). You will need to have an installation of the
 following libraries for this to work:
 
- * apiclient (Google Python client API)
+ * google-api-python-client (Google Python client API)
  * oauth2client
  * httplib2
 
@@ -58,18 +58,8 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client import file
 import httplib2
-from apiclient import discovery
-from apiclient import errors
-
-
-# Location of your secrets file.
-SECRETS_FILENAME = os.environ.get('GOOGLE_APIS',
-                                  path.expanduser('~/.google-apis.json'))
-
-
-# Location to store credentials for reuse between invocations.
-STORAGE_FILENAME = os.environ.get('GOOGLE_STORAGE',
-                                  path.expanduser('~/.google-storage.json'))
+from googleapiclient import discovery
+from googleapiclient import errors
 
 
 # The name of a sheet left as the unique sheet temporarily, while creating a new
@@ -86,8 +76,19 @@ def get_credentials(scopes, args):
     Returns:
       An authenticated http client object.
     """
-    flow = client.flow_from_clientsecrets(SECRETS_FILENAME, scope=scopes)
-    storage = file.Storage(STORAGE_FILENAME)
+    # Silence annoying error about file_cache version.
+    # See, for example, this: https://github.com/google/google-api-python-client/issues/299
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
+    # Location of your secrets file.
+    secrets_filename = os.environ.get('GOOGLE_APIS',
+                                      path.expanduser('~/.google-apis.json'))
+    # Location to store credentials for reuse between invocations.
+    storage_filename = os.environ.get('GOOGLE_STORAGE',
+                                      path.expanduser('~/.google-storage.json'))
+
+    flow = client.flow_from_clientsecrets(secrets_filename, scope=scopes)
+    storage = file.Storage(storage_filename)
     credentials = storage.get()
     if not credentials or credentials.invalid:
         credentials = tools.run_flow(flow, storage, args)
@@ -138,7 +139,7 @@ def get_alpha_column(column):
     Args:
       column: An integer, the column number. Note: The first column is "0".
     Returns:
-      A string. This can possibly be more than one charater, if column > 26.
+      A string. This can possibly be more than one character, if column > 26.
     """
     letters = []
     while column >= 0:
@@ -147,7 +148,7 @@ def get_alpha_column(column):
     return ''.join(reversed(letters))
 
 
-def sheet_range(title, nrows, ncols):
+def sheet_range(nrows, ncols, title=None):
     """Build up the full range of a sheet for some size of rows and columns.
 
     Args:
@@ -157,7 +158,10 @@ def sheet_range(title, nrows, ncols):
     Returns:
       A string representing the full range of this sheet.
     """
-    return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
+    if title is None:
+        return 'A1:{}{}'.format(get_alpha_column(ncols-1), nrows)
+    else:
+        return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
 
 
 def create_doc(service):
@@ -180,9 +184,10 @@ def create_doc(service):
 class Doc:
     "A wrapper for a particular document. This just keeps common immutable arguments."
 
-    def __init__(self, service, docid):
+    def __init__(self, service, docid, min_rows):
         self.service = service
         self.docid = docid
+        self.min_rows = min_rows
 
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
@@ -246,7 +251,7 @@ class Doc:
             nrows, ncols = self.get_sheet_size(title)
         else:
             nrows, ncols = nrowcols
-        srange = sheet_range(title, nrows, ncols)
+        srange = sheet_range(nrows, ncols, title)
         resp = self.service.spreadsheets().values().clear(
             spreadsheetId=self.docid,
             range=srange,
@@ -300,9 +305,14 @@ class Doc:
         nrows = len(rows)
         ncols = max(len(row) for row in rows) if rows else 0
 
-        # Note: Sizing down the sheet also deletes the values from the cells removed
-        # automatically.
-        self.resize_sheet(sheet_id, title, nrows, ncols)
+        nrows = self.min_rows if self.min_rows and nrows < self.min_rows else nrows
+        size = (nrows, ncols)
+
+        current_size = self.get_sheet_size(title)
+        if size != current_size:
+            # Note: Sizing down the sheet also deletes the values from the cells removed
+            # automatically.
+            self.resize_sheet(sheet_id, title, nrows, ncols)
 
         # Clear the remaining contents.
         self.clear_sheet(title, (nrows, ncols))
@@ -312,7 +322,7 @@ class Doc:
         # FIXME: Using an "updateCells" request in order to be able to set not only
         # the values would be an improvement and allow for much more control over
         # the formatting of numbers. It would be better not to use USER_ENTERED.
-        srange = sheet_range(title, nrows, ncols)
+        srange = sheet_range(nrows, ncols, title)
         resp = self.service.spreadsheets().values().update(
             spreadsheetId=self.docid,
             range=srange,
@@ -340,6 +350,7 @@ class Doc:
 
 def _main():
     parser = argparse.ArgumentParser(description=__doc__.strip(),
+                                     formatter_class=argparse.RawTextHelpFormatter,
                                      parents=[tools.argparser])
 
     parser.add_argument('filenames', nargs='*', action='store',
@@ -354,6 +365,13 @@ def _main():
 
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="Print out the log")
+
+    parser.add_argument('--min-rows', action='store', type=int, default=0,
+                        help=("Minimum number rows to resize uploaded sheet to. "
+                              "This is useful when another sheet feeds from the uploaded "
+                              "one, which otherwise automatically renumbers its "
+                              "references to rows beyond it if they existed, to avoid "
+                              "most such resizing woes."))
 
     args = parser.parse_args()
 
@@ -392,10 +410,10 @@ def _main():
         docid = create_doc(service)
         logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
 
-    match_names_and_upload_sheets(service, docid, new_sheets)
+    match_names_and_upload_sheets(service, docid, new_sheets, args.min_rows)
 
     # Clean up temporary sheets created for new documents only.
-    doc = Doc(service, docid)
+    doc = Doc(service, docid, args.min_rows)
     if created:
         doc.delete_empty_sheets()
 
@@ -406,12 +424,12 @@ def _main():
     print("https://docs.google.com/spreadsheets/d/{}/".format(docid))
 
 
-def match_names_and_upload_sheets(service, docid, new_sheets):
+def match_names_and_upload_sheets(service, docid, new_sheets, min_rows):
     """Match sheet names and upload their attendant file contents."""
 
-    doc = Doc(service, docid)
+    doc = Doc(service, docid, min_rows)
 
-    # Get the existings sheets within (this also validates the existence of the
+    # Get the existing sheets within (this also validates the existence of the
     # document).
     existing_sheets = doc.get_sheets()
     logging.info("Existing sheets: %s", existing_sheets)
@@ -441,6 +459,7 @@ def main():
     except errors.Error as exc:
         logging.fatal(str(exc))
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

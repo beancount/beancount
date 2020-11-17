@@ -1,145 +1,139 @@
 /* -*- mode: c -*- */
 /* A flex lexer for Beancount. */
 
-/*--------------------------------------------------------------------------------------*/
-/* Definitions */
-
 /* Options */
 %option noyywrap
-/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
 %option bison-bridge
 %option bison-locations
-/* %option reentrant */
+%option reentrant
+%option extra-type="yyextra_t*"
+/* %option nodefault */
 /* %option debug */
 /* %option stack */
 /* %option 8bit */
 
-
-/* Top Code. */
+/* Top Code. This is included in the FLex generated header file. */
 %top{
 
-/* Includes. */
-#include <math.h>
-#include <stdlib.h>
+#include "beancount/parser/parser.h"
 
-#include "parser.h"
-#include "grammar.h"
+typedef struct _yyextra_t yyextra_t;
 
+/**
+ * Allocate a new scanner object including private data.
+ *
+ * This encapsulates the native yylex_init_extra() API.
+ */
+yyscan_t yylex_new(void);
 
-/* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length);
+/**
+ * Free scanner object including private data.
+ *
+ * This encapsulated the native yylex_destroy() API. Python objects
+ * references stored in the @scanner are decremented.
+ */
+yyscan_t yylex_free(yyscan_t scanner);
 
-/* Build and accumulate an error on the builder object using the current
- * exception state. */
-void build_lexer_error_from_exception(void);
-
-
-
-/* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
-    if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception();                                              \
-       return LEX_ERROR;                                                                \
-    }                                                                                   \
-    /* Lexer builder methods should never return None, check for it. */                 \
-    else if (yylval->pyobj == Py_None) {                                                \
-        Py_DECREF(Py_None);                                                             \
-        build_lexer_error("Unexpected None result from lexer", 34);                     \
-        return LEX_ERROR;                                                               \
-    }
-
-
-/* Initialization/finalization methods. These are separate from the yylex_init()
- * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename, const char* encoding);
-void yylex_finalize(void);
-
-
-/* Global declarations; defined below. */
-extern int yy_eof_times;
-extern const char* yy_filename;
-extern int yycolumn;
-extern const char* yy_encoding;
-
-/* String buffer statics. */
-extern size_t strbuf_size; /* Current buffer size (not including final nul). */
-extern char* strbuf;       /* Current buffer head. */
-extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
-extern char* strbuf_ptr;   /* Current insertion point in buffer. */
-void strbuf_realloc(size_t num_new_chars);
-
-
-
-/* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol. */
-
-#define YY_USER_ACTION  {                               \
-    yy_line_tokens++;                                   \
-    yylloc->first_line = yylloc->last_line = yylineno;  \
-    yylloc->first_column = yycolumn;                    \
-    yylloc->last_column = yycolumn+yyleng-1;            \
-    yycolumn += yyleng;                                 \
-  }
-
-
-/* Skip the rest of the input line. */
-int yy_skip_line(void);
-
-
-/* Utility functions. */
-int strtonl(const char* buf, size_t nchars);
-
-
-/* Append characters to the static string buffer and verify. */
-#define SAFE_COPY_CHAR(value)                    \
-	if (strbuf_ptr >= strbuf_end) {         \
-            strbuf_realloc(1);                  \
-	}                                       \
-        *strbuf_ptr++ = value;
+/**
+ * Initialize scanner private data.
+ *
+ * Setup @scanner to read from the Python file-like object @file. Set
+ * the reported file name to @filename, if not NULL and not None.
+ * Otherwise try to obtain the file name from the @name attribute of
+ * the @file object. If this fails, use the empty string. @encoding is
+ * used to decode strings read from the input file, if not NULL,
+ * otherwise the default UTF-8 encoding is used. Python objects
+ * references are incremented. It is safe to call this multiple times.
+ */
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
 
 }
 
-/* A start condition for chomping an invalid token. */
+/* Definitions. */
+%{
+
+#include <math.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/tokens.h"
+
+struct _yyextra_t {
+    /* The filename being tokenized. */
+    PyObject* filename;
+
+    /* The encoding to use for converting strings. */
+    const char* encoding;
+};
+
+#define yy_filename yyget_extra(yyscanner)->filename
+#define yy_encoding yyget_extra(yyscanner)->encoding
+
+/* Build and accumulate an error on the builder object. */
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
+
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
+
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+
+#define YY_INPUT(buf, result, max_size)                         \
+    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
+
+#define YY_USER_ACTION                                                  \
+    {                                                                   \
+        yylloc->first_line = yylineno;                                  \
+        yylloc->last_line = yylloc->first_line;                         \
+        yylloc->first_column = yycolumn;                                \
+        yylloc->last_column = yycolumn + yyleng - 1;                    \
+        yylloc->file_name = yy_filename;                                \
+        yycolumn += yyleng;                                             \
+    }
+
+%}
+
 %x INVALID
+%x IGNORE
 
-/* Exclusive start condition for parsing escape sequences in string literals. */
-%x STRLIT
+ASCII           [\x00-\x7f]
+UTF-8-1         [\x80-\xbf]
+UTF-8-2         [\xc2-\xdf]{UTF-8-1}
+UTF-8-3         \xe0[\xa0-\xbf]{UTF-8-1}|[\xe1-\xec]{UTF-8-1}{UTF-8-1}|\xed[\x80-\x9f]{UTF-8-1}|[\xee-\xef]{UTF-8-1}{UTF-8-1}
+UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{UTF-8-1}|\xf4[\x80-\x8f]{UTF-8-1}{UTF-8-1}
+UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
+UTF-8           {ASCII}|{UTF-8-ONLY}
+
+ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+
+ /* Characters that may be used as flags. Make sure to include all the
+  * values from beancount.core.flags to allow round-trips between text
+  * and entries. {5307d8fa1e7b} */
+FLAGS           [!&#?%PSTCURM]
 
 
-/*--------------------------------------------------------------------------------------*/
-/* Rules */
-%%
-
+%% /* Rules */
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
-    yy_line_tokens = 0;
     yycolumn = 1;
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line and followed
-    by a non-comment regular character. This is how we detect an initial indent
-    and thus group postings together in the grammar. */
-[ \t\r]+	{
-    if ( yy_line_tokens == 1 ) {
-        /* If the next character completes the line, skip it. */
-        if ( yy_hold_char == '\n' ||
-             yy_hold_char == '\r' ||
-             yy_hold_char == '\0' ||
-             yy_hold_char == ';' ) {
-            return SKIPPED;
-        }
-        else {
-            return INDENT;
-        }
-    }
-}
+ /* Ignore whitespace, except when found at the beginning of a line
+    and followed by a regular character. This is how we detect an
+    initial indent and thus group postings and comments together in
+    the grammar. */
+^[ \t]+/[^ \t\r\n]	{ return INDENT; }
+[ \t\r]+ 	{ }
+
+ /* Comments. */
+;.*		{ }
 
  /* Characters with special meanings have their own tokens. */
 \|		{ return PIPE; }
@@ -154,57 +148,15 @@ int strtonl(const char* buf, size_t nchars);
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
-\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
+\#		{ return HASH; }
+\*		{ return ASTERISK; }
+\:		{ return COLON; }
 
- /* Special handling for characters beginning a line to be ignored.
-  * I'd like to improve how this is handled. Needs own lexer, really. */
-\#		{
-    if ( yy_line_tokens != 1 ) {
-        return HASH;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-        return SKIPPED;
-    }
-}
-
-\*		{
-    if ( yy_line_tokens != 1 ) {
-        return ASTERISK;
-    }
-    else {
-        /* Allow org-mode titles. */
-        yy_skip_line();
-        return SKIPPED;
-    }
-}
-
- /* Skip commented output (but not the accompanying newline). */
-;+.*		{
-    /* yy_skip_line(); */
-    return COMMENT;
-}
-
- /* Special characters which may be used in-lieu of a 'txn' keyword in a
-    transaction declaration output as a token. Other lines are just skipped.
-    This allows us to use org-mode or other separators in the input syntax.
-
-    Note: You need to make sure to include all the values from
-    beancount.core.flags, in order for round-trips between text and entries to
-    be possible. {5307d8fa1e7b}
-    */
-[!&#?%PSTCURM]	{
-    if ( yy_line_tokens != 1 ) {
-        yylval->character = yytext[0];
-        return FLAG;
-    }
-    else {
-        yy_skip_line();
-        return SKIPPED;
-    }
+{FLAGS}		{
+    yylval->character = yytext[0];
+    return FLAG;
 }
 
  /* Keywords. */
@@ -230,124 +182,63 @@ include		{ return INCLUDE; }
 
  /* Boolean values. */
 TRUE		{
-    yylval->pyobj = Py_True;
-    Py_INCREF(Py_True);
-    return BOOL;
+    return token(BOOL, true);
 }
 
 FALSE		{
-    yylval->pyobj = Py_False;
-    Py_INCREF(Py_False);
-    return BOOL;
+    return token(BOOL, false);
+}
+
+NULL		{
+    return token(NONE);
 }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
-    const char* year_str;
-    const char* month_str;
-    const char* day_str;
-    int year, month, day;
-
-    /* Parse the numbers. */
-    year_str = yytext;
-    month_str = strpbrk(year_str, "-/");
-    year = strtonl(year_str, month_str - year_str);
-    month_str++;
-    day_str = strpbrk(month_str, "-/");
-    month = strtonl(month_str, day_str - month_str);
-    day_str++;
-    day = strtonl(day_str, yytext + yyleng - day_str);
-
-    /* Attempt to create the date. */
-    BUILD_LEX("DATE", "iii", year, month, day);
-    return DATE;
+    return token(DATE, yytext);
 }
 
  /* Account names. */
-([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]*)+		{
-    BUILD_LEX("ACCOUNT", "s", yytext);
-    return ACCOUNT;
+{ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
+    return token(ACCOUNT, yytext);
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
-    BUILD_LEX("CURRENCY", "s", yytext);
-    return CURRENCY;
+    return token(CURRENCY, yytext, yyleng);
 }
 
  /* String literals. */
- /* Note that we use an exclusive start condition.
-    See section "Start Conditions" in the GNU Flex manual. */
-\"	{
-    strbuf_ptr = strbuf;
-    BEGIN(STRLIT);
-}
-
-<STRLIT>{
-
-    /* Saw closing quote - all done. */
-    \"        {
-        BEGIN(INITIAL);
-        *strbuf_ptr = '\0';
-        PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
-                                                 yy_encoding, "ignore");
-        if ( unicode_str == NULL ) {
-            build_lexer_error_from_exception();
-            yylval->pyobj = Py_None;
-            Py_INCREF(Py_None);
-            return LEX_ERROR;
-        }
-        BUILD_LEX("STRING", "O", unicode_str);
-        Py_DECREF(unicode_str);
-        strbuf_ptr = NULL;
-        return STRING;
-    }
-
-    /* Escape sequences. */
-    \\n       SAFE_COPY_CHAR('\n');
-    \\t       SAFE_COPY_CHAR('\t');
-    \\r       SAFE_COPY_CHAR('\r');
-    \\b       SAFE_COPY_CHAR('\b');
-    \\f       SAFE_COPY_CHAR('\f');
-    \\(.|\n)  SAFE_COPY_CHAR(yytext[1]);
-
-    /* All other characters. */
-    [^\\\"]+        {
-        if ( yyleng > (yy_size_t)(strbuf_end - strbuf_ptr) ) {
-            strbuf_realloc(yyleng);
-        }
-        size_t i;
-        for (i = 0; i < yyleng; ++i) {
-            *strbuf_ptr++ = yytext[i];
-        }
-    }
+\"([^\\\"]|\\.)*\"		{
+    return token(STRING, yytext + 1, yyleng - 2, yy_encoding);
 }
 
  /* Numbers */
-([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
-    BUILD_LEX("NUMBER", "s", yytext);
-    return NUMBER;
+([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)?	{
+    return token(NUMBER, yytext);
 }
 
  /* Tags */
 #[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("TAG", "s", &(yytext[1]));
-    return TAG;
+    return token(TAG, yytext + 1, yyleng - 1);
 }
 
  /* Links */
 \^[A-Za-z0-9\-_/.]+ 		{
-    BUILD_LEX("LINK", "s", &(yytext[1]));
-    return LINK;
+    return token(LINK, yytext + 1, yyleng - 1);
 }
 
- /* Key */
-[a-z][a-zA-Z0-9\-_]+: 		{
-    BUILD_LEX("KEY", "s#", yytext, yyleng-1);
-    unput(':');
-    return KEY;
+ /* Keys */
+[a-z][a-zA-Z0-9\-_]+/: 		{
+    return token(KEY, yytext, yyleng);
 }
+
+ /* Lines starting with an asterisk, a colon, an hash, or a character
+  * in the FLAGS characters set are ignored. This rule is inserted
+  * here to give higher precedence to rules matching valid tokens. */
+^[\*\:\#]/.	{ BEGIN(IGNORE); }
+^{FLAGS}/.	{ BEGIN(IGNORE); }
 
  /* Default rule. {bf253a29a820} */
 .			{
@@ -355,193 +246,166 @@ FALSE		{
     BEGIN(INVALID);
 }
 
- /* Fake an EOL at the end of file, to ensure that files without a final newline
-  * will process postings right. */
 <<EOF>>     		{
-  if ( yy_eof_times == 0 ) {
-    yy_eof_times = 1;
-    yylloc->first_line = yylineno;
-    return EOL;
-  }
-  return 0;
+    /* Ensure location data is populated. */
+    YY_USER_ACTION;
+    return YYEOF;
 }
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
     pattern, it would take precedence over valid rules if the matched text is
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
-<INVALID>[^ \t\n\r]+     {
-    char buffer[256];
-    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(buffer, length);
+<INVALID>[^ \t\n\r]+	{
+    PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
+    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
-    return LEX_ERROR;
+    return YYerror;
 }
 
-
-%%
-/*--------------------------------------------------------------------------------------*/
-/* User Code */
-
-
-/* Note: All these globals should be moved to an yylex_extra */
-
-/* The number of times EOF has been hit. This is used to synthesize an EOL at
- * the end of the file. */
-int yy_eof_times = 0;
-
-/* The filename being tokenized. */
-const char* yy_filename = 0;
-
-/* Number of tokens since the beginning of the line. */
-int yy_line_tokens = 0;
-
-/* The current column we're tokenizing at. */
-int yycolumn = 1;
-
-/* The encoding to use for converting strings. */
-const char* yy_encoding = NULL;
-
-/* A buffer for parsing string literals. It is reused and its size is dynamically allocated. */
-size_t strbuf_size = 0;
-char* strbuf = NULL;
-char* strbuf_end;
-char* strbuf_ptr;
-
-/* Initialize the globals before running the lexer. */
-void yylex_initialize(const char* filename, const char* encoding)
-{
-    assert(filename != NULL);
-    yy_eof_times = 0;
-    yy_filename = filename;
-    yy_line_tokens = 0;
-    yycolumn = 1;
-    if ( encoding == 0 ) {
-        yy_encoding = "utf8";
-    }
-    else {
-        yy_encoding = encoding;
-    }
-
-    /* Start with a decent small buffer. */
-    strbuf_size = 1024;
-    strbuf = realloc(strbuf, strbuf_size + 1);
-    strbuf_end = strbuf + strbuf_size - 1;
-    strbuf_ptr = NULL;
-
-    /* Note: If we used a reentrant parser, this routine should eventually call
-     * yylex_init(). */
+<IGNORE>.* {
+    BEGIN(INITIAL);
 }
 
-/* Finalize the globals before running the lexer. */
-void yylex_finalize(void)
-{
-    yy_filename = NULL;
+%% /* User Code */
 
-    /* Finalize our reading buffer. */
-    if ( strbuf != NULL ) {
-        free(strbuf);
-        strbuf = NULL;
+yyscan_t yylex_new(void)
+{
+    yyscan_t scanner;
+    yyextra_t* extra;
+
+    extra = malloc(sizeof(*extra));
+    if (!extra)
+        return NULL;
+
+    extra->filename = NULL;
+
+    yylex_init_extra(extra, &scanner);
+    if (!scanner) {
+        free(extra);
+        return NULL;
     }
 
-    /* Call the yylex finalization routine. */
-    yylex_destroy();
+    return scanner;
 }
 
-
-/* Reallocate the buffer to accomodate some new characters. */
-void strbuf_realloc(size_t num_new_chars)
+yyscan_t yylex_free(yyscan_t scanner)
 {
-    assert(strbuf_ptr != NULL);
-    size_t cur_size = strbuf_ptr - strbuf;
-    size_t new_size = cur_size + num_new_chars;
-    while ( strbuf_size < new_size ) {
-        strbuf_size <<= 1;
-    }
-    strbuf = realloc(strbuf, strbuf_size + 1);
-    strbuf_ptr = strbuf + cur_size;
-    strbuf_end = strbuf + strbuf_size - 1;
+    yyextra_t* extra = yyget_extra(scanner);
+
+    Py_XDECREF(extra->filename);
+    free(extra);
+
+    Py_XDECREF(yyget_in(scanner));
+    yylex_destroy(scanner);
+
+    return NULL;
 }
 
-
-
-
-#define LEXEOF 0
-
-int yy_skip_line()
+/* yyrestart() does not reset the scanner back to INITIAL state and
+ * Flex does not provide a way of doing so outside a scanner
+ * rule. This function does just that accessing Flex internals. */
+static void yybegin(yyscan_t scanner)
 {
-    int num_chars = 0;
-    for ( ;; ) {
-        int c = input();
-        num_chars++;
-        if ( c == LEXEOF || c == -1 ) {
-            break;
+    struct yyguts_t* yyg = (struct yyguts_t*)scanner;
+    BEGIN(INITIAL);
+}
+
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
+{
+    yyextra_t* extra = yyget_extra(scanner);
+
+    if (!filename || filename == Py_None) {
+        /* If a filename has not been specified, get it from the 'name'
+	 * attribute of the input file object. */
+        filename = PyObject_GetAttrString(file, "name");
+        if (!filename) {
+	    /* No 'name' attribute. */
+	    PyErr_Clear();
+            /* Use the empty string. */
+            filename = PyUnicode_FromString("");
         }
-        if ( c == '\n' ) {
-            unput(c);
-            num_chars--;
-            break;
-        }
+    } else {
+        Py_INCREF(filename);
     }
-    return num_chars;
-}
 
-/* Convert an integer string to a number. */
-int strtonl(const char* buf, size_t nchars)
-{
-    int result = 0;
-    size_t i;
-    for ( i = 0; i < nchars; ++i ) {
-        result *= 10;
-        result += (buf[i] - '0');
-    }
-    return result;
+    Py_XDECREF(extra->filename);
+    extra->filename = filename;
+
+    extra->encoding = encoding ? encoding : "utf-8";
+
+    Py_XDECREF(yyget_in(scanner));
+    Py_INCREF(file);
+    yyrestart((void *)file, scanner);
+    yybegin(scanner);
+
+    yyset_lineno(lineno, scanner);
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length)
+void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
 {
-    TRACE_ERROR("Invalid Token");
+    PyObject* error;
+    PyObject* rv;
+    va_list va;
+
+    va_start(va, format);
+    error = PyUnicode_FromFormatV(format, va);
+    va_end(va);
+
+    if (!error) {
+        return;
+    }
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                       "s#", string, length);
-    if (rv == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: Building exception from default rule");
-    }
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
+                             loc->file_name, loc->first_line, error);
+
     Py_XDECREF(rv);
+    Py_XDECREF(error);
 }
 
-void build_lexer_error_from_exception()
+void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
 {
-    TRACE_ERROR("Lexer Builder Exception");
+    PyObject* type;
+    PyObject* value;
+    PyObject* traceback;
 
-    /* Get the exception context. */
-    PyObject* ptype = NULL;
-    PyObject* pvalue = NULL;
-    PyObject* ptraceback = NULL;
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
-    /* Clear the exception. */
-    PyErr_Clear();
+    build_lexer_error(loc, builder, "%s: %S", PyExceptionClass_Name(type), value);
 
-    if (pvalue != NULL) {
-        /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
-                                           "OO", pvalue, ptype);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
+}
 
-        if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: While building exception");
-        }
+int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
+{
+    PyObject* dest = NULL;
+    PyObject* read = NULL;
+    int ret = 0;
+
+    // Note: Eventually we ought to allocate this once in the parser state and
+    // avoid reallocating this on every block read.
+    dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
+    if (!dest) {
+	goto error;
     }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Internal error: No exception");
+
+    read = PyObject_CallMethod(file, "readinto", "O", dest);
+    if (!read) {
+	goto error;
     }
+
+    ret = PyLong_AsSize_t(read);
+    if (PyErr_Occurred()) {
+	ret = 0;
+    }
+
+error:
+    Py_XDECREF(dest);
+    Py_XDECREF(read);
+    return ret;
 }

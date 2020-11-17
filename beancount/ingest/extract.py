@@ -7,16 +7,15 @@ __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import itertools
+import inspect
 import logging
 import sys
 import textwrap
-import traceback
 
 from beancount.core import data
 from beancount.parser import printer
 from beancount.ingest import similar
 from beancount.ingest import identify
-from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 from beancount import loader
 
@@ -51,8 +50,7 @@ def extract_from_file(filename, importer,
         generate Transaction objects with None as value for the 'tags' or 'links'
         attributes.
     Returns:
-      A list of new imported entries and a subset of these which have been
-      identified as possible duplicates.
+      A list of new imported entries.
     Raises:
       Exception: If there is an error in the importer's extract() method.
     """
@@ -61,9 +59,14 @@ def extract_from_file(filename, importer,
 
     # Note: Let the exception through on purpose. This makes developing
     # importers much easier by rendering the details of the exceptions.
-    new_entries = importer.extract(file)
+    #
+    # Note: For legacy support, support calling without the existing entries.
+    kwargs = {}
+    if 'existing_entries' in inspect.signature(importer.extract).parameters:
+        kwargs['existing_entries'] = existing_entries
+    new_entries = importer.extract(file, **kwargs)
     if not new_entries:
-        return [], []
+        return []
 
     # Make sure the newly imported entries are sorted; don't trust the importer.
     new_entries.sort(key=data.entry_sortkey)
@@ -77,36 +80,48 @@ def extract_from_file(filename, importer,
         new_entries = list(itertools.dropwhile(lambda x: x.date < min_date,
                                                new_entries))
 
-    # Find potential matching entries.
-    duplicate_entries = []
-    if existing_entries is not None:
+    return new_entries
+
+
+def find_duplicate_entries(new_entries_list, existing_entries):
+    """Flag potentially duplicate entries.
+
+    Args:
+      new_entries_list: A list of pairs of (key, lists of imported entries), one
+        for each importer. The key identifies the filename and/or importer that
+        yielded those new entries.
+      existing_entries: A list of previously existing entries from the target
+        ledger.
+    Returns:
+      A list of lists of modified new entries (like new_entries_list),
+      potentially with modified metadata to indicate those which are duplicated.
+    """
+    mod_entries_list = []
+    for key, new_entries in new_entries_list:
+        # Find similar entries against the existing ledger only.
         duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
-        duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
 
         # Add a metadata marker to the extracted entries for duplicates.
+        duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
         mod_entries = []
         for entry in new_entries:
             if id(entry) in duplicate_set:
                 marked_meta = entry.meta.copy()
                 marked_meta[DUPLICATE_META] = True
                 entry = entry._replace(meta=marked_meta)
-                duplicate_entries.append(entry)
             mod_entries.append(entry)
-        new_entries = mod_entries
+        mod_entries_list.append((key, mod_entries))
+    return mod_entries_list
 
-    return new_entries, duplicate_entries
 
-
-def print_extracted_entries(importer, entries, file):
-    """Print the entries for the given importer.
+def print_extracted_entries(entries, file):
+    """Print a list of entries.
 
     Args:
-      importer: An importer object that matched the file.
       entries: A list of extracted entries.
       file: A file object to write to.
     """
     # Print the filename and which modules matched.
-    # pylint: disable=invalid-name
     pr = lambda *args: print(*args, file=file)
     pr('')
 
@@ -131,7 +146,8 @@ def extract(importer_config,
             entries=None,
             options_map=None,
             mindate=None,
-            ascending=True):
+            ascending=True,
+            hooks=None):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file.
@@ -149,38 +165,60 @@ def extract(importer_config,
       mindate: Optional minimum date to output transactions for.
       ascending: A boolean, true to print entries in ascending order, false if
         descending is desired.
+      hooks: An optional list of hook functions to apply to the list of extract
+        (filename, entries) pairs, in order. If not specified, find_duplicate_entries()
+        is used, automatically.
     """
     allow_none_for_tags_and_links = (
         options_map and options_map["allow_deprecated_none_for_tags_and_links"])
 
-    output.write(HEADER)
+    # Run all the importers and gather their result sets.
+    new_entries_list = []
     for filename, importers in identify.find_imports(importer_config,
-                                                     files_or_directories,
-                                                     output):
+                                                     files_or_directories):
         for importer in importers:
             # Import and process the file.
             try:
-                new_entries, duplicate_entries = extract_from_file(
+                new_entries = extract_from_file(
                     filename,
                     importer,
                     existing_entries=entries,
                     min_date=mindate,
                     allow_none_for_tags_and_links=allow_none_for_tags_and_links)
+                new_entries_list.append((filename, new_entries))
             except Exception as exc:
-                logging.error("Importer %s.extract() raised an unexpected error: %s",
-                              importer.name(), exc)
-                logging.error("Traceback: %s", traceback.format_exc())
-                continue
-            if not new_entries and not duplicate_entries:
+                logging.exception("Importer %s.extract() raised an unexpected error: %s",
+                                  importer.name(), exc)
                 continue
 
-            if not ascending:
-                new_entries.reverse()
-            print_extracted_entries(importer, new_entries, output)
+    # Find potential duplicate entries in the result sets, either against the
+    # list of existing ones, or against each other. A single call to this
+    # function is made on purpose, so that the function be able to merge
+    # entries.
+    if hooks is None:
+        hooks = [find_duplicate_entries]
+    for hook_fn in hooks:
+        new_entries_list = hook_fn(new_entries_list, entries)
+    assert isinstance(new_entries_list, list)
+    assert all(isinstance(new_entries, tuple) for new_entries in new_entries_list)
+    assert all(isinstance(new_entries[0], str) for new_entries in new_entries_list)
+    assert all(isinstance(new_entries[1], list) for new_entries in new_entries_list)
+
+    # Print out the results.
+    output.write(HEADER)
+    for key, new_entries in new_entries_list:
+        output.write(identify.SECTION.format(key))
+        output.write('\n')
+        if not ascending:
+            new_entries.reverse()
+        print_extracted_entries(new_entries, output)
 
 
-def main():
-    parser = scripts_utils.create_arguments_parser("Extract transactions from downloads")
+DESCRIPTION = "Extract transactions from downloads"
+
+
+def add_arguments(parser):
+    """Add arguments for the extract command."""
 
     parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
                         default=None,
@@ -192,16 +230,20 @@ def main():
                         default=True, const=False,
                         help='Write out the entries in descending order')
 
-    args, config, downloads_directories = scripts_utils.parse_arguments(parser)
+
+def run(args, _, importers_list, files_or_directories, hooks=None):
+    """Run the subcommand."""
 
     # Load the ledger, if one is specified.
     if args.existing:
         entries, _, options_map = loader.load_file(args.existing)
     else:
-        entries = None
-        options_map = None
+        entries, options_map = None, None
 
-    extract(config, downloads_directories, sys.stdout,
-            entries=entries, options_map=options_map,
-            mindate=None, ascending=args.ascending)
+    extract(importers_list, files_or_directories, sys.stdout,
+            entries=entries,
+            options_map=options_map,
+            mindate=None,
+            ascending=args.ascending,
+            hooks=hooks)
     return 0

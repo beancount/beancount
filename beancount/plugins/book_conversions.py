@@ -7,49 +7,49 @@ particular account, which you provide. For each of those accounts, it also
 requires a corresponding Income account to book the profit/loss of reducing
 lots (i.e., sales):
 
-  plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+    plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
 Then, simply input the transactions with price conversion. We use "Bitcoins" in
 this example, converting Bitcoin purchases that were carried out as currency
 into maintaining these with cost basis, for tax reporting purposes:
 
-  2015-09-04 * "Buy some bitcoins"
-    Assets:Bank          -1000.00 USD
-    Assets:Bitcoin       4.333507 BTC @ 230.76 USD
+    2015-09-04 * "Buy some bitcoins"
+      Assets:Bank          -1000.00 USD
+      Assets:Bitcoin       4.333507 BTC @ 230.76 USD
 
-  2015-09-05 * "Buy some more bitcoins at a different price"
-    Assets:Bank          -1000.00 USD
-    Assets:Bitcoin       4.345747 BTC @ 230.11 USD
+    2015-09-05 * "Buy some more bitcoins at a different price"
+      Assets:Bank          -1000.00 USD
+      Assets:Bitcoin       4.345747 BTC @ 230.11 USD
 
-  2015-09-20 * "Use (sell) some bitcoins"
-    Assets:Bitcoin       -6.000000 BTC @ 230.50 USD
-    Expenses:Something
+    2015-09-20 * "Use (sell) some bitcoins"
+      Assets:Bitcoin       -6.000000 BTC @ 230.50 USD
+      Expenses:Something
 
 The result is that cost bases are inserted on augmenting lots:
 
-  2015-09-04 * "Buy some bitcoins"
-    Assets:Bitcoin  4.333507 BTC {230.76 USD} @ 230.76 USD
-    Assets:Bank     -1000.00 USD
+    2015-09-04 * "Buy some bitcoins"
+      Assets:Bitcoin  4.333507 BTC {230.76 USD} @ 230.76 USD
+      Assets:Bank     -1000.00 USD
 
-  2015-09-05 * "Buy some more bitcoins at a different price"
-    Assets:Bitcoin  4.345747 BTC {230.11 USD} @ 230.11 USD
-    Assets:Bank     -1000.00 USD
+    2015-09-05 * "Buy some more bitcoins at a different price"
+      Assets:Bitcoin  4.345747 BTC {230.11 USD} @ 230.11 USD
+      Assets:Bank     -1000.00 USD
 
 While on reducing lots, matching FIFO lots are automatically found and the
 corresponding cost basis added:
 
-  2015-09-20 * "Use (sell) some bitcoins"
-    Assets:Bitcoin          -4.333507 BTC {230.76 USD} @ 230.50 USD
-    Assets:Bitcoin          -1.666493 BTC {230.11 USD} @ 230.50 USD
-    Income:Bitcoin         0.47677955 USD
-    Expenses:Something  1383.00000000 USD
+    2015-09-20 * "Use (sell) some bitcoins"
+      Assets:Bitcoin          -4.333507 BTC {230.76 USD} @ 230.50 USD
+      Assets:Bitcoin          -1.666493 BTC {230.11 USD} @ 230.50 USD
+      Income:Bitcoin         0.47677955 USD
+      Expenses:Something  1383.00000000 USD
 
 Note that multiple lots were required to fulfill the sale quantity here. As in
 this example, this may result in multiple lots being created for a single one.
 
 Finally, Beancount will eventually support booking methods built-in, but this is
 a quick method that shows how to hack your own booking method via
-transformations of the postings that run in in a plugin.
+transformations of the postings that run in a plugin.
 
 Implementation notes:
 
@@ -71,13 +71,20 @@ Implementation notes:
   is not strictly true; however, we would need an Inventory in order to figrue
   this out. This will be done in the future and is not difficult to do.
 
+
+IMPORTANT:
+
+  This plugin was developed before the booking methods (FIFO, LIFO, and others)
+  were fully implemented in Beancount. It was built to answer a question on the
+  mailing-list about FIFO booking. You probably don't need to use them anymore.
+  Always prefer to use the native syntax instead of this.
+
 """
 
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 __plugins__ = ('book_price_conversions_plugin',)
 
-import argparse
 import collections
 import copy
 import logging
@@ -92,7 +99,8 @@ from beancount.core import inventory
 from beancount.core import account
 from beancount.core import data
 from beancount import loader
-from beancount.reports import table
+from beancount.utils import table
+from beancount.parser import version
 
 
 # The name of the metadata field used to link matched postings.
@@ -180,7 +188,7 @@ def reduce_inventory(pending_lots, posting, eindex):
         else:
             errors.append(
                 BookConversionError(posting.meta,
-                          "Could not match position {}".format(posting), None))
+                                    "Could not match position {}".format(posting), None))
             break
 
         # Reduce the pending lots.
@@ -412,7 +420,7 @@ def main():
     """Extract trades from metadata-annotated postings and report on them.
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
 
     oparser = parser.add_argument_group('Outputs')

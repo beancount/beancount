@@ -21,6 +21,7 @@ from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import getters
 from beancount.core import interpolate
 from beancount.core import convert
 from beancount.core import prices
@@ -73,7 +74,7 @@ def open(entries,
         to transfer previous balances from, in order to initialize account
         balances at the beginning of the period. This is typically called an
         opening balances account.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to the first
@@ -121,7 +122,7 @@ def close(entries,
         list of entries.
       conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to one beyond
@@ -151,7 +152,7 @@ def clear(entries,
     """Transfer income and expenses balances at the given date to the equity accounts.
 
     This method insert entries to zero out balances on income and expenses
-    accounts by transfering them to an equity account.
+    accounts by transferring them to an equity account.
 
     Args:
       entries: A list of directive tuples.
@@ -237,7 +238,7 @@ def clamp(entries,
         to transfer previous balances from, in order to initialize account
         balances at the beginning of the period. This is typically called an
         opening balances account.
-      account_conversions: A string, tne name of the equity account to
+      account_conversions: A string, the name of the equity account to
         book currency conversions against.
     Returns:
       A new list of entries is returned, and the index that points to the first
@@ -279,12 +280,16 @@ def clamp_opt(entries, begin_date, end_date, options_map):
       Same as clamp().
     """
     account_types = options.get_account_types(options_map)
-    previous_accounts = options.get_previous_accounts(options_map)
+    previous_earnings, previous_balances, _ = options.get_previous_accounts(options_map)
+    _, current_conversions = options.get_current_accounts(options_map)
+
     conversion_currency = options_map['conversion_currency']
     return clamp(entries, begin_date, end_date,
                  account_types,
                  conversion_currency,
-                 *previous_accounts)
+                 previous_earnings,
+                 previous_balances,
+                 current_conversions)
 
 
 def cap(entries,
@@ -356,7 +361,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     creating new entries.
 
     Note that inserting transfers breaks any following balance checks that are
-    in the tranferred accounts. For this reason, all balance assertion entries
+    in the transferred accounts. For this reason, all balance assertion entries
     following the cutoff date for those accounts are removed from the list in
     output.
 
@@ -420,7 +425,7 @@ def summarize(entries, date, account_opening):
 
     Args:
       entries: A list of directives.
-      date: A datetime.date instance, the cutoff date before which to summararize.
+      date: A datetime.date instance, the cutoff date before which to summarize.
       account_opening: A string, the name of the source account to book summarization
         entries against.
     Returns:
@@ -544,7 +549,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
         balances account from the source account; otherwise the new entries
         transfer FROM the balances into the source account.
       meta: A dict to use as metadata for the transactions.
-      flag: A string, the flag to use for the transactinos.
+      flag: A string, the flag to use for the transactions.
       narration_template: A format string for creating the narration. It is
         formatted with 'account' and 'date' replacement variables.
     Returns:
@@ -578,7 +583,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
     return new_entries
 
 
-def balance_by_account(entries, date=None):
+# TODO(blais): Reconcile this with beancount.core.realization.realize().
+def balance_by_account(entries, date=None, compress_unbooked=False):
     """Sum up the balance per account for all entries strictly before 'date'.
 
     Args:
@@ -586,11 +592,17 @@ def balance_by_account(entries, date=None):
       date: An optional datetime.date instance. If provided, stop accumulating
         on and after this date. This is useful for summarization before a
         specific date.
+      compress_unbooked: For accounts that have a booking method of NONE,
+        compress their positions into a single average position. This can be
+        used when you export the full list of positions, because those accounts
+        will have a myriad of small positions from fees at negative cost and
+        what-not.
     Returns:
       A pair of a dict of account string to instance Inventory (the balance of
       this account before the given date), and the index in the list of entries
       where the date was encountered. If all entries are located before the
       cutoff date, an index one beyond the last entry is returned.
+
     """
     balances = collections.defaultdict(inventory.Inventory)
     for index, entry in enumerate(entries):
@@ -611,6 +623,25 @@ def balance_by_account(entries, date=None):
                 account_balance.add_position(posting)
     else:
         index = len(entries)
+
+    # If the account has "NONE" booking method, merge all its postings
+    # together in order to obtain an accurate cost basis and balance of
+    # units.
+    #
+    # (This is a complex issue.) If you accrued positions without having them
+    # booked properly against existing cost bases, you have not properly accounted
+    # for the profit/loss to other postings. This means that the resulting
+    # profit/loss is merged in the cost basis of the positive and negative
+    # postings.
+    if compress_unbooked:
+        oc_map = getters.get_account_open_close(entries)
+        accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
+
+        for account, balance in balances.items():
+            dopen = accounts_map.get(account, None)
+            if dopen is not None and dopen.booking is data.Booking.NONE:
+                average_balance = balance.average()
+                balances[account] = inventory.Inventory(pos for pos in average_balance)
 
     return balances, index
 
@@ -642,7 +673,7 @@ def get_open_entries(entries, date):
                 open_entries[entry.account] = (index, entry)
 
         elif isinstance(entry, Close):
-            # If there is no coresponding open, don't raise an error.
+            # If there is no corresponding open, don't raise an error.
             open_entries.pop(entry.account, None)
 
     return [entry for (index, entry) in sorted(open_entries.values())]

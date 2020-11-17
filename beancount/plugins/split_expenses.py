@@ -8,16 +8,16 @@ into multiple postings, one for each member.
 
 For example, given the names 'Martin' and 'Caroline', the following transaction:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-     Income:Caroline:CreditCard      -269.00 USD
-     Expenses:Accommodation
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+       Income:Caroline:CreditCard      -269.00 USD
+       Expenses:Accommodation
 
 Will be converted to this:
 
-  2015-02-01 * "Aqua Viva Tulum - two nights"
-    Income:Caroline:CreditCard       -269.00 USD
-    Expenses:Accommodation:Martin     134.50 USD
-    Expenses:Accommodation:Caroline   134.50 USD
+    2015-02-01 * "Aqua Viva Tulum - two nights"
+      Income:Caroline:CreditCard       -269.00 USD
+      Expenses:Accommodation:Martin     134.50 USD
+      Expenses:Accommodation:Caroline   134.50 USD
 
 After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings
@@ -27,7 +27,6 @@ __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import argparse
 import logging
 import os
 import re
@@ -43,6 +42,7 @@ from beancount.core import interpolate
 from beancount.parser import options
 from beancount.query import query
 from beancount.query import query_render
+from beancount.parser import version
 
 
 __plugins__ = ('split_expenses',)
@@ -102,7 +102,7 @@ def split_expenses(entries, options_map, config):
                         # automatically calculated, so that the resulting
                         # calculated amounts aren't used to affect inferred
                         # tolerances.
-                        meta = posting.meta.copy()
+                        meta = posting.meta.copy() if posting.meta else {}
                         meta[interpolate.AUTOMATIC_META] = True
 
                         # Add a new posting for each member, to a new account
@@ -221,8 +221,8 @@ def get_participants(filename, options_map):
     plugin_options = dict(options_map["plugin"])
     try:
         return plugin_options["beancount.plugins.split_expenses"].split()
-    except KeyError:
-        raise KeyError("Could not find the split_expenses plugin configuration.")
+    except KeyError as exc:
+        raise KeyError("Could not find the split_expenses plugin configuration.") from exc
 
 
 def main():
@@ -235,7 +235,7 @@ def main():
     """
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
 
     parser.add_argument('-c', '--currency', action='store',

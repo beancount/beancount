@@ -1,16 +1,25 @@
 #!/usr/bin/env make
 
-# Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
+TOOLS=./tools
 
-GREP="grep --include="*.py" -srnE"
-TOOLS=./etc
+PYTHON ?= python3
+PYLINT ?= $(PYTHON) -m pylint
+LEX = flex
+YACC = bison
+YFLAGS = --report=itemset --verbose -Wall -Werror
+GRAPHER = dot
 
-PYTHON=python3
+
+# Support PYTHON being the path to a python interpreter.
+PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
+PYCONFIG = "python$(PYVERSION)-config"
+CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
+LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
+LDLIBS += $(shell $(PYCONFIG) --embed --libs)
 
 all: build
-
 
 # Clean everything up.
 clean:
@@ -19,33 +28,38 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
+	rm -f $(CROOT)/tokens_test
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
-
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
-LEX = flex
-YACC = bison --report=itemset --verbose
-FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
-TMP=/tmp
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	$(YACC) -o $(CROOT)/grammar.c $<
-	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
-	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
+	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 
+
 SOURCES =					\
+	$(CROOT)/decimal.c			\
+	$(CROOT)/decimal.h 			\
 	$(CROOT)/lexer.c			\
 	$(CROOT)/lexer.h			\
 	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h
+	$(CROOT)/grammar.h			\
+	$(CROOT)/macros.h			\
+	$(CROOT)/tokens.h
 
 .PHONY: build
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
+
+$(CROOT)/tokens_test: $(CROOT)/tokens_test.o $(CROOT)/tokens.o $(CROOT)/decimal.o
+
+.PHONY: ctest
+ctest: $(CROOT)/tokens_test
+	$(CROOT)/tokens_test
 
 build35: $(SOURCES)
 	python3.5 setup.py build_ext -i
@@ -99,7 +113,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
 
-GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
 	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
@@ -125,30 +138,21 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-
-# Push to github.
-github:
-	hg bookmark -r default master
-	hg push github
-
-# Bake a release.
+# Bake a release, upload the source.
 release:
-	$(PYTHON) setup.py register sdist upload
+	twine upload dist/*.tar.gz
 
-
-# Run the unittests.
-NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	$(NOSE) -v -s beancount
+	$(PYTHON) -m pytest -v -s beancount examples
 
 qtest qtests quiet-test quiet-tests test tests:
-	$(NOSE) beancount
+	$(PYTHON) -m pytest beancount
 
-test-failed:
-	$(NOSE) --failed beancount
+test-last test-last-failed test-failed:
+	$(PYTHON) -m pytest --last-failed beancount
 
-nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x beancount
+test-naked:
+	PATH=/bin:/usr/bin PYTHONPATH= $(PYTHON) -m pytest -x beancount
 
 # Run the parser and measure its performance.
 .PHONY: check
@@ -161,14 +165,10 @@ demo:
 	bin/bean-web --debug examples/demo.beancount
 
 
-# Generate the tutorial files from the example file.
+# Generate the example file.
 EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
-
-TUTORIAL=examples/tutorial
-tutorial: $(EXAMPLE)
-	$(PYTHON) beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -220,12 +220,12 @@ LINT_SRCS =					\
   bin/*						\
   tools/*.py
 
-# Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
-#PYLINT = pylint
-PYLINT = python3.5 $(shell which pylint)
-
 pylint lint:
-	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	$(PYLINT) $(LINT_SRCS)
+
+LINT_TESTS=useless-suppression,empty-docstring
+pylint-only:
+	$(PYLINT) --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
@@ -247,3 +247,15 @@ sphinx sphinx_odt2rst:
 
 convert_test:
 	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
+
+# This does not work well; import errors just won't go away, it's slow, and it
+# seems you have to pregenerate all .pyi to do anything useful.
+pytype:
+	find $(PWD)/beancount -name '*.py' | parallel -j16  pytype --pythonpath=$(PWD) -o {}i {}
+
+pytype1:
+	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
+
+bazel-link:
+	rm -f beancount/parser/_parser.so
+	ln -s ../../bazel-bin/beancount/parser/_parser.so beancount/parser/_parser.so

@@ -10,7 +10,7 @@ import textwrap
 import functools
 
 from beancount.reports import base
-from beancount.reports import table
+from beancount.utils import table
 from beancount.reports import tree_table
 from beancount.parser import printer
 from beancount.parser import options
@@ -90,7 +90,7 @@ class AccountsReport(base.Report):
         open_close = getters.get_account_open_close(entries)
 
         # Render to stdout.
-        maxlen = max(len(account) for account in open_close)
+        maxlen = (max(len(account) for account in open_close) if open_close else 0)
         sortkey_fun = functools.partial(account_types.get_account_sort_key,
                                         options.get_account_types(options_map))
         for account, (open, close) in sorted(open_close.items(),
@@ -111,8 +111,7 @@ class CurrentEventsReport(base.TableReport):
         for entry in entries:
             if isinstance(entry, data.Event):
                 events[entry.type] = entry.description
-        return table.create_table([(type_, description)
-                                   for type_, description in sorted(events.items())],
+        return table.create_table(list(sorted(events.items())),
                                   [(0, "Type", self.formatter.render_event_type),
                                    (1, "Description")])
 
@@ -158,7 +157,7 @@ class ActivityReport(base.HTMLReport,
                             type=date_utils.parse_date_liberally,
                             help="Cutoff date where we ignore whatever comes after.")
 
-    def render_real_text(self, real_root, options_map, file):
+    def render_real_text(self, real_root, price_map, price_date, options_map, file):
         rows = []
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
@@ -185,7 +184,7 @@ class ActivityReport(base.HTMLReport,
         table_ = table.create_table(rows, [(0, 'Account'), (1, 'Last Date', '{}'.format)])
         table.render_table(table_, file, 'text')
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
                      account_types.liabilities):

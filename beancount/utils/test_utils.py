@@ -1,4 +1,4 @@
-"""Support utillities for testing scripts.
+"""Support utilities for testing scripts.
 """
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -43,9 +43,18 @@ def find_repository_root(filename=None):
     """
     if filename is None:
         filename = __file__
+
+    # Support root directory under Bazel.
+    match = re.match(r"(.*\.runfiles/beancount)/", filename)
+    if match:
+        return match.group(1)
+
     while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKGINFO', 'COPYING', 'README')):
+                  for sigfile in ('PKG-INFO', 'COPYING', 'README.rst')):
+        prev_filename = filename
         filename = path.dirname(filename)
+        if prev_filename == filename:
+            raise ValueError("Failed to find the root directory.")
     return filename
 
 
@@ -74,7 +83,7 @@ def subprocess_env():
             'PYTHONPATH': find_python_lib()}
 
 
-def run_with_args(function, args):
+def run_with_args(function, args, runner_file=None):
     """Run the given function with sys.argv set to argv. The first argument is
     automatically inferred to be where the function object was defined. sys.argv
     is restored after the function is called.
@@ -83,14 +92,18 @@ def run_with_args(function, args):
       function: A function object to call with no arguments.
       argv: A list of arguments, excluding the script name, to be temporarily
         set on sys.argv.
+      runner_file: An optional name of the top-level file being run.
     Returns:
       The return value of the function run.
     """
     saved_argv = sys.argv
     saved_handlers = logging.root.handlers
+
     try:
-        module = sys.modules[function.__module__]
-        sys.argv = [module.__file__] + args
+        if runner_file is None:
+            module = sys.modules[function.__module__]
+            runner_file = module.__file__
+        sys.argv = [runner_file] + args
         logging.root.handlers = []
         return function()
     finally:
@@ -158,6 +171,7 @@ def create_temporary_files(root, contents_map):
             f.write(clean_contents)
 
 
+# TODO(blais): Improve this with kwargs instead.
 def capture(*attributes):
     """A context manager that captures what's printed to stdout.
 
@@ -184,9 +198,9 @@ def patch(obj, attributes, replacement_type):
     Args:
       obj: The object to patch up.
       attributes: A string or a sequence of strings, the names of attributes to replace.
-      replacement_type: A callable to build replacment objects.
+      replacement_type: A callable to build replacement objects.
     Yields:
-      An instance of a list of sequencs of 'replacement_type'.
+      An instance of a list of sequences of 'replacement_type'.
     """
     single = isinstance(attributes, str)
     if single:
@@ -206,7 +220,7 @@ def patch(obj, attributes, replacement_type):
         setattr(obj, attribute, saved_attr)
 
 
-def docfile(function):
+def docfile(function, **kwargs):
     """A decorator that write the function's docstring to a temporary file
     and calls the decorated function with the temporary filename.  This is
     useful for writing tests.
@@ -218,12 +232,28 @@ def docfile(function):
     """
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.NamedTemporaryFile('w') as file:
-            file.write(textwrap.dedent(function.__doc__))
+        allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
+        if any([key not in allowed for key in kwargs]):
+            raise ValueError("Invalid kwarg to docfile_extra")
+        with tempfile.NamedTemporaryFile('w', **kwargs) as file:
+            text = function.__doc__
+            file.write(textwrap.dedent(text))
             file.flush()
             return function(self, file.name)
     new_function.__doc__ = None
     return new_function
+
+
+def docfile_extra(**kwargs):
+    """
+    A decorator identical to @docfile,
+    but it also takes kwargs for the temporary file,
+    Kwargs:
+      e.g. buffering, encoding, newline, dir, prefix, and suffix.
+    Returns:
+      docfile
+    """
+    return functools.partial(docfile, **kwargs)
 
 
 def search_words(words, line):
@@ -252,6 +282,50 @@ class TestTempdirMixin:
         super().tearDown()
         # Clean up the temporary directory.
         shutil.rmtree(self.tempdir)
+
+
+class TmpFilesTestBase(unittest.TestCase):
+    """A test utility base class that creates and cleans up a directory hierarchy.
+    This convenience is useful for testing functions that work on files, such as the
+    documents tests, or the accounts walk.
+    """
+
+    # The list of strings, documents to create.
+    # Filenames ending with a '/' will be created as directories.
+    TEST_DOCUMENTS = None
+
+    def setUp(self):
+        self.tempdir, self.root = self.create_file_hierarchy(self.TEST_DOCUMENTS)
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir, ignore_errors=True)
+
+    @staticmethod
+    def create_file_hierarchy(test_files, subdir='root'):
+        """A test utility that creates a hierarchy of files.
+
+        Args:
+          test_files: A list of strings, relative filenames to a temporary root
+            directory. If the filename ends with a '/', we create a directory;
+            otherwise, we create a regular file.
+          subdir: A string, the subdirectory name under the temporary directory
+            location, to create the hierarchy under.
+        Returns:
+          A pair of strings, the temporary directory, and the subdirectory under
+            that which hosts the root of the tree.
+        """
+        tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+        root = path.join(tempdir, subdir)
+        for filename in test_files:
+            abs_filename = path.join(tempdir, filename)
+            if filename.endswith('/'):
+                os.makedirs(abs_filename)
+            else:
+                parent_dir = path.dirname(abs_filename)
+                if not path.exists(parent_dir):
+                    os.makedirs(parent_dir)
+                with open(abs_filename, 'w'): pass
+        return tempdir, root
 
 
 class TestCase(unittest.TestCase):
@@ -324,8 +398,7 @@ def make_failing_importer(*removed_module_names):
     def failing_import(name, *args, **kwargs):
         if name in removed_module_names:
             raise ImportError("Could not import {}".format(name))
-        else:
-            return builtins.__import__(name, *args, **kwargs)
+        return builtins.__import__(name, *args, **kwargs)
     return failing_import
 
 
@@ -337,10 +410,13 @@ def environ(varname, newvalue):
       varname: A string, the environ variable name.
       newvalue: A string, the desired value.
     """
-    oldvalue = os.environ.get(varname)
+    oldvalue = os.environ.get(varname, None)
     os.environ[varname] = newvalue
     yield
-    os.environ[varname] = oldvalue
+    if oldvalue is not None:
+        os.environ[varname] = oldvalue
+    else:
+        del os.environ[varname]
 
 
 # A function call's arguments, including its return value.
@@ -364,3 +440,16 @@ def record(fun):
         return return_value
     wrapped.calls = []
     return wrapped
+
+
+# TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
+def remove_alt_csv_path():
+    """Remove folder containing the csv module from the import path.
+
+    For some strange reason Bazel insists on inserting the local directory of
+    the file on sys.path and 'import csv' will fail to resolve to the global
+    module. TODO(blais): In the next version, renmame 'csv' to a different name.
+    """
+    sys.path[:] = [dirname
+                   for dirname in sys.path
+                   if not dirname.endswith('beancount/ingest/importers')]

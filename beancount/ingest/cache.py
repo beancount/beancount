@@ -58,9 +58,9 @@ class _FileMemo:
         """Computes the MIME type of the file."""
         return self.convert(mimetype)
 
-    def head(self, num_bytes=8192):
+    def head(self, num_bytes=8192, encoding=None):
         """An alias for reading just the first bytes of a file."""
-        return self.convert(head(num_bytes))
+        return self.convert(head(num_bytes, encoding=encoding))
 
     def contents(self):
         """An alias for reading the entire contents of the file."""
@@ -76,7 +76,7 @@ def mimetype(filename):
     return file_type.guess_file_type(filename)
 
 
-def head(num_bytes=8192):
+def head(num_bytes=8192, encoding=None):
     """A converter that just reads the first bytes of a file.
 
     Args:
@@ -87,9 +87,8 @@ def head(num_bytes=8192):
     def head_reader(filename):
         with open(filename, 'rb') as file:
             rawdata = file.read(num_bytes)
-            detected = chardet.detect(rawdata)
-            encoding = detected['encoding']
-            return rawdata.decode(encoding)
+            file_encoding = encoding or chardet.detect(rawdata)['encoding']
+            return rawdata.decode(file_encoding)
     return head_reader
 
 
@@ -103,7 +102,8 @@ def contents(filename):
     """
     # Attempt to detect the input encoding automatically, using chardet and a
     # decent amount of input.
-    rawdata = open(filename, 'rb').read(HEAD_DETECT_MAX_BYTES)
+    with open(filename, 'rb') as infile:
+        rawdata = infile.read(HEAD_DETECT_MAX_BYTES)
     detected = chardet.detect(rawdata)
     encoding = detected['encoding']
 

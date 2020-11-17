@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import unittest
+
 from beancount import loader
 from beancount.parser import cmptest
 
@@ -34,3 +36,7 @@ class TestExampleExcludeTag(cmptest.TestCase):
               Assets:Cash          -50.02 USD
 
         """, entries)
+
+
+if __name__ == '__main__':
+    unittest.main()
