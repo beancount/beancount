@@ -34,8 +34,8 @@ struct hash<beancount::MpDecimal> {
 };
 
 template<>
-struct hash<beancount::Decimal> {
-  size_t operator()(const beancount::Decimal& number) const {
+struct hash<beancount::Number> {
+  size_t operator()(const beancount::Number& number) const {
     return (number.has_exact() ?
             hash<string>{}(number.exact()) :
             hash<beancount::MpDecimal>{}(number.mpd()));
@@ -46,17 +46,17 @@ struct hash<beancount::Decimal> {
 
 namespace beancount {
 
-// Deserialize a Decimal proto to a mpdecimal number.
-decimal::Decimal ProtoToDec(const Decimal& decproto);
+// Deserialize a Number proto to a mpdecimal number.
+decimal::Decimal ProtoToDec(const Number& decproto);
 
-// Serialize a mpdecimal number to a Decimal proto.
-Decimal DecToProto(const decimal::Decimal& decproto);
+// Serialize a mpdecimal number to a Number proto.
+Number DecToProto(const decimal::Decimal& decproto);
 
 // Comparison operators for decimal protos.
-bool operator==(const Decimal& number1, const Decimal& number2);
+bool operator==(const Number& number1, const Number& number2);
 
-// Streaming operator for Decimal proto.
-std::ostream& operator<<(std::ostream& os, const Decimal& self);
+// Streaming operator for Number proto.
+std::ostream& operator<<(std::ostream& os, const Number& self);
 
 }  // namespace beancount
 

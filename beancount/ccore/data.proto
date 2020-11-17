@@ -33,7 +33,7 @@ message MetaValue {
     string tag = 5;
     bool boolean = 6;
     bool flag = 7;
-    Decimal number = 8;
+    Number number = 8;
     Amount amount = 9;
   }
 }
@@ -59,14 +59,14 @@ message Date {
 // essentially a typed number, with corresponding manipulation operations
 // defined on it.
 message Amount {
-  optional Decimal number = 1;
+  optional Number number = 1;
   optional string currency = 2;
 }
 
 // A variant of Amount that also includes a date and a label.
 message Cost {
- // A Decimal, the per-unit cost.
-  optional Decimal number = 1;
+ // A decimal number, the per-unit cost.
+  optional Number number = 1;
 
   // A string, the cost currency.
   optional string currency = 2;
@@ -164,7 +164,7 @@ message Pad {
 message Balance {
   optional string account = 3;
   optional Amount amount = 4;
-  optional Decimal tolerance = 5;
+  optional Number tolerance = 5;
   optional Amount diff_amount = 6;
 }
 

@@ -11,7 +11,7 @@ syntax = "proto2";
 package beancount;
 
 // Variant for number representation.
-message Decimal {
+message Number {
   // Exact string for the number, explicit and readable, requires conversion.
   optional string exact = 1;
 

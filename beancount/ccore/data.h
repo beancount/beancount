@@ -24,7 +24,7 @@ struct hash<beancount::Date> {
 template<>
 struct hash<beancount::Cost> {
   size_t operator()(const beancount::Cost& cost) const {
-    return (hash<beancount::Decimal>{}(cost.number()) ^
+    return (hash<beancount::Number>{}(cost.number()) ^
             hash<string>{}(cost.currency()) ^
             hash<beancount::Date>{}(cost.date()) ^
             hash<string>{}(cost.label()));

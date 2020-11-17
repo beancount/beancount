@@ -9,7 +9,7 @@
 namespace beancount {
 using google::protobuf::util::MessageDifferencer;
 
-decimal::Decimal ProtoToDec(const Decimal& decproto) {
+decimal::Decimal ProtoToDec(const Number& decproto) {
   decimal::Decimal dec;
   if (decproto.has_exact()) {
     dec = decimal::Decimal(decproto.exact());
@@ -32,10 +32,10 @@ decimal::Decimal ProtoToDec(const Decimal& decproto) {
   return dec;
 }
 
-// Convert a mpdecimal number to a Decimal proto.
-Decimal DecToProto(const decimal::Decimal& dec) {
+// Convert a mpdecimal number to a Number proto.
+Number DecToProto(const decimal::Decimal& dec) {
   // Serialize.
-  Decimal decproto;
+  Number decproto;
   {
     auto* mpd = decproto.mutable_mpd();
     const mpd_t* value = dec.getconst();
@@ -51,11 +51,11 @@ Decimal DecToProto(const decimal::Decimal& dec) {
 }
 
 // TODO(blais): Convert to decimals before comparing.
-bool operator==(const Decimal& obj1, const Decimal& obj2) {
+bool operator==(const Number& obj1, const Number& obj2) {
   return MessageDifferencer::Equals(obj1, obj2);
 }
 
-std::ostream& operator<<(std::ostream& os, const Decimal& number) {
+std::ostream& operator<<(std::ostream& os, const Number& number) {
   if (number.has_exact()) {
     os << number.exact();
   } else {

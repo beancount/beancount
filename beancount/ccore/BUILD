@@ -179,12 +179,13 @@ py_extension(
     name = "_core",
     srcs = ["_core.cc"],
     deps = [
-        "@local_config_python//:python_headers",
-        "@pybind11",
         ":number",
         ":data",
         ":account",
         ":account_types",
         ":inventory",
+        "@local_config_python//:python_headers",
+        "@pybind11",
+        "@mpdecimal//:mpdecimal",
     ],
 )
