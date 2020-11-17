@@ -5,6 +5,18 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-11-17
+
+ - Made it legal to insert a balance entry after account closure. It is a common
+   case that transactions happen on the last day of an account and the balance
+   directive operates at the beginning of the day. It was arguable whether
+   directives should be allowed after closure; notes and documents were allowed
+   because statements and phone calls may still occur after an account is
+   closed, but I suppose you can make the argument that a statement balance can
+   also occur at a later date, so voila, make it legal. You still cannot post
+   transactions to a closed account, which is the thing that really matters.
+
+
 2020-11-15
 
  - Render the tolerance in Balance directives (merged from Aaron Lindsay).

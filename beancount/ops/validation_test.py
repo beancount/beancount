@@ -7,6 +7,7 @@ import unittest
 
 from beancount.core import data
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount.ops import validation
 from beancount import loader
 
@@ -198,6 +199,15 @@ class TestValidateActiveAccounts(cmptest.TestCase):
         self.assertEqual(2, len(errors))
         self.assertEqual([validation.ValidationError, validation.ValidationError],
                          list(map(type, errors)))
+
+    @loader.load_doc()
+    def test_validate_balance_after_close(self, entries, _, options_map):
+        """
+        2014-01-01 open    Assets:US:Bank:Checking
+        2014-02-01 close   Assets:US:Bank:Checking
+        2014-02-05 balance Assets:US:Bank:Checking  0.00 USD
+        """
+        # This should pass without errors for balance directives.
 
 
 class TestValidateCurrencyConstraints(cmptest.TestCase):
