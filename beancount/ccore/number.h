@@ -10,6 +10,8 @@
 #include "beancount/ccore/number.pb.h"
 #include "beancount/defs.h"
 
+#include "decimal.hh"
+
 namespace std {
 
 // Hashing function for Decimal type.
@@ -44,10 +46,16 @@ struct hash<beancount::Decimal> {
 
 namespace beancount {
 
-// Custom comparison operators for protos.
+// Deserialize a Decimal proto to a mpdecimal number.
+decimal::Decimal ProtoToDec(const Decimal& decproto);
+
+// Serialize a mpdecimal number to a Decimal proto.
+Decimal DecToProto(const decimal::Decimal& decproto);
+
+// Comparison operators for decimal protos.
 bool operator==(const Decimal& number1, const Decimal& number2);
 
-// Custom streaming operators.
+// Streaming operator for Decimal proto.
 std::ostream& operator<<(std::ostream& os, const Decimal& self);
 
 }  // namespace beancount

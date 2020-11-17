@@ -17,8 +17,9 @@ namespace beancount {
 namespace {
 
 TEST(TestNumber, Decimal) {
-  decimal::Decimal dec("123.456");
-  // std::cout << dec << std::endl;
+  Decimal dec;
+  dec.set_exact("123.4567");
+  std::cout << dec << std::endl;
 }
 
 }  // namespace
