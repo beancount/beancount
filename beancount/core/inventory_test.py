@@ -46,6 +46,11 @@ class TestInventoryNew(unittest.TestCase):
         inv = inventory.from_string('')
         self.assertEqual(Inventory(), inv)
 
+
+
+class TestInventory(unittest.TestCase):
+
+    def test_from_string(self):
         inv = inventory.from_string('10 USD')
         self.assertEqual(
             Inventory([Position(A("10 USD"))]),
@@ -85,9 +90,6 @@ class TestInventoryNew(unittest.TestCase):
                                 Cost(D('510.00'), 'USD', None, None)),
                        Position(A("100 CAD"))]),
             inv)
-
-
-class TestInventory(unittest.TestCase):
 
     def checkAmount(self, inventory, number, currency):
         if isinstance(number, str):
