@@ -14,12 +14,17 @@ from beancount.core.amount import A
 from beancount.core import amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
-from beancount.core.inventory import Inventory
-from beancount.core.inventory import MatchResult
 from beancount.core import convert
 from beancount.core import position
-from beancount.core import inventory
 from beancount.utils import invariants
+
+# pylint: disable=invalid-name
+try:
+    from beancount.core import inventory
+except ImportError:
+    from beancount.ccore import _core as inventory
+Inventory = inventory.Inventory
+MatchResult = inventory.MatchResult
 
 
 P = position.from_string
@@ -35,14 +40,7 @@ def tearDown(module):
     invariants.uninstrument_invariants(Inventory)
 
 
-class TestInventory(unittest.TestCase):
-
-    def checkAmount(self, inventory, number, currency):
-        if isinstance(number, str):
-            number = D(number)
-        amount_ = amount.Amount(number, currency)
-        inv_amount = inventory.get_currency_units(amount_.currency)
-        self.assertEqual(inv_amount, amount_)
+class TestInventoryNew(unittest.TestCase):
 
     def test_from_string(self):
         inv = inventory.from_string('')
@@ -87,6 +85,16 @@ class TestInventory(unittest.TestCase):
                                 Cost(D('510.00'), 'USD', None, None)),
                        Position(A("100 CAD"))]),
             inv)
+
+
+class TestInventory(unittest.TestCase):
+
+    def checkAmount(self, inventory, number, currency):
+        if isinstance(number, str):
+            number = D(number)
+        amount_ = amount.Amount(number, currency)
+        inv_amount = inventory.get_currency_units(amount_.currency)
+        self.assertEqual(inv_amount, amount_)
 
     def test_ctor_empty_len(self):
         # Test regular constructor.
@@ -516,4 +524,6 @@ class TestInventory(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if not hasattr(inventory, "__copyright__"):
+        del TestInventory
     unittest.main()

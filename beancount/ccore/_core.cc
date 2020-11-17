@@ -1,5 +1,6 @@
 #include "beancount/ccore/account.h"
 #include "beancount/ccore/account_types.h"
+#include "beancount/ccore/inventory.h"
 #include "beancount/defs.h"
 
 #include <vector>
@@ -93,6 +94,20 @@ void ExportAccountTypes(py::module& mod) {
   mod.def("get_account_sign", &GetAccountSign);
 }
 
+void ExportInventory(py::module& mod) {
+  py::enum_<MatchResult>(mod, "MatchResult")
+    .value("CREATED", MatchResult::CREATED)
+    .value("REDUCED", MatchResult::REDUCED)
+    .value("AUGMENTED", MatchResult::AUGMENTED)
+    .value("IGNORED", MatchResult::IGNORED);
+
+  py::class_<Inventory>(mod, "Inventory")
+    .def(py::init<>())
+    .def("__eq__", &Inventory::operator==);
+
+  mod.def("from_string", &InventoryFromString);
+}
+
 }  // beancount
 
 
@@ -100,4 +115,5 @@ PYBIND11_MODULE(_core, mod) {
   mod.doc() = "Python bindings for Beancount core";
   beancount::ExportAccount(mod);
   beancount::ExportAccountTypes(mod);
+  beancount::ExportInventory(mod);
 }

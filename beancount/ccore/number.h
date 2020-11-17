@@ -5,6 +5,7 @@
 #define _BEANCOUNT_CCORE_NUMBER_H_
 
 #include <string>
+#include <iosfwd>
 
 #include "beancount/ccore/number.pb.h"
 #include "beancount/defs.h"
@@ -40,5 +41,15 @@ struct hash<beancount::Decimal> {
 };
 
 }  // namespace std
+
+namespace beancount {
+
+// Custom comparison operators for protos.
+bool operator==(const Decimal& number1, const Decimal& number2);
+
+// Custom streaming operators.
+std::ostream& operator<<(std::ostream& os, const Decimal& self);
+
+}  // namespace beancount
 
 #endif // _BEANCOUNT_CCORE_NUMBER_H_

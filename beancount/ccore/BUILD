@@ -30,9 +30,22 @@ py_proto_library(
 cc_library(
     name = "number",
     hdrs = ["number.h"],
+    srcs = ["number.cc"],
     deps = [
         "@com_google_absl//absl/hash",
+        "@mpdecimal//:mpdecimal",
+        "//beancount:defs",
         "//beancount/ccore:number_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "number_cc_test",
+    srcs = ["number_test.cc"],
+    deps = [
+        "//beancount:defs",
+        ":number",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -64,11 +77,14 @@ py_proto_library(
 cc_library(
     name = "data",
     hdrs = ["data.h"],
+    srcs = ["data.cc"],
     deps = [
-        "@com_google_absl//absl/hash",
+        "//beancount:defs",
         ":number",
         ":number_cc_proto",
         ":data_cc_proto",
+        #"@com_google_absl//absl/hash",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -152,7 +168,6 @@ py_test(
         "//beancount/core:number",
         "//beancount/core:amount",
         "//beancount/core:position",
-        "//beancount/core:inventory",
         "//beancount/core:convert",
         "//beancount/utils:invariants",
     ],
@@ -166,7 +181,10 @@ py_extension(
     deps = [
         "@local_config_python//:python_headers",
         "@pybind11",
+        ":number",
+        ":data",
         ":account",
         ":account_types",
+        ":inventory",
     ],
 )

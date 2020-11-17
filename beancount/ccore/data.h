@@ -33,4 +33,11 @@ struct hash<beancount::Cost> {
 
 }  // namespace std
 
+namespace beancount {
+
+// Custom comparison operators for protos.
+bool operator==(const Cost& cost1, const Cost& cost2);
+
+}  // namespace beancount
+
 #endif // _BEANCOUNT_CCORE_DATA_H_

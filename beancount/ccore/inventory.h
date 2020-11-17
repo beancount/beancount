@@ -68,7 +68,10 @@ enum MatchResult {
 // Positions are indexed by (currency, cost) for efficiency.
 class Inventory {
 public:
-  Inventory();
+  Inventory() {}
+
+  // Comparison operations.
+  bool operator==(const Inventory& other) const;
 
   // TODO(blais): Continue here.
 
@@ -77,6 +80,10 @@ public:
 private:
   std::unordered_map<pair<string, Cost>, Decimal, pair_hash> positions_;
 };
+
+// Constructor from a string.
+// TODO(blais): Turn into a proper constructor.
+Inventory InventoryFromString(string_view string);
 
 }  // namespace beancount
 

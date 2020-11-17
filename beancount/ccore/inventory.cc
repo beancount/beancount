@@ -2,6 +2,7 @@
 // License: "GNU GPLv2"
 
 #include "beancount/ccore/inventory.h"
+#include "beancount/ccore/data.h"
 
 // #include <algorithm>
 // #include <string>
@@ -15,6 +16,16 @@
 // #include "re2/re2.h"
 
 namespace beancount {
+
+Inventory InventoryFromString(string_view string) {
+  Inventory inv;
+  // TODO(blais)
+  return inv;
+}
+
+bool Inventory::operator==(const Inventory& other) const {
+  return positions_ == other.positions_;
+}
 
 
 }  // namespace beancount
