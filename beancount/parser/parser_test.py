@@ -127,51 +127,21 @@ class TestParserInputs(unittest.TestCase):
 
 class TestUnicodeErrors(unittest.TestCase):
 
-    test_utf8_string = textwrap.dedent("""
-      2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
-    """)
-    expected_utf8_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
-
-    test_latin1_string = textwrap.dedent("""
-      2015-05-23 note Assets:Something "école Floß søllerød"
-    """)
-    expected_latin1_string = "école Floß søllerød"
-
     # Test providing utf8 bytes to the lexer.
     def test_bytes_encoded_utf8(self):
-        utf8_bytes = self.test_utf8_string.encode('utf8')
-        entries, errors, _ = parser.parse_string(utf8_bytes)
-        self.assertEqual(1, len(entries))
+        test_bytes = '2015-05-23 note Assets:Test "Δ"'.encode('utf8')
+        entries, errors, _ = parser.parse_string(test_bytes)
+        self.assertEqual(len(entries), 1)
         self.assertFalse(errors)
         # Check that the lexer correctly parsed the UTF8 string.
-        self.assertEqual(self.expected_utf8_string, entries[0].comment)
+        self.assertEqual(entries[0].comment, "Δ")
 
     # Test providing latin1 bytes to the lexer when it is expecting utf8.
     def test_bytes_encoded_incorrect(self):
-        latin1_bytes = self.test_utf8_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes)
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer failed to convert the string but did not cause
-        # other errors.
-        self.assertNotEqual(self.expected_utf8_string, entries[0].comment)
-
-    # Test providing latin1 bytes to the lexer with an encoding.
-    def test_bytes_encoded_latin1(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='latin1')
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer correctly parsed the latin1 string.
-        self.assertEqual(self.expected_latin1_string, entries[0].comment)
-
-    # Test using a garbage invalid encoding.
-    def test_bytes_encoded_invalid(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "unknown encoding")
-        self.assertFalse(entries)
+        test_bytes = '2015-05-23 note Assets:Test "ü"'.encode('latin1')
+        entries, errors, _ = parser.parse_string(test_bytes)
+        self.assertEqual(len(entries), 0)
+        self.assertTrue(errors)
 
 
 class TestTestUtils(unittest.TestCase):
