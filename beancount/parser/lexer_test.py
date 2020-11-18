@@ -135,20 +135,15 @@ class TestLexer(unittest.TestCase):
     @lex_tokens
     def test_lex_unicode_account(self, tokens, errors):
         """\
-          Other:Bank Óthяr:Bあnk
-          abc1:abc1 ΑβγⅠ:ΑβγⅠ ابجا:ابجا
+          Other:Bank
+          Óthяr:Bあnk
         """
         self.assertEqual(
             [
-                ("ACCOUNT", 1, b"Other:Bank", "Other:Bank"),
-                ("ACCOUNT", 1, "Óthяr:Bあnk".encode("utf8"), "Óthяr:Bあnk"),
-                ("EOL", 2, b"\n", None),
-                ("KEY", 2, b"abc1", "abc1"),
-                ("COLON", 2, b":", None),
-                ("error", 2, b"abc1", None),
-                ("ACCOUNT", 2, "ΑβγⅠ:ΑβγⅠ".encode("utf8"), "ΑβγⅠ:ΑβγⅠ"),
-                ("ACCOUNT", 2, "ابجا:ابجا".encode("utf8"), "ابجا:ابجا"),
-                ("EOL", 3, b"\n", None),
+                ('ACCOUNT', 1, b'Other:Bank', 'Other:Bank'),
+                ('EOL', 2, b'\n', None),
+                ('ACCOUNT', 2, 'Óthяr:Bあnk'.encode('utf8'), 'Óthяr:Bあnk'),
+                ('EOL', 3, b'\n', None),
             ],
             tokens,
         )
