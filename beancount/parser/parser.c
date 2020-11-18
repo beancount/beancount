@@ -348,9 +348,13 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit__parser(void)
 {
+    PyObject* beancount_core_number;
+    PyObject* module;
+    PyObject* value;
+
     Py_INCREF(&Parser_Type);
 
-    PyObject* module = PyModule_Create(&moduledef);
+    module = PyModule_Create(&moduledef);
     if (!module) {
         goto error;
     }
@@ -358,45 +362,37 @@ PyMODINIT_FUNC PyInit__parser(void)
     PyDateTime_IMPORT;
     PyDecimal_IMPORT;
 
-#define SETATTR(module, name, value)                       \
-    if (!value) {                                          \
-        goto error;                                        \
-    }                                                      \
-    if (PyObject_SetAttrString(module, name, value) < 0) { \
-        goto error;                                        \
-    }
-
     /* Hash of the this Python extension source code. */
-    SETATTR(module, "SOURCE_HASH",
-            PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH)));
+    value = PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH));
+    PyObject_SetAttrString(module, "SOURCE_HASH", value);
 
     /* Release versions as defined in setup.py. */
-    SETATTR(module, "__version__",
-            PyUnicode_FromString(STRINGIFY(RELEASE_VERSION)));
+    value = PyUnicode_FromString(STRINGIFY(RELEASE_VERSION));
+    PyObject_SetAttrString(module, "__version__", value);
 
 #ifdef VC_CHANGESET
     /* Git changeset from the build source tree.
      * In the Bazel build, this information is absent. */
-    SETATTR(module, "__vc_changeset__",
-            PyUnicode_FromString(STRINGIFY(VC_CHANGESET)));
+    value = PyUnicode_FromString(STRINGIFY(VC_CHANGESET));
+    PyObject_SetAttrString(module, "__vc_changeset__", value);
 #endif
 
 #ifdef VC_TIMESTAMP
     /* Date of the last changeset.
      * In the Bazel build, this information is absent. */
-    SETATTR(module, "__vc_timestamp__",
-            PyLong_FromLong(VC_TIMESTAMP));
+    value = PyLong_FromLong(VC_TIMESTAMP);
+    PyObject_SetAttrString(module, "__vc_timestamp__", value);
 #endif
 
 #undef SETATTR
 
     /* Import the module that defines the missing object constant. */
-    PyObject* number_module = PyImport_ImportModule("beancount.core.number");
-    if (!number_module) {
+    beancount_core_number = PyImport_ImportModule("beancount.core.number");
+    if (!beancount_core_number) {
         goto error;
     }
 
-    missing_obj = PyObject_GetAttrString(number_module, "MISSING");
+    missing_obj = PyObject_GetAttrString(beancount_core_number, "MISSING");
     if (!missing_obj) {
         goto error;
     }
@@ -411,8 +407,8 @@ PyMODINIT_FUNC PyInit__parser(void)
     return module;
 
 error:
-    Py_DECREF(&Parser_Type);
-    Py_DECREF(module);
+    Py_XDECREF(&Parser_Type);
+    Py_XDECREF(module);
     return NULL;
 }
 
