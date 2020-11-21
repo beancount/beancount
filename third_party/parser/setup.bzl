@@ -39,16 +39,16 @@ filegroup(
     http_archive(
         name = "reflex",
         build_file_content = all_content + headers_content,
-        strip_prefix = "RE-flex-1.6.6",
-        sha256 = "f044631311fdabd71d9c6303b8f9edc7052289c099c7c47a1a42f5d9e8ad4905",
-        urls = ["https://github.com/Genivia/RE-flex/archive/v1.6.6.zip"],
+        strip_prefix = "RE-flex-3.0.1",
+        sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
+        urls = ["https://github.com/Genivia/RE-flex/archive/v3.0.1.zip"],
     )
 
-    # 2020-05-09
+    # 2020-11-21
     http_archive(
         name = "bison",
         build_file_content = all_content,
-        strip_prefix = "bison-3.6.4",
-        sha256 = "8183de64b5383f3634942c7b151bf2577f74273b2731574cdda8a8f3a0ab13e9",
-        urls = ["https://ftp.gnu.org/gnu/bison/bison-3.6.4.tar.gz"],
+        strip_prefix = "bison-3.7.3",
+        sha256 = "104fe912f2212ab4e4a59df888a93b719a046ffc38d178e943f6c54b1f27b3c7",
+        urls = ["https://ftp.gnu.org/gnu/bison/bison-3.7.3.tar.gz"],
     )
