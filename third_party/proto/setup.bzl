@@ -21,7 +21,6 @@ def setup_proto():
             sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
             strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
             urls = [
-                #"https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
                 "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
             ],
         )
@@ -71,7 +70,6 @@ def setup_riegeli():
         sha256 = "b6c537b53356a3af3ca3e621457751fa9a6ba96daf3aebb3526ae0f610863532",
         strip_prefix = "zstd-1.4.5/lib",
         urls = [
-            #"https://mirror.bazel.build/github.com/facebook/zstd/archive/v1.4.5.zip",
             "https://github.com/facebook/zstd/archive/v1.4.5.zip",  # 2020-05-22
         ],
     )
@@ -82,7 +80,6 @@ def setup_riegeli():
         sha256 = "38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303",
         strip_prefix = "snappy-1.1.8",
         urls = [
-            #"https://mirror.bazel.build/github.com/google/snappy/archive/1.1.8.zip",
             "https://github.com/google/snappy/archive/1.1.8.zip",  # 2020-01-14
         ],
     )
@@ -93,7 +90,6 @@ def setup_riegeli():
         sha256 = "338f1d9d95753dc3cdd882dfb6e176bbb4b18353c29c411ebcb7b890f361722e",
         strip_prefix = "crc32c-1.1.0",
         urls = [
-            #"https://mirror.bazel.build/github.com/google/crc32c/archive/1.1.0.zip",
             "https://github.com/google/crc32c/archive/1.1.0.zip",  # 2019-05-24
         ],
     )
@@ -104,7 +100,6 @@ def setup_riegeli():
     #     sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
     #     strip_prefix = "zlib-1.2.11",
     #     urls = [
-    #         #"http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
     #         "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
     #     ],
     # )
