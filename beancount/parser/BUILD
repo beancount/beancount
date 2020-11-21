@@ -2,6 +2,258 @@ load("//third_party/python:py_extension.bzl", "py_extension")
 
 package(default_visibility = ["//visibility:public"])
 
+#-------------------------------------------------------------------------------
+# Scanner and grammar rules.
+
+cc_library(
+    name = "lexer_c",
+    hdrs = [
+        "lexer.h",
+    ],
+    srcs = ["lexer.c"],
+    deps = [
+        ":lexer_hdr",
+        ":parser_hdr",
+        ":grammar_hdr",
+        ":decimal_hdr",
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "lexer_hdr",
+    hdrs = [
+        "lexer.h",
+        "tokens.h",
+        "decimal.h",
+    ],
+    deps = [
+        ":parser_hdr",
+        ":grammar_hdr",
+        "@local_config_python//:python_headers",
+    ],
+)
+
+py_library(
+    name = "lexer",
+    srcs = ["lexer.py"],
+    deps = [
+        ":_parser",
+        "//beancount/core:data",
+        "//beancount/core:account",
+        "//beancount/core:number",
+    ],
+)
+
+py_test(
+    name = "lexer_test",
+    srcs = ["lexer_test.py"],
+    deps = [
+        ":lexer",
+        "//beancount/core:number",
+    ],
+)
+
+cc_library(
+    name = "tokens_c",
+    hdrs = [
+        "tokens.h",
+    ],
+    srcs = ["tokens.c"],
+    deps = [
+        ":parser_hdr",
+        ":decimal_c",
+        ":grammar_hdr",
+        "@local_config_python//:python_headers",
+    ],
+)
+
+# cc_test(
+#     name = "tokens_test",
+#     srcs = ["tokens_test.c"],
+#     deps = [
+#         ":lexer_hdr",
+#         ":tokens_c",
+#         "@local_config_python//:python_headers",
+#     ],
+# )
+
+cc_library(
+    name = "grammar_c",
+    srcs = ["grammar.c"],
+    deps = [
+        ":parser_hdr",
+        ":lexer_hdr",
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "grammar_hdr",
+    hdrs = [
+        "grammar.h",
+        "macros.h",
+    ],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+py_library(
+    name = "grammar",
+    srcs = ["grammar.py"],
+    deps = [
+        ":lexer",
+        ":options",
+        "//beancount/core:number",
+        "//beancount/core:display_context",
+        "//beancount/core:data",
+        "//beancount/core:position",
+        "//beancount/core:account",
+    ],
+)
+
+py_test(
+    name = "grammar_test",
+    srcs = ["grammar_test.py"],
+    deps = [
+        "//beancount/core:number",
+        "//beancount/core:amount",
+        "//beancount/core:position",
+        "//beancount/core:data",
+        "//beancount/utils:test_utils",
+        "//beancount/parser:cmptest",
+        ":parser",
+        ":lexer",
+    ],
+)
+
+# Note that we could eventually build a macro that would generate a hash of the
+# source files involved in building an extension and moving these rules to a
+# macro, for a py_extension_with_hash() rule.
+filegroup(
+    name = "parser_source_files",
+    srcs = [
+        "lexer.l",
+        "grammar.y",
+        "decimal.h",
+        "decimal.c",
+        "macros.h",
+        "parser.h",
+        "parser.c",
+        "tokens.h",
+    ],
+)
+
+genrule(
+    name = "parser_source_hash",
+    srcs = [],
+    tools = ["//beancount/parser:hashsrc"],
+    cmd = "$(location //beancount/parser:hashsrc) > $@",
+    outs = ["parser_source_hash.h"],
+)
+
+#-------------------------------------------------------------------------------
+# C targets for extension module.
+
+cc_library(
+    name = "decimal_c",
+    hdrs = [
+        "decimal.h",
+    ],
+    srcs = ["decimal.c"],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "decimal_hdr",
+    hdrs = [
+        "decimal.h",
+    ],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+py_extension(
+    name = "_parser",
+    srcs = [
+        "parser.c",
+        ":parser_source_hash",
+        "//beancount:version_header",
+    ],
+    deps = [
+        ":grammar_c",
+        ":lexer_c",
+        ":decimal_c",
+        ":tokens_c",
+        "@local_config_python//:python_headers",
+    ],
+)
+
+cc_library(
+    name = "parser_hdr",
+    hdrs = ["parser.h"],
+    deps = [
+        "@local_config_python//:python_headers",
+    ],
+)
+
+py_library(
+    name = "parser",
+    srcs = ["parser.py"],
+    deps = [
+        ":_parser",
+        ":grammar",
+        ":printer",
+        ":hashsrc_lib",
+        "//beancount/core:data",
+        "//beancount/core:number",
+    ],
+)
+
+py_test(
+    name = "parser_test",
+    srcs = ["parser_test.py"],
+    deps = [
+        ":parser",
+        "//beancount/core:data",
+        "//beancount/core:number",
+        "//beancount/utils:test_utils",
+    ],
+)
+
+#-------------------------------------------------------------------------------
+# Pure Python targets.
+
+py_library(
+    name = "hashsrc_lib",
+    srcs = ["hashsrc.py"],
+    data = [":parser_source_files"],
+    deps = [
+        "//beancount/core:number",
+    ],
+)
+
+py_binary(
+    name = "hashsrc",
+    srcs = ["hashsrc.py"],
+    deps = [
+        ":hashsrc_lib",
+    ],
+)
+
+py_test(
+    name = "hashsrc_test",
+    srcs = ["hashsrc_test.py"],
+    deps = [
+        ":hashsrc_lib",
+        ":_parser",
+    ],
+)
+
 py_library(
     name = "version",
     srcs = ["version.py"],
@@ -139,201 +391,6 @@ py_test(
     ],
 )
 
-cc_library(
-    name = "grammar_c",
-    srcs = ["grammar.c"],
-    deps = [
-        ":parser_hdr",
-        ":lexer_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "grammar_hdr",
-    hdrs = [
-        "grammar.h",
-        "macros.h",
-    ],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-py_library(
-    name = "grammar",
-    srcs = ["grammar.py"],
-    deps = [
-        ":lexer",
-        ":options",
-        "//beancount/core:number",
-        "//beancount/core:display_context",
-        "//beancount/core:data",
-        "//beancount/core:position",
-        "//beancount/core:account",
-    ],
-)
-
-py_test(
-    name = "grammar_test",
-    srcs = ["grammar_test.py"],
-    deps = [
-        "//beancount/core:number",
-        "//beancount/core:amount",
-        "//beancount/core:position",
-        "//beancount/core:data",
-        "//beancount/utils:test_utils",
-        "//beancount/parser:cmptest",
-        ":parser",
-        ":lexer",
-    ],
-)
-
-# Note that we could eventually build a macro that would generate a hash of the
-# source files involved in building an extension and moving these rules to a
-# macro, for a py_extension_with_hash() rule.
-filegroup(
-    name = "parser_source_files",
-    srcs = [
-        "lexer.l",
-        "grammar.y",
-        "decimal.h",
-        "decimal.c",
-        "macros.h",
-        "parser.h",
-        "parser.c",
-        "tokens.h",
-    ],
-)
-
-genrule(
-    name = "parser_source_hash",
-    srcs = [],
-    tools = ["//beancount/parser:hashsrc"],
-    cmd = "$(location //beancount/parser:hashsrc) > $@",
-    outs = ["parser_source_hash.h"],
-)
-
-py_library(
-    name = "hashsrc_lib",
-    srcs = ["hashsrc.py"],
-    data = [":parser_source_files"],
-    deps = [
-        "//beancount/core:number",
-    ],
-)
-
-py_binary(
-    name = "hashsrc",
-    srcs = ["hashsrc.py"],
-    deps = [
-        ":hashsrc_lib",
-    ],
-)
-
-py_test(
-    name = "hashsrc_test",
-    srcs = ["hashsrc_test.py"],
-    deps = [
-        ":hashsrc_lib",
-        ":_parser",
-    ],
-)
-
-cc_library(
-    name = "decimal_c",
-    hdrs = [
-        "decimal.h",
-    ],
-    srcs = ["decimal.c"],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "decimal_hdr",
-    hdrs = [
-        "decimal.h",
-    ],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "lexer_c",
-    hdrs = [
-        "lexer.h",
-    ],
-    srcs = ["lexer.c"],
-    deps = [
-        ":lexer_hdr",
-        ":parser_hdr",
-        ":grammar_hdr",
-        ":decimal_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "lexer_hdr",
-    hdrs = [
-        "lexer.h",
-        "tokens.h",
-        "decimal.h",
-    ],
-    deps = [
-        ":parser_hdr",
-        ":grammar_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-py_library(
-    name = "lexer",
-    srcs = ["lexer.py"],
-    deps = [
-        ":_parser",
-        "//beancount/core:data",
-        "//beancount/core:account",
-        "//beancount/core:number",
-    ],
-)
-
-py_test(
-    name = "lexer_test",
-    srcs = ["lexer_test.py"],
-    deps = [
-        ":lexer",
-        "//beancount/core:number",
-    ],
-)
-
-cc_library(
-    name = "tokens_c",
-    hdrs = [
-        "tokens.h",
-    ],
-    srcs = ["tokens.c"],
-    deps = [
-        ":parser_hdr",
-        ":decimal_c",
-        ":grammar_hdr",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-# cc_test(
-#     name = "tokens_test",
-#     srcs = ["tokens_test.c"],
-#     deps = [
-#         ":lexer_hdr",
-#         ":tokens_c",
-#         "@local_config_python//:python_headers",
-#     ],
-# )
-
 py_library(
     name = "options",
     srcs = ["options.py"],
@@ -356,53 +413,6 @@ py_test(
     ],
 )
 
-py_extension(
-    name = "_parser",
-    srcs = [
-        "parser.c",
-        ":parser_source_hash",
-        "//beancount:version_header",
-    ],
-    deps = [
-        ":grammar_c",
-        ":lexer_c",
-        ":decimal_c",
-        ":tokens_c",
-        "@local_config_python//:python_headers",
-    ],
-)
-
-cc_library(
-    name = "parser_hdr",
-    hdrs = ["parser.h"],
-    deps = [
-        "@local_config_python//:python_headers",
-    ],
-)
-
-py_library(
-    name = "parser",
-    srcs = ["parser.py"],
-    deps = [
-        ":_parser",
-        ":grammar",
-        ":printer",
-        ":hashsrc_lib",
-        "//beancount/core:data",
-        "//beancount/core:number",
-    ],
-)
-
-py_test(
-    name = "parser_test",
-    srcs = ["parser_test.py"],
-    deps = [
-        ":parser",
-        "//beancount/core:data",
-        "//beancount/core:number",
-        "//beancount/utils:test_utils",
-    ],
-)
 
 py_library(
     name = "printer",
