@@ -39,9 +39,9 @@ filegroup(
     http_archive(
         name = "reflex",
         build_file_content = all_content + headers_content,
-        strip_prefix = "RE-flex-1.6.6",
-        sha256 = "f044631311fdabd71d9c6303b8f9edc7052289c099c7c47a1a42f5d9e8ad4905",
-        urls = ["https://github.com/Genivia/RE-flex/archive/v1.6.6.zip"],
+        strip_prefix = "RE-flex-3.0.1",
+        sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
+        urls = ["https://github.com/Genivia/RE-flex/archive/v3.0.1.zip"],
     )
 
     # 2020-11-21
