@@ -14,13 +14,7 @@ LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
 class LexBuilder:
-    """A builder used only for building lexer objects.
-
-    Attributes:
-      long_string_maxlines_default: Number of lines for a string to trigger a
-          warning. This is meant to help users detecting dangling quotes in
-          their source.
-    """
+    """A builder used only for building lexer objects."""
 
     def __init__(self):
         # Errors that occurred during lexing and parsing.
@@ -33,7 +27,6 @@ class LexBuilder:
 
         Args:
           message: The message of the error.
-          exc_type: An exception type, if an exception occurred.
         """
         self.errors.append(
             LexerError(new_metadata(filename, lineno), str(message), None))
@@ -48,8 +41,12 @@ def lex_iter(file, builder=None, encoding=None):
         used and discarded (along with its errors).
       encoding: A string (or None), the default encoding to use for strings.
     Yields:
-      Tuples of the token (a string), the matched text (a string), and the line
-      no (an integer).
+      All the tokens in the input file as ``(token, lineno, text,
+      value)`` tuples where ``token`` is a string representing the
+      token kind, ``lineno`` is the line number in the input file
+      where the token was matched, ``mathed`` is a bytes object
+      containing the exact text matched, and ``value`` is the semantic
+      value of the token or None.
     """
     # It would be more appropriate here to check for io.RawIOBase but
     # that does not work for io.BytesIO despite it implementing the
@@ -62,18 +59,15 @@ def lex_iter(file, builder=None, encoding=None):
     yield from parser.lex(file, encoding=encoding)
 
 
-def lex_iter_string(string, builder=None, encoding=None):
-    """Parse an input string and print the tokens to an output file.
+def lex_iter_string(string, builder=None, **kwargs):
+    """An iterator that yields all the tokens in the given string.
 
     Args:
-      input_string: a str or bytes, the contents of the ledger to be parsed.
-      builder: A builder of your choice. If not specified, a LexBuilder is
-        used and discarded (along with its errors).
-      encoding: A string (or None), the default encoding to use for strings.
+      string: a str or bytes, the contents of the ledger to be parsed.
     Returns:
-      A iterator on the string. See lex_iter() for details.
+      An iterator, see ``lex_iter()`` for details.
     """
     if not isinstance(string, bytes):
         string = string.encode('utf8')
     file = io.BytesIO(string)
-    yield from lex_iter(file, builder, encoding)
+    yield from lex_iter(file, builder=builder, **kwargs)
