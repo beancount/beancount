@@ -17,10 +17,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
-#endif
 
 /* Extend default location type with file name information. */
 typedef struct YYLTYPE {
@@ -76,8 +73,7 @@ const char* token_to_string(int token);
       YYERROR;                                                                \
   }
 
-#define MISSING_OBJ (yyget_extra(scanner)->missing_obj)
-
+#define MISSING_OBJ yyget_missing_obj(scanner)
 #define FILENAME (yyloc).file_name
 #define LINENO (yyloc).first_line
 
