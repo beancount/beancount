@@ -70,9 +70,6 @@ struct _yyextra_t {
     const char* encoding;
 };
 
-#define yy_filename yyget_extra(yyscanner)->filename
-#define yy_encoding yyget_extra(yyscanner)->encoding
-
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
@@ -91,7 +88,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yylloc->last_line = yylloc->first_line;                         \
         yylloc->first_column = yycolumn;                                \
         yylloc->last_column = yycolumn + yyleng - 1;                    \
-        yylloc->file_name = yy_filename;                                \
+        yylloc->file_name = yyget_extra(yyscanner)->filename;           \
         yycolumn += yyleng;                                             \
     }
 
@@ -211,7 +208,7 @@ NULL		{
 
  /* String literals. */
 \"([^\\\"]|\\.)*\"		{
-    return token(STRING, yytext + 1, yyleng - 2, yy_encoding);
+    return token(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
 }
 
  /* Numbers */
