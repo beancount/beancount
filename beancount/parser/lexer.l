@@ -15,7 +15,7 @@
 /* %option stack */
 /* %option 8bit */
 
-/* Top Code. This is included in the FLex generated header file. */
+/* Top code. This is included in the generated header file. */
 %top{
 
 #include "beancount/parser/parser.h"
@@ -70,29 +70,26 @@ struct _yyextra_t {
     const char* encoding;
 };
 
-#define yy_filename yyget_extra(yyscanner)->filename
-#define yy_encoding yyget_extra(yyscanner)->encoding
-
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
-/* Build and accumulate an error on the builder object using the current
- * exception state. */
+/* Build and accumulate an error using the current exception state. */
 void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
 
+/* Read from a io.BaseIO Python object into a buffer. */
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
 #define YY_INPUT(buf, result, max_size)                         \
     result = pyfile_read_into((PyObject *)yyin, buf, max_size);
 
-#define YY_USER_ACTION                                                  \
-    {                                                                   \
-        yylloc->first_line = yylineno;                                  \
-        yylloc->last_line = yylloc->first_line;                         \
-        yylloc->first_column = yycolumn;                                \
-        yylloc->last_column = yycolumn + yyleng - 1;                    \
-        yylloc->file_name = yy_filename;                                \
-        yycolumn += yyleng;                                             \
+#define YY_USER_ACTION                                        \
+    {                                                         \
+        yylloc->first_line = yylineno;                        \
+        yylloc->last_line = yylloc->first_line;               \
+        yylloc->first_column = yycolumn;                      \
+        yylloc->last_column = yycolumn + yyleng - 1;          \
+        yylloc->file_name = yyget_extra(yyscanner)->filename; \
+        yycolumn += yyleng;                                   \
     }
 
 %}
@@ -116,26 +113,24 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
   * and entries. {5307d8fa1e7b} */
 FLAGS           [!&#?%PSTCURM]
 
+%% /* Rules. */
 
-%% /* Rules */
-
- /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-\n		{
+ /* Newlines matter. */
+\n 		{
     yycolumn = 1;
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line
-    and followed by a regular character. This is how we detect an
-    initial indent and thus group postings and comments together in
-    the grammar. */
-^[ \t]+/[^ \t\r\n]	{ return INDENT; }
+ /* Whitespace: ignored, except when found at the beginning of a line
+  * and followed by a regular character. This is how we detect an
+  * initial indent and thus group syntax elements in the grammar. */
+^[ \t]+/[^ \t\r\n] { return INDENT; }
 [ \t\r]+ 	{ }
 
  /* Comments. */
-;.*		{ }
+;.* 		{ }
 
- /* Characters with special meanings have their own tokens. */
+ /* Characters with special meanings. */
 \|		{ return PIPE; }
 @@		{ return ATAT; }
 @		{ return AT; }
@@ -154,7 +149,7 @@ FLAGS           [!&#?%PSTCURM]
 \*		{ return ASTERISK; }
 \:		{ return COLON; }
 
-{FLAGS}		{
+{FLAGS} 	{
     yylval->character = yytext[0];
     return FLAG;
 }
@@ -180,7 +175,6 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
- /* Boolean values. */
 TRUE		{
     return token(BOOL, true);
 }
@@ -199,38 +193,39 @@ NULL		{
 }
 
  /* Account names. */
-{ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
+{ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
     return token(ACCOUNT, yytext);
 }
 
- /* Currencies. These are defined as uppercase only in order to disambiguate the
-  * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
+ /* Currencies. These are defined as uppercase only in order to
+  * disambiguate the syntax. This is to be kept in sync with
+  * beancount.core.amount.CURRENCY_RE. */
+[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
     return token(CURRENCY, yytext, yyleng);
 }
 
  /* String literals. */
-\"([^\\\"]|\\.)*\"		{
-    return token(STRING, yytext + 1, yyleng - 2, yy_encoding);
+\"([^\\\"]|\\.)*\" {
+    return token(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
 }
 
- /* Numbers */
-([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)?	{
+ /* Numbers. */
+([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? {
     return token(NUMBER, yytext);
 }
 
- /* Tags */
-#[A-Za-z0-9\-_/.]+ 		{
+ /* Tags. */
+#[A-Za-z0-9\-_/.]+ {
     return token(TAG, yytext + 1, yyleng - 1);
 }
 
- /* Links */
-\^[A-Za-z0-9\-_/.]+ 		{
+ /* Links. */
+\^[A-Za-z0-9\-_/.]+ {
     return token(LINK, yytext + 1, yyleng - 1);
 }
 
- /* Keys */
-[a-z][a-zA-Z0-9\-_]+/: 		{
+ /* Keys. */
+[a-z][a-zA-Z0-9\-_]+/: {
     return token(KEY, yytext, yyleng);
 }
 
@@ -240,34 +235,31 @@ NULL		{
 ^[\*\:\#]/.	{ BEGIN(IGNORE); }
 ^{FLAGS}/.	{ BEGIN(IGNORE); }
 
- /* Default rule. {bf253a29a820} */
-.			{
+ /* Default rule. */
+.		{
     unput(*yytext);
     BEGIN(INVALID);
 }
 
-<<EOF>>     		{
+<<EOF>>		{
     /* Ensure location data is populated. */
     YY_USER_ACTION;
     return YYEOF;
 }
 
- /* Note: We use a subparser here because if we set a default rule to chomp this
-    pattern, it would take precedence over valid rules if the matched text is
-    longer and thus would break the lexer. Writing our own lexer would fix
-    this and more. {bba169a1d35a} */
-<INVALID>[^ \t\n\r]+	{
+ /* Ivalid input: skip over to to the next whitespace character. */
+<INVALID>[^ \t\n\r]+ {
     PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
     build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
     BEGIN(INITIAL);
     return YYerror;
 }
-
-<IGNORE>.* {
+ /* Ignore input till the newline. */
+<IGNORE>.*	{
     BEGIN(INITIAL);
 }
 
-%% /* User Code */
+%% /* User code. */
 
 yyscan_t yylex_new(void)
 {
@@ -342,7 +334,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     yyset_lineno(lineno, scanner);
 }
 
-/* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
 {
     PyObject* error;
@@ -357,7 +348,6 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
         return;
     }
 
-    /* Build and accumulate a new error object. {27d1d459c5cd} */
     rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
                              loc->file_name, loc->first_line, error);
 
@@ -387,8 +377,11 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     PyObject* read = NULL;
     int ret = 0;
 
-    // Note: Eventually we ought to allocate this once in the parser state and
-    // avoid reallocating this on every block read.
+    /* This function could be optimized in two ways: avoiding to
+     * allocate a new memory view object for every block read and
+     * caching the lookup of the readinto method of the file
+     * object. */
+
     dest = PyMemoryView_FromMemory(buf, max_size, PyBUF_WRITE);
     if (!dest) {
 	goto error;
