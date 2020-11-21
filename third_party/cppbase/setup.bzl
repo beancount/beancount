@@ -6,8 +6,21 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 
 def setup_cppbase():
     setup_absl()
+    setup_regexp()
     setup_googletest()
     setup_decimal()
+
+
+def setup_regexp():
+    # RE2
+    if not native.existing_rule("com_google_re2"):
+        # 2020-08-09
+        http_archive(
+            name = "com_google_re2",
+            url = "https://github.com/google/re2/archive/ca11026a032ce2a3de4b3c389ee53d2bdc8794d6.tar.gz",
+            sha256 = "18048cd4aeaed8d0b08745ea4a573ca7f27221e7df6c4d1c46a0cb286890d7e7",
+            strip_prefix = "re2-ca11026a032ce2a3de4b3c389ee53d2bdc8794d6",
+        )
 
 
 def setup_absl():
