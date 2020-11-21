@@ -196,12 +196,6 @@ static PyObject* parser_iternext(Parser* self)
     int token;
     PyObject* obj;
 
-    /* Ensure the scanner has been initialized. */
-    if (!yyget_extra(self->scanner)->in) {
-        PyErr_SetString(PyExc_ValueError, "Parser not initialized");
-        return NULL;
-    }
-
     /* Get one token. */
     token = yylex(&yylval, &yylloc, self->scanner, self->builder);
     if (PyErr_Occurred() || token == 0) {
