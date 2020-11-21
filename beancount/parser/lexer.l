@@ -235,7 +235,7 @@ NULL		{
 ^[\*\:\#]/.	{ BEGIN(IGNORE); }
 ^{FLAGS}/.	{ BEGIN(IGNORE); }
 
- /* Default rule. */
+ /* Default rule. {bf253a29a820} */
 .		{
     unput(*yytext);
     BEGIN(INVALID);

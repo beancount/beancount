@@ -44,11 +44,11 @@ filegroup(
         urls = ["https://github.com/Genivia/RE-flex/archive/v1.6.6.zip"],
     )
 
-    # 2020-05-09
+    # 2020-11-21
     http_archive(
         name = "bison",
         build_file_content = all_content,
-        strip_prefix = "bison-3.6.4",
-        sha256 = "8183de64b5383f3634942c7b151bf2577f74273b2731574cdda8a8f3a0ab13e9",
-        urls = ["https://ftp.gnu.org/gnu/bison/bison-3.6.4.tar.gz"],
+        strip_prefix = "bison-3.7.3",
+        sha256 = "104fe912f2212ab4e4a59df888a93b719a046ffc38d178e943f6c54b1f27b3c7",
+        urls = ["https://ftp.gnu.org/gnu/bison/bison-3.7.3.tar.gz"],
     )
