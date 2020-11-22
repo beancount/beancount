@@ -40,6 +40,7 @@ def lex_iter(file, builder=None, encoding=None, strict=False):
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
       encoding: A string (or None), the default encoding to use for strings.
+      strict: Enable strict parsing mode when true.
     Yields:
       All the tokens in the input file as ``(token, lineno, text,
       value)`` tuples where ``token`` is a string representing the

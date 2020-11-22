@@ -114,6 +114,7 @@ import inspect
 import textwrap
 import io
 import sys
+import os
 
 from beancount.parser import _parser
 from beancount.parser import grammar
@@ -195,6 +196,12 @@ def parse_file(file, report_filename=None, report_firstline=1, **kw):
     # readinto() method.
     elif not isinstance(file, io.IOBase):
         file = open(file, 'rb')
+    strict = os.environ.get('BEANCOUNT_PARSER_STRICT')
+    if strict:
+        try:
+            kw['strict'] = int(strict)
+        except ValueError:
+            pass
     builder = grammar.Builder()
     parser = _parser.Parser(builder)
     parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)

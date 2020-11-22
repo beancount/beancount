@@ -168,7 +168,7 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
-    int strict = 0;
+    int strict = 1;
     int ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oizp", kwlist,

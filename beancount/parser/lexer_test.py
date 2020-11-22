@@ -336,13 +336,13 @@ class TestLexer(unittest.TestCase):
     def test_string_escaped(self, tokens, errors):
         r'''
           "The Great \"Juju\""
-          "The Great \t\n\r\f\b"
+          "The Great \t\n"
         '''
         self.assertEqual([
             ('EOL', 2, b'\n', None),
             ('STRING', 2, br'"The Great \"Juju\""', 'The Great "Juju"'),
             ('EOL', 3, b'\n', None),
-            ('STRING', 3, br'"The Great \t\n\r\f\b"', 'The Great \t\n\r\x0c\x08'),
+            ('STRING', 3, br'"The Great \t\n"', 'The Great \t\n'),
             ('EOL', 4, b'\n', None),
             ], tokens)
         self.assertFalse(errors)
