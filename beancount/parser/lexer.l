@@ -137,7 +137,7 @@ FLAGS           [!&#?%PSTCURM]
 %% /* Rules. */
 
  /* Newlines matter. */
-\n 		{
+\n {
     yycolumn = 1;
     return EOL;
 }
@@ -146,10 +146,10 @@ FLAGS           [!&#?%PSTCURM]
   * and followed by a regular character. This is how we detect an
   * initial indent and thus group syntax elements in the grammar. */
 ^[ \t]+/[^ \t\r\n] { return INDENT; }
-[ \t\r]+ 	{ }
+[ \t\r]+ { }
 
  /* Comments. */
-;.* 		{ }
+;.* { }
 
  /* Characters with special meanings. */
 \|		{ return PIPE; }
@@ -170,7 +170,7 @@ FLAGS           [!&#?%PSTCURM]
 \*		{ return ASTERISK; }
 \:		{ return COLON; }
 
-{FLAGS} 	{
+{FLAGS} {
     yylval->character = yytext[0];
     return FLAG;
 }
@@ -196,20 +196,20 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
-TRUE		{
+TRUE {
     return token(BOOL, true);
 }
 
-FALSE		{
+FALSE {
     return token(BOOL, false);
 }
 
-NULL		{
+NULL {
     return token(NONE);
 }
 
  /* Dates. */
-[0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
+[0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
     return token(DATE, yytext);
 }
 
@@ -257,12 +257,12 @@ NULL		{
 ^{FLAGS}/.	{ BEGIN(IGNORE); }
 
  /* Default rule. {bf253a29a820} */
-.		{
+. {
     unput(*yytext);
     BEGIN(INVALID);
 }
 
-<<EOF>>		{
+<<EOF>> {
     /* Ensure location data is populated. */
     YY_USER_ACTION;
     return YYEOF;
@@ -276,7 +276,7 @@ NULL		{
     return YYerror;
 }
  /* Ignore input till the newline. */
-<IGNORE>.*	{
+<IGNORE>.* {
     BEGIN(INITIAL);
 }
 
