@@ -13,7 +13,6 @@ cc_library(
     srcs = ["lexer.c"],
     deps = [
         ":lexer_hdr",
-        ":parser_hdr",
         ":grammar_hdr",
         ":decimal_hdr",
         "@local_config_python//:python_headers",
@@ -28,7 +27,6 @@ cc_library(
         "decimal.h",
     ],
     deps = [
-        ":parser_hdr",
         ":grammar_hdr",
         "@local_config_python//:python_headers",
     ],
@@ -82,7 +80,6 @@ cc_library(
     name = "grammar_c",
     srcs = ["grammar.c"],
     deps = [
-        ":parser_hdr",
         ":lexer_hdr",
         "@local_config_python//:python_headers",
     ],

@@ -1,5 +1,8 @@
 #include "beancount/parser/tokens.h"
 
+#define PY_SSIZE_T_CLEAN
+#include <datetime.h>
+
 #include <assert.h>
 
 #define LONG_STRING_LINES_MAX 64
@@ -158,4 +161,49 @@ PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* enc
     free(unescaped);
 
     return rv;
+}
+
+#define DIGITS "0123456789"
+
+/**
+ * Convert ASCII string to an integer.
+ *
+ * Converts the @string string of length @len to int. The input is
+ * assumed to be a valid representation of an integer number. No input
+ * validation or error checking is performed.
+ */
+int strtonl(const char* string, size_t len)
+{
+    int result = 0;
+    for (size_t i = 0; i < len; ++i) {
+        result *= 10;
+        result += string[i] - '0';
+    }
+    return result;
+}
+
+PyObject* pydate_from_cstring(const char* string)
+{
+    int year, month, day;
+    size_t n;
+
+    n = strspn(string, DIGITS);
+    year = strtonl(string, n);
+    string += n + 1;
+
+    n = strspn(string, DIGITS);
+    month = strtonl(string, n);
+    string += n + 1;
+
+    n = strspn(string, DIGITS);
+    day = strtonl(string, n);
+
+    assert(PyDateTimeAPI != 0);
+    return PyDate_FromDate(year, month, day);
+}
+
+void initialize_datetime() {
+    /* Note: This needs to be defined in the same file as PyDate* functions are
+     * used due to a variable declared in the header file. */
+    PyDateTime_IMPORT;
 }

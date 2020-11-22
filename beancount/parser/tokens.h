@@ -6,7 +6,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "beancount/parser/parser.h"
 #include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 
@@ -85,5 +84,27 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
  */
 PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* encoding);
 
+/**
+ * Convert an ASCII string to a PyDate object.
+ *
+ * The @string is assumed to be a valid date represetation in the
+ * format YYYY-MM-DD allowing for any character to divide the three
+ * digits groups.
+ */
+PyObject* pydate_from_cstring(const char* string);
+
+/**
+ * Convert an ASCII string to a PyDate object.
+ *
+ * The @string is assumed to be a valid date represetation in the
+ * format YYYY-MM-DD allowing for any character to divide the three
+ * digits groups.
+ */
+PyObject* pydate_from_cstring(const char* string);
+
+/**
+ * Initialize the local datetime globals.
+ */
+void initialize_datetime();
 
 #endif /* BEANCOUNT_TOKENS_H */

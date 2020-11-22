@@ -2,6 +2,7 @@
 /* A flex lexer for Beancount. */
 
 /* Options */
+%option noinput
 %option noyywrap
 %option yylineno
 %option never-interactive
@@ -18,9 +19,30 @@
 /* Top code. This is included in the generated header file. */
 %top{
 
-#include "beancount/parser/parser.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 typedef struct _yyextra_t yyextra_t;
+
+struct _yyextra_t {
+  /* The filename being tokenized. */
+  PyObject* filename;
+
+  /* The encoding to use for converting strings. */
+  const char* encoding;
+
+  /* A reference to the beancount.core.number.MISSING object */
+  PyObject* missing_obj;
+};
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+/* Lexer interface required by Bison. */
+#define YY_DECL int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param, \
+                          yyscan_t yyscanner, PyObject* builder)
 
 /**
  * Allocate a new scanner object including private data.
@@ -48,7 +70,8 @@ yyscan_t yylex_free(yyscan_t scanner);
  * otherwise the default UTF-8 encoding is used. Python objects
  * references are incremented. It is safe to call this multiple times.
  */
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
+                      const char* encoding, PyObject* missing_obj, yyscan_t scanner);
 
 }
 
@@ -62,21 +85,19 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
 #include "beancount/parser/grammar.h"
 #include "beancount/parser/tokens.h"
 
-struct _yyextra_t {
-    /* The filename being tokenized. */
-    PyObject* filename;
-
-    /* The encoding to use for converting strings. */
-    const char* encoding;
-};
-
-/* Build and accumulate an error on the builder object. */
+/**
+ * Build and accumulate an error on the builder object.
+ */
 void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
 
-/* Build and accumulate an error using the current exception state. */
+/**
+ * Build and accumulate an error using the current exception state.
+ */
 void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
 
-/* Read from a io.BaseIO Python object into a buffer. */
+/**
+ * Read from a io.BaseIO Python object into a buffer.
+ */
 int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 
 #define YY_INPUT(buf, result, max_size)                         \
@@ -303,7 +324,8 @@ static void yybegin(yyscan_t scanner)
     BEGIN(INITIAL);
 }
 
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner)
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
+                      const char* encoding, PyObject* missing_obj, yyscan_t scanner)
 {
     yyextra_t* extra = yyget_extra(scanner);
 
@@ -325,6 +347,8 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char
     extra->filename = filename;
 
     extra->encoding = encoding ? encoding : "utf-8";
+
+    extra->missing_obj = missing_obj;
 
     Py_XDECREF(yyget_in(scanner));
     Py_INCREF(file);

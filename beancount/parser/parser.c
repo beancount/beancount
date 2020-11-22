@@ -3,13 +3,13 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <datetime.h>
 
 #include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 #include "beancount/parser/parser.h"
 #include "beancount/parser/grammar.h"
 #include "beancount/parser/lexer.h"
+#include "beancount/parser/tokens.h"
 
 /*
   If we're running this from the Bazel environment, a genrule() is used to
@@ -37,45 +37,6 @@
 #ifndef BEANCOUNT_VERSION
 #include "beancount/version.h"
 #endif
-
-#define DIGITS "0123456789"
-
-/**
- * Convert ASCII string to an integer.
- *
- * Converts the @string string of length @len to int. The input is
- * assumed to be a valid representation of an integer number. No input
- * validation or error checking is performed.
- */
-int strtonl(const char* string, size_t len)
-{
-    int result = 0;
-    for (size_t i = 0; i < len; ++i) {
-        result *= 10;
-        result += string[i] - '0';
-    }
-    return result;
-}
-
-PyObject* pydate_from_cstring(const char* string)
-{
-    int year, month, day;
-    size_t n;
-
-    n = strspn(string, DIGITS);
-    year = strtonl(string, n);
-    string += n + 1;
-
-    n = strspn(string, DIGITS);
-    month = strtonl(string, n);
-    string += n + 1;
-
-    n = strspn(string, DIGITS);
-    day = strtonl(string, n);
-
-    assert(PyDateTimeAPI != 0);
-    return PyDate_FromDate(year, month, day);
-}
 
 extern YY_DECL;
 
@@ -176,7 +137,7 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, missing_obj, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -223,7 +184,7 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, encoding, missing_obj, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;
@@ -359,7 +320,7 @@ PyMODINIT_FUNC PyInit__parser(void)
         goto error;
     }
 
-    PyDateTime_IMPORT;
+    initialize_datetime();
     PyDecimal_IMPORT;
 
     /* Hash of the this Python extension source code. */
