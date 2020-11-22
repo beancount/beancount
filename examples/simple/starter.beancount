@@ -1,4 +1,3 @@
-#!/usr/bin/env bean-web
 ;; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 400; -*-
 ;; Starter Kit Example Ledger
 

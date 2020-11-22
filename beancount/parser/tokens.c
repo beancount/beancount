@@ -108,15 +108,6 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
         case 't':
             *dst++ = '\t';
             break;
-        case 'r':
-            *dst++ = '\r';
-            break;
-        case 'f':
-            *dst++ = '\f';
-            break;
-        case 'b':
-            *dst++ = '\b';
-            break;
         default:
             if (strict) {
                 free(buffer);
@@ -135,13 +126,13 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
     return dst - buffer;
 }
 
-PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* encoding)
+PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* encoding, bool strict)
 {
     char* unescaped = NULL;
     ssize_t r;
     int lines;
 
-    r = cunescape(string, len, false, &unescaped, &lines);
+    r = cunescape(string, len, strict, &unescaped, &lines);
     if (r < 0) {
         PyErr_Format(PyExc_ValueError, "Invalid string");
         free(unescaped);
