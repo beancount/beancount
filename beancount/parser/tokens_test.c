@@ -102,11 +102,11 @@ void test_cunescape()
     assert(memcmp(unescaped, "more\nthan\none\nline", len) == 0);
     free(unescaped);
 
-    s = "escaping\\n\\r";
+    s = "escaping\\n\\t";
     len = cunescape(s, strlen(s), true, &unescaped, &lines);
     assert(len == (ssize_t)strlen(s) - 2);
     assert(lines == 1);
-    assert(memcmp(unescaped, "escaping\n\r", len) == 0);
+    assert(memcmp(unescaped, "escaping\n\t", len) == 0);
     free(unescaped);
 }
 

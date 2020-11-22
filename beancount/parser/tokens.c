@@ -108,15 +108,6 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
         case 't':
             *dst++ = '\t';
             break;
-        case 'r':
-            *dst++ = '\r';
-            break;
-        case 'f':
-            *dst++ = '\f';
-            break;
-        case 'b':
-            *dst++ = '\b';
-            break;
         default:
             if (strict) {
                 free(buffer);
