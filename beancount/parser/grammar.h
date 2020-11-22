@@ -61,32 +61,32 @@ typedef void* yyscan_t;
 
 /* Extend default location type with file name information. */
 typedef struct YYLTYPE {
-    int first_line;
-    int first_column;
-    int last_line;
-    int last_column;
-    PyObject* file_name;
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+  PyObject* file_name;
 } YYLTYPE;
 
 #define YYLTYPE_IS_DECLARED 1
 
 /* Extend defult location action to copy file name over. */
 #define YYLLOC_DEFAULT(current, rhs, N)                                 \
-    do {                                                                \
-        if (N) {                                                        \
-            (current).first_line   = YYRHSLOC(rhs, 1).first_line;       \
-            (current).first_column = YYRHSLOC(rhs, 1).first_column;     \
-            (current).last_line    = YYRHSLOC(rhs, N).last_line;        \
-            (current).last_column  = YYRHSLOC(rhs, N).last_column;      \
-            (current).file_name    = YYRHSLOC(rhs, N).file_name;        \
-        } else {                                                        \
-            (current).first_line   = (current).last_line =              \
-                YYRHSLOC(rhs, 0).last_line;                             \
-            (current).first_column = (current).last_column =            \
-                YYRHSLOC(rhs, 0).last_column;                           \
-            (current).file_name    = YYRHSLOC(rhs, 0).file_name;        \
-        }                                                               \
-    } while (0)
+  do {                                                                \
+      if (N) {                                                        \
+          (current).first_line   = YYRHSLOC(rhs, 1).first_line;       \
+          (current).first_column = YYRHSLOC(rhs, 1).first_column;     \
+          (current).last_line    = YYRHSLOC(rhs, N).last_line;        \
+          (current).last_column  = YYRHSLOC(rhs, N).last_column;      \
+          (current).file_name    = YYRHSLOC(rhs, N).file_name;        \
+      } else {                                                        \
+          (current).first_line   = (current).last_line =              \
+              YYRHSLOC(rhs, 0).last_line;                             \
+          (current).first_column = (current).last_column =            \
+              YYRHSLOC(rhs, 0).last_column;                           \
+          (current).file_name    = YYRHSLOC(rhs, 0).file_name;        \
+      }                                                               \
+  } while (0)
 
 /* Get a printable version of a token name. */
 const char* token_to_string(int token);
@@ -163,13 +163,13 @@ union YYSTYPE
 {
 #line 154 "beancount/parser/grammar.y"
 
-    char character;
-    const char* string;
-    PyObject* pyobj;
-    struct {
-        PyObject* pyobj1;
-        PyObject* pyobj2;
-    } pairobj;
+  char character;
+  const char* string;
+  PyObject* pyobj;
+  struct {
+      PyObject* pyobj1;
+      PyObject* pyobj2;
+  } pairobj;
 
 #line 175 "beancount/parser/grammar.h"
 

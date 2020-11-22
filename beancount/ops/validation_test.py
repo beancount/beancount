@@ -7,7 +7,6 @@ import unittest
 
 from beancount.core import data
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount.ops import validation
 from beancount import loader
 
