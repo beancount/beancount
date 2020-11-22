@@ -51,7 +51,13 @@ extern int yydebug;
 #include <stdio.h>
 #include <assert.h>
 
-#include "beancount/parser/parser.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
 
 /* Extend default location type with file name information. */
 typedef struct YYLTYPE {
@@ -86,7 +92,7 @@ typedef struct YYLTYPE {
 const char* token_to_string(int token);
 
 
-#line 90 "beancount/parser/grammar.h"
+#line 96 "beancount/parser/grammar.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -155,7 +161,7 @@ const char* token_to_string(int token);
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 145 "beancount/parser/grammar.y"
+#line 154 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -165,7 +171,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 169 "beancount/parser/grammar.h"
+#line 175 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

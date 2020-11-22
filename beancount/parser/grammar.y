@@ -14,7 +14,13 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "beancount/parser/parser.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
 
 /* Extend default location type with file name information. */
 typedef struct YYLTYPE {
@@ -71,6 +77,8 @@ extern YY_DECL;
         build_grammar_error_from_exception(&yyloc, builder);                    \
         YYERROR;                                                                \
     }
+
+#define MISSING_OBJ (yyget_extra(scanner)->missing_obj)
 
 #define FILENAME (yyloc).file_name
 #define LINENO (yyloc).first_line
@@ -133,6 +141,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 
 /* Options. */
 %require "3.6"
+
 %defines
 %debug
 %locations
@@ -412,7 +421,7 @@ posting : INDENT optflag account incomplete_amount cost_spec eol
         | INDENT optflag account eol
         {
             BUILDY(DECREF($3),
-                   $$, "posting", "OOOOOb", $3, missing_obj, Py_None, Py_None, Py_False, $2);
+                   $$, "posting", "OOOOOb", $3, MISSING_OBJ, Py_None, Py_None, Py_False, $2);
         }
 
 key_value : KEY COLON key_value_value
@@ -586,15 +595,15 @@ amount_tolerance : number_expr CURRENCY
 maybe_number : number_expr
              | %empty
              {
-                 Py_INCREF(missing_obj);
-                 $$ = missing_obj;
+                 Py_INCREF(MISSING_OBJ);
+                 $$ = MISSING_OBJ;
              }
 
 maybe_currency : CURRENCY
                | %empty
                {
-                   Py_INCREF(missing_obj);
-                   $$ = missing_obj;
+                   Py_INCREF(MISSING_OBJ);
+                   $$ = MISSING_OBJ;
                }
 
 compound_amount : maybe_number CURRENCY
