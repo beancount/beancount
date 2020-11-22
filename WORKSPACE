@@ -23,6 +23,8 @@ setup_arrow()
 
 load("//third_party/parser:setup.bzl", "setup_parser")
 setup_parser()
+load("//third_party/parser:repositories.bzl", "parser_toolchains")
+parser_toolchains()
 
 # # Setup for packaging rules.
 # load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

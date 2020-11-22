@@ -47,6 +47,9 @@ def _genreflex_impl(ctx):
     if ctx.attr.prefix:
         args.add("-P", ctx.attr.prefix)
 
+    #args.add("--flex")
+    args.add("--full")  # Or --fast
+    args.add("--unicode")
     args.add("--bison-complete")
     args.add("--bison-locations")
     args.add_all(ctx.attr.lexopts)

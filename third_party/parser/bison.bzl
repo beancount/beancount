@@ -40,9 +40,10 @@ def _genyacc_impl(ctx):
     # Output files
     outputs = ctx.outputs.extra_outs + [
         ctx.outputs.header_out,
-        ctx.outputs.location_out,
         ctx.outputs.source_out,
     ]
+    if ctx.outputs.location_out:
+        outputs.append(ctx.outputs.location_out)
 
     m4 = m4_toolchain(ctx)
     ctx.actions.run(
