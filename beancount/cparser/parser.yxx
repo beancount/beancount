@@ -238,56 +238,56 @@ private:
 %token <PyObject*> LINK        /* A link that can be associated with a transaction */
 %token <PyObject*> KEY         /* A key in a key-value pair */
 
-/// /* Types for non-terminal symbols. */
-/// %type <character> txn
-/// %type <character> optflag
-/// %type <pyobj> account
-/// %type <pyobj> transaction
-/// %type <pyobj> posting
-/// %type <pyobj> key_value
-/// %type <pyobj> key_value_line
-/// %type <pyobj> key_value_list
-/// %type <pyobj> key_value_value
-/// %type <pyobj> posting_or_kv_list
-/// %type <pyobj> currency_list
-/// %type <pyobj> open
-/// %type <pyobj> close
-/// %type <pyobj> commodity
-/// %type <pyobj> balance
-/// %type <pyobj> pad
-/// %type <pairobj> amount_tolerance
-/// %type <pyobj> amount
-/// %type <pyobj> incomplete_amount
-/// %type <pyobj> compound_amount
-/// %type <pyobj> maybe_number
-/// %type <pyobj> maybe_currency
-/// %type <pyobj> price_annotation
-/// %type <pyobj> cost_comp
-/// %type <pyobj> cost_comp_list
-/// %type <pyobj> cost_spec
-/// %type <pyobj> price
-/// %type <pyobj> event
-/// %type <pyobj> query
-/// %type <pyobj> note
-/// %type <pyobj> document
-/// %type <pyobj> entry
-/// %type <pyobj> declarations
-/// %type <pyobj> txn_strings
-/// %type <pyobj> tags_links
-/// %type <pyobj> filename
-/// %type <pyobj> opt_booking
-/// %type <pyobj> number_expr
-/// %type <pyobj> option
-/// %type <pyobj> pushtag
-/// %type <pyobj> poptag
-/// %type <pyobj> pushmeta
-/// %type <pyobj> popmeta
-/// %type <pyobj> include
-/// %type <pyobj> plugin
-/// %type <pyobj> file
-/// %type <pyobj> custom
-/// %type <pyobj> custom_value
-/// %type <pyobj> custom_value_list
+/* Types for non-terminal symbols. */
+%type <character> txn
+%type <character> optflag
+%type <PyObject*> account
+%type <PyObject*> transaction
+%type <PyObject*> posting
+%type <PyObject*> key_value
+%type <PyObject*> key_value_line
+%type <PyObject*> key_value_list
+%type <PyObject*> key_value_value
+%type <PyObject*> posting_or_kv_list
+%type <PyObject*> currency_list
+%type <PyObject*> open
+%type <PyObject*> close
+%type <PyObject*> commodity
+%type <PyObject*> balance
+%type <PyObject*> pad
+%type <std::pair<PyObject*, PyObject*>> amount_tolerance
+%type <PyObject*> amount
+%type <PyObject*> incomplete_amount
+%type <PyObject*> compound_amount
+%type <PyObject*> maybe_number
+%type <PyObject*> maybe_currency
+%type <PyObject*> price_annotation
+%type <PyObject*> cost_comp
+%type <PyObject*> cost_comp_list
+%type <PyObject*> cost_spec
+%type <PyObject*> price
+%type <PyObject*> event
+%type <PyObject*> query
+%type <PyObject*> note
+%type <PyObject*> document
+%type <PyObject*> entry
+%type <PyObject*> declarations
+%type <PyObject*> txn_strings
+%type <PyObject*> tags_links
+%type <PyObject*> filename
+%type <PyObject*> opt_booking
+%type <PyObject*> number_expr
+%type <PyObject*> option
+%type <PyObject*> pushtag
+%type <PyObject*> poptag
+%type <PyObject*> pushmeta
+%type <PyObject*> popmeta
+%type <PyObject*> include
+%type <PyObject*> plugin
+%type <PyObject*> file
+%type <PyObject*> custom
+%type <PyObject*> custom_value
+%type <PyObject*> custom_value_list
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
@@ -308,15 +308,609 @@ private:
 //- Grammar rules -------------------------------------------------------------
 %%
 
-// TODO(blais): remove
-file:
-  empty
-  | error
+
+/* A transaction declaration can be either 'txn' or one of the special character flags. */
+txn:
+  TXN
     {
-      yyerrok;
+      $$ = '*';
+    }
+  | FLAG
+    {
+        $$ = $1;
+    }
+  | ASTERISK
+    {
+        $$ = '*';
+    }
+  | HASH
+    {
+        $$ = '#';
     }
 
-empty:
+eol: EOL | YYEOF
+
+/* FIXME: This needs be made more general, dealing with precedence.
+   I just need this right now, so I'm putting it in, in a way that will.
+   be backwards compatible, so this is just a bit of a temporary hack
+   (blais, 2015-04-18). */
+number_expr:
+  NUMBER
+  | number_expr PLUS number_expr
+    {
+      $$ = PyNumber_Add($1, $3);
+      DECREF($1, $3);
+    }
+  | number_expr MINUS number_expr
+    {
+        $$ = PyNumber_Subtract($1, $3);
+        DECREF($1, $3);
+    }
+  | number_expr ASTERISK number_expr
+    {
+        $$ = PyNumber_Multiply($1, $3);
+        DECREF($1, $3);
+    }
+  | number_expr SLASH number_expr
+    {
+        $$ = PyNumber_TrueDivide($1, $3);
+        DECREF($1, $3);
+    }
+  | MINUS number_expr %prec NEGATIVE
+    {
+        $$ = PyNumber_Negative($2);
+        DECREF($2);
+    }
+  | PLUS number_expr %prec NEGATIVE
+    {
+        $$ = $2;
+    }
+  | LPAREN number_expr RPAREN
+    {
+        $$ = $2;
+    }
+
+txn_strings:
+  %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+  | txn_strings STRING
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+  | txn_strings PIPE
+    {
+        BUILDY(,
+               $$, "pipe_deprecated_error", "");
+        $$ = $1;
+    }
+
+tags_links:
+  %empty
+    {
+        BUILDY(,
+               $$, "tag_link_new", "");
+    }
+  | tags_links LINK
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "tag_link_LINK", "OO", $1, $2);
+    }
+  | tags_links TAG
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "tag_link_TAG", "OO", $1, $2);
+    }
+
+transaction:
+  DATE txn txn_strings tags_links eol posting_or_kv_list
+    {
+        BUILDY(DECREF($1, $3, $4, $6),
+               $$, "transaction", "ObOOO", $1, $2, $3, $4, $6);
+    }
+
+optflag:
+  %empty
+    {
+        $$ = '\0';
+    }
+  | ASTERISK
+    {
+        $$ = '*';
+    }
+  | HASH
+    {
+        $$ = '#';
+    }
+  | FLAG
+
+price_annotation:
+  incomplete_amount
+
+account:
+  ACCOUNT
+    {
+        BUILDY(DECREF($1),
+               $$, "account", "O", $1);
+    }
+
+posting:
+  INDENT optflag account incomplete_amount cost_spec eol
+    {
+        BUILDY(DECREF($3, $4, $5),
+               $$, "posting", "OOOOOb", $3, $4, $5, Py_None, Py_False, $2);
+    }
+  | INDENT optflag account incomplete_amount cost_spec AT price_annotation eol
+    {
+        BUILDY(DECREF($3, $4, $5, $7),
+               $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_False, $2);
+    }
+  | INDENT optflag account incomplete_amount cost_spec ATAT price_annotation eol
+    {
+        BUILDY(DECREF($3, $4, $5, $7),
+               $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_True, $2);
+    }
+  | INDENT optflag account eol
+    {
+        BUILDY(DECREF($3),
+               $$, "posting", "OOOOOb", $3, MISSING_OBJ, Py_None, Py_None, Py_False, $2);
+    }
+
+key_value:
+  KEY COLON key_value_value
+    {
+        BUILDY(DECREF($2, $3),
+               $$, "key_value", "OO", $2, $3);
+    }
+
+key_value_line:
+  INDENT key_value eol
+    {
+        $$ = $2;
+    }
+
+key_value_value:
+  STRING
+  | account
+  | DATE
+  | CURRENCY
+  | TAG
+  | BOOL
+  | NONE
+  | number_expr
+  | amount
+  | %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+
+posting_or_kv_list:
+  %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+  | posting_or_kv_list INDENT eol
+    {
+        $$ = $1;
+    }
+  | posting_or_kv_list INDENT tags_links eol
+    {
+        BUILDY(DECREF($1, $3),
+               $$, "handle_list", "OO", $1, $3);
+    }
+  | posting_or_kv_list key_value_line
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+  | posting_or_kv_list posting
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+
+key_value_list:
+  %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+  | key_value_list INDENT eol
+    {
+        $$ = $1;
+    }
+  | key_value_list key_value_line
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+
+currency_list:
+  %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+  | CURRENCY
+    {
+        BUILDY(DECREF($1),
+               $$, "handle_list", "OO", Py_None, $1);
+    }
+  | currency_list COMMA CURRENCY
+    {
+        BUILDY(DECREF($1, $3),
+               $$, "handle_list", "OO", $1, $3);
+    }
+
+pushtag:
+  PUSHTAG TAG eol
+    {
+        BUILDY(DECREF($2),
+               $$, "pushtag", "O", $2);
+    }
+
+poptag:
+  POPTAG TAG eol
+    {
+        BUILDY(DECREF($2),
+               $$, "poptag", "O", $2);
+    }
+
+pushmeta:
+  PUSHMETA key_value eol
+    {
+        /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
+         * within a tuple, so expand in the method (it receives two
+         * objects). See https://docs.python.org/3.4/c-api/arg.html. */
+        BUILDY(DECREF($2),
+               $$, "pushmeta", "O", $2);
+    }
+
+popmeta:
+  POPMETA KEY COLON eol
+    {
+        BUILDY(DECREF($2),
+               $$, "popmeta", "O", $2);
+    }
+
+open:
+  DATE OPEN account currency_list opt_booking eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $5, $7),
+               $$, "open", "OOOOO", $1, $3, $4, $5, $7);
+    }
+
+opt_booking:
+  STRING
+  | %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+
+close:
+  DATE CLOSE account eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $5),
+               $$, "close", "OOO", $1, $3, $5);
+    }
+
+commodity:
+  DATE COMMODITY CURRENCY eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $5),
+               $$, "commodity", "OOO", $1, $3, $5);
+    }
+
+pad:
+  DATE PAD account account eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $6),
+               $$, "pad", "OOOO", $1, $3, $4, $6);
+    }
+
+balance:
+  DATE BALANCE account amount_tolerance eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $6, $4.pyobj1, $4.pyobj2),
+               $$, "balance", "OOOOO", $1, $3, $4.pyobj1, $4.pyobj2, $6);
+    }
+
+amount:
+  number_expr CURRENCY
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "amount", "OO", $1, $2);
+    }
+
+amount_tolerance:
+  number_expr CURRENCY
+    {
+        BUILDY(DECREF($1, $2),
+               $$.pyobj1, "amount", "OO", $1, $2);
+        $$.pyobj2 = Py_None;
+        Py_INCREF(Py_None);
+    }
+  | number_expr TILDE number_expr CURRENCY
+    {
+        BUILDY(DECREF($1, $4),
+               $$.pyobj1, "amount", "OO", $1, $4);
+        $$.pyobj2 = $3;
+    }
+
+maybe_number:
+  number_expr
+  | %empty
+    {
+        Py_INCREF(MISSING_OBJ);
+        $$ = MISSING_OBJ;
+    }
+
+maybe_currency:
+  CURRENCY
+  | %empty
+    {
+        Py_INCREF(MISSING_OBJ);
+        $$ = MISSING_OBJ;
+    }
+
+compound_amount:
+  maybe_number CURRENCY
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "compound_amount", "OOO", $1, Py_None, $2);
+    }
+  | number_expr maybe_currency
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "compound_amount", "OOO", $1, Py_None, $2);
+    }
+  | maybe_number HASH maybe_number CURRENCY
+    {
+        BUILDY(DECREF($1, $3, $4),
+               $$, "compound_amount", "OOO", $1, $3, $4);
+        ;
+    }
+
+incomplete_amount:
+  maybe_number maybe_currency
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "amount", "OO", $1, $2);
+    }
+
+cost_spec:
+  LCURL cost_comp_list RCURL
+    {
+        BUILDY(DECREF($2),
+               $$, "cost_spec", "OO", $2, Py_False);
+    }
+  | LCURLCURL cost_comp_list RCURLCURL
+    {
+        BUILDY(DECREF($2),
+               $$, "cost_spec", "OO", $2, Py_True);
+    }
+  | %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+
+cost_comp_list:
+  %empty
+    {
+        /* We indicate that there was a cost if there */
+        $$ = PyList_New(0);
+    }
+  | cost_comp
+    {
+        BUILDY(DECREF($1),
+               $$, "handle_list", "OO", Py_None, $1);
+    }
+  | cost_comp_list COMMA cost_comp
+    {
+        BUILDY(DECREF($1, $3),
+               $$, "handle_list", "OO", $1, $3);
+    }
+
+cost_comp:
+  compound_amount
+  | DATE
+  | STRING
+  | ASTERISK
+    {
+        BUILDY(,
+               $$, "cost_merge", "O", Py_None);
+    }
+
+price:
+  DATE PRICE CURRENCY amount eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $6),
+               $$, "price", "OOOO", $1, $3, $4, $6);
+    }
+
+event:
+  DATE EVENT STRING STRING eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $6),
+               $$, "event", "OOOO", $1, $3, $4, $6);
+    }
+
+query:
+  DATE QUERY STRING STRING eol key_value_list
+       {
+           BUILDY(DECREF($1, $3, $4, $6),
+                  $$, "query", "OOOO", $1, $3, $4, $6);
+       }
+
+note:
+  DATE NOTE account STRING eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $6),
+               $$, "note", "OOOO", $1, $3, $4, $6);
+    }
+
+filename: STRING
+
+document:
+  DATE DOCUMENT account filename tags_links eol key_value_list
+    {
+        BUILDY(DECREF($1, $3, $4, $5, $7),
+               $$, "document", "OOOOO", $1, $3, $4, $5, $7);
+    }
+
+custom_value:
+  STRING
+    {
+        BUILDY(DECREF($1),
+               $$, "custom_value", "OO", $1, Py_None);
+    }
+  | DATE
+    {
+        BUILDY(DECREF($1),
+               $$, "custom_value", "OO", $1, Py_None);
+    }
+  | BOOL
+    {
+        BUILDY(DECREF($1),
+               $$, "custom_value", "OO", $1, Py_None);
+    }
+  | amount
+    {
+        BUILDY(DECREF($1),
+               $$, "custom_value", "OO", $1, Py_None);
+    }
+  | number_expr
+    {
+        BUILDY(DECREF($1),
+               $$, "custom_value", "OO", $1, Py_None);
+    }
+  | account
+    {
+        /* Obtain beancount.core.account.TYPE */
+        PyObject* module = PyImport_ImportModule("beancount.core.account");
+        PyObject* dtype = PyObject_GetAttrString(module, "TYPE");
+        Py_DECREF(module);
+        BUILDY(DECREF($1, dtype),
+               $$, "custom_value", "OO", $1, dtype);
+    }
+
+custom_value_list:
+  %empty
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;
+    }
+  | custom_value_list custom_value
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+
+custom:
+  DATE CUSTOM STRING custom_value_list eol key_value_list
+   {
+       BUILDY(DECREF($1, $3, $4, $6),
+              $$, "custom", "OOOO", $1, $3, $4, $6);
+   }
+
+entry:
+  transaction
+  | balance
+  | open
+  | close
+  | pad
+  | document
+  | note
+  | event
+  | price
+  | commodity
+  | query
+  | custom
+
+option:
+  OPTION STRING STRING eol
+    {
+        BUILDY(DECREF($2, $3),
+               $$, "option", "OO", $2, $3);
+    }
+
+include:
+  INCLUDE STRING eol
+    {
+        BUILDY(DECREF($2),
+               $$, "include", "O", $2);
+    }
+
+plugin:
+  PLUGIN STRING eol
+    {
+        BUILDY(DECREF($2),
+               $$, "plugin", "OO", $2, Py_None);
+    }
+  | PLUGIN STRING STRING eol
+    {
+        BUILDY(DECREF($2, $3),
+               $$, "plugin", "OO", $2, $3);
+    }
+
+directive:
+  pushtag
+  | poptag
+  | pushmeta
+  | popmeta
+  | option
+  | include
+  | plugin
+
+declarations:
+  declarations EOL
+  | declarations directive
+  | declarations entry
+    {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+    }
+  | declarations error
+    {
+        /*
+         * Ignore the error and continue reducing ({3d95e55b654e}).
+         * Note that with the matching rule above, "error" will
+         * successfully reduce on each line that cannot reduce.
+         * Non-erroneous postings after an error occurs will reduce but
+         * not be included because a transaction's list of postings
+         * does not include an "error" rule.
+         *
+         * Note: Adding EOL after the "error" rule above works to
+         * reduce the number of calls to this rule resulting from the
+         * appearance of an error but makes the parser errors
+         * skip the next valid directive, so we just have to make sure
+         * repeated runs of this rule's handling code are idempotent.
+         */
+        $$ = $1;
+    }
+  | %empty
+    {
+         Py_INCREF(Py_None);
+         $$ = Py_None;
+    }
+
+
+file:
+  declarations YYEOF
+    {
+        BUILDY(DECREF($1),
+               $$, "store_result", "O", $1);
+    }
+
+// TODO(blais): What about the 'error' token?
+
 
 %%
 //- User code ----------------------------------------------------------------
