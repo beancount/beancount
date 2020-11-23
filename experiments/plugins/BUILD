@@ -16,7 +16,7 @@ py_library(
         ":mark_unverified",
         ":merge_meta",
         ":tag_pending",
-        ":unrealized",
+        #":unrealized",
     ],
 )
 
@@ -246,32 +246,35 @@ py_test(
     ],
 )
 
-py_library(
-    name = "unrealized",
-    srcs = ["unrealized.py"],
-    deps = [
-        "//beancount/core:account",
-        "//beancount/core:amount",
-        "//beancount/core:data",
-        "//beancount/core:flags",
-        "//beancount/core:getters",
-        "//beancount/core:number",
-        "//beancount/core:prices",
-        "//beancount/ops:holdings",
-        "//beancount/parser:options",
-    ],
-)
-
-py_test(
-    name = "unrealized_test",
-    srcs = ["unrealized_test.py"],
-    deps = [
-        ":unrealized",
-        "//beancount/core:data",
-        "//beancount/core:number",
-        "//beancount:loader",
-        "//beancount/ops:validation",
-        "//beancount/parser:options",
-        "//beancount:plugins_for_tests",
-    ],
-)
+# NOTE: Disabled because dependent beancount.ops.holdings has been deprecated.
+# And we will not port this--realizing unrealized gains is the wrong approach anyway.
+#
+# py_library(
+#     name = "unrealized",
+#     srcs = ["unrealized.py"],
+#     deps = [
+#         "//beancount/core:account",
+#         "//beancount/core:amount",
+#         "//beancount/core:data",
+#         "//beancount/core:flags",
+#         "//beancount/core:getters",
+#         "//beancount/core:number",
+#         "//beancount/core:prices",
+#         "//beancount/ops:holdings",
+#         "//beancount/parser:options",
+#     ],
+# )
+#
+# py_test(
+#     name = "unrealized_test",
+#     srcs = ["unrealized_test.py"],
+#     deps = [
+#         ":unrealized",
+#         "//beancount/core:data",
+#         "//beancount/core:number",
+#         "//beancount:loader",
+#         "//beancount/ops:validation",
+#         "//beancount/parser:options",
+#         "//beancount:plugins_for_tests",
+#     ],
+# )
