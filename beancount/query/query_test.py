@@ -27,7 +27,7 @@ class TestNumerifySimple(unittest.TestCase):
                                         numberify=True)
         self.assertEqual(['account', 'amount (USD)', 'amount (MXN)'],
                          [rt[0] for rt in rtypes])
-        self.assertEqual(13, len(rrows))
+        self.assertEqual(len(rrows[0]), 3)
 
 
 if __name__ == '__main__':
