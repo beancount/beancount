@@ -175,7 +175,7 @@ py_test(
     name = "query_test",
     srcs = ["query_test.py"],
     data = [
-        "//examples:sharing"
+        "//examples:example"
     ],
     deps = [
         "//beancount:loader",
@@ -183,6 +183,7 @@ py_test(
         "//beancount/utils:test_utils",
         "//beancount/plugins:split_expenses",
         "//beancount/plugins:auto_accounts",
+        "//beancount:plugins_for_tests",
     ],
 )
 
