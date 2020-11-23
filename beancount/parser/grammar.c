@@ -2018,8 +2018,8 @@ yyreduce:
   case 33: /* key_value: KEY COLON key_value_value  */
 #line 437 "beancount/parser/grammar.y"
     {
-        BUILDY(DECREF((yyvsp[-1].string), (yyvsp[0].pyobj)),
-               (yyval.pyobj), "key_value", "OO", (yyvsp[-1].string), (yyvsp[0].pyobj));
+        BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+               (yyval.pyobj), "key_value", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
 #line 2025 "beancount/parser/grammar.c"
     break;

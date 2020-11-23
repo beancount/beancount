@@ -435,8 +435,8 @@ posting:
 key_value:
   KEY COLON key_value_value
     {
-        BUILDY(DECREF($2, $3),
-               $$, "key_value", "OO", $2, $3);
+        BUILDY(DECREF($1, $3),
+               $$, "key_value", "OO", $1, $3);
     }
 
 key_value_line:

@@ -5,6 +5,14 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-11-22
+
+ - Fixed latent bug with key/value parsing (incorrect grammar rule, was working
+   anyway somehow).
+ - Internal changes to lexer and parser to minimize diffs with ongoing work in
+   'master' / C++ scanner/parser.
+
+
 2020-11-17
 
  - Made it legal to insert a balance entry after account closure. It is a common
