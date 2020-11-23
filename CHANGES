@@ -7,6 +7,8 @@ The master branch will rely on the Git repository history.
 
 2020-11-22
 
+ - Fixed bug in parser.parse_file() which when passed a filename in would leave
+   the file unclosed.
  - Fixed latent bug with key/value parsing (incorrect grammar rule, was working
    anyway somehow).
  - Internal changes to lexer and parser to minimize diffs with ongoing work in
