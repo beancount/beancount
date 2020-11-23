@@ -274,6 +274,9 @@ private:
 %define api.token.constructor
 %define api.token.prefix {TOK_}
 
+/* Special error token, redefined to carry an error message. */
+%token <absl::string_view> error
+
 /* Types for terminal symbols */
 %token <absl::string_view> INDENT     /* Initial indent IF at the beginning of a line */
 %token EOL        /* End-of-line */
@@ -1074,6 +1077,7 @@ public:
   }
 
   // Override the location to include the filename.
+  // TODO(blais): Why do I need this again?
   beancount::parser::location location() override
   {
     /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
