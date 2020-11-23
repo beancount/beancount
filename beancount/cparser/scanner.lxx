@@ -186,7 +186,8 @@ NULL {
 
  /* Numbers. */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? {
-  return Parser::make_NUMBER(build_NUMBER(text()), location());
+  decimal::Decimal number(text());
+  return Parser::make_NUMBER(number, location());
 }
 
  /* Tags. */

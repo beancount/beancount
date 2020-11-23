@@ -45,6 +45,8 @@
 
 #include "absl/strings/string_view.h"
 
+#include "decimal.hh"
+
 namespace beancount {
 namespace scanner { class Scanner; }
 namespace parser { class Builder; }
@@ -323,7 +325,7 @@ private:
 %token <PyObject*> ACCOUNT     /* The name of an account */
 %token <PyObject*> CURRENCY    /* A currency specification */
 %token <PyObject*> STRING      /* A quoted string, with any characters inside */
-%token <PyObject*> NUMBER      /* A floating-point number */
+%token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <PyObject*> TAG         /* A tag that can be associated with a transaction */
 %token <PyObject*> LINK        /* A link that can be associated with a transaction */
 %token <PyObject*> KEY         /* A key in a key-value pair */
@@ -366,6 +368,7 @@ private:
 %type <PyObject*> tags_links
 %type <PyObject*> filename
 %type <PyObject*> opt_booking
+%type <decimal::Decimal> dec_number_expr
 %type <PyObject*> number_expr
 %type <PyObject*> option
 %type <PyObject*> pushtag
@@ -424,40 +427,45 @@ eol: EOL | YYEOF
    I just need this right now, so I'm putting it in, in a way that will.
    be backwards compatible, so this is just a bit of a temporary hack
    (blais, 2015-04-18). */
-number_expr:
+// TODO(blais): Change 'dec_number_expr' back to 'number_expr' once Decimal is everywhere.
+dec_number_expr:
   NUMBER
-  | number_expr PLUS number_expr
+  | dec_number_expr PLUS dec_number_expr
     {
-      $$ = PyNumber_Add($1, $3);
-      DECREF($1, $3);
+      $$ = $1.add($3);
     }
-  | number_expr MINUS number_expr
+  | dec_number_expr MINUS dec_number_expr
     {
-      $$ = PyNumber_Subtract($1, $3);
-      DECREF($1, $3);
+      $$ = $1.sub($3);
     }
-  | number_expr ASTERISK number_expr
+  | dec_number_expr ASTERISK dec_number_expr
     {
-      $$ = PyNumber_Multiply($1, $3);
-      DECREF($1, $3);
+      $$ = $1.mul($3);
     }
-  | number_expr SLASH number_expr
+  | dec_number_expr SLASH dec_number_expr
     {
-      $$ = PyNumber_TrueDivide($1, $3);
-      DECREF($1, $3);
+      $$ = $1.div($3);
     }
-  | MINUS number_expr %prec NEGATIVE
+  | MINUS dec_number_expr %prec NEGATIVE
     {
-      $$ = PyNumber_Negative($2);
-      DECREF($2);
+      $$ = $2.minus();
     }
-  | PLUS number_expr %prec NEGATIVE
+  | PLUS dec_number_expr %prec NEGATIVE
+    {
+      $$ = $2.plus(); // Note: Not entirely sure we shouldn't just copy.
+    }
+  | LPAREN dec_number_expr RPAREN
     {
       $$ = $2;
     }
-  | LPAREN number_expr RPAREN
+
+// Simply translate the Decimal to a Python decimal here temporarily for now.
+number_expr:
+  dec_number_expr
     {
-      $$ = $2;
+      // TODO(blais): This will go away; you could convert directly to PyDecimal
+      // instead of going through strings.
+      pydecimal_from_cstring($1.to_sci().c_str());
     }
 
 txn_strings:
