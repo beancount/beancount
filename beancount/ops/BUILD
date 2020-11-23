@@ -89,41 +89,6 @@ py_test(
 )
 
 py_library(
-    name = "holdings",
-    srcs = ["holdings.py"],
-    deps = [
-        "//beancount/core:number",
-        "//beancount/core:account",
-        "//beancount/core:amount",
-        "//beancount/core:position",
-        "//beancount/core:realization",
-        "//beancount/core:account_types",
-        "//beancount/core:data",
-        "//beancount/core:flags",
-        "//beancount/core:getters",
-        "//beancount/core:prices",
-        "//beancount/ops:summarize",
-        "//beancount/parser:options",
-        "//beancount/utils:misc_utils",
-    ],
-)
-
-py_test(
-    name = "holdings_test",
-    srcs = ["holdings_test.py"],
-    deps = [
-        "//beancount/core:number",
-        "//beancount/core:position",
-        "//beancount/core:data",
-        "//beancount/core:prices",
-        ":holdings",
-        "//beancount:loader",
-        "//beancount:plugins_for_tests",
-        "//experiments/plugins:unrealized",
-    ],
-)
-
-py_library(
     name = "lifetimes",
     srcs = ["lifetimes.py"],
     deps = [
