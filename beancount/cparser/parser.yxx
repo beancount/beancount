@@ -50,7 +50,7 @@
 namespace beancount {
 namespace scanner { class Scanner; }
 namespace parser { class Builder; }
-typedef absl::string_view strview;
+using std::string_view;
 
 // Example of a local type; do this + below:  %type <TermList*> termlist
 ///   // Accumulator for term list.
@@ -74,12 +74,12 @@ namespace beancount {
 /// // Parse contents from the given string.
 /// // The 'line_offset' can be used in unit tests to mark the start of the test
 /// // string in the parsed file.
-/// std::unique_ptr<proto::Database> ParseString(const absl::string_view& input_string,
-///                                             const absl::string_view& filename,
+/// std::unique_ptr<proto::Database> ParseString(const string_view& input_string,
+///                                             const string_view& filename,
 ///                                             int line_offset = 0);
 ///
 /// // Parse contents from a file.
-/// std::unique_ptr<proto::Database> ParseFile(const absl::string_view& filename);
+/// std::unique_ptr<proto::Database> ParseFile(const string_view& filename);
 ///
 /// // Parse contents from stdin.
 /// std::unique_ptr<proto::Database> ParseStdin();
@@ -106,7 +106,7 @@ namespace beancount {
 #include "absl/strings/string_view.h"
 #include "reflex/input.h"
 
-using absl::string_view;
+using std::string_view;
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -215,27 +215,25 @@ public:
   }
 
   // TODO(blais): Create an updated driver for Beancount.
-  //
-  /// // Add a new type.
-  /// proto::Type* AddType(string_view type, string_view contents,
-  ///                      proto::TypeFlavor flavor);
-  ///
-  /// // Add a new instance of an object node.
-  /// proto::Object* AddObject(string_view type,
-  ///                          string_view ident,
-  ///                          string_view contents);
-  ///
-  /// // Add a new instance of a lazy object node.
-  /// // The identifer is allocated automatically.
-  /// proto::Object* AddAutoObject(string_view type,
-  ///                              string_view contents) {
-  ///
-  /// // Add a new instance of an object with default type.
-  /// // The identifer is allocated automatically.
-  /// proto::Object* AddDefaultObject(string_view contents) {
-  ///
-  /// // Get the resulting database of objects and clear it.
-  /// unique_ptr<proto::Database> GetClearDatabase() {
+
+
+  string_view Account(const location& loc, string_view account) {
+    // if not self.account_regexp.match(account):
+    //     meta = new_metadata(filename, lineno)
+    //     self.errors.append(
+    //         ParserError(meta, "Invalid account name: {}".format(account), None))
+    // # Intern account names. This should reduces memory usage a
+    // # fair bit because these strings are repeated liberally.
+    // return self.accounts.setdefault(account, account)
+
+    // BUILDY(DECREF($1),
+    //        $$, "account", "O", $1);
+    return account;
+  }
+
+
+
+
 
 private:
   // beancount.core.number.MISSING object.
@@ -277,10 +275,10 @@ private:
 %define api.token.prefix {TOK_}
 
 /* Special error token, redefined to carry an error message. */
-%token <absl::string_view> error
+%token <string_view> error
 
 /* Types for terminal symbols */
-%token <absl::string_view> INDENT     /* Initial indent IF at the beginning of a line */
+%token <string_view> INDENT     /* Initial indent IF at the beginning of a line */
 %token EOL        /* End-of-line */
 %token PIPE       /* | */
 %token ATAT       /* @@ */
@@ -322,7 +320,7 @@ private:
 %token <PyObject*> NONE        /* A None value (parsed as NULL) */
 %token <PyObject*> BOOL        /* A boolean, true or false */
 %token <PyObject*> DATE        /* A date object */
-%token <PyObject*> ACCOUNT     /* The name of an account */
+%token <string_view> ACCOUNT     /* The name of an account */
 %token <PyObject*> CURRENCY    /* A currency specification */
 %token <PyObject*> STRING      /* A quoted string, with any characters inside */
 %token <decimal::Decimal> NUMBER      /* A decimal number */
@@ -522,11 +520,12 @@ optflag:
 price_annotation:
   incomplete_amount
 
+// TODO(blais): Bubble up string_view through to callers.
 account:
   ACCOUNT
     {
-      BUILDY(DECREF($1),
-             $$, "account", "O", $1);
+      string_view account = builder.Account(location(), $1);
+      $$ = PyUnicode_FromStringAndSize(account.data(), account.size());
     }
 
 posting:

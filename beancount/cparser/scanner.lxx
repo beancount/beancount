@@ -18,13 +18,13 @@
 namespace beancount {
 
 // Using declarations for symbols in the scanner implementation only.
-using absl::string_view;
+using std::string_view;
 using beancount::parser::Parser;
 using std::endl;
 using std::string;
 
-inline strview view(const reflex::Matcher& m) {
-  return strview(m.begin(), m.size());
+inline string_view view(const reflex::Matcher& m) {
+  return string_view(m.begin(), m.size());
 }
 
 }  // namespace beancount
@@ -164,7 +164,7 @@ NULL {
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
-  return Parser::make_ACCOUNT(build_ACCOUNT(text()), location());
+  return Parser::make_ACCOUNT(view(matcher()), location());
 }
 
  /* Currencies. These are defined as uppercase only in order to
