@@ -22,7 +22,7 @@ class TestMergeMeta(cmptest.TestCase):
             extfile.flush()
 
             topfile.write(textwrap.dedent("""
-              plugin "beancount.plugins.merge_meta" "{}"
+              plugin "experiments.plugins.merge_meta" "{}"
             """.format(extfile.name)))
             topfile.write(textwrap.dedent(top_string))
             topfile.flush()
@@ -77,7 +77,7 @@ class TestMergeMeta(cmptest.TestCase):
             file3.flush()
 
             file2.write(textwrap.dedent("""
-              plugin "beancount.plugins.merge_meta" "{}"
+              plugin "experiments.plugins.merge_meta" "{}"
 
               2015-02-02 open Assets:Checking
                 account: "96cde66757fb"
@@ -85,7 +85,7 @@ class TestMergeMeta(cmptest.TestCase):
             file2.flush()
 
             file1.write(textwrap.dedent("""
-              plugin "beancount.plugins.merge_meta" "{}"
+              plugin "experiments.plugins.merge_meta" "{}"
 
               2015-02-02 open Assets:Checking
                 begin: 2015-01-01
@@ -106,7 +106,7 @@ class TestMergeMeta(cmptest.TestCase):
         # Note: Use load_file() and a real file to try to tease reentrance bugs.
         with TmpFile('w') as topfile:
             topfile.write(textwrap.dedent("""
-              plugin "beancount.plugins.merge_meta" "/path/to/file/that/doesnt/exist"
+              plugin "experiments.plugins.merge_meta" "/path/to/file/that/doesnt/exist"
 
               2015-02-02 open Assets:Checking
                 begin: 2015-01-01

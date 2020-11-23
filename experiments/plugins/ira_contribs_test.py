@@ -14,7 +14,7 @@ class TestIraContributions(cmptest.TestCase):
         """
         plugin "beancount.plugins.implicit_prices"
 
-        plugin "beancount.plugins.ira_contribs" "{
+        plugin "experiments.plugins.ira_contribs" "{
             'currency': 'IRAUSD',
             'flag': '&',
             'accounts': {

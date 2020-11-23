@@ -4,7 +4,7 @@ This can be used to clean up dirty imported payee names.
 
 This plugin accepts a list of rules in this format:
 
-    plugin "beancount.plugins.fix_payees" "[
+    plugin "experiments.plugins.fix_payees" "[
         (PAYEE, MATCH1, MATCH2, ...),
     ]"
 
@@ -20,7 +20,7 @@ is used.
 
 For example:
 
-    plugin "beancount.plugins.fix_payees" "[
+    plugin "experiments.plugins.fix_payees" "[
 
         ("T-Mobile USA",
          "A:Expenses:Communications:Phone",

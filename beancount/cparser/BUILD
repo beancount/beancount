@@ -61,25 +61,25 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "scanner_test",
-    srcs = ["scanner_test.cc"],
-    deps = [
-        # ":test_utils",
-        ":parser",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
+# cc_test(
+#     name = "scanner_test",
+#     srcs = ["scanner_test.cc"],
+#     deps = [
+#         # ":test_utils",
+#         ":parser",
+#         "@com_google_googletest//:gtest_main",
+#     ],
+# )
 
-cc_test(
-    name = "parser_test",
-    srcs = ["parser_test.cc"],
-    deps = [
-        # ":test_utils",
-        # ":data_cc_pb2",
-        # ":compile",
-        ":parser",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_absl//absl/strings",
-    ],
-)
+# cc_test(
+#     name = "parser_test",
+#     srcs = ["parser_test.cc"],
+#     deps = [
+#         # ":test_utils",
+#         # ":data_cc_pb2",
+#         # ":compile",
+#         ":parser",
+#         "@com_google_googletest//:gtest_main",
+#         "@com_google_absl//absl/strings",
+#     ],
+# )

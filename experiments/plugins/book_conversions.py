@@ -7,7 +7,7 @@ particular account, which you provide. For each of those accounts, it also
 requires a corresponding Income account to book the profit/loss of reducing
 lots (i.e., sales):
 
-    plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+    plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
 Then, simply input the transactions with price conversion. We use "Bitcoins" in
 this example, converting Bitcoin purchases that were carried out as currency

@@ -6,7 +6,7 @@ import textwrap
 
 from beancount import loader
 from beancount.parser import cmptest
-from beancount.plugins import book_conversions
+from experiments.plugins import book_conversions
 from beancount.utils import test_utils
 
 
@@ -15,7 +15,7 @@ class TestBookConversions(cmptest.TestCase):
     @loader.load_doc()
     def test_book_conversions_example(self, entries, errors, __):
         """
-          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -73,7 +73,7 @@ class TestBookConversions(cmptest.TestCase):
     @loader.load_doc()
     def test_book_conversions_split_augmenting(self, entries, errors, __):
         """
-          ;; plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+          ;; plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -219,8 +219,8 @@ class TestBookConversions(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_split_partial_failure(self, entries, errors, __):
         """
-          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
-          plugin "beancount.plugins.auto_accounts"
+          plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "experiments.plugins.auto_accounts"
 
           2015-09-04 *
             Assets:Bank           -500.00 USD
@@ -235,8 +235,8 @@ class TestBookConversions(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_split_complete_failure(self, entries, errors, __):
         """
-          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
-          plugin "beancount.plugins.auto_accounts"
+          plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "experiments.plugins.auto_accounts"
 
           2015-09-04 *
             Assets:Bank           -500.00 USD
@@ -255,7 +255,7 @@ class TestBookConversions(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_bad_configuration(self, entries, errors, __):
         """
-          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin"
+          plugin "experiments.plugins.book_conversions" "Assets:Bitcoin"
         """
         self.assertRegex(errors[0].message, "Invalid configuration")
 
@@ -265,7 +265,7 @@ class TestExtractTradesScript(unittest.TestCase):
     @test_utils.docfile
     def test_extract_trades(self, filename):
         """
-          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "experiments.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin

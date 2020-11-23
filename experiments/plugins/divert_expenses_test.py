@@ -12,7 +12,7 @@ class TestDivertExpenses(cmptest.TestCase):
     @loader.load_doc()
     def test_divert(self, entries, errors, __):
         """
-        plugin "beancount.plugins.divert_expenses" "{
+        plugin "experiments.plugins.divert_expenses" "{
           'tag': 'kai',
           'account': 'Expenses:Kai',
         }"
@@ -52,7 +52,7 @@ class TestDivertExpenses(cmptest.TestCase):
     @loader.load_doc()
     def test_divert_some_postings(self, entries, errors, __):
         """
-        plugin "beancount.plugins.divert_expenses" "{
+        plugin "experiments.plugins.divert_expenses" "{
           'tag': 'kai',
           'account': 'Expenses:Kai',
         }"
@@ -86,7 +86,7 @@ class TestDivertExpenses(cmptest.TestCase):
     @loader.load_doc()
     def test_divert_non_expenses(self, entries, errors, __):
         """
-        plugin "beancount.plugins.divert_expenses" "{
+        plugin "experiments.plugins.divert_expenses" "{
           'tag': 'kai',
           'account': 'Expenses:Kai',
         }"

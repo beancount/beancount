@@ -4,7 +4,7 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount.parser import cmptest
-from beancount.plugins import fix_payees
+from experiments.plugins import fix_payees
 from beancount import loader
 
 

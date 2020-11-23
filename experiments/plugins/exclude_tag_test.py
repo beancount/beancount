@@ -12,7 +12,7 @@ class TestExampleExcludeTag(cmptest.TestCase):
     @loader.load_doc()
     def test_exclude_tag(self, entries, errors, __):
         """
-            plugin "beancount.plugins.exclude_tag"
+            plugin "experiments.plugins.exclude_tag"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash

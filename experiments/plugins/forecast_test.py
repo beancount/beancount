@@ -13,7 +13,7 @@ class TestExampleForecast(cmptest.TestCase):
     def test_forecast(self):
         input_text = textwrap.dedent("""
 
-            plugin "beancount.plugins.forecast"
+            plugin "experiments.plugins.forecast"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash

@@ -4,7 +4,7 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount.parser import cmptest
-from beancount.plugins import fill_account
+from experiments.plugins import fill_account
 from beancount import loader
 
 
@@ -13,7 +13,7 @@ class TestFillAccountOpen(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_fill_account_invalid_account(self, entries, errors, _):
         """
-        plugin "beancount.plugins.fill_account" "Assets:Not_An_Account_Name"
+        plugin "experiments.plugins.fill_account" "Assets:Not_An_Account_Name"
 
         2001-01-01 open Assets:Cash
         2001-01-01 open Liabilities:CreditCard
@@ -24,7 +24,7 @@ class TestFillAccountOpen(cmptest.TestCase):
     @loader.load_doc()
     def test_fill_account(self, entries, _, options_map):
         """
-        plugin "beancount.plugins.fill_account" "Assets:Cash"
+        plugin "experiments.plugins.fill_account" "Assets:Cash"
 
         2001-01-01 open Assets:Cash
         2001-01-01 open Liabilities:CreditCard
@@ -59,7 +59,7 @@ class TestFillAccountOpen(cmptest.TestCase):
     @loader.load_doc()
     def test_fill_account_with_cost(self, entries, _, options_map):
         """
-        plugin "beancount.plugins.fill_account" "Assets:Cash"
+        plugin "experiments.plugins.fill_account" "Assets:Cash"
 
         2001-01-01 open Assets:Cash
         2001-01-01 open Liabilities:CreditCard

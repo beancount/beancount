@@ -14,7 +14,7 @@ class TestMarkUnverified(cmptest.TestCase):
     @loader.load_doc()
     def test_mark_unverified(self, entries, errors, options_map):
         """
-        plugin "beancount.plugins.mark_unverified"
+        plugin "experiments.plugins.mark_unverified"
 
         2016-01-01 open Assets:Account1
         2016-01-01 open Assets:Account2
