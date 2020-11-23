@@ -471,12 +471,6 @@ txn_strings:
       BUILDY(DECREF($1, $2),
              $$, "handle_list", "OO", $1, $2);
     }
-  | txn_strings PIPE
-    {
-      BUILDY(,
-             $$, "pipe_deprecated_error", "");
-      $$ = $1;
-    }
 
 tags_links:
   %empty
