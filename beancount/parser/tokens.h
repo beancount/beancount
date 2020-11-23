@@ -18,7 +18,7 @@
  * functions are handled and reported as lexing errors. Return @name
  * or %YYerror in case an exception has been raised and handled.
  */
-#define token(name, ...)                                                \
+#define TOKEN(name, ...)                                                \
     (                                                                   \
         yylval->pyobj = EXPAND(build_##name(__VA_ARGS__)),              \
         yylval->pyobj ? name : build_EXCEPTION(yylloc, builder)         \

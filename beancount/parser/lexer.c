@@ -1688,21 +1688,21 @@ case 42:
 YY_RULE_SETUP
 #line 200 "beancount/parser/lexer.l"
 {
-    return token(BOOL, true);
+    return TOKEN(BOOL, true);
 }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
 #line 204 "beancount/parser/lexer.l"
 {
-    return token(BOOL, false);
+    return TOKEN(BOOL, false);
 }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
 #line 208 "beancount/parser/lexer.l"
 {
-    return token(NONE);
+    return TOKEN(NONE);
 }
 	YY_BREAK
 /* Dates. */
@@ -1710,7 +1710,7 @@ case 45:
 YY_RULE_SETUP
 #line 213 "beancount/parser/lexer.l"
 {
-    return token(DATE, yytext);
+    return TOKEN(DATE, yytext);
 }
 	YY_BREAK
 /* Account names. */
@@ -1718,7 +1718,7 @@ case 46:
 YY_RULE_SETUP
 #line 218 "beancount/parser/lexer.l"
 {
-    return token(ACCOUNT, yytext);
+    return TOKEN(ACCOUNT, yytext);
 }
 	YY_BREAK
 /* Currencies. These are defined as uppercase only in order to
@@ -1728,7 +1728,7 @@ case 47:
 YY_RULE_SETUP
 #line 225 "beancount/parser/lexer.l"
 {
-    return token(CURRENCY, yytext, yyleng);
+    return TOKEN(CURRENCY, yytext, yyleng);
 }
 	YY_BREAK
 /* String literals. */
@@ -1737,7 +1737,7 @@ case 48:
 YY_RULE_SETUP
 #line 230 "beancount/parser/lexer.l"
 {
-    return token(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
+    return TOKEN(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
 }
 	YY_BREAK
 /* Numbers. */
@@ -1745,7 +1745,7 @@ case 49:
 YY_RULE_SETUP
 #line 235 "beancount/parser/lexer.l"
 {
-    return token(NUMBER, yytext);
+    return TOKEN(NUMBER, yytext);
 }
 	YY_BREAK
 /* Tags. */
@@ -1753,7 +1753,7 @@ case 50:
 YY_RULE_SETUP
 #line 240 "beancount/parser/lexer.l"
 {
-    return token(TAG, yytext + 1, yyleng - 1);
+    return TOKEN(TAG, yytext + 1, yyleng - 1);
 }
 	YY_BREAK
 /* Links. */
@@ -1761,7 +1761,7 @@ case 51:
 YY_RULE_SETUP
 #line 245 "beancount/parser/lexer.l"
 {
-    return token(LINK, yytext + 1, yyleng - 1);
+    return TOKEN(LINK, yytext + 1, yyleng - 1);
 }
 	YY_BREAK
 /* Keys. */
@@ -1772,7 +1772,7 @@ YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 250 "beancount/parser/lexer.l"
 {
-    return token(KEY, yytext, yyleng);
+    return TOKEN(KEY, yytext, yyleng);
 }
 	YY_BREAK
 /* Lines starting with an asterisk, a colon, an hash, or a character

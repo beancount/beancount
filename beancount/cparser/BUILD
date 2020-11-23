@@ -27,7 +27,6 @@ genyacc(
     source_out = "parser.cc",
 )
 
-
 cc_library(
     name = "parser_headers",
     hdrs = [

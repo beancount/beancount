@@ -197,57 +197,57 @@ plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
 TRUE {
-    return token(BOOL, true);
+    return TOKEN(BOOL, true);
 }
 
 FALSE {
-    return token(BOOL, false);
+    return TOKEN(BOOL, false);
 }
 
 NULL {
-    return token(NONE);
+    return TOKEN(NONE);
 }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
-    return token(DATE, yytext);
+    return TOKEN(DATE, yytext);
 }
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
-    return token(ACCOUNT, yytext);
+    return TOKEN(ACCOUNT, yytext);
 }
 
  /* Currencies. These are defined as uppercase only in order to
   * disambiguate the syntax. This is to be kept in sync with
   * beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
-    return token(CURRENCY, yytext, yyleng);
+    return TOKEN(CURRENCY, yytext, yyleng);
 }
 
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
-    return token(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
+    return TOKEN(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
 }
 
  /* Numbers. */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? {
-    return token(NUMBER, yytext);
+    return TOKEN(NUMBER, yytext);
 }
 
  /* Tags. */
 #[A-Za-z0-9\-_/.]+ {
-    return token(TAG, yytext + 1, yyleng - 1);
+    return TOKEN(TAG, yytext + 1, yyleng - 1);
 }
 
  /* Links. */
 \^[A-Za-z0-9\-_/.]+ {
-    return token(LINK, yytext + 1, yyleng - 1);
+    return TOKEN(LINK, yytext + 1, yyleng - 1);
 }
 
  /* Keys. */
 [a-z][a-zA-Z0-9\-_]+/: {
-    return token(KEY, yytext, yyleng);
+    return TOKEN(KEY, yytext, yyleng);
 }
 
  /* Lines starting with an asterisk, a colon, an hash, or a character
