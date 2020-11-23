@@ -8,14 +8,6 @@ filegroup(
 )
 
 filegroup(
-    name = "sharing",
-    srcs = [
-        "sharing/cozumel2015.beancount",
-        "sharing/duxbury2015.beancount",
-    ],
-)
-
-filegroup(
     name = "simple",
     srcs = [
         "simple/basic.beancount",

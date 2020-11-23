@@ -12,6 +12,7 @@ package(default_visibility = [
     "//beancount/scripts:__pkg__",
     "//examples:__subpackages__",
     "//experiments/plugins:__pkg__",
+    "//experiments/sharing:__pkg__",
 ])
 
 py_library(

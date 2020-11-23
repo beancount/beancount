@@ -7,8 +7,8 @@ from os import path
 
 from beancount import loader
 from beancount.parser import cmptest
-from beancount.plugins import split_expenses
 from beancount.utils import test_utils
+from experiments.sharing import split_expenses
 
 
 class TestSplitExpenses(cmptest.TestCase):
@@ -16,7 +16,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_simple(self, entries, errors, __):
         """
-            plugin "beancount.plugins.split_expenses" "Martin Caroline"
+            plugin "experiments.sharing.split_expenses" "Martin Caroline"
 
             2011-05-17 * "Something"
               Expenses:Restaurant   2.00 USD
@@ -38,7 +38,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_unaffected(self, entries, errors, __):
         """
-            plugin "beancount.plugins.split_expenses" "Martin Caroline"
+            plugin "experiments.sharing.split_expenses" "Martin Caroline"
 
             2011-05-17 * "Something"
               Expenses:Restaurant:Martin   2.00 USD
@@ -52,7 +52,7 @@ class TestSplitExpenses(cmptest.TestCase):
     def test_work_with_auto_accounts(self, entries, errors, __):
         """
             plugin "beancount.plugins.auto_accounts"
-            plugin "beancount.plugins.split_expenses" "Martin Caroline"
+            plugin "experiments.sharing.split_expenses" "Martin Caroline"
 
             2011-05-17 * "Something"
               Expenses:Restaurant:Martin   2.00 USD
@@ -67,7 +67,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_with_one_member_only(self, entries, errors, __):
         """
-            plugin "beancount.plugins.split_expenses" "Martin"
+            plugin "experiments.sharing.split_expenses" "Martin"
 
             2011-05-17 * "Something"
               Expenses:Restaurant          2.00 USD
@@ -84,7 +84,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.load_doc()
     def test_other_directives_copied(self, entries, errors, __):
         """
-            plugin "beancount.plugins.split_expenses" "Martin Caroline"
+            plugin "experiments.sharing.split_expenses" "Martin Caroline"
 
             2011-01-01 open Expenses:Restaurant  USD
             2011-01-01 open Assets:Cash
@@ -107,7 +107,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.load_doc()
     def test_tolerances__ignore_from_auto_postings(self, entries, errors, options_map):
         """
-        plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
+        plugin "experiments.sharing.split_expenses" "Martin Caroline Sheila"
 
         option "inferred_tolerance_default" "USD:0.005"
 
@@ -135,7 +135,7 @@ class TestSplitReports(unittest.TestCase):
           args: A list of extra arguments (beyond the filename).
         """
         rootdir = test_utils.find_repository_root(__file__)
-        filename = path.join(rootdir, 'examples', 'sharing', 'duxbury2015.beancount')
+        filename = path.join(rootdir, 'experiments', 'sharing', 'duxbury2015.beancount')
         with test_utils.capture() as stdout:
             test_utils.run_with_args(split_expenses.main, args + [filename])
         output = stdout.getvalue()

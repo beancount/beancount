@@ -220,7 +220,7 @@ def get_participants(filename, options_map):
     """
     plugin_options = dict(options_map["plugin"])
     try:
-        return plugin_options["beancount.plugins.split_expenses"].split()
+        return plugin_options["experiments.sharing.split_expenses"].split()
     except KeyError as exc:
         raise KeyError("Could not find the split_expenses plugin configuration.") from exc
 

@@ -181,7 +181,6 @@ py_test(
         "//beancount:loader",
         "//beancount/query:query",
         "//beancount/utils:test_utils",
-        "//beancount/plugins:split_expenses",
         "//beancount/plugins:auto_accounts",
         "//beancount:plugins_for_tests",
     ],
