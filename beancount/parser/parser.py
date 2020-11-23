@@ -188,16 +188,21 @@ def parse_file(file, report_filename=None, report_firstline=1, **kw):
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
+    close_file = None
     if file == '-':
-        file = sys.stdin.buffer
+        close_file = file = sys.stdin.buffer
     # It would be more appropriate here to check for io.RawIOBase but
     # that does not work for io.BytesIO despite it implementing the
     # readinto() method.
     elif not isinstance(file, io.IOBase):
-        file = open(file, 'rb')
+        close_file = file = open(file, 'rb')
+
     builder = grammar.Builder()
     parser = _parser.Parser(builder)
     parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
+
+    if close_file:
+        close_file.close()
     return builder.finalize()
 
 
