@@ -195,23 +195,47 @@ def _book(entries, options_map, methods):
 
                 if interpolation_errors:
                     errors.extend(interpolation_errors)
+
+                # Update the running balances for each account using the
+                # booked and interpolated values. Note that we could optimize away
+                # some of this in book_reductions() but we choose not to do so, as a
+                # sanity check that the direct aggregation of the final booked lots
+                # will compute the same result as that during the book_reductions()
+                # process.
+                for posting in inter_postings:
+                    balance = balances[posting.account]
+                    balance.add_position(posting)
+
+                # If lot merging was requested, resolve it after interpolation.
+                # This allows interpolation to resolve an unspecified cost before
+                # it gets merged together into a merged inventory.
+                cost_merging_postings = []
+                for i, inter_posting in enumerate(inter_postings):
+                    # Interpolated postings are always Cost instead of CostSpec,
+                    # so we need to look back at the pre-interpolated postings
+                    # to check the merge flag.
+                    posting_cost = booked_postings[i].cost
+                    if posting_cost is None:
+                        continue
+                    if (isinstance(posting_cost, CostSpec) and posting_cost.merge) \
+                            or methods[inter_posting.account] is Booking.AVERAGE:
+                        cost_merging_postings.extend(
+                            booking_method.rebook_inventory_at_average_cost(
+                                balances[inter_posting.account],
+                                inter_posting.account,
+                                inter_posting.units.currency,
+                                inter_posting.cost.currency,
+                            )
+                        )
+
                 repl_postings.extend(inter_postings)
+                repl_postings.extend(cost_merging_postings)
 
             # Replace postings by interpolated ones.
             meta = entry.meta.copy()
             meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
             entry = entry._replace(postings=repl_postings,
                                    meta=meta)
-
-            # Update the running balances for each account using the final,
-            # booked and interpolated values. Note that we could optimize away
-            # some of this in book_reductions() but we choose not to do so, as a
-            # sanity check that the direct aggregation of the final booked lots
-            # will compute the same result as that during the book_reductions()
-            # process.
-            for posting in repl_postings:
-                balance = balances[posting.account]
-                balance.add_position(posting)
 
         new_entries.append(entry)
 
@@ -570,6 +594,16 @@ def book_reductions(entry, group_postings, balances,
                 balance.is_reduced_by(units)):
                 # This posting is a reduction.
 
+                # If {*} if specified for this posting, re-book inventory at
+                # average cost before matching lots, so the match is more
+                # likely unambiguous.
+                if costspec.merge:
+                    booked_postings.extend(
+                        booking_method.rebook_inventory_at_average_cost(
+                            balance, account, units.currency, costspec.currency
+                        )
+                    )
+
                 # Match the positions.
                 cost_number = compute_cost_number(costspec, units)
                 matches = []
@@ -731,7 +765,7 @@ def interpolate_group(postings, balances, currency, tolerances):
       tolerances: A dict of currency to tolerance values.
     Returns:
       A tuple of
-        postings: A lit of new posting instances.
+        postings: A list of new posting instances.
         errors: A list of errors generated during interpolation.
         interpolated: A boolean, true if we did have to interpolate.
 

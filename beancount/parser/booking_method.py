@@ -5,16 +5,14 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from decimal import Decimal
 
+from beancount.core.inventory import Inventory
 from beancount.core.number import ZERO
-from beancount.core.data import Booking
+from beancount.core.data import Booking, Posting
 from beancount.core.amount import Amount
-from beancount.core.position import Cost
 from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
-from beancount.core import convert
 
 
 # An error raised if we failed to reduce the inventory balance unambiguously.
@@ -170,77 +168,82 @@ def booking_method_NONE(entry, posting, matches):
     return [posting], [], False
 
 
+def rebook_inventory_at_average_cost(full_inventory: Inventory,
+                                     account,
+                                     unit_currency,
+                                     cost_currency):
+    """ Returns a set of postings that rebook an inventory at average cost.
+
+    An inventory can be held in multiple cost currencies, so we treat units
+    held in differing cost currencies completely separately.
+
+    Args:
+        full_inventory: The ante-inventory that we want to rebook at average cost.
+          The inventory passed in will be updated.
+        account: The account name this inventory is held for.
+        unit_currency: The unit currency (commodity) that we want to rebook our
+          holdings for.
+        cost_currency: The cost currency to filter the inventory's positions,
+          since we treat units held in differing cost currencies completely
+          indepdendently.
+
+    Returns: a list of postings that will negate the inventory and rebook it
+    as an average position. If the inventory is already a single position for
+    the specified cost_currency, an empty list is returned as no rebooking is
+    necessary.
+    """
+    filtered_inv = inventory.Inventory()
+    for inv_position in full_inventory:
+        if inv_position.units.currency == unit_currency and \
+        inv_position.cost.currency == cost_currency:
+            filtered_inv.add_position(inv_position)
+
+    if len(filtered_inv) <= 1:
+        return []
+
+    booked_postings = []
+    avg_position = filtered_inv.average().get_only_position()
+    # Negate existing inventory.
+    for inv_position in filtered_inv:
+        full_inventory.add_amount(-inv_position.units, inv_position.cost)
+        booked_postings.append(Posting(
+                account=account,
+                units=-inv_position.units,
+                cost=inv_position.cost,
+                price=None,
+                flag=flags.FLAG_MERGING,
+                meta=None,
+            ))
+    # Now rebook at average cost.
+    full_inventory.add_amount(avg_position.units, avg_position.cost)
+    booked_postings.append(
+        Posting(
+            account=account,
+            units=avg_position.units,
+            cost=avg_position.cost,
+            price=None,
+            flag=flags.FLAG_MERGING,
+            meta=None,
+        )
+    )
+    return booked_postings
+
+
+
 def booking_method_AVERAGE(entry, posting, matches):
-    """AVERAGE booking method implementation."""
-    booked_reductions = []
-    booked_matches = []
-    errors = [AmbiguousMatchError(entry.meta, "AVERAGE method is not supported", entry)]
-    return booked_reductions, booked_matches, errors, False
+    """AVERAGE lot selector.
 
-    # FIXME: Future implementation here.
-    # pylint: disable=unreachable
-    if False: # pylint: disable=using-constant-test
-        # DISABLED - This is the code for AVERAGE, which is currently disabled.
+    Rebook at average already happens before these booking methods are called upon
+    to disambiguate multiple potential matching lots. Therefore, matches should always
+    be len 1 and we can simply delegate to STRICT booking.
 
-        # If there is more than a single match we need to ultimately merge the
-        # postings. Also, if the reducing posting provides a specific cost, we
-        # need to update the cost basis as well. Both of these cases are carried
-        # out by removing all the matches and readding them later on.
-        if len(matches) == 1 and (
-                not isinstance(posting.cost.number_per, Decimal) and
-                not isinstance(posting.cost.number_total, Decimal)):
-            # There is no cost. Just reduce the one leg. This should be the
-            # normal case if we always merge augmentations and the user lets
-            # Beancount deal with the cost.
-            match = matches[0]
-            sign = -1 if posting.units.number < ZERO else 1
-            number = min(abs(match.units.number), abs(posting.units.number))
-            match_units = Amount(number * sign, match.units.currency)
-            booked_reductions.append(posting._replace(units=match_units, cost=match.cost))
-            insufficient = (match_units.number != posting.units.number)
-        else:
-            # Merge the matching postings to a single one.
-            merged_units = inventory.Inventory()
-            merged_cost = inventory.Inventory()
-            for match in matches:
-                merged_units.add_amount(match.units)
-                merged_cost.add_amount(convert.get_weight(match))
-            if len(merged_units) != 1 or len(merged_cost) != 1:
-                errors.append(
-                    AmbiguousMatchError(
-                        entry.meta,
-                        'Cannot merge positions in multiple currencies: {}'.format(
-                            ', '.join(position.to_string(match_posting)
-                                      for match_posting in matches)), entry))
-            else:
-                if (isinstance(posting.cost.number_per, Decimal) or
-                    isinstance(posting.cost.number_total, Decimal)):
-                    errors.append(
-                        AmbiguousMatchError(
-                            entry.meta,
-                            "Explicit cost reductions aren't supported yet: {}".format(
-                                position.to_string(posting)), entry))
-                else:
-                    # Insert postings to remove all the matches.
-                    booked_reductions.extend(
-                        posting._replace(units=-match.units, cost=match.cost,
-                                         flag=flags.FLAG_MERGING)
-                        for match in matches)
-                    units = merged_units[0].units
-                    date = matches[0].cost.date  ## FIXME: Select which one,
-                                                 ## oldest or latest.
-                    cost_units = merged_cost[0].units
-                    cost = Cost(cost_units.number/units.number, cost_units.currency,
-                                date, None)
-
-                    # Insert a posting to refill those with a replacement match.
-                    booked_reductions.append(
-                        posting._replace(units=units, cost=cost, flag=flags.FLAG_MERGING))
-
-                    # Now, match the reducing request against this lot.
-                    booked_reductions.append(
-                        posting._replace(units=posting.units, cost=cost))
-                    insufficient = abs(posting.units.number) > abs(units.number)
+    In the future we could allow the AVERAGE booking method to skip lot matching and receive
+    all lots for the matching commodity. That would make our handling of user-specified
+    cost basis more user-friendly: we can see the user's intent to specify the expected
+    average basis in their reduction and throw an error if it isn't close to our computed
+    average. This is similar to what `plugins/check_average_cost.py` does.
+    """
+    return booking_method_STRICT(entry, posting, matches)
 
 
 _BOOKING_METHODS = {

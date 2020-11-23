@@ -493,9 +493,6 @@ class Builder(lexer.LexBuilder):
             elif comp is MERGE_COST:
                 if merge is None:
                     merge = True
-                    self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Cost merging is not supported yet", None))
                 else:
                     self.errors.append(
                         ParserError(new_metadata(filename, lineno),
