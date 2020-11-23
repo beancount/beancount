@@ -51,6 +51,7 @@ cc_library(
     # Generated and real files are interdependent.
     tags = ["nofixdeps"],
     deps = [
+        "//beancount/parser:tokens_c",
         "//third_party/parser:reflex",
         # ":data_cc_pb2",
         # ":data",

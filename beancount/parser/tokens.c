@@ -8,8 +8,7 @@
 #define LONG_STRING_LINES_MAX 64
 
 
-ssize_t validate_decimal_number(const char* str, char* buffer, size_t len)
-{
+ssize_t validate_decimal_number(const char* str, char* buffer, size_t len) {
     size_t n, digits = 0;
     bool comma = false;
     bool dot = false;
@@ -69,8 +68,7 @@ PyObject* pydecimal_from_cstring(const char* str)
     return PyDec_FromCString(buffer, len);
 }
 
-ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* lines)
-{
+ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* lines) {
     const char* src;
     char* buffer;
     char* dst;
@@ -138,8 +136,7 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
     return dst - buffer;
 }
 
-PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* encoding)
-{
+PyObject* pyunicode_from_cquotedstring(const char* string, size_t len, const char* encoding) {
     char* unescaped = NULL;
     ssize_t r;
     int lines;
@@ -172,8 +169,7 @@ PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* enc
  * assumed to be a valid representation of an integer number. No input
  * validation or error checking is performed.
  */
-int strtonl(const char* string, size_t len)
-{
+int strtonl(const char* string, size_t len) {
     int result = 0;
     for (size_t i = 0; i < len; ++i) {
         result *= 10;
@@ -182,8 +178,7 @@ int strtonl(const char* string, size_t len)
     return result;
 }
 
-PyObject* pydate_from_cstring(const char* string)
-{
+PyObject* pydate_from_cstring(const char* string) {
     int year, month, day;
     size_t n;
 
