@@ -41,13 +41,6 @@ from beancount.parser import options
 from beancount import loader
 
 
-def validate_entries(entries: data.Entries):
-    """Check for problematic entries resulting from some plugins."""
-    for entry in data.filter_txns(entries):
-        if entry.flag == flags.FLAG_UNREALIZED:
-            raise ValueError("Unrealized entries will fail with this plugin.")
-
-
 Header = List[str]
 Rows = List[List[Any]]
 Table = NamedTuple('Table', [('header', Header), ('rows', Rows)])
@@ -278,7 +271,6 @@ def main():
 
     # Load the file contents.
     entries, errors, options_map = loader.load_file(args.filename)
-    validate_entries(entries)
 
     # Initialize main output currency.
     main_currency = args.currency or options_map['operating_currency'][0]

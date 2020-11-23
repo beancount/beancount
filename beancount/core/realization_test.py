@@ -679,7 +679,7 @@ class TestFindLastActive(unittest.TestCase):
           Assets:Target            123.45 CAD
           Equity:Other
 
-        2014-03-01 U "This should get ignored because of the unrealized flag."
+        2014-03-01 * ""
           Assets:Target            -23.45 CAD
           Equity:Other
 
@@ -690,7 +690,7 @@ class TestFindLastActive(unittest.TestCase):
         real_account = realization.realize(entries)
         txn_postings = realization.get(real_account, 'Assets:Target').txn_postings
         txn_posting = realization.find_last_active_posting(txn_postings)
-        self.assertEqual(datetime.date(2014, 2, 1), txn_posting.txn.date)
+        self.assertEqual(datetime.date(2014, 3, 1), txn_posting.txn.date)
 
 
 class TestComputeBalance(unittest.TestCase):

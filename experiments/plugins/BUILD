@@ -16,6 +16,7 @@ py_library(
         ":mark_unverified",
         ":merge_meta",
         ":tag_pending",
+        ":unrealized",
     ],
 )
 
@@ -241,6 +242,36 @@ py_test(
         "//beancount/core:data",
         "//beancount:loader",
         "//beancount/utils:test_utils",
+        "//beancount:plugins_for_tests",
+    ],
+)
+
+py_library(
+    name = "unrealized",
+    srcs = ["unrealized.py"],
+    deps = [
+        "//beancount/core:account",
+        "//beancount/core:amount",
+        "//beancount/core:data",
+        "//beancount/core:flags",
+        "//beancount/core:getters",
+        "//beancount/core:number",
+        "//beancount/core:prices",
+        "//beancount/ops:holdings",
+        "//beancount/parser:options",
+    ],
+)
+
+py_test(
+    name = "unrealized_test",
+    srcs = ["unrealized_test.py"],
+    deps = [
+        ":unrealized",
+        "//beancount/core:data",
+        "//beancount/core:number",
+        "//beancount:loader",
+        "//beancount/ops:validation",
+        "//beancount/parser:options",
         "//beancount:plugins_for_tests",
     ],
 )

@@ -71,16 +71,6 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     Returns:
       A list of dicts, with the following fields:
     """
-    # Remove the entries inserted by unrealized gains/losses. Those entries do
-    # affect asset accounts, and we don't want them to appear in holdings.
-    #
-    # Note: Perhaps it would make sense to generalize this concept of "inserted
-    # unrealized gains."
-    simple_entries = [entry
-                      for entry in entries
-                      if (not isinstance(entry, data.Transaction) or
-                          entry.flag != flags.FLAG_UNREALIZED)]
-
     # Realize the accounts into a tree (because we want the positions by-account).
     root_account = realization.realize(simple_entries)
 

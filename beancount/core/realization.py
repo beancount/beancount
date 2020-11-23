@@ -497,12 +497,7 @@ def find_last_active_posting(txn_postings):
     """
     for txn_posting in reversed(txn_postings):
         assert not isinstance(txn_posting, Posting)
-
         if not isinstance(txn_posting, (TxnPosting, Open, Close, Pad, Balance, Note)):
-            continue
-
-        if (isinstance(txn_posting, TxnPosting) and
-            txn_posting.txn.flag == flags.FLAG_UNREALIZED):
             continue
         return txn_posting
 

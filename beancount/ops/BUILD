@@ -119,7 +119,7 @@ py_test(
         ":holdings",
         "//beancount:loader",
         "//beancount:plugins_for_tests",
-        "//beancount/plugins:unrealized",
+        "//experiments/plugins:unrealized",
     ],
 )
 
