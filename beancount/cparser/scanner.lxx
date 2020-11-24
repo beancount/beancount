@@ -144,18 +144,15 @@ plugin		{ return Parser::make_PLUGIN(location()); }
 include		{ return Parser::make_INCLUDE(location()); }
 
 TRUE {
-  Py_INCREF(Py_True);
-  return Parser::make_BOOL(Py_True, location());
+  return Parser::make_BOOL(true, location());
 }
 
 FALSE {
-  Py_INCREF(Py_False);
-  return Parser::make_BOOL(Py_False, location());
+  return Parser::make_BOOL(false, location());
 }
 
 NULL {
-  Py_INCREF(Py_None);
-  return Parser::make_NONE(Py_None, location());
+  return Parser::make_NONE(location());
 }
 
  /* Dates. */

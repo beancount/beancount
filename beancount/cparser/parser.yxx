@@ -336,8 +336,8 @@ private:
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
-%token <PyObject*> NONE        /* A None value (parsed as NULL) */
-%token <PyObject*> BOOL        /* A boolean, true or false */
+%token NONE        /* A None value (parsed as NULL) */
+%token <bool> BOOL        /* A boolean, true or false */
 %token <absl::CivilDay> DATE        /* A date object */
 %token <std::string_view> ACCOUNT     /* The name of an account */
 %token <std::string_view> CURRENCY    /* A currency specification */
@@ -605,7 +605,17 @@ key_value_value:
       $$ = StringToPyString($1);
     }
   | BOOL
+    {
+      PyObject* value = ($1) ? Py_True : Py_False;
+      Py_INCREF(value);
+      $$ = value;
+    }
+
   | NONE
+    {
+      Py_INCREF(Py_None);
+      $$ = Py_None;
+    }
   | number_expr
     {
       $$ = DecimalToPyDecimal($1);
@@ -967,8 +977,10 @@ custom_value:
     }
   | BOOL
     {
-      BUILDY(DECREF($1),
-             $$, "custom_value", "OO", $1, Py_None);
+      PyObject* s1 = ($1) ? Py_True : Py_False;
+      Py_INCREF(s1);
+      BUILDY(DECREF(s1),
+             $$, "custom_value", "OO", s1, Py_None);
     }
   | amount
     {
