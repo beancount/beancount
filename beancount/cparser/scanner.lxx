@@ -178,10 +178,8 @@ NULL {
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
   // TODO(blais): Add state to the scanner for specific encoding.
-  static const char* encoding = "UTF-8";
-    return Parser::make_STRING(
-      build_STRING(matcher().begin()+1, matcher().size()-2, encoding),
-      location());
+  string_view view(matcher().begin()+1, matcher().size()-2);
+  return Parser::make_STRING(view, location());
 }
 
  /* Numbers. */
