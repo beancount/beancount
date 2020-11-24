@@ -171,8 +171,7 @@ NULL {
   * disambiguate the syntax. This is to be kept in sync with
   * beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
-  return Parser::make_CURRENCY(build_CURRENCY(matcher().begin(), matcher().size()),
-                               location());
+  return Parser::make_CURRENCY(view(matcher()), location());
 }
 
  /* String literals. */
