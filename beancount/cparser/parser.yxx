@@ -344,7 +344,7 @@ private:
 /* Types for non-terminal symbols. */
 %type <char> txn
 %type <char> optflag
-%type <PyObject*> account
+%type <std::string_view> account
 %type <PyObject*> transaction
 %type <PyObject*> posting
 %type <PyObject*> key_value
@@ -545,30 +545,33 @@ price_annotation:
 account:
   ACCOUNT
     {
-      string_view account = builder.Account(location(), $1);
-      $$ = PyUnicode_FromStringAndSize(account.data(), account.size());
+      $$ = builder.Account(location(), $1);
     }
 
 posting:
   INDENT optflag account incomplete_amount cost_spec eol
     {
-      BUILDY(DECREF($3, $4, $5),
-             $$, "posting", "OOOOOb", $3, $4, $5, Py_None, Py_False, $2);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s3, $4, $5),
+             $$, "posting", "OOOOOb", s3, $4, $5, Py_None, Py_False, $2);
     }
   | INDENT optflag account incomplete_amount cost_spec AT price_annotation eol
     {
-      BUILDY(DECREF($3, $4, $5, $7),
-             $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_False, $2);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s3, $4, $5, $7),
+             $$, "posting", "OOOOOb", s3, $4, $5, $7, Py_False, $2);
     }
   | INDENT optflag account incomplete_amount cost_spec ATAT price_annotation eol
     {
-      BUILDY(DECREF($3, $4, $5, $7),
-             $$, "posting", "OOOOOb", $3, $4, $5, $7, Py_True, $2);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s3, $4, $5, $7),
+             $$, "posting", "OOOOOb", s3, $4, $5, $7, Py_True, $2);
     }
   | INDENT optflag account eol
     {
-      BUILDY(DECREF($3),
-             $$, "posting", "OOOOOb", $3, MISSING_OBJ, Py_None, Py_None, Py_False, $2);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s3),
+             $$, "posting", "OOOOOb", s3, MISSING_OBJ, Py_None, Py_None, Py_False, $2);
     }
 
 key_value:
@@ -591,6 +594,9 @@ key_value_value:
       $$ = STRING_TO_PYSTRING($1);
     }
   | account
+    {
+      $$ = STRING_TO_PYSTRING($1);
+    }
   | DATE
     {
       $$ = DATE_TO_PYDATE($1);
@@ -712,8 +718,9 @@ open:
   DATE OPEN account currency_list opt_booking eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
-      BUILDY(DECREF(s1, $3, $4, $5, $7),
-               $$, "open", "OOOOO", s1, $3, $4, $5, $7);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s1, s3, $4, $5, $7),
+               $$, "open", "OOOOO", s1, s3, $4, $5, $7);
     }
 
 opt_booking:
@@ -731,8 +738,9 @@ close:
   DATE CLOSE account eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
-      BUILDY(DECREF(s1, $3, $5),
-             $$, "close", "OOO", s1, $3, $5);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s1, s3, $5),
+             $$, "close", "OOO", s1, s3, $5);
     }
 
 commodity:
@@ -748,16 +756,19 @@ pad:
   DATE PAD account account eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
-      BUILDY(DECREF(s1, $3, $4, $6),
-             $$, "pad", "OOOO", s1, $3, $4, $6);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      PyObject* s4 = STRING_TO_PYSTRING($4);
+      BUILDY(DECREF(s1, s3, s4, $6),
+             $$, "pad", "OOOO", s1, s3, s4, $6);
     }
 
 balance:
   DATE BALANCE account amount_tolerance eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
-      BUILDY(DECREF(s1, $3, $6, ($4).first, ($4).second),
-             $$, "balance", "OOOOO", s1, $3, ($4).first, ($4).second, $6);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s1, s3, $6, ($4).first, ($4).second),
+             $$, "balance", "OOOOO", s1, s3, ($4).first, ($4).second, $6);
     }
 
 amount:
@@ -913,9 +924,10 @@ note:
   DATE NOTE account STRING eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
       PyObject* s4 = STRING_TO_PYSTRING($4);
-      BUILDY(DECREF(s1, $3, s4, $6),
-             $$, "note", "OOOO", s1, $3, s4, $6);
+      BUILDY(DECREF(s1, s3, s4, $6),
+             $$, "note", "OOOO", s1, s3, s4, $6);
     }
 
 filename:
@@ -928,8 +940,9 @@ document:
   DATE DOCUMENT account filename tags_links eol key_value_list
     {
       PyObject* s1 = DATE_TO_PYDATE($1);
-      BUILDY(DECREF(s1, $3, $4, $5, $7),
-             $$, "document", "OOOOO", s1, $3, $4, $5, $7);
+      PyObject* s3 = STRING_TO_PYSTRING($3);
+      BUILDY(DECREF(s1, s3, $4, $5, $7),
+             $$, "document", "OOOOO", s1, s3, $4, $5, $7);
     }
 
 custom_value:
@@ -962,12 +975,13 @@ custom_value:
     }
   | account
     {
+      PyObject* s1 = STRING_TO_PYSTRING($1);
       /* Obtain beancount.core.account.TYPE */
       PyObject* module = PyImport_ImportModule("beancount.core.account");
       PyObject* dtype = PyObject_GetAttrString(module, "TYPE");
       Py_DECREF(module);
-      BUILDY(DECREF($1, dtype),
-             $$, "custom_value", "OO", $1, dtype);
+      BUILDY(DECREF(s1, dtype),
+             $$, "custom_value", "OO", s1, dtype);
     }
 
 custom_value_list:
