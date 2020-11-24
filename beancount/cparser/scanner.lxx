@@ -205,8 +205,7 @@ NULL {
 
  /* Keys. */
 [a-z][a-zA-Z0-9\-_]+/: {
-  return Parser::make_KEY(build_KEY(matcher().begin(), matcher().size()),
-                          location());
+  return Parser::make_KEY(view(matcher()), location());
 }
 
  /* Lines starting with an asterisk, a colon, an hash, or a character

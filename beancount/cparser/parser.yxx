@@ -339,7 +339,7 @@ private:
 %token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <std::string_view> TAG         /* A tag that can be associated with a transaction */
 %token <std::string_view> LINK        /* A link that can be associated with a transaction */
-%token <PyObject*> KEY         /* A key in a key-value pair */
+%token <std::string_view> KEY         /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <char> txn
@@ -574,8 +574,9 @@ posting:
 key_value:
   KEY COLON key_value_value
     {
-      BUILDY(DECREF($1, $3),
-             $$, "key_value", "OO", $1, $3);
+      PyObject* s1 = STRING_TO_PYSTRING($1);
+      BUILDY(DECREF(s1, $3),
+             $$, "key_value", "OO", s1, $3);
     }
 
 key_value_line:
@@ -702,8 +703,9 @@ pushmeta:
 popmeta:
   POPMETA KEY COLON eol
     {
-      BUILDY(DECREF($2),
-             $$, "popmeta", "O", $2);
+      PyObject* s2 = STRING_TO_PYSTRING($2);
+      BUILDY(DECREF(s2),
+             $$, "popmeta", "O", s2);
     }
 
 open:
