@@ -130,6 +130,12 @@ static const char* kEncoding = "UTF-8";
 #define DATE_TO_PYDATE(d)                                  \
   pydate_from_civil_day(d.year(), d.month(), d.day());
 
+// Convert a decimal::Decimal to a PyDecimal.
+#define DECIMAL_TO_PYDECIMAL(d)                                  \
+  pydecimal_from_cstring(d.to_sci().c_str());
+
+
+
 
 /*
  * Call a builder method and detect and handle a Python exception being raised
@@ -379,8 +385,7 @@ private:
 %type <PyObject*> tags_links
 %type <PyObject*> filename
 %type <PyObject*> opt_booking
-%type <decimal::Decimal> dec_number_expr
-%type <PyObject*> number_expr
+%type <decimal::Decimal> number_expr
 %type <PyObject*> option
 %type <PyObject*> pushtag
 %type <PyObject*> poptag
@@ -438,45 +443,35 @@ eol: EOL | YYEOF
    I just need this right now, so I'm putting it in, in a way that will.
    be backwards compatible, so this is just a bit of a temporary hack
    (blais, 2015-04-18). */
-// TODO(blais): Change 'dec_number_expr' back to 'number_expr' once Decimal is everywhere.
-dec_number_expr:
+number_expr:
   NUMBER
-  | dec_number_expr PLUS dec_number_expr
+  | number_expr PLUS number_expr
     {
       $$ = $1.add($3);
     }
-  | dec_number_expr MINUS dec_number_expr
+  | number_expr MINUS number_expr
     {
       $$ = $1.sub($3);
     }
-  | dec_number_expr ASTERISK dec_number_expr
+  | number_expr ASTERISK number_expr
     {
       $$ = $1.mul($3);
     }
-  | dec_number_expr SLASH dec_number_expr
+  | number_expr SLASH number_expr
     {
       $$ = $1.div($3);
     }
-  | MINUS dec_number_expr %prec NEGATIVE
+  | MINUS number_expr %prec NEGATIVE
     {
       $$ = $2.minus();
     }
-  | PLUS dec_number_expr %prec NEGATIVE
+  | PLUS number_expr %prec NEGATIVE
     {
       $$ = $2.plus(); // Note: Not entirely sure we shouldn't just copy.
     }
-  | LPAREN dec_number_expr RPAREN
+  | LPAREN number_expr RPAREN
     {
       $$ = $2;
-    }
-
-// Simply translate the Decimal to a Python decimal here temporarily for now.
-number_expr:
-  dec_number_expr
-    {
-      // TODO(blais): This will go away; you could convert directly to PyDecimal
-      // instead of going through strings.
-      $$ = pydecimal_from_cstring($1.to_sci().c_str());
     }
 
 txn_strings:
@@ -612,6 +607,10 @@ key_value_value:
   | BOOL
   | NONE
   | number_expr
+    {
+      $$ = DECIMAL_TO_PYDECIMAL($1);
+    }
+
   | amount
   | %empty
     {
@@ -774,30 +773,37 @@ balance:
 amount:
   number_expr CURRENCY
     {
+      PyObject* s1 = DECIMAL_TO_PYDECIMAL($1);
       PyObject* s2 = STRING_TO_PYSTRING($2);
-      BUILDY(DECREF($1, s2),
-             $$, "amount", "OO", $1, s2);
+      BUILDY(DECREF(s1, s2),
+             $$, "amount", "OO", s1, s2);
     }
 
 amount_tolerance:
   number_expr CURRENCY
     {
+      PyObject* s1 = DECIMAL_TO_PYDECIMAL($1);
       PyObject* s2 = STRING_TO_PYSTRING($2);
-      BUILDY(DECREF($1, s2),
-             ($$).first, "amount", "OO", $1, s2);
+      BUILDY(DECREF(s1, s2),
+             ($$).first, "amount", "OO", s1, s2);
       ($$).second = Py_None;
       Py_INCREF(Py_None);
     }
   | number_expr TILDE number_expr CURRENCY
     {
+      PyObject* s1 = DECIMAL_TO_PYDECIMAL($1);
+      PyObject* s3 = DECIMAL_TO_PYDECIMAL($3);
       PyObject* s4 = STRING_TO_PYSTRING($4);
-      BUILDY(DECREF($1, s4),
-             ($$).first, "amount", "OO", $1, s4);
-      ($$).second = $3;
+      BUILDY(DECREF(s1, s4),
+             ($$).first, "amount", "OO", s1, s4);
+      ($$).second = s3;
     }
 
 maybe_number:
   number_expr
+    {
+      $$ = DECIMAL_TO_PYDECIMAL($1);
+    }
   | %empty
     {
       Py_INCREF(MISSING_OBJ);
@@ -824,8 +830,9 @@ compound_amount:
     }
   | number_expr maybe_currency
     {
-      BUILDY(DECREF($1, $2),
-             $$, "compound_amount", "OOO", $1, Py_None, $2);
+      PyObject* s1 = DECIMAL_TO_PYDECIMAL($1);
+      BUILDY(DECREF(s1, $2),
+             $$, "compound_amount", "OOO", s1, Py_None, $2);
     }
   | maybe_number HASH maybe_number CURRENCY
     {
@@ -970,8 +977,9 @@ custom_value:
     }
   | number_expr
     {
-      BUILDY(DECREF($1),
-             $$, "custom_value", "OO", $1, Py_None);
+      PyObject* s1 = DECIMAL_TO_PYDECIMAL($1);
+      BUILDY(DECREF(s1),
+             $$, "custom_value", "OO", s1, Py_None);
     }
   | account
     {
