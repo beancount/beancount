@@ -14,6 +14,7 @@
 
 #include "reflex/matcher.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/civil_time.h"
 
 namespace beancount {
 
@@ -159,7 +160,10 @@ NULL {
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
-  return Parser::make_DATE(build_DATE(text()), location());
+  int year, month, day;
+  parse_date_from_string(text(), &year, &month, &day);
+  absl::CivilDay date(year, month, day);
+  return Parser::make_DATE(date, location());
 }
 
  /* Account names. */

@@ -178,23 +178,30 @@ int strtonl(const char* string, size_t len) {
     return result;
 }
 
-PyObject* pydate_from_cstring(const char* string) {
-    int year, month, day;
+void parse_date_from_string(const char* string, int* year, int* month, int* day) {
     size_t n;
 
     n = strspn(string, DIGITS);
-    year = strtonl(string, n);
+    *year = strtonl(string, n);
     string += n + 1;
 
     n = strspn(string, DIGITS);
-    month = strtonl(string, n);
+    *month = strtonl(string, n);
     string += n + 1;
 
     n = strspn(string, DIGITS);
-    day = strtonl(string, n);
+    *day = strtonl(string, n);
+}
 
+PyObject* pydate_from_civil_day(int year, int month, int day) {
     assert(PyDateTimeAPI != 0);
     return PyDate_FromDate(year, month, day);
+}
+
+PyObject* pydate_from_cstring(const char* string) {
+    int year, month, day;
+    parse_date_from_string(string, &year, &month, &day);
+    return pydate_from_civil_day(year, month, day);
 }
 
 void initialize_datetime() {

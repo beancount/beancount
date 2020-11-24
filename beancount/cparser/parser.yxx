@@ -44,6 +44,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "absl/time/civil_time.h"
 
 #include "decimal.hh"
 
@@ -121,8 +122,13 @@ namespace parser {
 // TODO(blais): Revise this later, maybe make it part of the state of the builder.
 static const char* kEncoding = "UTF-8";
 
+// Convert string_view to Python string object.
 #define STRING_TO_PYSTRING(s)                                  \
   PyUnicode_Decode(s.data(), s.size(), kEncoding, "ignore")
+
+// Convert absl::CivilTime to Python date object.
+#define DATE_TO_PYDATE(d)                                  \
+  pydate_from_civil_day(d.year(), d.month(), d.day());
 
 
 /*
@@ -326,7 +332,7 @@ private:
 %token PLUGIN              /* 'plugin' keyword */
 %token <PyObject*> NONE        /* A None value (parsed as NULL) */
 %token <PyObject*> BOOL        /* A boolean, true or false */
-%token <PyObject*> DATE        /* A date object */
+%token <absl::CivilDay> DATE        /* A date object */
 %token <std::string_view> ACCOUNT     /* The name of an account */
 %token <std::string_view> CURRENCY    /* A currency specification */
 %token <std::string_view> STRING      /* A quoted string, with any characters inside */
@@ -505,6 +511,7 @@ tags_links:
 transaction:
   DATE txn txn_strings tags_links eol posting_or_kv_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* list = PyList_New(0);
       if (!$3.first.empty()) {
         PyList_Append(list, STRING_TO_PYSTRING(($3.first)));
@@ -512,8 +519,8 @@ transaction:
       if (!$3.second.empty()) {
         PyList_Append(list, STRING_TO_PYSTRING(($3.second)));
       }
-      BUILDY(DECREF($1, list, $4, $6),
-             $$, "transaction", "ObOOO", $1, $2, list, $4, $6);
+      BUILDY(DECREF(s1, list, $4, $6),
+             $$, "transaction", "ObOOO", s1, $2, list, $4, $6);
     }
 
 optflag:
@@ -584,6 +591,9 @@ key_value_value:
     }
   | account
   | DATE
+    {
+      $$ = DATE_TO_PYDATE($1);
+    }
   | CURRENCY
     {
       $$ = STRING_TO_PYSTRING($1);
@@ -699,8 +709,9 @@ popmeta:
 open:
   DATE OPEN account currency_list opt_booking eol key_value_list
     {
-      BUILDY(DECREF($1, $3, $4, $5, $7),
-               $$, "open", "OOOOO", $1, $3, $4, $5, $7);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1, $3, $4, $5, $7),
+               $$, "open", "OOOOO", s1, $3, $4, $5, $7);
     }
 
 opt_booking:
@@ -717,30 +728,34 @@ opt_booking:
 close:
   DATE CLOSE account eol key_value_list
     {
-      BUILDY(DECREF($1, $3, $5),
-             $$, "close", "OOO", $1, $3, $5);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1, $3, $5),
+             $$, "close", "OOO", s1, $3, $5);
     }
 
 commodity:
   DATE COMMODITY CURRENCY eol key_value_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* s3 = STRING_TO_PYSTRING($3);
-      BUILDY(DECREF($1, s3, $5),
-             $$, "commodity", "OOO", $1, s3, $5);
+      BUILDY(DECREF(s1, s3, $5),
+             $$, "commodity", "OOO", s1, s3, $5);
     }
 
 pad:
   DATE PAD account account eol key_value_list
     {
-      BUILDY(DECREF($1, $3, $4, $6),
-             $$, "pad", "OOOO", $1, $3, $4, $6);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1, $3, $4, $6),
+             $$, "pad", "OOOO", s1, $3, $4, $6);
     }
 
 balance:
   DATE BALANCE account amount_tolerance eol key_value_list
     {
-      BUILDY(DECREF($1, $3, $6, ($4).first, ($4).second),
-             $$, "balance", "OOOOO", $1, $3, ($4).first, ($4).second, $6);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1, $3, $6, ($4).first, ($4).second),
+             $$, "balance", "OOOOO", s1, $3, ($4).first, ($4).second, $6);
     }
 
 amount:
@@ -850,6 +865,9 @@ cost_comp_list:
 cost_comp:
   compound_amount
   | DATE
+    {
+      $$ = DATE_TO_PYDATE($1);
+    }
   | STRING
     {
       $$ = STRING_TO_PYSTRING($1);
@@ -863,35 +881,39 @@ cost_comp:
 price:
   DATE PRICE CURRENCY amount eol key_value_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* s3 = STRING_TO_PYSTRING($3);
-      BUILDY(DECREF($1, s3, $4, $6),
-             $$, "price", "OOOO", $1, s3, $4, $6);
+      BUILDY(DECREF(s1, s3, $4, $6),
+             $$, "price", "OOOO", s1, s3, $4, $6);
     }
 
 event:
   DATE EVENT STRING STRING eol key_value_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* s3 = STRING_TO_PYSTRING($3);
       PyObject* s4 = STRING_TO_PYSTRING($4);
-      BUILDY(DECREF($1, s3, s4, $6),
-             $$, "event", "OOOO", $1, s3, s4, $6);
+      BUILDY(DECREF(s1, s3, s4, $6),
+             $$, "event", "OOOO", s1, s3, s4, $6);
     }
 
 query:
   DATE QUERY STRING STRING eol key_value_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* s3 = STRING_TO_PYSTRING($3);
       PyObject* s4 = STRING_TO_PYSTRING($4);
-      BUILDY(DECREF($1, s3, s4, $6),
-             $$, "query", "OOOO", $1, s3, s4, $6);
+      BUILDY(DECREF(s1, s3, s4, $6),
+             $$, "query", "OOOO", s1, s3, s4, $6);
     }
 
 note:
   DATE NOTE account STRING eol key_value_list
     {
+      PyObject* s1 = DATE_TO_PYDATE($1);
       PyObject* s4 = STRING_TO_PYSTRING($4);
-      BUILDY(DECREF($1, $3, s4, $6),
-             $$, "note", "OOOO", $1, $3, s4, $6);
+      BUILDY(DECREF(s1, $3, s4, $6),
+             $$, "note", "OOOO", s1, $3, s4, $6);
     }
 
 filename:
@@ -903,8 +925,9 @@ filename:
 document:
   DATE DOCUMENT account filename tags_links eol key_value_list
     {
-      BUILDY(DECREF($1, $3, $4, $5, $7),
-             $$, "document", "OOOOO", $1, $3, $4, $5, $7);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1, $3, $4, $5, $7),
+             $$, "document", "OOOOO", s1, $3, $4, $5, $7);
     }
 
 custom_value:
@@ -916,8 +939,9 @@ custom_value:
     }
   | DATE
     {
-      BUILDY(DECREF($1),
-             $$, "custom_value", "OO", $1, Py_None);
+      PyObject* s1 = DATE_TO_PYDATE($1);
+      BUILDY(DECREF(s1),
+             $$, "custom_value", "OO", s1, Py_None);
     }
   | BOOL
     {
@@ -959,9 +983,10 @@ custom_value_list:
 custom:
   DATE CUSTOM STRING custom_value_list eol key_value_list
    {
+     PyObject* s1 = DATE_TO_PYDATE($1);
      PyObject* s3 = STRING_TO_PYSTRING($3);
-     BUILDY(DECREF($1, s3, $4, $6),
-            $$, "custom", "OOOO", $1, s3, $4, $6);
+     BUILDY(DECREF(s1, s3, $4, $6),
+            $$, "custom", "OOOO", s1, s3, $4, $6);
    }
 
 entry:

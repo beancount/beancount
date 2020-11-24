@@ -84,6 +84,19 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
  */
 PyObject* pyunicode_from_cquotedstring(const char* string, size_t len, const char* encoding);
 
+
+/**
+ * Convert date string to (year, month, date).
+ */
+void parse_date_from_string(const char* string, int* year, int* month, int* day);
+
+
+/**
+ * Convert integer (year, month, date) to a datetime object.
+ */
+PyObject* pydate_from_civil_day(int year, int month, int day);
+
+
 /**
  * Convert an ASCII string to a PyDate object.
  *
