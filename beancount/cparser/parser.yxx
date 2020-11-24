@@ -42,6 +42,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <optional>
 
 #include "absl/strings/string_view.h"
 #include "absl/time/civil_time.h"
@@ -369,7 +370,9 @@ private:
 %type <PyObject*> amount
 %type <PyObject*> incomplete_amount
 %type <PyObject*> compound_amount
+%type <std::optional<decimal::Decimal>> c_maybe_number
 %type <PyObject*> maybe_number
+%type <std::optional<std::string_view>> c_maybe_currency
 %type <PyObject*> maybe_currency
 %type <PyObject*> price_annotation
 %type <PyObject*> cost_comp
@@ -810,26 +813,48 @@ amount_tolerance:
       ($$).second = s3;
     }
 
-maybe_number:
+c_maybe_number:
   number_expr
     {
-      $$ = DecimalToPyDecimal($1);
+      $$ = {$1};
     }
   | %empty
     {
-      Py_INCREF(MISSING_OBJ);
-      $$ = MISSING_OBJ;
+      $$ = {};
     }
 
-maybe_currency:
+c_maybe_currency:
   CURRENCY
     {
-      $$ = StringToPyString($1);
+      $$ = {$1};
     }
   | %empty
     {
-      Py_INCREF(MISSING_OBJ);
-      $$ = MISSING_OBJ;
+      $$ = {};
+    }
+
+// TODO(blais): This is temporary, fold through to children below.
+maybe_number:
+  c_maybe_number
+    {
+      if ($1.has_value()) {
+        $$ = DecimalToPyDecimal($1.value());
+      } else {
+        Py_INCREF(MISSING_OBJ);
+        $$ = MISSING_OBJ;
+      }
+    }
+
+// TODO(blais): This is temporary, fold through to children below.
+maybe_currency:
+  c_maybe_currency
+    {
+      if ($1.has_value()) {
+        $$ = StringToPyString($1.value());
+      } else {
+        Py_INCREF(MISSING_OBJ);
+        $$ = MISSING_OBJ;
+      }
     }
 
 compound_amount:
