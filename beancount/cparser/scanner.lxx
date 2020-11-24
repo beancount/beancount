@@ -190,14 +190,14 @@ NULL {
 
  /* Tags. */
 #[A-Za-z0-9\-_/.]+ {
-return Parser::make_TAG(build_TAG(matcher().begin()+1, matcher().size()-1),
-                        location());
+  string_view view(matcher().begin()+1, matcher().size()-1);
+  return Parser::make_TAG(view, location());
 }
 
  /* Links. */
 \^[A-Za-z0-9\-_/.]+ {
-  return Parser::make_LINK(build_LINK(matcher().begin()+1, matcher().size()-1),
-                           location());
+  string_view view(matcher().begin()+1, matcher().size()-1);
+  return Parser::make_LINK(view, location());
 }
 
  /* Keys. */

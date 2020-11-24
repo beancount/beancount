@@ -331,8 +331,8 @@ private:
 %token <PyObject*> CURRENCY    /* A currency specification */
 %token <std::string_view> STRING      /* A quoted string, with any characters inside */
 %token <decimal::Decimal> NUMBER      /* A decimal number */
-%token <PyObject*> TAG         /* A tag that can be associated with a transaction */
-%token <PyObject*> LINK        /* A link that can be associated with a transaction */
+%token <std::string_view> TAG         /* A tag that can be associated with a transaction */
+%token <std::string_view> LINK        /* A link that can be associated with a transaction */
 %token <PyObject*> KEY         /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
@@ -491,13 +491,15 @@ tags_links:
     }
   | tags_links LINK
     {
-      BUILDY(DECREF($1, $2),
-             $$, "tag_link_LINK", "OO", $1, $2);
+      PyObject* s2 = STRING_TO_PYSTRING($2);
+      BUILDY(DECREF($1, s2),
+             $$, "tag_link_LINK", "OO", $1, s2);
     }
   | tags_links TAG
     {
-      BUILDY(DECREF($1, $2),
-             $$, "tag_link_TAG", "OO", $1, $2);
+      PyObject* s2 = STRING_TO_PYSTRING($2);
+      BUILDY(DECREF($1, s2),
+             $$, "tag_link_TAG", "OO", $1, s2);
     }
 
 transaction:
@@ -584,6 +586,9 @@ key_value_value:
   | DATE
   | CURRENCY
   | TAG
+    {
+      $$ = STRING_TO_PYSTRING($1);
+    }
   | BOOL
   | NONE
   | number_expr
@@ -656,15 +661,17 @@ currency_list:
 pushtag:
   PUSHTAG TAG eol
     {
-      BUILDY(DECREF($2),
-             $$, "pushtag", "O", $2);
+      PyObject* s2 = STRING_TO_PYSTRING($2);
+      BUILDY(DECREF(s2),
+             $$, "pushtag", "O", s2);
     }
 
 poptag:
   POPTAG TAG eol
     {
-      BUILDY(DECREF($2),
-             $$, "poptag", "O", $2);
+      PyObject* s2 = STRING_TO_PYSTRING($2);
+      BUILDY(DECREF(s2),
+             $$, "poptag", "O", s2);
     }
 
 pushmeta:
