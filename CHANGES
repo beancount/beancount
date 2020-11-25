@@ -5,6 +5,13 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-11-25
+
+ - Fixed #584 - a bug which was occurring because a pathological example using a
+   very large precision was used in inferring the precision of a currency and a
+   subsequent attempt to quantize a large number exceeded the default precision.
+
+
 2020-11-22
 
  - Fixed bug in parser.parse_file() which when passed a filename in would leave
