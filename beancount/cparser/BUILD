@@ -50,10 +50,10 @@ cc_library(
     # Generated and real files are interdependent.
     tags = ["nofixdeps"],
     deps = [
+        ":parser_cc_proto",
+        "//beancount/ccore:data_cc_proto",
         "//beancount/parser:tokens_c",
         "//third_party/parser:reflex",
-        # ":data_cc_pb2",
-        # ":data",
         ":parser_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
@@ -84,3 +84,22 @@ cc_library(
 #         "@com_google_absl//absl/strings",
 #     ],
 # )
+
+#-------------------------------------------------------------------------------
+# Intermediate representation.
+
+proto_library(
+    name = "parser_proto",
+    srcs = ["parser.proto"],
+    deps = [
+        "//beancount/ccore:number_proto",
+        "//beancount/ccore:data_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "parser_cc_proto",
+    deps = [
+      ":parser_proto",
+    ],
+)

@@ -33,6 +33,9 @@
 // Inserted in header, before anything else
 %code requires {
 
+#include "beancount/cparser/parser.pb.h"
+#include "beancount/ccore/data.pb.h"
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
@@ -137,6 +140,20 @@ inline PyObject* DateToPyDate(const absl::CivilDay& d) {
 // Convert a decimal::Decimal to a PyDecimal.
 inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
   return pydecimal_from_cstring(d.to_sci().c_str());
+}
+
+// Create two sets from a TagsLinks object.
+std::tuple<PyObject*, PyObject*> TagsLinksToPython(TagsLinks* tags_links) {
+  assert(tags_links != nullptr);
+  PyObject* tags = PySet_New(0);
+  for (const auto& tag : tags_links->tags()) {
+    PySet_Add(tags, StringToPyString(tag));
+  }
+  PyObject* links = PySet_New(0);
+  for (const auto& link : tags_links->links()) {
+    PySet_Add(links, StringToPyString(link));
+  }
+  return {tags, links};
 }
 
 /*
@@ -386,7 +403,7 @@ private:
 %type <PyObject*> entry
 %type <PyObject*> declarations
 %type <std::pair<std::string, std::string>> txn_strings  /* <payee, narration> */
-%type <PyObject*> tags_links
+%type <beancount::TagsLinks*> tags_links
 %type <PyObject*> filename
 %type <PyObject*> opt_booking
 %type <decimal::Decimal> number_expr
@@ -491,25 +508,24 @@ txn_strings:
 tags_links:
   %empty
     {
-      BUILDY(,
-             $$, "tag_link_new", "");
+      $$ = new TagsLinks{};
     }
   | tags_links LINK
     {
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF($1, s2),
-             $$, "tag_link_LINK", "OO", $1, s2);
+      $1->add_links($2.data(), $2.size());
+      $$ = $1;
     }
   | tags_links TAG
     {
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF($1, s2),
-             $$, "tag_link_TAG", "OO", $1, s2);
+      $1->add_tags($2.data(), $2.size());
+      $$ = $1;
     }
 
 transaction:
   DATE txn txn_strings tags_links eol posting_or_kv_list
     {
+      auto [tags, links] = TagsLinksToPython($4);
+      delete $4;
       PyObject* s1 = DateToPyDate($1);
       PyObject* list = PyList_New(0);
       if (!$3.first.empty()) {
@@ -518,8 +534,8 @@ transaction:
       if (!$3.second.empty()) {
         PyList_Append(list, StringToPyString(($3.second)));
       }
-      BUILDY(DECREF(s1, list, $4, $6),
-             $$, "transaction", "ObOOO", s1, $2, list, $4, $6);
+      BUILDY(DECREF(s1, list, tags, links, $6),
+             $$, "transaction", "ObOOO", s1, $2, list, tags, links, $6);
     }
 
 optflag:
@@ -644,8 +660,13 @@ posting_or_kv_list:
     }
   | posting_or_kv_list INDENT tags_links eol
     {
-      BUILDY(DECREF($1, $3),
-             $$, "handle_list", "OO", $1, $3);
+      auto [tags, links] = TagsLinksToPython($3);
+      delete $3;
+      PyObject* tags_links;
+      BUILDY(DECREF(tags, links),
+             tags_links, "tags_links_new", "OO", tags, links);
+      BUILDY(DECREF($1, tags_links),
+             $$, "handle_list", "OO", $1, tags_links);
     }
   | posting_or_kv_list key_value_line
     {
@@ -982,10 +1003,12 @@ filename:
 document:
   DATE DOCUMENT account filename tags_links eol key_value_list
     {
+      auto [tags, links] = TagsLinksToPython($5);
+      delete $5;
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $4, $5, $7),
-             $$, "document", "OOOOO", s1, s3, $4, $5, $7);
+      BUILDY(DECREF(s1, s3, $4, tags, links, $7),
+             $$, "document", "OOOOO", s1, s3, $4, tags, links, $7);
     }
 
 custom_value:
@@ -1303,3 +1326,8 @@ namespace parser {
 }  // namespace parser
 
 }  // namespace beancount
+
+// TODO(blais): In v3 review the syntax for uniformity:
+// - Allow tags/links on all directives?
+// - Remove the EMPTY_SET constraint
+// - Make it possible to tag/link before the narration strings.

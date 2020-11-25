@@ -720,7 +720,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Note(meta, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename, tags_links,
+    def document(self, filename, lineno, date, account, document_filename, tags,links,
                  kvlist):
         """Process a document directive.
 
@@ -730,7 +730,8 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           document_filename: a str, the name of the document file.
-          tags_links: The current TagsLinks accumulator.
+          tags: A set of tag strings.
+          links: A set of link strings.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Document object.
@@ -846,38 +847,6 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, filename, lineno):
-        """Create a new TagsLinks instance.
-
-        Returns:
-          An instance of TagsLinks, initialized with expected attributes.
-        """
-        return TagsLinks(set(), set())
-
-    def tag_link_TAG(self, filename, lineno, tags_links, tag):
-        """Add a tag to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          tag: A string, the new tag to insert.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.tags.add(tag)
-        return tags_links
-
-    def tag_link_LINK(self, filename, lineno, tags_links, link):
-        """Add a link to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          link: A string, the new link to insert.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.links.add(link)
-        return tags_links
-
     def _unpack_txn_strings(self, txn_strings, meta):
         """Unpack a tags_links accumulator to its payee and narration fields.
 
@@ -917,7 +886,7 @@ class Builder(lexer.LexBuilder):
         return (frozenset(tags) if tags else EMPTY_SET,
                 frozenset(links) if links else EMPTY_SET)
 
-    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
+    def transaction(self, filename, lineno, date, flag, txn_strings, tags, links,
                     posting_or_kv_list):
         """Process a transaction directive.
 
@@ -935,9 +904,11 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
           txn_strings: A list of strings, possibly empty, possibly longer.
-          tags_links: A TagsLinks namedtuple of tags, and/or links.
-          posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
-            this transaction, or None, if no postings have been declared.
+          tags: A set of tag strings.
+          links: A set of link strings.
+          posting_or_kv_list: a list of Posting, KeyValue or TagsLinks
+            instances, to be inserted in this transaction, or None, if no
+            postings have been declared.
         Returns:
           A new Transaction object.
         """
@@ -946,7 +917,6 @@ class Builder(lexer.LexBuilder):
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []
-        tags, links = tags_links.tags, tags_links.links
         if posting_or_kv_list:
             last_posting = None
             for posting_or_kv in posting_or_kv_list:
@@ -1020,3 +990,6 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
+
+    def tags_links_new(self, filename, lineno, tags, links):
+        return TagsLinks(tags, links)
