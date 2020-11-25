@@ -1331,3 +1331,5 @@ namespace parser {
 // - Allow tags/links on all directives?
 // - Remove the EMPTY_SET constraint
 // - Make it possible to tag/link before the narration strings.
+// - In the metadata, output not just the starting line but also the end line,
+//   for easy extraction of the original text.

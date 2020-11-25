@@ -1,7 +1,6 @@
 # This basically excludes //beancount/utils.
 package(default_visibility = [
     "//beancount:__pkg__",
-    "//beancount/ccore:__pkg__",
     "//beancount/ingest:__subpackages__",
     "//beancount/ops:__pkg__",
     "//beancount/parser:__pkg__",
@@ -13,6 +12,10 @@ package(default_visibility = [
     "//examples:__subpackages__",
     "//experiments/plugins:__pkg__",
     "//experiments/sharing:__pkg__",
+
+    # Temporary access from C core and parser.
+    "//beancount/ccore:__pkg__",
+    "//beancount/cparser:__pkg__",
 ])
 
 py_library(

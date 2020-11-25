@@ -9,6 +9,10 @@
 #include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * Dispatch to token values build functions.
@@ -119,5 +123,9 @@ PyObject* pydate_from_cstring(const char* string);
  * Initialize the local datetime globals.
  */
 void initialize_datetime();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* BEANCOUNT_TOKENS_H */
