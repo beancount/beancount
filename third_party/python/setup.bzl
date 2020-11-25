@@ -28,20 +28,30 @@ def setup_python():
         )
 
     # Rules for easy extension modules.
-    # 2020-05-11
+    # 2020-11-25
     http_archive(
         name = "pybind11_bazel",
-        strip_prefix = "pybind11_bazel-16ed1b8f308d2b3dec9d7e6decaad49ce4d28b43",
-        sha256 = "f1044df0475bbe819e285785ee9599d94f98ac3c86ddfb73fe16cfeb568bb381",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/16ed1b8f308d2b3dec9d7e6decaad49ce4d28b43.zip"],
+        strip_prefix = "pybind11_bazel-26973c0ff320cb4b39e45bc3e4297b82bc3a6c09",
+        sha256 = "a5666d950c3344a8b0d3892a88dc6b55c8e0c78764f9294e806d69213c03f19d",
+        urls = ["https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.zip"],
     )
     http_archive(
         name = "pybind11",
         build_file = "@pybind11_bazel//:pybind11.BUILD",
-        sha256 = "97504db65640570f32d3fdf701c25a340c8643037c3b69aec469c10c93dc8504",
-        strip_prefix = "pybind11-2.5.0",
-        urls = ["https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz"],
+        sha256 = "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a",
+        strip_prefix = "pybind11-2.6.1",
+        urls = ["https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz"],
     )
+    http_archive(
+        name = "pybind11_protobuf",
+        # build_file = "//third_party/python:pybind11_protobuf.BUILD",
+        strip_prefix = "pybind11_protobuf-experimental",
+        sha256 = "144e74162e115b91f658d1039dadd41b1f1f00c295ba77f13b50c483716c93bb",
+        urls = ["https://github.com/pybind/pybind11_protobuf/archive/experimental.zip"],
+    )
+
+    # See also: https://github.com/pybind/pybind11_protobuf/tree/experimental,
+    # which implement C++ proto casters. We will use this eventually to expose protobufs.
 
     # abseil (Python)
     if not native.existing_rule("com_google_absl_py"):
