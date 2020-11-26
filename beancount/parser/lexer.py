@@ -4,6 +4,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import contextlib
 import io
 
 from beancount.core.data import new_metadata
@@ -48,15 +49,16 @@ def lex_iter(file, builder=None, encoding=None):
       containing the exact text matched, and ``value`` is the semantic
       value of the token or None.
     """
-    # It would be more appropriate here to check for io.RawIOBase but
-    # that does not work for io.BytesIO despite it implementing the
-    # readinto() method.
-    if not isinstance(file, io.IOBase):
-        file = open(file, 'rb')
-    if builder is None:
-        builder = LexBuilder()
-    parser = _parser.Parser(builder)
-    yield from parser.lex(file, encoding=encoding)
+    with contextlib.ExitStack() as ctx:
+        # It would be more appropriate here to check for io.RawIOBase but
+        # that does not work for io.BytesIO despite it implementing the
+        # readinto() method.
+        if not isinstance(file, io.IOBase):
+            file = ctx.enter_context(open(file, 'rb'))
+        if builder is None:
+            builder = LexBuilder()
+        parser = _parser.Parser(builder)
+        yield from parser.lex(file, encoding=encoding)
 
 
 def lex_iter_string(string, builder=None, **kwargs):
