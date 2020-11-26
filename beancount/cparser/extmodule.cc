@@ -22,8 +22,9 @@ void Lex(const string& filename, int lineno, const string& encoding) {
   cout << "XXX" << filename << " " << lineno << " " << encoding << endl;
 }
 
-void Parse(const string& filename, int lineno, const string& encoding) {
-  cout << "YYY" << filename << " " << lineno << " " << encoding << endl;
+void Parse(py::object builder_obj,
+           const string& filename, int lineno, const string& encoding) {
+  parser::ParseFile(builder_obj.ptr(), filename, missing_obj);
 }
 
 // std::unique_ptr<proto::Database> parse_string(const std::string& input_string) {
@@ -104,6 +105,7 @@ object is used, if present. The encoding parameter allows to specify
 the file encoding. Parsing results are retrieved from the Builder
 object specified when the Parser object was instantiated.");
   )",
+          py::arg("builder"),
           py::arg("filename"),
           py::arg("lineno") = 1,
           py::arg("encoding") = "utf8");

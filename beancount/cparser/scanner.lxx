@@ -23,9 +23,13 @@ using beancount::parser::Parser;
 using std::endl;
 using std::string;
 
+// Obtain a string_view of the current match.
 inline string_view view(const reflex::Matcher& m) {
   return string_view(m.begin(), m.size());
 }
+
+// Copy `src` to `buffer` stripping commas on the way.
+void CopyNoCommas(const char* src, char* buffer);
 
 // Convert date string to (year, month, date).
 absl::CivilDay ParseDateFromString(const char* string);
@@ -184,7 +188,11 @@ NULL {
 
  /* Numbers. */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? {
-  decimal::Decimal number(text());
+  // Strip commas from the local buffer (without allocating memory).
+  static char buffer[256];
+  assert(size() < 255);
+  CopyNoCommas(text(), buffer);
+  decimal::Decimal number(buffer);
   return Parser::make_NUMBER(number, location());
 }
 
@@ -252,6 +260,16 @@ NULL {
 
 namespace beancount {
 namespace scanner {
+
+void CopyNoCommas(const char* src, char* buffer) {
+  char* dst = buffer;
+  for (; *src != '\0'; ++src) {
+    if (*src == ',')
+      continue;
+    *dst++ = *src;
+  }
+  *dst = '\0';
+}
 
 namespace {
 

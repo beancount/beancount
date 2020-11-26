@@ -137,6 +137,7 @@ py_test(
     srcs = ["extmodule_test.py"],
     deps = [
         ":extmodule",
+        "//beancount/parser:grammar",
         "//beancount/core:number",
     ],
 )

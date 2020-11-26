@@ -54,41 +54,20 @@
 
 namespace beancount {
 namespace scanner { class Scanner; }
-namespace parser { class Builder; }
+namespace parser {
+class Builder;
 
-// Example of a local type; do this + below:  %type <TermList*> termlist
-///   // Accumulator for term list.
-///   struct TermList {
-///     // List of word text.
-///     std::list<std::string> words;
-///
-///     // List of yet-to-be-resolved (type, ident) pairs.
-///     // Has ownershipo.
-///     std::list<proto::Ref*> unresolved_refs;
-///   };
+// Parse the contents of a file.
+void ParseFile(PyObject* builder_obj,
+               const std::string_view& filename,
+               PyObject* missing_obj);
 
+}  // namespace parser
 }  // namespace beancount
 }  // %code requires
 
 // Inserted in header, at the end.
 %code provides {
-namespace beancount {
-
-// TODO(blais): Implement these functions below.
-/// // Parse contents from the given string.
-/// // The 'line_offset' can be used in unit tests to mark the start of the test
-/// // string in the parsed file.
-/// std::unique_ptr<proto::Database> ParseString(const string_view& input_string,
-///                                             const string_view& filename,
-///                                             int line_offset = 0);
-///
-/// // Parse contents from a file.
-/// std::unique_ptr<proto::Database> ParseFile(const string_view& filename);
-///
-/// // Parse contents from stdin.
-/// std::unique_ptr<proto::Database> ParseStdin();
-
-}  // namespace beancount
 }  // %code provides
 
 //-----------------------------------------------------------------------------
@@ -161,23 +140,39 @@ std::tuple<PyObject*, PyObject*> TagsLinksToPython(TagsLinks* tags_links) {
  * in the handler. Always run the code to clean the references provided by the
  * reduced rule. {05bb0fb60e86}
  */
-#define BUILDY(clean, target, method_name, format, ...)                 \
-  target = PyObject_CallMethod(builder.obj(), method_name, "Oi" format, \
-                               location().begin.filename,               \
-                               location().begin.line,                   \
-                               ## __VA_ARGS__);                         \
-  clean;                                                                \
-  if (target == NULL) {                                                 \
-    build_grammar_error_from_exception(location(), builder.obj());      \
-    YYERROR;                                                            \
+#define BUILDY(clean, target, method_name, format, ...)                                         \
+  {                                                                                             \
+    auto loc = scanner.location();                                                              \
+    const string* s = loc.begin.filename;                                                       \
+    /* TODO(blais): Move this to the builder so it's done once. */                              \
+    PyObject* filename = PyUnicode_FromString(s->data());                                       \
+    cerr << "method_name: " << method_name << endl                                              \
+         << "filename: " << *loc.begin.filename << ":" << loc.begin.line << endl;               \
+                                                                                                \
+    target = PyObject_CallMethod(builder.builder(), method_name, "Oi" format,                   \
+                                 filename,                                                      \
+                                 loc.begin.line,                                                \
+                                 ## __VA_ARGS__);                                               \
+    Py_DECREF(filename);                                                                        \
+    clean;                                                                                      \
+                                                                                                \
+    if (target == NULL) {                                                                       \
+      /* TODO(blais): This is for temporary debugging of internal errors while porting. */      \
+      PyErr_PrintEx(1);                                                                         \
+                                                                                                \
+      build_grammar_error_from_exception(loc, builder.builder());                               \
+      /* Figure out if this is stilil the right way to call for errors in the C++ parser. */    \
+      YYERROR;                                                                                  \
+    }                                                                                           \
   }
 
 #define MISSING_OBJ builder.missing()
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(const location& loc, PyObject* builder)
-{
-#if 0
+void build_grammar_error_from_exception(const location& loc, PyObject* builder) {
+  cerr << "build_grammar_error_from_exception " << loc << endl;
+  assert(builder != nullptr);
+
   /* Get the exception context. */
   PyObject* ptype;
   PyObject* pvalue;
@@ -189,25 +184,24 @@ void build_grammar_error_from_exception(const location& loc, PyObject* builder)
   PyErr_Clear();
 
   if (pvalue != NULL) {
-      /* Build and accumulate a new error object. {27d1d459c5cd} */
-      PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
-                                         loc->file_name, loc->first_line,
-                                         pvalue, ptype, ptraceback);
-      if (rv == NULL) {
-          /* Note: Leave the internal error trickling up its detail. */
-          /* PyErr_SetString(PyExc_RuntimeError, */
-          /*                 "Internal error: While building exception"); */
-      }
+    /* Build and accumulate a new error object. {27d1d459c5cd} */
+    PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
+                                       loc.begin.filename, loc.begin.line,
+                                       pvalue, ptype, ptraceback);
+    if (rv == NULL) {
+      /* Note: Leave the internal error trickling up its detail. */
+      /* PyErr_SetString(PyExc_RuntimeError, */
+      /*                 "Internal error: While building exception"); */
+    }
   }
   else {
-      PyErr_SetString(PyExc_RuntimeError,
-                      "Internal error: No exception");
+    PyErr_SetString(PyExc_RuntimeError,
+                    "Internal error: No exception");
   }
 
   Py_XDECREF(ptype);
   Py_XDECREF(pvalue);
   Py_XDECREF(ptraceback);
-#endif
 }
 
 // TODO(blais): Move this to error() code.
@@ -229,31 +223,24 @@ void yyerror(const location& loc, yyscan_t scanner, PyObject* builder, char cons
 
 #define DECREF(...) _CC_FUNC(Py_DECREF, __VA_ARGS__)
 
-
-
-
-
-
-
 // In-memory build state for graph of nodes. This driver accepts actions from
 // the parser and simply builds up the parsed state. Since the input is not
 // assumed to be ordered, resolving references occurs as a separate phase.
 class Builder {
 public:
-  Builder(PyObject* missing);
-  virtual ~Builder();
+  Builder(PyObject* builder_obj, PyObject* missing_obj);
+  virtual ~Builder() {}
 
-  inline PyObject* obj() const { return builder_obj_; }
-  inline PyObject* missing() const { return missing_; }
+  inline PyObject* builder() const { return builder_obj_; }
+  inline PyObject* missing() const { return missing_obj_; }
 
-  // Set the location for errors to occur.
-  // This is a stateful setter whose data get used to report errors.
-  void WithLocation(const parser::location& location) {
-    location_ = location;
-  }
+  // // Set the location for errors to occur.
+  // // This is a stateful setter whose data get used to report errors.
+  // void WithLocation(const parser::location& location) {
+  //   location_ = location;
+  // }
 
   // TODO(blais): Create an updated driver for Beancount.
-
 
   string_view Account(const location& loc, string_view account) {
     // if not self.account_regexp.match(account):
@@ -269,18 +256,15 @@ public:
     return account;
   }
 
-
-
-
-
 private:
-  // beancount.core.number.MISSING object.
-  PyObject* missing_ = nullptr;
+  // // Last registered location.
+  // parser::location location_;
 
-  // Last registered location.
-  parser::location location_;
-
+  // Python grammar builder object.
   PyObject* builder_obj_;
+
+  // beancount.core.number.MISSING object.
+  PyObject* missing_obj_ = nullptr;
 };
 
 }  // namespace parser
@@ -524,6 +508,7 @@ tags_links:
 transaction:
   DATE txn txn_strings tags_links eol posting_or_kv_list
     {
+      cout << $1 << endl;
       auto [tags, links] = TagsLinksToPython($4);
       delete $4;
       PyObject* s1 = DateToPyDate($1);
@@ -535,7 +520,7 @@ transaction:
         PyList_Append(list, StringToPyString(($3.second)));
       }
       BUILDY(DECREF(s1, list, tags, links, $6),
-             $$, "transaction", "ObOOO", s1, $2, list, tags, links, $6);
+             $$, "transaction", "ObOOOO", s1, $2, list, tags, links, $6);
     }
 
 optflag:
@@ -1218,12 +1203,12 @@ namespace beancount {
 
 namespace parser {
 
-Builder::Builder(PyObject* missing_obj) :
-  missing_(missing_obj)
+Builder::Builder(PyObject* builder_obj, PyObject* missing_obj) :
+  builder_obj_(builder_obj),
+  missing_obj_(missing_obj)
 {
-}
-
-Builder::~Builder() {
+  assert(builder_obj_ != nullptr);
+  assert(missing_obj_ != nullptr);
 }
 
 // TODO(blais): Implement builder methods here (maybe).
@@ -1239,7 +1224,7 @@ public:
   using scanner::Scanner::Scanner;
 
   // Set the filename for location tokens.
-  void SetFilename(const string* filename) {
+  void SetFilename(string_view filename) {
     filename_ = filename;
   }
 
@@ -1249,24 +1234,32 @@ public:
 
   // Override the location to include the filename.
   // TODO(blais): Why do I need this again?
-  beancount::parser::location location() override
-  {
+  beancount::parser::location location() override {
     /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
     /* yylloc.begin.column = static_cast<unsigned int>(matcher().columno()); */
     /* yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end()); */
     /* yylloc.end.column = static_cast<unsigned int>(matcher().columno_end()); */
     auto yylloc = scanner::Scanner::location();
-    if (filename_) {
-      yylloc.begin.filename = filename_;
-    }
+    yylloc.begin.filename = &filename_;
     if (line_offset_ > 0) {
       yylloc.begin.line += line_offset_;
       yylloc.end.line += line_offset_;
     }
     return yylloc;
   }
+
+  // TODO(blais): Do we still need this? At least catch the exception.
+  virtual void lexer_error(const char* message) override {
+    cerr << "Scanner::lexer_error: ";
+    if (message) {
+      cerr << *message;
+    }
+    cerr << endl;
+    return scanner::Scanner::lexer_error(message);
+  }
+
 private:
-  const string* filename_ = nullptr;
+  string filename_;
   int line_offset_ = 0;
 };
 
@@ -1274,30 +1267,41 @@ private:
 
 namespace parser {
 
-// TODO(blais): Implement parser here.
-/// // Parse the given input to a database.
-/// std::unique_ptr<proto::Database> Parse(const reflex::Input& input,
-///                                        const string* filename = nullptr,
-///                                        int line_offset = 0) {
-///   // Create a scanner and builder.
-///   scanner::ScannerWithFile scanner(input, cout);
-///   if (filename != nullptr) {
-///     scanner.SetFilename(filename);
-///   }
-///   scanner.SetLineOffset(line_offset);
-///   parser::Builder builder;
-///
-///   // Run the parser.
-///   beancount::parser::Parser parser(scanner, builder);
-///   int result = parser.parse();
-///   (void)result;
-///
-///   auto db = builder.GetClearDatabase();
-///   return db;
-/// }
-///
-/// }  // namespace parser
-///
+// TODO(blais): Return the parsed state.
+void Parse(PyObject* builder_obj,
+           const reflex::Input& input,
+           const std::optional<string_view>& filename = {},
+           int line_offset = 0,
+           PyObject* missing_obj = nullptr) {
+  // Create a scanner and builder.
+  scanner::ScannerWithFile scanner(input, cout);
+  if (filename.has_value()) {
+    scanner.SetFilename(filename.value());
+  }
+  scanner.SetLineOffset(line_offset);
+  parser::Builder builder(builder_obj, missing_obj);
+
+  // Run the parser.
+  beancount::parser::Parser parser(scanner, builder);
+  parser.set_debug_stream(std::cerr);
+  // parser.set_debug_level(1);
+  // scanner.set_debug(1);
+  try {
+    int result = parser.parse();
+    (void)result;
+    cout << "result " << result << endl;
+  } catch (const std::runtime_error& exc) {
+    cerr << "exc " << exc.what() << endl;
+  }
+}
+
+void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* missing_obj) {
+  std::ifstream in = std::ifstream(string(filename), std::ios::in);
+  reflex::Input input(in);
+  string filename_str(filename);
+  return parser::Parse(builder_obj, input, filename_str, 0, missing_obj);
+}
+
 /// std::unique_ptr<proto::Database> ParseString(const string_view& input_string,
 ///                                              const string_view& filename,
 ///                                              int line_offset) {
@@ -1307,14 +1311,7 @@ namespace parser {
 ///   static const string filename_str(filename);
 ///   return parser::Parse(input, &filename_str, line_offset);
 /// }
-///
-/// std::unique_ptr<proto::Database> ParseFile(const string_view& filename) {
-///   std::ifstream in = std::ifstream(string(filename), std::ios::in);
-///   reflex::Input input(in);
-///   string filename_str(filename);
-///   return parser::Parse(input, &filename_str);
-/// }
-///
+
 /// std::unique_ptr<proto::Database> ParseStdin() {
 ///   reflex::Input input(stdin, reflex::Input::file_encoding::utf8);
 ///   static const string filename = "<string>";
@@ -1324,7 +1321,6 @@ namespace parser {
 /// }
 
 }  // namespace parser
-
 }  // namespace beancount
 
 // TODO(blais): In v3 review the syntax for uniformity:
@@ -1333,3 +1329,7 @@ namespace parser {
 // - Make it possible to tag/link before the narration strings.
 // - In the metadata, output not just the starting line but also the end line,
 //   for easy extraction of the original text.
+
+// TODO(blais): Remove and review all manners of locations() overriding. This
+// should normally work fine out of the box, and those fixes are likely
+// unnecessary.
