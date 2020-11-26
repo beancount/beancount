@@ -452,7 +452,7 @@ private:
 %type <PyObject*> key_value_list
 %type <PyObject*> key_value_value
 %type <PyObject*> posting_or_kv_list
-%type <PyObject*> currency_list
+%type <std::vector<std::string>> currency_list
 %type <PyObject*> open
 %type <PyObject*> close
 %type <PyObject*> commodity
@@ -790,20 +790,16 @@ key_value_list:
 currency_list:
   %empty
     {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      $$ = {};
     }
   | CURRENCY
     {
-      PyObject* s1 = StringToPyString($1);
-      BUILDY(DECREF(s1),
-             $$, "handle_list", "OO", Py_None, s1);
+      $$.push_back({$1.data(), $1.size()});
     }
   | currency_list COMMA CURRENCY
     {
-      PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF($1, s3),
-             $$, "handle_list", "OO", $1, s3);
+      $$ = $1;
+      $$.push_back({$3.data(), $3.size()});
     }
 
 pushtag:
@@ -836,6 +832,7 @@ open:
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
 
+      // Convert booking method.
       PyObject* s5;
       if ($5 != Booking::UNKNOWN) {
         s5 = StringToPyString(Booking_Name($5));
@@ -844,8 +841,14 @@ open:
         Py_INCREF(Py_None);
       }
 
-      BUILDY(DECREF(s1, s3, $4, s5, $7),
-               $$, "open", "OOOOO", s1, s3, $4, s5, $7);
+      // Convert currency list.
+      PyObject* s4 = PyList_New(0);
+      for (const auto& currency : $4) {
+        PyList_Append(s4, StringToPyString(currency));
+      }
+
+      BUILDY(DECREF(s1, s3, s4, s5, $7),
+               $$, "open", "OOOOO", s1, s3, s4, s5, $7);
     }
 
 booking:
