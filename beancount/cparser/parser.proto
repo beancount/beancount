@@ -6,7 +6,7 @@
 
 syntax = "proto2";
 
-package beancount;
+package beancount.inter;
 
 // import 'beancount/ccore/number.proto';
 // import 'beancount/ccore/data.proto';

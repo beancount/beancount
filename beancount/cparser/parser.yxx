@@ -126,7 +126,7 @@ inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
 
 // Create two sets from a TagsLinks object.
 std::tuple<PyObject*, PyObject*> TagsLinksToPython(
-  TagsLinks* tags_links,
+  inter::TagsLinks* tags_links,
   const absl::flat_hash_set<string>* active_tags) {
 
   assert(tags_links != nullptr);
@@ -478,7 +478,7 @@ private:
 %type <PyObject*> entry
 %type <PyObject*> declarations
 %type <std::pair<std::string, std::string>> txn_strings  /* <payee, narration> */
-%type <beancount::TagsLinks*> tags_links
+%type <beancount::inter::TagsLinks*> tags_links
 %type <PyObject*> filename
 %type <Booking> booking
 %type <decimal::Decimal> number_expr
@@ -583,7 +583,7 @@ txn_strings:
 tags_links:
   %empty
     {
-      $$ = new TagsLinks{};
+      $$ = new inter::TagsLinks{};
     }
   | tags_links LINK
     {
