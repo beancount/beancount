@@ -480,7 +480,7 @@ private:
 %type <std::pair<std::string, std::string>> txn_strings  /* <payee, narration> */
 %type <beancount::TagsLinks*> tags_links
 %type <PyObject*> filename
-%type <PyObject*> opt_booking
+%type <Booking> booking
 %type <decimal::Decimal> number_expr
 %type <PyObject*> option
 %type pushtag
@@ -831,23 +831,39 @@ popmeta:
     }
 
 open:
-  DATE OPEN account currency_list opt_booking eol key_value_list
+  DATE OPEN account currency_list booking eol key_value_list
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $4, $5, $7),
-               $$, "open", "OOOOO", s1, s3, $4, $5, $7);
+
+      PyObject* s5;
+      if ($5 != Booking::UNKNOWN) {
+        s5 = StringToPyString(Booking_Name($5));
+      } else {
+        s5 = Py_None;
+        Py_INCREF(Py_None);
+      }
+
+      BUILDY(DECREF(s1, s3, $4, s5, $7),
+               $$, "open", "OOOOO", s1, s3, $4, s5, $7);
     }
 
-opt_booking:
+booking:
   STRING
     {
-      $$ = StringToPyString($1);
+      string s1($1.data(), $1.size());
+      Booking method;
+      if (!Booking_Parse(s1, &method)) {
+        builder.LogError(absl::StrFormat("Invalid value for booking method: '%s'", s1),
+                         scanner.location());
+        // TODO(blais): For v2 behavior, set this to the global default.
+        method = Booking::UNKNOWN;
+      }
+      $$ = method;
     }
   | %empty
     {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      $$ = Booking::UNKNOWN;
     }
 
 close:
