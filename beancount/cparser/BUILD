@@ -105,6 +105,21 @@ cc_proto_library(
     ],
 )
 
+proto_library(
+    name = "options_proto",
+    srcs = ["options.proto"],
+    deps = [
+        "//beancount/ccore:data_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "options_cc_proto",
+    deps = [
+      ":options_proto",
+    ],
+)
+
 #-------------------------------------------------------------------------------
 # Extension module.
 
