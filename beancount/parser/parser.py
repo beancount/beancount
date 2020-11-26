@@ -109,6 +109,7 @@ corresponding expected values.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import contextlib
 import functools
 import inspect
 import textwrap
@@ -188,21 +189,17 @@ def parse_file(file, report_filename=None, report_firstline=1, **kw):
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
-    close_file = None
-    if file == '-':
-        close_file = file = sys.stdin.buffer
-    # It would be more appropriate here to check for io.RawIOBase but
-    # that does not work for io.BytesIO despite it implementing the
-    # readinto() method.
-    elif not isinstance(file, io.IOBase):
-        close_file = file = open(file, 'rb')
-
-    builder = grammar.Builder()
-    parser = _parser.Parser(builder)
-    parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
-
-    if close_file:
-        close_file.close()
+    with contextlib.ExitStack() as ctx:
+        if file == '-':
+            file = sys.stdin.buffer
+        # It would be more appropriate here to check for io.RawIOBase but
+        # that does not work for io.BytesIO despite it implementing the
+        # readinto() method.
+        elif not isinstance(file, io.IOBase):
+            file = ctx.enter_context(open(file, 'rb'))
+        builder = grammar.Builder()
+        parser = _parser.Parser(builder)
+        parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
     return builder.finalize()
 
 
