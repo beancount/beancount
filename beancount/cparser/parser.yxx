@@ -85,6 +85,7 @@ void ParseFile(PyObject* builder_obj,
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -143,17 +144,12 @@ std::tuple<PyObject*, PyObject*> TagsLinksToPython(TagsLinks* tags_links) {
 #define BUILDY(clean, target, method_name, format, ...)                                         \
   {                                                                                             \
     auto loc = scanner.location();                                                              \
-    const string* s = loc.begin.filename;                                                       \
-    /* TODO(blais): Move this to the builder so it's done once. */                              \
-    PyObject* filename = PyUnicode_FromString(s->data());                                       \
-    cerr << "method_name: " << method_name << endl                                              \
-         << "filename: " << *loc.begin.filename << ":" << loc.begin.line << endl;               \
-                                                                                                \
-    target = PyObject_CallMethod(builder.builder(), method_name, "Oi" format,                   \
-                                 filename,                                                      \
+    /* cerr << "method_name: " << method_name << endl */                                        \
+    /*     << "filename: " << *loc.begin.filename << ":" << loc.begin.line << endl; */          \
+    target = PyObject_CallMethod(builder.builder(), method_name, "si" format,                   \
+                                 loc.begin.filename->c_str(),                                   \
                                  loc.begin.line,                                                \
                                  ## __VA_ARGS__);                                               \
-    Py_DECREF(filename);                                                                        \
     clean;                                                                                      \
                                                                                                 \
     if (target == NULL) {                                                                       \
@@ -231,6 +227,10 @@ public:
   Builder(PyObject* builder_obj, PyObject* missing_obj);
   virtual ~Builder() {}
 
+  void Initialize() {
+    //// kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
+  }
+
   inline PyObject* builder() const { return builder_obj_; }
   inline PyObject* missing() const { return missing_obj_; }
 
@@ -242,18 +242,20 @@ public:
 
   // TODO(blais): Create an updated driver for Beancount.
 
-  string_view Account(const location& loc, string_view account) {
+  // TODO(blais): Remove this and replace it with post-parsing verification.
+  string_view Account(string_view account) {
+    accounts_.insert({account.data(), account.size()});
+    return account;
+  }
+
+  // Check that all the accounts are matching the prefix names provided in the
+  // options.
+  void ValidateAccounts() {
+  // TODO(blais):
     // if not self.account_regexp.match(account):
     //     meta = new_metadata(filename, lineno)
     //     self.errors.append(
     //         ParserError(meta, "Invalid account name: {}".format(account), None))
-    // # Intern account names. This should reduces memory usage a
-    // # fair bit because these strings are repeated liberally.
-    // return self.accounts.setdefault(account, account)
-
-    // BUILDY(DECREF($1),
-    //        $$, "account", "O", $1);
-    return account;
   }
 
 private:
@@ -265,6 +267,9 @@ private:
 
   // beancount.core.number.MISSING object.
   PyObject* missing_obj_ = nullptr;
+
+  // A set of all unique account names seen in the file.
+  absl::flat_hash_set<string> accounts_;
 };
 
 }  // namespace parser
@@ -508,7 +513,6 @@ tags_links:
 transaction:
   DATE txn txn_strings tags_links eol posting_or_kv_list
     {
-      cout << $1 << endl;
       auto [tags, links] = TagsLinksToPython($4);
       delete $4;
       PyObject* s1 = DateToPyDate($1);
@@ -541,11 +545,10 @@ optflag:
 price_annotation:
   incomplete_amount
 
-// TODO(blais): Bubble up string_view through to callers.
 account:
   ACCOUNT
     {
-      $$ = builder.Account(location(), $1);
+      $$ = builder.Account($1);
     }
 
 posting:
