@@ -1,9 +1,11 @@
 import os
+import pprint
 import tempfile
 import unittest
 
 from beancount.cparser import extmodule
 from beancount.parser import grammar
+from beancount.parser import printer
 
 
 class CppParserModuleTests(unittest.TestCase):
@@ -19,6 +21,10 @@ class CppParserModuleTests(unittest.TestCase):
     builder = grammar.Builder()
     out = extmodule.parse(builder, filename)
     print(out)
+    entries, errors, options_map = builder.finalize()
+    #pprint.pprint(options_map)
+    pprint.pprint((len(entries), errors))
+    printer.print_entry(entries[-1])
 
 
 if __name__ == '__main__':

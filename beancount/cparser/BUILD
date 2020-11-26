@@ -154,6 +154,7 @@ py_test(
     deps = [
         ":extmodule",
         "//beancount/parser:grammar",
+        "//beancount/parser:printer",
         "//beancount/core:number",
     ],
 )

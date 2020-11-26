@@ -116,9 +116,6 @@ class Builder(lexer.LexBuilder):
     def __init__(self):
         lexer.LexBuilder.__init__(self)
 
-        # A stack of the current active tags.
-        self.tags = []
-
         # A dict of the current active metadata fields (not a stack).
         self.meta = collections.defaultdict(list)
 
@@ -153,12 +150,6 @@ class Builder(lexer.LexBuilder):
             errors: A list of errors, hopefully empty.
             options_map: A dict of options.
         """
-        # If the user left some tags unbalanced, issue an error.
-        for tag in self.tags:
-            meta = new_metadata(self.options['filename'], 0)
-            self.errors.append(
-                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
-
         # If the user left some metadata unpopped, issue an error.
         for key, value_list in self.meta.items():
             meta = new_metadata(self.options['filename'], 0)
@@ -258,29 +249,6 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
-
-    def pushtag(self, filename, lineno, tag):
-        """Push a tag on the current set of tags.
-
-        Note that this does not need to be stack ordered.
-
-        Args:
-          tag: A string, a tag to be added.
-        """
-        self.tags.append(tag)
-
-    def poptag(self, filename, lineno, tag):
-        """Pop a tag off the current set of stacks.
-
-        Args:
-          tag: A string, a tag to be removed from the current set of tags.
-        """
-        try:
-            self.tags.remove(tag)
-        except ValueError:
-            meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
 
     def pushmeta(self, filename, lineno, key_value):
         """Set a metadata field on the current key-value pairs to be added to transactions.
@@ -881,8 +849,6 @@ class Builder(lexer.LexBuilder):
         Returns:
           A sanitized pair of (tags, links).
         """
-        if self.tags:
-            tags.update(self.tags)
         return (frozenset(tags) if tags else EMPTY_SET,
                 frozenset(links) if links else EMPTY_SET)
 

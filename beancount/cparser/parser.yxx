@@ -88,6 +88,7 @@ void ParseFile(PyObject* builder_obj,
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "reflex/input.h"
 
@@ -123,7 +124,10 @@ inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
 }
 
 // Create two sets from a TagsLinks object.
-std::tuple<PyObject*, PyObject*> TagsLinksToPython(TagsLinks* tags_links) {
+std::tuple<PyObject*, PyObject*> TagsLinksToPython(
+  TagsLinks* tags_links,
+  const absl::flat_hash_set<string>* active_tags) {
+
   assert(tags_links != nullptr);
   PyObject* tags = PySet_New(0);
   for (const auto& tag : tags_links->tags()) {
@@ -133,6 +137,14 @@ std::tuple<PyObject*, PyObject*> TagsLinksToPython(TagsLinks* tags_links) {
   for (const auto& link : tags_links->links()) {
     PySet_Add(links, StringToPyString(link));
   }
+
+  // Add the set of active tags if provided.
+  if (active_tags != nullptr) {
+    for (const auto& tag : *active_tags) {
+      PySet_Add(tags, StringToPyString(tag));
+    }
+  }
+
   return {tags, links};
 }
 
@@ -224,7 +236,7 @@ void yyerror(const location& loc, yyscan_t scanner, PyObject* builder, char cons
 // assumed to be ordered, resolving references occurs as a separate phase.
 class Builder {
 public:
-  Builder(PyObject* builder_obj, PyObject* missing_obj);
+  Builder(scanner::Scanner& scanner, PyObject* builder_obj, PyObject* missing_obj);
   virtual ~Builder() {}
 
   void Initialize() {
@@ -233,6 +245,7 @@ public:
 
   inline PyObject* builder() const { return builder_obj_; }
   inline PyObject* missing() const { return missing_obj_; }
+  const absl::flat_hash_set<string>& active_tags() const { return active_tags_; }
 
   // // Set the location for errors to occur.
   // // This is a stateful setter whose data get used to report errors.
@@ -248,6 +261,30 @@ public:
     return account;
   }
 
+  void PushTag(string_view tag) {
+    active_tags_.insert({tag.data(), tag.size()});
+  }
+
+  void PopTag(string_view tag) {
+    auto iter = active_tags_.find({tag.data(), tag.size()});
+    if (iter != active_tags_.end()) {
+      active_tags_.erase(iter);
+    } else {
+      LogError(absl::StrFormat("Attempting to pop absent tag: '%s'", tag),
+               scanner_.location());
+    }
+  }
+
+  // Insert an error in the error log. These will be returned along with the
+  // ledger as output of the parsing phase.
+  void LogError(string_view message, const location& loc) {
+    // TODO(blais):
+  }
+  void LogError(string_view message, const string_view& filename) {
+    // TODO(blais):
+  }
+  // TODO(blais): Can we turn this error logging into a stream instead?
+
   // Check that all the accounts are matching the prefix names provided in the
   // options.
   void ValidateAccounts() {
@@ -258,9 +295,17 @@ public:
     //         ParserError(meta, "Invalid account name: {}".format(account), None))
   }
 
+  void Finalize() {
+    // If the user left some tags unbalanced, issue an error.
+    for (const auto& tag : active_tags_) {
+      LogError(absl::StrFormat("Unbalanced pushed tag: '%s'", tag),
+               *scanner_.location().begin.filename);
+    }
+  }
+
 private:
-  // // Last registered location.
-  // parser::location location_;
+  // Scanner (in order to get the last location).
+  scanner::Scanner scanner_;
 
   // Python grammar builder object.
   PyObject* builder_obj_;
@@ -270,6 +315,9 @@ private:
 
   // A set of all unique account names seen in the file.
   absl::flat_hash_set<string> accounts_;
+
+  // A set of active tags.
+  absl::flat_hash_set<string> active_tags_;
 };
 
 }  // namespace parser
@@ -397,8 +445,8 @@ private:
 %type <PyObject*> opt_booking
 %type <decimal::Decimal> number_expr
 %type <PyObject*> option
-%type <PyObject*> pushtag
-%type <PyObject*> poptag
+%type pushtag
+%type poptag
 %type <PyObject*> pushmeta
 %type <PyObject*> popmeta
 %type <PyObject*> include
@@ -513,9 +561,9 @@ tags_links:
 transaction:
   DATE txn txn_strings tags_links eol posting_or_kv_list
     {
-      auto [tags, links] = TagsLinksToPython($4);
-      delete $4;
       PyObject* s1 = DateToPyDate($1);
+
+      // Encode txn_strings.
       PyObject* list = PyList_New(0);
       if (!$3.first.empty()) {
         PyList_Append(list, StringToPyString(($3.first)));
@@ -523,6 +571,11 @@ transaction:
       if (!$3.second.empty()) {
         PyList_Append(list, StringToPyString(($3.second)));
       }
+
+      // Split up the rest of the transaction line, tags and links.
+      auto [tags, links] = TagsLinksToPython($4, &builder.active_tags());
+      delete $4;
+
       BUILDY(DECREF(s1, list, tags, links, $6),
              $$, "transaction", "ObOOOO", s1, $2, list, tags, links, $6);
     }
@@ -648,7 +701,7 @@ posting_or_kv_list:
     }
   | posting_or_kv_list INDENT tags_links eol
     {
-      auto [tags, links] = TagsLinksToPython($3);
+      auto [tags, links] = TagsLinksToPython($3, nullptr);
       delete $3;
       PyObject* tags_links;
       BUILDY(DECREF(tags, links),
@@ -705,17 +758,13 @@ currency_list:
 pushtag:
   PUSHTAG TAG eol
     {
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s2),
-             $$, "pushtag", "O", s2);
+      builder.PushTag($2);
     }
 
 poptag:
   POPTAG TAG eol
     {
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s2),
-             $$, "poptag", "O", s2);
+      builder.PopTag($2);
     }
 
 pushmeta:
@@ -991,7 +1040,7 @@ filename:
 document:
   DATE DOCUMENT account filename tags_links eol key_value_list
     {
-      auto [tags, links] = TagsLinksToPython($5);
+      auto [tags, links] = TagsLinksToPython($5, &builder.active_tags());
       delete $5;
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1206,7 +1255,8 @@ namespace beancount {
 
 namespace parser {
 
-Builder::Builder(PyObject* builder_obj, PyObject* missing_obj) :
+Builder::Builder(scanner::Scanner& scanner, PyObject* builder_obj, PyObject* missing_obj) :
+  scanner_(scanner),
   builder_obj_(builder_obj),
   missing_obj_(missing_obj)
 {
@@ -1282,7 +1332,7 @@ void Parse(PyObject* builder_obj,
     scanner.SetFilename(filename.value());
   }
   scanner.SetLineOffset(line_offset);
-  parser::Builder builder(builder_obj, missing_obj);
+  parser::Builder builder(scanner, builder_obj, missing_obj);
 
   // Run the parser.
   beancount::parser::Parser parser(scanner, builder);
@@ -1292,7 +1342,6 @@ void Parse(PyObject* builder_obj,
   try {
     int result = parser.parse();
     (void)result;
-    cout << "result " << result << endl;
   } catch (const std::runtime_error& exc) {
     cerr << "exc " << exc.what() << endl;
   }
