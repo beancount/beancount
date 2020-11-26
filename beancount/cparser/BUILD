@@ -87,6 +87,21 @@ cc_library(
 #     ],
 # )
 
+# TODO(blais): Our goal in rewriting is to remove this by chipping away at it.
+py_library(
+    name = "grammar",
+    srcs = ["grammar.py"],
+    deps = [
+        "//beancount/parser:lexer",
+        "//beancount/parser:options",
+        "//beancount/core:number",
+        "//beancount/core:display_context",
+        "//beancount/core:data",
+        "//beancount/core:position",
+        "//beancount/core:account",
+    ],
+)
+
 #-------------------------------------------------------------------------------
 # Intermediate representation.
 
@@ -153,7 +168,7 @@ py_test(
     srcs = ["extmodule_test.py"],
     deps = [
         ":extmodule",
-        "//beancount/parser:grammar",
+        "//beancount/cparser:grammar",
         "//beancount/parser:printer",
         "//beancount/core:number",
     ],

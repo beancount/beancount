@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 from beancount.cparser import extmodule
-from beancount.parser import grammar
+from beancount.cparser import grammar
 from beancount.parser import printer
 
 

@@ -116,9 +116,6 @@ class Builder(lexer.LexBuilder):
     def __init__(self):
         lexer.LexBuilder.__init__(self)
 
-        # A stack of the current active tags.
-        self.tags = []
-
         # A dict of the current active metadata fields (not a stack).
         self.meta = collections.defaultdict(list)
 
@@ -153,12 +150,6 @@ class Builder(lexer.LexBuilder):
             errors: A list of errors, hopefully empty.
             options_map: A dict of options.
         """
-        # If the user left some tags unbalanced, issue an error.
-        for tag in self.tags:
-            meta = new_metadata(self.options['filename'], 0)
-            self.errors.append(
-                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
-
         # If the user left some metadata unpopped, issue an error.
         for key, value_list in self.meta.items():
             meta = new_metadata(self.options['filename'], 0)
@@ -258,29 +249,6 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
-
-    def pushtag(self, filename, lineno, tag):
-        """Push a tag on the current set of tags.
-
-        Note that this does not need to be stack ordered.
-
-        Args:
-          tag: A string, a tag to be added.
-        """
-        self.tags.append(tag)
-
-    def poptag(self, filename, lineno, tag):
-        """Pop a tag off the current set of stacks.
-
-        Args:
-          tag: A string, a tag to be removed from the current set of tags.
-        """
-        try:
-            self.tags.remove(tag)
-        except ValueError:
-            meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
 
     def pushmeta(self, filename, lineno, key_value):
         """Set a metadata field on the current key-value pairs to be added to transactions.
@@ -720,7 +688,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Note(meta, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename, tags_links,
+    def document(self, filename, lineno, date, account, document_filename, tags,links,
                  kvlist):
         """Process a document directive.
 
@@ -730,7 +698,8 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           document_filename: a str, the name of the document file.
-          tags_links: The current TagsLinks accumulator.
+          tags: A set of tag strings.
+          links: A set of link strings.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Document object.
@@ -846,38 +815,6 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, filename, lineno):
-        """Create a new TagsLinks instance.
-
-        Returns:
-          An instance of TagsLinks, initialized with expected attributes.
-        """
-        return TagsLinks(set(), set())
-
-    def tag_link_TAG(self, filename, lineno, tags_links, tag):
-        """Add a tag to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          tag: A string, the new tag to insert.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.tags.add(tag)
-        return tags_links
-
-    def tag_link_LINK(self, filename, lineno, tags_links, link):
-        """Add a link to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          link: A string, the new link to insert.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.links.add(link)
-        return tags_links
-
     def _unpack_txn_strings(self, txn_strings, meta):
         """Unpack a tags_links accumulator to its payee and narration fields.
 
@@ -912,12 +849,10 @@ class Builder(lexer.LexBuilder):
         Returns:
           A sanitized pair of (tags, links).
         """
-        if self.tags:
-            tags.update(self.tags)
         return (frozenset(tags) if tags else EMPTY_SET,
                 frozenset(links) if links else EMPTY_SET)
 
-    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
+    def transaction(self, filename, lineno, date, flag, txn_strings, tags, links,
                     posting_or_kv_list):
         """Process a transaction directive.
 
@@ -935,9 +870,11 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
           txn_strings: A list of strings, possibly empty, possibly longer.
-          tags_links: A TagsLinks namedtuple of tags, and/or links.
-          posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
-            this transaction, or None, if no postings have been declared.
+          tags: A set of tag strings.
+          links: A set of link strings.
+          posting_or_kv_list: a list of Posting, KeyValue or TagsLinks
+            instances, to be inserted in this transaction, or None, if no
+            postings have been declared.
         Returns:
           A new Transaction object.
         """
@@ -946,7 +883,6 @@ class Builder(lexer.LexBuilder):
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []
-        tags, links = tags_links.tags, tags_links.links
         if posting_or_kv_list:
             last_posting = None
             for posting_or_kv in posting_or_kv_list:
@@ -1020,3 +956,6 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
+
+    def tags_links_new(self, filename, lineno, tags, links):
+        return TagsLinks(tags, links)
