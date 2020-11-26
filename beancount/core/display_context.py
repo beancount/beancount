@@ -61,6 +61,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import decimal
 import enum
 import io
 from decimal import Decimal
@@ -217,7 +218,15 @@ class DisplayContext:
             # Note: We could probably logging.warn() this situation here.
             return number
         qdigit = Decimal(1).scaleb(-num_fractional_digits)
-        return number.quantize(qdigit)
+
+        with decimal.localcontext() as ctx:
+            # Allow precision for numbers as large as 1 billion in addition to
+            # the required number of fractional digits.
+            #
+            # TODO(blais): Review this to assess performance impact, and whether
+            # we could fold this outside a calling loop.
+            ctx.prec = num_fractional_digits + 9
+            return number.quantize(qdigit)
 
     def build(self,
               alignment=Align.NATURAL,
