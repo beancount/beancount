@@ -116,9 +116,6 @@ class Builder(lexer.LexBuilder):
     def __init__(self):
         lexer.LexBuilder.__init__(self)
 
-        # A dict of the current active metadata fields (not a stack).
-        self.meta = collections.defaultdict(list)
-
         # The result from running the parser, a list of entries.
         self.entries = []
 
@@ -150,14 +147,6 @@ class Builder(lexer.LexBuilder):
             errors: A list of errors, hopefully empty.
             options_map: A dict of options.
         """
-        # If the user left some metadata unpopped, issue an error.
-        for key, value_list in self.meta.items():
-            meta = new_metadata(self.options['filename'], 0)
-            self.errors.append(
-                ParserError(meta, (
-                    "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
-                        key, ', '.join(value_list)), None))
-
         # Weave the commas option in the DisplayContext itself, so it propagates
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options['render_commas'])
@@ -249,35 +238,6 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
-
-    def pushmeta(self, filename, lineno, key_value):
-        """Set a metadata field on the current key-value pairs to be added to transactions.
-
-        Args:
-          key_value: A KeyValue instance, to be added to the dict of metadata.
-        """
-        key, value = key_value
-        self.meta[key].append(value)
-
-    def popmeta(self, filename, lineno, key):
-        """Removed a key off the current set of stacks.
-
-        Args:
-          key: A string, a key to be removed from the meta dict.
-        """
-        try:
-            if key not in self.meta:
-                raise IndexError
-            value_list = self.meta[key]
-            value_list.pop(-1)
-            if not value_list:
-                self.meta.pop(key)
-        except IndexError:
-            meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta,
-                            "Attempting to pop absent metadata key: '{}'".format(key),
-                            None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -853,7 +813,7 @@ class Builder(lexer.LexBuilder):
                 frozenset(links) if links else EMPTY_SET)
 
     def transaction(self, filename, lineno, date, flag, txn_strings, tags, links,
-                    posting_or_kv_list):
+                    posting_or_kv_list, active_meta):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -875,6 +835,7 @@ class Builder(lexer.LexBuilder):
           posting_or_kv_list: a list of Posting, KeyValue or TagsLinks
             instances, to be inserted in this transaction, or None, if no
             postings have been declared.
+          active_meta:
         Returns:
           A new Transaction object.
         """
@@ -923,9 +884,8 @@ class Builder(lexer.LexBuilder):
         tags, links = self._finalize_tags_links(tags, links)
 
         # Initialize the metadata fields from the set of active values.
-        if self.meta:
-            for key, value_list in self.meta.items():
-                meta[key] = value_list[-1]
+        if active_meta:
+            meta.update(active_meta)
 
         # Add on explicitly defined values.
         if explicit_meta:

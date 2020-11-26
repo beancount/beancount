@@ -100,6 +100,7 @@ using std::list;
 using std::pair;
 using std::string;
 using std::unique_ptr;
+using std::vector;
 
 namespace beancount {
 namespace parser {
@@ -246,6 +247,9 @@ public:
   inline PyObject* builder() const { return builder_obj_; }
   inline PyObject* missing() const { return missing_obj_; }
   const absl::flat_hash_set<string>& active_tags() const { return active_tags_; }
+  const absl::flat_hash_map<string, vector<PyObject*>>& active_meta() const {
+    return active_meta_;
+  }
 
   // // Set the location for errors to occur.
   // // This is a stateful setter whose data get used to report errors.
@@ -275,6 +279,28 @@ public:
     }
   }
 
+  void PushMeta(string_view key, PyObject* value) {
+    auto& value_list = active_meta_[key];
+    value_list.push_back(value);
+    Py_INCREF(value);
+  }
+
+  void PopMeta(string_view key) {
+    auto iter = active_meta_.find(key);
+    if (iter == active_meta_.end()) {
+      LogError(absl::StrFormat("Attempting to pop absent metadata key: '%s'", key),
+               scanner_.location());
+    } else {
+      auto& value_list = iter->second;
+      assert(value_list.size() > 0);
+      Py_DECREF(value_list.back());
+      value_list.pop_back();
+      if (value_list.empty()) {
+        active_meta_.erase(iter);
+      }
+    }
+  }
+
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
   void LogError(string_view message, const location& loc) {
@@ -301,6 +327,13 @@ public:
       LogError(absl::StrFormat("Unbalanced pushed tag: '%s'", tag),
                *scanner_.location().begin.filename);
     }
+
+    // If the user left some metadata unpopped, issue an error.
+    for (const auto& [key, value_list] : active_meta_) {
+      LogError(absl::StrFormat(
+                 "Unbalanced metadata key '%s' has leftover metadata", key),
+               *scanner_.location().begin.filename);
+    }
   }
 
 private:
@@ -318,6 +351,10 @@ private:
 
   // A set of active tags.
   absl::flat_hash_set<string> active_tags_;
+
+  // A dict of the current active metadata fields; each of the field values is a
+  // stack and the current value is at the top (last value).
+  absl::flat_hash_map<string, vector<PyObject*>> active_meta_;
 };
 
 }  // namespace parser
@@ -409,6 +446,7 @@ private:
 %type <std::string_view> account
 %type <PyObject*> transaction
 %type <PyObject*> posting
+%type <std::pair<std::string, PyObject*>> c_key_value
 %type <PyObject*> key_value
 %type <PyObject*> key_value_line
 %type <PyObject*> key_value_list
@@ -447,8 +485,8 @@ private:
 %type <PyObject*> option
 %type pushtag
 %type poptag
-%type <PyObject*> pushmeta
-%type <PyObject*> popmeta
+%type pushmeta
+%type popmeta
 %type <PyObject*> include
 %type <PyObject*> plugin
 %type <PyObject*> file
@@ -576,8 +614,15 @@ transaction:
       auto [tags, links] = TagsLinksToPython($4, &builder.active_tags());
       delete $4;
 
-      BUILDY(DECREF(s1, list, tags, links, $6),
-             $$, "transaction", "ObOOOO", s1, $2, list, tags, links, $6);
+      // Create active metadata for builder.
+      PyObject* active_meta = PyDict_New();
+      for (const auto& [key, value_list] : builder.active_meta()) {
+        assert(value_list.size() > 0);
+        PyDict_SetItemString(active_meta, key.c_str(), value_list.back());
+      }
+
+      BUILDY(DECREF(s1, list, tags, links, $6, active_meta),
+             $$, "transaction", "ObOOOOO", s1, $2, list, tags, links, $6, active_meta);
     }
 
 optflag:
@@ -636,6 +681,12 @@ key_value:
       PyObject* s1 = StringToPyString($1);
       BUILDY(DECREF(s1, $3),
              $$, "key_value", "OO", s1, $3);
+    }
+
+c_key_value:
+  KEY COLON key_value_value
+    {
+      $$ = make_pair($1, $3);
     }
 
 key_value_line:
@@ -768,21 +819,15 @@ poptag:
     }
 
 pushmeta:
-  PUSHMETA key_value eol
+  PUSHMETA c_key_value eol
     {
-      /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
-       * within a tuple, so expand in the method (it receives two
-       * objects). See https://docs.python.org/3.4/c-api/arg.html. */
-      BUILDY(DECREF($2),
-             $$, "pushmeta", "O", $2);
+      builder.PushMeta($2.first, $2.second);
     }
 
 popmeta:
   POPMETA KEY COLON eol
     {
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s2),
-             $$, "popmeta", "O", s2);
+      builder.PopMeta($2);
     }
 
 open:
