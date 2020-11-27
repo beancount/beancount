@@ -28,14 +28,15 @@ message MetaValue {
   oneof value {
     string text = 1;
     string account = 2;
-    Date date = 3;
-    string currency = 4;
-    string tag = 5;
-    bool boolean = 6;
-    bool flag = 7;
-    Number number = 8;
-    Amount amount = 9;
-    int64 integer = 10;
+    string currency = 3;
+    string tag = 4;
+    string link = 5;
+    string flag = 6;
+    Date date = 7;
+    bool boolean = 8;
+    int64 integer = 9;
+    Number number = 10;
+    Amount amount = 11;
   }
 }
 

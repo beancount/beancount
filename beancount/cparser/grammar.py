@@ -589,81 +589,6 @@ class Builder(lexer.LexBuilder):
             dtype = type(value)
         return ValueType(value, dtype)
 
-    def key_value(self, filename, lineno, key, value):
-        """Process a document directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the account the document relates to.
-          document_filename: A str, the name of the document file.
-        Returns:
-          A new KeyValue object.
-        """
-        return KeyValue(key, value)
-
-    def posting(self, filename, lineno, account, units, cost, price, istotal, flag):
-        """Process a posting grammar rule.
-
-        Args:
-          filename: the current filename.
-          lineno: the current line number.
-          account: A string, the account of the posting.
-          units: An instance of Amount for the units.
-          cost: An instance of CostSpec for the cost.
-          price: Either None, or an instance of Amount that is the cost of the position.
-          istotal: A bool, True if the price is for the total amount being parsed, or
-                   False if the price is for each lot of the position.
-          flag: A string, one-character, the flag associated with this posting.
-        Returns:
-          A new Posting object, with no parent entry.
-        """
-        meta = new_metadata(filename, lineno)
-
-        # # Prices may not be negative.
-        # if price and isinstance(price.number, Decimal) and price.number < ZERO:
-        #     self.errors.append(
-        #         ParserError(meta, (
-        #             "Negative prices are not allowed: {} "
-        #             "(see http://furius.ca/beancount/doc/bug-negative-prices "
-        #             "for workaround)"
-        #         ).format(price), None))
-        #     # Fix it and continue.
-        #     price = Amount(abs(price.number), price.currency)
-
-        # If the price is specified for the entire amount, compute the effective
-        # price here and forget about that detail of the input syntax.
-        if istotal:
-            if units.number == ZERO:
-                number = ZERO
-            else:
-                number = price.number
-                if number is not MISSING:
-                    number = number/abs(units.number)
-            price = Amount(number, price.currency)
-
-        # Note: Allow zero prices because we need them for round-trips for
-        # conversion entries.
-        #
-        # if price is not None and price.number == ZERO:
-        #     self.errors.append(
-        #         ParserError(meta, "Price is zero: {}".format(price), None))
-
-        # If both cost and price are specified, the currencies must match, or
-        # that is an error.
-        if (cost is not None and
-            price is not None and
-            isinstance(cost.currency, str) and
-            isinstance(price.currency, str) and
-            cost.currency != price.currency):
-            self.errors.append(
-                ParserError(meta,
-                            "Cost and price currencies must match: {} != {}".format(
-                                cost.currency, price.currency), None))
-
-        return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
-
     def _unpack_txn_strings(self, txn_strings, meta):
         """Unpack a tags_links accumulator to its payee and narration fields.
 
@@ -805,6 +730,3 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
-
-    def tags_links_new(self, filename, lineno, tags, links):
-        return TagsLinks(tags, links)

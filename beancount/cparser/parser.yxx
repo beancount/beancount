@@ -103,6 +103,7 @@ using std::pair;
 using std::string;
 using std::unique_ptr;
 using std::vector;
+using absl::StrFormat;
 
 namespace beancount {
 namespace parser {
@@ -249,7 +250,7 @@ public:
   virtual ~Builder() {}
 
   void Initialize() {
-    //// kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
+    //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
   }
 
   inline PyObject* builder() const { return builder_obj_; }
@@ -282,7 +283,7 @@ public:
     if (iter != active_tags_.end()) {
       active_tags_.erase(iter);
     } else {
-      LogError(absl::StrFormat("Attempting to pop absent tag: '%s'", tag),
+      LogError(StrFormat("Attempting to pop absent tag: '%s'", tag),
                scanner_.location());
     }
   }
@@ -296,7 +297,7 @@ public:
   void PopMeta(string_view key) {
     auto iter = active_meta_.find(key);
     if (iter == active_meta_.end()) {
-      LogError(absl::StrFormat("Attempting to pop absent metadata key: '%s'", key),
+      LogError(StrFormat("Attempting to pop absent metadata key: '%s'", key),
                scanner_.location());
     } else {
       auto& value_list = iter->second;
@@ -317,9 +318,15 @@ public:
   void PreparePosting(inter::Posting* posting,
                       const char flag,
                       string_view account,
-                      const location& loc) const {
+                      bool is_total,
+                      const location& loc) {
+    assert(posting != nullptr);
+
+    // Store flag and account name.
     posting->set_flag(&flag);
     posting->set_account(account.data(), account.size());
+
+    // Store filename and line number in metadata.
     {
       auto* kv = posting->mutable_meta()->add_kv();
       kv->set_key("filename");
@@ -331,8 +338,54 @@ public:
       kv->set_key("lineno");
       kv->mutable_value()->set_integer(loc.begin.line);
     }
-  }
 
+    // Check conditions renamed to price annotations.
+    if (posting->has_price()) {
+      const auto& price = posting->price();
+
+      // If the price is specified for the entire amount, compute the effective
+      // price here and forget about that detail of the input syntax.
+      if (is_total) {
+        if (!posting->has_units() || !posting->units().has_number()){
+          // units.number is MISSING.
+          // Note: we could potentially do a better job and attempt to f
+          // this up after interpolation, but this syntax is pretty rare
+          // anyway.
+          LogError(StrFormat("Total price on a posting without units: %s.",
+                             price.DebugString()),
+                   scanner_.location());
+          posting->clear_price();
+        } else if (price.has_number()) {
+          decimal::Decimal dunits = ProtoToDecimal(posting->units().number());
+          decimal::Decimal dprice;
+          if (dunits.iszero()) {
+            dprice = dunits;
+          } else {
+            dprice = ProtoToDecimal(price.number()) / dunits.abs();
+          }
+          DecimalToProto(dprice, posting->mutable_price()->mutable_number());
+        }
+      }
+
+      // Note: Allow zero prices because we need them for round-trips for
+      // conversion entries.
+      //
+      // if price is not None and price.number == ZERO:
+      //     self.errors.append(
+      //         ParserError(meta, "Price is zero: {}".format(price), None))
+
+      // If both cost and price are specified, the currencies must match, or
+      // that is an error.
+      if (posting->has_cost_spec() &&
+          posting->cost_spec().has_currency() &&
+          price.has_currency() &&
+          posting->cost_spec().currency() != price.currency()) {
+        LogError(StrFormat("Cost and price currencies must match: %s != %s",
+                           posting->cost_spec().currency(), price.currency()),
+                 scanner_.location());
+      }
+    }
+  }
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
@@ -357,13 +410,13 @@ public:
   void Finalize() {
     // If the user left some tags unbalanced, issue an error.
     for (const auto& tag : active_tags_) {
-      LogError(absl::StrFormat("Unbalanced pushed tag: '%s'", tag),
+      LogError(StrFormat("Unbalanced pushed tag: '%s'", tag),
                *scanner_.location().begin.filename);
     }
 
     // If the user left some metadata unpopped, issue an error.
     for (const auto& [key, value_list] : active_meta_) {
-      LogError(absl::StrFormat(
+      LogError(StrFormat(
                  "Unbalanced metadata key '%s' has leftover metadata", key),
                *scanner_.location().begin.filename);
     }
@@ -423,7 +476,8 @@ private:
 %token <std::string_view> error
 
 /* Types for terminal symbols */
-%token <std::string_view> INDENT     /* Initial indent IF at the beginning of a line */
+%token INDENT     /* Initial indent IF at the beginning of a line */
+%token DEDENT     /* Initial indent IF at the beginning of a line */
 %token EOL        /* End-of-line */
 %token PIPE       /* | */
 %token ATAT       /* @@ */
@@ -477,15 +531,21 @@ private:
 %type <char> txn
 %type <char> optflag
 %type <std::string_view> account
+
+%type <PyObject*> transaction_line
 %type <PyObject*> transaction
+
+%type <std::vector<beancount::inter::Posting*>> posting_list
+%type <beancount::inter::Posting*> posting_and_metadata
 %type <beancount::inter::Posting*> posting
-%type <PyObject*> py_posting
-%type <std::pair<std::string, PyObject*>> c_key_value
-%type <PyObject*> key_value
-%type <PyObject*> key_value_line
-%type <PyObject*> key_value_list
+
+%type <PyObject*> py_indented_metadata  /* TODO(blais): Remove this. */
+%type <beancount::Meta*> indented_metadata
+%type <beancount::Meta*> metadata
+%type <beancount::Meta::KV*> metadata_line
+
+%type <std::pair<std::string, PyObject*>> key_value
 %type <PyObject*> key_value_value
-%type <PyObject*> posting_or_kv_list
 %type <std::vector<std::string>> currency_list
 %type <PyObject*> open
 %type <PyObject*> close
@@ -538,7 +598,7 @@ private:
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 7
+%expect 5
 
 
 
@@ -628,13 +688,30 @@ tags_links:
       $$ = $1;
     }
 
+/* A full matched transaction. */
 transaction:
-  DATE txn txn_strings tags_links eol posting_or_kv_list
+  /* A transaction with no indented body (this is valid). */
+  transaction_line
+    {
+      $$ = $1;
+    }
+  /* A transaction with an indented body. */
+  | transaction_line INDENT metadata posting_list DEDENT
+    {
+      // TODO(blais): Attach metadata and postings.
+      $$ = $1;
+    }
+
+/* Matches just the first line of a transaction, without its metadata. */
+transaction_line:
+  DATE txn txn_strings tags_links eol
     {
       PyObject* s1 = DateToPyDate($1);
+      (void)s1;
 
       // Encode txn_strings.
       PyObject* list = PyList_New(0);
+      (void)list;
       if (!$3.first.empty()) {
         PyList_Append(list, StringToPyString(($3.first)));
       }
@@ -645,6 +722,8 @@ transaction:
       // Split up the rest of the transaction line, tags and links.
       auto [tags, links] = TagsLinksToPython($4, &builder.active_tags());
       delete $4;
+      (void)tags;
+      (void)links;
 
       // Create active metadata for builder.
       PyObject* active_meta = PyDict_New();
@@ -653,8 +732,13 @@ transaction:
         PyDict_SetItemString(active_meta, key.c_str(), value_list.back());
       }
 
-      BUILDY(DECREF(s1, list, tags, links, $6, active_meta),
-             $$, "transaction", "ObOOOOO", s1, $2, list, tags, links, $6, active_meta);
+      DECREF(s1, list, tags, links, active_meta);
+#if 0
+      BUILDY(DECREF(s1, list, tags, links, active_meta),
+             $$, "transaction", "ObOOOOO", s1, $2, list, tags, links, active_meta);
+#endif
+      Py_INCREF(Py_None);
+      $$ = Py_None;
     }
 
 optflag:
@@ -677,14 +761,15 @@ price_annotation:
     {
       $price_annotation = $incomplete_amount;
 
-      // Prices may not be negative.
+      // Prices may not be negative. Check and issue an error if found; fix up
+      // the price to its absolute value and continue.
       if ($price_annotation->has_number()) {
         decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
         if (dec.sign() == -1) {
           builder.LogError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)", scanner.location());
-          // Fix it and continue.
+          // Invert and continue.
           DecimalToProto(-dec, $price_annotation->mutable_number());
         }
       }
@@ -696,66 +781,136 @@ account:
       $$ = builder.Account($1);
     }
 
-posting:
-  INDENT optflag account incomplete_amount cost_spec eol
+
+/* A list of metadata (optionally empty), including its indentation. */
+indented_metadata:
+  %empty
     {
-      $posting = new inter::Posting();
-      $posting->mutable_units()->CopyFrom(*$incomplete_amount);
-      $posting->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      builder.PreparePosting($posting, $optflag, $account, scanner.location());
+      $$ = nullptr;
     }
-  | INDENT optflag account incomplete_amount cost_spec AT price_annotation eol
+  | INDENT metadata DEDENT
     {
-      $posting = new inter::Posting();
-      $posting->mutable_units()->CopyFrom(*$incomplete_amount);
-      $posting->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      $posting->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($posting, $optflag, $account, scanner.location());
-    }
-  | INDENT optflag account incomplete_amount cost_spec ATAT price_annotation eol
-    {
-      $posting = new inter::Posting();
-      $posting->mutable_units()->CopyFrom(*$incomplete_amount);
-      $posting->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      $posting->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($posting, $optflag, $account, scanner.location());
-    }
-  | INDENT optflag account eol
-    {
-      $posting = new inter::Posting();
-      builder.PreparePosting($posting, $optflag, $account, scanner.location());
+      $$ = $2;
     }
 
-py_posting:
-  posting
+// FIXME: remove
+py_indented_metadata:
+  indented_metadata
     {
-      delete $1;
-
-      // TODO(blais): Do translation.
-      $$ = Py_None;
       Py_INCREF(Py_None);
+      $$ = Py_None;
+    }
+
+/* A list of metadata (optionally empty). */
+metadata:
+  %empty
+    {
+      $$ = nullptr;
+    }
+  | metadata metadata_line
+    {
+      if ($1 == nullptr) {
+        $$ = new beancount::Meta();
+      } else {
+        $$ = $1;
+      }
+      auto* kv = $$->add_kv();
+      kv->CopyFrom(*$2);
+      delete $2;
+    }
+
+/* A single line of a metadata declaration. */
+metadata_line:
+  /* Regular key-value pairs. */
+  key_value eol
+    {
+      $$ = new beancount::Meta::KV();
+      // TODO(blais): set key value
+    }
+  /* A tag can be used by itself as metadata. */
+  | TAG eol
+    {
+      $$ = new beancount::Meta::KV();
+      // TODO(blais): set key value
+    }
+  /* A link can be used by itself as metadata. */
+  | LINK eol
+    {
+      $$ = new beancount::Meta::KV();
+      // TODO(blais): set key value
+    }
+
+/* A list of postings, possibly empty. */
+posting_list:
+  %empty
+    {
+      $$ = {};
+    }
+  /* Matches an empty or comment indented line. It's convenient to be able to
+   * comment indented postings. */
+  | posting_list eol
+  /* Matches an actual posting. */
+  | posting_list posting_and_metadata
+    {
+      $1.push_back($2);
+      $$ = $1;
+    }
+
+/* A single posting and its associated metadata. */
+posting_and_metadata:
+  posting indented_metadata
+    {
+      if ($2 != nullptr) {
+        $1->mutable_meta()->CopyFrom(*$2);
+        delete $2;
+      }
+      $$ = $1;
+    }
+
+/* A posting line, without any of its metadata. */
+posting:
+  /* Variation with no price. */
+  optflag account incomplete_amount cost_spec eol
+    {
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+    }
+  /* Variation with price. */
+  | optflag account incomplete_amount cost_spec AT price_annotation eol
+    {
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      $$->mutable_price()->CopyFrom(*$price_annotation);
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+    }
+  /* Variation with complete price. */
+  | optflag account incomplete_amount cost_spec ATAT price_annotation eol
+    {
+      // TODO(blais): Merge this rule with the one above, by inspecting the
+      // value of AT and ATAT.
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      $$->mutable_price()->CopyFrom(*$price_annotation);
+      builder.PreparePosting($$, $optflag, $account, true, scanner.location());
+    }
+  /* Variation with just an account name. */
+  | optflag account eol
+    {
+      $$ = new inter::Posting();
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
 
 
 key_value:
   KEY COLON key_value_value
     {
-      PyObject* s1 = StringToPyString($1);
-      BUILDY(DECREF(s1, $3),
-             $$, "key_value", "OO", s1, $3);
-    }
-
-c_key_value:
-  KEY COLON key_value_value
-    {
       $$ = make_pair($1, $3);
     }
 
-key_value_line:
-  INDENT key_value eol
-    {
-      $$ = $2;
-    }
 
 key_value_value:
   STRING
@@ -802,55 +957,6 @@ key_value_value:
       $$ = Py_None;
     }
 
-posting_or_kv_list:
-  %empty
-    {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
-    }
-  | posting_or_kv_list INDENT eol
-    {
-      $$ = $1;
-    }
-  | posting_or_kv_list INDENT tags_links eol
-    {
-      auto [tags, links] = TagsLinksToPython($3, nullptr);
-      delete $3;
-      PyObject* tags_links;
-      BUILDY(DECREF(tags, links),
-             tags_links, "tags_links_new", "OO", tags, links);
-      BUILDY(DECREF($1, tags_links),
-             $$, "handle_list", "OO", $1, tags_links);
-    }
-  | posting_or_kv_list key_value_line
-    {
-      BUILDY(DECREF($1, $2),
-             $$, "handle_list", "OO", $1, $2);
-    }
-  | posting_or_kv_list py_posting
-    {
-      $$ = $1; // FIXME: remove
-#if 0
-      BUILDY(DECREF($1, $2),
-             $$, "handle_list", "OO", $1, $2);
-#endif
-    }
-
-key_value_list:
-  %empty
-    {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
-    }
-  | key_value_list INDENT eol
-    {
-      $$ = $1;
-    }
-  | key_value_list key_value_line
-    {
-      BUILDY(DECREF($1, $2),
-             $$, "handle_list", "OO", $1, $2);
-    }
 
 currency_list:
   %empty
@@ -880,7 +986,7 @@ poptag:
     }
 
 pushmeta:
-  PUSHMETA c_key_value eol
+  PUSHMETA key_value eol
     {
       builder.PushMeta($2.first, $2.second);
     }
@@ -892,7 +998,7 @@ popmeta:
     }
 
 open:
-  DATE OPEN account currency_list booking eol key_value_list
+  DATE OPEN account currency_list booking eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -922,7 +1028,7 @@ booking:
       string s1($1.data(), $1.size());
       Booking method;
       if (!Booking_Parse(s1, &method)) {
-        builder.LogError(absl::StrFormat("Invalid value for booking method: '%s'", s1),
+        builder.LogError(StrFormat("Invalid value for booking method: '%s'", s1),
                          scanner.location());
         // TODO(blais): For v2 behavior, set this to the global default.
         method = Booking::UNKNOWN;
@@ -935,7 +1041,7 @@ booking:
     }
 
 close:
-  DATE CLOSE account eol key_value_list
+  DATE CLOSE account eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -944,7 +1050,7 @@ close:
     }
 
 commodity:
-  DATE COMMODITY CURRENCY eol key_value_list
+  DATE COMMODITY CURRENCY eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -953,7 +1059,7 @@ commodity:
     }
 
 pad:
-  DATE PAD account account eol key_value_list
+  DATE PAD account account eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -963,7 +1069,7 @@ pad:
     }
 
 balance:
-  DATE BALANCE account amount_tolerance eol key_value_list
+  DATE BALANCE account amount_tolerance eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1076,8 +1182,8 @@ cost_spec:
       // `number_total` to a value in the input when using `{{...}}`.
       if ($2->has_number_total()) {
         builder.LogError(
-          absl::StrFormat("Per-unit cost may not be specified using total cost "
-                          "syntax: '%s'; ignoring per-unit cost", $2->DebugString()),
+          StrFormat("Per-unit cost may not be specified using total cost "
+                    "syntax: '%s'; ignoring per-unit cost", $2->DebugString()),
           scanner.location());
       } else {
         $2->mutable_number_total()->CopyFrom($2->number_per());
@@ -1124,7 +1230,7 @@ cost_comp:
     }
 
 price:
-  DATE PRICE CURRENCY amount eol key_value_list
+  DATE PRICE CURRENCY amount eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1133,7 +1239,7 @@ price:
     }
 
 event:
-  DATE EVENT STRING STRING eol key_value_list
+  DATE EVENT STRING STRING eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1143,7 +1249,7 @@ event:
     }
 
 query:
-  DATE QUERY STRING STRING eol key_value_list
+  DATE QUERY STRING STRING eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1153,7 +1259,7 @@ query:
     }
 
 note:
-  DATE NOTE account STRING eol key_value_list
+  DATE NOTE account STRING eol py_indented_metadata
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
@@ -1169,7 +1275,7 @@ filename:
     }
 
 document:
-  DATE DOCUMENT account filename tags_links eol key_value_list
+  DATE DOCUMENT account filename tags_links eol py_indented_metadata
     {
       auto [tags, links] = TagsLinksToPython($5, &builder.active_tags());
       delete $5;
@@ -1234,7 +1340,7 @@ custom_value_list:
     }
 
 custom:
-  DATE CUSTOM STRING custom_value_list eol key_value_list
+  DATE CUSTOM STRING custom_value_list eol py_indented_metadata
    {
      PyObject* s1 = DateToPyDate($1);
      PyObject* s3 = StringToPyString($3);
@@ -1468,7 +1574,9 @@ void Parse(PyObject* builder_obj,
   // Run the parser.
   beancount::parser::Parser parser(scanner, builder);
   parser.set_debug_stream(std::cerr);
-  // parser.set_debug_level(1);
+  if (getenv("DEBUG")) {
+    parser.set_debug_level(1);
+  }
   // scanner.set_debug(1);
   try {
     int result = parser.parse();
@@ -1522,3 +1630,8 @@ void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* mis
 //
 // - In the metadata, output not just the starting line but also the end line,
 //   for easy extraction of the original text.
+
+// These can get logged; override the appropriate methods.
+// /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
+//   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
+//   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

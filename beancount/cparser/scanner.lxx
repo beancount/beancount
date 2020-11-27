@@ -89,22 +89,19 @@ FLAGS           [!&#?%PSTCURM]
 //- Rules ---------------------------------------------------------------------
 %%
 
-
  /* Newlines matter. */
-\n {
-   // TODO(blais): Do we still need this? Use the C++ location instead.
-   /* yycolumn = 1; */
-   return Parser::make_EOL(location());
-}
+\n { return Parser::make_EOL(location()); }
 
- /* Whitespace: ignored, except when found at the beginning of a line
-  * and followed by a regular character. This is how we detect an
-  * initial indent and thus group syntax elements in the grammar. */
-^[ \t]+/[^ \t\r\n] { return Parser::make_INDENT(view(matcher()), location()); }
-[ \t\r]+ { }
+/* Indentation. This makes use of RE/flex's indentation stops feature and
+ * results in much tighter indentation handling. */
+^\h+                      // nodent, text is aligned to current margin column
+^\h+\i                    { return Parser::make_INDENT(location()); }
+^\h*\j                    { return Parser::make_DEDENT(location()); }
+\j                        { return Parser::make_DEDENT(location()); }
 
- /* Comments. */
-;.* { }
+/* Whitespace. */
+[ \t\r]+                  /* Ignored whitespace. */
+;.*                       /* Eat up Comments, anywhere. */
 
  /* Characters with special meanings. */
 \|		{ return Parser::make_PIPE(location()); }
