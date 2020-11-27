@@ -285,28 +285,6 @@ class Builder(lexer.LexBuilder):
                 # encounter this option.
                 sys.path.insert(0, path.dirname(filename))
 
-    def include(self, filename, lineno, include_filename):
-        """Process an include directive.
-
-        Args:
-          filename: current filename.
-          lineno: current line number.
-          include_name: A string, the name of the file to include.
-        """
-        self.options['include'].append(include_filename)
-
-    def plugin(self, filename, lineno, plugin_name, plugin_config):
-        """Process a plugin directive.
-
-        Args:
-          filename: current filename.
-          lineno: current line number.
-          plugin_name: A string, the name of the plugin module to import.
-          plugin_config: A string or None, an optional configuration string to
-            pass in to the plugin module.
-        """
-        self.options['plugin'].append((plugin_name, plugin_config))
-
     def handle_list(self, filename, lineno, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
 

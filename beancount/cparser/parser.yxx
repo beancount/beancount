@@ -34,6 +34,7 @@
 %code requires {
 
 #include "beancount/cparser/parser.pb.h"
+#include "beancount/cparser/options.pb.h"
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/number.pb.h"
 
@@ -272,6 +273,99 @@ public:
     return active_meta_;
   }
 
+  void AddOption(string_view key, string_view value) {
+    // TODO(blais): Convert Python code to C++ here.
+
+    const auto* descriptor = options_->GetDescriptor();
+    if (!descriptor->FindFieldByName(string(key))) {
+      // LogError(
+    // if key not in self.options:
+    //     meta = new_metadata(filename, lineno)
+    //     self.errors.append(
+    //         ParserError(meta, "Invalid option: '{}'".format(key), None))
+
+    }
+
+    // elif key in options.READ_ONLY_OPTIONS:
+    //     meta = new_metadata(filename, lineno)
+    //     self.errors.append(
+    //         ParserError(meta, "Option '{}' may not be set".format(key), None))
+
+    // else:
+    //     option_descriptor = options.OPTIONS[key]
+
+    //     # Issue a warning if the option is deprecated.
+    //     if option_descriptor.deprecated:
+    //         assert isinstance(option_descriptor.deprecated, str), "Internal error."
+    //         meta = new_metadata(filename, lineno)
+    //         self.errors.append(
+    //             DeprecatedError(meta, option_descriptor.deprecated, None))
+
+    //     # Rename the option if it has an alias.
+    //     if option_descriptor.alias:
+    //         key = option_descriptor.alias
+    //         option_descriptor = options.OPTIONS[key]
+
+    //     # Convert the value, if necessary.
+    //     if option_descriptor.converter:
+    //         try:
+    //             value = option_descriptor.converter(value)
+    //         except ValueError as exc:
+    //             meta = new_metadata(filename, lineno)
+    //             self.errors.append(
+    //                 ParserError(meta,
+    //                             "Error for option '{}': {}".format(key, exc),
+    //                             None))
+    //             return
+
+    //     option = self.options[key]
+    //     if isinstance(option, list):
+    //         # Append to a list of values.
+    //         option.append(value)
+
+    //     elif isinstance(option, dict):
+    //         # Set to a dict of values.
+    //         if not (isinstance(value, tuple) and len(value) == 2):
+    //             self.errors.append(
+    //                 ParserError(
+    //                     meta, "Error for option '{}': {}".format(key, value), None))
+    //             return
+    //         dict_key, dict_value = value
+    //         option[dict_key] = dict_value
+
+    //     elif isinstance(option, bool):
+    //         # Convert to a boolean.
+    //         if not isinstance(value, bool):
+    //             value = (value.lower() in {'true', 'on'}) or (value == '1')
+    //         self.options[key] = value
+
+    //     else:
+    //         # Set the value.
+    //         self.options[key] = value
+
+    //     # Refresh the list of valid account regexps as we go along.
+    //     if key.startswith('name_'):
+    //         # Update the set of valid account types.
+    //         self.account_regexp = valid_account_regexp(self.options)
+    //     elif key == 'insert_pythonpath':
+    //         # Insert the PYTHONPATH to this file when and only if you
+    //         # encounter this option.
+    //         sys.path.insert(0, path.dirname(filename))
+
+  }
+
+  void AddInclude(string_view filename) {
+    info_->add_include(filename.data(), filename.size());
+  }
+
+  void AddPlugin(string_view name, optional<string_view> config) {
+    auto* plugin = info_->add_plugin();
+    plugin->set_name(name.data(), name.size());
+    if (config.has_value()) {
+      plugin->set_config(config.value().data(), config.value().size());
+    }
+  }
+
   // Update the given repeated field with the list of active tags.
   // This function mutates the given argument.
   void SetTags(const google::protobuf::RepeatedPtrField<std::string>& tags,
@@ -488,6 +582,12 @@ public:
 private:
   // Scanner (in order to get the last location).
   scanner::Scanner scanner_;
+
+  // Processing info to produce from the parser.
+  std::unique_ptr<options::ProcessingInfo> info_;
+
+  // Options parsed.
+  std::unique_ptr<options::Options> options_;
 
   // Python grammar builder object.
   PyObject* builder_obj_;
@@ -1455,39 +1555,25 @@ directive:
   | custom
 
 option:
-  OPTION STRING STRING eol
+  OPTION STRING[key] STRING[value] eol
     {
-      PyObject* s2 = StringToPyString($2);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* ignore;
-      BUILDY(DECREF(ignore, s2, s3),
-             ignore, "option", "OO", s2, s3);
+      builder.AddOption($key, $value);
     }
 
 include:
   INCLUDE STRING eol
     {
-      PyObject* s2 = StringToPyString($2);
-      PyObject* ignore;
-      BUILDY(DECREF(ignore, s2),
-             ignore, "include", "O", s2);
+      builder.AddInclude($2);
     }
 
 plugin:
   PLUGIN STRING eol
     {
-      PyObject* s2 = StringToPyString($2);
-      PyObject* ignore;
-      BUILDY(DECREF(ignore, s2),
-             ignore, "plugin", "OO", s2, Py_None);
+      builder.AddPlugin($2, {});
     }
   | PLUGIN STRING STRING eol
     {
-      PyObject* s2 = StringToPyString($2);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* ignore;
-      BUILDY(DECREF(ignore, s2, s3),
-             ignore, "plugin", "OO", s2, s3);
+      builder.AddPlugin($2, $3);
     }
 
 /* Anything but a directive. Those constructs apply side-effects to the builder
@@ -1593,6 +1679,8 @@ Builder::Builder(scanner::Scanner& scanner, PyObject* builder_obj, PyObject* mis
   builder_obj_(builder_obj),
   missing_obj_(missing_obj)
 {
+  info_.reset(new options::ProcessingInfo());
+  options_.reset(new options::Options());
   assert(builder_obj_ != nullptr);
   assert(missing_obj_ != nullptr);
 }

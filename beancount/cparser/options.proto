@@ -16,10 +16,10 @@ message DisplayContext {
 }
 
 
-// Options that consist of data produced as a by-product of the parsing process.
-// These options cannot be input by the user. This is essentially read-only
-// state that is conceptually separate from the input options.
-message OutputContext {
+// Data produced as a by-product of the parsing process. This is essentially
+// read-only state that is conceptually separate from the input options,
+// produced by the parser.
+message ProcessingInfo {
   // The name of the top-level Beancount input file parsed from which the
   // contents of the ledger have been extracted. This may be None, if no file
   // was used.
@@ -68,7 +68,12 @@ message OutputContext {
   // is provided, it is provided as an extra argument to the plugin function.
   // Errors should not be printed out the output, they will be converted to
   // strings by the loader and displayed as dictated by the output medium.
-  repeated string plugin = 6;
+  message Plugin {
+    optional string name = 1;
+    // Configuration, most typically as a text-formatted protobuf message.
+    optional string config = 2;
+  }
+  repeated Plugin plugin = 6;
 }
 
 // Root names for accounts.
