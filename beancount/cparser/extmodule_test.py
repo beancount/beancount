@@ -24,7 +24,8 @@ class CppParserModuleTests(unittest.TestCase):
     entries, errors, options_map = builder.finalize()
     #pprint.pprint(options_map)
     pprint.pprint((len(entries), errors))
-    printer.print_entry(entries[-1])
+    if entries:
+      printer.print_entry(entries[-1])
 
 
 if __name__ == '__main__':

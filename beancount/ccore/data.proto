@@ -211,7 +211,7 @@ message Directive {
   // metadata.
 
   oneof body {
-    Transaction txn = 3;
+    Transaction transaction = 3;
     Open open = 4;
     Close close = 5;
     Commodity commodity = 6;

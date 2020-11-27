@@ -272,6 +272,22 @@ public:
     return active_meta_;
   }
 
+  // Update the given repeated field with the list of active tags.
+  // This function mutates the given argument.
+  void SetTags(const google::protobuf::RepeatedPtrField<std::string>& tags,
+               google::protobuf::RepeatedPtrField<std::string>* output) {
+    // First copy the active tags.
+    for (const auto& active_tag : active_tags_) {
+      *output->Add() = active_tag;
+    }
+    // Add the new tags, avoiding duplicates.
+    for (const auto& tag : tags) {
+      if (active_tags_.find(tag) == active_tags_.end()) {
+        *output->Add() = tag;
+      }
+    }
+  }
+
   // // Set the location for errors to occur.
   // // This is a stateful setter whose data get used to report errors.
   // void WithLocation(const parser::location& location) {
@@ -321,6 +337,32 @@ public:
       }
       delete value;
     }
+  }
+
+  // Insert the active metadata into the given argument.
+  void AddActiveMetadata(beancount::Meta* meta, beancount::Meta* output) {
+    // Insert active metadata.
+    for (auto [key, value_list] : active_meta_) {
+      auto* kv = output->mutable_kv()->Add();
+      kv->set_key(key);
+      kv->mutable_value()->CopyFrom(*value_list.back());
+    }
+
+    // Merge given metadata on top of active metadttaa.
+    if (meta != nullptr) {
+      output->MergeFrom(*meta);
+    }
+
+    // TODO(blais): Check for the presence of duplicates in the loop above and
+    // log and error if found.
+    //
+    //  value = explicit_meta.setdefault(posting_or_kv.key,
+    //                                   posting_or_kv.value)
+    //  if value is not posting_or_kv.value:
+    //      self.errors.append(ParserError(
+    //          meta, "Duplicate metadata field on entry: {}".format(
+    //              posting_or_kv), None))
+    //
   }
 
   void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
@@ -400,6 +442,12 @@ public:
     }
   }
 
+  // Note: We steal ownership.
+  void AppendDirective(inter::Directive*& directive) {
+    directives_.push_back(directive);
+    directive = nullptr;
+  }
+
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
   void LogError(string_view message, const location& loc) {
@@ -456,6 +504,9 @@ private:
   // A dict of the current active metadata fields; each of the field values is a
   // stack and the current value is at the top (last value).
   absl::flat_hash_map<string, vector<MetaValue*>> active_meta_;
+
+  // The accumulated list of all directives.
+  vector<inter::Directive*> directives_;
 };
 
 }  // namespace parser
@@ -547,14 +598,12 @@ private:
 %type <char> optflag
 %type <std::string_view> account
 
-%type <PyObject*> transaction_line
-%type <PyObject*> transaction
+%type <beancount::inter::Directive*> transaction_line
 
 %type <std::vector<beancount::inter::Posting*>> posting_list
 %type <beancount::inter::Posting*> posting_and_metadata
 %type <beancount::inter::Posting*> posting
 
-%type <PyObject*> py_indented_metadata  /* TODO(blais): Remove this. */
 %type <beancount::Meta*> indented_metadata
 %type <beancount::Meta*> metadata
 %type <beancount::Meta::KV*> metadata_line
@@ -573,26 +622,27 @@ private:
 %type <beancount::inter::CostSpec*> cost_comp_list
 %type <beancount::inter::CostSpec*> cost_spec
 
-%type <PyObject*> open
-%type <PyObject*> close
-%type <PyObject*> commodity
-%type <PyObject*> balance
-%type <PyObject*> pad
-%type <PyObject*> price
-%type <PyObject*> event
-%type <PyObject*> query
-%type <PyObject*> note
-%type <PyObject*> document
-%type <PyObject*> entry
-%type <PyObject*> declarations
-%type <PyObject*> custom
+%type <beancount::inter::Directive*> directive
+%type <beancount::inter::Directive*> transaction
+%type <beancount::inter::Directive*> balance
+%type <beancount::inter::Directive*> open
+%type <beancount::inter::Directive*> close
+%type <beancount::inter::Directive*> pad
+%type <beancount::inter::Directive*> document
+%type <beancount::inter::Directive*> note
+%type <beancount::inter::Directive*> event
+%type <beancount::inter::Directive*> price
+%type <beancount::inter::Directive*> commodity
+%type <beancount::inter::Directive*> query
+%type <beancount::inter::Directive*> custom
+
 
 %type <PyObject*> custom_value
 %type <PyObject*> custom_value_list
 
-%type <std::pair<std::string, std::string>> txn_strings  /* <payee, narration> */
+%type <std::pair<std::string, std::string>> payee_narration
 %type <beancount::inter::TagsLinks*> tags_links
-%type <PyObject*> filename
+%type <std::string_view> filename
 %type <Booking> booking
 %type <decimal::Decimal> number_expr
 %type <PyObject*> option
@@ -602,7 +652,9 @@ private:
 %type popmeta
 %type <PyObject*> include
 %type <PyObject*> plugin
-%type <PyObject*> file
+
+%type file
+%type declarations
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
@@ -680,11 +732,14 @@ number_expr:
       $$ = $2;
     }
 
-txn_strings:
+/* Payee and narration. */
+payee_narration:
+  /* Variant when both strings are present. */
   STRING STRING
     {
       $$ = make_pair($1, $2);
     }
+  /* Variant when only one string is present; interpret as narration only. */
   | STRING
     {
       $$ = make_pair("", $1);
@@ -716,49 +771,48 @@ transaction:
   /* A transaction with an indented body. */
   | transaction_line INDENT metadata posting_list DEDENT
     {
-      // TODO(blais): Attach metadata and postings.
       $$ = $1;
+
+      // Insert the local metadata on top of that from the directive.
+      // {99ef4ca51cd5}
+      if ($metadata != nullptr) {
+        $$->mutable_meta()->MergeFrom(*$metadata);
+        delete $metadata;
+      }
+
+      // Attach postings to the directive.
+      auto* txn = $$->mutable_transaction();
+      for (const auto* posting : $posting_list) {
+        txn->mutable_postings()->Add()->CopyFrom(*posting);
+      }
     }
 
 /* Matches just the first line of a transaction, without its metadata. */
 transaction_line:
-  DATE txn txn_strings tags_links eol
+  DATE txn payee_narration[pn] tags_links eol
     {
-      PyObject* s1 = DateToPyDate($1);
-      (void)s1;
+      // Create directive and update head, without custom metadata. That is
+      // added at {99ef4ca51cd5}.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata(nullptr, dir->mutable_meta());
 
-      // Encode txn_strings.
-      PyObject* list = PyList_New(0);
-      (void)list;
-      if (!$3.first.empty()) {
-        PyList_Append(list, StringToPyString(($3.first)));
+      // Create Transaction and update flag.
+      auto* txn = dir->mutable_transaction();
+      txn->set_flag(&$txn);
+
+      // Update payee and narration fields.
+      if (!$pn.first.empty()) {
+        txn->set_payee($pn.first.data(), $pn.first.size());
       }
-      if (!$3.second.empty()) {
-        PyList_Append(list, StringToPyString(($3.second)));
+      if (!$pn.second.empty()) {
+        txn->set_narration($pn.second.data(), $pn.second.size());
       }
 
-      // Split up the rest of the transaction line, tags and links.
-      auto [tags, links] = TagsLinksToPython($4, &builder.active_tags());
-      delete $4;
-      (void)tags;
-      (void)links;
-
-#if 0
-      // Create active metadata for builder.
-      PyObject* active_meta = PyDict_New();
-      for (const auto& [key, value_list] : builder.active_meta()) {
-        assert(value_list.size() > 0);
-        PyDict_SetItemString(active_meta, key.c_str(), value_list.back());
-      }
-#endif
-
-      DECREF(s1, list, tags, links);
-#if 0
-      BUILDY(DECREF(s1, list, tags, links, active_meta),
-             $$, "transaction", "ObOOOOO", s1, $2, list, tags, links, active_meta);
-#endif
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      // Update tags, including active tags and links.
+      builder.SetTags($tags_links->tags(), txn->mutable_tags());
+      txn->mutable_links()->CopyFrom($tags_links->links());
+      delete $tags_links;
     }
 
 optflag:
@@ -811,14 +865,6 @@ indented_metadata:
   | INDENT metadata DEDENT
     {
       $$ = $2;
-    }
-
-// FIXME: remove
-py_indented_metadata:
-  indented_metadata
-    {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
     }
 
 /* A list of metadata (optionally empty). */
@@ -1023,28 +1069,25 @@ popmeta:
     }
 
 open:
-  DATE OPEN account currency_list booking eol py_indented_metadata
+  DATE OPEN account currency_list booking eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
 
-      // Convert booking method.
-      PyObject* s5;
-      if ($5 != Booking::UNKNOWN) {
-        s5 = StringToPyString(Booking_Name($5));
-      } else {
-        s5 = Py_None;
-        Py_INCREF(Py_None);
+      // Create Open and update account.
+      auto* open = dir->mutable_open();
+      open->set_account($account.data(), $account.size());
+
+      // Create currency list.
+      for (const auto& currency : $currency_list) {
+        open->add_currencies(currency);
       }
 
-      // Convert currency list.
-      PyObject* s4 = PyList_New(0);
-      for (const auto& currency : $4) {
-        PyList_Append(s4, StringToPyString(currency));
-      }
-
-      BUILDY(DECREF(s1, s3, s4, s5, $7),
-               $$, "open", "OOOOO", s1, s3, s4, s5, $7);
+      // Set booking method.
+      open->set_booking($booking);
     }
 
 booking:
@@ -1066,57 +1109,73 @@ booking:
     }
 
 close:
-  DATE CLOSE account eol py_indented_metadata
+  DATE CLOSE account eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $5),
-             $$, "close", "OOO", s1, s3, $5);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Close and update account.
+      auto* open = dir->mutable_close();
+      open->set_account($account.data(), $account.size());
     }
 
 commodity:
-  DATE COMMODITY CURRENCY eol py_indented_metadata
+  DATE COMMODITY CURRENCY eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $5),
-             $$, "commodity", "OOO", s1, s3, $5);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Commodity and update account.
+      auto* commodity = dir->mutable_commodity();
+      commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
     }
 
 pad:
-  DATE PAD account account eol py_indented_metadata
+  DATE PAD account account[source] eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* s4 = StringToPyString($4);
-      BUILDY(DECREF(s1, s3, s4, $6),
-             $$, "pad", "OOOO", s1, s3, s4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Pad and update accounts.
+      auto* pad = dir->mutable_pad();
+      pad->set_account($3.data(), $3.size());
+      pad->set_source_account($source.data(), $source.size());
     }
 
 balance:
   DATE BALANCE account amount_tolerance[atol] eol indented_metadata[meta]
     {
       // Create directive and prepare head.
-      auto* dir = new Directive();
+      auto* dir = $$ = new inter::Directive();
       DateToProto($DATE, dir->mutable_date());
       if ($meta != nullptr) {
         dir->mutable_meta()->CopyFrom(*$meta);
         delete $meta;
       }
 
-      // Fill in balance fields.
+      // Create Pad and fill in account.
       auto* balance = dir->mutable_balance();
       balance->set_account($account.data(), $account.size());
+
+      // Fill in amount.
       balance->mutable_amount()->CopyFrom(*$atol.first);
       delete $atol.first;
+
+      // Fill in optional tolerance.
       if ($atol.second.has_value()) {
         DecimalToProto($atol.second.value(), balance->mutable_tolerance());
       }
-      // Note: We leave `diff_amount` unset.
 
-      // TODO(blais): Add directive.
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      // Note: We leave `diff_amount` unset.
     }
 
 /* An Amount, which is a decimal number and a currency. */
@@ -1270,64 +1329,94 @@ cost_comp:
     }
 
 price:
-  DATE PRICE CURRENCY amount eol py_indented_metadata
+  DATE PRICE CURRENCY amount eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* s4;
-      AmountToPyTuple(s4, $4);
-      delete $4;
-      BUILDY(DECREF(s1, s3, s4, $6),
-             $$, "price", "OOOO", s1, s3, s4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Price and update currency.
+      auto* price = dir->mutable_price();
+      price->set_currency($3.data(), $3.size());
+
+      // Update price amount.
+      price->mutable_amount()->CopyFrom(*$amount);
     }
 
 event:
-  DATE EVENT STRING STRING eol py_indented_metadata
+  DATE EVENT STRING[type] STRING[description] eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* s4 = StringToPyString($4);
-      BUILDY(DECREF(s1, s3, s4, $6),
-             $$, "event", "OOOO", s1, s3, s4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Event and update fields.
+      auto* event = dir->mutable_event();
+      event->set_type($type.data(), $type.size());
+      event->set_description($description.data(), $description.size());
     }
 
 query:
-  DATE QUERY STRING STRING eol py_indented_metadata
+  DATE QUERY STRING[name] STRING[qstr] eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* s4 = StringToPyString($4);
-      BUILDY(DECREF(s1, s3, s4, $6),
-             $$, "query", "OOOO", s1, s3, s4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Query and update fields.
+      auto* query = dir->mutable_query();
+      query->set_name($name.data(), $name.size());
+      query->set_query_string($qstr.data(), $qstr.size());
     }
 
 note:
-  DATE NOTE account STRING eol py_indented_metadata
+  DATE NOTE account STRING[comment] eol indented_metadata
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      PyObject* s4 = StringToPyString($4);
-      BUILDY(DECREF(s1, s3, s4, $6),
-             $$, "note", "OOOO", s1, s3, s4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Note and update account.
+      auto* note = dir->mutable_note();
+      note->set_account($3.data(), $3.size());
+
+      // Fill in comment.
+      note->set_comment($comment.data(), $comment.size());
     }
 
 filename:
   STRING
-    {
-      $$ = StringToPyString($1);
-    }
 
 document:
-  DATE DOCUMENT account filename tags_links eol py_indented_metadata
+  DATE DOCUMENT account filename tags_links eol indented_metadata
     {
-      auto [tags, links] = TagsLinksToPython($5, &builder.active_tags());
-      delete $5;
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $4, tags, links, $7),
-             $$, "document", "OOOOO", s1, s3, $4, tags, links, $7);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Document and update account and filename.
+      auto* document = dir->mutable_document();
+      document->set_account($account.data(), $account.size());
+      document->set_filename($filename.data(), $filename.size());
+
+      // Update tags, including active tags, and links.
+      // TODO(blais): Refactor with txn? It's the same code.
+      builder.SetTags($tags_links->tags(), document->mutable_tags());
+      document->mutable_links()->CopyFrom($tags_links->links());
+      delete $tags_links;
     }
 
+// TODO(blais): Reuse the MetaValue, instead of this type.
 custom_value:
   STRING
     {
@@ -1386,15 +1475,24 @@ custom_value_list:
     }
 
 custom:
-  DATE CUSTOM STRING custom_value_list eol py_indented_metadata
+  DATE CUSTOM STRING[type] custom_value_list eol indented_metadata
    {
-     PyObject* s1 = DateToPyDate($1);
-     PyObject* s3 = StringToPyString($3);
-     BUILDY(DECREF(s1, s3, $4, $6),
-            $$, "custom", "OOOO", s1, s3, $4, $6);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Custom and update accounts.
+      auto* custom = dir->mutable_custom();
+      custom->set_type($type.data(), $type.size());
+
+      // TODO(blais): Add custom values here, and define the corresponding
+      // proto.
    }
 
-entry:
+/* A rule to reduce any of the Beancount directives we offer. */
+directive:
   transaction
   | balance
   | open
@@ -1440,9 +1538,9 @@ plugin:
              $$, "plugin", "OO", s2, s3);
     }
 
-/* TODO(blais): For consistency with proto naming, rename directive -> pragma;
- * entry -> directive. */
-directive:
+/* Anything but a directive. Those constructs apply side-effects to the builder
+ * object. */
+pragma:
   pushtag
   | poptag
   | pushmeta
@@ -1451,53 +1549,44 @@ directive:
   | include
   | plugin
 
+/* A rule to reduce pragmas and directives. We also handle errors at this
+ * level. */
 declarations:
   declarations EOL
+  /* Accumulate nothing for anything that's not a directive. The side-effects of
+     all those pragma are stored in the builder object. */
+  | declarations pragma
+  /* A regular directive. Accmulate it in the builder. */
   | declarations directive
-  | declarations entry
     {
-      // TODO(blais): remove
-      if ($entry != Py_None) {
-        BUILDY(DECREF($1, $2),
-               $$, "handle_list", "OO", $1, $2);
-      } else {
-        $$ = $1;
+      if ($directive != nullptr) {
+        // Note: the reference is given to the builder.
+        builder.AppendDirective($directive);
       }
     }
+  /* An error raised at the parser level. */
   | declarations error
     {
-      /*
-       * Ignore the error and continue reducing ({3d95e55b654e}).
-       * Note that with the matching rule above, "error" will
-       * successfully reduce on each line that cannot reduce.
-       * Non-erroneous postings after an error occurs will reduce but
-       * not be included because a transaction's list of postings
-       * does not include an "error" rule.
-       *
-       * Note: Adding EOL after the "error" rule above works to
-       * reduce the number of calls to this rule resulting from the
-       * appearance of an error but makes the parser errors
-       * skip the next valid directive, so we just have to make sure
-       * repeated runs of this rule's handling code are idempotent.
-       */
-      $$ = $1;
+      // TODO(blais): What about the 'error' token encountered elsewhere? Is this
+      // guaranteed to bubble up here?
+
+      // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
+      // the matching rule above, "error" will successfully reduce on each line
+      // that cannot reduce. Non-erroneous postings after an error occurs will
+      // reduce but not be included because a transaction's list of postings
+      // does not include an "error" rule.
+      //
+      // Note: Adding EOL after the "error" rule above works to reduce the
+      // number of calls to this rule resulting from the appearance of an error
+      // but makes the parser errors skip the next valid directive, so we just
+      // have to make sure repeated runs of this rule's handling code are
+      // idempotent.
     }
   | %empty
-    {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
-    }
 
-
+/* Start token for parsing an entire file of the DSL. */
 file:
   declarations YYEOF
-    {
-      BUILDY(DECREF($1),
-             $$, "store_result", "O", $1);
-    }
-
-// TODO(blais): What about the 'error' token?
-
 
 %%
 //- User code ----------------------------------------------------------------
@@ -1689,4 +1778,12 @@ void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* mis
 //   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
 //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-// Rename `incomplete_amount` -> `partial_amount`
+// - Rename `incomplete_amount` -> `partial_amount`
+
+// - Making /all/ directives support tags and links in common would simplify the
+//   code and possibly the syntax. Do it.
+
+// - Add templated new/delete interfaces on the builder and count memory
+//   allocations.
+
+// - Reorder for all directives to be together.
