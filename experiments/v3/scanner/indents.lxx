@@ -1,5 +1,6 @@
 %o main tabs=8
 %%
+\n                        out() << "\\n\n"; // explicit newline
 ^\h+                      out() << "| "; // nodent, text is aligned to current margin column
 ^\h+\i                    out() << "> "; // indent
 ^\h*\j                    out() << "< "; // dedent
