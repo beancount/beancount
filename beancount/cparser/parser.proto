@@ -3,13 +3,43 @@
 // A schema for Beancount's parser output. This is the intermediate state of the
 // data, merely representing the production of the parser, before the subsequent
 // processing (booking) that will produce the finalized directives.
+//
+// The data structures seen here are not visible in the final output nor to the
+// regular plugins, which see the resolved ones produced after booking and
+// interpolation.
 
 syntax = "proto2";
 
 package beancount.inter;
 
-// import 'beancount/ccore/number.proto';
-// import 'beancount/ccore/data.proto';
+import 'beancount/ccore/number.proto';
+import 'beancount/ccore/data.proto';
+
+// A cost specification, which still requires to be filled in, and the final
+// per-unit numbers be calculated. This gets translated to Cost after booking
+// and interpolation.
+message CostSpec {
+  // A decimal number, exclusive the per-unit cost.
+  // TODO(blais): Rename this to number_per_unit; it's annoying.
+  optional Number number_per = 1;
+
+  // A decimal number, the total cost/price.
+  optional Number number_total = 2;
+
+  // A string, the commodity of the cost.
+  optional string currency = 3;
+
+  // A datetime.date for the date that the lot was created at. There should
+  // always be a valid date.
+  optional beancount.Date date = 4;
+
+  // A string for the label of this lot, or None, if there is no label.
+  optional string label = 5;
+
+  // A flag explicitly indicating to merge all matching lots and compute the
+  // average cost.
+  optional bool merge_cost = 6;
+}
 
 // An intermediate data structure holding the partially parsed tags and links.
 message TagsLinks {
