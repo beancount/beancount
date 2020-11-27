@@ -817,13 +817,21 @@ class Builder(lexer.LexBuilder):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if units.number == ZERO:
-                number = ZERO
+            if units.number is MISSING:
+                # Note: we could potentially do a better job and attempt to fix
+                # this up after interpolation, but this syntax is pretty rare
+                # anyway.
+                self.errors.append(ParserError(
+                    meta, ("Total price on a posting without units: {}.").format(price),
+                    None))
+                price = None
             else:
-                number = price.number
-                if number is not MISSING:
-                    number = number/abs(units.number)
-            price = Amount(number, price.currency)
+                price_number = price.number
+                if price_number is not MISSING:
+                    price_number = (ZERO
+                                    if units.number == ZERO
+                                    else price_number/abs(units.number))
+                    price = Amount(price_number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
         # conversion entries.

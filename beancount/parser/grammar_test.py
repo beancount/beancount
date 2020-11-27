@@ -1363,6 +1363,15 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         self.assertRegex(errors[0].message, 'Negative.*allowed')
 
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_total_price_with_missing(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT            MSFT @@ 2000.00 USD
+            Assets:Investments:Cash   20000.00 USD
+        """
+        self.assertRegex(errors[0].message, 'Total price on a posting')
+
 
 class TestBalance(unittest.TestCase):
 
