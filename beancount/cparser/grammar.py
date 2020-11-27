@@ -133,11 +133,6 @@ class Builder(lexer.LexBuilder):
         self.dcontext = display_context.DisplayContext()
         self.display_context_update = self.dcontext.update
 
-    def _dcupdate(self, number, currency):
-        """Update the display context."""
-        if isinstance(number, Decimal) and currency and currency is not MISSING:
-            self.display_context_update(number, currency)
-
     def finalize(self):
         """Finalize the parser, check for final errors and return the triple.
 
@@ -327,151 +322,6 @@ class Builder(lexer.LexBuilder):
             object_list.append(new_object)
         return object_list
 
-    def open(self, filename, lineno, date, account, currencies, booking_str, kvlist):
-        """Process an open directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the name of the account.
-          currencies: A list of constraint currencies.
-          booking_str: A string, the booking method, or None if none was specified.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Open object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        error = False
-        if booking_str:
-            try:
-                # Note: Somehow the 'in' membership operator is not defined on Enum.
-                booking = Booking[booking_str]
-            except KeyError:
-                # If the per-account method is invalid, set it to the global
-                # default method and continue.
-                booking = self.options['booking_method']
-                error = True
-        else:
-            booking = None
-
-        entry = Open(meta, date, account, currencies, booking)
-        if error:
-            self.errors.append(ParserError(meta,
-                                           "Invalid booking method: {}".format(booking_str),
-                                           entry))
-        return entry
-
-    def close(self, filename, lineno, date, account, kvlist):
-        """Process a close directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the name of the account.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Close object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Close(meta, date, account)
-
-    def commodity(self, filename, lineno, date, currency, kvlist):
-        """Process a close directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          currency: A string, the commodity being declared.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Close object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Commodity(meta, date, currency)
-
-    def pad(self, filename, lineno, date, account, source_account, kvlist):
-        """Process a pad directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the account to be padded.
-          source_account: A string, the account to pad from.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Pad object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Pad(meta, date, account, source_account)
-
-    def event(self, filename, lineno, date, event_type, description, kvlist):
-        """Process an event directive.
-
-        Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          event_type: a str, the name of the event type.
-          description: a str, the event value, the contents.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Event object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Event(meta, date, event_type, description)
-
-    def query(self, filename, lineno, date, query_name, query_string, kvlist):
-        """Process a document directive.
-
-        Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          query_name: a str, the name of the query.
-          query_string: a str, the SQL query itself.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Query object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Query(meta, date, query_name, query_string)
-
-    def price(self, filename, lineno, date, currency, amount, kvlist):
-        """Process a price directive.
-
-        Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          currency: the currency to be priced.
-          amount: an instance of Amount, that is the price of the currency.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Price object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Price(meta, date, currency, amount)
-
-    def note(self, filename, lineno, date, account, comment, kvlist):
-        """Process a note directive.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the account to attach the note to.
-          comment: A str, the note's comments contents.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Note object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Note(meta, date, account, comment)
-
     def document(self, filename, lineno, date, account, document_filename, tags,links,
                  kvlist):
         """Process a document directive.
@@ -494,22 +344,6 @@ class Builder(lexer.LexBuilder):
                                                        document_filename))
         tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
-
-    def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
-        """Process a custom directive.
-
-        Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          dir_type: A string, a type for the custom directive being parsed.
-          custom_values: A list of the various tokens seen on the same line.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Custom object.
-        """
-        meta = new_metadata(filename, lineno, kvlist)
-        return Custom(meta, date, dir_type, custom_values)
 
     def custom_value(self, filename, lineno, value, dtype=None):
         """Create a custom value object, along with its type.

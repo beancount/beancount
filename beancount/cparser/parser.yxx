@@ -636,7 +636,6 @@ private:
 %type <beancount::inter::Directive*> query
 %type <beancount::inter::Directive*> custom
 
-
 %type <PyObject*> custom_value
 %type <PyObject*> custom_value_list
 
@@ -645,13 +644,15 @@ private:
 %type <std::string_view> filename
 %type <Booking> booking
 %type <decimal::Decimal> number_expr
-%type <PyObject*> option
+
+%type option
+%type include
+%type plugin
+
 %type pushtag
 %type poptag
 %type pushmeta
 %type popmeta
-%type <PyObject*> include
-%type <PyObject*> plugin
 
 %type file
 %type declarations
@@ -1511,31 +1512,35 @@ option:
     {
       PyObject* s2 = StringToPyString($2);
       PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s2, s3),
-             $$, "option", "OO", s2, s3);
+      PyObject* ignore;
+      BUILDY(DECREF(ignore, s2, s3),
+             ignore, "option", "OO", s2, s3);
     }
 
 include:
   INCLUDE STRING eol
     {
       PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s2),
-             $$, "include", "O", s2);
+      PyObject* ignore;
+      BUILDY(DECREF(ignore, s2),
+             ignore, "include", "O", s2);
     }
 
 plugin:
   PLUGIN STRING eol
     {
       PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s2),
-             $$, "plugin", "OO", s2, Py_None);
+      PyObject* ignore;
+      BUILDY(DECREF(ignore, s2),
+             ignore, "plugin", "OO", s2, Py_None);
     }
   | PLUGIN STRING STRING eol
     {
       PyObject* s2 = StringToPyString($2);
       PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s2, s3),
-             $$, "plugin", "OO", s2, s3);
+      PyObject* ignore;
+      BUILDY(DECREF(ignore, s2, s3),
+             ignore, "plugin", "OO", s2, s3);
     }
 
 /* Anything but a directive. Those constructs apply side-effects to the builder
@@ -1569,6 +1574,8 @@ declarations:
     {
       // TODO(blais): What about the 'error' token encountered elsewhere? Is this
       // guaranteed to bubble up here?
+      //
+      // TODO(blais): Great place to generically log and error here too?
 
       // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
       // the matching rule above, "error" will successfully reduce on each line
@@ -1787,3 +1794,6 @@ void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* mis
 //   allocations.
 
 // - Reorder for all directives to be together.
+
+// - Create a new Ledger container type to expose for producing results, with
+//   'directives', 'errors', 'options', 'info' attributes.
