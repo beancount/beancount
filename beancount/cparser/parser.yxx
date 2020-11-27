@@ -405,8 +405,7 @@ public:
     if (iter != active_tags_.end()) {
       active_tags_.erase(iter);
     } else {
-      LogError(StrFormat("Attempting to pop absent tag: '%s'", tag),
-               scanner_.location());
+      LogError(StrFormat("Attempting to pop absent tag: '%s'", tag));
     }
   }
 
@@ -419,8 +418,7 @@ public:
   void PopMeta(string_view key) {
     auto iter = active_meta_.find(key);
     if (iter == active_meta_.end()) {
-      LogError(StrFormat("Attempting to pop absent metadata key: '%s'", key),
-               scanner_.location());
+      LogError(StrFormat("Attempting to pop absent metadata key: '%s'", key));
     } else {
       auto& value_list = iter->second;
       assert(value_list.size() > 0);
@@ -501,8 +499,7 @@ public:
           // this up after interpolation, but this syntax is pretty rare
           // anyway.
           LogError(StrFormat("Total price on a posting without units: %s.",
-                             price.DebugString()),
-                   scanner_.location());
+                             price.DebugString()));
           posting->clear_price();
         } else if (price.has_number()) {
           decimal::Decimal dunits = ProtoToDecimal(posting->units().number());
@@ -530,8 +527,7 @@ public:
           price.has_currency() &&
           posting->cost_spec().currency() != price.currency()) {
         LogError(StrFormat("Cost and price currencies must match: %s != %s",
-                           posting->cost_spec().currency(), price.currency()),
-                 scanner_.location());
+                           posting->cost_spec().currency(), price.currency()));
       }
     }
   }
@@ -544,11 +540,9 @@ public:
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
-  void LogError(string_view message, const location& loc) {
+  void LogError(string_view message) {
     // TODO(blais):
-  }
-  void LogError(string_view message, const string_view& filename) {
-    // TODO(blais):
+    /// scanner_.location()
   }
   // TODO(blais): Can we turn this error logging into a stream instead?
 
@@ -567,15 +561,13 @@ public:
 
     // If the user left some tags unbalanced, issue an error.
     for (const auto& tag : active_tags_) {
-      LogError(StrFormat("Unbalanced pushed tag: '%s'", tag),
-               *scanner_.location().begin.filename);
+      LogError(StrFormat("Unbalanced pushed tag: '%s'", tag));
     }
 
     // If the user left some metadata unpopped, issue an error.
     for (const auto& [key, value_list] : active_meta_) {
       LogError(StrFormat(
-                 "Unbalanced metadata key '%s' has leftover metadata", key),
-               *scanner_.location().begin.filename);
+                 "Unbalanced metadata key '%s' has leftover metadata", key));
     }
   }
 
@@ -932,7 +924,7 @@ price_annotation:
         if (dec.sign() == -1) {
           builder.LogError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                           "for workaround)", scanner.location());
+                           "for workaround)");
           // Invert and continue.
           DecimalToProto(-dec, $price_annotation->mutable_number());
         }
@@ -1197,8 +1189,7 @@ booking:
       string s1($1.data(), $1.size());
       Booking method;
       if (!Booking_Parse(s1, &method)) {
-        builder.LogError(StrFormat("Invalid value for booking method: '%s'", s1),
-                         scanner.location());
+        builder.LogError(StrFormat("Invalid value for booking method: '%s'", s1));
         // TODO(blais): For v2 behavior, set this to the global default.
         method = Booking::UNKNOWN;
       }
@@ -1383,8 +1374,7 @@ cost_spec:
       if ($2->has_number_total()) {
         builder.LogError(
           StrFormat("Per-unit cost may not be specified using total cost "
-                    "syntax: '%s'; ignoring per-unit cost", $2->DebugString()),
-          scanner.location());
+                    "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
       } else {
         $2->mutable_number_total()->CopyFrom($2->number_per());
       }
