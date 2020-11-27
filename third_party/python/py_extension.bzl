@@ -37,12 +37,22 @@ def py_extension(
         local_defines = local_defines,
     )
 
+    native.config_setting(
+        name = name+"_on_linux",
+        constraint_values = [
+            "@platforms//os:linux",
+        ],
+    )
+
     native.cc_binary(
         name = cc_binary_name,
         linkshared = True,
         linkstatic = True,
-        # Ensure that the init function is exported. Required for gold.
-        linkopts = ['-Wl,--export-dynamic-symbol=PyInit_{}'.format(name)],
+        linkopts = select({
+            # Ensure that the init function is exported. Required for gold.
+            name+"_on_linux": ['-Wl,--export-dynamic-symbol=PyInit_{}'.format(name)],
+            "//conditions:default": [],
+		}),
         visibility = ["//visibility:private"],
         deps = [cc_library_name],
     )
