@@ -524,16 +524,6 @@ private:
 // Note: Token type names appear in the parser header; qualify fully.
 
 /* Collection of value types. */
-// TODO(blais): Converts this to variant below.
-///// %union {
-/////   char character;
-/////   const char* string;
-/////   PyObject* pyobj;
-/////   struct {
-/////       PyObject* pyobj1;
-/////       PyObject* pyobj2;
-/////   } pairobj;
-///// }
 %define api.value.type variant // See: "C++ Variants"
 %define api.token.constructor
 %define api.token.prefix {TOK_}
@@ -608,6 +598,7 @@ private:
 %type <beancount::Meta*> metadata
 %type <beancount::Meta::KV*> metadata_line
 %type <beancount::MetaValue*> meta_value
+%type <std::vector<beancount::MetaValue*>> meta_value_list
 
 /* TODO(blais): Add constness aggressively. The produced tokens can be const. */
 %type <std::vector<std::string>> currency_list
@@ -635,9 +626,6 @@ private:
 %type <beancount::inter::Directive*> commodity
 %type <beancount::inter::Directive*> query
 %type <beancount::inter::Directive*> custom
-
-%type <PyObject*> custom_value
-%type <PyObject*> custom_value_list
 
 %type <std::pair<std::string, std::string>> payee_narration
 %type <beancount::inter::TagsLinks*> tags_links
@@ -669,7 +657,8 @@ private:
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 5
+/* TODO(blais): Have another go at taking to zero. */
+%expect 19
 
 
 
@@ -979,20 +968,15 @@ meta_value:
       $$ = new beancount::MetaValue();
       $$->set_text($1.data(), $1.size());
     }
-  | account
-    {
-      $$ = new beancount::MetaValue();
-      $$->set_account($1.data(), $1.size());
-    }
-  | DATE
-    {
-      $$ = new beancount::MetaValue();
-      DateToProto($1, $$->mutable_date());
-    }
   | CURRENCY
     {
       $$ = new beancount::MetaValue();
       $$->set_currency($1.data(), $1.size());
+    }
+  | account
+    {
+      $$ = new beancount::MetaValue();
+      $$->set_account($1.data(), $1.size());
     }
   | TAG
     {
@@ -1003,6 +987,11 @@ meta_value:
     {
       $$ = new beancount::MetaValue();
       $$->set_link($1.data(), $1.size());
+    }
+  | DATE
+    {
+      $$ = new beancount::MetaValue();
+      DateToProto($1, $$->mutable_date());
     }
   | BOOL
     {
@@ -1028,6 +1017,17 @@ meta_value:
   | %empty
     {
       $$ = new beancount::MetaValue();
+    }
+
+meta_value_list:
+  %empty
+    {
+      $$ = {};
+    }
+  | meta_value_list meta_value
+    {
+      $$ = $1;
+      $$.push_back($2);
     }
 
 currency_list:
@@ -1417,66 +1417,8 @@ document:
       delete $tags_links;
     }
 
-// TODO(blais): Reuse the MetaValue, instead of this type.
-custom_value:
-  STRING
-    {
-      PyObject* s1 = StringToPyString($1);
-      BUILDY(DECREF(s1),
-             $$, "custom_value", "OO", s1, Py_None);
-    }
-  | DATE
-    {
-      PyObject* s1 = DateToPyDate($1);
-      BUILDY(DECREF(s1),
-             $$, "custom_value", "OO", s1, Py_None);
-    }
-  | BOOL
-    {
-      PyObject* s1 = ($1) ? Py_True : Py_False;
-      Py_INCREF(s1);
-      BUILDY(DECREF(s1),
-             $$, "custom_value", "OO", s1, Py_None);
-    }
-  | amount
-    {
-      PyObject* s1;
-      AmountToPyTuple(s1, $1);
-      delete $1;
-      BUILDY(DECREF(s1),
-             $$, "custom_value", "OO", s1, Py_None);
-    }
-  | number_expr
-    {
-      PyObject* s1 = DecimalToPyDecimal($1);
-      BUILDY(DECREF(s1),
-             $$, "custom_value", "OO", s1, Py_None);
-    }
-  | account
-    {
-      PyObject* s1 = StringToPyString($1);
-      /* Obtain beancount.core.account.TYPE */
-      PyObject* module = PyImport_ImportModule("beancount.core.account");
-      PyObject* dtype = PyObject_GetAttrString(module, "TYPE");
-      Py_DECREF(module);
-      BUILDY(DECREF(s1, dtype),
-             $$, "custom_value", "OO", s1, dtype);
-    }
-
-custom_value_list:
-  %empty
-    {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
-    }
-  | custom_value_list custom_value
-    {
-      BUILDY(DECREF($1, $2),
-             $$, "handle_list", "OO", $1, $2);
-    }
-
 custom:
-  DATE CUSTOM STRING[type] custom_value_list eol indented_metadata
+  DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
    {
       // Create directive and update head.
       auto* dir = $$ = new inter::Directive();
@@ -1488,8 +1430,13 @@ custom:
       auto* custom = dir->mutable_custom();
       custom->set_type($type.data(), $type.size());
 
-      // TODO(blais): Add custom values here, and define the corresponding
-      // proto.
+      // Copy custom values here.
+      for (const auto* meta_value : $meta_value_list) {
+        // TODO(blais): Will AddAllocated() work here?
+        custom->mutable_values()->Add()->CopyFrom(*meta_value);
+        delete meta_value;
+      }
+      $meta_value_list.clear();
    }
 
 /* A rule to reduce any of the Beancount directives we offer. */

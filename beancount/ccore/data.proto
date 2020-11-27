@@ -198,9 +198,8 @@ message Document {
 }
 
 message Custom {
-  optional string type = 3;
-  // TODO(blais): How to link against well_known_protos?
-  // repeated google.protobuf.Any values = 4;
+  optional string type = 1;
+  repeated MetaValue values = 2;
 }
 
 message Directive {
