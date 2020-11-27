@@ -210,35 +210,6 @@ class Builder(lexer.LexBuilder):
         self.errors.append(
             ParserSyntaxError(meta, message, None))
 
-    def account(self, filename, lineno, account):
-        """Check account name validity.
-
-        Args:
-          account: a str, the account name.
-        Returns:
-          A string, the account name.
-        """
-        if not self.account_regexp.match(account):
-            meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Invalid account name: {}".format(account), None))
-        # Intern account names. This should reduces memory usage a
-        # fair bit because these strings are repeated liberally.
-        return self.accounts.setdefault(account, account)
-
-    def pipe_deprecated_error(self, filename, lineno):
-        """Issue a 'Pipe deprecated' error.
-
-        Args:
-          filename: The current filename
-          lineno: The current line number
-        """
-        if self.options['allow_pipe_separator']:
-            return
-        meta = new_metadata(filename, lineno)
-        self.errors.append(
-            ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
-
     def option(self, filename, lineno, key, value):
         """Process an option directive.
 
@@ -341,20 +312,6 @@ class Builder(lexer.LexBuilder):
         """
         self.options['plugin'].append((plugin_name, plugin_config))
 
-    def amount(self, filename, lineno, number, currency):
-        """Process an amount grammar rule.
-
-        Args:
-          number: a Decimal instance, the number of the amount.
-          currency: a currency object (a str, really, see CURRENCY above)
-        Returns:
-          An instance of Amount.
-        """
-        # Update the mapping that stores the parsed precisions.
-        # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self._dcupdate(number, currency)
-        return Amount(number, currency)
-
     def handle_list(self, filename, lineno, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
 
@@ -450,28 +407,6 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno, kvlist)
         return Pad(meta, date, account, source_account)
-
-    def balance(self, filename, lineno, date, account, amount, tolerance, kvlist):
-        """Process an assertion directive.
-
-        We produce no errors here by default. We replace the failing ones in the
-        routine that does the verification later one, that these have succeeded
-        or failed.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          date: A datetime object.
-          account: A string, the account to balance.
-          amount: The expected amount, to be checked.
-          tolerance: The tolerance number.
-          kvlist: a list of KeyValue instances.
-        Returns:
-          A new Balance object.
-        """
-        diff_amount = None
-        meta = new_metadata(filename, lineno, kvlist)
-        return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -730,3 +665,7 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
+
+    # TODO(blais): Remove.
+    def create_amount(self, _, __, number, currency):
+        return Amount(number, currency)

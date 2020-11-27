@@ -129,17 +129,17 @@ inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
 
 // Convert an Amount to a Python tuple like Amount.
 // TODO(blais): This doesn't actually create a proper instance of `Amount`.
-PyObject* AmountToPyTuple(Amount* amount){
-  auto dec = ProtoToDecimal(amount->number());
-  auto s1 = DecimalToPyDecimal(dec);
-  auto s2 = StringToPyString(amount->currency());
-  auto tup = PyTuple_Pack(2, s1, s2);
-  Py_DECREF(s1);
-  Py_DECREF(s2);
-  return tup;
-}
+#define AmountToPyTuple(output, amount)                 \
+  {                                                     \
+    auto dec = ProtoToDecimal(amount->number());        \
+    auto _s1 = DecimalToPyDecimal(dec);                 \
+    auto _s2 = StringToPyString(amount->currency());    \
+    BUILDY(DECREF(_s1, _s2),                            \
+           output, "create_amount", "OO", _s1, _s2);    \
+  }
 
 // Convert a date object to an equivalent proto.
+// TODO(blais): Move this to ccore.
 inline void DateToProto(const absl::CivilDay& date, Date* proto) {
   assert(proto != nullptr);
   proto->set_year(date.year());
@@ -412,7 +412,7 @@ public:
 
   // Check that all the accounts are matching the prefix names provided in the
   // options.
-  void ValidateAccounts() {
+  void ValidateAccount_names() {
   // TODO(blais):
     // if not self.account_regexp.match(account):
     //     meta = new_metadata(filename, lineno)
@@ -421,6 +421,8 @@ public:
   }
 
   void Finalize() {
+    void ValidateAccountNames();
+
     // If the user left some tags unbalanced, issue an error.
     for (const auto& tag : active_tags_) {
       LogError(StrFormat("Unbalanced pushed tag: '%s'", tag),
@@ -532,10 +534,10 @@ private:
 %token NONE        /* A None value (parsed as NULL) */
 %token <bool> BOOL        /* A boolean, true or false */
 %token <absl::CivilDay> DATE        /* A date object */
+%token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <std::string_view> ACCOUNT     /* The name of an account */
 %token <std::string_view> CURRENCY    /* A currency specification */
 %token <std::string_view> STRING      /* A quoted string, with any characters inside */
-%token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <std::string_view> TAG         /* A tag that can be associated with a transaction */
 %token <std::string_view> LINK        /* A link that can be associated with a transaction */
 %token <std::string_view> KEY         /* A key in a key-value pair */
@@ -558,13 +560,9 @@ private:
 %type <beancount::Meta::KV*> metadata_line
 %type <beancount::MetaValue*> meta_value
 
+/* TODO(blais): Add constness aggressively. The produced tokens can be const. */
 %type <std::vector<std::string>> currency_list
-%type <PyObject*> open
-%type <PyObject*> close
-%type <PyObject*> commodity
-%type <PyObject*> balance
-%type <PyObject*> pad
-%type <std::pair<PyObject*, PyObject*>> amount_tolerance
+%type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> incomplete_amount
 %type <std::optional<decimal::Decimal>> maybe_number
@@ -574,6 +572,12 @@ private:
 %type <beancount::inter::CostSpec*> cost_comp
 %type <beancount::inter::CostSpec*> cost_comp_list
 %type <beancount::inter::CostSpec*> cost_spec
+
+%type <PyObject*> open
+%type <PyObject*> close
+%type <PyObject*> commodity
+%type <PyObject*> balance
+%type <PyObject*> pad
 %type <PyObject*> price
 %type <PyObject*> event
 %type <PyObject*> query
@@ -581,6 +585,11 @@ private:
 %type <PyObject*> document
 %type <PyObject*> entry
 %type <PyObject*> declarations
+%type <PyObject*> custom
+
+%type <PyObject*> custom_value
+%type <PyObject*> custom_value_list
+
 %type <std::pair<std::string, std::string>> txn_strings  /* <payee, narration> */
 %type <beancount::inter::TagsLinks*> tags_links
 %type <PyObject*> filename
@@ -594,9 +603,6 @@ private:
 %type <PyObject*> include
 %type <PyObject*> plugin
 %type <PyObject*> file
-%type <PyObject*> custom
-%type <PyObject*> custom_value
-%type <PyObject*> custom_value_list
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
@@ -1088,41 +1094,56 @@ pad:
     }
 
 balance:
-  DATE BALANCE account amount_tolerance eol py_indented_metadata
+  DATE BALANCE account amount_tolerance[atol] eol indented_metadata[meta]
     {
-      PyObject* s1 = DateToPyDate($1);
-      PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $6, ($4).first, ($4).second),
-             $$, "balance", "OOOOO", s1, s3, ($4).first, ($4).second, $6);
+      // Create directive and prepare head.
+      auto* dir = new Directive();
+      DateToProto($DATE, dir->mutable_date());
+      if ($meta != nullptr) {
+        dir->mutable_meta()->CopyFrom(*$meta);
+        delete $meta;
+      }
+
+      // Fill in balance fields.
+      auto* balance = dir->mutable_balance();
+      balance->set_account($account.data(), $account.size());
+      balance->mutable_amount()->CopyFrom(*$atol.first);
+      delete $atol.first;
+      if ($atol.second.has_value()) {
+        DecimalToProto($atol.second.value(), balance->mutable_tolerance());
+      }
+      // Note: We leave `diff_amount` unset.
+
+      // TODO(blais): Add directive.
+      Py_INCREF(Py_None);
+      $$ = Py_None;
     }
 
+/* An Amount, which is a decimal number and a currency. */
 amount:
   number_expr CURRENCY
     {
-      $$ = new Amount();
-      DecimalToProto($1, $$->mutable_number());
-      $$->set_currency($2.data(), $2.size());
+      auto* amount = new Amount();
+      DecimalToProto($1, amount->mutable_number());
+      amount->set_currency($2.data(), $2.size());
+      $$ = amount;
       builder.UpdatePrecisionStats($1, $2);
     }
 
+/* An amount, with an optional associated tolerance. */
 amount_tolerance:
-  number_expr CURRENCY
+  amount
     {
-      PyObject* s1 = DecimalToPyDecimal($1);
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s1, s2),
-             ($$).first, "amount", "OO", s1, s2);
-      ($$).second = Py_None;
-      Py_INCREF(Py_None);
+      $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | number_expr TILDE number_expr CURRENCY
+  | number_expr TILDE number_expr[tolerance] CURRENCY
     {
-      PyObject* s1 = DecimalToPyDecimal($1);
-      PyObject* s3 = DecimalToPyDecimal($3);
-      PyObject* s4 = StringToPyString($4);
-      BUILDY(DECREF(s1, s4),
-             ($$).first, "amount", "OO", s1, s4);
-      ($$).second = s3;
+      auto* amount = new Amount();
+      DecimalToProto($1, amount->mutable_number());
+      amount->set_currency($4.data(), $4.size());
+      $$ = make_pair(amount, $tolerance);
+      builder.UpdatePrecisionStats($1, $4);
+      builder.UpdatePrecisionStats($tolerance, $4);
     }
 
 maybe_number:
@@ -1253,7 +1274,8 @@ price:
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
-      PyObject* s4 = AmountToPyTuple($4);
+      PyObject* s4;
+      AmountToPyTuple(s4, $4);
       delete $4;
       BUILDY(DECREF(s1, s3, s4, $6),
              $$, "price", "OOOO", s1, s3, s4, $6);
@@ -1328,7 +1350,8 @@ custom_value:
     }
   | amount
     {
-      PyObject* s1 = AmountToPyTuple($1);
+      PyObject* s1;
+      AmountToPyTuple(s1, $1);
       delete $1;
       BUILDY(DECREF(s1),
              $$, "custom_value", "OO", s1, Py_None);
@@ -1417,6 +1440,8 @@ plugin:
              $$, "plugin", "OO", s2, s3);
     }
 
+/* TODO(blais): For consistency with proto naming, rename directive -> pragma;
+ * entry -> directive. */
 directive:
   pushtag
   | poptag
@@ -1431,8 +1456,13 @@ declarations:
   | declarations directive
   | declarations entry
     {
-      BUILDY(DECREF($1, $2),
-             $$, "handle_list", "OO", $1, $2);
+      // TODO(blais): remove
+      if ($entry != Py_None) {
+        BUILDY(DECREF($1, $2),
+               $$, "handle_list", "OO", $1, $2);
+      } else {
+        $$ = $1;
+      }
     }
   | declarations error
     {

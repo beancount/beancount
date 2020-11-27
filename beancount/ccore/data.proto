@@ -204,19 +204,24 @@ message Custom {
 }
 
 message Directive {
-  optional Meta meta = 1;
-  optional Date date = 2;
+  optional Date date = 1;
+  optional Meta meta = 2;
+  // TODO(blais): Insert time for an additional sort-key.
+  // TODO(blais): Insert filename, line beginning and end here. No reason to use
+  // metadata.
 
-  optional Transaction txn = 3;
-  optional Open open = 4;
-  optional Close close = 5;
-  optional Commodity commodity = 6;
-  optional Pad pad = 7;
-  optional Balance balance = 8;
-  optional Note note = 9;
-  optional Event event = 10;
-  optional Query query = 11;
-  optional Price price = 12;
-  optional Document document = 13;
-  optional Custom custom = 14;
+  oneof body {
+    Transaction txn = 3;
+    Open open = 4;
+    Close close = 5;
+    Commodity commodity = 6;
+    Pad pad = 7;
+    Balance balance = 8;
+    Note note = 9;
+    Event event = 10;
+    Query query = 11;
+    Price price = 12;
+    Document document = 13;
+    Custom custom = 14;
+  }
 }
