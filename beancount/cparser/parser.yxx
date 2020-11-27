@@ -127,6 +127,18 @@ inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
   return pydecimal_from_cstring(d.to_sci().c_str());
 }
 
+// Convert an Amount to a Python tuple like Amount.
+// TODO(blais): This doesn't actually create a proper instance of `Amount`.
+PyObject* AmountToPyTuple(Amount* amount){
+  auto dec = ProtoToDecimal(amount->number());
+  auto s1 = DecimalToPyDecimal(dec);
+  auto s2 = StringToPyString(amount->currency());
+  auto tup = PyTuple_Pack(2, s1, s2);
+  Py_DECREF(s1);
+  Py_DECREF(s2);
+  return tup;
+}
+
 // Convert a date object to an equivalent proto.
 inline void DateToProto(const absl::CivilDay& date, Date* proto) {
   assert(proto != nullptr);
@@ -553,7 +565,7 @@ private:
 %type <PyObject*> balance
 %type <PyObject*> pad
 %type <std::pair<PyObject*, PyObject*>> amount_tolerance
-%type <PyObject*> amount
+%type <beancount::Amount*> amount
 %type <beancount::Amount*> incomplete_amount
 %type <std::optional<decimal::Decimal>> maybe_number
 %type <std::optional<std::string_view>> maybe_currency
@@ -1087,10 +1099,10 @@ balance:
 amount:
   number_expr CURRENCY
     {
-      PyObject* s1 = DecimalToPyDecimal($1);
-      PyObject* s2 = StringToPyString($2);
-      BUILDY(DECREF(s1, s2),
-             $$, "amount", "OO", s1, s2);
+      $$ = new Amount();
+      DecimalToProto($1, $$->mutable_number());
+      $$->set_currency($2.data(), $2.size());
+      builder.UpdatePrecisionStats($1, $2);
     }
 
 amount_tolerance:
@@ -1241,8 +1253,10 @@ price:
     {
       PyObject* s1 = DateToPyDate($1);
       PyObject* s3 = StringToPyString($3);
-      BUILDY(DECREF(s1, s3, $4, $6),
-             $$, "price", "OOOO", s1, s3, $4, $6);
+      PyObject* s4 = AmountToPyTuple($4);
+      delete $4;
+      BUILDY(DECREF(s1, s3, s4, $6),
+             $$, "price", "OOOO", s1, s3, s4, $6);
     }
 
 event:
@@ -1314,8 +1328,10 @@ custom_value:
     }
   | amount
     {
-      BUILDY(DECREF($1),
-             $$, "custom_value", "OO", $1, Py_None);
+      PyObject* s1 = AmountToPyTuple($1);
+      delete $1;
+      BUILDY(DECREF(s1),
+             $$, "custom_value", "OO", s1, Py_None);
     }
   | number_expr
     {
@@ -1642,3 +1658,5 @@ void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* mis
 // /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
 //   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
 //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// Rename `incomplete_amount` -> `partial_amount`
