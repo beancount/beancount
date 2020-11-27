@@ -256,7 +256,7 @@ public:
   inline PyObject* builder() const { return builder_obj_; }
   inline PyObject* missing() const { return missing_obj_; }
   const absl::flat_hash_set<string>& active_tags() const { return active_tags_; }
-  const absl::flat_hash_map<string, vector<PyObject*>>& active_meta() const {
+  const absl::flat_hash_map<string, vector<MetaValue*>>& active_meta() const {
     return active_meta_;
   }
 
@@ -288,10 +288,10 @@ public:
     }
   }
 
-  void PushMeta(string_view key, PyObject* value) {
+  // Steal the reference to `value`.
+  void PushMeta(string_view key, MetaValue* value) {
     auto& value_list = active_meta_[key];
     value_list.push_back(value);
-    Py_INCREF(value);
   }
 
   void PopMeta(string_view key) {
@@ -302,11 +302,12 @@ public:
     } else {
       auto& value_list = iter->second;
       assert(value_list.size() > 0);
-      Py_DECREF(value_list.back());
+      auto* value = value_list.back();
       value_list.pop_back();
       if (value_list.empty()) {
         active_meta_.erase(iter);
       }
+      delete value;
     }
   }
 
@@ -440,7 +441,7 @@ private:
 
   // A dict of the current active metadata fields; each of the field values is a
   // stack and the current value is at the top (last value).
-  absl::flat_hash_map<string, vector<PyObject*>> active_meta_;
+  absl::flat_hash_map<string, vector<MetaValue*>> active_meta_;
 };
 
 }  // namespace parser
@@ -543,9 +544,8 @@ private:
 %type <beancount::Meta*> indented_metadata
 %type <beancount::Meta*> metadata
 %type <beancount::Meta::KV*> metadata_line
+%type <beancount::MetaValue*> meta_value
 
-%type <std::pair<std::string, PyObject*>> key_value
-%type <PyObject*> key_value_value
 %type <std::vector<std::string>> currency_list
 %type <PyObject*> open
 %type <PyObject*> close
@@ -725,14 +725,16 @@ transaction_line:
       (void)tags;
       (void)links;
 
+#if 0
       // Create active metadata for builder.
       PyObject* active_meta = PyDict_New();
       for (const auto& [key, value_list] : builder.active_meta()) {
         assert(value_list.size() > 0);
         PyDict_SetItemString(active_meta, key.c_str(), value_list.back());
       }
+#endif
 
-      DECREF(s1, list, tags, links, active_meta);
+      DECREF(s1, list, tags, links);
 #if 0
       BUILDY(DECREF(s1, list, tags, links, active_meta),
              $$, "transaction", "ObOOOOO", s1, $2, list, tags, links, active_meta);
@@ -822,22 +824,24 @@ metadata:
 /* A single line of a metadata declaration. */
 metadata_line:
   /* Regular key-value pairs. */
-  key_value eol
+  KEY COLON meta_value eol
     {
       $$ = new beancount::Meta::KV();
-      // TODO(blais): set key value
+      $$->set_key($1.data(), $1.size());
+      $$->mutable_value()->CopyFrom(*$3);
+      delete $3;
     }
   /* A tag can be used by itself as metadata. */
   | TAG eol
     {
       $$ = new beancount::Meta::KV();
-      // TODO(blais): set key value
+      $$->mutable_value()->set_tag($1.data(), $1.size());
     }
   /* A link can be used by itself as metadata. */
   | LINK eol
     {
       $$ = new beancount::Meta::KV();
-      // TODO(blais): set key value
+      $$->mutable_value()->set_link($1.data(), $1.size());
     }
 
 /* A list of postings, possibly empty. */
@@ -904,59 +908,62 @@ posting:
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
 
-
-key_value:
-  KEY COLON key_value_value
-    {
-      $$ = make_pair($1, $3);
-    }
-
-
-key_value_value:
+meta_value:
   STRING
     {
-      $$ = StringToPyString($1);
+      $$ = new beancount::MetaValue();
+      $$->set_text($1.data(), $1.size());
     }
   | account
     {
-      $$ = StringToPyString($1);
+      $$ = new beancount::MetaValue();
+      $$->set_account($1.data(), $1.size());
     }
   | DATE
     {
-      $$ = DateToPyDate($1);
+      $$ = new beancount::MetaValue();
+      DateToProto($1, $$->mutable_date());
     }
   | CURRENCY
     {
-      $$ = StringToPyString($1);
+      $$ = new beancount::MetaValue();
+      $$->set_currency($1.data(), $1.size());
     }
   | TAG
     {
-      $$ = StringToPyString($1);
+      $$ = new beancount::MetaValue();
+      $$->set_tag($1.data(), $1.size());
+    }
+  | LINK
+    {
+      $$ = new beancount::MetaValue();
+      $$->set_link($1.data(), $1.size());
     }
   | BOOL
     {
-      PyObject* value = ($1) ? Py_True : Py_False;
-      Py_INCREF(value);
-      $$ = value;
+      $$ = new beancount::MetaValue();
+      $$->set_boolean($1);
     }
-
   | NONE
     {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      $$ = new beancount::MetaValue();
+      /* NULL is a proto not set */
     }
   | number_expr
     {
-      $$ = DecimalToPyDecimal($1);
+      $$ = new beancount::MetaValue();
+      DecimalToProto($1, $$->mutable_number());
     }
-
-  | amount
+  /* TODO(blais): Bring this back once 'amount' has been ported. */
+  // | amount
+  //   {
+  //     $$ = new beancount::MetaValue();
+  //     DecimalToProto($1, $$->mutable_number());
+  //   }
   | %empty
     {
-      Py_INCREF(Py_None);
-      $$ = Py_None;
+      $$ = new beancount::MetaValue();
     }
-
 
 currency_list:
   %empty
@@ -986,9 +993,9 @@ poptag:
     }
 
 pushmeta:
-  PUSHMETA key_value eol
+  PUSHMETA KEY COLON meta_value eol
     {
-      builder.PushMeta($2.first, $2.second);
+      builder.PushMeta($2, $4);
     }
 
 popmeta:
