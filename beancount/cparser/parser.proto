@@ -15,6 +15,12 @@ package beancount.inter;
 import 'beancount/ccore/number.proto';
 import 'beancount/ccore/data.proto';
 
+// An intermediate data structure holding the partially parsed tags and links.
+message TagsLinks {
+  repeated string tags = 1;
+  repeated string links = 2;
+}
+
 // A cost specification, which still requires to be filled in, and the final
 // per-unit numbers be calculated. This gets translated to Cost after booking
 // and interpolation.
@@ -41,8 +47,20 @@ message CostSpec {
   optional bool merge_cost = 6;
 }
 
-// An intermediate data structure holding the partially parsed tags and links.
-message TagsLinks {
-  repeated string tags = 1;
-  repeated string links = 2;
+// Copy of beancount.Posting with CostSpec instead.
+//
+// TODO(blais): By reusing the beancount.Posting with an optional field, we may
+// be able to avoid some serializations. Try migration this entire file there
+// later (once we've teased out all we need from the intermediate representation
+// in terms of concrete types).
+message Posting {
+  optional Meta meta = 1;
+  optional Date date = 2;
+  optional bytes flag = 3;
+  optional string account = 4;
+  optional Amount units = 5;
+  optional Amount price = 7;
+
+  // A Cost or CostSpec instances, the partially filled units of the position.
+  optional CostSpec cost_spec = 6;
 }

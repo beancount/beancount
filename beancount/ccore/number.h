@@ -47,16 +47,17 @@ struct hash<beancount::Number> {
 namespace beancount {
 
 // Deserialize a Number proto to a mpdecimal number.
-decimal::Decimal ProtoToDec(const Number& decproto);
+decimal::Decimal ProtoToDecimal(const Number& proto);
 
 // Serialize a mpdecimal number to a Number proto.
-Number DecToProto(const decimal::Decimal& decproto);
+Number DecimalToProto(const decimal::Decimal& dec);
+void DecimalToProto(const decimal::Decimal& dec, Number* proto);
 
 // Comparison operators for decimal protos.
-bool operator==(const Number& number1, const Number& number2);
+bool operator==(const Number& proto1, const Number& proto2);
 
 // Streaming operator for Number proto.
-std::ostream& operator<<(std::ostream& os, const Number& self);
+std::ostream& operator<<(std::ostream& os, const Number& proto);
 
 }  // namespace beancount
 

@@ -35,6 +35,7 @@ message MetaValue {
     bool flag = 7;
     Number number = 8;
     Amount amount = 9;
+    int64 integer = 10;
   }
 }
 

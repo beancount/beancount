@@ -52,6 +52,7 @@ cc_library(
     tags = ["nofixdeps"],
     deps = [
         ":parser_cc_proto",
+        "//beancount/ccore:number",
         "//beancount/ccore:data_cc_proto",
         "//beancount/parser:tokens_c",
         "//third_party/parser:reflex",

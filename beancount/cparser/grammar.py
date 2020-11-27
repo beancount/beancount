@@ -621,16 +621,16 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
-        # Prices may not be negative.
-        if price and isinstance(price.number, Decimal) and price.number < ZERO:
-            self.errors.append(
-                ParserError(meta, (
-                    "Negative prices are not allowed: {} "
-                    "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                    "for workaround)"
-                ).format(price), None))
-            # Fix it and continue.
-            price = Amount(abs(price.number), price.currency)
+        # # Prices may not be negative.
+        # if price and isinstance(price.number, Decimal) and price.number < ZERO:
+        #     self.errors.append(
+        #         ParserError(meta, (
+        #             "Negative prices are not allowed: {} "
+        #             "(see http://furius.ca/beancount/doc/bug-negative-prices "
+        #             "for workaround)"
+        #         ).format(price), None))
+        #     # Fix it and continue.
+        #     price = Amount(abs(price.number), price.currency)
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.

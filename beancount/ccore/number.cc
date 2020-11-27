@@ -9,13 +9,13 @@
 namespace beancount {
 using google::protobuf::util::MessageDifferencer;
 
-decimal::Decimal ProtoToDec(const Number& decproto) {
+decimal::Decimal ProtoToDecimal(const Number& proto) {
   decimal::Decimal dec;
-  if (decproto.has_exact()) {
-    dec = decimal::Decimal(decproto.exact());
+  if (proto.has_exact()) {
+    dec = decimal::Decimal(proto.exact());
   } else {
     mpd_t* value = dec.get();
-    const auto& mpd = decproto.mpd();
+    const auto& mpd = proto.mpd();
     value->flags = mpd.flags() & ~MPD_DATAFLAGS;
     value->exp = mpd.exp();
     value->digits = mpd.digits();
@@ -33,11 +33,18 @@ decimal::Decimal ProtoToDec(const Number& decproto) {
 }
 
 // Convert a mpdecimal number to a Number proto.
-Number DecToProto(const decimal::Decimal& dec) {
+Number DecimalToProto(const decimal::Decimal& dec) {
   // Serialize.
-  Number decproto;
+  Number proto;
+  DecimalToProto(dec, &proto);
+  return proto;
+}
+
+// Convert a mpdecimal number to a Number proto.
+void DecimalToProto(const decimal::Decimal& dec, Number* proto) {
+  // Serialize.
   {
-    auto* mpd = decproto.mutable_mpd();
+    auto* mpd = proto->mutable_mpd();
     const mpd_t* value = dec.getconst();
     mpd->set_flags(value->flags & ~MPD_DATAFLAGS);
     mpd->set_exp(value->exp);
@@ -47,19 +54,18 @@ Number DecToProto(const decimal::Decimal& dec) {
       mpd->add_data(value->data[ii]);
     }
   }
-  return decproto;
 }
 
 // TODO(blais): Convert to decimals before comparing.
-bool operator==(const Number& obj1, const Number& obj2) {
-  return MessageDifferencer::Equals(obj1, obj2);
+bool operator==(const Number& proto1, const Number& proto2) {
+  return MessageDifferencer::Equals(proto1, proto2);
 }
 
-std::ostream& operator<<(std::ostream& os, const Number& number) {
-  if (number.has_exact()) {
-    os << number.exact();
+std::ostream& operator<<(std::ostream& os, const Number& proto) {
+  if (proto.has_exact()) {
+    os << proto.exact();
   } else {
-    decimal::Decimal dec = ProtoToDec(number);
+    decimal::Decimal dec = ProtoToDecimal(proto);
     os << dec.to_sci(false);
   }
   return os;
