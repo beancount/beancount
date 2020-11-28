@@ -77,6 +77,7 @@ message ProcessingInfo {
 }
 
 // Root names for accounts.
+// TODO(blais): Join this with the AccountTypes type.
 message AccountRoots {
   optional string assets = 1;
   optional string liabilities = 2;
@@ -97,7 +98,7 @@ message Options {
   // must match, and the parser will validate these. You should place these
   // options at the beginning of your file, because they affect how the parser
   // recognizes account names.
-  optional AccountRoots names = 2;
+  optional AccountRoots root = 2;
 
   // Leaf name of the equity account used for summarizing previous transactions
   // into opening balances. e.g. "Opening-Balances".
@@ -157,7 +158,9 @@ message Options {
   // http://furius.ca/beancount/doc/tolerances.
   //
   // e.g., "CHF:0.01".
+
   // TODO(blais): This needs review, and possibly merging with display context.
+  // This is actually a mapping.
   repeated string inferred_tolerance_default = 10;
 
   // A multiplier for inferred tolerance values.
