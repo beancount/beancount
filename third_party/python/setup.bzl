@@ -42,13 +42,19 @@ def setup_python():
         strip_prefix = "pybind11-2.6.1",
         urls = ["https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz"],
     )
+
+    # NOTE: We've had to fork and patch up the given repository in order for it
+    # to work, this is too recent.
     http_archive(
         name = "pybind11_protobuf",
-        # build_file = "//third_party/python:pybind11_protobuf.BUILD",
         strip_prefix = "pybind11_protobuf-experimental",
-        sha256 = "144e74162e115b91f658d1039dadd41b1f1f00c295ba77f13b50c483716c93bb",
-        urls = ["https://github.com/pybind/pybind11_protobuf/archive/experimental.zip"],
+        sha256 = "970bb8bee40bd8bf1f2ed5a671142c78518e610256a676598244348e3316a8d8",
+        urls = ["https://github.com/blais/pybind11_protobuf/archive/experimental.zip"],
     )
+    # native.local_repository(
+    #     name = "pybind11_protobuf",
+    #     path = "/home/blais/src/pybind11_protobuf",
+    # )
 
     # See also: https://github.com/pybind/pybind11_protobuf/tree/experimental,
     # which implement C++ proto casters. We will use this eventually to expose protobufs.
