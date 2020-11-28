@@ -673,7 +673,7 @@ private:
 %type <std::vector<std::string>> currency_list
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
-%type <beancount::Amount*> incomplete_amount
+%type <beancount::Amount*> partial_amount
 %type <std::optional<decimal::Decimal>> maybe_number
 %type <std::optional<std::string_view>> maybe_currency
 %type <beancount::Amount*> price_annotation
@@ -890,9 +890,9 @@ optflag:
   | FLAG
 
 price_annotation:
-  incomplete_amount
+  partial_amount
     {
-      $price_annotation = $incomplete_amount;
+      $price_annotation = $partial_amount;
 
       // Prices may not be negative. Check and issue an error if found; fix up
       // the price to its absolute value and continue.
@@ -997,29 +997,29 @@ posting_and_metadata:
 /* A posting line, without any of its metadata. */
 posting:
   /* Variation with no price. */
-  optflag account incomplete_amount cost_spec eol
+  optflag account partial_amount cost_spec eol
     {
       $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_units()->CopyFrom(*$partial_amount);
       $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
   /* Variation with price. */
-  | optflag account incomplete_amount cost_spec AT price_annotation eol
+  | optflag account partial_amount cost_spec AT price_annotation eol
     {
       $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_units()->CopyFrom(*$partial_amount);
       $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       $$->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
   /* Variation with complete price. */
-  | optflag account incomplete_amount cost_spec ATAT price_annotation eol
+  | optflag account partial_amount cost_spec ATAT price_annotation eol
     {
       // TODO(blais): Merge this rule with the one above, by inspecting the
       // value of AT and ATAT.
       $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$incomplete_amount);
+      $$->mutable_units()->CopyFrom(*$partial_amount);
       $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       $$->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $optflag, $account, true, scanner.location());
@@ -1327,7 +1327,10 @@ compound_amount:
       $$->set_currency({$4.data(), $4.size()});
     }
 
-incomplete_amount:
+/* An amount with possibly missing values for number and/or currency. This is
+ * used in postings to allow users to let Beancount interpolate the missing
+ * values. */
+partial_amount:
   maybe_number maybe_currency
     {
       $$ = new Amount();
@@ -1786,8 +1789,6 @@ void ParseFile(PyObject* builder_obj, const string_view& filename, PyObject* mis
 // /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
 //   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
 //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-// - Rename `incomplete_amount` -> `partial_amount`
 
 // - Making /all/ directives support tags and links in common would simplify the
 //   code and possibly the syntax. Do it.
