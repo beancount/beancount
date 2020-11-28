@@ -20,13 +20,14 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import position
 
-from experiments.v3.protos import beancount_pb2 as pb
+from beancount.ccore import data_pb2 as pb
+from beancount.ccore import number_pb2 as nb
 
 import riegeli
 
 
-def copy_decimal(din: Decimal, dout: pb.Decimal):
-    dout.strvalue = str(din)
+def copy_decimal(din: Decimal, dout: nb.Number):
+    dout.exact = str(din)
 
 def copy_date(date: datetime.date, pbdate: pb.Date):
     pbdate.year = date.year
@@ -40,7 +41,7 @@ def copy_meta(meta: dict, pbmeta: pb.Meta):
     for key, value in sorted(meta.items()):
         item = pbmeta.kv.add()
         item.key = key
-        item.value = str(value) # FIXME: TODO - convert to type
+        item.value.text = str(value) # FIXME: TODO - convert to type
 
 
 def copy_amount(amt: amount.Amount, pbamt: pb.Amount):
@@ -71,7 +72,7 @@ def copy_posting(posting: data.Posting, pbpost: pb.Posting):
 
 def convert_Transaction(entry: data.Transaction) -> pb.Directive:
     pbent = pb.Directive()
-    txn = pbent.txn
+    txn = pbent.transaction
     copy_meta(entry.meta, pbent.meta)
     copy_date(entry.date, pbent.date)
     if entry.flag:
