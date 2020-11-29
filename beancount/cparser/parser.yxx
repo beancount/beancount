@@ -298,7 +298,7 @@ public:
 
     // Store flag and account name.
     if (flag != '\0') {
-      posting->set_flag(&flag);
+      posting->set_flag(&flag, 1);
     }
     posting->set_account(account.data(), account.size());
 
@@ -761,7 +761,7 @@ transaction:
 
 /* Matches just the first line of a transaction, without its metadata. */
 transaction_line:
-  DATE txn payee_narration[pn] tags_links eol
+  DATE txn[flag] payee_narration[pn] tags_links eol
     {
       // Create directive and update head, without custom metadata. That is
       // added at {99ef4ca51cd5}.
@@ -771,7 +771,9 @@ transaction_line:
 
       // Create Transaction and update flag.
       auto* txn = dir->mutable_transaction();
-      txn->set_flag(&$txn);
+      if ($flag != '\0') {
+        txn->set_flag(&$flag, 1);
+      }
 
       // Update payee and narration fields.
       if (!$pn.first.empty()) {
