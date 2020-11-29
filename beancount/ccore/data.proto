@@ -224,3 +224,23 @@ message Directive {
     Custom custom = 14;
   }
 }
+
+// A location in an input file.
+message Location {
+  optional string filename = 1;
+  optional int32 line_begin = 2;
+  optional int32 line_end = 3;
+}
+
+// An error in processing.
+message Error{
+  // The error message.
+  optional string message = 1;
+
+  // Location where the error occurred in the file, if relevant. The line
+  // numbers are optional and may be left unset if not relevant to the context.
+  optional Location location = 2;
+
+  // A unique hash referenceing of a corresponding directive.
+  optional string dirhash = 3;
+}
