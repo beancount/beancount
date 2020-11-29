@@ -65,6 +65,12 @@ class Builder;
 // Parse the contents of a file.
 std::unique_ptr<Ledger> ParseFile(const std::string_view& filename);
 
+// An intermediate data structure holding the partially parsed tags and links.
+struct TagsLinks {
+  std::vector<std::string_view> tags;
+  std::vector<std::string_view> links;
+};
+
 }  // namespace parser
 }  // namespace beancount
 }  // %code requires
@@ -245,16 +251,33 @@ public:
 
   // Update the given repeated field with the list of active tags.
   // This function mutates the given argument.
-  void SetTags(const google::protobuf::RepeatedPtrField<std::string>& tags,
-               google::protobuf::RepeatedPtrField<std::string>* output) {
-    // First copy the active tags.
-    for (const auto& active_tag : active_tags_) {
-      *output->Add() = active_tag;
+  template <typename T>
+  void SetTagsAndLinks(const TagsLinks& tags_links,
+                       T* message) {
+    if (!active_tags_.empty()) {
+      // First copy the active tags.
+      auto* output = message->mutable_tags();
+      for (const auto& active_tag : active_tags_) {
+        *output->Add() = active_tag;
+      }
     }
-    // Add the new tags, avoiding duplicates.
-    for (const auto& tag : tags) {
-      if (active_tags_.find(tag) == active_tags_.end()) {
-        *output->Add() = tag;
+
+    // Add the new tags.
+    if (!tags_links.tags.empty()) {
+      auto* output = message->mutable_tags();
+      // Avoiding duplicates with active metadata.
+      for (const auto& tag : tags_links.tags) {
+        if (active_tags_.find(tag) == active_tags_.end()) {
+          *output->Add() = tag;
+        }
+      }
+    }
+
+    // Add the new links.
+    if (!tags_links.links.empty()) {
+      auto* output = message->mutable_links();
+      for (const auto& link : tags_links.links) {
+        *output->Add() = link;
       }
     }
   }
@@ -661,7 +684,7 @@ private:
 %type <beancount::inter::Directive*> custom
 
 %type <std::pair<std::string, std::string>> payee_narration
-%type <beancount::inter::TagsLinks*> tags_links
+%type <beancount::parser::TagsLinks*> tags_links
 %type <std::string_view> filename
 %type <Booking> booking
 %type <decimal::Decimal> number_expr
@@ -873,9 +896,10 @@ transaction_line:
       }
 
       // Update tags, including active tags and links.
-      builder.SetTags($tags_links->tags(), txn->mutable_tags());
-      txn->mutable_links()->CopyFrom($tags_links->links());
-      delete $tags_links;
+      if ($tags_links != nullptr) {
+        builder.SetTagsAndLinks(*$tags_links, txn);
+        delete $tags_links;
+      }
     }
 
 /* A Price directive. */
@@ -989,9 +1013,10 @@ document:
 
       // Update tags, including active tags, and links.
       // TODO(blais): Refactor with txn? It's the same code.
-      builder.SetTags($tags_links->tags(), document->mutable_tags());
-      document->mutable_links()->CopyFrom($tags_links->links());
-      delete $tags_links;
+      if ($tags_links != nullptr) {
+        builder.SetTagsAndLinks(*$tags_links, document);
+        delete $tags_links;
+      }
     }
 
 /* A Note directive. */
@@ -1185,17 +1210,17 @@ meta_value_list:
 tags_links:
   %empty
     {
-      $$ = new inter::TagsLinks{};
-    }
-  | tags_links LINK
-    {
-      $1->add_links($2.data(), $2.size());
-      $$ = $1;
+      $$ = nullptr;
     }
   | tags_links TAG
     {
-      $1->add_tags($2.data(), $2.size());
-      $$ = $1;
+      $$ = ($1 != nullptr) ? ($1) : new TagsLinks{};
+      $$->tags.emplace_back($2.data(), $2.size());
+    }
+  | tags_links LINK
+    {
+      $$ = ($1 != nullptr) ? ($1) : new TagsLinks{};
+      $$->links.emplace_back($2.data(), $2.size());
     }
 
 /*- String matchers ---------------------------------------------------------*/
