@@ -11,7 +11,6 @@
 #include <vector>
 #include <list>
 
-#include "beancount/cparser/parser.pb.h"
 #include "beancount/cparser/options.pb.h"
 #include "beancount/ccore/data.pb.h"
 
@@ -23,7 +22,7 @@ struct Ledger final {
   ~Ledger();
 
   // A list of directives, with ownership.
-  std::list<beancount::inter::Directive*> directives;
+  std::list<beancount::Directive*> directives;
 
   // A list of errors encountered during parsing and processing.
   std::vector<beancount::Error*> errors;

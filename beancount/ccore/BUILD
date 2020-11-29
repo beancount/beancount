@@ -52,10 +52,17 @@ cc_test(
 #----------------------------------------
 
 proto_library(
+    name = "date_proto",
+    srcs = ["date.proto"],
+)
+
+proto_library(
     name = "data_proto",
     srcs = ["data.proto"],
     deps = [
         "//beancount/ccore:number_proto",
+        "//beancount/ccore:date_proto",
+        "//beancount/cparser:parser_proto",
     ],
 )
 

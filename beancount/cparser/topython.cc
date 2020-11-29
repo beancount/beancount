@@ -36,7 +36,7 @@ inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
 
 // Create two sets from a TagsLinks object.
 std::tuple<PyObject*, PyObject*> TagsLinksToPython(
-  inter::TagsLinks* tags_links,
+  TagsLinks* tags_links,
   const absl::flat_hash_set<string>* active_tags) {
 
   assert(tags_links != nullptr);

@@ -1,7 +1,7 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/scanner.h"
-#include "beancount/cparser/parser.pb.h"
 #include "beancount/parser/tokens.h"
+#include "beancount/ccore/data.pb.h"
 #include "beancount/defs.h"
 
 #include "pybind11/pybind11.h"

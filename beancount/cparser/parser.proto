@@ -13,7 +13,7 @@ syntax = "proto2";
 package beancount.inter;
 
 import 'beancount/ccore/number.proto';
-import 'beancount/ccore/data.proto';
+import 'beancount/ccore/date.proto';
 
 // A cost specification, which still requires to be filled in, and the final
 // per-unit numbers be calculated. This gets translated to Cost after booking
@@ -21,10 +21,10 @@ import 'beancount/ccore/data.proto';
 message CostSpec {
   // A decimal number, exclusive the per-unit cost.
   // TODO(blais): Rename this to number_per_unit; it's annoying.
-  optional Number number_per = 1;
+  optional beancount.Number number_per = 1;
 
   // A decimal number, the total cost/price.
-  optional Number number_total = 2;
+  optional beancount.Number number_total = 2;
 
   // A string, the commodity of the cost.
   optional string currency = 3;
@@ -39,63 +39,4 @@ message CostSpec {
   // A flag explicitly indicating to merge all matching lots and compute the
   // average cost.
   optional bool merge_cost = 6;
-}
-
-// Copy of beancount.Posting with CostSpec instead.
-//
-// TODO(blais): By reusing the beancount.Posting with an optional field, we may
-// be able to avoid some serializations. Try migration this entire file there
-// later (once we've teased out all we need from the intermediate representation
-// in terms of concrete types).
-message Posting {
-  optional Location location = 1;
-  optional Meta meta = 2;
-  optional Date date = 3;
-  optional bytes flag = 4;
-  optional string account = 5;
-  optional Amount units = 6;
-  optional Amount price = 8;
-
-  // A Cost or CostSpec instances, the partially filled units of the position.
-  optional CostSpec cost_spec = 9;
-}
-
-// Copy of beancount.Transaction with CostSpec instead.
-// TODO(blais): This is a bit much. Use an optional field.
-message Transaction {
-  optional bytes flag = 3;
-  optional string payee = 4;
-  optional string narration = 5;
-  repeated string tags = 6;
-  repeated string links = 7;
-  repeated Posting postings = 8;
-}
-
-// Copy of beancount.Directive with CostSpecs instead.
-// TODO(blais): This is a bit much. Use an optional field.
-message Directive {
-  optional Location location = 1;
-  optional Date date = 2;
-  optional Meta meta = 3;
-
-  oneof body {
-    Transaction transaction = 4;
-    Price price = 5;
-    Balance balance = 6;
-    Open open = 7;
-    Close close = 8;
-    Commodity commodity = 9;
-    Pad pad = 10;
-    Document document = 11;
-    Note note = 12;
-    Event event = 13;
-    Query query = 14;
-    Custom custom = 15;
-  }
-}
-
-// Container for a list of directives and more infos.
-message Ledger {
-  repeated Directive directive = 1;
-  // TODO(blais): Continue here with a clean list of contents.
 }

@@ -114,7 +114,7 @@ proto_library(
     srcs = ["parser.proto"],
     deps = [
         "//beancount/ccore:number_proto",
-        "//beancount/ccore:data_proto",
+        "//beancount/ccore:date_proto",
     ],
 )
 
@@ -185,7 +185,6 @@ cc_library(
     srcs = ["ledger.cc"],
     hdrs = ["ledger.h"],
     deps = [
-        "//beancount/cparser:parser_cc_proto",
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
         "//beancount:defs",

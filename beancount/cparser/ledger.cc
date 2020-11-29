@@ -36,7 +36,7 @@ int WriteToText(const Ledger& ledger, const string& filename) {
   }
   ZeroCopyOutputStream* output = new FileOutputStream(outfd);
   for (const auto& dir : ledger.directives) {
-    inter::Ledger ledger_proto;
+    LedgerProto ledger_proto;
     ledger_proto.add_directive()->CopyFrom(*dir);
     if (!TextFormat::Print(ledger_proto, output)) {
       std::cerr << "Error writing out message to '" << filename << "'" << std::endl;

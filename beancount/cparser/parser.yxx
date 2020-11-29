@@ -355,11 +355,11 @@ public:
 
   // Insert the active metadata into the given argument. If there is no metadata
   // to be added, the directive is unmodified.
-  inline void AddActiveMetadata(beancount::Meta* meta,
-                                beancount::inter::Directive* dir) const {
+  inline void AddActiveMetadata(Meta* meta,
+                                Directive* dir) const {
     // Append active metadata into the output.
     if (!active_meta_.empty()) {
-      beancount::Meta* dirmeta = dir->mutable_meta();
+      Meta* dirmeta = dir->mutable_meta();
       for (auto [key, value_list] : active_meta_) {
         auto* kv = dirmeta->mutable_kv()->Add();
         kv->set_key(key);
@@ -369,7 +369,7 @@ public:
 
     // Merge given metadata on top of active metadttaa.
     if (meta != nullptr) {
-      beancount::Meta* dirmeta = dir->mutable_meta();
+      Meta* dirmeta = dir->mutable_meta();
       dirmeta->MergeFrom(*meta);
     }
 
@@ -388,9 +388,9 @@ public:
   // Create a new directive. Return value ownership is given. If `meta` is
   // non-null, it will be reset and ownership will be taken (and it will be
   // deleted).
-  inline inter::Directive* MakeDirective(const absl::CivilDay& date,
-                                         beancount::Meta** meta) const {
-    auto* dir = new inter::Directive();
+  inline Directive* MakeDirective(const absl::CivilDay& date,
+                                  Meta** meta) const {
+    auto* dir = new Directive();
 
     // Set filename and line number.
     // TODO(blais): Set the end line number (when wrapping up).
@@ -400,7 +400,7 @@ public:
     DateToProto(date, dir->mutable_date());
 
     // Copy the metadata, if provided, including the stack's metadata.
-    beancount::Meta* ourmeta = nullptr;
+    Meta* ourmeta = nullptr;
     if (meta != nullptr) {
       ourmeta = *meta;
       meta = nullptr;
@@ -412,14 +412,14 @@ public:
   }
 
   // Note: We steal ownership.
-  void AppendDirective(inter::Directive*& directive) {
+  void AppendDirective(Directive*& directive) {
     directives_.push_back(directive);
     directive = nullptr;
   }
 
 
   // Common posting preparation actions.
-  void PreparePosting(inter::Posting* posting,
+  void PreparePosting(Posting* posting,
                       const char flag,
                       string_view account,
                       bool is_total,
@@ -562,7 +562,7 @@ private:
   absl::flat_hash_map<string, vector<MetaValue*>> active_meta_;
 
   // The accumulated list of all directives.
-  vector<inter::Directive*> directives_;
+  vector<Directive*> directives_;
 };
 
 }  // namespace parser
@@ -644,11 +644,11 @@ private:
 %type <char> optflag
 %type <std::string_view> account
 
-%type <beancount::inter::Directive*> transaction_line
+%type <beancount::Directive*> transaction_line
 
-%type <std::vector<beancount::inter::Posting*>> posting_list
-%type <beancount::inter::Posting*> posting_and_metadata
-%type <beancount::inter::Posting*> posting
+%type <std::vector<beancount::Posting*>> posting_list
+%type <beancount::Posting*> posting_and_metadata
+%type <beancount::Posting*> posting
 
 %type <beancount::Meta*> indented_metadata
 %type <beancount::Meta*> metadata
@@ -669,19 +669,19 @@ private:
 %type <beancount::inter::CostSpec*> cost_comp_list
 %type <beancount::inter::CostSpec*> cost_spec
 
-%type <beancount::inter::Directive*> directive
-%type <beancount::inter::Directive*> transaction
-%type <beancount::inter::Directive*> balance
-%type <beancount::inter::Directive*> open
-%type <beancount::inter::Directive*> close
-%type <beancount::inter::Directive*> pad
-%type <beancount::inter::Directive*> document
-%type <beancount::inter::Directive*> note
-%type <beancount::inter::Directive*> event
-%type <beancount::inter::Directive*> price
-%type <beancount::inter::Directive*> commodity
-%type <beancount::inter::Directive*> query
-%type <beancount::inter::Directive*> custom
+%type <beancount::Directive*> directive
+%type <beancount::Directive*> transaction
+%type <beancount::Directive*> balance
+%type <beancount::Directive*> open
+%type <beancount::Directive*> close
+%type <beancount::Directive*> pad
+%type <beancount::Directive*> document
+%type <beancount::Directive*> note
+%type <beancount::Directive*> event
+%type <beancount::Directive*> price
+%type <beancount::Directive*> commodity
+%type <beancount::Directive*> query
+%type <beancount::Directive*> custom
 
 %type <std::pair<std::string, std::string>> payee_narration
 %type <beancount::parser::TagsLinks*> tags_links
@@ -1391,7 +1391,7 @@ posting:
   /* Variation with no price. */
   optflag account partial_amount cost_spec eol
     {
-      $$ = new inter::Posting();
+      $$ = new Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
@@ -1401,7 +1401,7 @@ posting:
   /* Variation with price. */
   | optflag account partial_amount cost_spec AT price_annotation eol
     {
-      $$ = new inter::Posting();
+      $$ = new Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
@@ -1414,7 +1414,7 @@ posting:
     {
       // TODO(blais): Merge this rule with the one above, by inspecting the
       // value of AT and ATAT.
-      $$ = new inter::Posting();
+      $$ = new Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
@@ -1425,7 +1425,7 @@ posting:
   /* Variation with just an account name. */
   | optflag account eol
     {
-      $$ = new inter::Posting();
+      $$ = new Posting();
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
 

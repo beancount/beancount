@@ -12,6 +12,8 @@ syntax = "proto2";
 package beancount;
 
 import 'beancount/ccore/number.proto';
+import 'beancount/ccore/date.proto';
+import 'beancount/cparser/parser.proto';
 
 // Container for account types.
 message AccountTypes {
@@ -47,14 +49,6 @@ message Meta {
     optional MetaValue value = 2;
   }
   repeated KV kv = 1;
-}
-
-// Civil dates.
-// See https://abseil.io/blog/20181010-civil-time.
-message Date {
-  optional int32 year = 1;
-  optional int32 month = 2;
-  optional int32 day = 3;
 }
 
 // An 'Amount' represents a number of a particular unit of something. It's
@@ -109,13 +103,19 @@ message Posting {
   // An Amount, the units of the position.
   optional Amount units = 6;
 
-  // A Cost or CostSpec instances, the units of the position.
+  // A Cost instances, the units of the position.
   optional Cost cost = 7;
 
   // An Amount, the price at which the position took place, or None, where not
   // relevant. Providing a price member to a posting automatically adds a price
   // in the prices database at the date of the transaction.
   optional Amount price = 8;
+
+  // A CostSpec instance. Warning: This partically filled field is only used in
+  // the production of the intermediate representation produced by the parser
+  // and never set in the final processed output from Beancount. Do not use
+  // this.
+  optional inter.CostSpec cost_spec = 9;
 }
 
 //-------------------------------------------------------------------------------
@@ -245,4 +245,10 @@ message Error{
 
   // A unique hash referenceing of a corresponding directive.
   optional string dirhash = 3;
+}
+
+// Container for a list of directives and more infos.
+message LedgerProto {
+  repeated Directive directive = 1;
+  // TODO(blais): Continue here with a clean list of contents.
 }
