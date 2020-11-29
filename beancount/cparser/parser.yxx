@@ -733,15 +733,19 @@ private:
 
 
 
-//- Grammar rules -------------------------------------------------------------
+/*- Grammar rules -----------------------------------------------------------*/
 %%
 
 /* Start token for parsing an entire file of the DSL. */
 file:
   declarations YYEOF
 
+/* End-of-line marker. In Beancount whitespace matters, so we don't swallow these and
+   match them explicitly. */
+eol: EOL | YYEOF
+
 /* A rule to reduce pragmas and directives. We also handle errors at this
- * level. */
+   level. */
 declarations:
   declarations EOL
   /* Accumulate nothing for anything that's not a directive. The side-effects of
@@ -777,97 +781,88 @@ declarations:
     }
   | %empty
 
+/*- Pragmas -----------------------------------------------------------------*/
 
+/* pragmas: Anything but a directive. Those constructs apply side-effects to the
+   builder object. */
+pragma:
+  pushtag
+  | poptag
+  | pushmeta
+  | popmeta
+  | option
+  | include
+  | plugin
 
-
-
-/* The flag in a transaction declaration: it can be either 'txn' or one of the
-   special character flags. */
-txn:
-  TXN
+/* A pragma that pushes a new tag applied to transactions. */
+pushtag:
+  PUSHTAG TAG eol
     {
-      $$ = '*';
-    }
-  | FLAG
-    {
-        $$ = $1;
-    }
-  | ASTERISK
-    {
-        $$ = '*';
-    }
-  | HASH
-    {
-        $$ = '#';
+      builder.PushTag($2);
     }
 
-eol: EOL | YYEOF
-
-/* FIXME: This needs be made more general, dealing with precedence.
-   I just need this right now, so I'm putting it in, in a way that will.
-   be backwards compatible, so this is just a bit of a temporary hack
-   (blais, 2015-04-18). */
-number_expr:
-  NUMBER
-  | number_expr PLUS number_expr
+/* Remove a specific tag from the active list. */
+poptag:
+  POPTAG TAG eol
     {
-      $$ = $1.add($3);
-    }
-  | number_expr MINUS number_expr
-    {
-      $$ = $1.sub($3);
-    }
-  | number_expr ASTERISK number_expr
-    {
-      $$ = $1.mul($3);
-    }
-  | number_expr SLASH number_expr
-    {
-      $$ = $1.div($3);
-    }
-  | MINUS number_expr %prec NEGATIVE
-    {
-      $$ = $2.minus();
-    }
-  | PLUS number_expr %prec NEGATIVE
-    {
-      $$ = $2.plus(); // Note: Not entirely sure we shouldn't just copy.
-    }
-  | LPAREN number_expr RPAREN
-    {
-      $$ = $2;
+      builder.PopTag($2);
     }
 
-/* Payee and narration strings. */
-payee_narration:
-  /* Variant when both strings are present. */
-  STRING STRING
+/* A pragma that pushes a new key-value pair applied to transactions. */
+pushmeta:
+  PUSHMETA KEY COLON meta_value eol
     {
-      $$ = make_pair($1, $2);
-    }
-  /* Variant when only one string is present; interpret as narration only. */
-  | STRING
-    {
-      $$ = make_pair("", $1);
+      builder.PushMeta($2, $4);
     }
 
-/* A container for tags and links, which show up at the end of a transaction's
-   first line or in some of the directives. */
-tags_links:
-  %empty
+/* Remove a specific key-value pairfrom the active list. */
+popmeta:
+  POPMETA KEY COLON eol
     {
-      $$ = new inter::TagsLinks{};
+      builder.PopMeta($2);
     }
-  | tags_links LINK
+
+/* An option pragma. */
+option:
+  OPTION STRING[key] STRING[value] eol
     {
-      $1->add_links($2.data(), $2.size());
-      $$ = $1;
+      builder.AddOption($key, $value);
     }
-  | tags_links TAG
+
+/* An include pragma. */
+include:
+  INCLUDE STRING eol
     {
-      $1->add_tags($2.data(), $2.size());
-      $$ = $1;
+      builder.AddInclude($2);
     }
+
+/* A plugin pragma, along with its optional configuration. */
+plugin:
+  PLUGIN STRING eol
+    {
+      builder.AddPlugin($2, {});
+    }
+  | PLUGIN STRING STRING eol
+    {
+      builder.AddPlugin($2, $3);
+    }
+
+/*- Directives --------------------------------------------------------------*/
+
+/* A rule to reduce any of the Beancount directives we offer. */
+directive:
+  transaction
+  | price
+  | balance
+  | open
+  | close
+  | commodity
+  | pad
+  | document
+  | note
+  | event
+  | query
+  | custom
 
 /* A Transaction directive, including postings. */
 transaction:
@@ -923,48 +918,217 @@ transaction_line:
       delete $tags_links;
     }
 
-/* An optional flag marking a posting. */
-optflag:
-  %empty
+/* A Price directive. */
+price:
+  DATE PRICE CURRENCY amount eol indented_metadata
     {
-      $$ = '\0';
-    }
-  | ASTERISK
-    {
-      $$ = '*';
-    }
-  | HASH
-    {
-      $$ = '#';
-    }
-  | FLAG
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
 
-/* A price annotation on a posting. */
-price_annotation:
-  partial_amount
-    {
-      $price_annotation = $partial_amount;
+      // Create Price and update currency.
+      auto* price = dir->mutable_price();
+      price->set_currency($3.data(), $3.size());
 
-      // Prices may not be negative. Check and issue an error if found; fix up
-      // the price to its absolute value and continue.
-      if ($price_annotation->has_number()) {
-        decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
-        if (dec.sign() == -1) {
-          builder.LogError("Negative prices are not allowed "
-                           "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                           "for workaround)");
-          // Invert and continue.
-          DecimalToProto(-dec, $price_annotation->mutable_number());
-        }
+      // Update price amount.
+      price->mutable_amount()->CopyFrom(*$amount);
+    }
+
+/* A Balance directive. */
+balance:
+  DATE BALANCE account amount_tolerance[atol] eol indented_metadata[meta]
+    {
+      // Create directive and prepare head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      if ($meta != nullptr) {
+        dir->mutable_meta()->CopyFrom(*$meta);
+        delete $meta;
       }
+
+      // Create Pad and fill in account.
+      auto* balance = dir->mutable_balance();
+      balance->set_account($account.data(), $account.size());
+
+      // Fill in amount.
+      balance->mutable_amount()->CopyFrom(*$atol.first);
+      delete $atol.first;
+
+      // Fill in optional tolerance.
+      if ($atol.second.has_value()) {
+        DecimalToProto($atol.second.value(), balance->mutable_tolerance());
+      }
+
+      // Note: We leave `diff_amount` unset.
     }
 
-/* An  account name. */
-account:
-  ACCOUNT
+/* An Open directive. */
+open:
+  DATE OPEN account currency_list booking eol indented_metadata
     {
-      $$ = builder.Account($1);
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Open and update account.
+      auto* open = dir->mutable_open();
+      open->set_account($account.data(), $account.size());
+
+      // Create currency list.
+      for (const auto& currency : $currency_list) {
+        open->add_currencies(currency);
+      }
+
+      // Set booking method.
+      open->set_booking($booking);
     }
+
+/* A Close directive. */
+close:
+  DATE CLOSE account eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Close and update account.
+      auto* open = dir->mutable_close();
+      open->set_account($account.data(), $account.size());
+    }
+
+/* A Commodity directive. */
+commodity:
+  DATE COMMODITY CURRENCY eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Commodity and update account.
+      auto* commodity = dir->mutable_commodity();
+      commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
+    }
+
+/* A Pad directive. */
+pad:
+  DATE PAD account account[source] eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Pad and update accounts.
+      auto* pad = dir->mutable_pad();
+      pad->set_account($3.data(), $3.size());
+      pad->set_source_account($source.data(), $source.size());
+    }
+
+/* A Document directive. */
+document:
+  DATE DOCUMENT account filename tags_links eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Document and update account and filename.
+      auto* document = dir->mutable_document();
+      document->set_account($account.data(), $account.size());
+      document->set_filename($filename.data(), $filename.size());
+
+      // Update tags, including active tags, and links.
+      // TODO(blais): Refactor with txn? It's the same code.
+      builder.SetTags($tags_links->tags(), document->mutable_tags());
+      document->mutable_links()->CopyFrom($tags_links->links());
+      delete $tags_links;
+    }
+
+/* A Note directive. */
+note:
+  DATE NOTE account STRING[comment] eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Note and update account.
+      auto* note = dir->mutable_note();
+      note->set_account($3.data(), $3.size());
+
+      // Fill in comment.
+      note->set_comment($comment.data(), $comment.size());
+    }
+
+/* An Event directive. */
+event:
+  DATE EVENT STRING[type] STRING[description] eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Event and update fields.
+      auto* event = dir->mutable_event();
+      event->set_type($type.data(), $type.size());
+      event->set_description($description.data(), $description.size());
+    }
+
+/* A Query directive. */
+query:
+  DATE QUERY STRING[name] STRING[qstr] eol indented_metadata
+    {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Query and update fields.
+      auto* query = dir->mutable_query();
+      query->set_name($name.data(), $name.size());
+      query->set_query_string($qstr.data(), $qstr.size());
+    }
+
+/* A Custom directive. */
+custom:
+  DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
+   {
+      // Create directive and update head.
+      auto* dir = $$ = new inter::Directive();
+      DateToProto($DATE, dir->mutable_date());
+      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
+      delete $indented_metadata;
+
+      // Create Custom and update accounts.
+      auto* custom = dir->mutable_custom();
+      custom->set_type($type.data(), $type.size());
+
+      // Copy custom values here.
+      for (const auto* meta_value : $meta_value_list) {
+        // TODO(blais): Will AddAllocated() work here?
+        custom->mutable_values()->Add()->CopyFrom(*meta_value);
+        delete meta_value;
+      }
+      $meta_value_list.clear();
+   }
+
+/*- Metadata ----------------------------------------------------------------*/
 
 /* A list of metadata (optionally empty), including its indentation. */
 indented_metadata:
@@ -1018,72 +1182,8 @@ metadata_line:
       $$->mutable_value()->set_link($1.data(), $1.size());
     }
 
-/* A list of postings, possibly empty. */
-posting_list:
-  %empty
-    {
-      $$ = {};
-    }
-  /* Matches an empty or comment indented line. It's convenient to be able to
-   * comment indented postings. */
-  | posting_list eol
-  /* Matches an actual posting. */
-  | posting_list posting_and_metadata
-    {
-      $1.push_back($2);
-      $$ = $1;
-    }
-
-/* A single posting and its associated metadata. */
-posting_and_metadata:
-  posting indented_metadata
-    {
-      if ($2 != nullptr) {
-        $1->mutable_meta()->CopyFrom(*$2);
-        delete $2;
-      }
-      $$ = $1;
-    }
-
-/* A posting line, without any of its metadata. */
-posting:
-  /* Variation with no price. */
-  optflag account partial_amount cost_spec eol
-    {
-      $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
-    }
-  /* Variation with price. */
-  | optflag account partial_amount cost_spec AT price_annotation eol
-    {
-      $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
-    }
-  /* Variation with complete price. */
-  | optflag account partial_amount cost_spec ATAT price_annotation eol
-    {
-      // TODO(blais): Merge this rule with the one above, by inspecting the
-      // value of AT and ATAT.
-      $$ = new inter::Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
-      $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, true, scanner.location());
-    }
-  /* Variation with just an account name. */
-  | optflag account eol
-    {
-      $$ = new inter::Posting();
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
-    }
-
 /* A general variant that can contain basic types, used as the value in
- * key-value pairs of metadata and in Custom directives. */
+   key-value pairs of metadata and in Custom directives. */
 meta_value:
   STRING
     {
@@ -1153,6 +1253,50 @@ meta_value_list:
       $$.push_back($2);
     }
 
+/* A container for tags and links, which show up at the end of a transaction's
+   first line or in some of the directives. */
+tags_links:
+  %empty
+    {
+      $$ = new inter::TagsLinks{};
+    }
+  | tags_links LINK
+    {
+      $1->add_links($2.data(), $2.size());
+      $$ = $1;
+    }
+  | tags_links TAG
+    {
+      $1->add_tags($2.data(), $2.size());
+      $$ = $1;
+    }
+
+/*- String matchers ---------------------------------------------------------*/
+
+/* Payee and narration strings. */
+payee_narration:
+  /* Variant when both strings are present. */
+  STRING STRING
+    {
+      $$ = make_pair($1, $2);
+    }
+  /* Variant when only one string is present; interpret as narration only. */
+  | STRING
+    {
+      $$ = make_pair("", $1);
+    }
+
+/* An  account name. */
+account:
+  ACCOUNT
+    {
+      $$ = builder.Account($1);
+    }
+
+/* A filename. Consider specializing this. */
+filename:
+  STRING
+
 /* A comma-separated list of currencies. */
 currency_list:
   %empty
@@ -1169,30 +1313,81 @@ currency_list:
       $$.push_back({$3.data(), $3.size()});
     }
 
-/* An Open directive. */
-open:
-  DATE OPEN account currency_list booking eol indented_metadata
+/*- Arithmetic expressions --------------------------------------------------*/
+
+/* Arithmetic expression, reduced to a number. The reduction is carried out in
+   the parser. */
+number_expr:
+  NUMBER
+  | number_expr PLUS number_expr
     {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Open and update account.
-      auto* open = dir->mutable_open();
-      open->set_account($account.data(), $account.size());
-
-      // Create currency list.
-      for (const auto& currency : $currency_list) {
-        open->add_currencies(currency);
-      }
-
-      // Set booking method.
-      open->set_booking($booking);
+      $$ = $1.add($3);
+    }
+  | number_expr MINUS number_expr
+    {
+      $$ = $1.sub($3);
+    }
+  | number_expr ASTERISK number_expr
+    {
+      $$ = $1.mul($3);
+    }
+  | number_expr SLASH number_expr
+    {
+      $$ = $1.div($3);
+    }
+  | MINUS number_expr %prec NEGATIVE
+    {
+      $$ = $2.minus();
+    }
+  | PLUS number_expr %prec NEGATIVE
+    {
+      $$ = $2.plus(); // Note: Not entirely sure we shouldn't just copy.
+    }
+  | LPAREN number_expr RPAREN
+    {
+      $$ = $2;
     }
 
-/* The declaration of a booking method as a string. */
+/*- Single-character flags & other constants --------------------------------*/
+
+/* The flag in a transaction declaration: it can be either 'txn' or one of the
+   special character flags. */
+txn:
+  TXN
+    {
+      $$ = '*';
+    }
+  | FLAG
+    {
+        $$ = $1;
+    }
+  | ASTERISK
+    {
+        $$ = '*';
+    }
+  | HASH
+    {
+        $$ = '#';
+    }
+
+/* An optional flag marking a posting. */
+optflag:
+  %empty
+    {
+      $$ = '\0';
+    }
+  | ASTERISK
+    {
+      $$ = '*';
+    }
+  | HASH
+    {
+      $$ = '#';
+    }
+  | FLAG
+
+/* The declaration of a booking method as a string.
+   TODO(blais): Turn this to constants, strings was for v2. */
 booking:
   STRING
     {
@@ -1210,79 +1405,93 @@ booking:
       $$ = Booking::UNKNOWN;
     }
 
-/* A Close directive. */
-close:
-  DATE CLOSE account eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+/*- Postings ----------------------------------------------------------------*/
 
-      // Create Close and update account.
-      auto* open = dir->mutable_close();
-      open->set_account($account.data(), $account.size());
+/* A list of postings, possibly empty. */
+posting_list:
+  %empty
+    {
+      $$ = {};
+    }
+  /* Matches an empty or comment indented line. It's convenient to be able to
+   * comment indented postings. */
+  | posting_list eol
+  /* Matches an actual posting. */
+  | posting_list posting_and_metadata
+    {
+      $1.push_back($2);
+      $$ = $1;
     }
 
-/* A Commodity directive. */
-commodity:
-  DATE COMMODITY CURRENCY eol indented_metadata
+/* A single posting and its associated metadata. */
+posting_and_metadata:
+  posting indented_metadata
     {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Commodity and update account.
-      auto* commodity = dir->mutable_commodity();
-      commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
-    }
-
-/* A Pad directive. */
-pad:
-  DATE PAD account account[source] eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Pad and update accounts.
-      auto* pad = dir->mutable_pad();
-      pad->set_account($3.data(), $3.size());
-      pad->set_source_account($source.data(), $source.size());
-    }
-
-/* A Balance directive. */
-balance:
-  DATE BALANCE account amount_tolerance[atol] eol indented_metadata[meta]
-    {
-      // Create directive and prepare head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      if ($meta != nullptr) {
-        dir->mutable_meta()->CopyFrom(*$meta);
-        delete $meta;
+      if ($2 != nullptr) {
+        $1->mutable_meta()->CopyFrom(*$2);
+        delete $2;
       }
-
-      // Create Pad and fill in account.
-      auto* balance = dir->mutable_balance();
-      balance->set_account($account.data(), $account.size());
-
-      // Fill in amount.
-      balance->mutable_amount()->CopyFrom(*$atol.first);
-      delete $atol.first;
-
-      // Fill in optional tolerance.
-      if ($atol.second.has_value()) {
-        DecimalToProto($atol.second.value(), balance->mutable_tolerance());
-      }
-
-      // Note: We leave `diff_amount` unset.
+      $$ = $1;
     }
+
+/* A posting line, without any of its metadata. */
+posting:
+  /* Variation with no price. */
+  optflag account partial_amount cost_spec eol
+    {
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$partial_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+    }
+  /* Variation with price. */
+  | optflag account partial_amount cost_spec AT price_annotation eol
+    {
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$partial_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      $$->mutable_price()->CopyFrom(*$price_annotation);
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+    }
+  /* Variation with complete price. */
+  | optflag account partial_amount cost_spec ATAT price_annotation eol
+    {
+      // TODO(blais): Merge this rule with the one above, by inspecting the
+      // value of AT and ATAT.
+      $$ = new inter::Posting();
+      $$->mutable_units()->CopyFrom(*$partial_amount);
+      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      $$->mutable_price()->CopyFrom(*$price_annotation);
+      builder.PreparePosting($$, $optflag, $account, true, scanner.location());
+    }
+  /* Variation with just an account name. */
+  | optflag account eol
+    {
+      $$ = new inter::Posting();
+      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+    }
+
+/* A price annotation on a posting. */
+price_annotation:
+  partial_amount
+    {
+      $price_annotation = $partial_amount;
+
+      // Prices may not be negative. Check and issue an error if found; fix up
+      // the price to its absolute value and continue.
+      if ($price_annotation->has_number()) {
+        decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
+        if (dec.sign() == -1) {
+          builder.LogError("Negative prices are not allowed "
+                           "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                           "for workaround)");
+          // Invert and continue.
+          DecimalToProto(-dec, $price_annotation->mutable_number());
+        }
+      }
+    }
+
+/*- Amounts & Costs ---------------------------------------------------------*/
 
 /* An Amount, which is a decimal number and a currency. */
 amount:
@@ -1334,8 +1543,8 @@ maybe_currency:
     }
 
 /* An amount with possibly missing values for number and/or currency. This is
- * used in postings to allow users to let Beancount interpolate the missing
- * values. */
+   used in postings to allow users to let Beancount interpolate the missing
+   values. */
 partial_amount:
   maybe_number maybe_currency
     {
@@ -1441,207 +1650,6 @@ cost_comp:
       $$ = new inter::CostSpec();
       $$->set_merge_cost(true);
     }
-
-/* A Price directive. */
-price:
-  DATE PRICE CURRENCY amount eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Price and update currency.
-      auto* price = dir->mutable_price();
-      price->set_currency($3.data(), $3.size());
-
-      // Update price amount.
-      price->mutable_amount()->CopyFrom(*$amount);
-    }
-
-/* An Event directive. */
-event:
-  DATE EVENT STRING[type] STRING[description] eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Event and update fields.
-      auto* event = dir->mutable_event();
-      event->set_type($type.data(), $type.size());
-      event->set_description($description.data(), $description.size());
-    }
-
-/* A Query directive. */
-query:
-  DATE QUERY STRING[name] STRING[qstr] eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Query and update fields.
-      auto* query = dir->mutable_query();
-      query->set_name($name.data(), $name.size());
-      query->set_query_string($qstr.data(), $qstr.size());
-    }
-
-/* A Note directive. */
-note:
-  DATE NOTE account STRING[comment] eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Note and update account.
-      auto* note = dir->mutable_note();
-      note->set_account($3.data(), $3.size());
-
-      // Fill in comment.
-      note->set_comment($comment.data(), $comment.size());
-    }
-
-/* A filename. Consider specializing this. */
-filename:
-  STRING
-
-/* A Document directive. */
-document:
-  DATE DOCUMENT account filename tags_links eol indented_metadata
-    {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Document and update account and filename.
-      auto* document = dir->mutable_document();
-      document->set_account($account.data(), $account.size());
-      document->set_filename($filename.data(), $filename.size());
-
-      // Update tags, including active tags, and links.
-      // TODO(blais): Refactor with txn? It's the same code.
-      builder.SetTags($tags_links->tags(), document->mutable_tags());
-      document->mutable_links()->CopyFrom($tags_links->links());
-      delete $tags_links;
-    }
-
-/* A Custom directive. */
-custom:
-  DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
-   {
-      // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
-
-      // Create Custom and update accounts.
-      auto* custom = dir->mutable_custom();
-      custom->set_type($type.data(), $type.size());
-
-      // Copy custom values here.
-      for (const auto* meta_value : $meta_value_list) {
-        // TODO(blais): Will AddAllocated() work here?
-        custom->mutable_values()->Add()->CopyFrom(*meta_value);
-        delete meta_value;
-      }
-      $meta_value_list.clear();
-   }
-
-/* A rule to reduce any of the Beancount directives we offer. */
-directive:
-  transaction
-  | balance
-  | open
-  | close
-  | pad
-  | document
-  | note
-  | event
-  | price
-  | commodity
-  | query
-  | custom
-
-
-
-/* Anything but a directive. Those constructs apply side-effects to the builder
- * object. */
-pragma:
-  pushtag
-  | poptag
-  | pushmeta
-  | popmeta
-  | option
-  | include
-  | plugin
-
-/* A pragma that pushes a new tag applied to transactions. */
-pushtag:
-  PUSHTAG TAG eol
-    {
-      builder.PushTag($2);
-    }
-
-/* Remove a specific tag from the active list. */
-poptag:
-  POPTAG TAG eol
-    {
-      builder.PopTag($2);
-    }
-
-/* A pragma that pushes a new key-value pair applied to transactions. */
-pushmeta:
-  PUSHMETA KEY COLON meta_value eol
-    {
-      builder.PushMeta($2, $4);
-    }
-
-/* Remove a specific key-value pairfrom the active list. */
-popmeta:
-  POPMETA KEY COLON eol
-    {
-      builder.PopMeta($2);
-    }
-
-/* An option pragma. */
-option:
-  OPTION STRING[key] STRING[value] eol
-    {
-      builder.AddOption($key, $value);
-    }
-
-/* An include pragma. */
-include:
-  INCLUDE STRING eol
-    {
-      builder.AddInclude($2);
-    }
-
-/* A plugin pragma, along with its optional configuration. */
-plugin:
-  PLUGIN STRING eol
-    {
-      builder.AddPlugin($2, {});
-    }
-  | PLUGIN STRING STRING eol
-    {
-      builder.AddPlugin($2, $3);
-    }
-
-
-
 
 %%
 //- User code ----------------------------------------------------------------
@@ -1854,7 +1862,6 @@ std::unique_ptr<Ledger> ParseFile(PyObject* builder_obj,
 // - Create a new Ledger container type to expose for producing results, with
 //   'directives', 'errors', 'options', 'info' attributes.
 
-// - Reorder for consistency.
 // - Move builder to its own compilation unit.
 // - Remove Python
 // - Output to text-formatted file for comparison.
