@@ -901,14 +901,9 @@ transaction_line:
 price:
   DATE PRICE CURRENCY amount tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Price and update currency.
       auto* price = $$->mutable_price();
       price->set_currency($3.data(), $3.size());
-
-      // Update price amount.
       price->mutable_amount()->CopyFrom(*$amount);
     }
 
@@ -916,22 +911,16 @@ price:
 balance:
   DATE BALANCE account amount_tolerance[atol] tags_links eol indented_metadata
     {
-      // Create directive and prepare head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Pad and fill in account.
       auto* balance = $$->mutable_balance();
       balance->set_account($account.data(), $account.size());
 
-      // Fill in amount.
       balance->mutable_amount()->CopyFrom(*$atol.first);
       delete $atol.first;
 
-      // Fill in optional tolerance.
       if ($atol.second.has_value()) {
         builder.DecimalProto($atol.second.value(), balance->mutable_tolerance());
       }
-
       // Note: We leave `diff_amount` unset.
     }
 
@@ -939,19 +928,14 @@ balance:
 open:
   DATE OPEN account currency_list booking tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Open and update account.
       auto* open = $$->mutable_open();
       open->set_account($account.data(), $account.size());
 
-      // Create currency list.
       for (const auto& currency : $currency_list) {
         open->add_currencies(currency);
       }
 
-      // Set booking method.
       if ($booking != Booking::UNKNOWN) {
         open->set_booking($booking);
       }
@@ -961,10 +945,7 @@ open:
 close:
   DATE CLOSE account tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Close and update account.
       auto* open = $$->mutable_close();
       open->set_account($account.data(), $account.size());
     }
@@ -973,10 +954,7 @@ close:
 commodity:
   DATE COMMODITY CURRENCY tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Commodity and update account.
       auto* commodity = $$->mutable_commodity();
       commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
     }
@@ -985,10 +963,7 @@ commodity:
 pad:
   DATE PAD account account[source] tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Pad and update accounts.
       auto* pad = $$->mutable_pad();
       pad->set_account($3.data(), $3.size());
       pad->set_source_account($source.data(), $source.size());
@@ -998,10 +973,7 @@ pad:
 document:
   DATE DOCUMENT account filename tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Document and update account and filename.
       auto* document = $$->mutable_document();
       document->set_account($account.data(), $account.size());
       document->set_filename($filename.data(), $filename.size());
@@ -1011,10 +983,7 @@ document:
 note:
   DATE NOTE account STRING[comment] tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Note and update account and comment.
       auto* note = $$->mutable_note();
       note->set_account($3.data(), $3.size());
       note->set_comment($comment.data(), $comment.size());
@@ -1024,10 +993,7 @@ note:
 event:
   DATE EVENT STRING[type] STRING[description] tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Event and update fields.
       auto* event = $$->mutable_event();
       event->set_type($type.data(), $type.size());
       event->set_description($description.data(), $description.size());
@@ -1037,10 +1003,7 @@ event:
 query:
   DATE QUERY STRING[name] STRING[qstr] tags_links eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
-
-      // Create Query and update fields.
       auto* query = $$->mutable_query();
       query->set_name($name.data(), $name.size());
       query->set_query_string($qstr.data(), $qstr.size());
@@ -1048,14 +1011,11 @@ query:
 
 /* A Custom directive. Note that this directive does not support the dedicated
    tags and links because those can be part of metadata. It would be ambiguous
-   which is supplied. */
+   which they are. */
 custom:
   DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
     {
-      // Create directive and update head.
       $$ = builder.MakeDirective($1, &$indented_metadata, nullptr);
-
-      // Create Custom and update accounts.
       auto* custom = $$->mutable_custom();
       custom->set_type($type.data(), $type.size());
 
@@ -1724,7 +1684,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 }  // namespace beancount
 
 // TODO(blais): In v3 review the syntax for uniformity:
-// - Allow tags/links on all directives?
 // - Make it possible to tag/link before the narration strings.
 // - Add datetime parsing (civil datetime is sufficient).
 
