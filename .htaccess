@@ -211,3 +211,5 @@ RedirectMatch /doc/v3-install             https://docs.google.com/document/d/1Ww
 
 RedirectMatch /doc/v3$                    https://docs.google.com/document/d/1qPdNXaz5zuDQ8M9uoZFyyFis7hA0G55BEfhWhrVBsfc/
 RedirectMatch /doc/proposal-v3$           /beancount/doc/v3
+
+RedirectMatch /doc/v3-changes             https://docs.google.com/document/d/1Ia4zYmkB6I6IbWPRlcZYYuMS1ZI55T99dp9LiMJqXCE/
