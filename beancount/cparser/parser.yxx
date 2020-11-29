@@ -187,7 +187,10 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
 class Builder {
 public:
   Builder(const scanner::ScannerWithFile& scanner);
-  virtual ~Builder() {}
+  virtual ~Builder() {
+    for (auto* directive : directives_) delete directive;
+    for (auto* error : errors_) delete error;
+  }
 
   void Initialize() {
     //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
@@ -539,26 +542,24 @@ public:
 
   // Build an instance of a new ledger. This is how one stamps and extracts all
   // the results from the parser. The parser isn't reset.
-  std::unique_ptr<Ledger> MakeLedger() const {
+  std::unique_ptr<Ledger> MakeLedger() {
     auto ledger = std::make_unique<Ledger>();
-    // TODO(blais): implement these, use std::move and make lame.
-    std::copy(directives_.begin(), directives_.end(),
-              std::back_inserter(ledger->directives));
-    // ledger->errors = errorrs_;
-    // ledger->options = options_;
-    // ledger->info = info_;
+    ledger->directives = std::move(directives_);
+    ledger->errors = std::move(errors_);
+    ledger->options = std::move(options_);
+    ledger->info = std::move(info_);
     return ledger;
   }
 
 private:
-  // Scanner (in order to get the last location).
-  const scanner::ScannerWithFile& scanner_;
-
-  // Processing info to produce from the parser.
+  // The accumulated state, same as Ledger.
+  std::list<Directive*> directives_;
+  std::vector<Error*> errors_;
+  std::unique_ptr<options::Options> options_;
   std::unique_ptr<options::ProcessingInfo> info_;
 
-  // Options parsed.
-  std::unique_ptr<options::Options> options_;
+  // Scanner (in order to get the last location).
+  const scanner::ScannerWithFile& scanner_;
 
   // A set of all unique account names seen in the file.
   absl::flat_hash_set<string> accounts_;
@@ -570,8 +571,6 @@ private:
   // stack and the current value is at the top (last value).
   absl::flat_hash_map<string, vector<MetaValue*>> active_meta_;
 
-  // The accumulated list of all directives.
-  vector<Directive*> directives_;
 };
 
 }  // namespace parser
@@ -695,7 +694,7 @@ private:
 %type <std::pair<std::string, std::string>> payee_narration
 %type <beancount::parser::TagsLinks*> tags_links
 %type <std::string_view> filename
-%type <Booking> booking
+%type <options::Booking> booking
 %type <decimal::Decimal> number_expr
 
 %type option
@@ -944,7 +943,7 @@ open:
         open->add_currencies(currency);
       }
 
-      if ($booking != Booking::UNKNOWN) {
+      if ($booking != options::Booking::UNKNOWN) {
         open->set_booking($booking);
       }
     }
@@ -1300,17 +1299,17 @@ booking:
   STRING
     {
       string s1($1.data(), $1.size());
-      Booking method;
+      options::Booking method;
       if (!Booking_Parse(s1, &method)) {
         builder.LogError(StrFormat("Invalid value for booking method: '%s'", s1));
         // TODO(blais): For v2 behavior, set this to the global default.
-        method = Booking::UNKNOWN;
+        method = options::Booking::UNKNOWN;
       }
       $$ = method;
     }
   | %empty
     {
-      $$ = Booking::UNKNOWN;
+      $$ = options::Booking::UNKNOWN;
     }
 
 /*- Postings ----------------------------------------------------------------*/

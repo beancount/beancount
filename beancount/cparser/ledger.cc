@@ -17,32 +17,44 @@ using google::protobuf::io::FileOutputStream;
 using google::protobuf::TextFormat;
 
 Ledger::~Ledger() {
-  for (auto* directive : directives) {
-    delete directive;
-  }
-  directives.clear();
-  for (auto* error : errors) {
-    delete error;
-  }
-  errors.clear();
+  for (auto* directive : directives) delete directive;
+  for (auto* error : errors) delete error;
 }
 
 // TODO(blais): Pull error code.
 int WriteToText(const Ledger& ledger, const string& filename) {
+  // Open output file.
   int outfd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC);
   if (outfd == -1) {
     std::cerr << "Error opening file '" << filename << "': " << strerror(errno) << std::endl;
     return -1;
   }
   ZeroCopyOutputStream* output = new FileOutputStream(outfd);
+
+  // Output directives.
   for (const auto& dir : ledger.directives) {
     LedgerProto ledger_proto;
-    ledger_proto.add_directive()->CopyFrom(*dir);
+    ledger_proto.add_directives()->CopyFrom(*dir);
     if (!TextFormat::Print(ledger_proto, output)) {
       std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
       return -1;
     }
   }
+
+  // Output errors, options and processing info.
+  LedgerProto ledger_proto;
+  for (const auto& error : ledger.errors) {
+    ledger_proto.add_errors()->CopyFrom(*error);
+  }
+  ledger_proto.mutable_options()->CopyFrom(*ledger.options);
+  ledger_proto.mutable_info()->CopyFrom(*ledger.info);
+
+  if (!TextFormat::Print(ledger_proto, output)) {
+    std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
+    return -1;
+  }
+
+  // Close output.
   delete output;
   if (close(outfd) == -1) {
     std::cerr << "Error closing file '" << filename << "'" << std::endl;

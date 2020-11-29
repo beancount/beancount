@@ -14,6 +14,7 @@ package beancount;
 import 'beancount/ccore/number.proto';
 import 'beancount/ccore/date.proto';
 import 'beancount/cparser/parser.proto';
+import 'beancount/cparser/options.proto';
 
 // Container for account types.
 message AccountTypes {
@@ -118,17 +119,6 @@ message Posting {
   optional inter.CostSpec cost_spec = 9;
 }
 
-// A set of valid booking method names for positions on accounts.
-// See http://furius.ca/beancount/doc/inventories for a full explanation.
-enum Booking {
-  UNKNOWN = 0;
-  STRICT = 1;  // Reject ambiguous matches with an error.
-  NONE = 2;    // Disable matching and accept the creation of mixed inventories.
-  AVERAGE = 3; // Average cost booking: merge all matching lots before and after.
-  FIFO = 4;    // First-in first-out in the case of ambiguity.
-  LIFO = 5;    // Last-in first-out in the case of ambiguity.
-}
-
 // A pair of a Posting and its parent Transaction. This is inserted as
 // temporaries in lists of postings-of-entries, which is the product of a
 // realization.
@@ -178,7 +168,7 @@ message Open {
   // None if not specified. In practice, this attribute will be should be left
   // unspecified (None) in the vast majority of cases. See Booking below for a
   // selection of valid methods.
-  optional Booking booking = 5;
+  optional options.Booking booking = 5;
 }
 
 // A "close account" directive.
@@ -424,8 +414,10 @@ message Error{
 
 // Container for a list of directives and more infos.
 message LedgerProto {
-  repeated Directive directive = 1;
-  // TODO(blais): Continue here with a clean list of contents.
+  repeated Directive directives = 1;
+  repeated Error errors = 2;
+  optional options.Options options = 3;
+  optional options.ProcessingInfo info = 4;
 }
 
 // TODO(blais): Renumber all proto fields before publishing.

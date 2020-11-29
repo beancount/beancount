@@ -7,14 +7,22 @@ syntax = "proto2";
 
 package beancount.options;
 
-import 'beancount/ccore/data.proto';
-
 
 // TODO(blais): Reimplement the display context on currency pairs and encode as
 // a proto here.
 message DisplayContext {
 }
 
+// A set of valid booking method names for positions on accounts.
+// See http://furius.ca/beancount/doc/inventories for a full explanation.
+enum Booking {
+  UNKNOWN = 0;
+  STRICT = 1;  // Reject ambiguous matches with an error.
+  NONE = 2;    // Disable matching and accept the creation of mixed inventories.
+  AVERAGE = 3; // Average cost booking: merge all matching lots before and after.
+  FIFO = 4;    // First-in first-out in the case of ambiguity.
+  LIFO = 5;    // Last-in first-out in the case of ambiguity.
+}
 
 // Data produced as a by-product of the parsing process. This is essentially
 // read-only state that is conceptually separate from the input options,
@@ -265,7 +273,7 @@ message Options {
   // http://furius.ca/beancount/doc/proposal-booking
   //
   // e.g., STRICT
-  optional beancount.Booking booking_method = 18;
+  optional Booking booking_method = 18;
 
   // A boolean, if true, prepend the directory name of the top-level file to
   // the PYTHONPATH.

@@ -63,6 +63,7 @@ proto_library(
         "//beancount/ccore:number_proto",
         "//beancount/ccore:date_proto",
         "//beancount/cparser:parser_proto",
+        "//beancount/cparser:options_proto",
     ],
 )
 
