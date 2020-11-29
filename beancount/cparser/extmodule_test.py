@@ -18,14 +18,12 @@ class CppParserModuleTests(unittest.TestCase):
     # TODO(blais): Remove, this is temporary, for testing locally.
     filename = os.getenv("L")
     assert filename
-    builder = grammar.Builder()
-    out = extmodule.parse(builder, filename)
-    print(out)
-    entries, errors, options_map = builder.finalize()
+    ledger = extmodule.parse(filename)
+    print(ledger)
     #pprint.pprint(options_map)
-    pprint.pprint((len(entries), errors))
-    if entries:
-      printer.print_entry(entries[-1])
+    pprint.pprint((len(ledger.directives), ledger.errors))
+    if ledger.directives:
+      printer.print_entry(ledger.directives[-1])
 
 
 if __name__ == '__main__':

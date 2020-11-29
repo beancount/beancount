@@ -303,6 +303,7 @@ absl::CivilDay ParseDateFromString(const char* string) {
 
 
 
+#if 0
 // TODO(blais): I want to move all this to the parser side.
 // There should be no error handling in the scanner other than issuing 'error'
 // tokens (with a message, somehow).
@@ -344,6 +345,7 @@ void build_lexer_error_from_exception(const parser::location& loc, PyObject* bui
     Py_XDECREF(value);
     Py_XDECREF(traceback);
 }
+#endif
 
 // TODO(blais): Remove lexer_error() with exception; set the name of the derived
 // class of the scanner. Replace build_lexer_error_from_exception() by a call to

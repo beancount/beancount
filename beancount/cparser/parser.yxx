@@ -39,9 +39,6 @@
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/number.pb.h"
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
@@ -64,9 +61,7 @@ namespace parser {
 class Builder;
 
 // Parse the contents of a file.
-std::unique_ptr<Ledger> ParseFile(PyObject* builder_obj,
-                                  const std::string_view& filename,
-                                  PyObject* missing_obj);
+std::unique_ptr<Ledger> ParseFile(const std::string_view& filename);
 
 }  // namespace parser
 }  // namespace beancount
@@ -117,36 +112,6 @@ using google::protobuf::TextFormat;
 
 namespace parser {
 
-// Default and only encoding we really have to bother supporting.
-// TODO(blais): Revise this later, maybe make it part of the state of the builder.
-static const char* kEncoding = "UTF-8";
-
-// Convert string_view to Python string object.
-inline PyObject* StringToPyString(const string_view s) {
-  return PyUnicode_Decode(s.data(), s.size(), kEncoding, "ignore");
-}
-
-// Convert absl::CivilDay to Python date object.
-inline PyObject* DateToPyDate(const absl::CivilDay& d) {
-  return pydate_from_civil_day(d.year(), d.month(), d.day());
-}
-
-// Convert a decimal::Decimal to a PyDecimal.
-inline PyObject* DecimalToPyDecimal(const decimal::Decimal& d) {
-  return pydecimal_from_cstring(d.to_sci().c_str());
-}
-
-// Convert an Amount to a Python tuple like Amount.
-// TODO(blais): This doesn't actually create a proper instance of `Amount`.
-#define AmountToPyTuple(output, amount)                 \
-  {                                                     \
-    auto dec = ProtoToDecimal(amount->number());        \
-    auto _s1 = DecimalToPyDecimal(dec);                 \
-    auto _s2 = StringToPyString(amount->currency());    \
-    BUILDY(DECREF(_s1, _s2),                            \
-           output, "create_amount", "OO", _s1, _s2);    \
-  }
-
 // Convert a date object to an equivalent proto.
 // TODO(blais): Move this to ccore.
 inline void DateToProto(const absl::CivilDay& date, Date* proto) {
@@ -156,127 +121,18 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
   proto->set_day(date.day());
 }
 
-// Create two sets from a TagsLinks object.
-std::tuple<PyObject*, PyObject*> TagsLinksToPython(
-  inter::TagsLinks* tags_links,
-  const absl::flat_hash_set<string>* active_tags) {
-
-  assert(tags_links != nullptr);
-  PyObject* tags = PySet_New(0);
-  for (const auto& tag : tags_links->tags()) {
-    PySet_Add(tags, StringToPyString(tag));
-  }
-  PyObject* links = PySet_New(0);
-  for (const auto& link : tags_links->links()) {
-    PySet_Add(links, StringToPyString(link));
-  }
-
-  // Add the set of active tags if provided.
-  if (active_tags != nullptr) {
-    for (const auto& tag : *active_tags) {
-      PySet_Add(tags, StringToPyString(tag));
-    }
-  }
-
-  return {tags, links};
-}
-
-/*
- * Call a builder method and detect and handle a Python exception being raised
- * in the handler. Always run the code to clean the references provided by the
- * reduced rule. {05bb0fb60e86}
- */
-#define BUILDY(clean, target, method_name, format, ...)                                         \
-  {                                                                                             \
-    auto loc = scanner.location();                                                              \
-    /* cerr << "method_name: " << method_name << endl */                                        \
-    /*     << "filename: " << *loc.begin.filename << ":" << loc.begin.line << endl; */          \
-    target = PyObject_CallMethod(builder.builder(), method_name, "si" format,                   \
-                                 loc.begin.filename->c_str(),                                   \
-                                 loc.begin.line,                                                \
-                                 ## __VA_ARGS__);                                               \
-    clean;                                                                                      \
-                                                                                                \
-    if (target == NULL) {                                                                       \
-      /* TODO(blais): This is for temporary debugging of internal errors while porting. */      \
-      PyErr_PrintEx(1);                                                                         \
-                                                                                                \
-      build_grammar_error_from_exception(loc, builder.builder());                               \
-      /* Figure out if this is stilil the right way to call for errors in the C++ parser. */    \
-      YYERROR;                                                                                  \
-    }                                                                                           \
-  }
-
-/* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(const location& loc, PyObject* builder) {
-  cerr << "build_grammar_error_from_exception " << loc << endl;
-  assert(builder != nullptr);
-
-  /* Get the exception context. */
-  PyObject* ptype;
-  PyObject* pvalue;
-  PyObject* ptraceback;
-  PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-  PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-
-  /* Clear the exception. */
-  PyErr_Clear();
-
-  if (pvalue != NULL) {
-    /* Build and accumulate a new error object. {27d1d459c5cd} */
-    PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
-                                       loc.begin.filename, loc.begin.line,
-                                       pvalue, ptype, ptraceback);
-    if (rv == NULL) {
-      /* Note: Leave the internal error trickling up its detail. */
-      /* PyErr_SetString(PyExc_RuntimeError, */
-      /*                 "Internal error: While building exception"); */
-    }
-  }
-  else {
-    PyErr_SetString(PyExc_RuntimeError,
-                    "Internal error: No exception");
-  }
-
-  Py_XDECREF(ptype);
-  Py_XDECREF(pvalue);
-  Py_XDECREF(ptraceback);
-}
-
-// TODO(blais): Move this to error() code.
-#if 0
-/* Error-handling function. {ca6aab8b9748} */
-void yyerror(const location& loc, yyscan_t scanner, PyObject* builder, char const* message)
-{
-  /* Register a syntax error with the builder. */
-  PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "Ois",
-                                     loc->file_name, loc->first_line,
-                                     message);
-  if (rv == NULL) {
-      PyErr_SetString(PyExc_RuntimeError,
-                      "Internal error: Building exception from yyerror()");
-  }
-  Py_XDECREF(rv);
-}
-#endif
-
-#define DECREF(...) _CC_FUNC(Py_DECREF, __VA_ARGS__)
-
-
 // In-memory build state for graph of nodes. This driver accepts actions from
 // the parser and simply builds up the parsed state. Since the input is not
 // assumed to be ordered, resolving references occurs as a separate phase.
 class Builder {
 public:
-  Builder(scanner::Scanner& scanner, PyObject* builder_obj, PyObject* missing_obj);
+  Builder(scanner::Scanner& scanner);
   virtual ~Builder() {}
 
   void Initialize() {
     //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
   }
 
-  inline PyObject* builder() const { return builder_obj_; }
-  inline PyObject* missing() const { return missing_obj_; }
   const absl::flat_hash_set<string>& active_tags() const { return active_tags_; }
   const absl::flat_hash_map<string, vector<MetaValue*>>& active_meta() const {
     return active_meta_;
@@ -559,12 +415,6 @@ private:
 
   // Options parsed.
   std::unique_ptr<options::Options> options_;
-
-  // Python grammar builder object.
-  PyObject* builder_obj_;
-
-  // beancount.core.number.MISSING object.
-  PyObject* missing_obj_ = nullptr;
 
   // A set of all unique account names seen in the file.
   absl::flat_hash_set<string> accounts_;
@@ -1654,6 +1504,13 @@ cost_comp:
 %%
 //- User code ----------------------------------------------------------------
 
+// TODO(blais): Move this to error() code.
+#if 0
+/* Error-handling function. {ca6aab8b9748} */
+void yyerror(const location& loc, yyscan_t scanner, /* PyObject* builder, */ char const* message)
+#endif
+
+// TODO(blais): Review this completely.
 void beancount::parser::Parser::error(const location& loc, const string& msg)
 {
   // TODO(blais): Change this code to log an error and bubble that up to the
@@ -1696,15 +1553,11 @@ void beancount::parser::Parser::error(const location& loc, const string& msg)
 namespace beancount {
 namespace parser {
 
-Builder::Builder(scanner::Scanner& scanner, PyObject* builder_obj, PyObject* missing_obj) :
-  scanner_(scanner),
-  builder_obj_(builder_obj),
-  missing_obj_(missing_obj)
+Builder::Builder(scanner::Scanner& scanner) :
+  scanner_(scanner)
 {
   info_.reset(new options::ProcessingInfo());
   options_.reset(new options::Options());
-  assert(builder_obj_ != nullptr);
-  assert(missing_obj_ != nullptr);
 }
 
 // TODO(blais): Implement builder methods here (maybe).
@@ -1765,18 +1618,16 @@ namespace parser {
 
 // TODO(blais): Return the parsed state.
 std::unique_ptr<Ledger> Parse(
-  PyObject* builder_obj,
   const reflex::Input& input,
   const std::optional<string_view>& filename = {},
-  int line_offset = 0,
-  PyObject* missing_obj = nullptr) {
+  int line_offset = 0) {
   // Create a scanner and builder.
   scanner::ScannerWithFile scanner(input, cout);
   if (filename.has_value()) {
     scanner.SetFilename(filename.value());
   }
   scanner.SetLineOffset(line_offset);
-  parser::Builder builder(scanner, builder_obj, missing_obj);
+  parser::Builder builder(scanner);
 
   // Run the parser.
   beancount::parser::Parser parser(scanner, builder);
@@ -1798,13 +1649,11 @@ std::unique_ptr<Ledger> Parse(
   return output;
 }
 
-std::unique_ptr<Ledger> ParseFile(PyObject* builder_obj,
-                                  const string_view& filename,
-                                  PyObject* missing_obj) {
+std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
   std::ifstream in = std::ifstream(string(filename), std::ios::in);
   reflex::Input input(in);
   string filename_str(filename);
-  return parser::Parse(builder_obj, input, filename_str, 0, missing_obj);
+  return parser::Parse(input, filename_str, 0);
 }
 
 // TODO(blais): Implement this.

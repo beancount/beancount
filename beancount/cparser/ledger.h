@@ -7,6 +7,7 @@
 #ifndef _BEANCOUNT_CPARSER_LEDGER_H_
 #define _BEANCOUNT_CPARSER_LEDGER_H_
 
+#include <memory>
 #include <vector>
 #include <list>
 
@@ -26,10 +27,10 @@ struct Ledger final {
   std::vector<beancount::Error*> errors;
 
   // Parsed options.
-  std::unique_ptr<options::Options> options;
+  std::shared_ptr<options::Options> options;
 
   // Processing details.
-  std::unique_ptr<options::ProcessingInfo> info;
+  std::shared_ptr<options::ProcessingInfo> info;
 };
 
 }  // namespace beancount

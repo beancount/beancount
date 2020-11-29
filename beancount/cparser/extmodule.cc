@@ -5,6 +5,7 @@
 #include "beancount/defs.h"
 
 #include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 
 namespace beancount {
 namespace py = pybind11;
@@ -22,9 +23,9 @@ void Lex(const string& filename, int lineno, const string& encoding) {
   cout << "XXX" << filename << " " << lineno << " " << encoding << endl;
 }
 
-void Parse(py::object builder_obj,
-           const string& filename, int lineno, const string& encoding) {
-  parser::ParseFile(builder_obj.ptr(), filename, missing_obj);
+std::unique_ptr<Ledger> Parse(const string& filename, int lineno, const string& encoding) {
+  // TODO(blais): lineno? Encoding?
+  return parser::ParseFile(filename);
 }
 
 // std::unique_ptr<proto::Database> parse_string(const std::string& input_string) {
@@ -96,6 +97,10 @@ iterable yielding (token name, string value, sematical value) tuples.
           py::arg("encoding") = "utf8");
 
   // Export the parser entry points.
+  // TODO(blais): Support an interface that's a bit more flexible, like this:
+  // mod.def("parse_string", &parse_string, "Parse a language string");
+  // mod.def("parse_file", &parse_file, "Parse a language file");
+  // mod.def("parse_stdin", &parse_stdin, "Parse an language from stdin");
   mod.def("parse", &Parse, R"(
 Parse input from file object. The filename and lineno keyword
 arguments allow to specify the file name and start line number to be
@@ -105,15 +110,15 @@ object is used, if present. The encoding parameter allows to specify
 the file encoding. Parsing results are retrieved from the Builder
 object specified when the Parser object was instantiated.");
   )",
-          py::arg("builder"),
           py::arg("filename"),
           py::arg("lineno") = 1,
           py::arg("encoding") = "utf8");
 
-  // TODO(blais): Export a 'Parser' type? This is done in the C version.
-
-  // TODO(blais): Support an interface that's a bit more flexible, like this:
-  // mod.def("parse_string", &parse_string, "Parse a language string");
-  // mod.def("parse_file", &parse_file, "Parse a language file");
-  // mod.def("parse_stdin", &parse_stdin, "Parse an language from stdin");
+  // Export the ultimate result of the parser.
+  py::class_<Ledger>(mod, "Ledger")
+    .def(py::init<>())
+    .def_readwrite("directives", &Ledger::directives)
+    .def_readwrite("errors", &Ledger::errors)
+    .def_readwrite("options", &Ledger::options)
+    .def_readwrite("info", &Ledger::info);
 }
