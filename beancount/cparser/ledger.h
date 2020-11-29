@@ -17,6 +17,8 @@
 
 namespace beancount {
 
+// Container for all data produced by the parser, and the by Beancount in
+// general (after booking, interpolation, and plugins processing.
 struct Ledger final {
   ~Ledger();
 
@@ -32,6 +34,9 @@ struct Ledger final {
   // Processing details.
   std::shared_ptr<options::ProcessingInfo> info;
 };
+
+// Write ledger content to a text-formatted file.
+int WriteToText(const Ledger& ledger, const std::string& filename);
 
 }  // namespace beancount
 

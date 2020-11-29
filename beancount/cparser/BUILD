@@ -188,6 +188,7 @@ cc_library(
         "//beancount/cparser:parser_cc_proto",
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
-
+        "//beancount:defs",
+        "@com_google_protobuf//:protobuf",
     ]
 )

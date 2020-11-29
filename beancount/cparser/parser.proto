@@ -98,3 +98,9 @@ message Directive {
     Custom custom = 14;
   }
 }
+
+// Container for a list of directives and more infos.
+message Ledger {
+  repeated Directive directive = 1;
+  // TODO(blais): Continue here with a clean list of contents.
+}

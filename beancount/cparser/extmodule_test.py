@@ -14,16 +14,18 @@ class CppParserModuleTests(unittest.TestCase):
     print(extmodule.__doc__)
     print(extmodule.parse.__doc__)
 
-  def test_parse_string(self):
+  def test_parse(self):
     # TODO(blais): Remove, this is temporary, for testing locally.
     filename = os.getenv("L")
     assert filename
     ledger = extmodule.parse(filename)
     print(ledger)
-    #pprint.pprint(options_map)
-    pprint.pprint((len(ledger.directives), ledger.errors))
-    if ledger.directives:
-      printer.print_entry(ledger.directives[-1])
+    extmodule.write_to_text(ledger, os.path.expanduser("/tmp/ledger.pbtxt"))
+
+    # #pprint.pprint(options_map)
+    # pprint.pprint((len(ledger.directives), ledger.errors))
+    # if ledger.directives:
+    #   printer.print_entry(ledger.directives[-1])
 
 
 if __name__ == '__main__':

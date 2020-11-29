@@ -121,4 +121,8 @@ object specified when the Parser object was instantiated.");
     .def_readwrite("errors", &Ledger::errors)
     .def_readwrite("options", &Ledger::options)
     .def_readwrite("info", &Ledger::info);
+
+  // Output the contents of a parsed ledger to a text-formatted file. This will
+  // be used for cross-checking parsed output with that from the Python parser.
+  mod.def("write_to_text", &WriteToText);
 }

@@ -50,8 +50,8 @@ namespace beancount {
 decimal::Decimal ProtoToDecimal(const Number& proto);
 
 // Serialize a mpdecimal number to a Number proto.
-Number DecimalToProto(const decimal::Decimal& dec);
-void DecimalToProto(const decimal::Decimal& dec, Number* proto);
+Number DecimalToProto(const decimal::Decimal& dec, bool text);
+void DecimalToProto(const decimal::Decimal& dec, bool text, Number* proto);
 
 // Comparison operators for decimal protos.
 bool operator==(const Number& proto1, const Number& proto2);

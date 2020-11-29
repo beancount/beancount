@@ -44,6 +44,7 @@
 #include <fstream>
 #include <list>
 #include <memory>
+#include <algorithm>
 #include <string>
 #include <optional>
 
@@ -202,6 +203,12 @@ public:
     }
   }
 
+  // Convert a decimal number to a proto.
+  void DecimalProto(const decimal::Decimal& dec, Number* proto) {
+    // Note you could configure conversion options here.
+    DecimalToProto(dec, true, proto);
+  }
+
   // // Set the location for errors to occur.
   // // This is a stateful setter whose data get used to report errors.
   // void WithLocation(const parser::location& location) {
@@ -290,7 +297,9 @@ public:
     assert(posting != nullptr);
 
     // Store flag and account name.
-    posting->set_flag(&flag);
+    if (flag != '\0') {
+      posting->set_flag(&flag);
+    }
     posting->set_account(account.data(), account.size());
 
     // Store filename and line number in metadata.
@@ -329,7 +338,7 @@ public:
           } else {
             dprice = ProtoToDecimal(price.number()) / dunits.abs();
           }
-          DecimalToProto(dprice, posting->mutable_price()->mutable_number());
+          DecimalProto(dprice, posting->mutable_price()->mutable_number());
         }
       }
 
@@ -405,6 +414,18 @@ public:
     //         # encounter this option.
     //         sys.path.insert(0, path.dirname(filename))
 
+  // Build an instance of a new ledger. This is how one stamps and extracts all
+  // the results from the parser. The parser isn't reset.
+  std::unique_ptr<Ledger> MakeLedger() const {
+    auto ledger = std::make_unique<Ledger>();
+    // TODO(blais): implement these, use std::move and make lame.
+    std::copy(directives_.begin(), directives_.end(),
+              std::back_inserter(ledger->directives));
+    // ledger->errors = errorrs_;
+    // ledger->options = options_;
+    // ledger->info = info_;
+    return ledger;
+  }
 
 private:
   // Scanner (in order to get the last location).
@@ -604,10 +625,8 @@ declarations:
   /* A regular directive. Accmulate it in the builder. */
   | declarations directive
     {
-      if ($directive != nullptr) {
-        // Note: the reference is given to the builder.
-        builder.AppendDirective($directive);
-      }
+      // Note: the reference is given to the builder.
+      builder.AppendDirective($directive);
     }
   /* An error raised at the parser level. */
   | declarations error
@@ -808,7 +827,7 @@ balance:
 
       // Fill in optional tolerance.
       if ($atol.second.has_value()) {
-        DecimalToProto($atol.second.value(), balance->mutable_tolerance());
+        builder.DecimalProto($atol.second.value(), balance->mutable_tolerance());
       }
 
       // Note: We leave `diff_amount` unset.
@@ -1078,13 +1097,13 @@ meta_value:
   | number_expr
     {
       $$ = new beancount::MetaValue();
-      DecimalToProto($1, $$->mutable_number());
+      builder.DecimalProto($1, $$->mutable_number());
     }
   /* TODO(blais): Bring this back once 'amount' has been ported. */
   // | amount
   //   {
   //     $$ = new beancount::MetaValue();
-  //     DecimalToProto($1, $$->mutable_number());
+  //     builder.DecimalProto($1, $$->mutable_number());
   //   }
   | %empty
     {
@@ -1336,7 +1355,7 @@ price_annotation:
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)");
           // Invert and continue.
-          DecimalToProto(-dec, $price_annotation->mutable_number());
+          builder.DecimalProto(-dec, $price_annotation->mutable_number());
         }
       }
     }
@@ -1348,7 +1367,7 @@ amount:
   number_expr CURRENCY
     {
       auto* amount = new Amount();
-      DecimalToProto($1, amount->mutable_number());
+      builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency($2.data(), $2.size());
       $$ = amount;
       builder.UpdatePrecisionStats($1, $2);
@@ -1363,7 +1382,7 @@ amount_tolerance:
   | number_expr TILDE number_expr[tolerance] CURRENCY
     {
       auto* amount = new Amount();
-      DecimalToProto($1, amount->mutable_number());
+      builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency($4.data(), $4.size());
       $$ = make_pair(amount, $tolerance);
       builder.UpdatePrecisionStats($1, $4);
@@ -1400,7 +1419,7 @@ partial_amount:
     {
       $$ = new Amount();
       if ($1.has_value()) {
-        DecimalToProto($1.value(), $$->mutable_number());
+        builder.DecimalProto($1.value(), $$->mutable_number());
       }
       if ($2.has_value()) {
         $$->set_currency($2.value().data(), $2.value().size());
@@ -1413,7 +1432,7 @@ compound_amount:
     {
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
-        DecimalToProto($1.value(), $$->mutable_number_per());
+        builder.DecimalProto($1.value(), $$->mutable_number_per());
         builder.UpdatePrecisionStats($1.value(), $2);
       }
       $$->set_currency({$2.data(), $2.size()});
@@ -1421,7 +1440,7 @@ compound_amount:
   | number_expr maybe_currency
     {
       $$ = new inter::CostSpec();
-      DecimalToProto($1, $$->mutable_number_per());
+      builder.DecimalProto($1, $$->mutable_number_per());
       if ($2.has_value()) {
         $$->set_currency({$2.value().data(), $2.value().size()});
         builder.UpdatePrecisionStats($1, $2.value());
@@ -1431,11 +1450,11 @@ compound_amount:
     {
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
-        DecimalToProto($1.value(), $$->mutable_number_per());
+        builder.DecimalProto($1.value(), $$->mutable_number_per());
         builder.UpdatePrecisionStats($1.value(), $4);
       }
       if ($3.has_value()) {
-        DecimalToProto($3.value(), $$->mutable_number_total());
+        builder.DecimalProto($3.value(), $$->mutable_number_total());
         builder.UpdatePrecisionStats($3.value(), $4);
       }
       $$->set_currency({$4.data(), $4.size()});
@@ -1636,17 +1655,14 @@ std::unique_ptr<Ledger> Parse(
     parser.set_debug_level(1);
   }
   // scanner.set_debug(1);
-  std::unique_ptr<Ledger> output;
   try {
     int result = parser.parse();
-    (void)result;
-    output.reset(new Ledger());
-    /* TODO: Fill this in. */
+    (void)result; // TODO(blais): Handle the result and corresponding error.
 
   } catch (const std::runtime_error& exc) {
     cerr << "exc " << exc.what() << endl;
   }
-  return output;
+  return builder.MakeLedger();
 }
 
 std::unique_ptr<Ledger> ParseFile(const string_view& filename) {

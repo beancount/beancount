@@ -33,17 +33,21 @@ decimal::Decimal ProtoToDecimal(const Number& proto) {
 }
 
 // Convert a mpdecimal number to a Number proto.
-Number DecimalToProto(const decimal::Decimal& dec) {
+Number DecimalToProto(const decimal::Decimal& dec, bool text) {
   // Serialize.
   Number proto;
-  DecimalToProto(dec, &proto);
+  DecimalToProto(dec, text, &proto);
   return proto;
 }
 
 // Convert a mpdecimal number to a Number proto.
-void DecimalToProto(const decimal::Decimal& dec, Number* proto) {
+void DecimalToProto(const decimal::Decimal& dec, bool text, Number* proto) {
   // Serialize.
-  {
+  if (text) {
+    proto->set_exact(dec.to_sci());
+  } else {
+    // TODO(blais): add unit test to figure out why the number of data includes
+    // extra zeros beyond the length.
     auto* mpd = proto->mutable_mpd();
     const mpd_t* value = dec.getconst();
     mpd->set_flags(value->flags & ~MPD_DATAFLAGS);
