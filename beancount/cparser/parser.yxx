@@ -258,9 +258,16 @@ public:
     }
   }
 
+  void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
+    // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
+  }
+
+
+
+
   // Insert the active metadata into the given argument.
-  void AddActiveMetadata(beancount::Meta* meta, beancount::Meta* output) {
-    // Insert active metadata.
+  inline void AddActiveMetadata(beancount::Meta* meta, beancount::Meta* output) const {
+    // Append active metadata into the output.
     for (auto [key, value_list] : active_meta_) {
       auto* kv = output->mutable_kv()->Add();
       kv->set_key(key);
@@ -284,9 +291,33 @@ public:
     //
   }
 
-  void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
-    // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
+  // Create a new directive. Return value ownership is given. If `meta` is
+  // non-null, it will be reset and ownership will be taken (and it will be
+  // deleted).
+  inline inter::Directive* MakeDirective(const absl::CivilDay& date,
+                                         beancount::Meta** meta) const {
+      // Create directive and update head.
+      auto* dir = new inter::Directive();
+
+      DateToProto(date, dir->mutable_date());
+
+      beancount::Meta* ourmeta = nullptr;
+      if (meta != nullptr) {
+        ourmeta = *meta;
+        meta = nullptr;
+      }
+      AddActiveMetadata(ourmeta, dir->mutable_meta());
+      delete ourmeta;
+
+      return dir;
   }
+
+  // Note: We steal ownership.
+  void AppendDirective(inter::Directive*& directive) {
+    directives_.push_back(directive);
+    directive = nullptr;
+  }
+
 
   // Common posting preparation actions.
   void PreparePosting(inter::Posting* posting,
@@ -359,12 +390,6 @@ public:
                            posting->cost_spec().currency(), price.currency()));
       }
     }
-  }
-
-  // Note: We steal ownership.
-  void AppendDirective(inter::Directive*& directive) {
-    directives_.push_back(directive);
-    directive = nullptr;
   }
 
   // Insert an error in the error log. These will be returned along with the
@@ -765,12 +790,10 @@ transaction_line:
     {
       // Create directive and update head, without custom metadata. That is
       // added at {99ef4ca51cd5}.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata(nullptr, dir->mutable_meta());
+      $$ = builder.MakeDirective($1, nullptr);
 
       // Create Transaction and update flag.
-      auto* txn = dir->mutable_transaction();
+      auto* txn = $$->mutable_transaction();
       if ($flag != '\0') {
         txn->set_flag(&$flag, 1);
       }
@@ -794,13 +817,10 @@ price:
   DATE PRICE CURRENCY amount eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Price and update currency.
-      auto* price = dir->mutable_price();
+      auto* price = $$->mutable_price();
       price->set_currency($3.data(), $3.size());
 
       // Update price amount.
@@ -809,18 +829,13 @@ price:
 
 /* A Balance directive. */
 balance:
-  DATE BALANCE account amount_tolerance[atol] eol indented_metadata[meta]
+  DATE BALANCE account amount_tolerance[atol] eol indented_metadata
     {
       // Create directive and prepare head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      if ($meta != nullptr) {
-        dir->mutable_meta()->CopyFrom(*$meta);
-        delete $meta;
-      }
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Pad and fill in account.
-      auto* balance = dir->mutable_balance();
+      auto* balance = $$->mutable_balance();
       balance->set_account($account.data(), $account.size());
 
       // Fill in amount.
@@ -840,13 +855,10 @@ open:
   DATE OPEN account currency_list booking eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Open and update account.
-      auto* open = dir->mutable_open();
+      auto* open = $$->mutable_open();
       open->set_account($account.data(), $account.size());
 
       // Create currency list.
@@ -855,7 +867,9 @@ open:
       }
 
       // Set booking method.
-      open->set_booking($booking);
+      if ($booking != Booking::UNKNOWN) {
+        open->set_booking($booking);
+      }
     }
 
 /* A Close directive. */
@@ -863,13 +877,10 @@ close:
   DATE CLOSE account eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Close and update account.
-      auto* open = dir->mutable_close();
+      auto* open = $$->mutable_close();
       open->set_account($account.data(), $account.size());
     }
 
@@ -878,13 +889,10 @@ commodity:
   DATE COMMODITY CURRENCY eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Commodity and update account.
-      auto* commodity = dir->mutable_commodity();
+      auto* commodity = $$->mutable_commodity();
       commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
     }
 
@@ -893,13 +901,10 @@ pad:
   DATE PAD account account[source] eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Pad and update accounts.
-      auto* pad = dir->mutable_pad();
+      auto* pad = $$->mutable_pad();
       pad->set_account($3.data(), $3.size());
       pad->set_source_account($source.data(), $source.size());
     }
@@ -909,13 +914,10 @@ document:
   DATE DOCUMENT account filename tags_links eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Document and update account and filename.
-      auto* document = dir->mutable_document();
+      auto* document = $$->mutable_document();
       document->set_account($account.data(), $account.size());
       document->set_filename($filename.data(), $filename.size());
 
@@ -931,13 +933,10 @@ note:
   DATE NOTE account STRING[comment] eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Note and update account.
-      auto* note = dir->mutable_note();
+      auto* note = $$->mutable_note();
       note->set_account($3.data(), $3.size());
 
       // Fill in comment.
@@ -949,13 +948,10 @@ event:
   DATE EVENT STRING[type] STRING[description] eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Event and update fields.
-      auto* event = dir->mutable_event();
+      auto* event = $$->mutable_event();
       event->set_type($type.data(), $type.size());
       event->set_description($description.data(), $description.size());
     }
@@ -965,13 +961,10 @@ query:
   DATE QUERY STRING[name] STRING[qstr] eol indented_metadata
     {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Query and update fields.
-      auto* query = dir->mutable_query();
+      auto* query = $$->mutable_query();
       query->set_name($name.data(), $name.size());
       query->set_query_string($qstr.data(), $qstr.size());
     }
@@ -981,13 +974,10 @@ custom:
   DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
    {
       // Create directive and update head.
-      auto* dir = $$ = new inter::Directive();
-      DateToProto($DATE, dir->mutable_date());
-      builder.AddActiveMetadata($indented_metadata, dir->mutable_meta());
-      delete $indented_metadata;
+      $$ = builder.MakeDirective($1, &$indented_metadata);
 
       // Create Custom and update accounts.
-      auto* custom = dir->mutable_custom();
+      auto* custom = $$->mutable_custom();
       custom->set_type($type.data(), $type.size());
 
       // Copy custom values here.
@@ -1724,7 +1714,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 
 // - Move builder to its own compilation unit.
 // - Output to text-formatted file for comparison.
-// - Refactor directives head code
 // - Set directive-level filename/lineno metadata
 // TODO(blais): Carve a dedicated field in the protos for original location
 // filename, start line, and end line, doesn't have to be generic metadata.
