@@ -34,6 +34,9 @@ void CopyNoCommas(const char* src, char* buffer);
 // Convert date string to (year, month, date).
 absl::CivilDay ParseDateFromString(const char* string);
 
+// Convert time string to (hour, minute, second).
+absl::CivilSecond ParseTimeFromString(const char* string);
+
 }  // namespace scanner
 }  // namespace beancount
 }
@@ -160,7 +163,7 @@ NULL {
 }
 
  /* Dates. */
-[0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
+[0-2][0-9]{3,}[\-/][0-9]{2,}[\-/][0-9]{2,} {
   return Parser::make_DATE(ParseDateFromString(text()), location());
 }
 
@@ -287,6 +290,7 @@ int strtonl(const char* string, size_t len) {
 #define DIGITS "0123456789"
 
 absl::CivilDay ParseDateFromString(const char* string) {
+  // Note: You could make this faster with a fixed size for dates.
   size_t n = strspn(string, DIGITS);
   int year = strtonl(string, n);
   string += n + 1;
@@ -298,7 +302,29 @@ absl::CivilDay ParseDateFromString(const char* string) {
   n = strspn(string, DIGITS);
   int day = strtonl(string, n);
 
+  // TODO(blais): Handle failure to create here, with invalid numerical values.
   return absl::CivilDay{year, month, day};
+}
+
+absl::CivilSecond ParseTimeFromString(const char* string) {
+  size_t n = strspn(string, DIGITS);
+  int hour = strtonl(string, n);
+  string += n + 1;
+
+  n = strspn(string, DIGITS);
+  int minute = strtonl(string, n);
+
+  int second;
+  if (*string == '\0') {
+    second = 0;
+  } else {
+    string += n + 1;
+    n = strspn(string, DIGITS);
+    second = strtonl(string, n);
+  }
+
+  // TODO(blais): Handle failure to create here, e.g., with 26:00:00
+  return absl::CivilSecond{hour, minute, second};
 }
 
 
@@ -369,6 +395,19 @@ void build_lexer_error_from_exception(const parser::location& loc, PyObject* bui
 // scanner is actually defined in the parser.yxx file-- and to log error
 // messages from here. However, I think it would be much more elegant to weave
 // error messages through to the error token somehow.
+
+
+// Have another go at inserting time after date.
+// TODO(blais): bring this back, it seems to make parsing signicantly slower.
+// Two ideas: Move below for precedence, or include in date token with
+// separator token.
+ /* Times. */
+ /*
+  [0-9]{4,}[\-/][0-9]+[\-/][0-9]+\.([0-2][0-9]:[0-5][0-9]:([0-5][0-9])?)? {
+     return Parser::make_TIME(ParseTimeFromString(text()), location());
+  }
+  %token <absl::CivilSecond> TIME        /* A time object
+  */
 
 }  // namespace scanner
 }  // namespace beancount

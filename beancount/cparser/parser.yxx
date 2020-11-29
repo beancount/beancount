@@ -1707,5 +1707,8 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // - Move builder to its own compilation unit.
 // - Output to text-formatted file for comparison.
 
-// Remove parser.proto
+// - Expand vocabulary of flags.
+
+// - Unify HASH and ASTERISK flags, also with posting vs. transaction flags. Test explicitly in lexer.
+
 // - Finish documenting the protos
