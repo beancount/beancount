@@ -1711,4 +1711,4 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 
 // - Unify HASH and ASTERISK flags, also with posting vs. transaction flags. Test explicitly in lexer.
 
-// - Finish documenting the protos
+// TODO(blais): Insert time for an additional sort-key.

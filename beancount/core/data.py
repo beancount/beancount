@@ -396,10 +396,7 @@ class Custom(NamedTuple):
 
     Attributes:
       meta: See above.
-      date: The date at which this query should be run. All directives following
-        this date will be ignored automatically. This is essentially equivalent to
-        the CLOSE modifier in the shell syntax.
-      dir_type: A string that represents the type of the directive.
+      type: A string that represents the type of the directive.
       values: A list of values of various simple types supported by the grammar.
         (Note that this list is not enforced to be consistent for all directives
         of the same type by the parser.)
