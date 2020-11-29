@@ -736,6 +736,51 @@ private:
 //- Grammar rules -------------------------------------------------------------
 %%
 
+/* Start token for parsing an entire file of the DSL. */
+file:
+  declarations YYEOF
+
+/* A rule to reduce pragmas and directives. We also handle errors at this
+ * level. */
+declarations:
+  declarations EOL
+  /* Accumulate nothing for anything that's not a directive. The side-effects of
+     all those pragma are stored in the builder object. */
+  | declarations pragma
+  /* A regular directive. Accmulate it in the builder. */
+  | declarations directive
+    {
+      if ($directive != nullptr) {
+        // Note: the reference is given to the builder.
+        builder.AppendDirective($directive);
+      }
+    }
+  /* An error raised at the parser level. */
+  | declarations error
+    {
+      // TODO(blais): What about the 'error' token encountered elsewhere? Is this
+      // guaranteed to bubble up here?
+      //
+      // TODO(blais): Great place to generically log and error here too?
+
+      // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
+      // the matching rule above, "error" will successfully reduce on each line
+      // that cannot reduce. Non-erroneous postings after an error occurs will
+      // reduce but not be included because a transaction's list of postings
+      // does not include an "error" rule.
+      //
+      // Note: Adding EOL after the "error" rule above works to reduce the
+      // number of calls to this rule resulting from the appearance of an error
+      // but makes the parser errors skip the next valid directive, so we just
+      // have to make sure repeated runs of this rule's handling code are
+      // idempotent.
+    }
+  | %empty
+
+
+
+
+
 /* The flag in a transaction declaration: it can be either 'txn' or one of the
    special character flags. */
 txn:
@@ -1596,46 +1641,7 @@ plugin:
     }
 
 
-/* A rule to reduce pragmas and directives. We also handle errors at this
- * level. */
-declarations:
-  declarations EOL
-  /* Accumulate nothing for anything that's not a directive. The side-effects of
-     all those pragma are stored in the builder object. */
-  | declarations pragma
-  /* A regular directive. Accmulate it in the builder. */
-  | declarations directive
-    {
-      if ($directive != nullptr) {
-        // Note: the reference is given to the builder.
-        builder.AppendDirective($directive);
-      }
-    }
-  /* An error raised at the parser level. */
-  | declarations error
-    {
-      // TODO(blais): What about the 'error' token encountered elsewhere? Is this
-      // guaranteed to bubble up here?
-      //
-      // TODO(blais): Great place to generically log and error here too?
 
-      // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
-      // the matching rule above, "error" will successfully reduce on each line
-      // that cannot reduce. Non-erroneous postings after an error occurs will
-      // reduce but not be included because a transaction's list of postings
-      // does not include an "error" rule.
-      //
-      // Note: Adding EOL after the "error" rule above works to reduce the
-      // number of calls to this rule resulting from the appearance of an error
-      // but makes the parser errors skip the next valid directive, so we just
-      // have to make sure repeated runs of this rule's handling code are
-      // idempotent.
-    }
-  | %empty
-
-/* Start token for parsing an entire file of the DSL. */
-file:
-  declarations YYEOF
 
 %%
 //- User code ----------------------------------------------------------------
