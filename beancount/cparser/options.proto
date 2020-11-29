@@ -236,6 +236,10 @@ message Options {
   // all, only user plugins are run (the user should explicitly load the
   // desired list of plugins by using the 'plugin' option. This is useful in case the
   // user wants full control over the ordering in which the plugins are run).
+  //
+  // TODO(blais): Make the default include all the core plugins, as PEDANTIC.
+  // Let that be the default. Make DEFAULT some other name. V3 should include
+  // all the pedantry by default.
   enum ProcessingMode {
     DEFAULT = 0;
     RAW = 1;

@@ -246,9 +246,7 @@ public:
 
   // Update the given repeated field with the list of active tags.
   // This function mutates the given argument.
-  template <typename T>
-  void SetTagsAndLinks(const TagsLinks& tags_links,
-                       T* message) {
+  void SetTagsAndLinks(const TagsLinks& tags_links, Directive* message) const {
     if (!active_tags_.empty()) {
       // First copy the active tags.
       auto* output = message->mutable_tags();
@@ -384,7 +382,8 @@ public:
   // non-null, it will be reset and ownership will be taken (and it will be
   // deleted).
   inline Directive* MakeDirective(const absl::CivilDay& date,
-                                  Meta** meta) const {
+                                  Meta** meta,
+                                  TagsLinks** tags_links) const {
     auto* dir = new Directive();
 
     // Set filename and line number.
@@ -402,6 +401,13 @@ public:
     }
     AddActiveMetadata(ourmeta, dir);
     delete ourmeta;
+
+    // Update tags, including active tags, and links.
+    if (tags_links != nullptr && *tags_links != nullptr) {
+      SetTagsAndLinks(**tags_links, dir);
+      delete *tags_links;
+      tags_links = nullptr;
+    }
 
     return dir;
   }
@@ -874,7 +880,7 @@ transaction_line:
     {
       // Create directive and update head, without custom metadata. That is
       // added at {99ef4ca51cd5}.
-      $$ = builder.MakeDirective($1, nullptr);
+      $$ = builder.MakeDirective($1, nullptr, &$tags_links);
 
       // Create Transaction and update flag.
       auto* txn = $$->mutable_transaction();
@@ -889,20 +895,14 @@ transaction_line:
       if (!$pn.second.empty()) {
         txn->set_narration($pn.second.data(), $pn.second.size());
       }
-
-      // Update tags, including active tags and links.
-      if ($tags_links != nullptr) {
-        builder.SetTagsAndLinks(*$tags_links, txn);
-        delete $tags_links;
-      }
     }
 
 /* A Price directive. */
 price:
-  DATE PRICE CURRENCY amount eol indented_metadata
+  DATE PRICE CURRENCY amount tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Price and update currency.
       auto* price = $$->mutable_price();
@@ -914,10 +914,10 @@ price:
 
 /* A Balance directive. */
 balance:
-  DATE BALANCE account amount_tolerance[atol] eol indented_metadata
+  DATE BALANCE account amount_tolerance[atol] tags_links eol indented_metadata
     {
       // Create directive and prepare head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Pad and fill in account.
       auto* balance = $$->mutable_balance();
@@ -937,10 +937,10 @@ balance:
 
 /* An Open directive. */
 open:
-  DATE OPEN account currency_list booking eol indented_metadata
+  DATE OPEN account currency_list booking tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Open and update account.
       auto* open = $$->mutable_open();
@@ -959,10 +959,10 @@ open:
 
 /* A Close directive. */
 close:
-  DATE CLOSE account eol indented_metadata
+  DATE CLOSE account tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Close and update account.
       auto* open = $$->mutable_close();
@@ -971,10 +971,10 @@ close:
 
 /* A Commodity directive. */
 commodity:
-  DATE COMMODITY CURRENCY eol indented_metadata
+  DATE COMMODITY CURRENCY tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Commodity and update account.
       auto* commodity = $$->mutable_commodity();
@@ -983,10 +983,10 @@ commodity:
 
 /* A Pad directive. */
 pad:
-  DATE PAD account account[source] eol indented_metadata
+  DATE PAD account account[source] tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Pad and update accounts.
       auto* pad = $$->mutable_pad();
@@ -999,42 +999,33 @@ document:
   DATE DOCUMENT account filename tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Document and update account and filename.
       auto* document = $$->mutable_document();
       document->set_account($account.data(), $account.size());
       document->set_filename($filename.data(), $filename.size());
-
-      // Update tags, including active tags, and links.
-      // TODO(blais): Refactor with txn? It's the same code.
-      if ($tags_links != nullptr) {
-        builder.SetTagsAndLinks(*$tags_links, document);
-        delete $tags_links;
-      }
     }
 
 /* A Note directive. */
 note:
-  DATE NOTE account STRING[comment] eol indented_metadata
+  DATE NOTE account STRING[comment] tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
-      // Create Note and update account.
+      // Create Note and update account and comment.
       auto* note = $$->mutable_note();
       note->set_account($3.data(), $3.size());
-
-      // Fill in comment.
       note->set_comment($comment.data(), $comment.size());
     }
 
 /* An Event directive. */
 event:
-  DATE EVENT STRING[type] STRING[description] eol indented_metadata
+  DATE EVENT STRING[type] STRING[description] tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Event and update fields.
       auto* event = $$->mutable_event();
@@ -1044,10 +1035,10 @@ event:
 
 /* A Query directive. */
 query:
-  DATE QUERY STRING[name] STRING[qstr] eol indented_metadata
+  DATE QUERY STRING[name] STRING[qstr] tags_links eol indented_metadata
     {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
 
       // Create Query and update fields.
       auto* query = $$->mutable_query();
@@ -1055,12 +1046,14 @@ query:
       query->set_query_string($qstr.data(), $qstr.size());
     }
 
-/* A Custom directive. */
+/* A Custom directive. Note that this directive does not support the dedicated
+   tags and links because those can be part of metadata. It would be ambiguous
+   which is supplied. */
 custom:
   DATE CUSTOM STRING[type] meta_value_list eol indented_metadata
-   {
+    {
       // Create directive and update head.
-      $$ = builder.MakeDirective($1, &$indented_metadata);
+      $$ = builder.MakeDirective($1, &$indented_metadata, nullptr);
 
       // Create Custom and update accounts.
       auto* custom = $$->mutable_custom();
@@ -1073,7 +1066,7 @@ custom:
         delete meta_value;
       }
       $meta_value_list.clear();
-   }
+    }
 
 /*- Metadata ----------------------------------------------------------------*/
 
@@ -1748,9 +1741,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
 //   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
 //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-// - Making /all/ directives support tags and links in common would simplify the
-//   code and possibly the syntax. Do it.
 
 // - Add templated new/delete interfaces on the builder and count memory
 //   allocations.

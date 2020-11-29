@@ -125,8 +125,6 @@ message Transaction {
   optional bytes flag = 3;
   optional string payee = 4;
   optional string narration = 5;
-  repeated string tags = 6;
-  repeated string links = 7;
   repeated Posting postings = 8;
 }
 
@@ -196,8 +194,6 @@ message Price {
 message Document {
   optional string account = 3;
   optional string filename = 4;
-  repeated string tags = 5;
-  repeated string links = 6;
 }
 
 message Custom {
@@ -210,20 +206,22 @@ message Directive {
   optional Location location = 1;
   optional Date date = 2;
   optional Meta meta = 3;
+  repeated string tags = 4;
+  repeated string links = 5;
 
   oneof body {
-    Transaction transaction = 4;
-    Price price = 5;
-    Balance balance = 6;
-    Open open = 7;
-    Close close = 8;
-    Commodity commodity = 9;
-    Pad pad = 10;
-    Document document = 11;
-    Note note = 12;
-    Event event = 13;
-    Query query = 14;
-    Custom custom = 15;
+    Transaction transaction = 6;
+    Price price = 7;
+    Balance balance = 8;
+    Open open = 9;
+    Close close = 10;
+    Commodity commodity = 11;
+    Pad pad = 12;
+    Document document = 13;
+    Note note = 14;
+    Event event = 15;
+    Query query = 16;
+    Custom custom = 17;
   }
 }
 
