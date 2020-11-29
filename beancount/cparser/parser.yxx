@@ -50,6 +50,7 @@
 #include <optional>
 
 #include "absl/strings/string_view.h"
+#include "absl/strings/str_join.h"
 #include "absl/time/civil_time.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/text_format.h"
@@ -96,6 +97,7 @@ struct TagsLinks {
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/escaping.h"
 #include "reflex/input.h"
 
 namespace beancount {
@@ -199,7 +201,7 @@ public:
   // Add a new option. This gets store into the options proto and some of the
   // values may influence parsing.
   void AddOption(string_view key, string_view value) {
-
+    // Check the options field and get relevant descriptors.
     const auto* descriptor = options_->GetDescriptor();
     const auto* field = descriptor->FindFieldByName(string(key));
     if (!field) {
@@ -214,8 +216,13 @@ public:
     }
 
     // Set the field on the options proto.
-    if (!TextFormat::ParseFieldValueFromString(string(value), field, options_.get())) {
-      LogError(StrFormat("Could not parse and set option '%s'; ignored.", key));
+    string value_str(value);
+    if (field->type() == FieldDescriptor::TYPE_STRING) {
+      value_str = absl::StrCat("\"", absl::CEscape(value_str), "\"");
+    }
+    if (!TextFormat::ParseFieldValueFromString(value_str, field, options_.get())) {
+      LogError(StrFormat("Could not parse and set option '%s' with value '%s'; ignored.",
+                         key, value));
       return;
     }
 
@@ -487,6 +494,7 @@ public:
   void LogError(string_view message) {
     // TODO(blais):
     /// scanner_.location()
+    std::cerr << scanner_.get_location() << ": " << message << std::endl;
   }
   // TODO(blais): Can we turn this error logging into a stream instead?
 
