@@ -1124,34 +1124,6 @@ currency_list:
       $$.push_back({$3.data(), $3.size()});
     }
 
-/* A pragma that pushes a new tag applied to transactions. */
-pushtag:
-  PUSHTAG TAG eol
-    {
-      builder.PushTag($2);
-    }
-
-/* Remove a specific tag from the active list. */
-poptag:
-  POPTAG TAG eol
-    {
-      builder.PopTag($2);
-    }
-
-/* A pragma that pushes a new key-value pair applied to transactions. */
-pushmeta:
-  PUSHMETA KEY COLON meta_value eol
-    {
-      builder.PushMeta($2, $4);
-    }
-
-/* Remove a specific key-value pairfrom the active list. */
-popmeta:
-  POPMETA KEY COLON eol
-    {
-      builder.PopMeta($2);
-    }
-
 /* An Open directive. */
 open:
   DATE OPEN account currency_list booking eol indented_metadata
@@ -1557,6 +1529,47 @@ directive:
   | query
   | custom
 
+
+
+/* Anything but a directive. Those constructs apply side-effects to the builder
+ * object. */
+pragma:
+  pushtag
+  | poptag
+  | pushmeta
+  | popmeta
+  | option
+  | include
+  | plugin
+
+/* A pragma that pushes a new tag applied to transactions. */
+pushtag:
+  PUSHTAG TAG eol
+    {
+      builder.PushTag($2);
+    }
+
+/* Remove a specific tag from the active list. */
+poptag:
+  POPTAG TAG eol
+    {
+      builder.PopTag($2);
+    }
+
+/* A pragma that pushes a new key-value pair applied to transactions. */
+pushmeta:
+  PUSHMETA KEY COLON meta_value eol
+    {
+      builder.PushMeta($2, $4);
+    }
+
+/* Remove a specific key-value pairfrom the active list. */
+popmeta:
+  POPMETA KEY COLON eol
+    {
+      builder.PopMeta($2);
+    }
+
 /* An option pragma. */
 option:
   OPTION STRING[key] STRING[value] eol
@@ -1582,16 +1595,6 @@ plugin:
       builder.AddPlugin($2, $3);
     }
 
-/* Anything but a directive. Those constructs apply side-effects to the builder
- * object. */
-pragma:
-  pushtag
-  | poptag
-  | pushmeta
-  | popmeta
-  | option
-  | include
-  | plugin
 
 /* A rule to reduce pragmas and directives. We also handle errors at this
  * level. */
