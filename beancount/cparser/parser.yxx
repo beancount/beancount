@@ -26,6 +26,7 @@
 // }
 
 // Input state to parser.
+// TODO(blais): indent properly, use %param is equivalent?
 %parse-param {::beancount::scanner::Scanner& scanner} {::beancount::parser::Builder& builder}
 
 //- Code blocks ---------------------------------------------------------------
@@ -57,7 +58,7 @@
 #include "decimal.hh"
 
 namespace beancount {
-namespace scanner { class Scanner; }
+namespace scanner { class Scanner; class ScannerWithFile; }
 namespace parser {
 class Builder;
 
@@ -111,6 +112,61 @@ using absl::StrFormat;
 using google::protobuf::FieldDescriptor;
 using google::protobuf::TextFormat;
 
+namespace scanner {
+// TODO(blais): Move this code to scanner.lxx?
+
+// An extension to the generated scanner that also fetches the filename for the
+// location.
+class ScannerWithFile : public scanner::Scanner {
+public:
+  using scanner::Scanner::Scanner;
+
+  // Set the filename for location tokens.
+  void SetFilename(string_view filename) {
+    filename_ = filename;
+  }
+
+  void SetLineOffset(const int line_offset) {
+    line_offset_ = line_offset;
+  }
+
+  // Override the location to include the filename.
+  // TODO(blais): Why do I need this again?
+  beancount::parser::location location() override {
+    /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
+    /* yylloc.begin.column = static_cast<unsigned int>(matcher().columno()); */
+    /* yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end()); */
+    /* yylloc.end.column = static_cast<unsigned int>(matcher().columno_end()); */
+    auto yylloc = scanner::Scanner::location();
+    yylloc.begin.filename = &filename_;
+    if (line_offset_ > 0) {
+      yylloc.begin.line += line_offset_;
+      yylloc.end.line += line_offset_;
+    }
+    return yylloc;
+  }
+
+  beancount::parser::location get_location() const {
+    // Get around insufficiently const generated RE/flex base.
+    return const_cast<ScannerWithFile*>(this)->location();
+  }
+
+  // TODO(blais): Do we still need this? At least catch the exception.
+  virtual void lexer_error(const char* message) override {
+    cerr << "Scanner::lexer_error: ";
+    if (message) {
+      cerr << *message;
+    }
+    cerr << endl;
+    return scanner::Scanner::lexer_error(message);
+  }
+
+private:
+  string filename_;
+  int line_offset_ = 0;
+};
+
+}  // namespace scanner
 namespace parser {
 
 // Convert a date object to an equivalent proto.
@@ -127,7 +183,7 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
 // assumed to be ordered, resolving references occurs as a separate phase.
 class Builder {
 public:
-  Builder(scanner::Scanner& scanner);
+  Builder(const scanner::ScannerWithFile& scanner);
   virtual ~Builder() {}
 
   void Initialize() {
@@ -262,21 +318,36 @@ public:
     // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
   }
 
+  // Set the location proto.
+  void SetLocation(Location* output) const {
+    auto scanloc = scanner_.get_location().begin;
+    if (scanloc.filename != nullptr) {
+      // Note: Save on space / processing time by using an indirection (~20ms).
+      output->set_filename(*scanloc.filename);
+    }
+    if (scanloc.line != 0) {
+      output->set_lineno(scanloc.line);
+    }
+  }
 
-
-
-  // Insert the active metadata into the given argument.
-  inline void AddActiveMetadata(beancount::Meta* meta, beancount::Meta* output) const {
+  // Insert the active metadata into the given argument. If there is no metadata
+  // to be added, the directive is unmodified.
+  inline void AddActiveMetadata(beancount::Meta* meta,
+                                beancount::inter::Directive* dir) const {
     // Append active metadata into the output.
-    for (auto [key, value_list] : active_meta_) {
-      auto* kv = output->mutable_kv()->Add();
-      kv->set_key(key);
-      kv->mutable_value()->CopyFrom(*value_list.back());
+    if (!active_meta_.empty()) {
+      beancount::Meta* dirmeta = dir->mutable_meta();
+      for (auto [key, value_list] : active_meta_) {
+        auto* kv = dirmeta->mutable_kv()->Add();
+        kv->set_key(key);
+        kv->mutable_value()->CopyFrom(*value_list.back());
+      }
     }
 
     // Merge given metadata on top of active metadttaa.
     if (meta != nullptr) {
-      output->MergeFrom(*meta);
+      beancount::Meta* dirmeta = dir->mutable_meta();
+      dirmeta->MergeFrom(*meta);
     }
 
     // TODO(blais): Check for the presence of duplicates in the loop above and
@@ -296,20 +367,25 @@ public:
   // deleted).
   inline inter::Directive* MakeDirective(const absl::CivilDay& date,
                                          beancount::Meta** meta) const {
-      // Create directive and update head.
-      auto* dir = new inter::Directive();
+    auto* dir = new inter::Directive();
 
-      DateToProto(date, dir->mutable_date());
+    // Set filename and line number.
+    // TODO(blais): Set the end line number (when wrapping up).
+    SetLocation(dir->mutable_location());
 
-      beancount::Meta* ourmeta = nullptr;
-      if (meta != nullptr) {
-        ourmeta = *meta;
-        meta = nullptr;
-      }
-      AddActiveMetadata(ourmeta, dir->mutable_meta());
-      delete ourmeta;
+    // Set the date.
+    DateToProto(date, dir->mutable_date());
 
-      return dir;
+    // Copy the metadata, if provided, including the stack's metadata.
+    beancount::Meta* ourmeta = nullptr;
+    if (meta != nullptr) {
+      ourmeta = *meta;
+      meta = nullptr;
+    }
+    AddActiveMetadata(ourmeta, dir);
+    delete ourmeta;
+
+    return dir;
   }
 
   // Note: We steal ownership.
@@ -327,24 +403,14 @@ public:
                       const location& loc) {
     assert(posting != nullptr);
 
+    // Store filename and line number for the posting.
+    SetLocation(posting->mutable_location());
+
     // Store flag and account name.
     if (flag != '\0') {
       posting->set_flag(&flag, 1);
     }
     posting->set_account(account.data(), account.size());
-
-    // Store filename and line number in metadata.
-    {
-      auto* kv = posting->mutable_meta()->add_kv();
-      kv->set_key("filename");
-      assert(loc.begin.filename != nullptr);
-      kv->mutable_value()->set_text(loc.begin.filename->data(), loc.begin.filename->size());
-    }
-    {
-      auto* kv = posting->mutable_meta()->add_kv();
-      kv->set_key("lineno");
-      kv->mutable_value()->set_integer(loc.begin.line);
-    }
 
     // Check conditions renamed to price annotations.
     if (posting->has_price()) {
@@ -454,7 +520,7 @@ public:
 
 private:
   // Scanner (in order to get the last location).
-  scanner::Scanner scanner_;
+  const scanner::ScannerWithFile& scanner_;
 
   // Processing info to produce from the parser.
   std::unique_ptr<options::ProcessingInfo> info_;
@@ -1302,7 +1368,9 @@ posting:
     {
       $$ = new inter::Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      if ($cost_spec != nullptr) {
+        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      }
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
   /* Variation with price. */
@@ -1310,7 +1378,9 @@ posting:
     {
       $$ = new inter::Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      if ($cost_spec != nullptr) {
+        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      }
       $$->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $optflag, $account, false, scanner.location());
     }
@@ -1321,7 +1391,9 @@ posting:
       // value of AT and ATAT.
       $$ = new inter::Posting();
       $$->mutable_units()->CopyFrom(*$partial_amount);
-      $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      if ($cost_spec != nullptr) {
+        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+      }
       $$->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $optflag, $account, true, scanner.location());
     }
@@ -1460,34 +1532,35 @@ cost_spec:
     }
   | LCURLCURL cost_comp_list RCURLCURL
     {
-      // Note: This is using the total syntax; it is an error to set
-      // `number_total` to a value in the input when using `{{...}}`.
-      if ($2->has_number_total()) {
-        builder.LogError(
-          StrFormat("Per-unit cost may not be specified using total cost "
-                    "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
-      } else {
-        $2->mutable_number_total()->CopyFrom($2->number_per());
+      if ($2 != nullptr) {
+        // Note: This is using the total syntax; it is an error to set
+        // `number_total` to a value in the input when using `{{...}}`.
+        if ($2->has_number_total()) {
+          builder.LogError(
+            StrFormat("Per-unit cost may not be specified using total cost "
+                      "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
+        } else {
+          $2->mutable_number_total()->CopyFrom($2->number_per());
+        }
+        $2->clear_number_per();
       }
-      $2->clear_number_per();
       $$ = $2;
     }
   | %empty
     {
-      $$ = new inter::CostSpec();
+      $$ = nullptr;
     }
 
 /* A comma-separated list of components in a {...} cost specification. */
 cost_comp_list:
   %empty
     {
-      $$ = new inter::CostSpec();
+      $$ = nullptr;
     }
   | cost_comp
   | cost_comp_list COMMA cost_comp
     {
-      // Note: Assuming we are allowed to return and mutate $1.
-      $$ = $1;
+      $$ = ($1 != nullptr) ? ($1) : new inter::CostSpec();
       // TODO(blais): Check for collisions here.
       $$->MergeFrom(*$3);
       delete $3;
@@ -1564,7 +1637,7 @@ void beancount::parser::Parser::error(const location& loc, const string& msg)
 namespace beancount {
 namespace parser {
 
-Builder::Builder(scanner::Scanner& scanner) :
+Builder::Builder(const scanner::ScannerWithFile& scanner) :
   scanner_(scanner)
 {
   info_.reset(new options::ProcessingInfo());
@@ -1574,56 +1647,6 @@ Builder::Builder(scanner::Scanner& scanner) :
 // TODO(blais): Implement builder methods here (maybe).
 
 }  //  namespace parser
-
-namespace scanner {
-
-// An extension to the generated scanner that also fetches the filename for the
-// location.
-class ScannerWithFile : public scanner::Scanner {
-public:
-  using scanner::Scanner::Scanner;
-
-  // Set the filename for location tokens.
-  void SetFilename(string_view filename) {
-    filename_ = filename;
-  }
-
-  void SetLineOffset(const int line_offset) {
-    line_offset_ = line_offset;
-  }
-
-  // Override the location to include the filename.
-  // TODO(blais): Why do I need this again?
-  beancount::parser::location location() override {
-    /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
-    /* yylloc.begin.column = static_cast<unsigned int>(matcher().columno()); */
-    /* yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end()); */
-    /* yylloc.end.column = static_cast<unsigned int>(matcher().columno_end()); */
-    auto yylloc = scanner::Scanner::location();
-    yylloc.begin.filename = &filename_;
-    if (line_offset_ > 0) {
-      yylloc.begin.line += line_offset_;
-      yylloc.end.line += line_offset_;
-    }
-    return yylloc;
-  }
-
-  // TODO(blais): Do we still need this? At least catch the exception.
-  virtual void lexer_error(const char* message) override {
-    cerr << "Scanner::lexer_error: ";
-    if (message) {
-      cerr << *message;
-    }
-    cerr << endl;
-    return scanner::Scanner::lexer_error(message);
-  }
-
-private:
-  string filename_;
-  int line_offset_ = 0;
-};
-
-}  // namespace scanner
 
 namespace parser {
 
@@ -1717,3 +1740,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // - Set directive-level filename/lineno metadata
 // TODO(blais): Carve a dedicated field in the protos for original location
 // filename, start line, and end line, doesn't have to be generic metadata.
+
+// Remove parser.proto
+// - Finish documenting the protos

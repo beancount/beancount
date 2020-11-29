@@ -86,33 +86,36 @@ message Cost {
 // (multiple transactions may not share a Posting instance), and that's what the
 // entry field should be set to.
 message Posting {
+  // Location of the posting.
+  optional Location location = 1;
+
   // A dict of strings to values, the metadata that was attached specifically to
   // that posting, or None, if not provided. In practice, most of the instances
   // will be unlikely to have metadata.
-  optional Meta meta = 1;
+  optional Meta meta = 2;
 
   // Optional posting date.
-  optional Date date = 2;
+  optional Date date = 3;
 
   // An optional flag, a one-character string or None, which is to be associated
   // with the posting. Most postings don't have a flag, but it can be convenient
   // to mark a particular posting as problematic or pending to be reconciled for
   // a future import of its account.
-  optional bytes flag = 3;
+  optional bytes flag = 4;
 
   // A string, the account that is modified by this posting.
-  optional string account = 4;
+  optional string account = 5;
 
   // An Amount, the units of the position.
-  optional Amount units = 5;
+  optional Amount units = 6;
 
   // A Cost or CostSpec instances, the units of the position.
-  optional Cost cost = 6;
+  optional Cost cost = 7;
 
   // An Amount, the price at which the position took place, or None, where not
   // relevant. Providing a price member to a posting automatically adds a price
   // in the prices database at the date of the transaction.
-  optional Amount price = 7;
+  optional Amount price = 8;
 }
 
 //-------------------------------------------------------------------------------
@@ -202,34 +205,33 @@ message Custom {
   repeated MetaValue values = 2;
 }
 
+// TODO(blais): Insert time for an additional sort-key.
 message Directive {
-  optional Date date = 1;
-  optional Meta meta = 2;
-  // TODO(blais): Insert time for an additional sort-key.
-  // TODO(blais): Insert filename, line beginning and end here. No reason to use
-  // metadata.
+  optional Location location = 1;
+  optional Date date = 2;
+  optional Meta meta = 3;
 
   oneof body {
-    Transaction transaction = 3;
-    Open open = 4;
-    Close close = 5;
-    Commodity commodity = 6;
-    Pad pad = 7;
-    Balance balance = 8;
-    Note note = 9;
-    Event event = 10;
-    Query query = 11;
-    Price price = 12;
-    Document document = 13;
-    Custom custom = 14;
+    Transaction transaction = 4;
+    Price price = 5;
+    Balance balance = 6;
+    Open open = 7;
+    Close close = 8;
+    Commodity commodity = 9;
+    Pad pad = 10;
+    Document document = 11;
+    Note note = 12;
+    Event event = 13;
+    Query query = 14;
+    Custom custom = 15;
   }
 }
 
 // A location in an input file.
 message Location {
   optional string filename = 1;
-  optional int32 line_begin = 2;
-  optional int32 line_end = 3;
+  optional int32 lineno = 2;
+  optional int32 lineno_end = 3;
 }
 
 // An error in processing.

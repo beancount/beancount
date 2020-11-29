@@ -56,15 +56,16 @@ message CostSpec {
 // later (once we've teased out all we need from the intermediate representation
 // in terms of concrete types).
 message Posting {
-  optional Meta meta = 1;
-  optional Date date = 2;
-  optional bytes flag = 3;
-  optional string account = 4;
-  optional Amount units = 5;
-  optional Amount price = 7;
+  optional Location location = 1;
+  optional Meta meta = 2;
+  optional Date date = 3;
+  optional bytes flag = 4;
+  optional string account = 5;
+  optional Amount units = 6;
+  optional Amount price = 8;
 
   // A Cost or CostSpec instances, the partially filled units of the position.
-  optional CostSpec cost_spec = 6;
+  optional CostSpec cost_spec = 9;
 }
 
 // Copy of beancount.Transaction with CostSpec instead.
@@ -81,21 +82,23 @@ message Transaction {
 // Copy of beancount.Directive with CostSpecs instead.
 // TODO(blais): This is a bit much. Use an optional field.
 message Directive {
-  optional Date date = 1;
-  optional Meta meta = 2;
+  optional Location location = 1;
+  optional Date date = 2;
+  optional Meta meta = 3;
+
   oneof body {
-    Transaction transaction = 3;
-    Open open = 4;
-    Close close = 5;
-    Commodity commodity = 6;
-    Pad pad = 7;
-    Balance balance = 8;
-    Note note = 9;
-    Event event = 10;
-    Query query = 11;
-    Price price = 12;
-    Document document = 13;
-    Custom custom = 14;
+    Transaction transaction = 4;
+    Price price = 5;
+    Balance balance = 6;
+    Open open = 7;
+    Close close = 8;
+    Commodity commodity = 9;
+    Pad pad = 10;
+    Document document = 11;
+    Note note = 12;
+    Event event = 13;
+    Query query = 14;
+    Custom custom = 15;
   }
 }
 
