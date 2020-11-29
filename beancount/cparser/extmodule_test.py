@@ -1,6 +1,7 @@
 import os
 import pprint
 import tempfile
+import time
 import unittest
 
 from beancount.cparser import extmodule
@@ -18,14 +19,12 @@ class CppParserModuleTests(unittest.TestCase):
     # TODO(blais): Remove, this is temporary, for testing locally.
     filename = os.getenv("L")
     assert filename
+    t1 = time.time()
     ledger = extmodule.parse(filename)
-    print(ledger)
+    t2 = time.time()
     extmodule.write_to_text(ledger, os.path.expanduser("/tmp/ledger.pbtxt"))
-
-    # #pprint.pprint(options_map)
-    # pprint.pprint((len(ledger.directives), ledger.errors))
-    # if ledger.directives:
-    #   printer.print_entry(ledger.directives[-1])
+    t3 = time.time()
+    print((t2 - t1) * 1000, (t3 - t2) * 1000)
 
 
 if __name__ == '__main__':

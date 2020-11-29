@@ -1699,7 +1699,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 
 // TODO(blais): In v3 review the syntax for uniformity:
 // - Allow tags/links on all directives?
-// - Remove the EMPTY_SET constraint
 // - Make it possible to tag/link before the narration strings.
 // - Add datetime parsing (civil datetime is sufficient).
 
@@ -1709,9 +1708,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 
 // TODO(blais): Rework the rules to take advantage of the name aliases.
 
-// TODO(blais): Carve a dedicated field in the protos for original location
-// filename, start line, and end line, doesn't have to be generic metadata.
-//
 // - In the metadata, output not just the starting line but also the end line,
 //   for easy extraction of the original text.
 
@@ -1726,9 +1722,9 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // - Add templated new/delete interfaces on the builder and count memory
 //   allocations.
 
-// - Create a new Ledger container type to expose for producing results, with
-//   'directives', 'errors', 'options', 'info' attributes.
-
 // - Move builder to its own compilation unit.
-// - Remove Python
 // - Output to text-formatted file for comparison.
+// - Refactor directives head code
+// - Set directive-level filename/lineno metadata
+// TODO(blais): Carve a dedicated field in the protos for original location
+// filename, start line, and end line, doesn't have to be generic metadata.
