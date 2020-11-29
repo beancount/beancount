@@ -58,6 +58,7 @@ cc_library(
         "//beancount/parser:tokens_c",
         "//third_party/parser:reflex",
         ":parser_headers",
+        ":ledger",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
@@ -66,6 +67,7 @@ cc_library(
     ],
 )
 
+# TODO(blais): Bring this back, using C++ only, ditto for parser (with text-formatted protos).
 # cc_test(
 #     name = "scanner_test",
 #     srcs = ["scanner_test.cc"],
@@ -174,4 +176,18 @@ py_test(
         "//beancount/parser:printer",
         "//beancount/core:number",
     ],
+)
+
+#-------------------------------------------------------------------------------
+
+cc_library(
+    name = "ledger",
+    srcs = ["ledger.cc"],
+    hdrs = ["ledger.h"],
+    deps = [
+        "//beancount/cparser:parser_cc_proto",
+        "//beancount/cparser:options_cc_proto",
+        "//beancount/ccore:data_cc_proto",
+
+    ]
 )
