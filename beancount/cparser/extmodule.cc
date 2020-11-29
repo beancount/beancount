@@ -1,6 +1,5 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/scanner.h"
-#include "beancount/parser/tokens.h"
 #include "beancount/ccore/data.pb.h"
 #include "beancount/defs.h"
 
@@ -59,12 +58,6 @@ PYBIND11_MODULE(extmodule, mod) {
 
   using namespace beancount;
   namespace py = pybind11;
-
-  // Initialize the datetime and decimal modules. Note: datetime has to be
-  // initialize in each of the compilation units its APIs get called because of
-  // global declaration in a header file.
-  initialize_datetime();
-  PyDecimal_IMPORT;
 
   // Fetch the MISSING object and steal a reference to a global for later use.
   py::module_ number = py::module_::import("beancount.core.number");
