@@ -61,6 +61,18 @@ Directive::BodyCase GetDirectiveType(const Directive& dir) {
   return dir.body_case();
 }
 
+// Downgrade to V2 conversion for direct proto-to-proto comparison.
+void DowngradeToV2(Directive* dir) {
+  dir->mutable_location()->clear_lineno_end();
+
+  if (dir->body_case() == Directive::BodyCase::kTransaction) {
+    auto* transaction = dir->mutable_transaction();
+    for (auto& posting : *transaction->mutable_postings()) {
+      posting.mutable_location()->clear_lineno_end();
+    }
+  }
+}
+
 // Explicit interface to protobuf schema.
 //
 // For a more complete and read/write setup, it'll be wiser to complete the
@@ -86,6 +98,7 @@ void ExportProtoTypes(py::module& mod) {
     .export_values()
     ;
   mod.def("GetDirectiveType", &GetDirectiveType);
+  mod.def("DowngradeToV2", &DowngradeToV2);
 
   py::class_<Directive>(mod, "Directive")
     .def("__str__", &Directive::DebugString)

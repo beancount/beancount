@@ -18,13 +18,6 @@
 %locations
 %define api.filename.type "const std::string"
 
-// %initial-action does not work to set the filename since the location() is set
-// on the symbol itself.
-// This doesn't work either.
-// %initial-action {
-//   driver.WithLocation(@$);
-// }
-
 // Input state to parser.
 // TODO(blais): indent properly, use %param is equivalent?
 %parse-param {::beancount::scanner::Scanner& scanner} {::beancount::parser::Builder& builder}
@@ -124,15 +117,11 @@ class ScannerWithFile : public scanner::Scanner {
 public:
   using scanner::Scanner::Scanner;
 
-  // Set the filename for location tokens.
-  void SetFilename(string_view filename) {
-    filename_ = filename;
-  }
-
   void SetLineOffset(const int line_offset) {
     line_offset_ = line_offset;
   }
 
+#if 0
   // TODO(blais): You'll probably remove this, use the @$ Bison construct or
   // default action to set the global location for the rule in the parser.
   // https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html
@@ -144,13 +133,14 @@ public:
     /* yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end()); */
     /* yylloc.end.column = static_cast<unsigned int>(matcher().columno_end()); */
     auto yylloc = scanner::Scanner::location();
-    yylloc.begin.filename = &filename_;
+    yylloc.begin.filename = &this->filename;
     if (line_offset_ > 0) {
       yylloc.begin.line += line_offset_;
       yylloc.end.line += line_offset_;
     }
     return yylloc;
   }
+#endif
 
   beancount::parser::location get_location() const {
     // Get around insufficiently const generated RE/flex base.
@@ -168,7 +158,6 @@ public:
   }
 
 private:
-  string filename_;
   int line_offset_ = 0;
 };
 
@@ -347,18 +336,6 @@ public:
     // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
   }
 
-  // Set the location proto.
-  void SetLocation(Location* output) const {
-    auto scanloc = scanner_.get_location().begin;
-    if (scanloc.filename != nullptr) {
-      // Note: Save on space / processing time by using an indirection (~20ms).
-      output->set_filename(*scanloc.filename);
-    }
-    if (scanloc.line != 0) {
-      output->set_lineno(scanloc.line);
-    }
-  }
-
   // Insert the active metadata into the given argument. If there is no metadata
   // to be added, the directive is unmodified.
   inline void AddActiveMetadata(Meta* meta,
@@ -399,10 +376,6 @@ public:
                                   TagsLinks** tags_links) const {
     auto* dir = new Directive();
 
-    // Set filename and line number.
-    // TODO(blais): Set the end line number (when wrapping up).
-    SetLocation(dir->mutable_location());
-
     // Set the date.
     DateToProto(date, dir->mutable_date());
 
@@ -437,9 +410,6 @@ public:
                       bool is_total,
                       const location& loc) {
     assert(posting != nullptr);
-
-    // Store filename and line number for the posting.
-    SetLocation(posting->mutable_location());
 
     // Store flag and account name.
     if (flag != '\0') {
@@ -751,6 +721,13 @@ declarations:
     {
       // Note: the reference is given to the builder.
       builder.AppendDirective($directive);
+
+      // Set the location.
+      auto* loc = $directive->mutable_location();
+      loc->set_filename(scanner.filename);
+      loc->set_lineno(@2.begin.line);
+      // TODO(blais): Bring this in after 1:1 parity.
+      // loc->set_lineno_end(@2.end.line);
     }
   /* An error raised at the parser level. */
   | declarations error
@@ -1340,7 +1317,13 @@ posting_and_metadata:
         $1->mutable_meta()->CopyFrom(*$2);
         delete $2;
       }
-      $$ = $1;
+      $$ = $posting;
+
+      // Set the location.
+      auto* loc = $posting->mutable_location();
+      loc->set_filename(scanner.filename);
+      loc->set_lineno(@1.begin.line);
+      loc->set_lineno_end(@2.end.line);
     }
 
 /* A posting line, without any of its metadata. */
@@ -1640,7 +1623,7 @@ std::unique_ptr<Ledger> Parse(
   // Create a scanner and builder.
   scanner::ScannerWithFile scanner(input, cout);
   if (filename.has_value()) {
-    scanner.SetFilename(filename.value());
+    scanner.filename = filename.value();
   }
   scanner.SetLineOffset(line_offset);
   parser::Builder builder(scanner);
@@ -1696,10 +1679,6 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // - Make it possible to tag/link before the narration strings.
 // - Add datetime parsing (civil datetime is sufficient).
 
-// TODO(blais): Remove and review all manners of locations() overriding. This
-// should normally work fine out of the box, and those fixes are likely
-// unnecessary.
-
 // TODO(blais): Rework all the rules to take advantage of the name aliases.
 
 // - In the metadata, output not just the starting line but also the end line,
@@ -1723,11 +1702,3 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // TODO(blais): Insert time for an additional sort-key.
 
 // - Contemplate merging tags & links into a single field.
-
-// IMPORTANT
-// - Fix location, when matching metadata it is incorrectly located at the end
-//   of the matching position. We need to somehow save the beginning of the
-//   match.
-// Use these instead:
-// https://www.gnu.org/software/bison/manual/html_node/Actions-and-Locations.html
-// https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html

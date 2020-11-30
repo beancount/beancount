@@ -24,10 +24,12 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import position
+from beancount.core.number import MISSING
 
 from beancount.ccore import data_pb2 as pb
 from beancount.ccore import date_pb2 as db
 from beancount.ccore import number_pb2 as nb
+from beancount.cparser import parser_pb2 as qb
 
 from beancount.cparser import extmodule
 from beancount.cparser import grammar
@@ -62,14 +64,32 @@ def copy_meta(meta: dict, pbmeta: pb.Meta, pbloc: pb.Location):
 
 
 def copy_amount(amt: amount.Amount, pbamt: pb.Amount):
-    copy_decimal(amt.number, pbamt.number)
-    pbamt.currency = amt.currency
+    if amt is not MISSING:
+        copy_decimal(amt.number, pbamt.number)
+    if amt is not MISSING:
+        pbamt.currency = amt.currency
 
 
 def copy_cost(cost: position.Cost, pbcost: pb.Cost):
-    copy_decimal(cost.number, pbcost.number)
-    pbcost.currency = cost.currency
-    copy_date(cost.date, pbcost.date)
+    if cost.number is not MISSING:
+        copy_decimal(cost.number, pbcost.number)
+    if cost.currency is not None:
+        pbcost.currency = cost.currency
+    if cost.date is not None:
+        copy_date(cost.date, pbcost.date)
+    if cost.label:
+        pbcost.label = cost.label
+
+
+def copy_cost_spec(cost: position.CostSpec, pbcost: qb.CostSpec):
+    if cost.number_per is not MISSING:
+        copy_decimal(cost.number_per, pbcost.number_per)
+    if cost.number_total is not MISSING:
+        copy_decimal(cost.number_total, pbcost.number_total)
+    if cost.currency is not None:
+        pbcost.currency = cost.currency
+    if cost.date is not None:
+        copy_date(cost.date, pbcost.date)
     if cost.label:
         pbcost.label = cost.label
 
@@ -82,7 +102,11 @@ def copy_posting(posting: data.Posting, pbpost: pb.Posting):
     if posting.units is not None:
         copy_amount(posting.units, pbpost.units)
     if posting.cost is not None:
-        copy_cost(posting.cost, pbpost.cost)
+        if isinstance(posting.cost, position.CostSpec):
+            copy_cost_spec(posting.cost, pbpost.cost_spec)
+        elif isinstance(posting.cost, position.Cost):
+            copy_cost(posting.cost, pbpost.cost_spec)
+
     if posting.price is not None:
         copy_amount(posting.price, pbpost.price)
 
@@ -153,7 +177,7 @@ def export_v2_data(filename: str, output_filename: str, num_directives: int):
     entries, errors, options_map = parser.parse_file(filename)
     entries = data.sorted(entries)
 
-    for entry in itertools.islice(entries, 100):
+    for entry in itertools.islice(entries, num_directives):
         if isinstance(entry, data.Transaction):
             pbdir = convert_Transaction(entry)
         elif isinstance(entry, data.Open):
@@ -173,7 +197,7 @@ def export_v2_data(filename: str, output_filename: str, num_directives: int):
             write("")
 
         if 0:
-            print('-' * 100)
+            print('-' * 80)
             printer.print_entry(entry)
             print(txn)
             print()
@@ -201,7 +225,8 @@ def export_v3_data(filename: str, output_filename: str, num_directives: int):
     directives = sorted(ledger.directives, key=entry_sortkey_v3)
     with open(output_filename, "w") as outfile:
         pr = functools.partial(print,  file=outfile)
-        for directive in itertools.islice(directives, 100):
+        for directive in itertools.islice(directives, num_directives):
+            extmodule.DowngradeToV2(directive);
             pr("#---")
             pr("# {}".format(directive.location.lineno))
             pr("#")
@@ -219,7 +244,7 @@ def main():
         "Output filename (if .pbtxt, output as text-formatted protos. "
         "Otherwise write to a riegeli file."))
 
-    parser.add_argument('--num_directives', type=int, default=100,
+    parser.add_argument('--num_directives', type=int, default=1000,
                         help="Number of entries to print")
 
     args = parser.parse_args()
