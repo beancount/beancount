@@ -56,6 +56,11 @@ py::object GetDate(const T& parent) {
   return py::reinterpret_steal<py::object>(py_date);
 }
 
+// TODO(blais): Deal with missing oneof for protobufs.
+Directive::BodyCase GetDirectiveType(const Directive& dir) {
+  return dir.body_case();
+}
+
 // Explicit interface to protobuf schema.
 //
 // For a more complete and read/write setup, it'll be wiser to complete the
@@ -63,6 +68,25 @@ py::object GetDate(const T& parent) {
 // techniques. However, this project is still burgeoning and needs some active
 // involvement in order to debug and complete.
 void ExportProtoTypes(py::module& mod) {
+  // TODO(blais): In order to replace missing oneof functionality.
+  py::enum_<Directive::BodyCase>(mod, "BodyCase")
+    .value("kTransaction", Directive::BodyCase::kTransaction)
+    .value("kPrice", Directive::BodyCase::kPrice)
+    .value("kBalance", Directive::BodyCase::kBalance)
+    .value("kOpen", Directive::BodyCase::kOpen)
+    .value("kClose", Directive::BodyCase::kClose)
+    .value("kCommodity", Directive::BodyCase::kCommodity)
+    .value("kPad", Directive::BodyCase::kPad)
+    .value("kDocument", Directive::BodyCase::kDocument)
+    .value("kNote", Directive::BodyCase::kNote)
+    .value("kEvent", Directive::BodyCase::kEvent)
+    .value("kQuery", Directive::BodyCase::kQuery)
+    .value("kCustom", Directive::BodyCase::kCustom)
+    .value("BODY_NOT_SET", Directive::BodyCase::BODY_NOT_SET)
+    .export_values()
+    ;
+  mod.def("GetDirectiveType", &GetDirectiveType);
+
   py::class_<Directive>(mod, "Directive")
     .def("__str__", &Directive::DebugString)
     .def_property_readonly("location", &Directive::location)
@@ -130,7 +154,20 @@ void ExportProtoTypes(py::module& mod) {
     .def_property_readonly("price", &Posting::price)
     ;
 
+  py::class_<Price>(mod, "Price");
+  py::class_<Balance>(mod, "Balance");
+  py::class_<Open>(mod, "Open");
+  py::class_<Close>(mod, "Close");
+  py::class_<Commodity>(mod, "Commodity");
+  py::class_<Pad>(mod, "Pad");
+  py::class_<Document>(mod, "Document");
+  py::class_<Note>(mod, "Note");
+  py::class_<Event>(mod, "Event");
+  py::class_<Query>(mod, "Query");
+  py::class_<Custom>(mod, "Custom");
+
   // TODO(blais): Complete this. Perhaps auto-generate.
+
 }
 
 }  // namespace beancount

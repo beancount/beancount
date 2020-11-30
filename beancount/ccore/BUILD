@@ -24,7 +24,7 @@ cc_proto_library(
 
 py_proto_library(
     name = "number_py_proto",
-    srcs = [":number.proto"],
+    srcs = ["number.proto"],
 )
 
 cc_library(
@@ -56,6 +56,18 @@ proto_library(
     srcs = ["date.proto"],
 )
 
+cc_proto_library(
+    name = "date_cc_proto",
+    deps = [":date_proto"],
+)
+
+py_proto_library(
+    name = "date_py_proto",
+    srcs = ["date.proto"],
+)
+
+#----------------------------------------
+
 proto_library(
     name = "data_proto",
     srcs = ["data.proto"],
@@ -79,8 +91,12 @@ py_proto_library(
     srcs = ["data.proto"],
     deps = [
         "//beancount/ccore:number_py_proto",
+        "//beancount/ccore:date_py_proto",
+        "//beancount/cparser:parser_py_proto",
+        "//beancount/cparser:options_py_proto",
     ],
 )
+
 
 cc_library(
     name = "data",

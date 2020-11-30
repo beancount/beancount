@@ -133,8 +133,11 @@ public:
     line_offset_ = line_offset;
   }
 
+  // TODO(blais): You'll probably remove this, use the @$ Bison construct or
+  // default action to set the global location for the rule in the parser.
+  // https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html
+
   // Override the location to include the filename.
-  // TODO(blais): Why do I need this again?
   beancount::parser::location location() override {
     /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
     /* yylloc.begin.column = static_cast<unsigned int>(matcher().columno()); */
@@ -1720,3 +1723,11 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // TODO(blais): Insert time for an additional sort-key.
 
 // - Contemplate merging tags & links into a single field.
+
+// IMPORTANT
+// - Fix location, when matching metadata it is incorrectly located at the end
+//   of the matching position. We need to somehow save the beginning of the
+//   match.
+// Use these instead:
+// https://www.gnu.org/software/bison/manual/html_node/Actions-and-Locations.html
+// https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html

@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 load("//third_party/python:py_extension.bzl", "py_extension")
 #load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("//third_party/parser:bison.bzl", "genyacc")
@@ -119,10 +122,20 @@ proto_library(
 
 cc_proto_library(
     name = "parser_cc_proto",
+    deps = [":parser_proto"],
+)
+
+py_proto_library(
+    name = "parser_py_proto",
+    srcs = ["parser.proto"],
     deps = [
-      ":parser_proto",
+        "//beancount/ccore:number_py_proto",
+        "//beancount/ccore:date_py_proto",
     ],
 )
+
+#-------------------------------------------------------------------------------
+# Options and other info.
 
 proto_library(
     name = "options_proto",
@@ -131,9 +144,12 @@ proto_library(
 
 cc_proto_library(
     name = "options_cc_proto",
-    deps = [
-      ":options_proto",
-    ],
+    deps = [":options_proto"],
+)
+
+py_proto_library(
+    name = "options_py_proto",
+    srcs = ["options.proto"],
 )
 
 #-------------------------------------------------------------------------------

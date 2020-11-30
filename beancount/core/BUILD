@@ -12,6 +12,7 @@ package(default_visibility = [
     "//examples:__subpackages__",
     "//experiments/plugins:__pkg__",
     "//experiments/sharing:__pkg__",
+    "//experiments/v3/protos:__pkg__",
 
     # Temporary access from C core and parser.
     "//beancount/ccore:__pkg__",

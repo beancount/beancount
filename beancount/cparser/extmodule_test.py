@@ -1,5 +1,6 @@
 import os
 import pprint
+import itertools
 import tempfile
 import time
 import unittest
@@ -32,7 +33,7 @@ class CppParserModuleTests(unittest.TestCase):
     # print("XX3 ", ledger.directives[101])
     # print("XX4 ", ledger.options)
     # print("XX5 ", ledger.info)
-    for entry in ledger.directives[:10]:
+    for entry in itertools.islice(ledger.directives, 100):
       print(entry.location)
       print(entry.transaction)
       #print(entry.date, entry.date.month)

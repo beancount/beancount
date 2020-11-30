@@ -9,39 +9,56 @@ __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
+import functools
+import itertools
 import logging
 import datetime
 from os import path
 from decimal import Decimal
 
+import riegeli
+
 from beancount import loader
+from beancount.parser import parser
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import position
 
 from beancount.ccore import data_pb2 as pb
+from beancount.ccore import date_pb2 as db
 from beancount.ccore import number_pb2 as nb
 
-import riegeli
+from beancount.cparser import extmodule
+from beancount.cparser import grammar
+from beancount.parser import printer
 
 
 def copy_decimal(din: Decimal, dout: nb.Number):
     dout.exact = str(din)
 
-def copy_date(date: datetime.date, pbdate: pb.Date):
+def copy_date(date: datetime.date, pbdate: db.Date):
     pbdate.year = date.year
     pbdate.month = date.month
     pbdate.day = date.day
 
 
-def copy_meta(meta: dict, pbmeta: pb.Meta):
+def copy_meta(meta: dict, pbmeta: pb.Meta, pbloc: pb.Location):
     if meta is None:
         return
     for key, value in sorted(meta.items()):
-        item = pbmeta.kv.add()
-        item.key = key
-        item.value.text = str(value) # FIXME: TODO - convert to type
+        if key == "filename":
+            pbloc.filename = value
+        elif key == "lineno":
+            pbloc.lineno = value
+        else:
+            item = pbmeta.kv.add()
+            item.key = key
+            if isinstance(value, bool):
+                item.value.boolean = value
+            else:
+                item.value.text = str(value)
+                # FIXME: TODO - convert to more types.
 
 
 def copy_amount(amt: amount.Amount, pbamt: pb.Amount):
@@ -58,7 +75,7 @@ def copy_cost(cost: position.Cost, pbcost: pb.Cost):
 
 
 def copy_posting(posting: data.Posting, pbpost: pb.Posting):
-    copy_meta(posting.meta, pbpost.meta)
+    copy_meta(posting.meta, pbpost.meta, pbpost.location)
     if posting.flag:
         pbpost.flag = posting.flag.encode('utf8')
     pbpost.account = posting.account
@@ -71,76 +88,144 @@ def copy_posting(posting: data.Posting, pbpost: pb.Posting):
 
 
 def convert_Transaction(entry: data.Transaction) -> pb.Directive:
-    pbent = pb.Directive()
-    txn = pbent.transaction
-    copy_meta(entry.meta, pbent.meta)
-    copy_date(entry.date, pbent.date)
+    pbdir = pb.Directive()
+    txn = pbdir.transaction
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    if entry.tags:
+        pbdir.tags.extend(entry.tags)
+    if entry.links:
+        pbdir.links.extend(entry.links)
+
     if entry.flag:
         txn.flag = entry.flag.encode('utf8')
     if entry.payee:
         txn.payee = entry.payee
     txn.narration = entry.narration
-    if entry.tags:
-        txn.tags.extend(entry.tags)
-    if entry.links:
-        txn.links.extend(entry.links)
     for posting in entry.postings:
         pbpost = txn.postings.add()
         copy_posting(posting, pbpost)
-    return pbent
+    return pbdir
 
 
 def convert_Open(entry: data.Open) -> pb.Directive:
-    pbent = pb.Directive()
-    open = pbent.open
-    copy_meta(entry.meta, pbent.meta)
-    copy_date(entry.date, pbent.date)
+    pbdir = pb.Directive()
+    open = pbdir.open
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
     open.account = entry.account
     if entry.currencies:
         open.currencies.extend(entry.currencies)
     # TODO(blais): Add enum
-    return pbent
+    return pbdir
 
 
 def convert_Close(entry: data.Close) -> pb.Directive:
-    pbent = pb.Directive()
-    close = pbent.close
-    copy_meta(entry.meta, pbent.meta)
-    copy_date(entry.date, pbent.date)
+    pbdir = pb.Directive()
+    close = pbdir.close
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
     close.account = entry.account
-    return pbent
+    return pbdir
+
+
+def convert_Commodity(entry: data.Commodity) -> pb.Directive:
+    pbdir = pb.Directive()
+    comm = pbdir.commodity
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    comm.currency = entry.currency
+    return pbdir
+
+
+def export_v2_data(filename: str, output_filename: str, num_directives: int):
+    if output_filename.endswith(".pbtxt"):
+        output = open(output_filename, 'w')
+        writer = None
+        def write(message):
+            print(message, file=output)
+    else:
+        output = open(output_filename, 'wb')
+        writer = riegeli.RecordWriter(output)
+        write = writer.write_message
+
+    #entries, errors, options_map = loader.load_file(filename)
+    entries, errors, options_map = parser.parse_file(filename)
+    entries = data.sorted(entries)
+
+    for entry in itertools.islice(entries, 100):
+        if isinstance(entry, data.Transaction):
+            pbdir = convert_Transaction(entry)
+        elif isinstance(entry, data.Open):
+            pbdir = convert_Open(entry)
+        elif isinstance(entry, data.Close):
+            pbdir = convert_Close(entry)
+        elif isinstance(entry, data.Commodity):
+            pbdir = convert_Commodity(entry)
+        else:
+            pbdir = None
+
+        if pbdir is not None:
+            write("#---")
+            write("# {}".format(pbdir.location.lineno))
+            write("#")
+            write(pbdir)
+            write("")
+
+        if 0:
+            print('-' * 100)
+            printer.print_entry(entry)
+            print(txn)
+            print()
+
+    if hasattr(writer, "close"):
+        writer.close()
+    output.close()
+
+
+_SORT_ORDER = {
+    extmodule.BodyCase.kOpen: -2,
+    extmodule.BodyCase.kBalance: -1,
+    extmodule.BodyCase.kDocument: 1,
+    extmodule.BodyCase.kClose: 2,
+}
+
+
+def entry_sortkey_v3(dir: pb.Directive):
+    type_order = _SORT_ORDER.get(extmodule.GetDirectiveType(dir), 0)
+    return (dir.date, type_order, dir.location.lineno)
+
+
+def export_v3_data(filename: str, output_filename: str, num_directives: int):
+    ledger = extmodule.parse(filename)
+    directives = sorted(ledger.directives, key=entry_sortkey_v3)
+    with open(output_filename, "w") as outfile:
+        pr = functools.partial(print,  file=outfile)
+        for directive in itertools.islice(directives, 100):
+            pr("#---")
+            pr("# {}".format(directive.location.lineno))
+            pr("#")
+            pr(directive)
+            pr()
 
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Ledger filename')
-    parser.add_argument('output', help='Riegeli filename')
+
+    parser.add_argument('filename',
+                        help="Ledger input filename.")
+    parser.add_argument('output', help=(
+        "Output filename (if .pbtxt, output as text-formatted protos. "
+        "Otherwise write to a riegeli file."))
+
+    parser.add_argument('--num_directives', type=int, default=100,
+                        help="Number of entries to print")
+
     args = parser.parse_args()
 
-    with open(args.output, 'wb') as outfile:
-        with riegeli.RecordWriter(outfile) as writer:
-            entries, errors, options_map = loader.load_file(args.filename)
-            for entry in entries:
-                if isinstance(entry, data.Transaction):
-                    pbent = convert_Transaction(entry)
-                elif isinstance(entry, data.Open):
-                    pbent = convert_Open(entry)
-                elif isinstance(entry, data.Close):
-                    pbent = convert_Close(entry)
-                else:
-                    pbent = None
-
-                if pbent is not None:
-                    #print(type(txn))
-                    #print(txn)
-                    writer.write_message(pbent)
-
-                if 0:
-                    print('-' * 100)
-                    printer.print_entry(entry)
-                    print(txn)
-                    print()
+    export_v2_data(args.filename, args.output + ".v2.pbtxt", args.num_directives)
+    export_v3_data(args.filename, args.output + ".v3.pbtxt", args.num_directives)
 
 
 if __name__ == '__main__':
