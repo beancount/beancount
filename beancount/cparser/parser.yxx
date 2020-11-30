@@ -423,11 +423,9 @@ public:
   }
 
   // Note: We steal ownership.
-  void AppendDirective(Directive*& directive) {
+  void AppendDirective(Directive* directive) {
     directives_.push_back(directive);
-    directive = nullptr;
   }
-
 
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
@@ -548,6 +546,8 @@ public:
     ledger->errors = std::move(errors_);
     ledger->options = std::move(options_);
     ledger->info = std::move(info_);
+    assert(ledger->options);
+    assert(ledger->info);
     return ledger;
   }
 
@@ -555,8 +555,8 @@ private:
   // The accumulated state, same as Ledger.
   std::list<Directive*> directives_;
   std::vector<Error*> errors_;
-  std::unique_ptr<options::Options> options_;
-  std::unique_ptr<options::ProcessingInfo> info_;
+  std::shared_ptr<options::Options> options_;
+  std::shared_ptr<options::ProcessingInfo> info_;
 
   // Scanner (in order to get the last location).
   const scanner::ScannerWithFile& scanner_;
@@ -570,7 +570,6 @@ private:
   // A dict of the current active metadata fields; each of the field values is a
   // stack and the current value is at the top (last value).
   absl::flat_hash_map<string, vector<MetaValue*>> active_meta_;
-
 };
 
 }  // namespace parser
@@ -1719,3 +1718,5 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 // - Unify HASH and ASTERISK flags, also with posting vs. transaction flags. Test explicitly in lexer.
 
 // TODO(blais): Insert time for an additional sort-key.
+
+// - Contemplate merging tags & links into a single field.

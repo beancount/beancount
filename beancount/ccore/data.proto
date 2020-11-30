@@ -17,6 +17,7 @@ import 'beancount/cparser/parser.proto';
 import 'beancount/cparser/options.proto';
 
 // Container for account types.
+// TODO(blais): Reconcile with Options and code library.
 message AccountTypes {
   optional string assets = 1;
   optional string liabilities = 2;
@@ -400,7 +401,7 @@ message Location {
 }
 
 // An error in processing.
-message Error{
+message Error {
   // The error message.
   optional string message = 1;
 
