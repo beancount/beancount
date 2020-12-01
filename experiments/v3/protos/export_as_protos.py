@@ -8,13 +8,15 @@ become: a parser, booking engine and data source provider for a query/api thing.
 __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from decimal import Decimal
+from os import path
 import argparse
+import datetime
 import functools
 import itertools
 import logging
-import datetime
-from os import path
-from decimal import Decimal
+import re
+from typing import Optional
 
 import riegeli
 
@@ -30,6 +32,7 @@ from beancount.ccore import data_pb2 as pb
 from beancount.ccore import date_pb2 as db
 from beancount.ccore import number_pb2 as nb
 from beancount.cparser import parser_pb2 as qb
+from beancount.cparser import options_pb2 as ob
 
 from beancount.cparser import extmodule
 from beancount.cparser import grammar
@@ -48,7 +51,7 @@ def copy_date(date: datetime.date, pbdate: db.Date):
 def copy_meta(meta: dict, pbmeta: pb.Meta, pbloc: pb.Location):
     if meta is None:
         return
-    for key, value in sorted(meta.items()):
+    for key, value in meta.items():
         if key == "filename":
             pbloc.filename = value
         elif key == "lineno":
@@ -58,20 +61,31 @@ def copy_meta(meta: dict, pbmeta: pb.Meta, pbloc: pb.Location):
             item.key = key
             if isinstance(value, bool):
                 item.value.boolean = value
+            elif isinstance(value, datetime.date):
+                item.value.date.year = value.year
+                item.value.date.month = value.month
+                item.value.date.day = value.day
+            elif isinstance(value, Decimal):
+                item.value.number.exact = str(value)
             else:
-                item.value.text = str(value)
-                # FIXME: TODO - convert to more types.
+                assert isinstance(value, str), type(value)
+                if re.match(amount.CURRENCY_RE + "$", value):
+                    item.value.currency = str(value)
+                else:
+                    item.value.text = str(value)
 
 
 def copy_amount(amt: amount.Amount, pbamt: pb.Amount):
-    if amt is not MISSING:
+    if amt is MISSING:
+        return
+    if amt.number is not MISSING:
         copy_decimal(amt.number, pbamt.number)
-    if amt is not MISSING:
+    if amt.currency is not MISSING:
         pbamt.currency = amt.currency
 
 
 def copy_cost(cost: position.Cost, pbcost: pb.Cost):
-    if cost.number is not MISSING:
+    if cost.number not in {MISSING, None}:
         copy_decimal(cost.number, pbcost.number)
     if cost.currency is not None:
         pbcost.currency = cost.currency
@@ -82,11 +96,11 @@ def copy_cost(cost: position.Cost, pbcost: pb.Cost):
 
 
 def copy_cost_spec(cost: position.CostSpec, pbcost: qb.CostSpec):
-    if cost.number_per is not MISSING:
+    if cost.number_per not in {MISSING, None}:
         copy_decimal(cost.number_per, pbcost.number_per)
-    if cost.number_total is not MISSING:
+    if cost.number_total not in {MISSING, None}:
         copy_decimal(cost.number_total, pbcost.number_total)
-    if cost.currency is not None:
+    if cost.currency not in {None, MISSING}:
         pbcost.currency = cost.currency
     if cost.date is not None:
         copy_date(cost.date, pbcost.date)
@@ -117,15 +131,16 @@ def convert_Transaction(entry: data.Transaction) -> pb.Directive:
     copy_meta(entry.meta, pbdir.meta, pbdir.location)
     copy_date(entry.date, pbdir.date)
     if entry.tags:
-        pbdir.tags.extend(entry.tags)
+        pbdir.tags.extend(sorted(entry.tags))
     if entry.links:
-        pbdir.links.extend(entry.links)
+        pbdir.links.extend(sorted(entry.links))
 
     if entry.flag:
         txn.flag = entry.flag.encode('utf8')
     if entry.payee:
         txn.payee = entry.payee
-    txn.narration = entry.narration
+    if entry.narration:
+        txn.narration = entry.narration
     for posting in entry.postings:
         pbpost = txn.postings.add()
         copy_posting(posting, pbpost)
@@ -140,7 +155,8 @@ def convert_Open(entry: data.Open) -> pb.Directive:
     open.account = entry.account
     if entry.currencies:
         open.currencies.extend(entry.currencies)
-    # TODO(blais): Add enum
+    if entry.booking:
+        open.booking = ob.Booking.Value(entry.booking.name)
     return pbdir
 
 
@@ -162,7 +178,74 @@ def convert_Commodity(entry: data.Commodity) -> pb.Directive:
     return pbdir
 
 
-def export_v2_data(filename: str, output_filename: str, num_directives: int):
+def convert_Event(entry: data.Event) -> pb.Directive:
+    pbdir = pb.Directive()
+    event = pbdir.event
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    event.type = entry.type
+    event.description = entry.description
+    return pbdir
+
+
+def convert_Note(entry: data.Note) -> pb.Directive:
+    pbdir = pb.Directive()
+    note = pbdir.note
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    note.account = entry.account
+    note.comment = entry.comment
+    return pbdir
+
+
+def convert_Query(entry: data.Query) -> pb.Directive:
+    pbdir = pb.Directive()
+    query = pbdir.query
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    query.name = entry.name
+    query.query_string = entry.query_string
+    return pbdir
+
+
+def convert_Price(entry: data.Price) -> pb.Directive:
+    pbdir = pb.Directive()
+    price = pbdir.price
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    price.currency = entry.currency
+    copy_decimal(entry.amount.number, price.amount.number)
+    price.amount.currency = entry.amount.currency
+    return pbdir
+
+
+def convert_Balance(entry: data.Balance) -> pb.Directive:
+    pbdir = pb.Directive()
+    balance = pbdir.balance
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    balance.account = entry.account
+    copy_decimal(entry.amount.number, balance.amount.number)
+    balance.amount.currency = entry.amount.currency
+    if entry.tolerance:
+        copy_decimal(entry.tolerance, balance.tolerance)
+    if entry.diff_amount:
+        copy_decimal(entry.diff_amount.number, balance.diff_amount.number)
+        balance.diff_amount.currency = entry.diff_amount.currency
+    return pbdir
+
+
+def convert_Pad(entry: data.Pad) -> pb.Directive:
+    pbdir = pb.Directive()
+    pad = pbdir.pad
+    copy_meta(entry.meta, pbdir.meta, pbdir.location)
+    copy_date(entry.date, pbdir.date)
+    pad.account = entry.account
+    pad.source_account = entry.source_account
+    return pbdir
+
+
+def export_v2_data(filename: str, output_filename: str, num_directives: Optional[int]):
     if output_filename.endswith(".pbtxt"):
         output = open(output_filename, 'w')
         writer = None
@@ -177,7 +260,9 @@ def export_v2_data(filename: str, output_filename: str, num_directives: int):
     entries, errors, options_map = parser.parse_file(filename)
     entries = data.sorted(entries)
 
-    for entry in itertools.islice(entries, num_directives):
+    if num_directives:
+        entries = itertools.islice(entries, num_directives)
+    for entry in entries:
         if isinstance(entry, data.Transaction):
             pbdir = convert_Transaction(entry)
         elif isinstance(entry, data.Open):
@@ -186,6 +271,18 @@ def export_v2_data(filename: str, output_filename: str, num_directives: int):
             pbdir = convert_Close(entry)
         elif isinstance(entry, data.Commodity):
             pbdir = convert_Commodity(entry)
+        elif isinstance(entry, data.Event):
+            pbdir = convert_Event(entry)
+        elif isinstance(entry, data.Note):
+            pbdir = convert_Note(entry)
+        elif isinstance(entry, data.Query):
+            pbdir = convert_Query(entry)
+        elif isinstance(entry, data.Price):
+            pbdir = convert_Price(entry)
+        elif isinstance(entry, data.Balance):
+            pbdir = convert_Balance(entry)
+        elif isinstance(entry, data.Pad):
+            pbdir = convert_Pad(entry)
         else:
             pbdir = None
 
@@ -220,12 +317,14 @@ def entry_sortkey_v3(dir: pb.Directive):
     return (dir.date, type_order, dir.location.lineno)
 
 
-def export_v3_data(filename: str, output_filename: str, num_directives: int):
+def export_v3_data(filename: str, output_filename: str, num_directives: Optional[int]):
     ledger = extmodule.parse(filename)
     directives = sorted(ledger.directives, key=entry_sortkey_v3)
     with open(output_filename, "w") as outfile:
         pr = functools.partial(print,  file=outfile)
-        for directive in itertools.islice(directives, num_directives):
+        if num_directives:
+            directives = itertools.islice(directives, num_directives)
+        for directive in directives:
             extmodule.DowngradeToV2(directive);
             pr("#---")
             pr("# {}".format(directive.location.lineno))
@@ -244,7 +343,7 @@ def main():
         "Output filename (if .pbtxt, output as text-formatted protos. "
         "Otherwise write to a riegeli file."))
 
-    parser.add_argument('--num_directives', type=int, default=1000,
+    parser.add_argument('--num_directives', type=int, default=None,
                         help="Number of entries to print")
 
     args = parser.parse_args()

@@ -63,14 +63,38 @@ Directive::BodyCase GetDirectiveType(const Directive& dir) {
 
 // Downgrade to V2 conversion for direct proto-to-proto comparison.
 void DowngradeToV2(Directive* dir) {
+  // Remove end line number in directive.
   dir->mutable_location()->clear_lineno_end();
 
-  if (dir->body_case() == Directive::BodyCase::kTransaction) {
+  // Remove end line number in postings, if this is a transaction.
+  auto body_case = dir->body_case();
+  if (body_case == Directive::BodyCase::kTransaction) {
     auto* transaction = dir->mutable_transaction();
     for (auto& posting : *transaction->mutable_postings()) {
       posting.mutable_location()->clear_lineno_end();
     }
   }
+
+  // Remove tags and links for directives that didn't use to support them.
+  if (body_case != Directive::BodyCase::kTransaction &&
+      body_case != Directive::BodyCase::kDocument) {
+    dir->clear_tags();
+    dir->clear_links();
+  }
+
+  // Sort tags.
+  std::vector<string> tags;
+  std::copy(dir->tags().begin(), dir->tags().end(), std::back_inserter(tags));
+  std::sort(tags.begin(), tags.end());
+  dir->clear_tags();
+  for (auto tag : tags) dir->add_tags(tag);
+
+  // Sort links.
+  std::vector<string> links;
+  std::copy(dir->links().begin(), dir->links().end(), std::back_inserter(links));
+  std::sort(links.begin(), links.end());
+  dir->clear_links();
+  for (auto link : links) dir->add_links(link);
 }
 
 // Explicit interface to protobuf schema.

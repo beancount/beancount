@@ -184,9 +184,20 @@ public:
     for (auto* error : errors_) delete error;
   }
 
+  // TODO(blais): Review this, not needed.
   void Initialize() {
     //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
+
+    // Set Decimal context before processing, update the desired precision for
+    // arithmetic operations.
+    //
+    // Note: Review this, perhaps allow the user to override it (would require
+    // post-poning the computation of arithmetic expressions).
+    context_ = decimal::context;
+    context_.prec(28);
   }
+
+  inline decimal::Context& context() { return context_; }
 
   const absl::flat_hash_set<string>& active_tags() const { return active_tags_; }
   const absl::flat_hash_map<string, vector<MetaValue*>>& active_meta() const {
@@ -246,42 +257,6 @@ public:
     }
   }
 
-  // Update the given repeated field with the list of active tags.
-  // This function mutates the given argument.
-  void SetTagsAndLinks(const TagsLinks& tags_links, Directive* message) const {
-    if (!active_tags_.empty()) {
-      // First copy the active tags.
-      auto* output = message->mutable_tags();
-      for (const auto& active_tag : active_tags_) {
-        *output->Add() = active_tag;
-      }
-    }
-
-    // Add the new tags.
-    if (!tags_links.tags.empty()) {
-      auto* output = message->mutable_tags();
-      // Avoiding duplicates with active metadata.
-      for (const auto& tag : tags_links.tags) {
-        if (active_tags_.find(tag) == active_tags_.end()) {
-          *output->Add() = tag;
-        }
-      }
-    }
-
-    // Add the new links.
-    if (!tags_links.links.empty()) {
-      auto* output = message->mutable_links();
-      for (const auto& link : tags_links.links) {
-        *output->Add() = link;
-      }
-    }
-  }
-
-  // Convert a decimal number to a proto.
-  void DecimalProto(const decimal::Decimal& dec, Number* proto) {
-    // Note you could configure conversion options here.
-    DecimalToProto(dec, true, proto);
-  }
 
   // // Set the location for errors to occur.
   // // This is a stateful setter whose data get used to report errors.
@@ -297,6 +272,42 @@ public:
     return account;
   }
 
+  //---------------------------------------------------------------------------
+  // Tags & links
+
+  // Update the given repeated field with the list of active tags.
+  // This function mutates the `directive` argument.
+  // `tags_links` is optional.
+  void SetTagsAndLinks(const TagsLinks* tags_links, Directive* message) const {
+    if (!active_tags_.empty()) {
+      // First copy the active tags.
+      auto* output = message->mutable_tags();
+      for (const auto& active_tag : active_tags_) {
+        *output->Add() = active_tag;
+      }
+    }
+
+    if (tags_links != nullptr) {
+      // Add the new tags.
+      if (!tags_links->tags.empty()) {
+        // Avoiding duplicates with active metadata.
+        for (const auto& tag : tags_links->tags) {
+          if (active_tags_.find(tag) == active_tags_.end()) {
+            *message->mutable_tags()->Add() = tag;
+          }
+        }
+      }
+
+      // Add the new links.
+      if (!tags_links->links.empty()) {
+        auto* output = message->mutable_links();
+        for (const auto& link : tags_links->links) {
+          *output->Add() = link;
+        }
+      }
+    }
+  }
+
   void PushTag(string_view tag) {
     active_tags_.insert({tag.data(), tag.size()});
   }
@@ -309,6 +320,9 @@ public:
       LogError(StrFormat("Attempting to pop absent tag: '%s'", tag));
     }
   }
+
+  //---------------------------------------------------------------------------
+  // Active metadata
 
   // Steal the reference to `value`.
   void PushMeta(string_view key, MetaValue* value) {
@@ -330,10 +344,6 @@ public:
       }
       delete value;
     }
-  }
-
-  void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
-    // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
   }
 
   // Insert the active metadata into the given argument. If there is no metadata
@@ -368,6 +378,23 @@ public:
     //
   }
 
+  //---------------------------------------------------------------------------
+  // Numbers & precision
+
+  // Convert a decimal number to a proto.
+  void DecimalProto(const decimal::Decimal& dec, Number* proto) {
+    // Note you could configure conversion options here.
+    DecimalToProto(dec, true, proto);
+  }
+
+  void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
+    // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
+  }
+
+
+
+
+
   // Create a new directive. Return value ownership is given. If `meta` is
   // non-null, it will be reset and ownership will be taken (and it will be
   // deleted).
@@ -388,9 +415,9 @@ public:
     AddActiveMetadata(ourmeta, dir);
     delete ourmeta;
 
-    // Update tags, including active tags, and links.
+    // Update tags, including adding active tags, and links.
+    SetTagsAndLinks(*tags_links, dir);
     if (tags_links != nullptr && *tags_links != nullptr) {
-      SetTagsAndLinks(**tags_links, dir);
       delete *tags_links;
       tags_links = nullptr;
     }
@@ -438,7 +465,7 @@ public:
           if (dunits.iszero()) {
             dprice = dunits;
           } else {
-            dprice = ProtoToDecimal(price.number()) / dunits.abs();
+            dprice = ProtoToDecimal(price.number()).div(dunits.abs(), context());
           }
           DecimalProto(dprice, posting->mutable_price()->mutable_number());
         }
@@ -530,6 +557,9 @@ private:
   std::vector<Error*> errors_;
   std::shared_ptr<options::Options> options_;
   std::shared_ptr<options::ProcessingInfo> info_;
+
+  // Decimal context.
+  decimal::Context context_;
 
   // Scanner (in order to get the last location).
   const scanner::ScannerWithFile& scanner_;
@@ -1207,27 +1237,28 @@ number_expr:
   NUMBER
   | number_expr PLUS number_expr
     {
-      $$ = $1.add($3);
+      $$ = $1.add($3, builder.context());
     }
   | number_expr MINUS number_expr
     {
-      $$ = $1.sub($3);
+      $$ = $1.sub($3, builder.context());
     }
   | number_expr ASTERISK number_expr
     {
-      $$ = $1.mul($3);
+      $$ = $1.mul($3, builder.context());
     }
   | number_expr SLASH number_expr
     {
-      $$ = $1.div($3);
+      $$ = $1.div($3, builder.context());
     }
   | MINUS number_expr %prec NEGATIVE
     {
-      $$ = $2.minus();
+      $$ = $2.minus(builder.context());
     }
   | PLUS number_expr %prec NEGATIVE
     {
-      $$ = $2.plus(); // Note: Not entirely sure we shouldn't just copy.
+      // Note: Not entirely sure we shouldn't just copy.
+      $$ = $2.plus(builder.context());
     }
   | LPAREN number_expr RPAREN
     {
@@ -1607,6 +1638,7 @@ Builder::Builder(const scanner::ScannerWithFile& scanner) :
 {
   info_.reset(new options::ProcessingInfo());
   options_.reset(new options::Options());
+  Initialize();
 }
 
 // TODO(blais): Implement builder methods here (maybe).
@@ -1675,30 +1707,40 @@ std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
 }  // namespace parser
 }  // namespace beancount
 
-// TODO(blais): In v3 review the syntax for uniformity:
-// - Make it possible to tag/link before the narration strings.
-// - Add datetime parsing (civil datetime is sufficient).
+//-----------------------------------------------------------------------------
+// TODO in parser rewrite to C++:
 
-// TODO(blais): Rework all the rules to take advantage of the name aliases.
+// - Make it possible to tag/link before the narration strings.
+
+// - Rework all the rules to take advantage of the name aliases; at least do it
+// - uniformly.
 
 // - In the metadata, output not just the starting line but also the end line,
 //   for easy extraction of the original text.
 
-// These can get logged; override the appropriate methods.
-// /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
-//   Assets:CA:LondonLife:RRSP:Cash   2000 CAD
-//   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+// - Review all error logging in the scanner and parser.
+//   The following can get logged; override the appropriate methods.
+//   Grep in the implementations to ensure I've handled all of them.
+//   /home/blais/r/q/office/accounting/blais.beancount:1591.2-0x7fff5298fdf8:1591.30: syntax error, unexpected ACCOUNT, expecting DEDENT or TAG or LINK or KEY
+//     Assets:CA:LondonLife:RRSP:Cash   2000 CAD
+//     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
 // - Add templated new/delete interfaces on the builder and count memory
-//   allocations.
-
+//   allocations. I like to go raw in the parser (no smart pointers) but I
+//   should automate checking, at least conditionally.
+//
 // - Move builder to its own compilation unit.
-// - Output to text-formatted file for comparison.
-
-// - Expand vocabulary of flags.
-
-// - Unify HASH and ASTERISK flags, also with posting vs. transaction flags. Test explicitly in lexer.
-
-// TODO(blais): Insert time for an additional sort-key.
-
+//
+// - Expand the vocabulary of flags.
+//   Unify HASH and ASTERISK flags, also with posting vs. transaction flags. Test explicitly in lexer.
+//
+// - Insert time for an additional sort-key.
+//   Add datetime parsing (civil datetime is sufficient).
+//
+// - Add optional date parsing to postings.
+//
 // - Contemplate merging tags & links into a single field.
+//
+// - Review usage of string_view and temporary buffers. Try converting to
+//   std::string and measure impact (may be minimal with judicious usage of
+//   std::move()); {96464129e441}
