@@ -11,7 +11,7 @@
 #include "absl/base/log_severity.h"
 #include "absl/status/status.h"
 
-#include "experiments/v3/protos/beancount.pb.h"
+#include "beancount/ccore/data.pb.h"
 
 
 int main(int argc, char** argv) {

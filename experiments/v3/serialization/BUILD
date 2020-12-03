@@ -17,6 +17,6 @@ cc_binary(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
-        "//experiments/v3/protos:beancount_cc_proto"
+        "//beancount/ccore:data_cc_proto"
     ],
 )
