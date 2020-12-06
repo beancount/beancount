@@ -22,10 +22,10 @@ struct Ledger final {
   ~Ledger();
 
   // A list of directives, with ownership.
-  std::list<beancount::Directive*> directives;
+  std::vector<Directive*> directives;
 
   // A list of errors encountered during parsing and processing.
-  std::vector<beancount::Error*> errors;
+  std::vector<Error*> errors;
 
   // Parsed options.
   std::shared_ptr<options::Options> options;
@@ -36,6 +36,10 @@ struct Ledger final {
 
 // Write ledger content to a text-formatted file.
 int WriteToText(const Ledger& ledger, const std::string& filename);
+
+// Sort the directives according to the sorting rule.
+std::vector<Directive*> SortDirectives(
+  const std::vector<Directive*>& directives);
 
 }  // namespace beancount
 

@@ -18,8 +18,8 @@ class ExportProtosTests(unittest.TestCase):
     #pr(ep.Open)
     pr(ep)
     balance = ep.Balance()
-    #pr(balance)
-    balance.account = "Assets:Blablabla"
+    pr(balance)
+    #balance.account = "Assets:Blablabla"
     #print(balance)
 
 

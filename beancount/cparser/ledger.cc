@@ -21,6 +21,73 @@ Ledger::~Ledger() {
   for (auto* error : errors) delete error;
 }
 
+// _SORT_ORDER = {
+//     extmodule.BodyCase.kOpen: -2,
+//     extmodule.BodyCase.kBalance: -1,
+//     extmodule.BodyCase.kDocument: 1,
+//     extmodule.BodyCase.kClose: 2,
+// }
+//
+// def entry_sortkey_v3(dir: pb.Directive):
+//     type_order = _SORT_ORDER.get(extmodule.GetDirectiveType(dir), 0)
+//     return (dir.date, type_order, dir.location.lineno)
+
+struct CompareDirectives {
+
+  bool operator() (const Directive* a, const Directive* b) const {
+#if 0
+    std::cerr << a->date().ShortDebugString() << " ; " << b->date().ShortDebugString() << std::endl;
+#endif
+    assert(a != nullptr);
+    assert(b != nullptr);
+    const Date& adate = a->date();
+    const Date& bdate = b->date();
+
+    assert(adate.has_year());
+    assert(bdate.has_year());
+    const int ayear = adate.year();
+    const int byear = bdate.year();
+    if (ayear < byear)
+      return true;
+
+    assert(adate.has_month());
+    assert(bdate.has_month());
+    const int amonth = adate.month();
+    const int bmonth = bdate.month();
+    if (amonth < bmonth)
+      return true;
+
+    assert(adate.has_day());
+    assert(bdate.has_day());
+    const int aday = adate.day();
+    const int bday = bdate.day();
+    if (aday < bday)
+      return true;
+
+    // TODO(blais): Add more
+    return false;
+  }
+};
+
+// TODO(blais): Move this to data.h/cc.
+// TODO(blais): Convert directives to vector? Probably.
+std::vector<Directive*> SortDirectives(
+  const std::vector<Directive*>& directives) {
+
+  std::vector<Directive*> vdirectives;
+  std::cerr << "AAA " << directives.size() << std::endl;
+  vdirectives.reserve(directives.size());
+  std::cerr << "AAV " << vdirectives.size() << " " << vdirectives.capacity() << std::endl;
+  std::copy(directives.begin(), directives.end(), std::back_inserter(vdirectives));
+  std::cerr << "AAV " << vdirectives.size() << std::endl;
+  for (auto dir : vdirectives) { assert(dir != nullptr); }
+#if 1
+  std::sort(vdirectives.begin(), vdirectives.end(), CompareDirectives());
+#endif
+  std::cerr << "AAS " << vdirectives.size() << std::endl;
+  return vdirectives;
+}
+
 // TODO(blais): Pull error code.
 int WriteToText(const Ledger& ledger, const string& filename) {
   // Open output file.

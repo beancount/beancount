@@ -184,6 +184,9 @@ NULL {
 \"([^\\\"]|\\.)*\" {
   // TODO(blais): Add state to the scanner for specific encoding.
   string_view view(matcher().begin()+1, matcher().size()-2);
+#if 1
+  return Parser::make_STRING(view, location());
+#else
   std::string unescaped;
   std::string error_message;
   if (!absl::CUnescape(view, &unescaped, &error_message)) {
@@ -192,9 +195,15 @@ NULL {
   // TODO(blais): Copy over the existing buffer to avoid reallocation. Review
   // all usage of string_view to ensure buffer safety during rule processing and
   // measure impact. See {96464129e441}.
+
+#if 1
   unescaped.copy((char*)view.data(), unescaped.size());
   string_view view_unescaped(view.data(), unescaped.size());
   return Parser::make_STRING(view_unescaped, location());
+#else
+  return Parser::make_STRING(unescaped, location());
+#endif
+#endif
 }
 
  /* Numbers. */

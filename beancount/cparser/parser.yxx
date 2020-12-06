@@ -427,6 +427,7 @@ public:
 
   // Note: We steal ownership.
   void AppendDirective(Directive* directive) {
+    assert(directive != nullptr);
     directives_.push_back(directive);
   }
 
@@ -553,7 +554,7 @@ public:
 
 private:
   // The accumulated state, same as Ledger.
-  std::list<Directive*> directives_;
+  std::vector<Directive*> directives_;
   std::vector<Error*> errors_;
   std::shared_ptr<options::Options> options_;
   std::shared_ptr<options::ProcessingInfo> info_;
@@ -598,56 +599,56 @@ private:
 %token <std::string_view> error
 
 /* Types for terminal symbols */
-%token INDENT     /* Initial indent IF at the beginning of a line */
-%token DEDENT     /* Initial indent IF at the beginning of a line */
-%token EOL        /* End-of-line */
-%token PIPE       /* | */
-%token ATAT       /* @@ */
-%token AT         /* @ */
-%token LCURLCURL  /* {{ */
-%token RCURLCURL  /* }} */
-%token LCURL      /* { */
-%token RCURL      /* } */
-%token COMMA      /* , */
-%token TILDE      /* ~ */
-%token HASH       /* # */
-%token ASTERISK   /* * */
-%token SLASH      /* / */
-%token COLON      /* : */
-%token PLUS       /* + */
-%token MINUS      /* - */
-%token LPAREN     /* ( */
-%token RPAREN     /* ) */
-%token <char> FLAG    /* Valid characters for flags */
-%token TXN                 /* 'txn' keyword */
-%token BALANCE             /* 'balance' keyword */
-%token OPEN                /* 'open' keyword */
-%token CLOSE               /* 'close' keyword */
-%token COMMODITY           /* 'commodity' keyword */
-%token PAD                 /* 'pad' keyword */
-%token EVENT               /* 'event' keyword */
-%token PRICE               /* 'price' keyword */
-%token NOTE                /* 'note' keyword */
-%token DOCUMENT            /* 'document' keyword */
-%token QUERY               /* 'query' keyword */
-%token CUSTOM              /* 'custom' keyword */
-%token PUSHTAG             /* 'pushtag' keyword */
-%token POPTAG              /* 'poptag' keyword */
-%token PUSHMETA            /* 'pushmeta' keyword */
-%token POPMETA             /* 'popmeta' keyword */
-%token OPTION              /* 'option' keyword */
-%token INCLUDE             /* 'include' keyword */
-%token PLUGIN              /* 'plugin' keyword */
+%token INDENT      /* Initial indent IF at the beginning of a line */
+%token DEDENT      /* Initial indent IF at the beginning of a line */
+%token EOL         /* End-of-line */
+%token PIPE        /* | */
+%token ATAT        /* @@ */
+%token AT          /* @ */
+%token LCURLCURL   /* {{ */
+%token RCURLCURL   /* }} */
+%token LCURL       /* { */
+%token RCURL       /* } */
+%token COMMA       /* , */
+%token TILDE       /* ~ */
+%token HASH        /* # */
+%token ASTERISK    /* * */
+%token SLASH       /* / */
+%token COLON       /* : */
+%token PLUS        /* + */
+%token MINUS       /* - */
+%token LPAREN      /* ( */
+%token RPAREN      /* ) */
+%token <char> FLAG /* Valid characters for flags */
+%token TXN         /* 'txn' keyword */
+%token BALANCE     /* 'balance' keyword */
+%token OPEN        /* 'open' keyword */
+%token CLOSE       /* 'close' keyword */
+%token COMMODITY   /* 'commodity' keyword */
+%token PAD         /* 'pad' keyword */
+%token EVENT       /* 'event' keyword */
+%token PRICE       /* 'price' keyword */
+%token NOTE        /* 'note' keyword */
+%token DOCUMENT    /* 'document' keyword */
+%token QUERY       /* 'query' keyword */
+%token CUSTOM      /* 'custom' keyword */
+%token PUSHTAG     /* 'pushtag' keyword */
+%token POPTAG      /* 'poptag' keyword */
+%token PUSHMETA    /* 'pushmeta' keyword */
+%token POPMETA     /* 'popmeta' keyword */
+%token OPTION      /* 'option' keyword */
+%token INCLUDE     /* 'include' keyword */
+%token PLUGIN      /* 'plugin' keyword */
 %token NONE        /* A None value (parsed as NULL) */
-%token <bool> BOOL        /* A boolean, true or false */
-%token <absl::CivilDay> DATE        /* A date object */
-%token <decimal::Decimal> NUMBER      /* A decimal number */
-%token <std::string_view> ACCOUNT     /* The name of an account */
-%token <std::string_view> CURRENCY    /* A currency specification */
-%token <std::string_view> STRING      /* A quoted string, with any characters inside */
-%token <std::string_view> TAG         /* A tag that can be associated with a transaction */
-%token <std::string_view> LINK        /* A link that can be associated with a transaction */
-%token <std::string_view> KEY         /* A key in a key-value pair */
+%token <bool> BOOL                 /* A boolean, true or false */
+%token <absl::CivilDay> DATE       /* A date object */
+%token <decimal::Decimal> NUMBER   /* A decimal number */
+%token <std::string_view> ACCOUNT  /* The name of an account */
+%token <std::string_view> CURRENCY /* A currency specification */
+%token <std::string_view> STRING        /* A quoted string, with any characters inside */
+%token <std::string_view> TAG      /* A tag that can be associated with a transaction */
+%token <std::string_view> LINK     /* A link that can be associated with a transaction */
+%token <std::string_view> KEY      /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <char> txn
@@ -1674,7 +1675,16 @@ std::unique_ptr<Ledger> Parse(
   } catch (const std::runtime_error& exc) {
     cerr << "exc " << exc.what() << endl;
   }
-  return builder.MakeLedger();
+  auto ledger = builder.MakeLedger();
+
+  // TODO(blais): remove
+  for (auto dir : ledger->directives) { assert(dir != nullptr); }
+
+  // Sort the directives.
+  auto vdir = SortDirectives(ledger->directives);
+  ledger->directives.clear();
+  std::copy(vdir.begin(), vdir.end(), std::back_inserter(ledger->directives));
+  return ledger;
 }
 
 std::unique_ptr<Ledger> ParseFile(const string_view& filename) {

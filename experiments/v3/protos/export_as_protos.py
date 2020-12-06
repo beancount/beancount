@@ -10,32 +10,34 @@ __license__ = "GNU GPLv2"
 
 from decimal import Decimal
 from os import path
+from typing import Optional
 import argparse
 import datetime
 import functools
 import itertools
 import logging
+import os
 import re
-from typing import Optional
+import time
 
 import riegeli
 
-from beancount import loader
-from beancount.parser import parser
-from beancount.parser import printer
-from beancount.core import data
-from beancount.core import amount
-from beancount.core import position
-from beancount.core.number import MISSING
+from google.protobuf.pyext import _message
 
+from beancount import loader
 from beancount.ccore import data_pb2 as pb
 from beancount.ccore import date_pb2 as db
 from beancount.ccore import number_pb2 as nb
-from beancount.cparser import parser_pb2 as qb
-from beancount.cparser import options_pb2 as ob
-
+from beancount.core import amount
+from beancount.core import data
+from beancount.core import position
+from beancount.core.number import MISSING
 from beancount.cparser import extmodule
 from beancount.cparser import grammar
+from beancount.cparser import options_pb2 as ob
+from beancount.cparser import parser_pb2 as qb
+from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import printer
 
 
@@ -304,22 +306,27 @@ def export_v2_data(filename: str, output_filename: str, num_directives: Optional
     output.close()
 
 
-_SORT_ORDER = {
-    extmodule.BodyCase.kOpen: -2,
-    extmodule.BodyCase.kBalance: -1,
-    extmodule.BodyCase.kDocument: 1,
-    extmodule.BodyCase.kClose: 2,
-}
-
-
-def entry_sortkey_v3(dir: pb.Directive):
-    type_order = _SORT_ORDER.get(extmodule.GetDirectiveType(dir), 0)
-    return (dir.date, type_order, dir.location.lineno)
+# _SORT_ORDER = {
+#     extmodule.BodyCase.kOpen: -2,
+#     extmodule.BodyCase.kBalance: -1,
+#     extmodule.BodyCase.kDocument: 1,
+#     extmodule.BodyCase.kClose: 2,
+# }
+#
+# def entry_sortkey_v3(dir: pb.Directive):
+#     type_order = _SORT_ORDER.get(extmodule.GetDirectiveType(dir), 0)
+#     return (dir.date, type_order, dir.location.lineno)
 
 
 def export_v3_data(filename: str, output_filename: str, num_directives: Optional[int]):
+    t1 = time.time()
     ledger = extmodule.parse(filename)
-    directives = sorted(ledger.directives, key=entry_sortkey_v3)
+    t2 = time.time()
+    print((t2 - t1)*1000)
+    # directives = extmodule.SortDirectives(ledger.directives)
+    # t3 = time.time()
+    # print((t3 - t2)*1000)
+    directives = ledger.directives
     with open(output_filename, "w") as outfile:
         pr = functools.partial(print,  file=outfile)
         if num_directives:
@@ -348,8 +355,14 @@ def main():
 
     args = parser.parse_args()
 
+    #os.environ["BEANCOUNT_DISABLE_LOAD_CACHE"] = "1"
+    t1 = time.time()
     export_v2_data(args.filename, args.output + ".v2.pbtxt", args.num_directives)
+    t2 = time.time()
     export_v3_data(args.filename, args.output + ".v3.pbtxt", args.num_directives)
+    t3 = time.time()
+    print("Export to v2: {:,.0f}ms".format((t2-t1)*1000))
+    print("Export to v3: {:,.0f}ms".format((t3-t2)*1000))
 
 
 if __name__ == '__main__':

@@ -122,6 +122,7 @@ void ExportProtoTypes(py::module& mod) {
     .export_values()
     ;
   mod.def("GetDirectiveType", &GetDirectiveType);
+  mod.def("SortDirectives", &SortDirectives);
   mod.def("DowngradeToV2", &DowngradeToV2);
 
   py::class_<Directive>(mod, "Directive")
