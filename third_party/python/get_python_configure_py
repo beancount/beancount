@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Get a bunch of copies of the python_configure.bzl file.
+
+There doesn't appear to be an official one.
+"""
+__copyright__ = "Copyright (C) 2020  Martin Blais"
+__license__ = "GNU GPLv2"
+
+import re
+from os import path
+import tempfile
+import argparse
+import logging
+from urllib import request
+
+URLS = """
+https://raw.githubusercontent.com/tensorflow/tensorflow/master/third_party/py/python_configure.bzl
+https://raw.githubusercontent.com/grpc/grpc/master/third_party/py/python_configure.bzl
+https://raw.githubusercontent.com/google/riegeli/master/python/riegeli/python_configure.bzl
+https://raw.githubusercontent.com/google-research/google-research/master/scann/build_deps/py/python_configure.bzl
+""".strip().split()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    args = parser.parse_args()
+
+    def fetch_name(url):
+        return (re.match("https://raw.githubusercontent.com/[^/]+/([^/]+)/", url)
+                .group(1))
+
+
+    tempdir = tempfile.mkdtemp(prefix="pyconfbzl.")
+    print(tempdir)
+    for url in URLS:
+        resp = request.urlopen(url)
+        filename = path.join(tempdir, fetch_name(url) + ".python_configure.bzl")
+        with open(filename, "wb") as outfile:
+            outfile.write(resp.read())
+
+
+if __name__ == '__main__':
+    main()

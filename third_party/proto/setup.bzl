@@ -6,12 +6,17 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def setup_proto():
     # Protobuf
+    # if not native.existing_rule("com_google_protobuf"):
+    #     http_archive(
+    #         name = "com_google_protobuf",
+    #         urls = ["https://github.com/protocolbuffers/protobuf/archive/v4.0.0-rc2.tar.gz"],
+    #         sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
+    #         strip_prefix = "protobuf-4.0.0-rc2",
+    #     )
     if not native.existing_rule("com_google_protobuf"):
-        http_archive(
+        native.local_repository(
             name = "com_google_protobuf",
-            urls = ["https://github.com/protocolbuffers/protobuf/archive/v4.0.0-rc2.tar.gz"],
-            sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
-            strip_prefix = "protobuf-4.0.0-rc2",
+            path = "/home/blais/src/google/third_party/protobuf/testing/opensource",
         )
 
     # Rules for building protos.
@@ -37,12 +42,18 @@ def setup_proto():
 
 def setup_riegeli():
     # 2020-10-23
-    http_archive(
-        name = "com_google_riegeli",
-        sha256 = "73a3b47727a8021a377afb7fcea06ec62e047d90f1799f723eb54c0e44acdf87",
-        strip_prefix = "riegeli-5baa15714c60bbeabb9a1fce5d7e41b3076c068e",
-        urls = ["https://github.com/google/riegeli/archive/5baa15714c60bbeabb9a1fce5d7e41b3076c068e.zip"],
-    )
+    if False:
+        http_archive(
+            name = "com_google_riegeli",
+            sha256 = "73a3b47727a8021a377afb7fcea06ec62e047d90f1799f723eb54c0e44acdf87",
+            strip_prefix = "riegeli-5baa15714c60bbeabb9a1fce5d7e41b3076c068e",
+            urls = ["https://github.com/google/riegeli/archive/5baa15714c60bbeabb9a1fce5d7e41b3076c068e.zip"],
+        )
+    else:
+        native.local_repository(
+            name = "com_google_riegeli",
+            path = "/home/blais/src/github/google/riegeli",
+        )
 
     # 2019-02-22
     http_archive(
