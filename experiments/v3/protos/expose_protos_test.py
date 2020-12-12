@@ -1,3 +1,8 @@
+"""Isolated test for proto conversion.
+
+bazel test --test_env=LEDGER=<filename.beancount> //experiments/v3/protos:expose_protos_test
+"""
+
 import functools
 import sys
 import os
@@ -10,17 +15,10 @@ from experiments.v3.protos import expose_protos as ep
 
 class ExportProtosTests(unittest.TestCase):
 
-  def test_simple(self):
-    pr = functools.partial(print, file=sys.stderr)
-    pr(ep.__doc__)
-    #pprint.pprint(dir(ep))
-    pr(ep.Balance)
-    #pr(ep.Open)
-    pr(ep)
-    balance = ep.Balance()
-    #pr(balance)
-    balance.account = "Assets:Blablabla"
-    #print(balance)
+  def test_parse_and_convert(self):
+    filename = os.getenv("L")
+    ledger = ep.parse(filename)
+    directives = ledger.TestProtoConversion()
 
 
 if __name__ == '__main__':

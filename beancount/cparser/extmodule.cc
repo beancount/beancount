@@ -1,5 +1,5 @@
 #include "beancount/cparser/parser.h"
-#include "beancount/cparser/scanner.h"
+#include "beancount/cparser/ledger.h"
 #include "beancount/ccore/data.pb.h"
 #include "beancount/defs.h"
 
@@ -18,6 +18,7 @@ using options::Options;
 using options::ProcessingInfo;
 
 using std::cout;
+using std::cerr;
 using std::endl;
 
 // A reference to the placeholder object for missing cost specifications.

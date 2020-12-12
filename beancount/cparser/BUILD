@@ -169,12 +169,12 @@ py_extension(
     name = "extmodule",
     srcs = ["extmodule.cc"],
     deps = [
-        ":parser_cc_proto",
         ":parser",
+        ":ledger",
+        "//beancount/ccore:data_cc_proto",
         "//beancount:defs",
         "@local_config_python//:python_headers",
         "@pybind11",
-        #"@com_google_absl//absl/strings",
     ],
 )
 

@@ -1,3 +1,6 @@
+# Allow my global ledger variable to pass through for some experimental tests.
+build --test_env=L
+
 # Use Clang to build, not gcc.
 build --repo_env=CC=cc
 build --repo_env=CXX=c++
