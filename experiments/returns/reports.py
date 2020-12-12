@@ -453,7 +453,7 @@ def generate_reports(account_data_map: Dict[Account, AccountData],
     os.makedirs(output_dir, exist_ok=True)
     multiprocessing.set_start_method('fork')
     calls = []
-    for report in config.reports.report:
+    for report in config.groups.group:
         adlist = [account_data_map[name] for name in report.investment]
         assert isinstance(adlist, list)
         assert all(isinstance(ad, AccountData) for ad in adlist)

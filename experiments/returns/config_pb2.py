@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='config.proto',
   package='beancount.returns',
   syntax='proto2',
-  serialized_pb=_b('\n\x0c\x63onfig.proto\x12\x11\x62\x65\x61ncount.returns\"t\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12\x30\n\x07reports\x18\x02 \x01(\x0b\x32\x1f.beancount.returns.ReportConfig\"u\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\x12\x15\n\rincome_regexp\x18\x02 \x01(\t\x12\x17\n\x0f\x65xpenses_regexp\x18\x03 \x01(\t\">\n\x0cReportConfig\x12.\n\x06report\x18\x01 \x03(\x0b\x32\x1e.beancount.returns.ReportGroup\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\"A\n\x0bReportGroup\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\ninvestment\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t')
+  serialized_pb=_b('\n\x0c\x63onfig.proto\x12\x11\x62\x65\x61ncount.returns\"\xad\x01\n\x06\x43onfig\x12\x38\n\x0binvestments\x18\x01 \x01(\x0b\x32#.beancount.returns.InvestmentConfig\x12.\n\x06groups\x18\x03 \x01(\x0b\x32\x1e.beancount.returns.GroupConfig\x12\x39\n\x13\x62\x65nchmark_portfolio\x18\x02 \x03(\x0b\x32\x1c.beancount.returns.Portfolio\"u\n\x10InvestmentConfig\x12\x31\n\ninvestment\x18\x01 \x03(\x0b\x32\x1d.beancount.returns.Investment\x12\x15\n\rincome_regexp\x18\x02 \x01(\t\x12\x17\n\x0f\x65xpenses_regexp\x18\x03 \x01(\t\"\x7f\n\nInvestment\x12\x10\n\x08\x63urrency\x18\x01 \x01(\t\x12\x15\n\rasset_account\x18\x02 \x01(\t\x12\x19\n\x11\x64ividend_accounts\x18\x03 \x03(\t\x12\x16\n\x0ematch_accounts\x18\x04 \x03(\t\x12\x15\n\rcash_accounts\x18\x05 \x03(\t\"i\n\x0bGroupConfig\x12\'\n\x05group\x18\x01 \x03(\x0b\x32\x18.beancount.returns.Group\x12\x31\n\nsupergroup\x18\x02 \x03(\x0b\x32\x1d.beancount.returns.SuperGroup\"X\n\x05Group\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x12\n\ninvestment\x18\x02 \x03(\t\x12\x10\n\x08\x63urrency\x18\x03 \x01(\t\x12\x1b\n\x13\x62\x65nchmark_portfolio\x18\x04 \x03(\t\")\n\nSuperGroup\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05group\x18\x02 \x03(\t\"0\n\x08Position\x12\x12\n\ninstrument\x18\x01 \x01(\t\x12\x10\n\x08\x66raction\x18\x02 \x01(\x02\"H\n\tPortfolio\x12\x0c\n\x04name\x18\x01 \x01(\t\x12-\n\x08position\x18\x02 \x03(\x0b\x32\x1b.beancount.returns.Position')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -41,9 +41,16 @@ _CONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='reports', full_name='beancount.returns.Config.reports', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      name='groups', full_name='beancount.returns.Config.groups', index=1,
+      number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='benchmark_portfolio', full_name='beancount.returns.Config.benchmark_portfolio', index=2,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -59,8 +66,8 @@ _CONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=35,
-  serialized_end=151,
+  serialized_start=36,
+  serialized_end=209,
 )
 
 
@@ -104,39 +111,8 @@ _INVESTMENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=153,
-  serialized_end=270,
-)
-
-
-_REPORTCONFIG = _descriptor.Descriptor(
-  name='ReportConfig',
-  full_name='beancount.returns.ReportConfig',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='report', full_name='beancount.returns.ReportConfig.report', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto2',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=272,
-  serialized_end=334,
+  serialized_start=211,
+  serialized_end=328,
 )
 
 
@@ -194,36 +170,29 @@ _INVESTMENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=336,
-  serialized_end=463,
+  serialized_start=330,
+  serialized_end=457,
 )
 
 
-_REPORTGROUP = _descriptor.Descriptor(
-  name='ReportGroup',
-  full_name='beancount.returns.ReportGroup',
+_GROUPCONFIG = _descriptor.Descriptor(
+  name='GroupConfig',
+  full_name='beancount.returns.GroupConfig',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='beancount.returns.ReportGroup.name', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='investment', full_name='beancount.returns.ReportGroup.investment', index=1,
-      number=2, type=9, cpp_type=9, label=3,
+      name='group', full_name='beancount.returns.GroupConfig.group', index=0,
+      number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='currency', full_name='beancount.returns.ReportGroup.currency', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='supergroup', full_name='beancount.returns.GroupConfig.supergroup', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -239,19 +208,191 @@ _REPORTGROUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=465,
-  serialized_end=530,
+  serialized_start=459,
+  serialized_end=564,
+)
+
+
+_GROUP = _descriptor.Descriptor(
+  name='Group',
+  full_name='beancount.returns.Group',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='beancount.returns.Group.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='investment', full_name='beancount.returns.Group.investment', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='currency', full_name='beancount.returns.Group.currency', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='benchmark_portfolio', full_name='beancount.returns.Group.benchmark_portfolio', index=3,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=566,
+  serialized_end=654,
+)
+
+
+_SUPERGROUP = _descriptor.Descriptor(
+  name='SuperGroup',
+  full_name='beancount.returns.SuperGroup',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='beancount.returns.SuperGroup.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='group', full_name='beancount.returns.SuperGroup.group', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=656,
+  serialized_end=697,
+)
+
+
+_POSITION = _descriptor.Descriptor(
+  name='Position',
+  full_name='beancount.returns.Position',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='instrument', full_name='beancount.returns.Position.instrument', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='fraction', full_name='beancount.returns.Position.fraction', index=1,
+      number=2, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=699,
+  serialized_end=747,
+)
+
+
+_PORTFOLIO = _descriptor.Descriptor(
+  name='Portfolio',
+  full_name='beancount.returns.Portfolio',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='beancount.returns.Portfolio.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='position', full_name='beancount.returns.Portfolio.position', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=749,
+  serialized_end=821,
 )
 
 _CONFIG.fields_by_name['investments'].message_type = _INVESTMENTCONFIG
-_CONFIG.fields_by_name['reports'].message_type = _REPORTCONFIG
+_CONFIG.fields_by_name['groups'].message_type = _GROUPCONFIG
+_CONFIG.fields_by_name['benchmark_portfolio'].message_type = _PORTFOLIO
 _INVESTMENTCONFIG.fields_by_name['investment'].message_type = _INVESTMENT
-_REPORTCONFIG.fields_by_name['report'].message_type = _REPORTGROUP
+_GROUPCONFIG.fields_by_name['group'].message_type = _GROUP
+_GROUPCONFIG.fields_by_name['supergroup'].message_type = _SUPERGROUP
+_PORTFOLIO.fields_by_name['position'].message_type = _POSITION
 DESCRIPTOR.message_types_by_name['Config'] = _CONFIG
 DESCRIPTOR.message_types_by_name['InvestmentConfig'] = _INVESTMENTCONFIG
-DESCRIPTOR.message_types_by_name['ReportConfig'] = _REPORTCONFIG
 DESCRIPTOR.message_types_by_name['Investment'] = _INVESTMENT
-DESCRIPTOR.message_types_by_name['ReportGroup'] = _REPORTGROUP
+DESCRIPTOR.message_types_by_name['GroupConfig'] = _GROUPCONFIG
+DESCRIPTOR.message_types_by_name['Group'] = _GROUP
+DESCRIPTOR.message_types_by_name['SuperGroup'] = _SUPERGROUP
+DESCRIPTOR.message_types_by_name['Position'] = _POSITION
+DESCRIPTOR.message_types_by_name['Portfolio'] = _PORTFOLIO
 
 Config = _reflection.GeneratedProtocolMessageType('Config', (_message.Message,), dict(
   DESCRIPTOR = _CONFIG,
@@ -267,13 +408,6 @@ InvestmentConfig = _reflection.GeneratedProtocolMessageType('InvestmentConfig', 
   ))
 _sym_db.RegisterMessage(InvestmentConfig)
 
-ReportConfig = _reflection.GeneratedProtocolMessageType('ReportConfig', (_message.Message,), dict(
-  DESCRIPTOR = _REPORTCONFIG,
-  __module__ = 'config_pb2'
-  # @@protoc_insertion_point(class_scope:beancount.returns.ReportConfig)
-  ))
-_sym_db.RegisterMessage(ReportConfig)
-
 Investment = _reflection.GeneratedProtocolMessageType('Investment', (_message.Message,), dict(
   DESCRIPTOR = _INVESTMENT,
   __module__ = 'config_pb2'
@@ -281,12 +415,40 @@ Investment = _reflection.GeneratedProtocolMessageType('Investment', (_message.Me
   ))
 _sym_db.RegisterMessage(Investment)
 
-ReportGroup = _reflection.GeneratedProtocolMessageType('ReportGroup', (_message.Message,), dict(
-  DESCRIPTOR = _REPORTGROUP,
+GroupConfig = _reflection.GeneratedProtocolMessageType('GroupConfig', (_message.Message,), dict(
+  DESCRIPTOR = _GROUPCONFIG,
   __module__ = 'config_pb2'
-  # @@protoc_insertion_point(class_scope:beancount.returns.ReportGroup)
+  # @@protoc_insertion_point(class_scope:beancount.returns.GroupConfig)
   ))
-_sym_db.RegisterMessage(ReportGroup)
+_sym_db.RegisterMessage(GroupConfig)
+
+Group = _reflection.GeneratedProtocolMessageType('Group', (_message.Message,), dict(
+  DESCRIPTOR = _GROUP,
+  __module__ = 'config_pb2'
+  # @@protoc_insertion_point(class_scope:beancount.returns.Group)
+  ))
+_sym_db.RegisterMessage(Group)
+
+SuperGroup = _reflection.GeneratedProtocolMessageType('SuperGroup', (_message.Message,), dict(
+  DESCRIPTOR = _SUPERGROUP,
+  __module__ = 'config_pb2'
+  # @@protoc_insertion_point(class_scope:beancount.returns.SuperGroup)
+  ))
+_sym_db.RegisterMessage(SuperGroup)
+
+Position = _reflection.GeneratedProtocolMessageType('Position', (_message.Message,), dict(
+  DESCRIPTOR = _POSITION,
+  __module__ = 'config_pb2'
+  # @@protoc_insertion_point(class_scope:beancount.returns.Position)
+  ))
+_sym_db.RegisterMessage(Position)
+
+Portfolio = _reflection.GeneratedProtocolMessageType('Portfolio', (_message.Message,), dict(
+  DESCRIPTOR = _PORTFOLIO,
+  __module__ = 'config_pb2'
+  # @@protoc_insertion_point(class_scope:beancount.returns.Portfolio)
+  ))
+_sym_db.RegisterMessage(Portfolio)
 
 
 # @@protoc_insertion_point(module_scope)
