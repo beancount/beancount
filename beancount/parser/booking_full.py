@@ -176,7 +176,7 @@ def _book(entries, options_map, methods):
                 # CostSpec instances below.
                 (booked_postings,
                  booking_errors) = book_reductions(entry, group_postings, balances,
-                                                   methods)
+                                                   methods, tolerances)
 
                 # If there were any errors, skip this group of postings.
                 if booking_errors:
@@ -502,7 +502,7 @@ def has_self_reduction(postings, methods):
 
 
 def book_reductions(entry, group_postings, balances,
-                    methods):
+                    methods, tolerances):
     """Book inventory reductions against the ante-balances.
 
     This function accepts a dict of (account, Inventory balance) and for each
@@ -522,6 +522,7 @@ def book_reductions(entry, group_postings, balances,
       balances: A dict of account name to inventory contents.
       methods: A mapping of account name to their corresponding booking
         method enum.
+      tolerances: A dict of currency to tolerance values.
     Returns:
       A pair of
         booked_postings: A list of booked postings, with reducing lots resolved
@@ -581,8 +582,9 @@ def book_reductions(entry, group_postings, balances,
                     # Skip balance positions not held at cost.
                     if position.cost is None:
                         continue
+                    currency_tolerance = tolerances.get(position.cost.currency, 0)
                     if (cost_number is not None and
-                        position.cost.number != cost_number):
+                        abs(position.cost.number - cost_number) > currency_tolerance):
                         continue
                     if (isinstance(costspec.currency, str) and
                         position.cost.currency != costspec.currency):

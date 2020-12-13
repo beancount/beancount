@@ -1430,7 +1430,7 @@ class TestBookAugmentations(_BookingTestBase):
         # Further test what would happen if book_reductions() would be called anyhow.
         entry = find_first_with_tag('apply', entries)
         postings, errors = bf.book_reductions(entry, entry.postings,
-                                              {}, _BM(Booking.STRICT))
+                                              {}, _BM(Booking.STRICT), {})
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
@@ -1451,7 +1451,7 @@ class TestBookAugmentations(_BookingTestBase):
         # Further test what would happen if book_reductions() would be called anyhow.
         entry = find_first_with_tag('apply', entries)
         postings, errors = bf.book_reductions(entry, entry.postings,
-                                              {}, _BM(Booking.STRICT))
+                                              {}, _BM(Booking.STRICT), {})
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
@@ -1725,6 +1725,56 @@ class TestBookReductions(_BookingTestBase):
 
         2016-01-01 * #booked
         """
+
+
+    @book_test(Booking.STRICT)
+    def test_reduce__strict__tolerence_match(self, _, __):
+        """
+        option "inferred_tolerance_default" "USD:0.01"
+        2016-01-01 * #ante
+          Assets:Account   3 HOOL {{ 10 USD }}
+
+        2016-05-02 * #apply
+          Assets:Account              -1 HOOL { 3.33 USD } ; this is within 0.01 USD so it should match
+
+        2016-05-02 * #apply
+          Assets:Account              -1 HOOL { 3.34 USD } ; this is within 0.01 USD so it should match
+
+        2016-01-01 * #booked
+          Assets:Account              -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
+        """
+
+    @book_test(Booking.STRICT)
+    def test_reduce__strict__tolerence_match_star_currency(self, _, __):
+        """
+        option "inferred_tolerance_default" "*:0.01"
+        2016-01-01 * #ante
+          Assets:Account   3 HOOL {{ 10 USD }}
+
+        2016-05-02 * #apply
+          Assets:Account              -1 HOOL { 3.33 USD } ; this is within 0.01 USD so it should match
+
+        2016-05-02 * #apply
+          Assets:Account              -1 HOOL { 3.34 USD } ; this is within 0.01 USD so it should match
+
+        2016-01-01 * #booked
+          Assets:Account              -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
+        """
+
+    @book_test(Booking.STRICT)
+    def test_reduce__strict__tolerence_nomatch(self, _, __):
+        """
+        option "inferred_tolerance_default" "USD:0.01"
+        2016-01-01 * #ante
+          Assets:Account   3 HOOL {{ 10 USD }}
+
+        2016-05-02 * #apply
+          Assets:Account              -1 HOOL { 3.32 USD }
+
+        2016-05-02 * #booked
+          error: "No position matches"
+        """
+
 
 
 
@@ -2767,12 +2817,13 @@ class TestBook(unittest.TestCase):
         balances = collections.defaultdict(inventory.Inventory)
         methods = collections.defaultdict(lambda: Booking.STRICT)
         for entry in entries:
+            tolerances = {}
             (booked_postings,
              booked_errors) = bf.book_reductions(entry,
                                                  entry.postings,
                                                  balances,
-                                                 methods)
-            tolerances = {}
+                                                 methods,
+                                                 tolerances)
             (inter_postings,
              inter_errors,
              interpolated) = bf.interpolate_group(booked_postings,
