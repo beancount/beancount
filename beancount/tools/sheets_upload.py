@@ -14,7 +14,7 @@ contents of the CSV files to sheets named 'apples' and 'oranges':
 You can override the name of the sheets created by appending a colon and the
 name, like this:
 
-  upload-to-sheets apples.csv:Apples oranges.csv:Oranges
+  upload-to-sheets Apples:apples.csv Oranges:oranges.csv
 
 If you'd like to upload the sheets in an existing document, provide it as an
 option:
@@ -40,24 +40,23 @@ Moreover, you will need to enable the Google Sheets API in the developer console
 and download the Client Secrets that Google provides to ~/.google-apis.json. (You
 can override this location with the GOOGLE_APIS environment variable.)
 """
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020  Martin Blais"
 __license__ = "GNU GPLv2"
-
-# IMPORTANT: This should be usable as a standalone script. Do not depend on Beancount.
 
 import argparse
 import csv
 import logging
 import os
+import json
+import pickle
 import re
 import string
 import sys
 from os import path
+from typing import List, Optional
 
-from oauth2client import client
-from oauth2client import tools
-from oauth2client import file
-import httplib2
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport import requests as grequests
 from googleapiclient import discovery
 from googleapiclient import errors
 
@@ -67,37 +66,46 @@ from googleapiclient import errors
 EMPTY_SHEET_TITLE = '__EMPTY__'
 
 
-def get_credentials(scopes, args):
-    """Authenticate via oauth2 and cache credentials to a file (or refresh them).
+def get_credentials(scopes: List[str],
+                    secrets_filename: Optional[str] = None,
+                    storage_filename: Optional[str] = None):
+    """Authenticate via oauth2 and return credentials."""
 
-    Args:
-      scopes: A string or a list of strings, the scopes to get credentials for.
-      args: An argparse option values object.
-    Returns:
-      An authenticated http client object.
-    """
-    # Silence annoying error about file_cache version.
-    # See, for example, this: https://github.com/google/google-api-python-client/issues/299
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
-    # Location of your secrets file.
-    secrets_filename = os.environ.get('GOOGLE_APIS',
-                                      path.expanduser('~/.google-apis.json'))
-    # Location to store credentials for reuse between invocations.
-    storage_filename = os.environ.get('GOOGLE_STORAGE',
-                                      path.expanduser('~/.google-storage.json'))
+    import __main__
+    cache_dir = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
+    if secrets_filename is None:
+        secrets_filename = "{}.json".format(cache_dir)
+    if storage_filename is None:
+        storage_filename = "{}.cache".format(cache_dir)
 
-    flow = client.flow_from_clientsecrets(secrets_filename, scope=scopes)
-    storage = file.Storage(storage_filename)
-    credentials = storage.get()
-    if not credentials or credentials.invalid:
-        credentials = tools.run_flow(flow, storage, args)
-        storage.put(credentials)
-    http = httplib2.Http()
-    credentials.authorize(http)
-    if credentials.access_token_expired:
-        credentials.refresh(http)
-    return credentials, http
+    # Load the secrets file, to figure if it's for a service account or an OAUTH
+    # secrets file.
+    secrets_info = json.load(open(secrets_filename))
+    if secrets_info.get("type") == "service_account":
+        # Process service account flow.
+        credentials = service_account.Credentials.from_service_account_info(
+            secrets_info, scopes=scopes)
+    else:
+        # Process OAuth flow.
+        credentials = None
+        if path.exists(storage_filename):
+            with open(storage_filename, 'rb') as token:
+                credentials = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not credentials or not credentials.valid:
+            if credentials and credentials.expired and credentials.refresh_token:
+                credentials.refresh(grequests.Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    secrets_filename, scopes)
+                credentials = flow.run_console()
+            # Save the credentials for the next run
+            with open(storage_filename, 'wb') as token:
+                pickle.dump(credentials, token)
+
+    return credentials
 
 
 def pop_alist(items, key, default=None):
@@ -350,8 +358,7 @@ class Doc:
 
 def _main():
     parser = argparse.ArgumentParser(description=__doc__.strip(),
-                                     formatter_class=argparse.RawTextHelpFormatter,
-                                     parents=[tools.argparser])
+                                     formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('filenames', nargs='*', action='store',
                         help=("CSV filenames[:name] to upload. "
@@ -385,9 +392,9 @@ def _main():
             args.docid = match.group(1)
 
     # Discover the service.
-    _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
+    creds = get_credentials('https://www.googleapis.com/auth/spreadsheets')
     url = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
-    service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=url)
+    service = discovery.build('sheets', 'v4', credentials=creds)
 
     # Figure out what the name mappings should be, from the filenames (or
     # explicitly).
@@ -395,7 +402,10 @@ def _main():
     for filename in args.filenames:
         match = re.match('(.*):(.*)$', filename)
         if match:
-            filename, sheet_name = (match.group(1), match.group(2))
+            sheet_name, filename = (match.group(1), match.group(2))
+            # Support inverted sheets name labels.
+            if not path.exists(filename) and path.exists(sheet_name):
+                sheet_name, filename = filename, sheet_name
         else:
             sheet_name = path.splitext(path.basename(filename))[0]
         new_sheets.append((sheet_name, filename))
@@ -437,7 +447,7 @@ def match_names_and_upload_sheets(service, docid, new_sheets, min_rows):
     # Create new or match against existing sheets if necessary. This essentially
     # pairs up spreadsheets from the input to sheet-ids in the doc.
     sheets_alist = []
-    for title, filename in reversed(new_sheets):
+    for title, filename in new_sheets:
         sheet_id = pop_alist(existing_sheets, title)
         if sheet_id is None:
             logging.info("Creating sheet '%s'", title)
