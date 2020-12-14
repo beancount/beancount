@@ -1732,16 +1732,18 @@ class TestBookReductions(_BookingTestBase):
         """
         option "inferred_tolerance_default" "USD:0.01"
         2016-01-01 * #ante
-          Assets:Account   3 HOOL {{ 10 USD }}
+          Assets:Account           3 HOOL {{ 10 USD }}
 
         2016-05-02 * #apply
-          Assets:Account              -1 HOOL { 3.33 USD } ; this is within 0.01 USD so it should match
+          ; This is within 0.01 USD so it should match
+          Assets:Account           -1 HOOL { 3.33 USD }
 
         2016-05-02 * #apply
-          Assets:Account              -1 HOOL { 3.34 USD } ; this is within 0.01 USD so it should match
+          ; This is within 0.01 USD so it should match
+          Assets:Account           -1 HOOL { 3.34 USD }
 
         2016-01-01 * #booked
-          Assets:Account              -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
+          Assets:Account           -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
         """
 
     @book_test(Booking.STRICT)
@@ -1749,16 +1751,18 @@ class TestBookReductions(_BookingTestBase):
         """
         option "inferred_tolerance_default" "*:0.01"
         2016-01-01 * #ante
-          Assets:Account   3 HOOL {{ 10 USD }}
+          Assets:Account           3 HOOL {{ 10 USD }}
 
         2016-05-02 * #apply
-          Assets:Account              -1 HOOL { 3.33 USD } ; this is within 0.01 USD so it should match
+          ; This is within 0.01 USD so it should match
+          Assets:Account           -1 HOOL { 3.33 USD }
 
         2016-05-02 * #apply
-          Assets:Account              -1 HOOL { 3.34 USD } ; this is within 0.01 USD so it should match
+          ; This is within 0.01 USD so it should match
+          Assets:Account           -1 HOOL { 3.34 USD }
 
         2016-01-01 * #booked
-          Assets:Account              -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
+          Assets:Account           -1 HOOL { 3.333333333333333333333333333 USD, 2016-01-01 }
         """
 
     @book_test(Booking.STRICT)
