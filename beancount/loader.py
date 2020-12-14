@@ -15,6 +15,7 @@ import logging
 import os
 import pickle
 import struct
+import traceback
 import textwrap
 import time
 import warnings
@@ -565,38 +566,55 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             plugin_name = renamed_name
 
         # Try to import the module.
+        #
+        # Note: We intercept import errors and continue but let other plugin
+        # import time exceptions fail a run, by choice.
         try:
             module = importlib.import_module(plugin_name)
             if not hasattr(module, '__plugins__'):
                 continue
+        except ImportError:
+            # Upon failure, just issue an error.
+            formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
+            errors.append(LoadError(data.new_metadata("<load>", 0),
+                                    'Error importing "{}": {}'.format(
+                                        plugin_name, formatted_traceback), None))
+            continue
 
-            with misc_utils.log_time(plugin_name, log_timings, indent=2):
+        # Apply it.
+        with misc_utils.log_time(plugin_name, log_timings, indent=2):
+            # Run each transformer function in the plugin.
+            for function_name in module.__plugins__:
+                if isinstance(function_name, str):
+                    # Support plugin functions provided by name.
+                    callback = getattr(module, function_name)
+                else:
+                    # Support function types directly, not just names.
+                    callback = function_name
 
-                # Run each transformer function in the plugin.
-                for function_name in module.__plugins__:
-                    if isinstance(function_name, str):
-                        # Support plugin functions provided by name.
-                        callback = getattr(module, function_name)
-                    else:
-                        # Support function types directly, not just names.
-                        callback = function_name
+                # Provide arguments if config is provided.
+                # TODO(blais): Make this consistent in v3, not conditional.
+                args = () if plugin_config is None else (plugin_config,)
 
-                    if plugin_config is not None:
-                        entries, plugin_errors = callback(entries, options_map,
-                                                          plugin_config)
-                    else:
-                        entries, plugin_errors = callback(entries, options_map)
+                # Catch all exceptions raised in running the plugin, except exits.
+                try:
+                    entries, plugin_errors = callback(entries, options_map, *args)
                     errors.extend(plugin_errors)
+                except Exception as exc:
+                    # Allow the user to exit in a plugin.
+                    if isinstance(exc, SystemExit):
+                        raise
+
+                    # Upon failure, just issue an error.
+                    formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
+                    errors.append(LoadError(data.new_metadata("<load>", 0),
+                                            'Error applying plugin "{}": {}'.format(
+                                                plugin_name, formatted_traceback), None))
+                    continue
 
             # Ensure that the entries are sorted. Don't trust the plugins
             # themselves.
             entries.sort(key=data.entry_sortkey)
-
-        except (ImportError, TypeError) as exc:
-            # Upon failure, just issue an error.
-            errors.append(LoadError(data.new_metadata("<load>", 0),
-                                    'Error importing "{}": {}'.format(
-                                        plugin_name, str(exc)), None))
 
     return entries, errors
 
