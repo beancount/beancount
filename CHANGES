@@ -5,6 +5,12 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-12-14
+
+ - Fixed #588: Catch more narrow exceptions from plugins and render full stack
+   when caught.
+
+
 2020-11-25
 
  - Fixed #584 - a bug which was occurring because a pathological example using a

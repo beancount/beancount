@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import functools
 import logging
+import importlib
 import unittest
 import tempfile
 import textwrap
@@ -31,7 +32,64 @@ TEST_INPUT = """
 """
 
 
+def get_failing_plugin_module(exc_type):
+    """Return a failing plugin module. For testing."""
+    class PluginModule: pass
+    def fail(*args):
+        raise exc_type()
+    PluginModule.__plugins__ = (fail,)
+    return PluginModule
+
+
+real_import_module = importlib.import_module
+
+
+def mock_import_module(exc_type, plugin_name):
+    if plugin_name == "failing":
+        return get_failing_plugin_module(exc_type)
+    else:
+        return real_import_module(plugin_name)
+
+
 class TestLoader(unittest.TestCase):
+
+    def test_import_exception(self):
+        # Test an invalid plugin name.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "invalid.module.name"\n\n' + TEST_INPUT)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(1, len(trans_errors))
+        self.assertRegex(trans_errors[0].message, "ModuleNotFoundError")
+
+    @mock.patch('importlib.import_module', side_effect=ValueError)
+    def test_import_other_exception(self, _):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "doesnt_matter"\n\n' + TEST_INPUT)
+        with self.assertRaises(ValueError):
+            loader.run_transformations(entries, errors, options_map, None)
+
+    @mock.patch('importlib.import_module',
+                functools.partial(mock_import_module, ValueError))
+    def test_run_transformation_exception(self):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "failing"\n\n' + TEST_INPUT)
+        loader.run_transformations(entries, errors, options_map, None)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(1, len(trans_errors))
+        self.assertRegex(trans_errors[0].message, "ValueError")
+
+    @mock.patch('importlib.import_module',
+                functools.partial(mock_import_module, SystemExit))
+    def test_run_transformation_exception(self):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "failing"\n\n' + TEST_INPUT)
+        with self.assertRaises(SystemExit):
+            loader.run_transformations(entries, errors, options_map, None)
 
     def test_run_transformations(self):
         # Test success case.
@@ -39,13 +97,6 @@ class TestLoader(unittest.TestCase):
         trans_entries, trans_errors = loader.run_transformations(
             entries, errors, options_map, None)
         self.assertEqual(0, len(trans_errors))
-
-        # Test an invalid plugin name.
-        entries, errors, options_map = parser.parse_string(
-            'plugin "invalid.module.name"\n\n' + TEST_INPUT)
-        trans_entries, trans_errors = loader.run_transformations(
-            entries, errors, options_map, None)
-        self.assertEqual(1, len(trans_errors))
 
     def test_load(self):
         with test_utils.capture():
