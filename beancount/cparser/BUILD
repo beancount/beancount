@@ -172,6 +172,7 @@ py_extension(
         ":parser",
         ":ledger",
         "//beancount/ccore:data_cc_proto",
+        "//beancount/ccore:datapy",
         "//beancount:defs",
         "@local_config_python//:python_headers",
         "@pybind11",

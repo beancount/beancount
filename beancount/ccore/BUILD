@@ -112,6 +112,19 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "datapy",
+    hdrs = ["datapy.h"],
+    srcs = ["datapy.cc"],
+    deps = [
+        "//beancount/ccore:data_cc_proto",
+        "//beancount/cparser:options_cc_proto",
+        "//beancount:defs",
+        "@local_config_python//:python_headers",
+        "@pybind11",
+    ],
+)
+
 #----------------------------------------
 
 cc_library(
