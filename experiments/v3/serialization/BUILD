@@ -8,10 +8,7 @@ cc_binary(
     srcs = ["riegeli_print.cc"],
     deps = [
         "@com_google_riegeli//riegeli/base",
-        "@com_google_riegeli//riegeli/base:options_parser",
         "@com_google_riegeli//riegeli/bytes:fd_reader",
-        "@com_google_riegeli//riegeli/bytes:writer_utils",
-        "@com_google_riegeli//riegeli/records:chunk_reader",
         "@com_google_riegeli//riegeli/records:record_reader",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
