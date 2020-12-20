@@ -5,6 +5,14 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2020-12-20
+
+ - Merged half of branch pr128_seltzered_beanpriceupdate on this side of
+   Beancount. The other side will be patched to
+   http://github.com/beancount/beanprice. This adds some trimming functions to
+   beancount.ops.lifetimes.
+
+
 2020-12-14
 
  - Fixed #588: Catch more narrow exceptions from plugins and render full stack
