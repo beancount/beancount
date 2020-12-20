@@ -8,11 +8,24 @@ def setup_proto():
     # Protobuf
     if not native.existing_rule("com_google_protobuf"):
         use_unreleased_version = True
+        use_local_copy = True
         if use_unreleased_version:
-            native.local_repository(
-                name = "com_google_protobuf",
-                path = "/home/blais/src/google/third_party/protobuf/testing/opensource",
-            )
+            if use_local_copy:
+                native.local_repository(
+                    name = "com_google_protobuf",
+                    path = "/home/blais/src/google/third_party/protobuf/testing/opensource",
+                )
+            else:
+                http_archive(
+                    name = "com_google_protobuf",
+                    urls = ["file:///home/blais/src/google/third_party.tar.gz"],
+                    sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
+                    strip_prefix = "third_party/protobuf/testing/opensource",
+                    patches = [
+                        ":protobuf_message_module_override.patch",
+                        ":protobuf_pyext_target.patch",
+                        ":protobuf_tp_print_to_vectorcall_offset.patch"],
+                )
         else:
             http_archive(
                 name = "com_google_protobuf",

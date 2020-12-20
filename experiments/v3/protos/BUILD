@@ -42,6 +42,7 @@ py_extension(
         "@local_config_python//:python_headers",
         "@com_google_protobuf//:protobuf",
         "@com_google_protobuf//:proto_api",
+        "@com_google_protobuf//:pyext",
         "@pybind11",
     ],
 )

@@ -1,0 +1,26 @@
+diff --git a/python/google/protobuf/pyext/repeated_composite_container.cc b/python/google/protobuf/pyext/repeated_composite_container.cc
+index d934f75..7f149ef 100755
+--- a/python/google/protobuf/pyext/repeated_composite_container.cc
++++ b/python/google/protobuf/pyext/repeated_composite_container.cc
+@@ -567,7 +567,7 @@ PyTypeObject RepeatedCompositeContainer_Type = {
+     sizeof(RepeatedCompositeContainer),         // tp_basicsize
+     0,                                          //  tp_itemsize
+     repeated_composite_container::Dealloc,      //  tp_dealloc
+-    nullptr,                                    //  tp_print
++    0,                                          //  tp_print (unused 3.0-3.7) / tp_vectorcall_offset (3.8)
+     nullptr,                                    //  tp_getattr
+     nullptr,                                    //  tp_setattr
+     nullptr,                                    //  tp_compare
+diff --git a/python/google/protobuf/pyext/repeated_scalar_container.cc b/python/google/protobuf/pyext/repeated_scalar_container.cc
+index 8c937b7..23e8ba9 100755
+--- a/python/google/protobuf/pyext/repeated_scalar_container.cc
++++ b/python/google/protobuf/pyext/repeated_scalar_container.cc
+@@ -753,7 +753,7 @@ PyTypeObject RepeatedScalarContainer_Type = {
+     sizeof(RepeatedScalarContainer),         // tp_basicsize
+     0,                                       //  tp_itemsize
+     repeated_scalar_container::Dealloc,      //  tp_dealloc
+-    nullptr,                                 //  tp_print
++    0,                                       //  tp_print (unused 3.0-3.7) / tp_vectorcall_offset (3.8)
+     nullptr,                                 //  tp_getattr
+     nullptr,                                 //  tp_setattr
+     nullptr,                                 //  tp_compare

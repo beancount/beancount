@@ -19,6 +19,20 @@ class ExportProtosTests(unittest.TestCase):
     filename = os.getenv("L")
     ledger = ep.parse(filename)
     directives = ledger.TestProtoConversion()
+    for index, entry in enumerate(directives):
+      print("Original directive at {}".format(index))
+      print(entry)
+      if index >= 10:
+        break
+
+    entry = directives[0]
+    entry.date.year = 2020
+    print("Modified date")
+    print(entry.date)
+
+    print("Printing from C++")
+    ledger.DebugPrint()
+
 
 
 if __name__ == '__main__':

@@ -1,0 +1,13 @@
+diff --git a/python/google/protobuf/pyext/message_module.cc b/python/google/protobuf/pyext/message_module.cc
+index 16c1845..b5975f7 100755
+--- a/python/google/protobuf/pyext/message_module.cc
++++ b/python/google/protobuf/pyext/message_module.cc
+@@ -55,7 +55,7 @@ struct ApiImplementation : google::protobuf::python::PyProto_API {
+         ->py_message_factory->message_factory;
+   }
+   PyObject* NewMessage(const google::protobuf::Descriptor* descriptor,
+-                       PyObject* py_message_factory) const {
++                       PyObject* py_message_factory) const override {
+     return google::protobuf::python::PyMessage_New(descriptor, py_message_factory);
+   }
+   PyObject* NewMessageOwnedExternally(
