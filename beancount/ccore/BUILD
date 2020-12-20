@@ -66,6 +66,15 @@ py_proto_library(
     srcs = ["date.proto"],
 )
 
+cc_library(
+    name = "date",
+    hdrs = ["date.h"],
+    deps = [
+        "@com_google_absl//absl/time",
+        "//beancount/ccore:date_cc_proto",
+    ],
+)
+
 #----------------------------------------
 
 proto_library(

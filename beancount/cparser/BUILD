@@ -57,6 +57,7 @@ cc_library(
     deps = [
         ":parser_cc_proto",
         ":options_cc_proto",
+        "//beancount/ccore:date",
         "//beancount/ccore:number",
         "//beancount/ccore:data_cc_proto",
         "//third_party/parser:reflex",
