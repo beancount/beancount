@@ -35,8 +35,8 @@
 // Copyright (C) 2020  Martin Blais"
 // GNU GPLv2"
 
-#ifndef _BEANCOUNT_CCORE_INVENTORY_H_
-#define _BEANCOUNT_CCORE_INVENTORY_H_
+#ifndef BEANCOUNT_CCORE_INVENTORY_H_
+#define BEANCOUNT_CCORE_INVENTORY_H_
 
 #include <string>
 #include <utility>
@@ -87,4 +87,4 @@ Inventory InventoryFromString(string_view string);
 
 }  // namespace beancount
 
-#endif // _BEANCOUNT_CCORE_INVENTORY_H_
+#endif // BEANCOUNT_CCORE_INVENTORY_H_

@@ -3,8 +3,8 @@
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef _BEANCOUNT_CCORE_DATE_H_
-#define _BEANCOUNT_CCORE_DATE_H_
+#ifndef BEANCOUNT_CCORE_DATE_H_
+#define BEANCOUNT_CCORE_DATE_H_
 
 #include "beancount/ccore/date.pb.h"
 
@@ -24,4 +24,4 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
 
 }  // namespace beancount
 
-#endif  // _BEANCOUNT_CCORE_DATE_H_
+#endif  // BEANCOUNT_CCORE_DATE_H_

@@ -1,8 +1,8 @@
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef _BEANCOUNT_CCORE_DATA_H_
-#define _BEANCOUNT_CCORE_DATA_H_
+#ifndef BEANCOUNT_CCORE_DATA_H_
+#define BEANCOUNT_CCORE_DATA_H_
 
 #include <string>
 
@@ -40,4 +40,4 @@ bool operator==(const Cost& cost1, const Cost& cost2);
 
 }  // namespace beancount
 
-#endif // _BEANCOUNT_CCORE_DATA_H_
+#endif // BEANCOUNT_CCORE_DATA_H_

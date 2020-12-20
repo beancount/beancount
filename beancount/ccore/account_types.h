@@ -10,8 +10,8 @@
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef _BEANCOUNT_CCORE_ACCOUNT_TYPES_H_
-#define _BEANCOUNT_CCORE_ACCOUNT_TYPES_H_
+#ifndef BEANCOUNT_CCORE_ACCOUNT_TYPES_H_
+#define BEANCOUNT_CCORE_ACCOUNT_TYPES_H_
 
 #include <vector>
 #include <string>
@@ -64,4 +64,4 @@ int GetAccountSign(string_view account_name, const AccountTypes& account_types);
 
 }  // namespace beancount
 
-#endif // _BEANCOUNT_CCORE_ACCOUNT_TYPES_H_
+#endif // BEANCOUNT_CCORE_ACCOUNT_TYPES_H_

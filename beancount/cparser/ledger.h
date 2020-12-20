@@ -4,8 +4,8 @@
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef _BEANCOUNT_CPARSER_LEDGER_H_
-#define _BEANCOUNT_CPARSER_LEDGER_H_
+#ifndef BEANCOUNT_CPARSER_LEDGER_H_
+#define BEANCOUNT_CPARSER_LEDGER_H_
 
 #include <memory>
 #include <vector>
@@ -39,4 +39,4 @@ int WriteToText(const Ledger& ledger, const std::string& filename);
 
 }  // namespace beancount
 
-#endif // _BEANCOUNT_CPARSER_LEDGER_H_
+#endif // BEANCOUNT_CPARSER_LEDGER_H_

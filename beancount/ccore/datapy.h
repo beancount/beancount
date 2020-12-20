@@ -3,8 +3,8 @@
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef _BEANCOUNT_CCORE_DATAPY_H_
-#define _BEANCOUNT_CCORE_DATAPY_H_
+#ifndef BEANCOUNT_CCORE_DATAPY_H_
+#define BEANCOUNT_CCORE_DATAPY_H_
 
 #include "pybind11/pybind11.h"
 
@@ -16,4 +16,4 @@ void ExportDataTypesToPython(pybind11::module& mod);
 
 }  // namespace beancount
 
-#endif // _BEANCOUNT_CCORE_DATAPY_H_
+#endif // BEANCOUNT_CCORE_DATAPY_H_
