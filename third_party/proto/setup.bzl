@@ -24,7 +24,9 @@ def setup_proto():
                     patches = [
                         ":protobuf_message_module_override.patch",
                         ":protobuf_pyext_target.patch",
-                        ":protobuf_tp_print_to_vectorcall_offset.patch"],
+                        ":protobuf_tp_print_to_vectorcall_offset.patch",
+                        ":protobuf_remove_unused_constants_in_arena.patch"
+                    ],
                 )
         else:
             http_archive(
