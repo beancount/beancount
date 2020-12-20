@@ -39,6 +39,9 @@ py_extension(
         #
         "//beancount/cparser:parser",
         "//beancount/cparser:ledger",
+        #
+        "@com_google_absl//absl/time",
+        #
         "@local_config_python//:python_headers",
         "@com_google_protobuf//:protobuf",
         "@com_google_protobuf//:proto_api",

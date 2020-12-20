@@ -8,6 +8,7 @@
 
 #include "pybind11/pybind11.h"
 #include "python/google/protobuf/proto_api.h"
+#include "absl/time/clock.h"
 
 // The first method is to use the capsule created and provided by _message.so to
 // try to call the Proto API to create objects. However, this does not work,
@@ -96,9 +97,12 @@ const PyProto_API& GetPyProtoApi() {
 py::list TestProtoConversion(const Ledger& ledger) {
   py::list dirlist;
   const auto& py_proto_api = GetPyProtoApi();
+  absl::Time t1 = absl::Now();
   for (auto* directive : ledger.directives) {
     dirlist.append(py_proto_api.NewMessageOwnedExternally(directive, nullptr));
   }
+  absl::Time t2 = absl::Now(); // ~20-25ms
+  std::cerr << "TestProtoConversion time=" << t2 - t1 << std::endl;
   return dirlist;
 }
 
