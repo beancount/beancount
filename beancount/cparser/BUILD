@@ -46,6 +46,7 @@ cc_library(
         "scanner.cc",
         "parser.cc",
     ],
+    linkopts = ["-Wl,-lstdc++fs"],  # std::experimental::filesystem
     copts = [
         "-Wno-implicit-fallthrough",
         "-O2",

@@ -33,14 +33,15 @@
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/number.pb.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <experimental/filesystem>
 #include <fstream>
 #include <list>
 #include <memory>
-#include <algorithm>
-#include <string>
 #include <optional>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_join.h"
@@ -94,19 +95,19 @@ struct TagsLinks {
 #include "reflex/input.h"
 
 namespace beancount {
-
-using std::string_view;
+namespace filesystem = std::experimental::filesystem;
+using absl::StrFormat;
+using google::protobuf::FieldDescriptor;
+using google::protobuf::TextFormat;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::list;
 using std::pair;
 using std::string;
+using std::string_view;
 using std::unique_ptr;
 using std::vector;
-using absl::StrFormat;
-using google::protobuf::FieldDescriptor;
-using google::protobuf::TextFormat;
 
 namespace scanner {
 // TODO(blais): Move this code to scanner.lxx?
@@ -270,6 +271,21 @@ public:
   string_view Account(string_view account) {
     accounts_.insert({account.data(), account.size()});
     return account;
+  }
+
+  // Given a filename, if it is relative, return an absolute filename, based on
+  // the filename being parsed.
+  string MakeAbsolutePath(string_view filename) {
+    if (!filename.empty()) {
+      filesystem::path document_path(filename);
+      if (document_path.is_relative()) {
+        const string* filename = scanner_.get_location().begin.filename;
+        assert(filename);
+        filesystem::path parser_filename(*filename);
+        return parser_filename.parent_path() / document_path;
+      }
+    }
+    return string(filename);
   }
 
   //---------------------------------------------------------------------------
@@ -992,7 +1008,9 @@ document:
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* document = $$->mutable_document();
       document->set_account($account.data(), $account.size());
-      document->set_filename($filename.data(), $filename.size());
+
+      string abs_filename = builder.MakeAbsolutePath($filename);
+      document->set_filename(abs_filename);
     }
 
 /* A Note directive. */
