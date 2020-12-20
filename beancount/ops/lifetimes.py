@@ -101,6 +101,39 @@ def compress_intervals_days(intervals, num_days):
     return new_intervals
 
 
+def trim_intervals(intervals, trim_start=None, trim_end=None):
+    """Trim a list of date pairs to be within a start and end date.
+    Useful in update-style price fetching.
+
+    Args:
+      intervals: A list of pairs of datetime.date instances
+      trim_start: An inclusive starting date.
+      trim_end: An exclusive starting date.
+    Returns:
+      A list of new intervals (pairs of (date, date)).
+    """
+    new_intervals = []
+    iter_intervals = iter(intervals)
+    if(trim_start is not None and
+       trim_end is not None and
+       trim_end < trim_start):
+        raise ValueError('Trim end date is before start date')
+
+    for date_begin, date_end in iter_intervals:
+        if(trim_start is not None and
+           trim_start > date_begin):
+            date_begin = trim_start
+        if(trim_end is not None):
+            if(date_end is None or
+               trim_end < date_end):
+                date_end = trim_end
+
+        if(date_end is None or
+           date_begin <= date_end):
+            new_intervals.append((date_begin, date_end))
+    return new_intervals
+
+
 def compress_lifetimes_days(lifetimes_map, num_days):
     """Compress a lifetimes map to ignore short stretches of unused days.
 
@@ -139,7 +172,7 @@ def required_weekly_prices(lifetimes_map, date_last):
         for date_begin, date_end in intervals:
             # Find first Friday before the minimum date.
             diff_days = 4 - date_begin.weekday()
-            if diff_days > 1:
+            if diff_days >= 1:
                 diff_days -= 7
             date = date_begin + datetime.timedelta(days=diff_days)
 
@@ -149,4 +182,45 @@ def required_weekly_prices(lifetimes_map, date_last):
             while date < date_end:
                 results.append((date, currency_pair[0], currency_pair[1]))
                 date += ONE_WEEK
+    return sorted(results)
+
+
+def required_daily_prices(lifetimes_map, date_last, weekdays_only=False):
+    """Enumerate all the commodities and days where the price is required.
+
+    Given a map of lifetimes for a set of commodities, enumerate all the days
+    for each commodity where it is active. This can be used to connect to a
+    historical price fetcher routine to fill in missing price entries from an
+    existing ledger.
+
+    Args:
+      lifetimes_map: A dict of currency to active intervals as returned by
+        get_commodity_lifetimes().
+      date_last: A datetime.date instance, the last date which we're interested in.
+      weekdays_only: Option to limit fetching to weekdays only.
+    Returns:
+      Tuples of (date, currency, cost-currency).
+    """
+    results = []
+    for currency_pair, intervals in lifetimes_map.items():
+        if currency_pair[1] is None:
+            continue
+        for date_begin, date_end in intervals:
+            # Find first Weekday starting on or before minimum date.
+            date = date_begin
+            if(weekdays_only):
+                diff_days = 4 - date_begin.weekday()
+                if diff_days < 0:
+                    date += datetime.timedelta(days=diff_days)
+
+            # Iterate over all weekdays.
+            if date_end is None:
+                date_end = date_last
+            while date < date_end:
+                results.append((date, currency_pair[0], currency_pair[1]))
+                if weekdays_only and date.weekday() == 4:
+                    date += 3 * ONEDAY
+                else:
+                    date += ONEDAY
+
     return sorted(results)

@@ -190,11 +190,105 @@ class TestCompressLifetimes(test_utils.TestCase):
             compressed = lifetimes.compress_intervals_days(intervals, num_days)
             self.assertEqual(expected, compressed)
 
+class TestTrimLifetimes(test_utils.TestCase):
+
+    def test_single_closed(self):
+        intervals = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10))]
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           None,
+                                           None)
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 7), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           None)
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 3))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           None,
+                                           datetime.date(2014, 3, 3))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 7), datetime.date(2014, 3, 3))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           datetime.date(2014, 3, 3))
+        self.assertEqual(expected, trimmed)
+
+        expected = []
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 1, 2),
+                                           datetime.date(2014, 2, 2))
+        self.assertEqual(expected, trimmed)
+
+        expected = []
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 3, 11),
+                                           datetime.date(2014, 3, 20))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 3))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 1, 2),
+                                           datetime.date(2014, 3, 3))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 7), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           datetime.date(2014, 3, 20))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 1, 2),
+                                           datetime.date(2014, 3, 20))
+        self.assertEqual(expected, trimmed)
+
+    def test_single_open(self):
+        intervals = [(datetime.date(2014, 2, 3), None)]
+        expected = [(datetime.date(2014, 2, 3), None)]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           None,
+                                           None)
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 7), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           datetime.date(2014, 3, 10))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           None,
+                                           datetime.date(2014, 3, 10))
+        self.assertEqual(expected, trimmed)
+
+        expected = [(datetime.date(2014, 2, 7), None)]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           None)
+        self.assertEqual(expected, trimmed)
+
+    def test_multiple(self):
+        intervals = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
+                     (datetime.date(2014, 3, 20), datetime.date(2014, 7, 1))]
+        expected = [(datetime.date(2014, 2, 7), datetime.date(2014, 3, 10)),
+                    (datetime.date(2014, 3, 20), datetime.date(2014, 5, 1))]
+        trimmed = lifetimes.trim_intervals(intervals,
+                                           datetime.date(2014, 2, 7),
+                                           datetime.date(2014, 5, 1))
+        self.assertEqual(expected, trimmed)
+
 
 class TestLifetimeDateIterators(test_utils.TestCase):
 
     def test_iter_weeks(self):
-        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 3),
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 6),
                                             datetime.date(2014, 3, 10)),
                                            (datetime.date(2014, 5, 20),
                                             datetime.date(2014, 7, 1))],
@@ -216,6 +310,52 @@ class TestLifetimeDateIterators(test_utils.TestCase):
                           (datetime.date(2014, 6, 20), 'AAPL', 'USD'),
                           (datetime.date(2014, 6, 27), 'AAPL', 'USD')],
                          required_prices)
+
+    def test_iter_weekdays(self):
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 2),
+                                            datetime.date(2014, 2, 10)),
+                                           (datetime.date(2014, 5, 20),
+                                            datetime.date(2014, 5, 24))],
+                         ('USD', None): [(datetime.date(2014, 1, 1), None)]}
+
+        required_prices = list(lifetimes.required_daily_prices(lifetimes_map,
+                                                               datetime.date(2014, 9, 1),
+                                                               True))
+        self.assertEqual([(datetime.date(2014, 1, 31), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 3), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 4), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 5), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 6), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 7), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 20), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 21), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 22), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 23), 'AAPL', 'USD')],
+                        required_prices)
+
+    def test_iter_days(self):
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 2),
+                                            datetime.date(2014, 2, 10)),
+                                           (datetime.date(2014, 5, 20),
+                                            datetime.date(2014, 5, 24))],
+                           ('USD', None): [(datetime.date(2014, 1, 1), None)]}
+
+        required_prices = list(lifetimes.required_daily_prices(lifetimes_map,
+                                                                datetime.date(2014, 9, 1),
+                                                                False))
+        self.assertEqual([(datetime.date(2014, 2, 2), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 3), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 4), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 5), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 6), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 7), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 8), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 9), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 20), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 21), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 22), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 23), 'AAPL', 'USD')],
+                        required_prices)
 
 
 if __name__ == '__main__':
