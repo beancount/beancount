@@ -254,12 +254,6 @@ message Options {
   }
   optional ProcessingMode plugin_processing_mode = 16;
 
-  // The number of lines beyond which a multi-line string will trigger an
-  // overly long line warning. This warning is meant to help detect a dangling
-  // quote by warning users of unexpectedly long strings.
-  // e.g., 64.
-  optional int32 long_string_maxlines = 17;
-
   // The booking method to apply to ambiguous reductions of inventory lots.
   // When a posting is matched against the contents of an account's inventory
   // to reduce its contents and multiple lots match, the method dictates how
@@ -273,9 +267,9 @@ message Options {
   // http://furius.ca/beancount/doc/proposal-booking
   //
   // e.g., STRICT
-  optional Booking booking_method = 18;
+  optional Booking booking_method = 17;
 
   // A boolean, if true, prepend the directory name of the top-level file to
   // the PYTHONPATH.
-  optional bool insert_pythonpath = 19;
+  optional bool insert_pythonpath = 18;
 }

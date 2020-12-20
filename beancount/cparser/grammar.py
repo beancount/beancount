@@ -167,10 +167,6 @@ class Builder(lexer.LexBuilder):
 
         return self.options
 
-    def get_long_string_maxlines(self):
-        """See base class."""
-        return self.options['long_string_maxlines']
-
     def store_result(self, filename, lineno, entries):
         """Start rule stores the final result here.
 
@@ -181,29 +177,6 @@ class Builder(lexer.LexBuilder):
             self.entries = entries
         # Also record the name of the processed file.
         self.options['filename'] = filename
-
-    def build_grammar_error(self, filename, lineno, exc_value,
-                            exc_type=None, exc_traceback=None):
-        """Build a grammar error and appends it to the list of pending errors.
-
-        Args:
-          filename: The current filename
-          lineno: The current line number
-          excvalue: The exception value, or a str, the message of the error.
-          exc_type: An exception type, if an exception occurred.
-          exc_traceback: A traceback object.
-        """
-        if exc_type is not None:
-            assert not isinstance(exc_value, str)
-            strings = traceback.format_exception_only(exc_type, exc_value)
-            tblist = traceback.extract_tb(exc_traceback)
-            filename, lineno, _, __ = tblist[0]
-            message = '{} ({}:{})'.format(strings[0], filename, lineno)
-        else:
-            message = str(exc_value)
-        meta = new_metadata(filename, lineno)
-        self.errors.append(
-            ParserSyntaxError(meta, message, None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
