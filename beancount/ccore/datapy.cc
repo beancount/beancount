@@ -5,17 +5,32 @@
 #include "beancount/ccore/data.pb.h"
 #include "beancount/cparser/options.pb.h"
 
+#include <string>
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "datetime.h"
 
 #include "pybind11/pybind11.h"
+//#include "pybind11/functional.h"
 #include "pybind11/stl.h"
 
 namespace beancount {
 namespace py = pybind11;
 using options::Options;
 using options::ProcessingInfo;
+
+// C++11 construct to for overload method resolution.
+template<class... Args, class T, class R>
+auto resolve(R (T::*m)(Args...)) -> decltype(m)
+{ return m; }
+
+template<class T, class R>
+auto resolve(R (T::*m)(void)) -> decltype(m)
+{ return m; }
+
+
+
 
 // Convert a date proto to a date object.
 template <typename T>
@@ -91,9 +106,10 @@ void ExportDataTypesToPython(py::module& mod) {
 
   py::class_<Location>(mod, "Location")
     .def("__str__", &Directive::DebugString)
-    .def_property_readonly("filename", &Location::filename)
-    .def_property_readonly("lineno", &Location::lineno)
-    .def_property_readonly("lineno_end", &Location::lineno_end)
+    .def_property("filename", &Location::filename,
+                  resolve<const std::string&>(&Location::set_filename))
+    .def_property("lineno", &Location::lineno, &Location::set_lineno)
+    .def_property("lineno_end", &Location::lineno_end, &Location::set_lineno_end)
     ;
 
   py::class_<Transaction>(mod, "Transaction")

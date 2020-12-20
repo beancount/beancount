@@ -35,7 +35,10 @@ class CppParserModuleTests(unittest.TestCase):
     # print("XX5 ", ledger.info)
     for entry in itertools.islice(ledger.directives, 100):
       print(entry.location)
-      print(entry.transaction)
+      entry.location.filename = entry.location.filename + "XXX"
+      entry.location.lineno += 10000000
+      print(entry.location)
+
       #print(entry.date, entry.date.month)
       #print(entry.location.filename, entry.location.lineno)
 
