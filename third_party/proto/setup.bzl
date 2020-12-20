@@ -44,6 +44,29 @@ def setup_proto():
         )
 
 
+def setup_upb():
+    # upb, a smaller alternative to protobuf.
+    if not native.existing_rule("upb"):
+        if True:
+            native.local_repository(
+                name = "upb",
+                path = "/home/blais/src/github/protocolbuffers/upb",
+            )
+        else:
+            http_archive(
+                name = "upb",
+                sha256 = "602e7530c975d6a5731fff06132ae615100a28058044dd508746f1b63c0a0eae",
+                strip_prefix = "upb-b10b02f66f0dfa055b676770ff394bad9f4d9df0",
+                urls = ["https://github.com/protocolbuffers/upb/archive/b10b02f66f0dfa055b676770ff394bad9f4d9df0.tar.gz"],
+            )
+
+    if not native.existing_rule("upb_extras"):
+        native.local_repository(
+            name = "upb_extras",
+            path = "/home/blais/p/upb-extras",
+        )
+
+
 def setup_riegeli():
     # 2020-12-08
     http_archive(
