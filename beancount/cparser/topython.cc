@@ -140,6 +140,83 @@ void yyerror(const location& loc, yyscan_t scanner, PyObject* builder, char cons
 }
 
 
+#-------------------------------------------------------------------------------
+# From lexer
+
+#if 0
+// TODO(blais): I want to move all this to the parser side.
+// There should be no error handling in the scanner other than issuing 'error'
+// tokens (with a message, somehow).
+void build_lexer_error(const parser::location& loc, PyObject* builder, const char* format, ...) {
+    PyObject* error;
+    PyObject* rv;
+    va_list va;
+
+    va_start(va, format);
+    error = PyUnicode_FromFormatV(format, va);
+    va_end(va);
+
+    if (!error) {
+        return;
+    }
+
+    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
+                             loc.begin.filename, loc.begin.line, error);
+
+    Py_XDECREF(rv);
+    Py_XDECREF(error);
+}
+
+// TODO(blais): This was used by build_EXCEPTION to dispatch errors
+// automatically on failure to call in Python. The new code will have to do
+// something in the builder. Restore the functionality on the new builder. This
+// is currently unused.
+void build_lexer_error_from_exception(const parser::location& loc, PyObject* builder) {
+    PyObject* type;
+    PyObject* value;
+    PyObject* traceback;
+
+    PyErr_Fetch(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
+
+    build_lexer_error(loc, builder, "%s: %S", PyExceptionClass_Name(type), value);
+
+    Py_XDECREF(type);
+    Py_XDECREF(value);
+    Py_XDECREF(traceback);
+}
+#endif
+
+// TODO(blais): Remove lexer_error() with exception; set the name of the derived
+// class of the scanner. Replace build_lexer_error_from_exception() by a call to
+// my own version of lexer_error().
+//
+//   -s, −−nodefault
+//   This suppresses the default rule that echoes all unmatched input text when no
+//   rule matches. With the −−flex option, the scanner reports "scanner jammed"
+//   when no rule matches by calling yyFlexLexer::LexerError("scanner jammed").
+//   Without the −−flex and −−debug options, a std::runtime exception is raised by
+//   invoking AbstractLexer::lexer_error("scanner jammed"). To throw a custom
+//   exception instead, use option −−exception or override the virtual method
+//   lexer_error in a derived lexer class. The virtual methods LexerError and
+//   lexer_error may be redefined by a user-specified derived lexer class, see
+//   Inheriting Lexer/yyFlexLexer . Without the −−flex option, but with the
+//   −−debug option, the default rule is suppressed without invoking lexer_error
+//   to raise an exception. See also options −−exception=VALUE and -S (or −−find).
+//
+// One suboptimal way to handle this situation would be for the scanner to
+// provide access to the builder--it can, as the actual derived class for the
+// scanner is actually defined in the parser.yxx file-- and to log error
+// messages from here. However, I think it would be much more elegant to weave
+// error messages through to the error token somehow.
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# From parser
+
 
     def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):
@@ -163,3 +240,14 @@ void yyerror(const location& loc, yyscan_t scanner, PyObject* builder, char cons
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
+
+
+#-------------------------------------------------------------------------------
+# New error handling
+
+From scanner:
+beancount::parser::Parser::syntax_error(location(), "Unknown token.")
+    return Parser::make_YYerror(error_message, location());
+
+virtual void AbstractLexer::lexer_error(const char *message = NULL)
+virtual void FlexLexer::LexerError(const char *s) ///< error message

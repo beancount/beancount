@@ -36,12 +36,12 @@ def setup_absl():
         #  pick a recent release.
         #  Hit the 'clipboard with a left arrow' icon to copy the commit hex
         #
-        # 2020-05-08
+        # 2020-09-23
         http_archive(
             name = "com_google_absl",
-            url = "https://github.com/abseil/abseil-cpp/archive/c45d1c09d517e145d722e00deea9be6c8be8dd57.tar.gz",
-            sha256 = "29b3781679d58af5f26d5a889b9710ade67b7b259f198d3a5025ca7b014b5789",
-            strip_prefix = "abseil-cpp-c45d1c09d517e145d722e00deea9be6c8be8dd57",
+            url = "https://github.com/abseil/abseil-cpp/archive/20200923.2.tar.gz",
+            sha256 = "bf3f13b13a0095d926b25640e060f7e13881bd8a792705dd9e161f3c2b9aa976",
+            strip_prefix = "abseil-cpp-20200923.2",
         )
 
 

@@ -12,8 +12,10 @@
 
 #include "reflex/matcher.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/escaping.h"
 #include "absl/time/civil_time.h"
+#include "absl/status/statusor.h"
 
 namespace beancount {
 namespace scanner {
@@ -33,7 +35,7 @@ inline string_view view(const reflex::Matcher& m) {
 void CopyNoCommas(const char* src, char* buffer);
 
 // Convert date string to (year, month, date).
-absl::CivilDay ParseDateFromString(const char* string);
+absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string);
 
 // Convert time string to (hour, minute, second).
 absl::CivilSecond ParseTimeFromString(const char* string);
@@ -58,7 +60,24 @@ absl::CivilSecond ParseTimeFromString(const char* string);
 %option bison-cc-namespace=beancount::parser
 %option bison-cc-parser=Parser
 
-// Throw an exception in the scanner's default rule.
+// Redirect scanner errors to raising a parser-level exception. The doc says:
+//
+//   This suppresses the default rule that echoes all unmatched input text when
+//   no rule matches. With the −−flex option, the scanner reports "scanner
+//   jammed" when no rule matches by calling yyFlexLexer::LexerError("scanner
+//   jammed"). Without the −−flex and −−debug options, a std::runtime exception
+//   is raised by invoking AbstractLexer::lexer_error("scanner jammed"). To
+//   throw a custom exception instead, use option −−exception or override the
+//   virtual method lexer_error in a derived lexer class. The virtual methods
+//   LexerError and lexer_error may be redefined by a user-specified derived
+//   lexer class, see Inheriting Lexer/yyFlexLexer . Without the −−flex option,
+//   but with the −−debug option, the default rule is suppressed without
+//   invoking lexer_error to raise an exception. See also options
+//   −−exception=VALUE and -S (or −−find)."
+//
+// Note: syntax_error is never really invoked; because we have a default
+// matching rule that gobbles up invalid tokens.
+%option nodefault
 %option exception="beancount::parser::Parser::syntax_error(location(), \"Unknown token.\")"
 
 // TODO(blais): Figure out if I should put the actual derived class for the
@@ -72,8 +91,6 @@ absl::CivilSecond ParseTimeFromString(const char* string);
 %option unicode
 
 %option indent
-%option nodefault
-
 %option fast
 
 
@@ -82,8 +99,8 @@ absl::CivilSecond ParseTimeFromString(const char* string);
 %x IGNORE
 
 // Patterns for the international components of the names of accounts.
-ACCOUNTTYPE     [\p{Lu}][\p{L}\p{Nd}\-]*
-ACCOUNTNAME     [\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*
+ACCOUNTTYPE     [\p{Lu}\p{Lo}][\p{L}\p{N}\-]*
+ACCOUNTNAME     [\p{Lu}\p{Lo}\p{N}][\p{L}\p{N}\-]*
 
 // Characters that may be used as flags. Make sure to include all the
 // values from beancount.core.flags to allow round-trips between text
@@ -165,7 +182,11 @@ NULL {
 
  /* Dates. */
 [0-2][0-9]{3,}[\-/][0-9]{2,}[\-/][0-9]{2,} {
-  return Parser::make_DATE(ParseDateFromString(text()), location());
+  auto stdate = ParseDateFromString(text());
+  if (!stdate.ok()) {
+    return Parser::make_YYerror(stdate.status().ToString(), location());
+  }
+  return Parser::make_DATE(stdate.value(), location());
 }
 
  /* Account names. */
@@ -182,27 +203,43 @@ NULL {
 
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
+  // Check for very long strings and issue an error. This helps narrow down
+  // errors when an unterminated string occurs.
+  if (matcher().size() >= 16384) {
+    return Parser::make_YYerror("String too long", location());
+  }
+
   // TODO(blais): Add state to the scanner for specific encoding.
-  string_view view(matcher().begin()+1, matcher().size()-2);
+  const char* start = matcher().begin() + 1;
+  ssize_t size = matcher().size() - 2;
+  string_view view(start, size);
   std::string unescaped;
   std::string error_message;
   if (!absl::CUnescape(view, &unescaped, &error_message)) {
     return Parser::make_YYerror(error_message, location());
   }
+
   // TODO(blais): Copy over the existing buffer to avoid reallocation. Review
   // all usage of string_view to ensure buffer safety during rule processing and
-  // measure impact. See {96464129e441}.
-  unescaped.copy((char*)view.data(), unescaped.size());
-  string_view view_unescaped(view.data(), unescaped.size());
+  // measure impact. See {96464129e441}. We make sure the buffer's filled beyond
+  // escaping area for unit tests.
+  unescaped.copy((char*)start, unescaped.size());
+  string_view view_unescaped(start, unescaped.size());
+  char* end = (char*)start + unescaped.size();
+  for (; end < start + size; ++end) {
+    *end = '_';
+  }
+
   return Parser::make_STRING(view_unescaped, location());
 }
 
  /* Numbers. */
 ([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? {
   // Strip commas from the local buffer (without allocating memory).
-  static char buffer[256];
-  assert(size() < 255);
-  CopyNoCommas(text(), buffer);
+  static char buffer[1024];
+  if (size() < 1024) {
+    CopyNoCommas(text(), buffer);
+  }
   decimal::Decimal number(buffer);
   return Parser::make_NUMBER(number, location());
 }
@@ -250,6 +287,7 @@ NULL {
   oss << "Invalid token: '" << str() << "'";
   std::string error_message = oss.str();
 
+  // Go back to initial state.
   start(INITIAL);
 
   // Return special error token generated by Bison.
@@ -300,7 +338,7 @@ int strtonl(const char* string, size_t len) {
 
 #define DIGITS "0123456789"
 
-absl::CivilDay ParseDateFromString(const char* string) {
+absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string) {
   // Note: You could make this faster with a fixed size for dates.
   size_t n = strspn(string, DIGITS);
   int year = strtonl(string, n);
@@ -313,8 +351,13 @@ absl::CivilDay ParseDateFromString(const char* string) {
   n = strspn(string, DIGITS);
   int day = strtonl(string, n);
 
-  // TODO(blais): Handle failure to create here, with invalid numerical values.
-  return absl::CivilDay{year, month, day};
+  // Build date and detect invalid values out of range.
+  auto date = absl::CivilDay{year, month, day};
+  if (date.year() != year || date.month() != month || date.day() != day) {
+    return absl::InvalidArgumentError(absl::StrCat("Invalid time: ", string));
+  }
+
+  return date;
 }
 
 absl::CivilSecond ParseTimeFromString(const char* string) {
@@ -337,76 +380,6 @@ absl::CivilSecond ParseTimeFromString(const char* string) {
   // TODO(blais): Handle failure to create here, e.g., with 26:00:00
   return absl::CivilSecond{hour, minute, second};
 }
-
-
-
-#if 0
-// TODO(blais): I want to move all this to the parser side.
-// There should be no error handling in the scanner other than issuing 'error'
-// tokens (with a message, somehow).
-void build_lexer_error(const parser::location& loc, PyObject* builder, const char* format, ...) {
-    PyObject* error;
-    PyObject* rv;
-    va_list va;
-
-    va_start(va, format);
-    error = PyUnicode_FromFormatV(format, va);
-    va_end(va);
-
-    if (!error) {
-        return;
-    }
-
-    rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
-                             loc.begin.filename, loc.begin.line, error);
-
-    Py_XDECREF(rv);
-    Py_XDECREF(error);
-}
-
-// TODO(blais): This was used by build_EXCEPTION to dispatch errors
-// automatically on failure to call in Python. The new code will have to do
-// something in the builder. Restore the functionality on the new builder. This
-// is currently unused.
-void build_lexer_error_from_exception(const parser::location& loc, PyObject* builder) {
-    PyObject* type;
-    PyObject* value;
-    PyObject* traceback;
-
-    PyErr_Fetch(&type, &value, &traceback);
-    PyErr_NormalizeException(&type, &value, &traceback);
-
-    build_lexer_error(loc, builder, "%s: %S", PyExceptionClass_Name(type), value);
-
-    Py_XDECREF(type);
-    Py_XDECREF(value);
-    Py_XDECREF(traceback);
-}
-#endif
-
-// TODO(blais): Remove lexer_error() with exception; set the name of the derived
-// class of the scanner. Replace build_lexer_error_from_exception() by a call to
-// my own version of lexer_error().
-//
-//   -s, −−nodefault
-//   This suppresses the default rule that echoes all unmatched input text when no
-//   rule matches. With the −−flex option, the scanner reports "scanner jammed"
-//   when no rule matches by calling yyFlexLexer::LexerError("scanner jammed").
-//   Without the −−flex and −−debug options, a std::runtime exception is raised by
-//   invoking AbstractLexer::lexer_error("scanner jammed"). To throw a custom
-//   exception instead, use option −−exception or override the virtual method
-//   lexer_error in a derived lexer class. The virtual methods LexerError and
-//   lexer_error may be redefined by a user-specified derived lexer class, see
-//   Inheriting Lexer/yyFlexLexer . Without the −−flex option, but with the
-//   −−debug option, the default rule is suppressed without invoking lexer_error
-//   to raise an exception. See also options −−exception=VALUE and -S (or −−find).
-//
-// One suboptimal way to handle this situation would be for the scanner to
-// provide access to the builder--it can, as the actual derived class for the
-// scanner is actually defined in the parser.yxx file-- and to log error
-// messages from here. However, I think it would be much more elegant to weave
-// error messages through to the error token somehow.
-
 
 // Have another go at inserting time after date.
 // TODO(blais): bring this back, it seems to make parsing signicantly slower.

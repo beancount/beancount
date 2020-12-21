@@ -65,22 +65,22 @@ cc_library(
         ":ledger",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@mpdecimal//:mpdecimal",
     ],
 )
 
-# TODO(blais): Bring this back, using C++ only, ditto for parser (with text-formatted protos).
-# cc_test(
-#     name = "scanner_test",
-#     srcs = ["scanner_test.cc"],
-#     deps = [
-#         # ":test_utils",
-#         ":parser",
-#         "@com_google_googletest//:gtest_main",
-#     ],
-# )
+cc_test(
+    name = "scanner_test",
+    srcs = ["scanner_test.cc"],
+    deps = [
+        ":test_utils",
+        ":parser",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
 
 # cc_test(
 #     name = "parser_test",
@@ -204,4 +204,32 @@ cc_library(
         "//beancount:defs",
         "@com_google_protobuf//:protobuf",
     ]
+)
+
+#-------------------------------------------------------------------------------
+
+cc_library(
+    name = "test_utils",
+    srcs = [
+        "test_utils.cc"
+    ],
+    hdrs = [
+        "test_utils.h"
+    ],
+    deps = [
+        #":data_cc_pb2",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "test_utils_test",
+    srcs = ["test_utils_test.cc"],
+    deps = [
+        ":test_utils",
+        #":data_cc_pb2",
+        "@com_google_protobuf//:protobuf",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
