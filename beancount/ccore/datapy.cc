@@ -29,10 +29,8 @@ template<class T, class R>
 auto resolve(R (T::*m)(void)) -> decltype(m)
 { return m; }
 
-
-
-
 // Convert a date proto to a date object.
+// Note: this requried initialization of PyDateTimeAPI in this compilation unit.
 template <typename T>
 py::object GetDate(const T& parent) {
   const auto& date = parent.date();
@@ -47,6 +45,11 @@ py::object GetDate(const T& parent) {
 // techniques. However, this project is still burgeoning and needs some active
 // involvement in order to debug and complete.
 void ExportDataTypesToPython(py::module& mod) {
+  // Lazy initialise the PyDateTime import.
+  if (!PyDateTimeAPI) {
+    PyDateTime_IMPORT;
+  }
+
   // TODO(blais): In order to replace missing oneof functionality.
   py::enum_<Directive::BodyCase>(mod, "BodyCase")
     .value("kTransaction", Directive::BodyCase::kTransaction)
