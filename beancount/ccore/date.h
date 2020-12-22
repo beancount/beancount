@@ -11,6 +11,7 @@
 #include <cassert>
 
 #include "absl/time/civil_time.h"
+#include "absl/status/statusor.h"
 
 namespace beancount {
 
@@ -21,6 +22,13 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
   proto->set_month(date.month());
   proto->set_day(date.day());
 }
+
+// Convert date string in YYYY.MM.DD format to (year, month, date).
+// Only the first 10 characters are inspected; the string need not be zero-terminated.
+absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string);
+
+// Convert time string in hh::mm or hh:mm:ss format to civil seconds.
+absl::StatusOr<absl::CivilSecond> ParseTimeFromString(const char* string, size_t length=0);
 
 }  // namespace beancount
 
