@@ -123,42 +123,6 @@ public:
     line_offset_ = line_offset;
   }
 
-#if 0
-  // TODO(blais): You'll probably remove this, use the @$ Bison construct or
-  // default action to set the global location for the rule in the parser.
-  // https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html
-
-  // Override the location to include the filename.
-  beancount::parser::location location() override {
-    /* yylloc.begin.line = static_cast<unsigned int>(matcher().lineno()); */
-    /* yylloc.begin.column = static_cast<unsigned int>(matcher().columno()); */
-    /* yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end()); */
-    /* yylloc.end.column = static_cast<unsigned int>(matcher().columno_end()); */
-    auto yylloc = scanner::Scanner::location();
-    yylloc.begin.filename = &this->filename;
-    if (line_offset_ > 0) {
-      yylloc.begin.line += line_offset_;
-      yylloc.end.line += line_offset_;
-    }
-    return yylloc;
-  }
-#endif
-
-  beancount::parser::location get_location() const {
-    // Get around insufficiently const generated RE/flex base.
-    return const_cast<ScannerWithFile*>(this)->location();
-  }
-
-  // TODO(blais): Do we still need this? At least catch the exception.
-  virtual void lexer_error(const char* message) override {
-    cerr << "Scanner::lexer_error: ";
-    if (message) {
-      cerr << *message;
-    }
-    cerr << endl;
-    return scanner::Scanner::lexer_error(message);
-  }
-
 private:
   int line_offset_ = 0;
 };
@@ -171,7 +135,7 @@ namespace parser {
 // assumed to be ordered, resolving references occurs as a separate phase.
 class Builder {
 public:
-  Builder(const scanner::ScannerWithFile& scanner);
+  Builder(scanner::ScannerWithFile& scanner);
   virtual ~Builder() {
     for (auto* directive : directives_) delete directive;
     for (auto* error : errors_) delete error;
@@ -271,7 +235,7 @@ public:
     if (!filename.empty()) {
       filesystem::path document_path(filename);
       if (document_path.is_relative()) {
-        const string* filename = scanner_.get_location().begin.filename;
+        const string* filename = scanner_.location().begin.filename;
         assert(filename);
         filesystem::path parser_filename(*filename);
         return parser_filename.parent_path() / document_path;
@@ -503,7 +467,7 @@ public:
   void LogError(const string& message) {
     // TODO(blais):
     /// scanner_.location()
-    std::cerr << scanner_.get_location() << ": " << message << std::endl;
+    std::cerr << scanner_.location() << ": " << message << std::endl;
   }
   // TODO(blais): Can we turn this error logging into a stream instead?
 
@@ -570,7 +534,7 @@ private:
   decimal::Context context_;
 
   // Scanner (in order to get the last location).
-  const scanner::ScannerWithFile& scanner_;
+  scanner::ScannerWithFile& scanner_;
 
   // A set of all unique account names seen in the file.
   absl::flat_hash_set<string> accounts_;
@@ -1647,7 +1611,7 @@ void beancount::parser::Parser::error(const location& loc, const string& msg)
 namespace beancount {
 namespace parser {
 
-Builder::Builder(const scanner::ScannerWithFile& scanner) :
+Builder::Builder(scanner::ScannerWithFile& scanner) :
   scanner_(scanner)
 {
   info_.reset(new options::ProcessingInfo());
