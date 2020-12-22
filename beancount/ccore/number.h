@@ -59,6 +59,10 @@ bool operator==(const Number& proto1, const Number& proto2);
 // Streaming operator for Number proto.
 std::ostream& operator<<(std::ostream& os, const Number& proto);
 
+// Copy `src` to `buffer` stripping commas on the way, for a fixed number of
+// characters.
+void CopySansCommas(const char* src, char* buffer, size_t num_chars);
+
 }  // namespace beancount
 
 #endif // BEANCOUNT_CCORE_NUMBER_H_

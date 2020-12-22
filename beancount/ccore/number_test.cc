@@ -22,5 +22,17 @@ TEST(TestNumber, Decimal) {
   std::cout << dec << std::endl;
 }
 
+TEST(TestNumber, CopySansCommas) {
+  const char* src = "123,456,678,9AB";
+  char dst[20];
+  std::fill_n(dst, 20, '\0');
+  CopySansCommas(src, dst, 8);
+  EXPECT_STREQ("123456", dst);
+
+  std::fill_n(dst, 20, '\0');
+  CopySansCommas(src, dst, 7);
+  EXPECT_STREQ("123456", dst);
+}
+
 }  // namespace
 }  // namespace beancount
