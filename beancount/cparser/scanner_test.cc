@@ -61,7 +61,8 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
   symbol_tuples symbols;
   while (true) {
     auto token = scanner.lex();
-    if (token.type_get() == symbol::S_YYEOF) {
+    auto token_type = token.type_get();
+    if (token_type == symbol::S_YYEOF) {
       break;
     }
     // Note: the matcher will always return the full pattern matched, not the
@@ -70,7 +71,24 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
     // Also, you could include the error message for YYerror here. We ignore it
     // for now.
     int lineno = scanner.matcher().lineno();
-    symbols.push_back({token.type_get(), lineno, scanner.matcher().text()});
+
+    // Get the original text matched in the input stream, or, if this is a
+    // STRING typed token, the resultant parsed string included.
+    string value;
+    if (token_type == symbol::S_YYerror ||
+        token_type == symbol::S_ACCOUNT ||
+        token_type == symbol::S_CURRENCY ||
+        token_type == symbol::S_STRING ||
+        token_type == symbol::S_TAG ||
+        token_type == symbol::S_LINK ||
+        token_type == symbol::S_KEY) {
+      value = token.value.as<std::string>();
+    } else {
+      value = scanner.matcher().str();
+    }
+
+    // Add the symbol to the list.
+    symbols.push_back({token.type_get(), lineno, value});
   }
   return symbols;
 }
@@ -110,9 +128,9 @@ TEST(ScannerTest, BasicTokens) {
         {symbol::S_CURRENCY, 5, "TEST-3"},
         {symbol::S_CURRENCY, 5, "NT"},
         {symbol::S_EOL,      5, "\n"},
-        {symbol::S_STRING,   6, "\"Nice dinner at Mermaid Inn\""},
+        {symbol::S_STRING,   6, "Nice dinner at Mermaid Inn"},
         {symbol::S_EOL,      6, "\n"},
-        {symbol::S_STRING,   7, "\"\""},
+        {symbol::S_STRING,   7, ""},
         {symbol::S_EOL,      7, "\n"},
         {symbol::S_NUMBER,   8, "123"},
         {symbol::S_NUMBER,   8, "123.45"},
@@ -122,9 +140,9 @@ TEST(ScannerTest, BasicTokens) {
         {symbol::S_MINUS,    8, "-"},
         {symbol::S_NUMBER,   8, "123.456789"},
         {symbol::S_EOL,      8, "\n"},
-        {symbol::S_TAG,      9, "#sometag123"},
+        {symbol::S_TAG,      9, "sometag123"},
         {symbol::S_EOL,      9, "\n"},
-        {symbol::S_LINK,     10, "^sometag123"},
+        {symbol::S_LINK,     10, "sometag123"},
         {symbol::S_EOL,      10, "\n"},
         {symbol::S_KEY,      11, "somekey"},
         {symbol::S_COLON,    11, ":"},
@@ -150,7 +168,7 @@ TEST(ScannerTest, UnicodeAccountName) {
         //
         {symbol::S_KEY,     3, u8"abc1"},
         {symbol::S_COLON,   3, u8":"},
-        {symbol::S_YYerror, 3, u8"abc1"},
+        {symbol::S_YYerror, 3, u8"Invalid token: 'abc1'"},
         {symbol::S_EOL,     3, u8"\n"},
         //
         {symbol::S_ACCOUNT, 4, u8"ΑβγⅠ:ΑβγⅠ"},
@@ -279,7 +297,7 @@ TEST(ScannerTest, NumberDots) {
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_NUMBER,   1, "1.234"},
-        {symbol::S_YYerror,  1, ".00"},
+        {symbol::S_YYerror,  1, "Invalid token: '.00'"},
         {symbol::S_CURRENCY, 1, "USD"},
         {symbol::S_EOL,      1, "\n"},
       }));
@@ -291,7 +309,7 @@ TEST(ScannerTest, NumberNoInteger) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror,  1, ".2347"},
+        {symbol::S_YYerror,  1, "Invalid token: '.2347'"},
         {symbol::S_CURRENCY, 1, "USD"},
         {symbol::S_EOL,      1, "\n"},
       }));
@@ -320,13 +338,24 @@ TEST(ScannerTest, CurrencyDash) {
       }));
 }
 
-TEST(ScannerTest, BadDate) {
+TEST(ScannerTest, BadDateInvalidToken) {
   const char* test = u8R"(
     2013-12-98
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror, 1, "2013-12-98"},
+        {symbol::S_YYerror, 1, "Invalid date: '2013-12-98'"},
+        {symbol::S_EOL,     1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, BadDateValidButInvalid) {
+  const char* test = u8R"(
+    2013-15-01
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_YYerror, 1, "Invalid date: '2013-15-01'"},
         {symbol::S_EOL,     1, "\n"},
       }));
 }
@@ -337,8 +366,9 @@ TEST(ScannerTest, DateFollowedByNumber) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror, 1, "2013-12-228"},
-        {symbol::S_EOL,     1, "\n"},
+        {symbol::S_DATE,   1, "2013-12-22"},
+        {symbol::S_NUMBER, 1, "8"},
+        {symbol::S_EOL,    1, "\n"},
       }));
 }
 
@@ -365,7 +395,7 @@ TEST(ScannerTest, AccountNamesWithNumbers) {
         {symbol::S_EOL,     1, "\n"},
         {symbol::S_ACCOUNT, 2, "Assets:99Test"},
         {symbol::S_EOL,     2, "\n"},
-        {symbol::S_YYerror, 3, "Assets:signals"},
+        {symbol::S_YYerror, 3, "Invalid token: 'Assets:signals'"},
         {symbol::S_EOL,     3, "\n"},
       }));
 }
@@ -388,7 +418,7 @@ TEST(ScannerTest, InvalidDirective) {
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_DATE,     1, "2008-03-01"},
-        {symbol::S_YYerror,  1, "check"},
+        {symbol::S_YYerror,  1, "Invalid token: 'check'"},
         {symbol::S_ACCOUNT,  1, "Assets:BestBank:Savings"},
         {symbol::S_NUMBER,   1, "2340.19"},
         {symbol::S_CURRENCY, 1, "USD"},
@@ -463,14 +493,11 @@ TEST(ScannerTest, StringEscaped) {
     "The Great \"Juju\""
     "The Great \t\n\r\f\b"
   )";
-
-  std::cout << "test = '" << test << "'" << std::endl;
-
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_STRING, 1, R"("The Great "Juju"__")"},
+        {symbol::S_STRING, 1, "The Great \"Juju\""},
         {symbol::S_EOL,    1, "\n"},
-        {symbol::S_STRING, 2, "\"The Great \t\n\r\f\b_____\""},
+        {symbol::S_STRING, 2, "The Great \t\n\r\f\b"},
         {symbol::S_EOL,    2, "\n"},
       }));
 }
@@ -479,7 +506,7 @@ TEST(ScannerTest, StringNewline) {
   auto test = absl::StrCat(R"("The Great\nJuju")", "\n");
   const auto symbols = Tokenize(test, false);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_STRING, 1, "\"The Great\nJuju_\""},
+        {symbol::S_STRING, 1, "The Great\nJuju"},
         {symbol::S_EOL,    1, "\n"},
       }));
 }

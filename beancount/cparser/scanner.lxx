@@ -21,20 +21,20 @@ namespace beancount {
 namespace scanner {
 
 // Using declarations for symbols in the scanner implementation only.
-using std::string_view;
 using beancount::parser::Parser;
 using std::endl;
 using std::string;
 
 // Obtain a string_view of the current match.
-inline string_view view(const reflex::Matcher& m) {
-  return string_view(m.begin(), m.size());
+inline std::string_view view(const reflex::Matcher& m) {
+  return std::string_view(m.begin(), m.size());
 }
 
 // Copy `src` to `buffer` stripping commas on the way.
-void CopyNoCommas(const char* src, char* buffer);
+void CopyNoCommas(const char* src, char* buffer, size_t num_chars);
 
-// Convert date string to (year, month, date).
+// Convert date string in YYYY.MM.DD format to (year, month, date).
+// Only the first 10 characters are inspected; the string need not be zero-terminated.
 absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string);
 
 // Convert time string to (hour, minute, second).
@@ -181,24 +181,26 @@ NULL {
 }
 
  /* Dates. */
-[0-2][0-9]{3,}[\-/][0-9]{2,}[\-/][0-9]{2,} {
-  auto stdate = ParseDateFromString(text());
+[0-9]{4}[\-/][0-9]{2}[\-/][0-9]{2} {
+  // TODO(blais): Is it possible to add a lookahead symbol to prevent
+  // "2013-12-228" from producing a valid date + integer?
+  auto stdate = ParseDateFromString(matcher().begin());
   if (!stdate.ok()) {
-    return Parser::make_YYerror(stdate.status().ToString(), location());
+    return Parser::make_YYerror(std::string(stdate.status().message()), location());
   }
   return Parser::make_DATE(stdate.value(), location());
 }
 
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
-  return Parser::make_ACCOUNT(view(matcher()), location());
+  return Parser::make_ACCOUNT(str(), location());
 }
 
  /* Currencies. These are defined as uppercase only in order to
   * disambiguate the syntax. This is to be kept in sync with
   * beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
-  return Parser::make_CURRENCY(view(matcher()), location());
+  return Parser::make_CURRENCY(str(), location());
 }
 
  /* String literals. */
@@ -210,27 +212,14 @@ NULL {
   }
 
   // TODO(blais): Add state to the scanner for specific encoding.
-  const char* start = matcher().begin() + 1;
-  ssize_t size = matcher().size() - 2;
-  string_view view(start, size);
+  std::string_view contents(matcher().begin() + 1, matcher().size() - 2);
   std::string unescaped;
   std::string error_message;
-  if (!absl::CUnescape(view, &unescaped, &error_message)) {
+  if (!absl::CUnescape(contents, &unescaped, &error_message)) {
     return Parser::make_YYerror(error_message, location());
   }
 
-  // TODO(blais): Copy over the existing buffer to avoid reallocation. Review
-  // all usage of string_view to ensure buffer safety during rule processing and
-  // measure impact. See {96464129e441}. We make sure the buffer's filled beyond
-  // escaping area for unit tests.
-  unescaped.copy((char*)start, unescaped.size());
-  string_view view_unescaped(start, unescaped.size());
-  char* end = (char*)start + unescaped.size();
-  for (; end < start + size; ++end) {
-    *end = '_';
-  }
-
-  return Parser::make_STRING(view_unescaped, location());
+  return Parser::make_STRING(std::move(unescaped), location());
 }
 
  /* Numbers. */
@@ -238,7 +227,7 @@ NULL {
   // Strip commas from the local buffer (without allocating memory).
   static char buffer[1024];
   if (size() < 1024) {
-    CopyNoCommas(text(), buffer);
+    CopyNoCommas(matcher().begin(), buffer, matcher().size());
   }
   decimal::Decimal number(buffer);
   return Parser::make_NUMBER(number, location());
@@ -246,19 +235,19 @@ NULL {
 
  /* Tags. */
 #[A-Za-z0-9\-_/.]+ {
-  string_view view(matcher().begin()+1, matcher().size()-1);
-  return Parser::make_TAG(view, location());
+  std::string text = {matcher().begin() + 1, matcher().size() - 1};
+  return Parser::make_TAG(std::move(text), location());
 }
 
  /* Links. */
 \^[A-Za-z0-9\-_/.]+ {
-  string_view view(matcher().begin()+1, matcher().size()-1);
-  return Parser::make_LINK(view, location());
+  std::string text = {matcher().begin() + 1, matcher().size() - 1};
+  return Parser::make_LINK(std::move(text), location());
 }
 
  /* Keys. */
 [a-z][a-zA-Z0-9\-_]+/: {
-  return Parser::make_KEY(view(matcher()), location());
+  return Parser::make_KEY(str(), location());
 }
 
  /* Lines starting with an asterisk, a colon, an hash, or a character
@@ -310,9 +299,9 @@ NULL {
 namespace beancount {
 namespace scanner {
 
-void CopyNoCommas(const char* src, char* buffer) {
+void CopyNoCommas(const char* src, char* buffer, size_t num_chars) {
   char* dst = buffer;
-  for (; *src != '\0'; ++src) {
+  for (int i = 0; i < num_chars; ++i, ++src) {
     if (*src == ',')
       continue;
     *dst++ = *src;
@@ -322,6 +311,8 @@ void CopyNoCommas(const char* src, char* buffer) {
 
 namespace {
 
+// // TODO(blais): Use the version from Abseil, which is probably faster.
+//
 // Convert ASCII string to an integer. Converts the 'string' string of length
 // 'len' to int. The input is assumed to be a valid representation of an integer
 // number. No input validation or error checking is performed.
@@ -339,22 +330,16 @@ int strtonl(const char* string, size_t len) {
 #define DIGITS "0123456789"
 
 absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string) {
-  // Note: You could make this faster with a fixed size for dates.
-  size_t n = strspn(string, DIGITS);
-  int year = strtonl(string, n);
-  string += n + 1;
-
-  n = strspn(string, DIGITS);
-  int month = strtonl(string, n);
-  string += n + 1;
-
-  n = strspn(string, DIGITS);
-  int day = strtonl(string, n);
-
-  // Build date and detect invalid values out of range.
+  // Build date, parsing from fixed locations.
+  int year = strtonl(string, 4);
+  int month = strtonl(string + 5, 2);
+  int day = strtonl(string + 8, 2);
   auto date = absl::CivilDay{year, month, day};
+
+  // Detect invalid values out of range.
   if (date.year() != year || date.month() != month || date.day() != day) {
-    return absl::InvalidArgumentError(absl::StrCat("Invalid time: ", string));
+    return absl::InvalidArgumentError(
+        absl::StrCat("Invalid date: '", std::string_view(string, 10), "'"));
   }
 
   return date;

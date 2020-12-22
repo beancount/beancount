@@ -391,6 +391,10 @@ message Directive {
 // A location in an input file. This represents a span of lines.
 message Location {
   // An absolute filename path.
+  //
+  // TODO(blais): Change this to an index to the short list of filenames
+  // involved from ProcessingInfo. Make index 0 the special "no file" index for
+  // generated directives.
   optional string filename = 1;
 
   // The beginning line number.

@@ -60,8 +60,8 @@ std::unique_ptr<Ledger> ParseFile(const std::string_view& filename);
 
 // An intermediate data structure holding the partially parsed tags and links.
 struct TagsLinks {
-  std::vector<std::string_view> tags;
-  std::vector<std::string_view> links;
+  std::vector<std::string> tags;
+  std::vector<std::string> links;
 };
 
 }  // namespace parser
@@ -199,10 +199,10 @@ public:
 
   // Add a new option. This gets store into the options proto and some of the
   // values may influence parsing.
-  void AddOption(string_view key, string_view value) {
+  void AddOption(const string& key, string&& value) {
     // Check the options field and get relevant descriptors.
     const auto* descriptor = options_->GetDescriptor();
-    const auto* field = descriptor->FindFieldByName(string(key));
+    const auto* field = descriptor->FindFieldByName(key);
     if (!field) {
       LogError(StrFormat("Invalid option: '%s'", key));
       return;
@@ -215,7 +215,7 @@ public:
     }
 
     // Set the field on the options proto.
-    string value_str(value);
+    string value_str = std::move(value);
     if (field->type() == FieldDescriptor::TYPE_STRING) {
       value_str = absl::StrCat("\"", absl::CEscape(value_str), "\"");
     }
@@ -238,15 +238,15 @@ public:
     //   ParserError(meta, "Error for option '{}': {}".format(key, exc),
   }
 
-  void AddInclude(string_view filename) {
-    info_->add_include(filename.data(), filename.size());
+  void AddInclude(string&& filename) {
+    info_->add_include(filename);
   }
 
-  void AddPlugin(string_view name, optional<string_view> config) {
+  void AddPlugin(string&& name, optional<string> config) {
     auto* plugin = info_->add_plugin();
-    plugin->set_name(name.data(), name.size());
+    plugin->set_name(name);
     if (config.has_value()) {
-      plugin->set_config(config.value().data(), config.value().size());
+      plugin->set_config(std::move(config.value()));
     }
   }
 
@@ -260,14 +260,14 @@ public:
   // TODO(blais): Create an updated driver for Beancount.
 
   // TODO(blais): Remove this and replace it with post-parsing verification.
-  string_view Account(string_view account) {
-    accounts_.insert({account.data(), account.size()});
-    return account;
+  const string& Account(string&& account) {
+    auto iter = accounts_.insert(account);
+    return *iter.first;
   }
 
   // Given a filename, if it is relative, return an absolute filename, based on
   // the filename being parsed.
-  string MakeAbsolutePath(string_view filename) {
+  string MakeAbsolutePath(const string& filename) {
     if (!filename.empty()) {
       filesystem::path document_path(filename);
       if (document_path.is_relative()) {
@@ -316,12 +316,12 @@ public:
     }
   }
 
-  void PushTag(string_view tag) {
-    active_tags_.insert({tag.data(), tag.size()});
+  void PushTag(const string& tag) {
+    active_tags_.insert(tag);
   }
 
-  void PopTag(string_view tag) {
-    auto iter = active_tags_.find({tag.data(), tag.size()});
+  void PopTag(const string& tag) {
+    auto iter = active_tags_.find(tag);
     if (iter != active_tags_.end()) {
       active_tags_.erase(iter);
     } else {
@@ -338,7 +338,7 @@ public:
     value_list.push_back(value);
   }
 
-  void PopMeta(string_view key) {
+  void PopMeta(const string& key) {
     auto iter = active_meta_.find(key);
     if (iter == active_meta_.end()) {
       LogError(StrFormat("Attempting to pop absent metadata key: '%s'", key));
@@ -395,7 +395,7 @@ public:
     DecimalToProto(dec, true, proto);
   }
 
-  void UpdatePrecisionStats(const decimal::Decimal& dec, string_view currency) {
+  void UpdatePrecisionStats(const decimal::Decimal& dec, const string& currency) {
     // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
   }
 
@@ -441,7 +441,7 @@ public:
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
                       const char flag,
-                      string_view account,
+                      const string& account,
                       bool is_total,
                       const location& loc) {
     assert(posting != nullptr);
@@ -450,7 +450,7 @@ public:
     if (flag != '\0') {
       posting->set_flag(&flag, 1);
     }
-    posting->set_account(account.data(), account.size());
+    posting->set_account(account);
 
     // Check conditions renamed to price annotations.
     if (posting->has_price()) {
@@ -500,7 +500,7 @@ public:
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
-  void LogError(string_view message) {
+  void LogError(const string& message) {
     // TODO(blais):
     /// scanner_.location()
     std::cerr << scanner_.get_location() << ": " << message << std::endl;
@@ -603,7 +603,7 @@ private:
 %define api.token.prefix {TOK_}
 
 /* Special error token, redefined to carry an error message. */
-%token <std::string_view> error
+%token <std::string> error
 
 /* Types for terminal symbols */
 %token INDENT     /* Initial indent IF at the beginning of a line */
@@ -650,17 +650,17 @@ private:
 %token <bool> BOOL        /* A boolean, true or false */
 %token <absl::CivilDay> DATE        /* A date object */
 %token <decimal::Decimal> NUMBER      /* A decimal number */
-%token <std::string_view> ACCOUNT     /* The name of an account */
-%token <std::string_view> CURRENCY    /* A currency specification */
-%token <std::string_view> STRING      /* A quoted string, with any characters inside */
-%token <std::string_view> TAG         /* A tag that can be associated with a transaction */
-%token <std::string_view> LINK        /* A link that can be associated with a transaction */
-%token <std::string_view> KEY         /* A key in a key-value pair */
+%token <std::string> ACCOUNT     /* The name of an account */
+%token <std::string> CURRENCY    /* A currency specification */
+%token <std::string> STRING      /* A quoted string, with any characters inside */
+%token <std::string> TAG         /* A tag that can be associated with a transaction */
+%token <std::string> LINK        /* A link that can be associated with a transaction */
+%token <std::string> KEY         /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <char> txn
 %type <char> optflag
-%type <std::string_view> account
+%type <std::string> account
 
 %type <beancount::Directive*> transaction_line
 
@@ -680,7 +680,7 @@ private:
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> partial_amount
 %type <std::optional<decimal::Decimal>> maybe_number
-%type <std::optional<std::string_view>> maybe_currency
+%type <std::optional<std::string>> maybe_currency
 %type <beancount::Amount*> price_annotation
 %type <beancount::inter::CostSpec*> compound_amount
 %type <beancount::inter::CostSpec*> cost_comp
@@ -703,7 +703,7 @@ private:
 
 %type <std::pair<std::string, std::string>> payee_narration
 %type <beancount::parser::TagsLinks*> tags_links
-%type <std::string_view> filename
+%type <std::string> filename
 %type <options::Booking> booking
 %type <decimal::Decimal> number_expr
 
@@ -834,25 +834,25 @@ popmeta:
 option:
   OPTION STRING[key] STRING[value] eol
     {
-      builder.AddOption($key, $value);
+      builder.AddOption($key, std::move($value));
     }
 
 /* An include pragma. */
 include:
   INCLUDE STRING eol
     {
-      builder.AddInclude($2);
+      builder.AddInclude(std::move($2));
     }
 
 /* A plugin pragma, along with its optional configuration. */
 plugin:
   PLUGIN STRING eol
     {
-      builder.AddPlugin($2, {});
+      builder.AddPlugin(std::move($2), {});
     }
   | PLUGIN STRING STRING eol
     {
-      builder.AddPlugin($2, $3);
+      builder.AddPlugin(std::move($2), $3);
     }
 
 /*- Directives --------------------------------------------------------------*/
@@ -914,10 +914,10 @@ transaction_line:
 
       // Update payee and narration fields.
       if (!$pn.first.empty()) {
-        txn->set_payee($pn.first.data(), $pn.first.size());
+        txn->set_payee($pn.first);
       }
       if (!$pn.second.empty()) {
-        txn->set_narration($pn.second.data(), $pn.second.size());
+        txn->set_narration($pn.second);
       }
     }
 
@@ -927,7 +927,7 @@ price:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* price = $$->mutable_price();
-      price->set_currency($3.data(), $3.size());
+      price->set_currency(std::move($3));
       price->mutable_amount()->CopyFrom(*$amount);
     }
 
@@ -937,7 +937,7 @@ balance:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* balance = $$->mutable_balance();
-      balance->set_account($account.data(), $account.size());
+      balance->set_account($account);
 
       balance->mutable_amount()->CopyFrom(*$atol.first);
       delete $atol.first;
@@ -954,7 +954,7 @@ open:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* open = $$->mutable_open();
-      open->set_account($account.data(), $account.size());
+      open->set_account($account);
 
       for (const auto& currency : $currency_list) {
         open->add_currencies(currency);
@@ -971,7 +971,7 @@ close:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* open = $$->mutable_close();
-      open->set_account($account.data(), $account.size());
+      open->set_account($account);
     }
 
 /* A Commodity directive. */
@@ -980,7 +980,7 @@ commodity:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* commodity = $$->mutable_commodity();
-      commodity->set_currency($CURRENCY.data(), $CURRENCY.size());
+      commodity->set_currency(std::move($CURRENCY));
     }
 
 /* A Pad directive. */
@@ -989,8 +989,8 @@ pad:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* pad = $$->mutable_pad();
-      pad->set_account($3.data(), $3.size());
-      pad->set_source_account($source.data(), $source.size());
+      pad->set_account($3);
+      pad->set_source_account($source);
     }
 
 /* A Document directive. */
@@ -999,7 +999,7 @@ document:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* document = $$->mutable_document();
-      document->set_account($account.data(), $account.size());
+      document->set_account($account);
 
       string abs_filename = builder.MakeAbsolutePath($filename);
       document->set_filename(abs_filename);
@@ -1011,8 +1011,8 @@ note:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* note = $$->mutable_note();
-      note->set_account($3.data(), $3.size());
-      note->set_comment($comment.data(), $comment.size());
+      note->set_account($3);
+      note->set_comment(std::move($comment));
     }
 
 /* An Event directive. */
@@ -1021,8 +1021,8 @@ event:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* event = $$->mutable_event();
-      event->set_type($type.data(), $type.size());
-      event->set_description($description.data(), $description.size());
+      event->set_type(std::move($type));
+      event->set_description(std::move($description));
     }
 
 /* A Query directive. */
@@ -1031,8 +1031,8 @@ query:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* query = $$->mutable_query();
-      query->set_name($name.data(), $name.size());
-      query->set_query_string($qstr.data(), $qstr.size());
+      query->set_name(std::move($name));
+      query->set_query_string(std::move($qstr));
     }
 
 /* A Custom directive. Note that this directive does not support the dedicated
@@ -1043,7 +1043,7 @@ custom:
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, nullptr);
       auto* custom = $$->mutable_custom();
-      custom->set_type($type.data(), $type.size());
+      custom->set_type(std::move($type));
 
       // Copy custom values here.
       for (const auto* meta_value : $meta_value_list) {
@@ -1091,7 +1091,7 @@ metadata_line:
   KEY COLON meta_value eol
     {
       $$ = new beancount::Meta::KV();
-      $$->set_key($1.data(), $1.size());
+      $$->set_key($1);
       $$->mutable_value()->CopyFrom(*$3);
       delete $3;
     }
@@ -1099,13 +1099,13 @@ metadata_line:
   | TAG eol
     {
       $$ = new beancount::Meta::KV();
-      $$->mutable_value()->set_tag($1.data(), $1.size());
+      $$->mutable_value()->set_tag($1);
     }
   /* A link can be used by itself as metadata. */
   | LINK eol
     {
       $$ = new beancount::Meta::KV();
-      $$->mutable_value()->set_link($1.data(), $1.size());
+      $$->mutable_value()->set_link($1);
     }
 
 /* A general variant that can contain basic types, used as the value in
@@ -1114,27 +1114,27 @@ meta_value:
   STRING
     {
       $$ = new beancount::MetaValue();
-      $$->set_text($1.data(), $1.size());
+      $$->set_text(std::move($1));
     }
   | CURRENCY
     {
       $$ = new beancount::MetaValue();
-      $$->set_currency($1.data(), $1.size());
+      $$->set_currency(std::move($1));
     }
   | account
     {
       $$ = new beancount::MetaValue();
-      $$->set_account($1.data(), $1.size());
+      $$->set_account($1);
     }
   | TAG
     {
       $$ = new beancount::MetaValue();
-      $$->set_tag($1.data(), $1.size());
+      $$->set_tag($1);
     }
   | LINK
     {
       $$ = new beancount::MetaValue();
-      $$->set_link($1.data(), $1.size());
+      $$->set_link($1);
     }
   | DATE
     {
@@ -1189,12 +1189,12 @@ tags_links:
   | tags_links TAG
     {
       $$ = ($1 != nullptr) ? ($1) : new TagsLinks{};
-      $$->tags.emplace_back($2.data(), $2.size());
+      $$->tags.push_back($2);
     }
   | tags_links LINK
     {
       $$ = ($1 != nullptr) ? ($1) : new TagsLinks{};
-      $$->links.emplace_back($2.data(), $2.size());
+      $$->links.push_back($2);
     }
 
 /*- String matchers ---------------------------------------------------------*/
@@ -1204,19 +1204,19 @@ payee_narration:
   /* Variant when both strings are present. */
   STRING STRING
     {
-      $$ = make_pair($1, $2);
+      $$ = make_pair(std::move($1), std::move($2));
     }
   /* Variant when only one string is present; interpret as narration only. */
   | STRING
     {
-      $$ = make_pair("", $1);
+      $$ = make_pair("", std::move($1));
     }
 
 /* An  account name. */
 account:
   ACCOUNT
     {
-      $$ = builder.Account($1);
+      $$ = builder.Account(std::move($1));
     }
 
 /* A filename. Consider specializing this. */
@@ -1231,12 +1231,12 @@ currency_list:
     }
   | CURRENCY
     {
-      $$.push_back({$1.data(), $1.size()});
+      $$.push_back(std::move($1));
     }
   | currency_list COMMA CURRENCY
     {
       $$ = $1;
-      $$.push_back({$3.data(), $3.size()});
+      $$.push_back(std::move($3));
     }
 
 /*- Arithmetic expressions --------------------------------------------------*/
@@ -1318,10 +1318,9 @@ optflag:
 booking:
   STRING
     {
-      string s1($1.data(), $1.size());
       options::Booking method;
-      if (!Booking_Parse(s1, &method)) {
-        builder.LogError(StrFormat("Invalid value for booking method: '%s'", s1));
+      if (!Booking_Parse($1, &method)) {
+        builder.LogError(StrFormat("Invalid value for booking method: '%s'", $1));
         // TODO(blais): For v2 behavior, set this to the global default.
         method = options::Booking::UNKNOWN;
       }
@@ -1436,11 +1435,12 @@ price_annotation:
 amount:
   number_expr CURRENCY
     {
+      builder.UpdatePrecisionStats($1, $2);
+
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
-      amount->set_currency($2.data(), $2.size());
+      amount->set_currency(std::move($2));
       $$ = amount;
-      builder.UpdatePrecisionStats($1, $2);
     }
 
 /* An amount, with an optional associated tolerance. */
@@ -1451,12 +1451,13 @@ amount_tolerance:
     }
   | number_expr TILDE number_expr[tolerance] CURRENCY
     {
-      auto* amount = new Amount();
-      builder.DecimalProto($1, amount->mutable_number());
-      amount->set_currency($4.data(), $4.size());
-      $$ = make_pair(amount, $tolerance);
       builder.UpdatePrecisionStats($1, $4);
       builder.UpdatePrecisionStats($tolerance, $4);
+
+      auto* amount = new Amount();
+      builder.DecimalProto($1, amount->mutable_number());
+      amount->set_currency(std::move($4));
+      $$ = make_pair(amount, $tolerance);
     }
 
 /* An optional number. */
@@ -1492,7 +1493,7 @@ partial_amount:
         builder.DecimalProto($1.value(), $$->mutable_number());
       }
       if ($2.has_value()) {
-        $$->set_currency($2.value().data(), $2.value().size());
+        $$->set_currency($2.value());
       }
     }
 
@@ -1505,14 +1506,14 @@ compound_amount:
         builder.DecimalProto($1.value(), $$->mutable_number_per());
         builder.UpdatePrecisionStats($1.value(), $2);
       }
-      $$->set_currency({$2.data(), $2.size()});
+      $$->set_currency(std::move($2));
     }
   | number_expr maybe_currency
     {
       $$ = new inter::CostSpec();
       builder.DecimalProto($1, $$->mutable_number_per());
       if ($2.has_value()) {
-        $$->set_currency({$2.value().data(), $2.value().size()});
+        $$->set_currency($2.value());
         builder.UpdatePrecisionStats($1, $2.value());
       }
     }
@@ -1527,7 +1528,7 @@ compound_amount:
         builder.DecimalProto($3.value(), $$->mutable_number_total());
         builder.UpdatePrecisionStats($3.value(), $4);
       }
-      $$->set_currency({$4.data(), $4.size()});
+      $$->set_currency(std::move($4));
     }
 
 /* A cost specification. */
@@ -1583,7 +1584,7 @@ cost_comp:
   | STRING
     {
       $$ = new inter::CostSpec();
-      $$->set_label($1.data(), $1.size());
+      $$->set_label(std::move($1));
     }
   | ASTERISK
     {
