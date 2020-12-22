@@ -1602,6 +1602,9 @@ void yyerror(const location& loc, yyscan_t scanner, /* PyObject* builder, */ cha
 #endif
 
 // TODO(blais): Review this completely.
+//
+// On a scanner exception, Parser::syntax_error() is thrown and caught by the
+// parser source code and this method is called with it.
 void beancount::parser::Parser::error(const location& loc, const string& msg)
 {
   // TODO(blais): Change this code to log an error and bubble that up to the

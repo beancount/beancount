@@ -78,7 +78,7 @@ absl::CivilSecond ParseTimeFromString(const char* string);
 // Note: syntax_error is never really invoked; because we have a default
 // matching rule that gobbles up invalid tokens.
 %option nodefault
-%option exception="beancount::parser::Parser::syntax_error(location(), \"Unknown token.\")"
+%option exception="Parser::syntax_error(location(), absl::StrCat(\"Unknown token: '\", matcher().str(), \"'\"))"
 
 // TODO(blais): Figure out if I should put the actual derived class for the
 // scanner in beancount/cparser/parser.h and set it here.

@@ -14,30 +14,14 @@
 
 namespace beancount {
 namespace {
-
-using std::pair;
 using std::string;
-using std::vector;
-using std::tuple;
-using testing::Eq;
-
-// TODO(blais): Implement scanner tests here.
-
-/// // TODO(blais): When symbol_name() is made public, make a << operator on the symbol_type.
-
 using symbol = parser::Parser::symbol_kind;
 using symbol_type = parser::Parser::symbol_kind::symbol_kind_type;
-typedef tuple<symbol_type, int, string> symbol_tuple;
-typedef vector<symbol_tuple> symbol_tuples;
+using testing::Eq;
 
-#if 0
-std::ostream& operator<<(std::ostream& os, const symbol_type& sym) {
-  os << parser::Parser::symbol_name(sym);
-  return os;
-}
-#endif
+typedef std::tuple<symbol_type, int, string> symbol_tuple;
+typedef std::vector<symbol_tuple> symbol_tuples;
 
-#if 0
 // Print a sequence of actual test tokens.
 void PrintTokens(const symbol_tuples& tokens) {
   for (const auto& token : tokens) {
@@ -46,7 +30,6 @@ void PrintTokens(const symbol_tuples& tokens) {
               << std::get<2>(token) << std::endl;
   }
 }
-#endif
 
 // Read the given string in 'input_string' and return a scanned list of (token,
 // name) pairs.
@@ -60,36 +43,46 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
   // Yield and accumulate all the tokens and their matched text.
   symbol_tuples symbols;
   while (true) {
-    auto token = scanner.lex();
-    auto token_type = token.type_get();
-    if (token_type == symbol::S_YYEOF) {
-      break;
-    }
-    // Note: the matcher will always return the full pattern matched, not the
-    // token value. Be aware of this when debugging.
-    //
-    // Also, you could include the error message for YYerror here. We ignore it
-    // for now.
-    int lineno = scanner.matcher().lineno();
+    try {
+      parser::Parser::symbol_type token = scanner.lex();
+      auto token_type = token.type_get();
+      if (token_type == symbol::S_YYEOF) {
+        break;
+      }
+      // Note: the matcher will always return the full pattern matched, not the
+      // token value. Be aware of this when debugging.
+      //
+      // Also, you could include the error message for YYerror here. We ignore it
+      // for now.
+      int lineno = scanner.matcher().lineno();
 
-    // Get the original text matched in the input stream, or, if this is a
-    // STRING typed token, the resultant parsed string included.
-    string value;
-    if (token_type == symbol::S_YYerror ||
-        token_type == symbol::S_ACCOUNT ||
-        token_type == symbol::S_CURRENCY ||
-        token_type == symbol::S_STRING ||
-        token_type == symbol::S_TAG ||
-        token_type == symbol::S_LINK ||
-        token_type == symbol::S_KEY) {
-      value = token.value.as<std::string>();
-    } else {
-      value = scanner.matcher().str();
-    }
+      // Get the original text matched in the input stream, or, if this is a
+      // STRING typed token, the resultant parsed string included.
+      string value;
+      if (token_type == symbol::S_YYerror ||
+          token_type == symbol::S_ACCOUNT ||
+          token_type == symbol::S_CURRENCY ||
+          token_type == symbol::S_STRING ||
+          token_type == symbol::S_TAG ||
+          token_type == symbol::S_LINK ||
+          token_type == symbol::S_KEY) {
+        value = token.value.as<std::string>();
+      } else {
+        value = scanner.matcher().str();
+      }
 
-    // Add the symbol to the list.
-    symbols.push_back({token.type_get(), lineno, value});
+      // Add the symbol to the list.
+      symbols.push_back({token.type_get(), lineno, value});
+    }
+    catch (const parser::Parser::syntax_error& exc) {
+      symbols.push_back({
+          symbol::S_YYerror,
+          scanner.matcher().lineno(),
+          absl::StrCat("Syntax error: ", exc.what())});
+      scanner.matcher().input();
+    }
   }
+  (void)PrintTokens;
   return symbols;
 }
 
@@ -511,305 +504,253 @@ TEST(ScannerTest, StringNewline) {
       }));
 }
 
-// TODO(blais): Change string type to std::string and measure performance.
-// Remove padding.
+TEST(ScannerTest, StringNewlineLong) {
+  // Note that this test contains an _actual_ newline, not an escape one as in
+  // the previous test. This should allow us to parse multiline strings.
+  const char* test = R"(
+    "Forty
+    world
+    leaders
+    and
+    hundreds"
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+            {symbol::S_STRING, 1, "Forty\nworld\nleaders\nand\nhundreds"},
+            {symbol::S_EOL, 5, "\n"},
+      }));
+}
 
+TEST(ScannerTest, StringNewlineTooLong) {
+  // Testing a string that busts the limits.
+  char line[128];
+  std::fill_n(line, 127, 'a');
+  line[127] = '\0';
+  std::ostringstream oss;
+  for (int ii = 0; ii < 128; ++ii) {
+    oss << line << std::endl;
+  }
+  const auto symbols = Tokenize(oss.str(), false);
+  EXPECT_EQ(256, symbols.size());
+  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[0]));
+  EXPECT_EQ(symbol::S_EOL, std::get<0>(symbols[1]));
+}
 
-//     def test_string_newline_long(self, tokens, errors):
-//         '''
-//         "Forty
-//         world
-//         leaders
-//         and
-//         hundreds"
-//         '''
-//         # Note that this test contains an _actual_ newline, not an escape one as
-//         # in the previous test. This should allow us to parse multiline strings.
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             ('STRING', 6,
-//              b'"Forty\nworld\nleaders\nand\nhundreds"',
-//              'Forty\nworld\nleaders\nand\nhundreds'),
-//             {symbol::S_EOL, 7, "\n"},
-//             ], tokens)
-//         self.assertFalse(errors)
-//
-//     def test_string_newline_toolong(self):
-//         # Testing a string that busts the limits.
-//         line = 'a' * 127 + '\n'
-//         string = '"' + line * 128 + '"\n'
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(string, builder))
-//         self.assertTrue(tokens[0], 'error')
-//         self.assertTrue(tokens[1], 'EOL')
-//
-//     @lex_tokens
-//     def test_popmeta(self, tokens, errors):
-//         '''
-//         popmeta location:
-//         '''
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_POPMETA, 2, "popmeta"},
-//             {symbol::S_KEY, 2, "location"},
-//             {symbol::S_COLON, 2, ":"},
-//             {symbol::S_EOL, 3, "\n"},
-//         ], tokens)
-//         self.assertFalse(errors)
-//
-//     @lex_tokens
-//     def test_null_true_false(self, tokens, errors):
-//         '''
-//         TRUE FALSE NULL
-//         '''
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_BOOL, 2, "TRUE"},
-//             {symbol::S_BOOL, 2, "FALSE"},
-//             {symbol::S_NONE, 2, "NULL"},
-//             {symbol::S_EOL, 3, "\n"},
-//         ], tokens)
-//         self.assertFalse(errors)
-//
-//
-// class TestIgnoredLines(unittest.TestCase):
-//
-//     @lex_tokens
-//     def test_ignored__long_comment(self, tokens, errors):
-//         """
-//         ;; Long comment line about something something.
-//         """
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_EOL, 3, "\n"},
-//             ], tokens)
-//         self.assertFalse(errors)
-//
-//     @lex_tokens
-//     def test_ignored__indented_comment(self, tokens, errors):
-//         """
-//         option "title" "The Title"
-//           ;; Something something.
-//         """
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_OPTION, 2, "option"},
-//             {symbol::S_STRING, 2, ""title""},
-//             {symbol::S_STRING, 2, ""The Title""},
-//             {symbol::S_EOL, 3, "\n"},
-//             {symbol::S_INDENT, 3, "  "},
-//             {symbol::S_EOL, 4, "\n"},
-//         ], tokens)
-//         self.assertFalse(errors)
-//
-//     @lex_tokens
-//     def test_ignored__something_else(self, tokens, errors):
-//         """
-//         Regular prose appearing mid-file which starts with a flag character.
-//         """
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_EOL, 3, "\n"},
-//             ], tokens)
-//         self.assertFalse(errors)
-//
-//     @lex_tokens
-//     def test_ignored__something_else_non_flag(self, tokens, errors):
-//         """
-//         Xxx this sentence starts with a non-flag character.
-//         """
-//         self.assertTrue(errors)
-//
-//     @lex_tokens
-//     def test_ignored__org_mode_title(self, tokens, errors):
-//         """
-//         * This sentence is an org-mode title.
-//         """
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_EOL, 3, "\n"},
-//         ], tokens)
-//         self.assertFalse(errors)
-//
-//     @lex_tokens
-//     def test_ignored__org_mode_drawer(self, tokens, errors):
-//         """
-//         :PROPERTIES:
-//         :this: is an org-mode property drawer
-//         :END:
-//         """
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             {symbol::S_EOL, 3, "\n"},
-//             {symbol::S_EOL, 4, "\n"},
-//             {symbol::S_EOL, 5, "\n"},
-//         ], tokens)
-//         self.assertFalse(errors)
-//
-//
-// class TestLexerErrors(unittest.TestCase):
-//     """Test lexer error handling.
-//     """
-//
-//     @lex_tokens
-//     def test_lexer_invalid_token(self, tokens, errors):
-//         """
-//           2000-01-01 open ` USD
-//         """
-//         self.assertEqual([{symbol::S_EOL, 2, "\n"},
-//                           ('DATE', 2, b'2000-01-01', datetime.date(2000, 1, 1)),
-//                           {symbol::S_OPEN, 2, "open"},
-//                           ('error', 2, b'`', None),
-//                           {symbol::S_CURRENCY, 2, "USD"},
-//                           ('EOL', 3, b'\n', None)], tokens)
-//         self.assertEqual(1, len(errors))
-//
-//     @lex_tokens
-//     def test_lexer_exception__recovery(self, tokens, errors):
-//         """
-//           2000-13-32 open Assets:Something
-//
-//           2000-01-02 open Assets:Working
-//         """
-//         self.assertEqual([{symbol::S_EOL, 2, "\n"},
-//                           ('error', 2, b'2000-13-32', None),
-//                           {symbol::S_OPEN, 2, "open"},
-//                           {symbol::S_ACCOUNT, 2, "Assets:Something"},
-//                           {symbol::S_EOL, 3, "\n"},
-//                           {symbol::S_EOL, 4, "\n"},
-//                           ('DATE', 4, b'2000-01-02', datetime.date(2000, 1, 2)),
-//                           {symbol::S_OPEN, 4, "open"},
-//                           {symbol::S_ACCOUNT, 4, "Assets:Working"},
-//                           ('EOL', 5, b'\n', None)], tokens)
-//         self.assertEqual(1, len(errors))
-//
-//     @lex_tokens
-//     def test_lexer_exception_DATE(self, tokens, errors):
-//         """
-//           2000-13-32 open Assets:Something
-//         """
-//         self.assertEqual([{symbol::S_EOL, 2, "\n"},
-//                           ('error', 2, b'2000-13-32', None),
-//                           {symbol::S_OPEN, 2, "open"},
-//                           {symbol::S_ACCOUNT, 2, "Assets:Something"},
-//                           ('EOL', 3, b'\n', None)], tokens)
-//         self.assertEqual(1, len(errors))
-//
-//     def test_lexer_exception_substring_with_quotes(self):
-//         test_input = """
-//           2016-07-15 query "hotels" "SELECT * WHERE account ~ 'Expenses:Accommodation'"
-//         """
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-//         self.assertEqual([
-//             {symbol::S_EOL, 2, "\n"},
-//             ('DATE', 2, b'2016-07-15', datetime.date(2016, 7, 15)),
-//             {symbol::S_QUERY, 2, "query"},
-//             {symbol::S_STRING, 2, ""hotels""},
-//             ('STRING', 2, b'"SELECT * WHERE account ~ \'Expenses:Accommodation\'"',
-//              'SELECT * WHERE account ~ \'Expenses:Accommodation\''),
-//             ('EOL', 3, b'\n', None)], tokens)
-//         self.assertEqual(0, len(builder.errors))
-//
-//
-// class TestLexerUnicode(unittest.TestCase):
-//
-//     test_utf8_string = textwrap.dedent("""
-//       2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
-//     """)
-//     expected_utf8_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
-//
-//     test_latin1_string = textwrap.dedent("""
-//       2015-05-23 note Assets:Something "école Floß søllerød"
-//     """)
-//     expected_latin1_string = "école Floß søllerød"
-//
-//     # Test providing utf8 bytes to the lexer.
-//     def test_bytes_encoded_utf8(self):
-//         utf8_bytes = self.test_utf8_string.encode('utf8')
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(utf8_bytes, builder))
-//
-//         # The lexer outputs no errors.
-//         self.assertFalse(builder.errors)
-//
-//         # Check that the lexer correctly parsed the UTF8 string.
-//         str_tokens = [token for token in tokens if token[0] == 'STRING']
-//         self.assertEqual(self.expected_utf8_string, str_tokens[0][3])
-//
-//     # Test providing latin1 bytes to the lexer when it is expecting utf8.
-//     def test_bytes_encoded_latin1_invalid(self):
-//         latin1_bytes = self.test_utf8_string.encode('latin1')
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
-//
-//         # The lexer outputs no errors.
-//         self.assertFalse(builder.errors)
-//
-//         # Check that the lexer failed to convert the string but did not cause
-//         # other errors.
-//         str_tokens = [token for token in tokens if token[0] == 'STRING']
-//         self.assertNotEqual(self.expected_utf8_string, str_tokens[0][3])
-//
-//     # Test providing latin1 bytes to the lexer with an encoding.
-//     def test_bytes_encoded_latin1(self):
-//         latin1_bytes = self.test_latin1_string.encode('latin1')
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(latin1_bytes, builder, encoding='latin1'))
-//
-//         # The lexer outputs no errors.
-//         self.assertFalse(builder.errors)
-//
-//         # Check that the lexer correctly parsed the latin1 string.
-//         str_tokens = [token for token in tokens if token[0] == 'STRING']
-//         self.assertEqual(self.expected_latin1_string, str_tokens[0][3])
-//
-//     # Test providing utf16 bytes to the lexer when it is expecting utf8.
-//     def test_bytes_encoded_utf16_invalid(self):
-//         utf16_bytes = self.test_utf8_string.encode('utf16')
-//         builder = lexer.LexBuilder()
-//         tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
-//         self.assertTrue(builder.errors)
-//
-//
-// class TestLexerMisc(unittest.TestCase):
-//
-//     @lex_tokens
-//     def test_valid_commas_in_number(self, tokens, errors):
-//         """\
-//           45,234.00
-//         """
-//         self.assertEqual([
-//             ('NUMBER', 1, b'45,234.00', D('45234.00')),
-//             {symbol::S_EOL, 2, "\n"},
-//         ], tokens)
-//         self.assertEqual(0, len(errors))
-//
-//     @lex_tokens
-//     def test_invalid_commas_in_integral(self, tokens, errors):
-//         """\
-//           452,34.00
-//         """
-//         self.assertEqual(1, len(errors))
-//         self.assertEqual([
-//             ('error', 1, b'452,34.00', None),
-//             {symbol::S_EOL, 2, "\n"},
-//         ], tokens)
-//
-//     @lex_tokens
-//     def test_invalid_commas_in_fractional(self, tokens, errors):
-//         """\
-//           45234.000,000
-//         """
-//         # Unfortunately this is going to get parsed as two numbers but that will
-//         # cause an error downstream in the parser. Nevertheless, keep this test
-//         # case here in case eventually we improve the lexer.
-//         self.assertEqual(0, len(errors))
-//         self.assertEqual([
-//             ('NUMBER', 1, b'45234.000', D('45234.000')),
-//             {symbol::S_COMMA, 1, ","},
-//             ('NUMBER', 1, b'000', D('0')),
-//             {symbol::S_EOL, 2, "\n"},
-//         ], tokens)
+TEST(ScannerTest, InvalidCharacter) {
+  // Testing a string with invalid characters.
+  const char* test  = "\x80\n";
+  const auto symbols = Tokenize(test, false);
+  EXPECT_EQ(symbols, symbol_tuples({
+        // This is translated by the exception handler in the Tokenize() routine
+        // above. I'm not exactly sure why we find two produced here.
+        {symbol::S_YYerror, 1, "Syntax error: Unknown token: ''"},
+        {symbol::S_YYerror, 1, "Syntax error: Unknown token: ''"},
+      }));
+}
+
+TEST(ScannerTest, PopMeta) {
+  const char* test = R"(
+    popmeta location:
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_POPMETA, 1, "popmeta"},
+        {symbol::S_KEY,     1, "location"},
+        {symbol::S_COLON,   1, ":"},
+        {symbol::S_EOL,     1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, TrueFalseNull) {
+  const char* test = R"(
+    TRUE FALSE NULL
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_BOOL, 1, "TRUE"},
+        {symbol::S_BOOL, 1, "FALSE"},
+        {symbol::S_NONE, 1, "NULL"},
+        {symbol::S_EOL,  1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, ValidCommasInNumber) {
+  const char* test = R"(
+    45,234.00
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_NUMBER, 1, "45,234.00"},
+        {symbol::S_EOL,    1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, InvalidCommasInInteger) {
+  const char* test = R"(
+    452,34.00
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_NUMBER, 1, "452,34.00"},
+        {symbol::S_EOL,    1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, InvalidCommasInFractional) {
+  // Unfortunately this is going to get parsed as two numbers but that will
+  // cause an error downstream in the parser. Nevertheless, keep this test case
+  // here in case eventually we improve the lexer.
+  const char* test = R"(
+    45234.000,000
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_NUMBER, 1, "45234.000"},
+        {symbol::S_COMMA,  1, ","},
+        {symbol::S_NUMBER, 1, "000"},
+        {symbol::S_EOL,    1, "\n"},
+      }));
+}
+
+// Tests for ignored lines.
+
+TEST(IgnoredLinesTest, TrueFalseNull) {
+  const char* test = R"(
+    ;; Long comment line about something something.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_EOL, 1, "\n"},
+      }));
+}
+
+TEST(IgnoredLinesTest, IndentedComment) {
+  const char* test = R"(
+    option "title" "The Title"
+      ;; Something something.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_OPTION, 1, "option"},
+        {symbol::S_STRING, 1, "title"},
+        {symbol::S_STRING, 1, "The Title"},
+        {symbol::S_EOL, 1, "\n"},
+        {symbol::S_INDENT, 2, "  "},
+        {symbol::S_EOL, 2, "\n"},
+        {symbol::S_DEDENT, 3, ""},
+      }));
+}
+
+TEST(IgnoredLinesTest, NonCommentIgnored) {
+  const char* test = R"(
+    Regular prose appearing mid-file which starts with a flag character.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_EOL, 1, "\n"},
+      }));
+}
+
+TEST(IgnoredLinesTest, NonCommentNonFlag) {
+  const char* test = R"(
+    Xxx this sentence starts with a non-flag character.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols.size(), 9);
+  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[0]));
+  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[1]));
+  EXPECT_EQ(symbol::S_EOL, std::get<0>(symbols.back()));
+}
+
+TEST(IgnoredLinesTest, NonCommentOrgModeTitle) {
+  const char* test = R"(
+    * This sentence is an org-mode title.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_EOL, 1, "\n"},
+      }));
+}
+
+TEST(IgnoredLinesTest, NonCommentOrgModeDrawer) {
+  const char* test = R"(
+    :PROPERTIES:
+    :this: is an org-mode property drawer
+    :END:
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_EOL, 1, "\n"},
+        {symbol::S_EOL, 2, "\n"},
+        {symbol::S_EOL, 3, "\n"},
+      }));
+}
+
+// Test lexer error handling.
+
+TEST(LexerErrorsTest, InvalidToken) {
+  const char* test = R"(
+    2000-01-01 open ` USD
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_DATE, 1, "2000-01-01"},
+        {symbol::S_OPEN, 1, "open"},
+        {symbol::S_YYerror, 1, "Invalid token: '`'"},
+        {symbol::S_CURRENCY, 1, "USD"},
+        {symbol::S_EOL, 1, "\n"},
+      }));
+}
+
+TEST(LexerErrorsTest, ErrorRecovery) {
+  const char* test = R"(
+    2000-13-32 open Assets:Something
+    2000-01-02 open Assets:Working
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_YYerror, 1, "Invalid date: '2000-13-32'"},
+        {symbol::S_OPEN,    1, "open"},
+        {symbol::S_ACCOUNT, 1, "Assets:Something"},
+        {symbol::S_EOL,     1, "\n"},
+        {symbol::S_DATE,    2, "2000-01-02"},
+        {symbol::S_OPEN,    2, "open"},
+        {symbol::S_ACCOUNT, 2, "Assets:Working"},
+        {symbol::S_EOL,     2, "\n"},
+    }));
+}
+
+TEST(LexerErrorsTest, ErrorSubstringWithQuotes) {
+  const char* test = R"(
+    2016-07-15 query "hotels" "SELECT * WHERE account ~ 'Expenses:Accommodation'"
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_DATE,   1, "2016-07-15"},
+        {symbol::S_QUERY,  1, "query"},
+        {symbol::S_STRING, 1, "hotels"},
+        {symbol::S_STRING, 1, "SELECT * WHERE account ~ \'Expenses:Accommodation\'"},
+        {symbol::S_EOL,    1, "\n"},
+      }));
+}
+
+// Unicode tests.
+
+TEST(LexerUnicodeTest, EncodedUTF8) {
+  const char* test = u8R"(
+    2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_DATE,    1, "2015-05-23"},
+        {symbol::S_NOTE,    1, "note"},
+        {symbol::S_ACCOUNT, 1, "Assets:Something"},
+        {symbol::S_STRING,  1, u8"a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"},
+        {symbol::S_EOL,     1, "\n"},
+      }));
+}
+
+// TODO(blais): Convert the rest of the tests. Test with Latin1, UTF16.k
+
 }  // namespace
 }  // namespace beancount
