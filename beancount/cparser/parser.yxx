@@ -56,7 +56,7 @@ namespace parser {
 class Builder;
 
 // Parse the contents of a file.
-std::unique_ptr<Ledger> ParseFile(const std::string_view& filename);
+std::unique_ptr<Ledger> ParseFile(std::string_view filename);
 
 // An intermediate data structure holding the partially parsed tags and links.
 struct TagsLinks {
@@ -613,6 +613,7 @@ private:
 %token NONE        /* A None value (parsed as NULL) */
 %token <bool> BOOL        /* A boolean, true or false */
 %token <absl::CivilDay> DATE        /* A date object */
+%token <absl::CivilSecond> TIME        /* A time object */
 %token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <std::string> ACCOUNT     /* The name of an account */
 %token <std::string> CURRENCY    /* A currency specification */
@@ -1655,7 +1656,7 @@ std::unique_ptr<Ledger> Parse(
   return builder.MakeLedger();
 }
 
-std::unique_ptr<Ledger> ParseFile(const string_view& filename) {
+std::unique_ptr<Ledger> ParseFile(string_view filename) {
   std::ifstream in = std::ifstream(string(filename), std::ios::in);
   reflex::Input input(in);
   string filename_str(filename);

@@ -57,10 +57,9 @@ absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string) {
   return date;
 }
 
-absl::StatusOr<absl::CivilSecond> ParseTimeFromString(const char* string, size_t length) {
-  if (length == 0) {
-    length = std::strlen(string);
-  }
+absl::StatusOr<absl::CivilSecond> ParseTimeFromString(std::string_view input) {
+  const char* string = input.data();
+  size_t length = input.size();
 
   const char* end = string + length;
   const char* current = string;
@@ -69,14 +68,14 @@ absl::StatusOr<absl::CivilSecond> ParseTimeFromString(const char* string, size_t
   int hour = BoundedAtoi(current, length, &skip);
   if (current == skip || hour >= 24 || skip == end || *skip != ':') {
     return absl::InvalidArgumentError(
-        absl::StrCat("Invalid time at hour: '", std::string_view(string, length), "'"));
+        absl::StrCat("Invalid time: '", std::string_view(string, length), "'"));
   }
   current = skip + 1;
 
   int minute = BoundedAtoi(current, end - current, &skip);
   if (current == skip || minute >= 60) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Invalid time at minute: '", std::string_view(string, length), "'"));
+        absl::StrCat("Invalid time: '", std::string_view(string, length), "'"));
   }
   current = skip;
 
@@ -88,7 +87,7 @@ absl::StatusOr<absl::CivilSecond> ParseTimeFromString(const char* string, size_t
     second = BoundedAtoi(current, end - current, &skip);
     if (current == skip || second >= 60) {
       return absl::InvalidArgumentError(
-          absl::StrCat("Invalid time at second: '", std::string_view(string, length), "'"));
+          absl::StrCat("Invalid time: '", std::string_view(string, length), "'"));
     }
   }
   auto time = absl::CivilSecond{1970, 1, 1, hour, minute, second};

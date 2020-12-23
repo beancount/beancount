@@ -9,6 +9,7 @@
 #include "beancount/ccore/date.pb.h"
 
 #include <cassert>
+#include <string_view>
 
 #include "absl/time/civil_time.h"
 #include "absl/status/statusor.h"
@@ -28,7 +29,7 @@ inline void DateToProto(const absl::CivilDay& date, Date* proto) {
 absl::StatusOr<absl::CivilDay> ParseDateFromString(const char* string);
 
 // Convert time string in hh::mm or hh:mm:ss format to civil seconds.
-absl::StatusOr<absl::CivilSecond> ParseTimeFromString(const char* string, size_t length=0);
+absl::StatusOr<absl::CivilSecond> ParseTimeFromString(std::string_view input);
 
 }  // namespace beancount
 

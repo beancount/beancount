@@ -90,6 +90,7 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
 TEST(ScannerTest, BasicTokens) {
   const char* test = u8R"(
     2013-05-18 2014-01-02 2014/01/02
+    12:34 12:34:56
     Assets:US:Bank:Checking
     Liabilities:US:Bank:Credit
     Other:Bank
@@ -107,39 +108,42 @@ TEST(ScannerTest, BasicTokens) {
         {symbol::S_DATE,     1, "2014-01-02"},
         {symbol::S_DATE,     1, "2014/01/02"},
         {symbol::S_EOL,      1, "\n"},
-        {symbol::S_ACCOUNT,  2, "Assets:US:Bank:Checking"},
+        {symbol::S_TIME,     2, "12:34"},
+        {symbol::S_TIME,     2, "12:34:56"},
         {symbol::S_EOL,      2, "\n"},
-        {symbol::S_ACCOUNT,  3, "Liabilities:US:Bank:Credit"},
+        {symbol::S_ACCOUNT,  3, "Assets:US:Bank:Checking"},
         {symbol::S_EOL,      3, "\n"},
-        {symbol::S_ACCOUNT,  4, "Other:Bank"},
+        {symbol::S_ACCOUNT,  4, "Liabilities:US:Bank:Credit"},
         {symbol::S_EOL,      4, "\n"},
-        {symbol::S_CURRENCY, 5, "USD"},
-        {symbol::S_CURRENCY, 5, "HOOL"},
-        {symbol::S_CURRENCY, 5, "TEST_D"},
-        {symbol::S_CURRENCY, 5, "TEST_3"},
-        {symbol::S_CURRENCY, 5, "TEST-D"},
-        {symbol::S_CURRENCY, 5, "TEST-3"},
-        {symbol::S_CURRENCY, 5, "NT"},
+        {symbol::S_ACCOUNT,  5, "Other:Bank"},
         {symbol::S_EOL,      5, "\n"},
-        {symbol::S_STRING,   6, "Nice dinner at Mermaid Inn"},
+        {symbol::S_CURRENCY, 6, "USD"},
+        {symbol::S_CURRENCY, 6, "HOOL"},
+        {symbol::S_CURRENCY, 6, "TEST_D"},
+        {symbol::S_CURRENCY, 6, "TEST_3"},
+        {symbol::S_CURRENCY, 6, "TEST-D"},
+        {symbol::S_CURRENCY, 6, "TEST-3"},
+        {symbol::S_CURRENCY, 6, "NT"},
         {symbol::S_EOL,      6, "\n"},
-        {symbol::S_STRING,   7, ""},
+        {symbol::S_STRING,   7, "Nice dinner at Mermaid Inn"},
         {symbol::S_EOL,      7, "\n"},
-        {symbol::S_NUMBER,   8, "123"},
-        {symbol::S_NUMBER,   8, "123.45"},
-        {symbol::S_NUMBER,   8, "123.456789"},
-        {symbol::S_MINUS,    8, "-"},
-        {symbol::S_NUMBER,   8, "123"},
-        {symbol::S_MINUS,    8, "-"},
-        {symbol::S_NUMBER,   8, "123.456789"},
+        {symbol::S_STRING,   8, ""},
         {symbol::S_EOL,      8, "\n"},
-        {symbol::S_TAG,      9, "sometag123"},
+        {symbol::S_NUMBER,   9, "123"},
+        {symbol::S_NUMBER,   9, "123.45"},
+        {symbol::S_NUMBER,   9, "123.456789"},
+        {symbol::S_MINUS,    9, "-"},
+        {symbol::S_NUMBER,   9, "123"},
+        {symbol::S_MINUS,    9, "-"},
+        {symbol::S_NUMBER,   9, "123.456789"},
         {symbol::S_EOL,      9, "\n"},
-        {symbol::S_LINK,     10, "sometag123"},
+        {symbol::S_TAG,      10, "sometag123"},
         {symbol::S_EOL,      10, "\n"},
-        {symbol::S_KEY,      11, "somekey"},
-        {symbol::S_COLON,    11, ":"},
+        {symbol::S_LINK,     11, "sometag123"},
         {symbol::S_EOL,      11, "\n"},
+        {symbol::S_KEY,      12, "somekey"},
+        {symbol::S_COLON,    12, ":"},
+        {symbol::S_EOL,      12, "\n"},
       }));
 }
 
@@ -362,6 +366,17 @@ TEST(ScannerTest, DateFollowedByNumber) {
         {symbol::S_DATE,   1, "2013-12-22"},
         {symbol::S_NUMBER, 1, "8"},
         {symbol::S_EOL,    1, "\n"},
+      }));
+}
+
+TEST(ScannerTest, BadTime) {
+  const char* test = u8R"(
+    99:99
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_YYerror, 1, "Invalid time: '99:99'"},
+        {symbol::S_EOL,     1, "\n"},
       }));
 }
 
