@@ -90,7 +90,7 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
 TEST(ScannerTest, BasicTokens) {
   const char* test = u8R"(
     2013-05-18 2014-01-02 2014/01/02
-    12:34 2013-05-18 12:34:56 2013-05-18 12:34
+    13:18 2013-05-18 12:34:56 2013-05-18 12:34
     Assets:US:Bank:Checking
     Liabilities:US:Bank:Credit
     Other:Bank
@@ -108,9 +108,9 @@ TEST(ScannerTest, BasicTokens) {
         {symbol::S_DATE,     1, "2014-01-02"},
         {symbol::S_DATE,     1, "2014/01/02"},
         {symbol::S_EOL,      1, "\n"},
-        {symbol::S_NUMBER,   2, "12"},
+        {symbol::S_NUMBER,   2, "13"},
         {symbol::S_COLON,    2, ":"},
-        {symbol::S_NUMBER,   2, "34"},
+        {symbol::S_NUMBER,   2, "18"},
         {symbol::S_DATETIME, 2, "2013-05-18 12:34:56"},
         {symbol::S_DATETIME, 2, "2013-05-18 12:34"},
         {symbol::S_EOL,      2, "\n"},
@@ -361,13 +361,18 @@ TEST(ScannerTest, BadDateValidButInvalid) {
 }
 
 TEST(ScannerTest, DateFollowedByNumber) {
+  // Because we care about word boundary on the date, this parses as an
+  // arithmetic expression.
   const char* test = u8R"(
     2013-12-228
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_DATE,   1, "2013-12-22"},
-        {symbol::S_NUMBER, 1, "8"},
+        {symbol::S_NUMBER, 1, "2013"},
+        {symbol::S_MINUS,  1, "-"},
+        {symbol::S_NUMBER, 1, "12"},
+        {symbol::S_MINUS,  1, "-"},
+        {symbol::S_NUMBER, 1, "228"},
         {symbol::S_EOL,    1, "\n"},
       }));
 }

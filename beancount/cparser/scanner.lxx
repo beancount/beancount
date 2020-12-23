@@ -24,12 +24,6 @@ namespace scanner {
 
 // Using declarations for symbols in the scanner implementation only.
 using beancount::parser::Parser;
-using std::string;
-
-// Obtain a string_view of the current match.
-inline std::string_view view(const reflex::Matcher& m) {
-  return std::string_view(m.begin(), m.size());
-}
 
 }  // namespace scanner
 }  // namespace beancount
@@ -177,7 +171,7 @@ NULL {
  /* Date or date/time. Note that we're not parsing time separately because
   * absorbing that pattern at the top level adds more than 10% to the total
   * parsing time, so we process it as an optional group only after dates. */
-{DATE}(\s+({TIME}))?\b {
+{DATE}([ \t]+({TIME}))?\b {
   // Parse date.
   const auto& m = matcher();
   auto sdate = ParseDateFromString(m.begin());
@@ -314,9 +308,3 @@ NULL {
 
 //-----------------------------------------------------------------------------
 // Code: Scanner Body
-
-namespace beancount {
-namespace scanner {
-
-}  // namespace scanner
-}  // namespace beancount
