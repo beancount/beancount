@@ -613,7 +613,7 @@ private:
 %token NONE        /* A None value (parsed as NULL) */
 %token <bool> BOOL        /* A boolean, true or false */
 %token <absl::CivilDay> DATE        /* A date object */
-%token <absl::CivilSecond> TIME        /* A time object */
+%token <absl::CivilSecond> DATETIME        /* A date + time object */
 %token <decimal::Decimal> NUMBER      /* A decimal number */
 %token <std::string> ACCOUNT     /* The name of an account */
 %token <std::string> CURRENCY    /* A currency specification */

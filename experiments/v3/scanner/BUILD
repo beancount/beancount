@@ -18,11 +18,17 @@ cc_library(
 
 cc_binary(
     name = "indents",
-    srcs = [
-        "indents.cc",
-    ],
+    srcs = ["indents.cc"],
     deps = [
         ":indents_hdrs",
+        "//third_party/parser:reflex",
+    ],
+)
+
+cc_binary(
+    name = "matcher",
+    srcs = ["matcher.cc",],
+    deps = [
         "//third_party/parser:reflex",
     ],
 )

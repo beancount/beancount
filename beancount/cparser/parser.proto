@@ -15,6 +15,8 @@ package beancount.inter;
 import 'beancount/ccore/number.proto';
 import 'beancount/ccore/date.proto';
 
+// A number specification.
+
 // A cost specification, which still requires to be filled in, and the final
 // per-unit numbers be calculated. This gets translated to Cost after booking
 // and interpolation.
