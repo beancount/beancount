@@ -15,6 +15,7 @@
 
 namespace beancount {
 namespace {
+using std::string;
 
 TEST(TestAccount, AccountRegexp) {
   EXPECT_TRUE(beancount::kAccountRE.ok());

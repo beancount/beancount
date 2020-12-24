@@ -9,13 +9,11 @@
 #define BEANCOUNT_DEFS_H_
 
 #include <optional>
-#include <string>
 #include <tuple>
 #include <vector>
 
 namespace beancount {
 
-using std::string;
 using std::vector;
 using std::size_t;
 using std::optional;

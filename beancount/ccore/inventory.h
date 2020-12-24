@@ -78,7 +78,7 @@ public:
 
 
 private:
-  std::unordered_map<pair<string, Cost>, Number, pair_hash> positions_;
+  std::unordered_map<std::pair<std::string, Cost>, Number, pair_hash> positions_;
 };
 
 // Constructor from a string.

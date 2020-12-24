@@ -22,10 +22,11 @@ Ledger::~Ledger() {
 }
 
 // TODO(blais): Pull error code.
-int WriteToText(const Ledger& ledger, const string& filename) {
+int WriteToText(const Ledger& ledger, const std::string& filename) {
   // Open output file.
   int outfd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC);
   if (outfd == -1) {
+    // TODO(blais): handle this properly, with Status<>.
     std::cerr << "Error opening file '" << filename << "': " << strerror(errno) << std::endl;
     return -1;
   }
@@ -36,6 +37,7 @@ int WriteToText(const Ledger& ledger, const string& filename) {
     LedgerProto ledger_proto;
     ledger_proto.add_directives()->CopyFrom(*dir);
     if (!TextFormat::Print(ledger_proto, output)) {
+      // TODO(blais): handle this properly.
       std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
       return -1;
     }
@@ -50,6 +52,7 @@ int WriteToText(const Ledger& ledger, const string& filename) {
   ledger_proto.mutable_info()->CopyFrom(*ledger.info);
 
   if (!TextFormat::Print(ledger_proto, output)) {
+    // TODO(blais): handle this properly.
     std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
     return -1;
   }
@@ -57,6 +60,7 @@ int WriteToText(const Ledger& ledger, const string& filename) {
   // Close output.
   delete output;
   if (close(outfd) == -1) {
+    // TODO(blais): handle this properly.
     std::cerr << "Error closing file '" << filename << "'" << std::endl;
     return -1;
   }

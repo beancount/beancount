@@ -6,6 +6,8 @@
 #include "beancount/ccore/data.pb.h"
 #include "beancount/defs.h"
 
+#include <string>
+
 #include "pybind11/pybind11.h"
 #include "python/google/protobuf/proto_api.h"
 #include "absl/time/clock.h"
@@ -25,6 +27,7 @@ namespace beancount {
 namespace py = pybind11;
 using std::cerr;
 using std::endl;
+using std::string;
 using google::protobuf::python::PyProto_API;
 using google::protobuf::python::PyProtoAPICapsuleName;
 

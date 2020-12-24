@@ -5,6 +5,7 @@
 #include "beancount/defs.h"
 
 #include <memory>
+#include <string>
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -15,7 +16,7 @@
 
 namespace beancount {
 namespace py = pybind11;
-
+using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
