@@ -10,8 +10,6 @@
 
 namespace beancount {
 
-using std::size_t;
-
 // Generic hash for generic pair.
 struct pair_hash
 {
