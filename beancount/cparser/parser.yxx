@@ -1653,6 +1653,10 @@ std::unique_ptr<Ledger> Parse(
   } catch (const std::runtime_error& exc) {
     cerr << "exc " << exc.what() << endl;
   }
+
+  // This is a noop, unless %option perf-report is enabled in the scanner.
+  scanner.perf_report();
+
   return builder.MakeLedger();
 }
 

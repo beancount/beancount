@@ -19,11 +19,21 @@
 #include "absl/time/civil_time.h"
 #include "absl/status/statusor.h"
 
+// TODO(blais): Add state to the scanner to support other encodings.
+
 namespace beancount {
 namespace scanner {
 
 // Using declarations for symbols in the scanner implementation only.
 using beancount::parser::Parser;
+
+// A default location object to reuse to avoid having to construct one where
+// it's not needed.
+static beancount::parser::location kLocation;
+
+#define DEFLOC location()
+//#define DEFLOC kLocation  // This saves only 10ms. Not worth it.
+
 
 }  // namespace scanner
 }  // namespace beancount
@@ -65,8 +75,6 @@ using beancount::parser::Parser;
 %option nodefault
 %option exception="Parser::syntax_error(location(), absl::StrCat(\"Unknown token: '\", matcher().str(), \"'\"))"
 
-// TODO(blais): Figure out if I should put the actual derived class for the
-// scanner in beancount/cparser/parser.h and set it here.
 %option namespace=beancount::scanner
 %option lexer=Scanner
 
@@ -78,6 +86,16 @@ using beancount::parser::Parser;
 %option indent
 %option fast
 
+// Profiling options.
+// Observations:
+// - The most expensive rule is the newline matching rule. Not sure why.
+// - Find a way to make creating the location() object conditional and cheaper.
+//   We don't need it everywhere. It's a virtual method. Only create and pass it
+//   where needed.
+// - Accounts and currencies are also very expensive to compute.
+//
+// TODO(blais): Turn this in to a Bazel config setting.
+// %option perf-report
 
 // States.
 %x INVALID
@@ -99,73 +117,73 @@ TIME		\d{1,2}:\d{2}(:\d{2})?
 %%
 
  /* Newlines matter. */
-\n { return Parser::make_EOL(location()); }
+\n { return Parser::make_EOL(DEFLOC); }
 
 /* Indentation. This makes use of RE/flex's indentation stops feature and
  * results in much tighter indentation handling. */
 ^\h+                      // nodent, text is aligned to current margin column
-^\h+\i                    { return Parser::make_INDENT(location()); }
-^\h*\j                    { return Parser::make_DEDENT(location()); }
-\j                        { return Parser::make_DEDENT(location()); }
+^\h+\i                    { return Parser::make_INDENT(DEFLOC); }
+^\h*\j                    { return Parser::make_DEDENT(DEFLOC); }
+\j                        { return Parser::make_DEDENT(DEFLOC); }
 
 /* Whitespace. */
 [ \t\r]+                  /* Ignored whitespace. */
 ;.*                       /* Eat up Comments, anywhere. */
 
  /* Characters with special meanings. */
-\|		{ return Parser::make_PIPE(location()); }
-@@		{ return Parser::make_ATAT(location()); }
-@		{ return Parser::make_AT(location()); }
-\{\{		{ return Parser::make_LCURLCURL(location()); }
-\}\}		{ return Parser::make_RCURLCURL(location()); }
-\{		{ return Parser::make_LCURL(location()); }
-\}		{ return Parser::make_RCURL(location()); }
-,		{ return Parser::make_COMMA(location()); }
-\~		{ return Parser::make_TILDE(location()); }
-\+		{ return Parser::make_PLUS(location()); }
-\-		{ return Parser::make_MINUS(location()); }
-\/		{ return Parser::make_SLASH(location()); }
-\(		{ return Parser::make_LPAREN(location()); }
-\)		{ return Parser::make_RPAREN(location()); }
-\#		{ return Parser::make_HASH(location()); }
-\*		{ return Parser::make_ASTERISK(location()); }
-\:		{ return Parser::make_COLON(location()); }
+\|		{ return Parser::make_PIPE(DEFLOC); }
+@@		{ return Parser::make_ATAT(DEFLOC); }
+@		{ return Parser::make_AT(DEFLOC); }
+\{\{		{ return Parser::make_LCURLCURL(DEFLOC); }
+\}\}		{ return Parser::make_RCURLCURL(DEFLOC); }
+\{		{ return Parser::make_LCURL(DEFLOC); }
+\}		{ return Parser::make_RCURL(DEFLOC); }
+,		{ return Parser::make_COMMA(DEFLOC); }
+\~		{ return Parser::make_TILDE(DEFLOC); }
+\+		{ return Parser::make_PLUS(DEFLOC); }
+\-		{ return Parser::make_MINUS(DEFLOC); }
+\/		{ return Parser::make_SLASH(DEFLOC); }
+\(		{ return Parser::make_LPAREN(DEFLOC); }
+\)		{ return Parser::make_RPAREN(DEFLOC); }
+\#		{ return Parser::make_HASH(DEFLOC); }
+\*		{ return Parser::make_ASTERISK(DEFLOC); }
+\:		{ return Parser::make_COLON(DEFLOC); }
 
 {FLAGS} {
-  return Parser::make_FLAG(wchr(), location());
+  return Parser::make_FLAG(wchr(), DEFLOC);
 }
 
  /* Keywords. */
-txn		{ return Parser::make_TXN(location()); }
-balance		{ return Parser::make_BALANCE(location()); }
-open		{ return Parser::make_OPEN(location()); }
-close		{ return Parser::make_CLOSE(location()); }
-commodity	{ return Parser::make_COMMODITY(location()); }
-pad		{ return Parser::make_PAD(location()); }
-event		{ return Parser::make_EVENT(location()); }
-query		{ return Parser::make_QUERY(location()); }
-custom		{ return Parser::make_CUSTOM(location()); }
-price		{ return Parser::make_PRICE(location()); }
-note		{ return Parser::make_NOTE(location()); }
-document	{ return Parser::make_DOCUMENT(location()); }
-pushtag	        { return Parser::make_PUSHTAG(location()); }
-poptag		{ return Parser::make_POPTAG(location()); }
-pushmeta	{ return Parser::make_PUSHMETA(location()); }
-popmeta		{ return Parser::make_POPMETA(location()); }
-option		{ return Parser::make_OPTION(location()); }
-plugin		{ return Parser::make_PLUGIN(location()); }
-include		{ return Parser::make_INCLUDE(location()); }
+txn		{ return Parser::make_TXN(DEFLOC); }
+balance		{ return Parser::make_BALANCE(DEFLOC); }
+open		{ return Parser::make_OPEN(DEFLOC); }
+close		{ return Parser::make_CLOSE(DEFLOC); }
+commodity	{ return Parser::make_COMMODITY(DEFLOC); }
+pad		{ return Parser::make_PAD(DEFLOC); }
+event		{ return Parser::make_EVENT(DEFLOC); }
+query		{ return Parser::make_QUERY(DEFLOC); }
+custom		{ return Parser::make_CUSTOM(DEFLOC); }
+price		{ return Parser::make_PRICE(DEFLOC); }
+note		{ return Parser::make_NOTE(DEFLOC); }
+document	{ return Parser::make_DOCUMENT(DEFLOC); }
+pushtag	        { return Parser::make_PUSHTAG(DEFLOC); }
+poptag		{ return Parser::make_POPTAG(DEFLOC); }
+pushmeta	{ return Parser::make_PUSHMETA(DEFLOC); }
+popmeta		{ return Parser::make_POPMETA(DEFLOC); }
+option		{ return Parser::make_OPTION(DEFLOC); }
+plugin		{ return Parser::make_PLUGIN(DEFLOC); }
+include		{ return Parser::make_INCLUDE(DEFLOC); }
 
 TRUE {
-  return Parser::make_BOOL(true, location());
+  return Parser::make_BOOL(true, DEFLOC);
 }
 
 FALSE {
-  return Parser::make_BOOL(false, location());
+  return Parser::make_BOOL(false, DEFLOC);
 }
 
 NULL {
-  return Parser::make_NONE(location());
+  return Parser::make_NONE(DEFLOC);
 }
 
  /* Date or date/time. Note that we're not parsing time separately because
@@ -223,7 +241,6 @@ NULL {
     return Parser::make_YYerror("String too long", location());
   }
 
-  // TODO(blais): Add state to the scanner for specific encoding.
   std::string_view contents(matcher().begin() + 1, matcher().size() - 2);
   std::string unescaped;
   std::string error_message;
@@ -275,9 +292,7 @@ NULL {
 }
 
 <<EOF>> {
-  /* Ensure location data is populated. */
-  // TODO(blais): Review this, how to handle in RE/flex.
-  /// YY_USER_ACTION;
+  /* Mark the end of file with an explicit token. */
   return Parser::make_YYEOF(location());
 }
 
@@ -308,3 +323,9 @@ NULL {
 
 //-----------------------------------------------------------------------------
 // Code: Scanner Body
+
+namespace beancount {
+namespace scanner {
+
+}  // namespace scanner
+}  // namespace beancount
