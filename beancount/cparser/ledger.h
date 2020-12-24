@@ -25,7 +25,7 @@ struct Ledger final {
   std::list<beancount::Directive*> directives;
 
   // A list of errors encountered during parsing and processing.
-  std::vector<const beancount::Error*> errors;
+  std::vector<beancount::Error*> errors;
 
   // Parsed options.
   std::shared_ptr<options::Options> options;

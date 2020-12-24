@@ -56,6 +56,11 @@ namespace parser {
 // Parse the contents of a file.
 std::unique_ptr<Ledger> ParseFile(std::string_view filename);
 
+// Parse the contents of a string.
+std::unique_ptr<Ledger> ParseString(const std::string_view& input_string,
+                                    const std::string_view& filename,
+                                    int line_offset = 0);
+
 // An intermediate data structure holding the partially parsed tags and links.
 struct TagsLinks {
   std::vector<std::string> tags;
@@ -95,18 +100,7 @@ struct TagsLinks {
 #include "reflex/input.h"
 
 namespace beancount {
-using absl::StrFormat;
-using google::protobuf::FieldDescriptor;
-using google::protobuf::TextFormat;
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::list;
-using std::pair;
 using std::string;
-using std::string_view;
-using std::unique_ptr;
-using std::vector;
 
 namespace scanner {
 
@@ -859,7 +853,7 @@ booking:
     {
       options::Booking method;
       if (!Booking_Parse($1, &method)) {
-        builder.LogError(StrFormat("Invalid value for booking method: '%s'", $1));
+        builder.LogError(absl::StrFormat("Invalid value for booking method: '%s'", $1));
         method = options::Booking::UNKNOWN;
       }
       $$ = method;
@@ -1080,8 +1074,8 @@ cost_spec:
         // `number_total` to a value in the input when using `{{...}}`.
         if ($2->has_number_total()) {
           builder.LogError(
-            StrFormat("Per-unit cost may not be specified using total cost "
-                      "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
+              absl::StrFormat("Per-unit cost may not be specified using total cost "
+                              "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
         } else {
           $2->mutable_number_total()->CopyFrom($2->number_per());
         }
@@ -1181,15 +1175,16 @@ void beancount::parser::Parser::error(const location& loc, const string& msg)
 
 namespace beancount {
 namespace parser {
+using std::string_view;
 
-// TODO(blais): Return the parsed state.
 std::unique_ptr<Ledger> Parse(
-  const reflex::Input& input,
-  const std::optional<string_view>& filename = {},
-  int line_offset = 0,
-  bool debug = false) {
+    const reflex::Input& input,
+    const std::optional<string_view>& filename = {},
+    int line_offset = 0,
+    bool debug = false) {
+
   // Create a scanner and builder.
-  scanner::ScannerWithFile scanner(input, cout);
+  scanner::ScannerWithFile scanner(input, std::cout);
   if (filename.has_value()) {
     scanner.filename = filename.value();
   }
@@ -1209,7 +1204,7 @@ std::unique_ptr<Ledger> Parse(
 
   } catch (const std::runtime_error& exc) {
     // TODO(blais): Implement this.
-    cerr << "exc " << exc.what() << endl;
+    std::cerr << "exc " << exc.what() << std::endl;
   }
 
   if (debug) {
@@ -1223,11 +1218,20 @@ std::unique_ptr<Ledger> Parse(
 std::unique_ptr<Ledger> ParseFile(string_view filename) {
   std::ifstream in = std::ifstream(string(filename), std::ios::in);
   reflex::Input input(in);
-  string filename_str(filename);
-  return parser::Parse(input, filename_str, 0);
+  return parser::Parse(input, string(filename), 0);
+}
+
+std::unique_ptr<Ledger> ParseString(const string_view& input_string,
+                                    const string_view& filename,
+                                    int line_offset) {
+  // Ensure the string is converted to UTF8 by using reflex::Input and
+  // instantiate a scanner.
+  reflex::Input input(input_string.data(), input_string.size());
+  return parser::Parse(input, string(filename), line_offset);
 }
 
 // TODO(blais): Implement string parser and stdin parser functions.
+
 
 }  // namespace parser
 }  // namespace beancount

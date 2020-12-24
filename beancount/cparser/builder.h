@@ -142,7 +142,7 @@ public:
 private:
   // The accumulated state, same as Ledger.
   std::list<Directive*> directives_;
-  std::vector<const Error*> errors_;
+  std::vector<Error*> errors_;
   std::shared_ptr<options::Options> options_;
   std::shared_ptr<options::ProcessingInfo> info_;
 

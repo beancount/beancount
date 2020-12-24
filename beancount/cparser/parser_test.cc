@@ -1,5 +1,6 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/scanner.h"
+#include "beancount/cparser/test_utils.h"
 
 #if 0
 #include "beancount/compile.h"
@@ -30,33 +31,49 @@ using std::cout;
 using std::endl;
 using std::string_view;
 
-#if 0
-// Run the parser and check that its proto output equivalent matches.
-bool CheckParse(string_view input, string_view expected_proto, int line_offset = 0) {
-  string clean_string = StripAndDedent(input);
-  auto actual_db = ParseString(clean_string, nullptr, line_offset);
-  ClearLineNumbers(actual_db.get());
-  return CompareMessages(*actual_db, expected_proto);
+void ExpectParse(const std::string& input_string,
+                 const std::string& expected_string,
+                 bool dedent=true) {
+  string clean_string = dedent ? StripAndDedent(input_string) : input_string;
+  auto ledger = parser::ParseString(clean_string, "<string>");
+  EXPECT_EQ(1, ledger->directives.size());
+  ClearLineNumbers(ledger.get());
+  EXPECT_TRUE(EqualsMessages(*ledger->directives.front(), expected_string));
 }
 
-// // Serious wizardry in effect to get the line at the start of macro expansion.
-// #define EXPECT_PARSE (SAVE_LINE RUN_CHECK
-// #define SAVE_LINE { int lineno = __LINE__;
-// #define RUN_CHECK(...) EXPECT_TRUE(CheckParse(__VA_ARGS__, lineno)); } )
+TEST(ParserTest, TestBasic) {
+  ExpectParse(R"(
 
-#define EXPECT_PARSE(input, expected_proto)             \
-  EXPECT_TRUE(CheckParse(input, expected_proto));
+    2014-01-27 * "UNION MARKET"
+      Liabilities:US:Amex:BlueCash    -22.02 USD
+      Expenses:Food:Grocery            22.02 USD
 
-// Test just one item.
-TEST(ParserTest, OneItem) {
-  EXPECT_PARSE(u8R"(
-    Conquer the world.
-  )", u8R"(
-    type {type: "item" contents: "Item type" flavor: LAZY}
-    object {id {type: "item"} contents: "Conquer the world."}
+  )", R"(
+    date {
+      year: 2014
+      month: 1
+      day: 27
+    }
+    transaction {
+      flag: "*"
+      narration: "UNION MARKET"
+      postings {
+        account: "Liabilities:US:Amex:BlueCash"
+        units {
+          number { exact: "-22.02" }
+          currency: "USD"
+        }
+      }
+      postings {
+        account: "Expenses:Food:Grocery"
+        units {
+          number { exact: "22.02" }
+          currency: "USD"
+        }
+      }
+    }
   )");
 }
-#endif
 
 }  // namespace
 }  // namespace beancount

@@ -107,18 +107,18 @@ cc_test(
     ],
 )
 
-# cc_test(
-#     name = "parser_test",
-#     srcs = ["parser_test.cc"],
-#     deps = [
-#         # ":test_utils",
-#         # ":data_cc_pb2",
-#         # ":compile",
-#         ":parser",
-#         "@com_google_googletest//:gtest_main",
-#         "@com_google_absl//absl/strings",
-#     ],
-# )
+cc_test(
+    name = "parser_test",
+    srcs = ["parser_test.cc"],
+    deps = [
+        "//beancount/ccore:data_cc_proto",
+        ":test_utils",
+        ":parser",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
 
 # TODO(blais): Our goal in rewriting is to remove this by chipping away at it.
 py_library(
@@ -240,7 +240,8 @@ cc_library(
         "test_utils.h"
     ],
     deps = [
-        #":data_cc_pb2",
+        ":ledger",
+        "//beancount/ccore:data_cc_proto",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
     ],
@@ -250,9 +251,10 @@ cc_test(
     name = "test_utils_test",
     srcs = ["test_utils_test.cc"],
     deps = [
+        "//beancount/ccore:data_cc_proto",
         ":test_utils",
-        #":data_cc_pb2",
-        "@com_google_protobuf//:protobuf",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
     ],
 )
