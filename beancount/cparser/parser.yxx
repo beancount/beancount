@@ -19,7 +19,6 @@
 %define api.filename.type "const std::string"
 
 // Input state to parser.
-// TODO(blais): indent properly, use %param is equivalent?
 %parse-param {::beancount::scanner::Scanner& scanner} {::beancount::parser::Builder& builder}
 
 //- Code blocks ---------------------------------------------------------------
@@ -276,7 +275,7 @@ namespace parser {
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-/* TODO(blais): Have another go at taking to zero. */
+/* TODO(blais): Have another go at taking that to zero. */
 %expect 20
 
 
@@ -314,10 +313,9 @@ declarations:
   /* An error raised at the parser level. */
   | declarations error
     {
-      // TODO(blais): What about the 'error' token encountered elsewhere? Is this
-      // guaranteed to bubble up here?
-      //
-      // TODO(blais): Great place to generically log and error here too?
+      // TODO(blais): ERROR - What about the 'error' token encountered
+      // elsewhere? Is this guaranteed to bubble up here? Great place to
+      // generically log and error here too?
 
       // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
       // the matching rule above, "error" will successfully reduce on each line
@@ -590,10 +588,9 @@ custom:
       custom->set_type(std::move($type));
 
       // Copy custom values here.
-      for (const auto* meta_value : $meta_value_list) {
-        // TODO(blais): Will AddAllocated() work here?
-        custom->mutable_values()->Add()->CopyFrom(*meta_value);
-        delete meta_value;
+      auto* values = custom->mutable_values();
+      for (auto* meta_value : $meta_value_list) {
+        values->AddAllocated(meta_value);
       }
       $meta_value_list.clear();
     }
@@ -1107,8 +1104,7 @@ cost_comp_list:
   | cost_comp_list COMMA cost_comp
     {
       $$ = ($1 != nullptr) ? ($1) : new inter::CostSpec();
-      // TODO(blais): Check for collisions here.
-      $$->MergeFrom(*$3);
+      builder.MergeCost(*$3, $$);
       delete $3;
     }
 
@@ -1134,13 +1130,13 @@ cost_comp:
 %%
 //- User code ----------------------------------------------------------------
 
-// TODO(blais): Move this to error() code.
+// TODO(blais): ERROR Move this to error() code.
 #if 0
 /* Error-handling function. {ca6aab8b9748} */
 void yyerror(const location& loc, yyscan_t scanner, /* PyObject* builder, */ char const* message)
 #endif
 
-// TODO(blais): Review this completely.
+// TODO(blais): ERROR Review this completely.
 //
 // On a scanner exception, Parser::syntax_error() is thrown and caught by the
 // parser source code and this method is called with it.
@@ -1190,7 +1186,8 @@ namespace parser {
 std::unique_ptr<Ledger> Parse(
   const reflex::Input& input,
   const std::optional<string_view>& filename = {},
-  int line_offset = 0) {
+  int line_offset = 0,
+  bool debug = false) {
   // Create a scanner and builder.
   scanner::ScannerWithFile scanner(input, cout);
   if (filename.has_value()) {
@@ -1202,20 +1199,23 @@ std::unique_ptr<Ledger> Parse(
   // Run the parser.
   beancount::parser::Parser parser(scanner, builder);
   parser.set_debug_stream(std::cerr);
-  if (getenv("DEBUG")) {
+  if (debug) {
     parser.set_debug_level(1);
+    scanner.set_debug(1);
   }
-  // scanner.set_debug(1);
   try {
     int result = parser.parse();
-    (void)result; // TODO(blais): Handle the result and corresponding error.
+    (void)result; // TODO(blais): ERROR Handle the result and corresponding error.
 
   } catch (const std::runtime_error& exc) {
+    // TODO(blais): Implement this.
     cerr << "exc " << exc.what() << endl;
   }
 
-  // This is a noop, unless %option perf-report is enabled in the scanner.
-  scanner.perf_report();
+  if (debug) {
+    // This is a noop, unless %option perf-report is enabled in the scanner.
+    scanner.perf_report();
+  }
 
   return builder.MakeLedger();
 }
@@ -1227,25 +1227,7 @@ std::unique_ptr<Ledger> ParseFile(string_view filename) {
   return parser::Parse(input, filename_str, 0);
 }
 
-// TODO(blais): Implement this.
-/// std::unique_ptr<proto::Database> ParseString(const string_view& input_string,
-///                                              const string_view& filename,
-///                                              int line_offset) {
-///   // Ensure the string is converted to UTF8 by using reflex::Input and
-///   // instantiate a scanner.
-///   reflex::Input input(input_string.data(), input_string.size());
-///   static const string filename_str(filename);
-///   return parser::Parse(input, &filename_str, line_offset);
-/// }
-
-// TODO(blais): Implement this.
-/// std::unique_ptr<proto::Database> ParseStdin() {
-///   reflex::Input input(stdin, reflex::Input::file_encoding::utf8);
-///   static const string filename = "<string>";
-///   auto db = parser::Parse(input, &filename);
-///   fclose(stdin);
-///   return db;
-/// }
+// TODO(blais): Implement string parser and stdin parser functions.
 
 }  // namespace parser
 }  // namespace beancount

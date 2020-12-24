@@ -99,6 +99,10 @@ public:
     DecimalToProto(dec, true, proto);
   }
 
+  // Check collisions on merging two components of a cost list and log errors
+  // appropriately. Mutates the
+  void MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator);
+
   // Update statistics on on precision.
   // // TODO(blais): This ought to be renamed "WitnessDecimal()".
   void UpdatePrecisionStats(const decimal::Decimal& dec, const std::string& currency);

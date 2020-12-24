@@ -204,6 +204,12 @@ void Builder::AddActiveMetadata(Meta* meta, Directive* dir) const {
   //
 }
 
+void Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator) {
+  // TODO(blais): Check for collisions here.
+  accumulator->MergeFrom(new_cost_spec);
+}
+
+
 void Builder::UpdatePrecisionStats(const decimal::Decimal& dec, const string& currency) {
   // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
 }
