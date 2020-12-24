@@ -38,6 +38,30 @@ cc_library(
         "parser.h",
         "location.h",
     ],
+    deps = [
+        "//beancount/ccore:number",
+        "//beancount/ccore:date",
+        "//third_party/parser:reflex",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/status:statusor",
+    ]
+)
+
+cc_library(
+    name = "builder",
+    srcs = ["builder.cc"],
+    hdrs = ["builder.h"],
+    deps = [
+        ":parser_headers",
+        ":parser_cc_proto",
+        ":options_cc_proto",
+        ":ledger",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@mpdecimal//:mpdecimal",
+        "@com_google_protobuf//:protobuf",
+    ]
 )
 
 cc_library(
@@ -55,6 +79,7 @@ cc_library(
     # Generated and real files are interdependent.
     tags = ["nofixdeps"],
     deps = [
+        ":builder",
         ":parser_cc_proto",
         ":options_cc_proto",
         "//beancount/ccore:date",
