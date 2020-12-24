@@ -10,11 +10,9 @@
 
 #include <optional>
 #include <tuple>
-#include <vector>
 
 namespace beancount {
 
-using std::vector;
 using std::size_t;
 using std::optional;
 using std::pair;

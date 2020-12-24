@@ -37,7 +37,7 @@ template<>
 struct hash<beancount::Number> {
   size_t operator()(const beancount::Number& number) const {
     return (number.has_exact() ?
-            hash<string>{}(number.exact()) :
+            hash<std::string>{}(number.exact()) :
             hash<beancount::MpDecimal>{}(number.mpd()));
   }
 };

@@ -16,6 +16,7 @@
 namespace beancount {
 namespace {
 using std::string;
+using std::vector;
 
 TEST(TestAccount, AccountRegexp) {
   EXPECT_TRUE(beancount::kAccountRE.ok());
