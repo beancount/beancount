@@ -8,6 +8,9 @@
 #ifndef BEANCOUNT_CCORE_STD_UTILS_H_
 #define BEANCOUNT_CCORE_STD_UTILS_H_
 
+#include <string>
+#include <string_view>
+
 namespace beancount {
 
 // Generic hash for generic pair.
@@ -18,6 +21,9 @@ struct pair_hash
     return std::hash<T1>{}(pair.first) ^ std::hash<T2>{}(pair.second);
   }
 };
+
+// Creates an uppercase string from a given absl::string_view.
+std::string Capitalize(std::string_view s);
 
 }  // namespace beancount
 

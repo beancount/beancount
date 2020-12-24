@@ -12,6 +12,19 @@ package(default_visibility = [
 cc_library(
     name = "std_utils",
     hdrs = ["std_utils.h"],
+    srcs = ["std_utils.cc"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "std_utils_test",
+    srcs = ["std_utils_test.cc"],
+    deps = [
+        ":std_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 #----------------------------------------

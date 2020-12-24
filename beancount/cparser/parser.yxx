@@ -950,6 +950,7 @@ price_annotation:
       if ($price_annotation->has_number()) {
         decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
         if (dec.sign() == -1) {
+          // TODO(blais): Move this to post-parsing.
           builder.LogError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)");
@@ -1073,6 +1074,7 @@ cost_spec:
         // Note: This is using the total syntax; it is an error to set
         // `number_total` to a value in the input when using `{{...}}`.
         if ($2->has_number_total()) {
+          // TODO(blais): Move this to post-parsing.
           builder.LogError(
               absl::StrFormat("Per-unit cost may not be specified using total cost "
                               "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
@@ -1124,48 +1126,16 @@ cost_comp:
 %%
 //- User code ----------------------------------------------------------------
 
-// TODO(blais): ERROR Move this to error() code.
-#if 0
-/* Error-handling function. {ca6aab8b9748} */
-void yyerror(const location& loc, yyscan_t scanner, /* PyObject* builder, */ char const* message)
-#endif
-
-// TODO(blais): ERROR Review this completely.
-//
 // On a scanner exception, Parser::syntax_error() is thrown and caught by the
 // parser source code and this method is called with it.
 void beancount::parser::Parser::error(const location& loc, const string& msg)
 {
-  // TODO(blais): Change this code to log an error and bubble that up to the
-  // output. We should never write to stderr.
   using std::cerr;
   using std::endl;
-  cerr << loc << ": " << msg << endl;
-  if (loc.begin.line == loc.end.line && loc.begin.line == scanner.lineno()) {
-    cerr << scanner.matcher().line() << endl;
-    for (size_t i = 0; i < loc.begin.column; ++i)
-      cerr << " ";
-    for (size_t i = loc.begin.column; i <= loc.end.column; ++i)
-      cerr << "~";
-    cerr << endl;
-  } else {
-    FILE* file = scanner.in().file(); // The current file being scanned.
-    if (file != NULL) {
-      beancount::scanner::Scanner::Matcher* m = scanner.new_matcher(file);
-      scanner.push_matcher(m);
-      off_t pos = ftell(file);
-      fseek(file, 0, SEEK_SET);
-      for (size_t i = 1; i < loc.begin.line; ++i) {
-        m->skip('\n'); // Skip to the next line.
-      }
-      for (size_t i = loc.begin.line; i <= loc.end.line; ++i) {
-        cerr << m->line() << endl;
-        m->skip('\n'); // Next line.
-      }
-      fseek(file, pos, SEEK_SET); // Restore position in the file to continue scanning.
-      scanner.pop_matcher(); // Restore matcher.
-    }
-  }
+
+  // Log an error.
+  // TODO(blais): Add location.
+  builder.LogError(msg);
 
   // If token is unknown (no match).
   if (scanner.size() == 0) {

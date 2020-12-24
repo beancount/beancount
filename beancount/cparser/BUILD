@@ -57,6 +57,7 @@ cc_library(
         ":parser_cc_proto",
         ":options_cc_proto",
         ":ledger",
+        "//beancount/ccore:std_utils",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@mpdecimal//:mpdecimal",
@@ -180,6 +181,35 @@ py_proto_library(
 )
 
 #-------------------------------------------------------------------------------
+# Proto container for everything.
+
+proto_library(
+    name = "ledger_proto",
+    srcs = ["ledger.proto"],
+    deps = [
+        "//beancount/ccore:data_proto",
+        "//beancount/cparser:options_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "ledger_cc_proto",
+    deps = [":ledger_proto"],
+)
+
+cc_library(
+    name = "ledger",
+    srcs = ["ledger.cc"],
+    hdrs = ["ledger.h"],
+    deps = [
+        "//beancount/cparser:ledger_cc_proto",
+        "//beancount/cparser:options_cc_proto",
+        "//beancount/ccore:data_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ]
+)
+
+#-------------------------------------------------------------------------------
 # Extension module.
 
 # TODO(blais): Let the pybind11 authors know py_extension works better.
@@ -214,19 +244,6 @@ py_test(
         "//beancount/parser:printer",
         "//beancount/core:number",
     ],
-)
-
-#-------------------------------------------------------------------------------
-
-cc_library(
-    name = "ledger",
-    srcs = ["ledger.cc"],
-    hdrs = ["ledger.h"],
-    deps = [
-        "//beancount/cparser:options_cc_proto",
-        "//beancount/ccore:data_cc_proto",
-        "@com_google_protobuf//:protobuf",
-    ]
 )
 
 #-------------------------------------------------------------------------------

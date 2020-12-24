@@ -1,4 +1,5 @@
 #include "beancount/cparser/builder.h"
+#include "beancount/ccore/std_utils.h"
 
 #include <experimental/filesystem>
 
@@ -232,10 +233,12 @@ Directive* Builder::MakeDirective(const absl::CivilDay& date,
   delete ourmeta;
 
   // Update tags, including adding active tags, and links.
-  SetTagsAndLinks(*tags_links, dir);
-  if (tags_links != nullptr && *tags_links != nullptr) {
-    delete *tags_links;
-    tags_links = nullptr;
+  if (tags_links != nullptr) {
+    SetTagsAndLinks(*tags_links, dir);
+    if (*tags_links != nullptr) {
+      delete *tags_links;
+      *tags_links = nullptr;
+    }
   }
 
   return dir;
@@ -306,9 +309,11 @@ void Builder::PreparePosting(Posting* posting,
 
 
 void Builder::LogError(const string& message) {
-  // TODO(blais):
-  /// scanner_.location()
-  std::cerr << scanner_.location() << ": " << message << std::endl;
+  auto* error = new Error();
+  errors_.push_back(error);
+  error->set_message(Capitalize(message));
+
+  // TODO(blais): add location
 }
 // TODO(blais): Can we turn this error logging into a stream instead?
 

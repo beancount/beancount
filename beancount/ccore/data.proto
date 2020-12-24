@@ -413,7 +413,7 @@ message Error {
   // numbers are optional and may be left unset if not relevant to the context.
   optional Location location = 2;
 
-  // A unique hash referenceing of a corresponding directive.
+  // A unique hash referencing of a corresponding directive.
   optional string dirhash = 3;
 }
 

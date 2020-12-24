@@ -66,4 +66,21 @@ int WriteToText(const Ledger& ledger, const std::string& filename) {
   return 0;
 }
 
+std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger) {
+  auto output = std::make_unique<inter::Ledger>();
+  for (const auto* dir : ledger.directives) {
+    output->add_directives()->CopyFrom(*dir);
+  }
+  for (const auto* error : ledger.errors) {
+    output->add_errors()->CopyFrom(*error);
+  }
+  if (ledger.options->ByteSizeLong() > 0) {
+    output->mutable_options()->CopyFrom(*ledger.options);
+  }
+  if (ledger.info->ByteSizeLong() > 0) {
+    output->mutable_info()->CopyFrom(*ledger.info);
+  }
+  return output;
+}
+
 }  // namespace beancount

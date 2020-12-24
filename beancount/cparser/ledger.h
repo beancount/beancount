@@ -7,6 +7,8 @@
 #ifndef BEANCOUNT_CPARSER_LEDGER_H_
 #define BEANCOUNT_CPARSER_LEDGER_H_
 
+#include "beancount/cparser/ledger.pb.h"
+
 #include <memory>
 #include <vector>
 #include <list>
@@ -16,8 +18,14 @@
 
 namespace beancount {
 
-// Container for all data produced by the parser, and the by Beancount in
-// general (after booking, interpolation, and plugins processing.
+// Container for all data produced by the parser, and also by Beancount in
+// general (after booking, interpolation, and plugins processing).
+//
+// Note that this a C++ container; we also have a separate proto container used
+// for tests.
+//
+// TODO(blais): Measure performance and use cases and eliminate one or the
+// other.
 struct Ledger final {
   ~Ledger();
 
@@ -36,6 +44,9 @@ struct Ledger final {
 
 // Write ledger content to a text-formatted file.
 int WriteToText(const Ledger& ledger, const std::string& filename);
+
+// Convert the class above to a proto version.
+std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger);
 
 }  // namespace beancount
 
