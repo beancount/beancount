@@ -8,7 +8,6 @@
 
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/number.h"
-#include "beancount/defs.h"
 
 namespace std {
 

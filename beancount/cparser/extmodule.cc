@@ -2,7 +2,6 @@
 #include "beancount/cparser/ledger.h"
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/datapy.h"
-#include "beancount/defs.h"
 
 #include <memory>
 #include <string>

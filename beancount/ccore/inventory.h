@@ -42,7 +42,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "beancount/defs.h"
+#include "beancount/ccore/std_utils.h"
 #include "beancount/ccore/data.pb.h"
 #include "beancount/ccore/data.h"
 #include "beancount/ccore/number.h"

@@ -17,7 +17,6 @@
 #include <string>
 
 #include "beancount/ccore/data.pb.h"
-#include "beancount/defs.h"
 
 namespace beancount {
 

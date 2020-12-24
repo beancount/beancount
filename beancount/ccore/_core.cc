@@ -1,7 +1,6 @@
 #include "beancount/ccore/account.h"
 #include "beancount/ccore/account_types.h"
 #include "beancount/ccore/inventory.h"
-#include "beancount/defs.h"
 
 #include <vector>
 #include <string>

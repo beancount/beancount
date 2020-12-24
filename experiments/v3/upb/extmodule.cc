@@ -4,7 +4,6 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/ledger.h"
 #include "beancount/ccore/data.pb.h"
-#include "beancount/defs.h"
 
 #include "beancount/ccore/data.upbcpp.h"
 

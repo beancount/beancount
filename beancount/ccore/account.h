@@ -15,8 +15,6 @@
 #include <vector>
 #include <string>
 
-#include "beancount/defs.h"
-
 namespace beancount {
 
 // Component separator for account names.

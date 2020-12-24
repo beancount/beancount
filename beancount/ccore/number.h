@@ -8,7 +8,6 @@
 #include <iosfwd>
 
 #include "beancount/ccore/number.pb.h"
-#include "beancount/defs.h"
 
 #include "decimal.hh"
 

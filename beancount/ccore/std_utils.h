@@ -5,8 +5,8 @@
 // Copyright (C) 2013-2016,2020  Martin Blais
 // License: "GNU GPLv2"
 
-#ifndef BEANCOUNT_DEFS_H_
-#define BEANCOUNT_DEFS_H_
+#ifndef BEANCOUNT_CCORE_STD_UTILS_H_
+#define BEANCOUNT_CCORE_STD_UTILS_H_
 
 namespace beancount {
 
@@ -21,4 +21,4 @@ struct pair_hash
 
 }  // namespace beancount
 
-#endif // BEANCOUNT_CCORE_ACCOUNT_H_
+#endif // BEANCOUNT_CCORE_STD_UTILS_H_

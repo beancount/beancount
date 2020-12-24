@@ -200,7 +200,6 @@ py_extension(
         ":ledger",
         "//beancount/ccore:data_cc_proto",
         "//beancount/ccore:datapy",
-        "//beancount:defs",
         "@local_config_python//:python_headers",
         "@pybind11",
     ],
@@ -226,7 +225,6 @@ cc_library(
     deps = [
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
-        "//beancount:defs",
         "@com_google_protobuf//:protobuf",
     ]
 )

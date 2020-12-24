@@ -9,6 +9,11 @@ package(default_visibility = [
     "//experiments/v3:__subpackages__",
 ])
 
+cc_library(
+    name = "std_utils",
+    hdrs = ["std_utils.h"],
+)
+
 #----------------------------------------
 
 proto_library(
@@ -34,7 +39,6 @@ cc_library(
     deps = [
         "@com_google_absl//absl/hash",
         "@mpdecimal//:mpdecimal",
-        "//beancount:defs",
         "//beancount/ccore:number_cc_proto",
     ],
 )
@@ -43,7 +47,6 @@ cc_test(
     name = "number_cc_test",
     srcs = ["number_test.cc"],
     deps = [
-        "//beancount:defs",
         ":number",
         "@com_google_googletest//:gtest_main",
     ],
@@ -124,7 +127,6 @@ cc_library(
     hdrs = ["data.h"],
     srcs = ["data.cc"],
     deps = [
-        "//beancount:defs",
         ":number",
         ":number_cc_proto",
         ":data_cc_proto",
@@ -140,7 +142,6 @@ cc_library(
     deps = [
         "//beancount/ccore:data_cc_proto",
         "//beancount/cparser:options_cc_proto",
-        "//beancount:defs",
         "@local_config_python//:python_headers",
         "@pybind11",
     ],
@@ -153,7 +154,6 @@ cc_library(
     hdrs = ["account.h"],
     srcs = ["account.cc"],
     deps = [
-        "//beancount:defs",
         "//beancount/ccore:data_cc_proto",
         "@com_google_re2//:re2",
         "@com_google_absl//absl/strings:str_format",
@@ -165,7 +165,6 @@ cc_test(
     name = "account_cc_test",
     srcs = ["account_test.cc"],
     deps = [
-        "//beancount:defs",
         ":account",
         "@com_google_googletest//:gtest_main",
     ],
@@ -187,7 +186,6 @@ cc_library(
     hdrs = ["account_types.h"],
     srcs = ["account_types.cc"],
     deps = [
-        "//beancount:defs",
         ":account",
         "@com_google_absl//absl/strings",
     ],
@@ -209,7 +207,7 @@ cc_library(
     hdrs = ["inventory.h"],
     srcs = ["inventory.cc"],
     deps = [
-        "//beancount:defs",
+        ":std_utils",
         ":number",
         ":data",
         ":data_cc_proto",
