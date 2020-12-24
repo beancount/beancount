@@ -1,9 +1,5 @@
 #include "beancount/cparser/test_utils.h"
-#if 0
-#include "beancount/data.pb.h"
-#endif
 
-#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <limits>
@@ -14,18 +10,13 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "google/protobuf/text_format.h"
 #include "google/protobuf/util/message_differencer.h"
 
 namespace beancount {
-using std::string_view;
-using google::protobuf::TextFormat;
 using google::protobuf::util::MessageDifferencer;
 using std::cout;
 using std::endl;
-using std::pair;
 using std::string;
-using std::vector;
 
 namespace {
 
@@ -42,8 +33,8 @@ inline int CountIndentSpaces(const string& line) {
 
 }
 
-string StripAndDedent(const string_view& input_string) {
-  vector<string> lines = absl::StrSplit(input_string, "\n");
+string StripAndDedent(std::string_view input_string) {
+  std::vector<string> lines = absl::StrSplit(input_string, "\n");
 
   // Check that the first two lines are empty and remove them.
   assert(lines.size() >= 2);
@@ -51,29 +42,33 @@ string StripAndDedent(const string_view& input_string) {
   assert(absl::StripAsciiWhitespace(lines.back()).empty());
   lines.erase(lines.begin());
   lines.pop_back();
-  // for (auto line : lines) { std::cout << "[" << line << "]" << std::endl; }
 
   // Dedent the lines.
-  int min_spaces = std::numeric_limits<int>::max();
+  int min_column = std::numeric_limits<int>::max();
   for (const auto& line : lines) {
+    if (line.empty()) {
+      continue;
+    }
     int num_spaces = CountIndentSpaces(line);
-    if (num_spaces < min_spaces)
-      min_spaces = num_spaces;
+    if (num_spaces < min_column) {
+      min_column = num_spaces;
+    }
   }
-  vector<string> dedented_lines;
-  dedented_lines.reserve(lines.size());
-  for (const auto& line : lines) {
-    dedented_lines.push_back(line.substr(min_spaces, string::npos));
+  std::vector<string> dedented_lines;
+  if (min_column == 0) {
+    dedented_lines = std::move(lines);
+  } else {
+    dedented_lines.reserve(lines.size());
+    for (const auto& line : lines) {
+      dedented_lines.push_back(line.size() >= min_column ?
+                               line.substr(min_column, string::npos) : line);
+    }
   }
   return absl::StrCat(absl::StrJoin(dedented_lines, "\n"), "\n");
 }
 
-template <typename T>
-bool CompareMessages(const T& actual,
-                     std::string_view expected_proto) {
-  // TODO(blais): Remove string() when protobuf is upgraded.
-  T expected;
-  assert(TextFormat::ParseFromString(string(expected_proto), &expected));
+bool EqualsMessages(const google::protobuf::Message& expected,
+                    const google::protobuf::Message& actual) {
   bool succ = MessageDifferencer::Equals(expected, actual);
   if (!succ) {
     // Print actual output.
@@ -86,29 +81,18 @@ bool CompareMessages(const T& actual,
   return succ;
 }
 
-
-
-
-
-
-
-#if 0
-// Explicit instantiation.
-template bool CompareMessages(const beancount::proto::Database& actual,
-                              std::string_view expected_proto);
-
-void ClearLineNumbers(proto::Database* db) {
-  for (auto& typ : *db->mutable_type()) {
-    if (typ.has_lineno()) {
-      typ.clear_lineno();
+void ClearLineNumbers(Ledger* ledger) {
+  for (auto* dir : ledger->directives) {
+    dir->clear_location();
+    if (dir->has_transaction()) {
+      for (auto& posting : *dir->mutable_transaction()->mutable_postings()) {
+        posting.clear_location();
+      }
     }
   }
-  for (auto& obj : *db->mutable_object()) {
-    if (obj.has_lineno()) {
-      obj.clear_lineno();
-    }
+  for (auto* error : ledger->errors) {
+    error->clear_location();
   }
 }
-#endif
 
 }  // namespace beancount

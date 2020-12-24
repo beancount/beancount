@@ -1,39 +1,92 @@
 #include "beancount/cparser/test_utils.h"
-// #include "beancount/data.pb.h"
+#include "beancount/ccore/data.pb.h"
 
 #include <string>
 
+#include "absl/strings/str_split.h"
+#include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "google/protobuf/util/message_differencer.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 namespace beancount {
 namespace {
-
 using std::string;
+using std::vector;
 using google::protobuf::TextFormat;
 using google::protobuf::util::MessageDifferencer;
+using testing::ElementsAre;
 
-/// // Test just one item.
-/// TEST(TestUtilsTest, ClearLineNumbers) {
-///   string input = u8R"(
-///     type {lineno: 42 type: "item"}
-///     object {lineno: 142 id {type: "item" ident: "0"}}
-///   )";
-///   proto::Database input_db;
-///   ASSERT_TRUE(TextFormat::ParseFromString(input, &input_db));
-///   ClearLineNumbers(&input_db);
-///
-///   string expected = u8R"(
-///     type {type: "item"}
-///     object {id {type: "item" ident: "0"}}
-///   )";
-///   proto::Database expected_db;
-///   ASSERT_TRUE(TextFormat::ParseFromString(expected, &expected_db));
-///
-///   EXPECT_TRUE(MessageDifferencer::Equals(expected_db, input_db));
-/// }
+TEST(TestUtilsTest, StripAndDedent) {
+  string input = u8R"(
+
+    left
+       indented
+      less
+
+  )";
+  string output = StripAndDedent(input);
+  vector<string> output_lines = absl::StrSplit(output, "\n");
+  EXPECT_THAT(output_lines, ElementsAre("", "left", "   indented", "  less", "", ""));
+}
+
+TEST(TestUtilsTest, CompareMessages) {
+  beancount::Amount amount;
+  amount.mutable_number()->set_exact("144000");
+  amount.set_currency("USD");
+  EXPECT_TRUE(EqualsMessages(amount, R"(
+    number { exact: "144000" }
+    currency: "USD"
+  )"));
+}
+
+TEST(TestUtilsTest, ClearLineNumbers) {
+  auto txn = new Directive();
+  google::protobuf::TextFormat::ParseFromString(R"(
+    location {
+      lineno: 10
+      lineno_end: 10
+    }
+    transaction {
+      postings {
+        location {
+          lineno: 10
+          lineno_end: 10
+        }
+      }
+      postings {
+        location {
+          lineno: 10
+          lineno_end: 10
+        }
+      }
+    }
+  )", txn);
+
+  auto error = new Error();
+  google::protobuf::TextFormat::ParseFromString(R"(
+    location {
+      lineno: 10
+      lineno_end: 10
+    }
+  )", error);
+
+  Ledger ledger;
+  ledger.directives.push_back(txn);
+  ledger.errors.push_back(error);
+
+  ClearLineNumbers(&ledger);
+
+  EXPECT_TRUE(EqualsMessages(*ledger.directives.front(), R"(
+    transaction {
+      postings {
+      }
+      postings {
+      }
+    }
+  )"));
+}
 
 }  // namespace
 }  // namespace beancount
