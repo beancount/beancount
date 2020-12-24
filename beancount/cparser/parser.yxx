@@ -996,7 +996,7 @@ amount_tolerance:
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency(std::move($4));
-      $$ = make_pair(amount, $tolerance);
+      $$ = std::make_pair(amount, $tolerance);
     }
 
 /* An optional number. */

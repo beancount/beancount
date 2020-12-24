@@ -9,16 +9,11 @@
 #define BEANCOUNT_DEFS_H_
 
 #include <optional>
-#include <tuple>
 
 namespace beancount {
 
 using std::size_t;
 using std::optional;
-using std::pair;
-using std::make_pair;
-using std::tuple;
-using std::make_tuple;
 
 // Generic hash for generic pair.
 struct pair_hash
