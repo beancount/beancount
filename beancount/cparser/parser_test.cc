@@ -28,7 +28,7 @@ using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
-using absl::string_view;
+using std::string_view;
 
 #if 0
 // Run the parser and check that its proto output equivalent matches.

@@ -4651,6 +4651,13 @@ http://furius.ca/beancount/doc/proposal-query
       Expenses:Electricity             45.34/2 USD
       Liabilities:Alice                45.34/2 USD
 
+* Crypto
+
+  Start thinking about some features for crypto users.
+
+  - Make it possible to transfer lots with cost between accounts without having
+    to specify the full detail (use matching).
+
 * Misc Grab Bag of Ideas
 
   Here follows a grab bag of ideas. When I have a new idea coming to me, I don't
@@ -5551,9 +5558,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Issue #130: Padding involving the same account doesn't work incrementally (blais/beancount)
 
-  - Issue #128: bean-report holdings market value incorrect if no price given
-    initially (blais/beancount)
-
   - Issue #131: Aggregate the state of DisplayContext across all parsed files.
 
 ** TaxMin Reporting
@@ -5610,20 +5614,10 @@ http://furius.ca/beancount/doc/proposal-query
       further assistance. Thank you for being a Betterment customer, have a wonderful
       day."
 
-
 ** Adding Types
 
   Comments from YYing re. adding types:
   https://bitbucket.org/blais/beancount/issues/140/add-type-annotation-to-beancount-codebase
-
-  - typing.NamedTuple is a good drop-in replacement for namedtuple. See
-    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi
-    for example
-
-  - There should be an abc for all directives, thus the signatures of many
-    functions can expressed more accurately. E.g.
-    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L149
-    without a proper abc, the argument can only be List[Any]
 
   - Some bad design choice is more obvious when adding type annotation. E.g.
     https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L67
@@ -5637,3 +5631,9 @@ http://furius.ca/beancount/doc/proposal-query
     returns foo in bar, mypy is unable to infer that the return type is a bool.
     I think pytype from Google have better type inference but it's written in
     Python2 and I haven't figure out how to run it against python3 code.
+
+** V3-Specific
+
+- Build RE/flex with Boost or PCRE2 with JIT-optimized regexps; see how much of
+  a difference it makes; right now it's using the default, which is claimed to
+  be faster.

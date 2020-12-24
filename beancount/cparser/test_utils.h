@@ -10,12 +10,12 @@ namespace beancount {
 
 // Ditch the first and last lines and dedent the remaining lines.
 // This is useful for writing unit tests.
-std::string StripAndDedent(const absl::string_view& input_string);
+std::string StripAndDedent(const std::string_view& input_string);
 
 // Compare the given message with the parsed text proto version.
 // Returns true on success.
 template <typename T>
-bool CompareMessages(const T& message, absl::string_view expected_proto);
+bool CompareMessages(const T& message, std::string_view expected_proto);
 
 
 

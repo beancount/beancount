@@ -15,6 +15,9 @@
 #include "re2/re2.h"
 
 namespace beancount {
+using std::string_view;
+using std::string;
+using std::vector;
 
 const char* kSep = ":";
 

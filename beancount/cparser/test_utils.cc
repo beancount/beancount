@@ -18,7 +18,7 @@
 #include "google/protobuf/util/message_differencer.h"
 
 namespace beancount {
-using absl::string_view;
+using std::string_view;
 using google::protobuf::TextFormat;
 using google::protobuf::util::MessageDifferencer;
 using std::cout;
@@ -70,7 +70,7 @@ string StripAndDedent(const string_view& input_string) {
 
 template <typename T>
 bool CompareMessages(const T& actual,
-                     absl::string_view expected_proto) {
+                     std::string_view expected_proto) {
   // TODO(blais): Remove string() when protobuf is upgraded.
   T expected;
   assert(TextFormat::ParseFromString(string(expected_proto), &expected));
@@ -95,7 +95,7 @@ bool CompareMessages(const T& actual,
 #if 0
 // Explicit instantiation.
 template bool CompareMessages(const beancount::proto::Database& actual,
-                              absl::string_view expected_proto);
+                              std::string_view expected_proto);
 
 void ClearLineNumbers(proto::Database* db) {
   for (auto& typ : *db->mutable_type()) {

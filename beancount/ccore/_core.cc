@@ -13,6 +13,10 @@
 
 namespace beancount {
 namespace py = pybind11;
+using std::string;
+using std::string_view;
+using std::vector;
+using std::optional;
 
 namespace {
 

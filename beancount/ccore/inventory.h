@@ -83,7 +83,7 @@ private:
 
 // Constructor from a string.
 // TODO(blais): Turn into a proper constructor.
-Inventory InventoryFromString(string_view string);
+Inventory InventoryFromString(std::string_view string);
 
 }  // namespace beancount
 

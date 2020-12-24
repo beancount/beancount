@@ -17,7 +17,7 @@
 
 namespace beancount {
 
-Inventory InventoryFromString(string_view string) {
+Inventory InventoryFromString(std::string_view string) {
   Inventory inv;
   // TODO(blais)
   return inv;
