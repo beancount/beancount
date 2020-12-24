@@ -8,12 +8,9 @@
 #ifndef BEANCOUNT_DEFS_H_
 #define BEANCOUNT_DEFS_H_
 
-#include <optional>
-
 namespace beancount {
 
 using std::size_t;
-using std::optional;
 
 // Generic hash for generic pair.
 struct pair_hash

@@ -53,7 +53,7 @@ public:
   void AddInclude(std::string&& filename);
 
   // Add a plugin to be run.
-  void AddPlugin(std::string&& name, optional<std::string> config);
+  void AddPlugin(std::string&& name, const std::optional<std::string>& config);
 
   // Intern account and add to the global list of accounts seen.
   const std::string& Account(std::string&& account);

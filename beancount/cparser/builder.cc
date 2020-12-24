@@ -84,7 +84,7 @@ void Builder::AddInclude(string&& filename) {
   info_->add_include(filename);
 }
 
-void Builder::AddPlugin(string&& name, optional<string> config) {
+void Builder::AddPlugin(string&& name, const std::optional<string>& config) {
   auto* plugin = info_->add_plugin();
   plugin->set_name(name);
   if (config.has_value()) {
