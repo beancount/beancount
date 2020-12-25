@@ -308,7 +308,9 @@ void Builder::PreparePosting(Posting* posting,
 }
 
 void SetLocationFromLocation(const location& loc, Location* output) {
-  output->set_filename(*loc.begin.filename);
+  if (loc.begin.filename) {
+    output->set_filename(*loc.begin.filename);
+  }
   output->set_lineno(loc.begin.line);
   output->set_lineno_end(loc.end.line);
 }
@@ -338,7 +340,7 @@ void Builder::ValidateAccountNames() {
 }
 
 void Builder::Finalize(const location& loc) {
-  void ValidateAccountNames();
+  ValidateAccountNames();
 
   // If the user left some tags unbalanced, issue an error.
   for (const auto& tag : active_tags_) {
@@ -347,8 +349,7 @@ void Builder::Finalize(const location& loc) {
 
   // If the user left some metadata unpopped, issue an error.
   for (const auto& [key, value_list] : active_meta_) {
-    AddError(StrFormat(
-                 "Unbalanced metadata key '%s' has leftover metadata", key), loc);
+    AddError(StrFormat("Unbalanced metadata key '%s' has leftover metadata", key), loc);
   }
 }
 

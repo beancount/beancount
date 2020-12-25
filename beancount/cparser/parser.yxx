@@ -59,7 +59,8 @@ std::unique_ptr<Ledger> ParseFile(std::string_view filename);
 // Parse the contents of a string.
 std::unique_ptr<Ledger> ParseString(const std::string_view& input_string,
                                     const std::string_view& filename,
-                                    int line_offset = 0);
+                                    int line_offset = 0,
+                                    bool debug = false);
 
 // An intermediate data structure holding the partially parsed tags and links.
 struct TagsLinks {
@@ -270,7 +271,7 @@ namespace parser {
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
 /* TODO(blais): Have another go at taking that to zero. */
-%expect 20
+%expect 18
 
 
 
@@ -280,10 +281,13 @@ namespace parser {
 /* Start token for parsing an entire file of the DSL. */
 file:
   declarations YYEOF
+    {
+      builder.Finalize(location());
+    }
 
 /* End-of-line marker. In Beancount whitespace matters, so we don't swallow these and
    match them explicitly. */
-eol: EOL | YYEOF
+eol: EOL
 
 /* A rule to reduce pragmas and directives. We also handle errors at this
    level. */
@@ -1195,11 +1199,12 @@ std::unique_ptr<Ledger> ParseFile(string_view filename) {
 
 std::unique_ptr<Ledger> ParseString(const string_view& input_string,
                                     const string_view& filename,
-                                    int line_offset) {
+                                    int line_offset,
+                                    bool debug) {
   // Ensure the string is converted to UTF8 by using reflex::Input and
   // instantiate a scanner.
   reflex::Input input(input_string.data(), input_string.size());
-  return parser::Parse(input, string(filename), line_offset, true);
+  return parser::Parse(input, string(filename), line_offset, debug);
 }
 
 // TODO(blais): Implement string parser and stdin parser functions.
