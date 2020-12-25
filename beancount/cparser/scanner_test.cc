@@ -35,7 +35,7 @@ void PrintTokens(const symbol_tuples& tokens) {
 
 // Read the given string in 'input_string' and return a scanned list of (token,
 // name) pairs.
-symbol_tuples Tokenize(const string& input_string, bool no_dedent=true) {
+symbol_tuples Tokenize(const string& input_string, bool no_dedent=false) {
   // Ensure the string is converted to UTF8 by using reflex::Input and
   // instantiate a scanner.
   string clean_string = no_dedent ? input_string : StripAndDedent(input_string);

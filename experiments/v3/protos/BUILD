@@ -17,7 +17,6 @@ py_binary(
         "//beancount/core:data",
         "//beancount/core:position",
         "//beancount/cparser:extmodule",
-        "//beancount/cparser:grammar",
         "//beancount/parser:printer",
         "//beancount:loader",
         "@com_google_riegeli//python/riegeli",

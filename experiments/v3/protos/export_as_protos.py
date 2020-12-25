@@ -35,7 +35,6 @@ from beancount.cparser import parser_pb2 as qb
 from beancount.cparser import options_pb2 as ob
 
 from beancount.cparser import extmodule
-from beancount.cparser import grammar
 from beancount.parser import printer
 
 

@@ -79,6 +79,87 @@ void Builder::AddOption(const string& key, string&& value, const location& loc) 
   //       Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
   //           converter=D)]),
   //   ParserError(meta, "Error for option '{}': {}".format(key, exc),
+
+
+    // def option(self, filename, lineno, key, value):
+    //     """Process an option directive.
+
+    //     Args:
+    //       filename: current filename.
+    //       lineno: current line number.
+    //       key: option's key (str)
+    //       value: option's value
+    //     """
+    //     if key not in self.options:
+    //         meta = new_metadata(filename, lineno)
+    //         self.errors.append(
+    //             ParserError(meta, "Invalid option: '{}'".format(key), None))
+
+    //     elif key in options.READ_ONLY_OPTIONS:
+    //         meta = new_metadata(filename, lineno)
+    //         self.errors.append(
+    //             ParserError(meta, "Option '{}' may not be set".format(key), None))
+
+    //     else:
+    //         option_descriptor = options.OPTIONS[key]
+
+    //         # Issue a warning if the option is deprecated.
+    //         if option_descriptor.deprecated:
+    //             assert isinstance(option_descriptor.deprecated, str), "Internal error."
+    //             meta = new_metadata(filename, lineno)
+    //             self.errors.append(
+    //                 DeprecatedError(meta, option_descriptor.deprecated, None))
+
+    //         # Rename the option if it has an alias.
+    //         if option_descriptor.alias:
+    //             key = option_descriptor.alias
+    //             option_descriptor = options.OPTIONS[key]
+
+    //         # Convert the value, if necessary.
+    //         if option_descriptor.converter:
+    //             try:
+    //                 value = option_descriptor.converter(value)
+    //             except ValueError as exc:
+    //                 meta = new_metadata(filename, lineno)
+    //                 self.errors.append(
+    //                     ParserError(meta,
+    //                                 "Error for option '{}': {}".format(key, exc),
+    //                                 None))
+    //                 return
+
+    //         option = self.options[key]
+    //         if isinstance(option, list):
+    //             # Append to a list of values.
+    //             option.append(value)
+
+    //         elif isinstance(option, dict):
+    //             # Set to a dict of values.
+    //             if not (isinstance(value, tuple) and len(value) == 2):
+    //                 self.errors.append(
+    //                     ParserError(
+    //                         meta, "Error for option '{}': {}".format(key, value), None))
+    //                 return
+    //             dict_key, dict_value = value
+    //             option[dict_key] = dict_value
+
+    //         elif isinstance(option, bool):
+    //             # Convert to a boolean.
+    //             if not isinstance(value, bool):
+    //                 value = (value.lower() in {'true', 'on'}) or (value == '1')
+    //             self.options[key] = value
+
+    //         else:
+    //             # Set the value.
+    //             self.options[key] = value
+
+    //         # Refresh the list of valid account regexps as we go along.
+    //         if key.startswith('name_'):
+    //             # Update the set of valid account types.
+    //             self.account_regexp = valid_account_regexp(self.options)
+    //         elif key == 'insert_pythonpath':
+    //             # Insert the PYTHONPATH to this file when and only if you
+    //             # encounter this option.
+    //             sys.path.insert(0, path.dirname(filename))
 }
 
 void Builder::AddInclude(string&& filename) {
@@ -337,6 +418,20 @@ void Builder::ValidateAccountNames() {
   //     meta = new_metadata(filename, lineno)
   //     self.errors.append(
   //         ParserError(meta, "Invalid account name: {}".format(account), None))
+
+    // names = map(options.__getitem__, ('name_assets',
+    //                                   'name_liabilities',
+    //                                   'name_equity',
+    //                                   'name_income',
+    //                                   'name_expenses'))
+
+    // # Replace the first term of the account regular expression with the specific
+    // # names allowed under the options configuration. This code is kept in sync
+    // # with {5672c7270e1e}.
+    // return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
+    //                                            account.sep,
+    //                                            account.ACC_COMP_NAME_RE))
+
 }
 
 void Builder::Finalize(const location& loc) {
@@ -351,6 +446,19 @@ void Builder::Finalize(const location& loc) {
   for (const auto& [key, value_list] : active_meta_) {
     AddError(StrFormat("Unbalanced metadata key '%s' has leftover metadata", key), loc);
   }
+
+        // # Weave the commas option in the DisplayContext itself, so it propagates
+        // # everywhere it is used automatically.
+        // self.dcontext.set_commas(self.options['render_commas'])
+
+        // # Build and store the inferred DisplayContext instance.
+        // self.options['dcontext'] = self.dcontext
+
+        // # Also record the name of the processed file.
+        // self.options['filename'] = filename
+
+        // return sorted(self.entries, key=data.entry_sortkey)
+
 }
 
 // TODO(blais): Process this with code in the plugins loading loop.

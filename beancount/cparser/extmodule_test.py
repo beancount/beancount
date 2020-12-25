@@ -6,7 +6,6 @@ import time
 import unittest
 
 from beancount.cparser import extmodule
-from beancount.cparser import grammar
 from beancount.parser import printer
 
 
