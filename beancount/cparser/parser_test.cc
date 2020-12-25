@@ -26,11 +26,16 @@ using std::endl;
 using std::string_view;
 
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
-                               const std::string& expected_string,
-                               bool dedent=true) {
-  string clean_string = dedent ? StripAndDedent(input_string) : input_string;
+                                    const std::string& expected_string,
+                                    bool no_dedent=false,
+                                    bool leave_lineno=false,
+                                    bool print_input=false) {
+  string clean_string = no_dedent ? input_string : StripAndDedent(input_string);
+  if (print_input) {
+    std::cout << "clean_string = >>>>>" << clean_string << "<<<<<" << std::endl;
+  }
   auto ledger = parser::ParseString(clean_string, "<string>");
-  ClearLineNumbers(ledger.get());
+  ClearLineNumbers(ledger.get(), leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
   EXPECT_TRUE(EqualsMessages(*ledger_proto, expected_string));
   return ledger;
@@ -63,10 +68,7 @@ TEST(ParserTest, TestBasicTesting) {
   EXPECT_EQ(1, ledger->directives.size());
 }
 
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Transaction
-
-TEST(TestParserEntryTypes, EntryTransactionOneString) {
+TEST(TestParserEntryTypes, TransactionOneString) {
   ExpectParse(R"(
     2013-05-18 * "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         100 USD
@@ -90,7 +92,7 @@ TEST(TestParserEntryTypes, EntryTransactionOneString) {
   )");
 }
 
-TEST(TestParserEntryTypes, EntryTransactionTwoStrings) {
+TEST(TestParserEntryTypes, TransactionTwoStrings) {
   ExpectParse(R"(
     2013-05-18 * "Mermaid Inn" "Nice dinner"
       Expenses:Restaurant         100 USD
@@ -115,7 +117,7 @@ TEST(TestParserEntryTypes, EntryTransactionTwoStrings) {
   )");
 }
 
-TEST(TestParserEntryTypes, EntryTransactionThreeStrings) {
+TEST(TestParserEntryTypes, TransactionThreeStrings) {
   ExpectParse(R"(
     2013-05-18 * "Mermaid Inn" "Nice dinner" "With Caroline"
       Expenses:Restaurant         100 USD
@@ -127,7 +129,7 @@ TEST(TestParserEntryTypes, EntryTransactionThreeStrings) {
   )");
 }
 
-TEST(TestParserEntryTypes, EntryTransactionWithTxnKeyword) {
+TEST(TestParserEntryTypes, TransactionWithTxnKeyword) {
   ExpectParse(R"(
     2013-05-18 txn "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         100 USD
@@ -150,9 +152,6 @@ TEST(TestParserEntryTypes, EntryTransactionWithTxnKeyword) {
     }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Balance
 
 TEST(TestParserEntryTypes, Balance) {
   ExpectParse(R"(
@@ -186,9 +185,6 @@ errors {
 }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Open
 
 TEST(TestParserEntryTypes, Open1) {
   ExpectParse(R"(
@@ -262,9 +258,6 @@ TEST(TestParserEntryTypes, Open5) {
   )");
 }
 
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Close
-
 TEST(TestParserEntryTypes, Close) {
   ExpectParse(R"(
     2013-05-18 close Assets:US:BestBank:Checking
@@ -277,9 +270,6 @@ TEST(TestParserEntryTypes, Close) {
     }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Commodity
 
 TEST(TestParserEntryTypes, Commodity) {
   ExpectParse(R"(
@@ -294,9 +284,6 @@ TEST(TestParserEntryTypes, Commodity) {
   )");
 }
 
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Pad
-
 TEST(TestParserEntryTypes, Pad) {
   ExpectParse(R"(
     2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
@@ -310,9 +297,6 @@ TEST(TestParserEntryTypes, Pad) {
     }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Event
 
 TEST(TestParserEntryTypes, Event) {
   ExpectParse(R"(
@@ -338,9 +322,6 @@ TEST(TestParserEntryTypes, Event) {
   )");
 }
 
- //------------------------------------------------------------------------------
-// TestParserEntryTypes.Query
-
 TEST(TestParserEntryTypes, Query) {
   ExpectParse(R"(
     2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
@@ -354,9 +335,6 @@ TEST(TestParserEntryTypes, Query) {
     }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Note
 
 TEST(TestParserEntryTypes, Note) {
   ExpectParse(R"(
@@ -372,9 +350,6 @@ TEST(TestParserEntryTypes, Note) {
   )");
 }
 
-  //------------------------------------------------------------------------------
-// TestParserEntryTypes.Document
-
 TEST(TestParserEntryTypes, Document) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
@@ -388,9 +363,6 @@ TEST(TestParserEntryTypes, Document) {
     }
   )");
 }
-
-//------------------------------------------------------------------------------
-// TestParserEntryTypes.Price
 
 TEST(TestParserEntryTypes, Price) {
   ExpectParse(R"(
@@ -410,9 +382,6 @@ TEST(TestParserEntryTypes, Price) {
     }
   )");
 }
-
-  //------------------------------------------------------------------------------
-// TestParserEntryTypes.Custom
 
 TEST(TestParserEntryTypes, Custom) {
   ExpectParse(R"(
@@ -440,6 +409,310 @@ TEST(TestParserEntryTypes, Custom) {
       }
     }
   )");
+}
+
+//------------------------------------------------------------------------------
+// TestWhitespace
+
+TEST(TestWhitespace, IndentError0) {
+  // TODO(blais): Figure out if we can turn these two errors to single one.
+  ExpectParse(R"(
+    2020-07-28 open Assets:Foo
+      2020-07-28 open Assets:Bar
+  )", R"(
+    directives {
+      date { year: 2020 month: 7 day: 28 }
+      open {
+        account: "Assets:Bar"
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected DATE, expecting DEDENT or TAG or LINK or KEY"
+      location { lineno: 2 }
+    }
+    errors {
+      message: "Syntax error, unexpected DEDENT"
+      location { lineno: 3 }
+    }
+  )", false, true);
+}
+
+TEST(TestWhitespace, IndentError1) {
+  // TODO(blais): Figure out if we can turn these two errors to single one.
+  ExpectParse(R"(
+    2020-07-28 open Assets:Foo
+
+      2020-07-28 open Assets:Bar
+  )", R"(
+    directives {
+      date { year: 2020 month: 7 day: 28 }
+      open {
+        account: "Assets:Foo"
+      }
+    }
+    directives {
+      date { year: 2020 month: 7 day: 28 }
+      open {
+        account: "Assets:Bar"
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected INDENT"
+      location { lineno: 3 }
+    }
+    errors {
+      message: "Syntax error, unexpected DEDENT"
+      location { lineno: 4 }
+    }
+  )", false, true);
+}
+
+//------------------------------------------------------------------------------
+// TestParserComplete
+
+TEST(TestParserComplete, TransactionSinglePostingAtZero) {
+  // TODO(blais): Figure out if we can turn these two errors to single one.
+  ExpectParse(R"(
+    2013-05-18 * "Nice dinner at Mermaid Inn"
+      Expenses:Restaurant         0 USD
+  )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "0" } currency: "USD" }
+        }
+      }
+    }
+  )");
+}
+
+TEST(TestParserComplete, TransactionImbalanceFromSinglePosting) {
+  // TODO(blais): Figure out if we can turn these two errors to single one.
+  ExpectParse(R"(
+    2013-05-18 * "Nice dinner at Mermaid Inn"
+      Expenses:Restaurant         100 USD
+  )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+      }
+    }
+  )");
+}
+
+//------------------------------------------------------------------------------
+// TestUglyBugs
+
+TEST(TestParserComplete, Empty1) {
+  ExpectParse("", R"(
+  )");
+}
+
+TEST(TestParserComplete, Empty2) {
+  ExpectParse(R"(
+
+  )", R"(
+  )");
+}
+
+TEST(TestParserComplete, Comment) {
+  ExpectParse(R"(
+    ;; This is some comment.
+  )", R"(
+  )");
+}
+
+TEST(TestParserComplete, ExtraWhitespaceNote) {
+  // TODO(blais): We could do better here, in the original, the directive is produced.
+  ExpectParse(R"(
+    2013-07-11 note Assets:Cash "test"
+      ;;
+  )", R"(
+    errors {
+      message: "Syntax error, unexpected EOL, expecting DEDENT or TAG or LINK or KEY"
+    }
+  )");
+}
+
+TEST(TestParserComplete, ExtraWhitespaceTransaction) {
+  // TODO(blais): Fix this, in the original, there's no error.
+  ExpectParse(absl::StrCat(
+    "2013-05-18 * \"Nice dinner at Mermaid Inn\"\n",
+    "  Expenses:Restaurant         100 USD\n",
+    "  Assets:US:Cash\n",
+    "  \n",
+    ";; End of file"), R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+        }
+      }
+    }
+  )", true);
+}
+
+TEST(TestParserComplete, ExtraWhitespaceComment) {
+  ExpectParse(absl::StrCat(
+    "2013-05-18 * \"Nice dinner at Mermaid Inn\"\n",
+    "  Expenses:Restaurant         100 USD\n",
+    "  Assets:US:Cash\n",
+    "  ;;"), R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+        }
+      }
+    }
+  )", true, false, true);
+}
+
+TEST(TestParserComplete, IndentEOF) {
+  ExpectParse("\t", R"(
+  )", true);
+}
+
+TEST(TestParserComplete, CommentEOF) {
+  ExpectParse("; comment", R"(
+  )", true);
+}
+
+TEST(TestParserComplete, NoEmptyLines) {
+  ExpectParse(R"(
+    2013-05-01 open Assets:Cash   USD,CAD,EUR
+    2013-05-02 close Assets:US:BestBank:Checking
+    2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
+    2013-05-04 event "location" "New York, USA"
+    2013-05-05 * "Payee" "Narration"
+      Assets:US:BestBank:Checking   100.00 USD
+      Assets:Cash                  -100.00 USD
+    2013-05-06 note Assets:US:BestBank:Checking  "Blah, di blah."
+    2013-05-07 price USD   1.0290 CAD
+  )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 1 }
+      open {
+        account: "Assets:Cash"
+        currencies: "USD"
+        currencies: "CAD"
+        currencies: "EUR"
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 2 }
+      close {
+        account: "Assets:US:BestBank:Checking"
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 3 }
+      pad {
+        account: "Assets:US:BestBank:Checking"
+        source_account: "Equity:Opening-Balances"
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 4 }
+      event {
+        type: "location"
+        description: "New York, USA"
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 5 }
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:US:BestBank:Checking"
+          units { number { exact: "100.00" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Cash"
+          units { number { exact: "-100.00" } currency: "USD" }
+        }
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 6 }
+      note {
+        account: "Assets:US:BestBank:Checking"
+        comment: "Blah, di blah."
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 7 }
+      price {
+        currency: "USD"
+        amount { number { exact: "1.0290" } currency: "CAD" }
+      }
+    }
+  )");
+}
+
+//------------------------------------------------------------------------------
+// TestComment
+
+TEST(TestComment, CommentBeforeTransaction) {
+  ExpectParse(R"(
+    ; Hi
+    2015-06-07 *
+      Assets:Cash   1 USD
+      Assets:Cash   -1 USD
+  )", R"(
+    directives {
+      date { year: 2015 month: 6 day: 7 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Cash"
+          units { number { exact: "1" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Cash"
+          units { number { exact: "-1" } currency: "USD" }
+        }
+      }
+    }
+  )");
+}
+
+TEST(TestComment, CommentAfterTransaction) {
+  ExpectParse(R"(
+    2015-06-07 *
+      Assets:Cash   1 USD
+      Assets:Cash   -1 USD
+    ; Hi
+  )", R"(
+
+  )");
+// TODO(blais): should be valid
 }
 
 }  // namespace

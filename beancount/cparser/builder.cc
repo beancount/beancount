@@ -42,18 +42,18 @@ void Builder::Initialize() {
   context_.prec(28);
 }
 
-void Builder::AddOption(const string& key, string&& value) {
+void Builder::AddOption(const string& key, string&& value, const location& loc) {
   // Check the options field and get relevant descriptors.
   const auto* descriptor = options_->GetDescriptor();
   const auto* field = descriptor->FindFieldByName(key);
   if (!field) {
-    LogError(StrFormat("Invalid option: '%s'", key));
+    AddError(StrFormat("Invalid option: '%s'", key), loc);
     return;
   }
 
   // Issue a warning if the option is deprecated.
   if (field->options().deprecated()) {
-    LogError(StrFormat("Option '%s' is deprecated; ignored.", key));
+    AddError(StrFormat("Option '%s' is deprecated; ignored.", key), loc);
     return;
   }
 
@@ -63,8 +63,8 @@ void Builder::AddOption(const string& key, string&& value) {
     value_str = absl::StrCat("\"", absl::CEscape(value_str), "\"");
   }
   if (!TextFormat::ParseFieldValueFromString(value_str, field, options_.get())) {
-    LogError(StrFormat("Could not parse and set option '%s' with value '%s'; ignored.",
-                       key, value));
+    AddError(StrFormat("Could not parse and set option '%s' with value '%s'; ignored.",
+                       key, value), loc);
     return;
   }
 
@@ -146,12 +146,12 @@ void Builder::PushTag(const string& tag) {
   active_tags_.insert(tag);
 }
 
-void Builder::PopTag(const string& tag) {
+void Builder::PopTag(const string& tag, const location& loc) {
   auto iter = active_tags_.find(tag);
   if (iter != active_tags_.end()) {
     active_tags_.erase(iter);
   } else {
-    LogError(StrFormat("Attempting to pop absent tag: '%s'", tag));
+    AddError(StrFormat("Attempting to pop absent tag: '%s'", tag), loc);
   }
 }
 
@@ -160,10 +160,10 @@ void Builder::PushMeta(std::string_view key, MetaValue* value) {
   value_list.push_back(value);
 }
 
-void Builder::PopMeta(const string& key) {
+void Builder::PopMeta(const string& key, const location& loc) {
   auto iter = active_meta_.find(key);
   if (iter == active_meta_.end()) {
-    LogError(StrFormat("Attempting to pop absent metadata key: '%s'", key));
+    AddError(StrFormat("Attempting to pop absent metadata key: '%s'", key), loc);
   } else {
     auto& value_list = iter->second;
     assert(value_list.size() > 0);
@@ -273,8 +273,8 @@ void Builder::PreparePosting(Posting* posting,
         // Note: we could potentially do a better job and attempt to f
         // this up after interpolation, but this syntax is pretty rare
         // anyway.
-        LogError(StrFormat("Total price on a posting without units: %s.",
-                           price.DebugString()));
+        AddError(StrFormat("Total price on a posting without units: %s.",
+                           price.DebugString()), loc);
         posting->clear_price();
       } else if (price.has_number()) {
         decimal::Decimal dunits = ProtoToDecimal(posting->units().number());
@@ -301,19 +301,23 @@ void Builder::PreparePosting(Posting* posting,
         posting->cost_spec().has_currency() &&
         price.has_currency() &&
         posting->cost_spec().currency() != price.currency()) {
-      LogError(StrFormat("Cost and price currencies must match: %s != %s",
-                         posting->cost_spec().currency(), price.currency()));
+      AddError(StrFormat("Cost and price currencies must match: %s != %s",
+                         posting->cost_spec().currency(), price.currency()), loc);
     }
   }
 }
 
+void SetLocationFromLocation(const location& loc, Location* output) {
+  output->set_filename(*loc.begin.filename);
+  output->set_lineno(loc.begin.line);
+  output->set_lineno_end(loc.end.line);
+}
 
-void Builder::LogError(const string& message) {
+void Builder::AddError(const string& message, const location& loc) {
   auto* error = new Error();
   errors_.push_back(error);
   error->set_message(Capitalize(message));
-
-  // TODO(blais): add location
+  SetLocationFromLocation(loc, error->mutable_location());
 }
 // TODO(blais): Can we turn this error logging into a stream instead?
 
@@ -333,18 +337,18 @@ void Builder::ValidateAccountNames() {
   //         ParserError(meta, "Invalid account name: {}".format(account), None))
 }
 
-void Builder::Finalize() {
+void Builder::Finalize(const location& loc) {
   void ValidateAccountNames();
 
   // If the user left some tags unbalanced, issue an error.
   for (const auto& tag : active_tags_) {
-    LogError(StrFormat("Unbalanced pushed tag: '%s'", tag));
+    AddError(StrFormat("Unbalanced pushed tag: '%s'", tag), loc);
   }
 
   // If the user left some metadata unpopped, issue an error.
   for (const auto& [key, value_list] : active_meta_) {
-    LogError(StrFormat(
-                 "Unbalanced metadata key '%s' has leftover metadata", key));
+    AddError(StrFormat(
+                 "Unbalanced metadata key '%s' has leftover metadata", key), loc);
   }
 }
 

@@ -24,19 +24,21 @@ typedef std::vector<symbol_tuple> symbol_tuples;
 
 // Print a sequence of actual test tokens.
 void PrintTokens(const symbol_tuples& tokens) {
+  std::cout << ",--------------------------------" << std::endl;
   for (const auto& token : tokens) {
-    std::cout << std::get<0>(token) << " "
-              << std::get<1>(token) << " "
+    std::cout << std::get<1>(token) << " "
+              << parser::Parser::symbol_name(std::get<0>(token)) << " "
               << std::get<2>(token) << std::endl;
   }
+  std::cout << "`--------------------------------" << std::endl;
 }
 
 // Read the given string in 'input_string' and return a scanned list of (token,
 // name) pairs.
-symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
+symbol_tuples Tokenize(const string& input_string, bool no_dedent=true) {
   // Ensure the string is converted to UTF8 by using reflex::Input and
   // instantiate a scanner.
-  string clean_string = dedent ? StripAndDedent(input_string) : input_string;
+  string clean_string = no_dedent ? input_string : StripAndDedent(input_string);
   reflex::Input input(clean_string);
   scanner::Scanner scanner(input, std::cout);
 
@@ -82,7 +84,6 @@ symbol_tuples Tokenize(const string& input_string, bool dedent=true) {
       scanner.matcher().input();
     }
   }
-  (void)PrintTokens;
   return symbols;
 }
 
@@ -471,7 +472,7 @@ TEST(ScannerTest, StringTooLong) {
       "2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01\n",
       empty,
       "2014-02-02 note Assets:Temporary \"Bla bla\"\n");
-  const auto symbols = Tokenize(test, false);
+  const auto symbols = Tokenize(test, true);
   EXPECT_EQ(symbols.size(), 9);
   EXPECT_EQ(std::get<0>(symbols[5]), symbol::S_YYerror);
 }
@@ -481,7 +482,7 @@ TEST(ScannerTest, VeryLongNumber) {
   std::fill_n(buffer, 2048, '1');
   buffer[2047] = '\n';
   buffer[2048] = '\0';
-  const auto symbols = Tokenize(buffer, false);
+  const auto symbols = Tokenize(buffer, true);
   EXPECT_EQ(symbols.size(), 2);
   EXPECT_EQ(std::get<0>(symbols[0]), symbol::S_NUMBER);
 }
@@ -493,7 +494,7 @@ TEST(ScannerTest, VeryLongString) {
   buffer[262142] = '"';
   buffer[262143] = '\n';
   buffer[262144] = '\0';
-  const auto symbols = Tokenize(buffer, false);
+  const auto symbols = Tokenize(buffer, true);
   EXPECT_EQ(symbols.size(), 2);
   EXPECT_EQ(std::get<0>(symbols[0]), symbol::S_YYerror);
 }
@@ -501,7 +502,7 @@ TEST(ScannerTest, VeryLongString) {
 TEST(ScannerTest, NoFinalNewline) {
   const string test = absl::StrCat(
       "2014-01-01 open Assets:Temporary    ");
-  const auto symbols = Tokenize(test, false);
+  const auto symbols = Tokenize(test, true);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_DATE, 1, "2014-01-01"},
         {symbol::S_OPEN, 1, "open"},
@@ -525,7 +526,7 @@ TEST(ScannerTest, StringEscaped) {
 
 TEST(ScannerTest, StringNewline) {
   auto test = absl::StrCat(R"("The Great\nJuju")", "\n");
-  const auto symbols = Tokenize(test, false);
+  const auto symbols = Tokenize(test, true);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_STRING, 1, "The Great\nJuju"},
         {symbol::S_EOL,    1, "\n"},
@@ -558,7 +559,7 @@ TEST(ScannerTest, StringNewlineTooLong) {
   for (int ii = 0; ii < 128; ++ii) {
     oss << line << std::endl;
   }
-  const auto symbols = Tokenize(oss.str(), false);
+  const auto symbols = Tokenize(oss.str(), true);
   EXPECT_EQ(256, symbols.size());
   EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[0]));
   EXPECT_EQ(symbol::S_EOL, std::get<0>(symbols[1]));
@@ -567,7 +568,7 @@ TEST(ScannerTest, StringNewlineTooLong) {
 TEST(ScannerTest, InvalidCharacter) {
   // Testing a string with invalid characters.
   const char* test  = "\x80\n";
-  const auto symbols = Tokenize(test, false);
+  const auto symbols = Tokenize(test, true);
   EXPECT_EQ(symbols, symbol_tuples({
         // This is translated by the exception handler in the Tokenize() routine
         // above. I'm not exactly sure why we find two produced here.
@@ -763,6 +764,7 @@ TEST(LexerErrorsTest, ErrorSubstringWithQuotes) {
 }
 
 // Unicode tests.
+// TODO(blais): Also test with Latin1 and UTF16 inputs.
 
 TEST(LexerUnicodeTest, EncodedUTF8) {
   const char* test = u8R"(
@@ -778,7 +780,16 @@ TEST(LexerUnicodeTest, EncodedUTF8) {
       }));
 }
 
-// TODO(blais): Convert the rest of the tests. Test with Latin1, UTF16.k
+// Cut-n-paste bits and bobs here as needed.
+TEST(PlaceholderTest, DebugPrint) {
+  const std::string test = absl::StrCat(
+    "2013-05-18 * \"Nice dinner at Mermaid Inn\"\n",
+    "  Expenses:Restaurant         100 USD\n",
+    "  Assets:US:Cash\n",
+    "  ;;");
+  const auto symbols = Tokenize(test, true);
+  PrintTokens(symbols);
+}
 
 }  // namespace
 }  // namespace beancount

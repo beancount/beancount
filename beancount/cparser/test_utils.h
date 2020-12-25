@@ -38,7 +38,7 @@ bool EqualsMessages(const T& actual, std::string_view expected_proto_string) {
 
 // Clear all the line number fields in the parsed leder. Mutates the protos in
 // place. This is useful for testing.
-void ClearLineNumbers(Ledger* ledger);
+void ClearLineNumbers(Ledger* ledger, bool leave_start=false);
 
 }  //  namespace beancount
 

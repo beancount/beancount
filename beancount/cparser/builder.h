@@ -8,6 +8,7 @@
 #define BEANCOUNT_CPARSER_BUILDER_H_
 
 #include "beancount/cparser/scanner.h"
+#include "beancount/cparser/location.h"
 
 #include <string>
 #include <string_view>
@@ -47,7 +48,8 @@ public:
 
   // Add a new option. This gets stored into the options proto and some of the
   // values may influence parsing.
-  void AddOption(const std::string& key, std::string&& value);
+  void AddOption(const std::string& key, std::string&& value,
+                 const location& loc);
 
   // Add an include directive.
   void AddInclude(std::string&& filename);
@@ -74,7 +76,7 @@ public:
   void PushTag(const std::string& tag);
 
   // Pop a tag from the context stack.
-  void PopTag(const std::string& tag);
+  void PopTag(const std::string& tag, const location& loc);
 
   //---------------------------------------------------------------------------
   // Active metadata
@@ -84,7 +86,7 @@ public:
   void PushMeta(std::string_view key, MetaValue* value);
 
   // Pop some metadata key pair from the context stack.
-  void PopMeta(const std::string& key);
+  void PopMeta(const std::string& key, const location& loc);
 
   // Insert the active metadata into the given argument. If there is no metadata
   // to be added, the directive is unmodified.
@@ -126,14 +128,14 @@ public:
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
-  void LogError(const std::string& message);
+  void AddError(const std::string& message, const location& loc);
 
   // Check that all the accounts are matching the prefix names provided in the
   // options.
   void ValidateAccountNames();
 
   // Finalize the parser before deletion.
-  void Finalize();
+  void Finalize(const location& loc);
 
   // Build an instance of a new ledger. This is how one stamps and extracts all
   // the results from the parser. The parser isn't reset.

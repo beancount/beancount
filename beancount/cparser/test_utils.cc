@@ -14,7 +14,7 @@
 
 namespace beancount {
 using google::protobuf::util::MessageDifferencer;
-using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
 
@@ -34,6 +34,9 @@ inline int CountIndentSpaces(const string& line) {
 }
 
 string StripAndDedent(std::string_view input_string) {
+  if (input_string.empty()) {
+    return string(input_string);
+  }
   std::vector<string> lines = absl::StrSplit(input_string, "\n");
 
   // Check that the first two lines are empty and remove them.
@@ -72,26 +75,39 @@ bool EqualsMessages(const google::protobuf::Message& expected,
   bool succ = MessageDifferencer::Equals(expected, actual);
   if (!succ) {
     // Print actual output.
-    cout << ",--------------------------- Actual" << endl;
-    cout << actual.DebugString() << endl;
-    cout << "---------------------------- Expected" << endl;
-    cout << expected.DebugString() << endl;
-    cout << "`-----------------------------------'" << endl;
+    cerr << ",--------------------------- Actual" << endl;
+    cerr << actual.DebugString() << endl;
+    cerr << "---------------------------- Expected" << endl;
+    cerr << expected.DebugString() << endl;
+    cerr << "`-----------------------------------'" << endl;
   }
   return succ;
 }
 
-void ClearLineNumbers(Ledger* ledger) {
+template <typename T>
+void ClearLocation(T* parent, bool leave_errors) {
+  if (!parent->has_location()) {
+    return;
+  }
+  if (leave_errors) {
+    parent->mutable_location()->clear_filename();
+    parent->mutable_location()->clear_lineno_end();
+  } else {
+    parent->clear_location();
+  }
+}
+
+void ClearLineNumbers(Ledger* ledger, bool leave_errors) {
   for (auto* dir : ledger->directives) {
-    dir->clear_location();
+    ClearLocation(dir, false);
     if (dir->has_transaction()) {
       for (auto& posting : *dir->mutable_transaction()->mutable_postings()) {
-        posting.clear_location();
+        ClearLocation(&posting, false);
       }
     }
   }
   for (auto* error : ledger->errors) {
-    error->clear_location();
+    ClearLocation(error, leave_errors);
   }
 }
 

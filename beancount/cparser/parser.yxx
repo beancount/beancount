@@ -349,7 +349,7 @@ pushtag:
 poptag:
   POPTAG TAG eol
     {
-      builder.PopTag($2);
+      builder.PopTag($2, @$);
     }
 
 /* A pragma that pushes a new key-value pair applied to transactions. */
@@ -363,14 +363,14 @@ pushmeta:
 popmeta:
   POPMETA KEY COLON eol
     {
-      builder.PopMeta($2);
+      builder.PopMeta($2, @$);
     }
 
 /* An option pragma. */
 option:
   OPTION STRING[key] STRING[value] eol
     {
-      builder.AddOption($key, std::move($value));
+      builder.AddOption($key, std::move($value), @$);
     }
 
 /* An include pragma. */
@@ -738,12 +738,16 @@ payee_narration:
   /* Variant when both strings are present. */
   STRING STRING
     {
-      $$ = make_pair(std::move($1), std::move($2));
+      $$ = std::make_pair(std::move($1), std::move($2));
     }
   /* Variant when only one string is present; interpret as narration only. */
   | STRING
     {
-      $$ = make_pair("", std::move($1));
+      $$ = std::make_pair("", std::move($1));
+    }
+  | %empty
+    {
+      $$ = std::make_pair("", "");
     }
 
 /* An  account name. */
@@ -853,7 +857,7 @@ booking:
     {
       options::Booking method;
       if (!Booking_Parse($1, &method)) {
-        builder.LogError(absl::StrFormat("Invalid value for booking method: '%s'", $1));
+        builder.AddError(absl::StrFormat("Invalid value for booking method: '%s'", $1), @$);
         method = options::Booking::UNKNOWN;
       }
       $$ = method;
@@ -908,7 +912,7 @@ posting:
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+      builder.PreparePosting($$, $optflag, $account, false, @$);
     }
   /* Variation with price. */
   | optflag account partial_amount cost_spec AT price_annotation eol
@@ -919,7 +923,7 @@ posting:
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
       $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+      builder.PreparePosting($$, $optflag, $account, false, @$);
     }
   /* Variation with complete price. */
   | optflag account partial_amount cost_spec ATAT price_annotation eol
@@ -930,13 +934,13 @@ posting:
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
       $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, true, scanner.location());
+      builder.PreparePosting($$, $optflag, $account, true, @$);
     }
   /* Variation with just an account name. */
   | optflag account eol
     {
       $$ = new Posting();
-      builder.PreparePosting($$, $optflag, $account, false, scanner.location());
+      builder.PreparePosting($$, $optflag, $account, false, @$);
     }
 
 /* A price annotation on a posting. */
@@ -951,9 +955,9 @@ price_annotation:
         decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
         if (dec.sign() == -1) {
           // TODO(blais): Move this to post-parsing.
-          builder.LogError("Negative prices are not allowed "
+          builder.AddError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                           "for workaround)");
+                           "for workaround)", @$);
           // Invert and continue.
           builder.DecimalProto(-dec, $price_annotation->mutable_number());
         }
@@ -1075,9 +1079,10 @@ cost_spec:
         // `number_total` to a value in the input when using `{{...}}`.
         if ($2->has_number_total()) {
           // TODO(blais): Move this to post-parsing.
-          builder.LogError(
-              absl::StrFormat("Per-unit cost may not be specified using total cost "
-                              "syntax: '%s'; ignoring per-unit cost", $2->DebugString()));
+          builder.AddError(
+              absl::StrFormat(
+                  "Per-unit cost may not be specified using total cost "
+                  "syntax: '%s'; ignoring per-unit cost", $2->DebugString()), @$);
         } else {
           $2->mutable_number_total()->CopyFrom($2->number_per());
         }
@@ -1130,12 +1135,9 @@ cost_comp:
 // parser source code and this method is called with it.
 void beancount::parser::Parser::error(const location& loc, const string& msg)
 {
-  using std::cerr;
-  using std::endl;
-
   // Log an error.
   // TODO(blais): Add location.
-  builder.LogError(msg);
+  builder.AddError(msg, loc);
 
   // If token is unknown (no match).
   if (scanner.size() == 0) {
@@ -1197,7 +1199,7 @@ std::unique_ptr<Ledger> ParseString(const string_view& input_string,
   // Ensure the string is converted to UTF8 by using reflex::Input and
   // instantiate a scanner.
   reflex::Input input(input_string.data(), input_string.size());
-  return parser::Parse(input, string(filename), line_offset);
+  return parser::Parse(input, string(filename), line_offset, true);
 }
 
 // TODO(blais): Implement string parser and stdin parser functions.
