@@ -31,6 +31,10 @@ class TestFillAccountOpen(cmptest.TestCase):
         2020-12-26 * "Transfer lots" #transfer
           Assets:Coinbase        -0.4 BTC {}
           Assets:Binance
+
+        2020-12-26 * "Transfer the special lot" #transfer
+          Assets:Coinbase        -0.4 BTC {"wow"}
+          Assets:Binance
         """
         self.assertEqualEntries("""
 
@@ -46,6 +50,10 @@ class TestFillAccountOpen(cmptest.TestCase):
           Assets:Coinbase  -0.2 BTC {16000 USD, 2020-12-25}
           Assets:Binance    0.2 BTC {15000 USD, 2020-12-25}
           Assets:Binance    0.2 BTC {16000 USD, 2020-12-25}
+
+        2020-12-26 * "Transfer the special lot" #transfer
+          Assets:Coinbase  -0.4 BTC {18000 USD, 2020-12-25, "wow"}
+          Assets:Binance    0.4 BTC {18000 USD, 2020-12-25, "wow"}
 
         """, list(data.filter_txns(entries)))
 
