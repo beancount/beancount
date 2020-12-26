@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """Testing out APSW for Beancount.
+
+TODO(blais):
+Custom aggregate functions are possible; try them out in the future; see:
+- https://www.sqlite.org/appfunc.html
+- https://rogerbinns.github.io/apsw/connection.html#apsw.Connection.createaggregatefunction
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"

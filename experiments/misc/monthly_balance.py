@@ -29,16 +29,16 @@ def main():
     date_from = parse(args.dfrom).date()
     date_to = parse(args.dto).date()
     sql = """
-      SELECT 
+      SELECT
         year, month, root(account, 1) as ar, sum(position) as pos
-      FROM 
+      FROM
         date > {date_from} AND date < {date_to}
-      WHERE 
+      WHERE
          account ~ "Expenses" OR
          account ~ "Liabilities:Loans" OR
          account ~ "Income"
-      GROUP BY year, month, ar 
-      ORDER BY year, month, ar 
+      GROUP BY year, month, ar
+      ORDER BY year, month, ar
       FLATTEN
     """.format(**locals())
 
@@ -51,7 +51,7 @@ def main():
     for row in rrows:
         d = out['{}/{:02d}'.format(row.year, row.month)][row.pos.lot.currency]
         d[row.ar] = row.pos.number
-        
+
     # Write this out to a CSV file.
     wr = csv.writer(sys.stdout)
     for month, currencies in sorted(out.items()):
