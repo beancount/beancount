@@ -45,9 +45,8 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import csv
-import logging
-import os
 import json
+import logging
 import pickle
 import re
 import string
@@ -73,7 +72,7 @@ def get_credentials(scopes: List[str],
 
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
-    import __main__
+    import __main__  # pylint: disable=import-outside-toplevel
     cache_dir = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
     if secrets_filename is None:
         secrets_filename = "{}.json".format(cache_dir)
@@ -85,7 +84,9 @@ def get_credentials(scopes: List[str],
     secrets_info = json.load(open(secrets_filename))
     if secrets_info.get("type") == "service_account":
         # Process service account flow.
-        credentials = service_account.Credentials.from_service_account_info(
+        # pylint: disable=import-outside-toplevel
+        import google.oauth2.service_account as sa
+        credentials = sa.Credentials.from_service_account_info(
             secrets_info, scopes=scopes)
     else:
         # Process OAuth flow.

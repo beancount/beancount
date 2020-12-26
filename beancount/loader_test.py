@@ -84,7 +84,7 @@ class TestLoader(unittest.TestCase):
 
     @mock.patch('importlib.import_module',
                 functools.partial(mock_import_module, SystemExit))
-    def test_run_transformation_exception(self):
+    def test_run_transformation_systemexit(self):
         # Test another exception occurring during import.
         entries, errors, options_map = parser.parse_string(
             'plugin "failing"\n\n' + TEST_INPUT)
