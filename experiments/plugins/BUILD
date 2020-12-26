@@ -246,6 +246,30 @@ py_test(
     ],
 )
 
+
+py_library(
+    name = "transfer_lots",
+    srcs = ["transfer_lots.py"],
+    deps = [
+        "//beancount/core:inventory",
+        "//beancount/ops:basicops",
+    ],
+)
+
+py_test(
+    name = "transfer_lots_test",
+    srcs = ["transfer_lots_test.py"],
+    deps = [
+        ":transfer_lots",
+        "//beancount/parser:cmptest",
+        "//beancount/core:data",
+        "//beancount:loader",
+        "//beancount/utils:test_utils",
+        "//beancount:plugins_for_tests",
+    ],
+)
+
+
 # NOTE: Disabled because dependent beancount.ops.holdings has been deprecated.
 # And we will not port this--realizing unrealized gains is the wrong approach anyway.
 #
