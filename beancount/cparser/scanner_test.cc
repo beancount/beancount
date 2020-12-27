@@ -782,11 +782,16 @@ TEST(LexerUnicodeTest, EncodedUTF8) {
 
 // Cut-n-paste bits and bobs here as needed.
 TEST(PlaceholderTest, DebugPrint) {
+#if 0
   const std::string test = absl::StrCat(
     "2013-05-18 * \"Nice dinner at Mermaid Inn\"\n",
     "  Expenses:Restaurant         100 USD\n",
     "  Assets:US:Cash\n",
     "  ;;");
+#endif
+  const std::string test = R"(
+    Account:*:Bla
+  )";
   const auto symbols = Tokenize(test, true);
   PrintTokens(symbols);
 }

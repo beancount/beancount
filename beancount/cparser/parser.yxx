@@ -141,7 +141,8 @@ namespace parser {
 %define api.token.prefix {TOK_}
 
 /* Special error token, redefined to carry an error message. */
-%token <std::string> error
+%token <std::string> YYerror
+%token <std::string> YYUNDEF
 
 /* Types for terminal symbols */
 %token INDENT     /* Initial indent IF at the beginning of a line */
@@ -273,6 +274,8 @@ namespace parser {
 /* TODO(blais): Have another go at taking that to zero. */
 %expect 18
 
+/* TODO(blais): Still have specify %destructor code in order to free up memory
+ * for discarded tokens in case of shifting during error recovery. */
 
 
 /*- Grammar rules -----------------------------------------------------------*/
@@ -311,21 +314,18 @@ declarations:
   /* An error raised at the parser level. */
   | declarations error
     {
-      // TODO(blais): ERROR - What about the 'error' token encountered
-      // elsewhere? Is this guaranteed to bubble up here? Great place to
-      // generically log and error here too?
-
-      // Ignore the error and continue reducing ({3d95e55b654e}). Note that with
-      // the matching rule above, "error" will successfully reduce on each line
-      // that cannot reduce. Non-erroneous postings after an error occurs will
-      // reduce but not be included because a transaction's list of postings
-      // does not include an "error" rule.
-      //
-      // Note: Adding EOL after the "error" rule above works to reduce the
-      // number of calls to this rule resulting from the appearance of an error
-      // but makes the parser errors skip the next valid directive, so we just
-      // have to make sure repeated runs of this rule's handling code are
-      // idempotent.
+      // "Bison can force the situation to fit the rule, by discarding part of
+      // the semantic context and part of the input. First it discards states
+      // and objects from the stack until it gets back to a state in which the
+      // error token is acceptable. (This means that the subexpressions already
+      // parsed are discarded, back to the last complete stmts.) At this point
+      // the error token can be shifted. Then, if the old lookahead token is not
+      // acceptable to be shifted next, the parser reads tokens and discards
+      // them until it finds a token which is acceptable. In this example, Bison
+      // reads and discards input until the next newline so that the fourth rule
+      // can apply. Note that discarded symbols are possible sources of memory
+      // leaks, see Freeing Discarded Symbols, for a means to reclaim this
+      // memory."
     }
   | %empty
 

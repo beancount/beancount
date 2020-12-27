@@ -29,12 +29,13 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     const std::string& expected_string,
                                     bool no_dedent=false,
                                     bool leave_lineno=false,
-                                    bool print_input=false) {
+                                    bool print_input=false,
+                                    bool debug=false) {
   string clean_string = no_dedent ? input_string : StripAndDedent(input_string);
   if (print_input) {
     std::cout << "clean_string = >>>>>" << clean_string << "<<<<<" << std::endl;
   }
-  auto ledger = parser::ParseString(clean_string, "<string>");
+  auto ledger = parser::ParseString(clean_string, "<string>", 0, debug);
   ClearLineNumbers(ledger.get(), leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
   EXPECT_TRUE(EqualsMessages(*ledger_proto, expected_string));
@@ -987,7 +988,6 @@ TEST(TestPushPopMeta, PushmetaForgotten) {
 }
 
 
-#if 0
 
 //------------------------------------------------------------------------------
 // TestMultipleLines
@@ -1024,44 +1024,77 @@ TEST(TestMultipleLines, MultilineNarration) {
 // Test syntax errors that occur within the parser. One of our goals is to
 // recover and report without ever bailing out with an exception.
 
-TEST(TestSyntaxErrors, lexer_default_rule_1) {
+TEST(TestSyntaxErrors, SingleErrorTokenAtTopLevel) {
+  // Note: This is a single invalid token.
   ExpectParse(R"(
-    Account:*:Bla
+    Error:*:Token
   )", R"(
+    errors {
+      message: "Syntax error, unexpected invalid token"
+    }
   )");
-  // TODO(blais): This should have raised an error and didn't?
-  // self.assertTrue(lexer.LexerError in map(type, errors))
 }
 
-TEST(TestSyntaxErrors, lexer_default_rule_2) {
+TEST(TestSyntaxErrors, ErrorInTransactionLine) {
   ExpectParse(R"(
-    2013-05-18 * "Nice dinner at Mermaid Inn"
-      Expenses:Resta(urant        100 USD
-      Expenses:Tips                10 USD
-      Assets:US:Cash             -110 USD
+    2013-05-01 open Assets:US:Cash
 
-    2013-05-20 balance Assets:US:Cash  -110 USD
+    2013-05-02 * "Dinner" A:*:B
+      Expenses:Restaurant               100 USD
+      Assets:US:Cash                   -100 USD
+
+    2013-05-03 balance Assets:US:Cash  -100 USD
   )", R"(
      directives {
-       date { year: 2013 month: 5 day: 20 }
+       date { year: 2013 month: 5 day: 1 }
+       open { account: "Assets:US:Cash" }
+     }
+     directives {
+       date { year: 2013 month: 5 day: 03 }
        balance {
          account: "Assets:US:Cash"
-         amount { number { exact: "-110" } currency: "USD" }
+         amount { number { exact: "-100" } currency: "USD" }
        }
      }
-  )");
-  // // TODO(blais): that's not right
-  // # Check that we indeed read the 'check' entry that comes after the one
-  // # with the error.
-  // check_list(self, entries, [data.Balance])
-
-  // # Make sure at least one error is reported.
-  // self.assertEqual(1, len(errors))
-  // self.assertIsInstance(errors[0], lexer.LexerError)
-  // self.assertRegex(errors[0].message, 'Invalid token')
+     errors {
+       message: "Syntax error, unexpected invalid token, expecting EOL or TAG or LINK"
+       location { lineno: 3 }
+     }
+  )", false, true);
 }
 
-TEST(TestSyntaxErrors, no_final_newline) {
+TEST(TestSyntaxErrors, ErrorInPosting) {
+  ExpectParse(R"(
+    2013-05-01 open Assets:US:Cash
+
+    2013-05-02 * "Dinner"
+      Expenses:Resta(urant              100 USD
+      Assets:US:Cash                   -100 USD
+
+    2013-05-03 balance Assets:US:Cash  -100 USD
+  )", R"(
+     directives {
+       date { year: 2013 month: 5 day: 1 }
+       open { account: "Assets:US:Cash" }
+     }
+     directives {
+       date { year: 2013 month: 5 day: 03 }
+       balance {
+         account: "Assets:US:Cash"
+         amount { number { exact: "-100" } currency: "USD" }
+       }
+     }
+     errors {
+       message: "Syntax error, unexpected invalid token, expecting PLUS or MINUS or LPAREN or NUMBER"
+       location { lineno: 4 }
+     }
+  )", false, true);
+}
+
+TEST(TestSyntaxErrors, NoFinalNewline) {
+  // Note: We would have to explicitly have to simulate and dedents here for
+  // this to work and this is surprisingly tricky and error prone. See
+  // {fab24459d79d} Prefer not to handle.
   ExpectParse(absl::StrCat(
     "2014-11-02 *\n",
     "  Assets:Something   1 USD\n",
@@ -1071,10 +1104,9 @@ TEST(TestSyntaxErrors, no_final_newline) {
       message: "Syntax error, unexpected DEDENT, expecting EOL or ATAT or AT"
     }
   )", true);
-  // Note: This used to actually work; now we fail this, you need a final
-  // newline.
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // TestParserOptions
 
@@ -1122,13 +1154,11 @@ TEST(TestParserOptions, readonly_option) {
 // TestParserInclude
 
 TEST(TestParserInclude, parse_nonexist) {
-#if 0
-        with self.assertRaises(OSError):
-            parser.parse_file('/some/bullshit/filename.beancount')
-#endif
   ExpectParse(R"(
   )", R"(
   )");
+        with self.assertRaises(OSError):
+            parser.parse_file('/some/bullshit/filename.beancount')
 }
 
 TEST(TestParserInclude, include_absolute) {
@@ -3127,7 +3157,7 @@ TEST(TestDocument, document_no_tags_links) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
   )", R"(
-  )");
+)",);
         // check_list(self, entries, [data.Document])
 }
 
