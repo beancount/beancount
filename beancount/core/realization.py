@@ -38,7 +38,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import flags
 from beancount.core import convert
 
 

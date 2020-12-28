@@ -18,7 +18,6 @@ from beancount.core import convert
 from beancount.core import position
 from beancount.utils import invariants
 
-# pylint: disable=invalid-name
 try:
     from beancount.core import inventory
 except ImportError:

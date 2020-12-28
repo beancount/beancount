@@ -6,6 +6,8 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import sys
+import argparse
+import logging
 
 
 def gen_inputs(template, args):
@@ -15,7 +17,6 @@ def gen_inputs(template, args):
         sys.stdout.write(template.format(*actual_args))
 
 def main():
-    import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     #parser.add_argument('filenames', nargs='+', help='Filenames')
