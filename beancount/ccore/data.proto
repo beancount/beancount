@@ -102,6 +102,9 @@ message Posting {
   // A string, the account that is modified by this posting.
   optional string account = 5;
 
+  // NOTE(blais): Maybe units + cost really ought to actually just be an
+  // instance of Position, defined as a proto instead of a module, in here.
+
   // An Amount, the units of the position.
   optional Amount units = 6;
 
