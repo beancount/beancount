@@ -12,8 +12,10 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import math
 import re
 from decimal import Decimal
+from typing import List, Optional, Union
 
 
 # Constants.
@@ -86,3 +88,41 @@ def same_sign(number1, number2):
       A boolean.
     """
     return (number1 >= 0) == (number2 >= 0)
+
+
+def infer_quantization_from_numbers(numbers: List[Union[float, Decimal]],
+                                    threshold=0.01) -> Optional[Decimal]:
+    """Given a list of numbers from floats, infer the quantization.
+
+    Sometimes a series of numbers are provided as floats, e.g., prices from a
+    price source, and we'd like to infer what the right quantization should be
+    just from the numbers. This simple algorithm increases the precision until
+    all rounding errors from binary representation to decimal are below a
+    fractional threshold.
+
+    Args:
+      prices: A list of float or Decimal prices to infer from. If floats are
+        provided, conversion is done naively.
+      threshold: A fraction, the maximum error to tolerate before stopping the
+        search.
+    Returns:
+      A decimal object to use with decimal.Decimal.quantize().
+    """
+    # Ensure all prices are decimal instances.
+    cnumbers = [number if isinstance(number, Decimal) else Decimal(number)
+               for number in numbers]
+
+    # Find the starting exponent, if below 1. This is useful if all numbers are
+    # as e.g., 0.0xxxyyy, whereby xxx is the fraction and yyy is the noise. We'd
+    # have to start searching at exp=2 (0.01) and return 0.0001.
+    exp = max(-math.ceil(math.log10(max(cnumbers))), 0)
+
+    # Search for the correct fraction to use.
+    for exponent in range(exp, 20):
+        multiplier = Decimal(10**exponent)
+        quant = 1 / multiplier
+        residuals = [(number.quantize(quant) - number) * multiplier for number in cnumbers]
+        max_residual = max(residuals)
+        if max_residual < threshold:
+            return quant
+    return None
