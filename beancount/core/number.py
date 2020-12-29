@@ -12,6 +12,7 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import decimal
 import math
 import re
 from decimal import Decimal
@@ -22,6 +23,7 @@ from typing import List, Optional, Union
 ZERO = Decimal()
 HALF = Decimal('0.5')
 ONE = Decimal('1')
+TEN = Decimal('10')
 
 # A constant used to make incomplete data, e.g. missing numbers in the cost spec
 # to be filled in automatically. We define this as a class so that it appears in
@@ -90,15 +92,60 @@ def same_sign(number1, number2):
     return (number1 >= 0) == (number2 >= 0)
 
 
-def infer_quantization_from_numbers(numbers: List[Union[float, Decimal]],
-                                    threshold=0.01) -> Optional[Decimal]:
-    """Given a list of numbers from floats, infer the quantization.
+def auto_quantized_exponent(number: Decimal, threshold: float) -> int:
+    """Automatically infer the exponent that would be used below a given threshold."""
+    dtuple = number.normalize().as_tuple()
+    norm = Decimal(dtuple._replace(sign=0, exponent=-len(dtuple.digits)))
+    low_threshold = threshold
+    high_threshold = 1. - low_threshold
+    while norm != ZERO:
+        if not (low_threshold <= norm <= high_threshold):
+            break
+        ntuple = norm.scaleb(1).as_tuple()
+        norm = Decimal(ntuple._replace(digits=ntuple.digits[ntuple.exponent:]))
+    return dtuple.exponent - norm.as_tuple().exponent
 
-    Sometimes a series of numbers are provided as floats, e.g., prices from a
-    price source, and we'd like to infer what the right quantization should be
-    just from the numbers. This simple algorithm increases the precision until
-    all rounding errors from binary representation to decimal are below a
-    fractional threshold.
+
+def auto_quantize(number: Decimal, threshold: float) -> Decimal:
+    """Automatically quantize the number at a given threshold.
+
+    For example, with a threshold of 0.01, this will convert:
+
+      20.899999618530273 20.9
+      20.290000000000000000000000000000 20.29
+      110.90 110.9
+      11.0600004196167 11.06
+      10.539999961853027 10.54
+      134.3300018310547 134.33
+      253.920200000000000000000000000000 253.9202
+
+    """
+    exponent = auto_quantized_exponent(number, threshold)
+    if exponent != number.as_tuple().exponent:
+        quant = TEN ** exponent
+        qnumber = number.quantize(quant).normalize()
+        return qnumber
+    else:
+        return number
+
+
+def num_fractional_digits(number: Decimal) -> int:
+    """Return the number of fractional digits."""
+    return -number.as_tuple().exponent
+
+
+def infer_quantum_from_list(numbers: List[Decimal],
+                            threshold: float=0.01) -> Optional[Decimal]:
+    """Given a list of numbers from floats, infer the common quantization.
+
+    For a series of numbers provided as floats, e.g., prices from a price
+    source, we'd like to infer what the right quantization that should be used
+    to avoid rounding errors above some threshold.
+
+
+    from the numbers. This simple algorithm auto-quantizes all the numbers and
+    quantizes all of them at the maximum precision that would result in rounding
+    under the threshold.
 
     Args:
       prices: A list of float or Decimal prices to infer from. If floats are
@@ -107,22 +154,9 @@ def infer_quantization_from_numbers(numbers: List[Union[float, Decimal]],
         search.
     Returns:
       A decimal object to use with decimal.Decimal.quantize().
+
     """
-    # Ensure all prices are decimal instances.
-    cnumbers = [number if isinstance(number, Decimal) else Decimal(number)
-               for number in numbers]
-
-    # Find the starting exponent, if below 1. This is useful if all numbers are
-    # as e.g., 0.0xxxyyy, whereby xxx is the fraction and yyy is the noise. We'd
-    # have to start searching at exp=2 (0.01) and return 0.0001.
-    exp = max(-math.ceil(math.log10(max(cnumbers))), 0)
-
-    # Search for the correct fraction to use.
-    for exponent in range(exp, 20):
-        multiplier = Decimal(10**exponent)
-        quant = 1 / multiplier
-        residuals = [(number.quantize(quant) - number) * multiplier for number in cnumbers]
-        max_residual = max(residuals)
-        if max_residual < threshold:
-            return quant
-    return None
+    # Auto quantize all the numbers.
+    qnumbers = [auto_quantize(num, threshold) for num in numbers]
+    exponent = max(num_fractional_digits(n) for n in qnumbers)
+    return -exponent
