@@ -69,15 +69,14 @@ def get_credentials(scopes: List[str],
                     secrets_filename: Optional[str] = None,
                     storage_filename: Optional[str] = None):
     """Authenticate via oauth2 and return credentials."""
-
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
     import __main__  # pylint: disable=import-outside-toplevel
-    cache_dir = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
+    cache_basename = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
     if secrets_filename is None:
-        secrets_filename = "{}.json".format(cache_dir)
+        secrets_filename = "{}.json".format(cache_basename)
     if storage_filename is None:
-        storage_filename = "{}.cache".format(cache_dir)
+        storage_filename = "{}.cache".format(cache_basename)
 
     # Load the secrets file, to figure if it's for a service account or an OAUTH
     # secrets file.
@@ -393,7 +392,7 @@ def _main():
             args.docid = match.group(1)
 
     # Discover the service.
-    creds = get_credentials('https://www.googleapis.com/auth/spreadsheets')
+    creds = get_credentials(['https://www.googleapis.com/auth/spreadsheets'])
     url = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
     service = discovery.build('sheets', 'v4', credentials=creds)
 
