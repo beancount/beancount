@@ -103,7 +103,7 @@ public:
 
   // Check collisions on merging two components of a cost list and log errors
   // appropriately. Mutates the
-  void MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator);
+  absl::Status MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator);
 
   // Update statistics on on precision.
   // // TODO(blais): This ought to be renamed "WitnessDecimal()".
@@ -128,7 +128,7 @@ public:
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
-  void AddError(const std::string& message, const location& loc);
+  void AddError(std::string_view message, const location& loc);
 
   // Check that all the accounts are matching the prefix names provided in the
   // options.

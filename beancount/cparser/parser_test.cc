@@ -1799,96 +1799,180 @@ TEST(TestTransactions, TagsAfterFirstPosting) {
   )");
 }
 
-#if 0
 //------------------------------------------------------------------------------
 // TestParseLots
 
-TEST(TestParseLots, cost_none) {
+TEST(TestParseLots, CostNone) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   45.23 USD
       Assets:Invest:Cash  -45.23 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "45.23" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-45.23" } currency: "USD" }
+        }
+      }
+    }
   )");
-        self.assertFalse(parser.is_entry_incomplete(entries[0]))
-        self.assertFalse(errors)
-        posting = entries[0].postings[0]
-        self.assertEqual(A('45.23 USD'), posting.units)
-        // self.assertEqual(None, posting.cost)
+  // TODO(blais): self.assertFalse(parser.is_entry_incomplete(entries[0]))
 }
 
-TEST(TestParseLots, cost_empty) {
+TEST(TestParseLots, CostEmpty) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   20 AAPL {}
       Assets:Invest:Cash  -20 AAPL
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-20" } currency: "AAPL" }
+        }
+      }
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertFalse(errors)
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
+  // TODO(blais): self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // self.assertFalse(errors)
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 }
 
-TEST(TestParseLots, cost_amount) {
+TEST(TestParseLots, CostAmount) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL      20 AAPL {45.23 USD}
       Assets:Invest:Cash  -90.46 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { number_per { exact: "45.23" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-90.46" } currency: "USD" }
+        }
+      }
+    }
   )");
-        self.assertFalse(parser.is_entry_incomplete(entries[0]))
-        self.assertFalse(errors)
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        // self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), posting.cost)
+  // TODO(blais): self.assertFalse(parser.is_entry_incomplete(entries[0]))
+  // self.assertFalse(errors)
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), posting.cost)
 }
 
-TEST(TestParseLots, cost_date) {
+TEST(TestParseLots, CostDate) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   20 AAPL {2014-12-26}
       Assets:Invest:Cash  -20 AAPL
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { date { year: 2014 month: 12 day: 26 } }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-20" } currency: "AAPL" }
+        }
+      }
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertFalse(errors)
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        self.assertEqual(
-            CostSpec(MISSING, None, MISSING, datetime.date(2014, 12, 26), None, False),
-            // posting.cost)
+  // TODO(blais): self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // self.assertFalse(errors)
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(
+  //     CostSpec(MISSING, None, MISSING, datetime.date(2014, 12, 26), None, False),
+  //     // posting.cost)
 }
 
-TEST(TestParseLots, cost_label) {
+TEST(TestParseLots, CostLabel) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   20 AAPL {"d82d55a0dbe8"}
       Assets:Invest:Cash  -20 AAPL
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { label: "d82d55a0dbe8" }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-20" } currency: "AAPL" }
+        }
+      }
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
-                         // posting.cost)
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
+  //                  // posting.cost)
 }
 
-TEST(TestParseLots, cost_merge) {
+TEST(TestParseLots, CostMerge) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   20 AAPL {*}
       Assets:Invest:Cash  -20 AAPL
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { merge_cost: true }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-20" } currency: "AAPL" }
+        }
+      }
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), posting.cost)
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), posting.cost)
 }
 
-TEST(TestParseLots, cost_two_components) {
+TEST(TestParseLots, CostTwoComponents) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26}
@@ -1898,12 +1982,56 @@ TEST(TestParseLots, cost_two_components) {
       Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8"}
       Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26}
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" }
+        }
+      }
+    }
   )");
-        self.assertEqual(0, len(errors))
-        // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // self.assertEqual(0, len(errors))
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
-TEST(TestParseLots, cost_three_components) {
+TEST(TestParseLots, CostThreeComponents) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, "d82d55a0dbe8"}
@@ -1913,98 +2041,231 @@ TEST(TestParseLots, cost_three_components) {
       Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD, 2014-12-26}
       Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26, 45.23 USD}
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "1" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            currency: "USD"
+            date { year: 2014 month: 12 day: 26 }
+            label: "d82d55a0dbe8"
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(0, len(errors))
 }
 
-TEST(TestParseLots, cost_repeated) {
+TEST(TestParseLots, CostRepeated) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL       1 AAPL {45.23 USD, 45.24 USD}
       Assets:Invest:Cash  -45.23 USD
   )", R"(
+    errors {
+      message: "Duplicate `number_per` cost spec field."
+    }
   )");
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, "Duplicate cost")
 }
 
-TEST(TestParseLots, cost_repeated_date) {
+TEST(TestParseLots, CostRepeatedDate) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, 2014-12-27}
       Assets:Invest:Cash   -1 AAPL
   )", R"(
+    errors {
+      message: "Duplicate `date` cost spec field."
+    }
   )");
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, "Duplicate date")
 }
 
-TEST(TestParseLots, cost_repeated_label) {
+TEST(TestParseLots, CostRepeatedLabel) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL       1 AAPL {"aaa", "bbb", 45.23 USD}
       Assets:Invest:Cash  -45.23 USD
   )", R"(
+    errors {
+      message: "Duplicate `label` cost spec field."
+    }
   )");
-        self.assertEqual(1, len(errors))
-        self.assertTrue(any(re.search("Duplicate label", error.message)
-                            // for error in errors))
 }
 
-TEST(TestParseLots, cost_repeated_merge) {
+TEST(TestParseLots, CostRepeatedMerge) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL       1 AAPL {*, *}
       Assets:Invest:Cash  -45.23 USD
   )", R"(
+    errors {
+      message: "Duplicate `merge_cost` cost spec field."
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertEqual(2, len(errors))
-        self.assertTrue(any(re.search("Duplicate merge", error.message)
-                            // for error in errors))
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
-TEST(TestParseLots, cost_both_costs) {
+TEST(TestParseLots, CostBothCosts) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL       10 AAPL {45.23 # 9.95 USD}
       Assets:Invest:Cash  -110.36 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "10" } currency: "AAPL" }
+          cost_spec {
+            number_per { exact: "45.23" }
+            number_total { exact: "9.95" }
+            currency: "USD"
+          }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-110.36" } currency: "USD" }
+        }
+      }
+    }
   )");
-        posting = entries[0].postings[0]
-        self.assertEqual(CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
-                         // posting.cost)
+  // posting = entries[0].postings[0]
+  // self.assertEqual(CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
+  // posting.cost)
 }
 
-TEST(TestParseLots, cost_total_cost_only) {
+#if 0
+
+// Try adding {, 100.00 USD, , } as cost, see what happens.
+
+TEST(TestParseLots, CostTotalCostOnly) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL      10 AAPL {# 9.95 USD}
       Assets:Invest:Cash  -19.90 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "10" } currency: "AAPL" }
+          cost_spec {
+
+# How to represent MISSING vs. absent here?
+
+number_total { exact: "9.95" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units { number { exact: "-19.90" } currency: "USD" }
+        }
+      }
+    }
   )");
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        posting = entries[0].postings[0]
-        self.assertEqual(CostSpec(MISSING, D('9.95'), 'USD', None, None, False),
-                         // posting.cost)
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // posting = entries[0].postings[0]
+  // self.assertEqual(CostSpec(MISSING, D('9.95'), 'USD', None, None, False),
+  // posting.cost)
 }
 
-TEST(TestParseLots, cost_total_empty_total) {
+TEST(TestParseLots, CostTotalEmptyTotal) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL      20 AAPL {45.23 # USD}
       Assets:Invest:Cash  -45.23 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          units { number { exact: "20" } currency: "AAPL" }
+          cost_spec { number_per { exact: "45.23" }
+
+# How to represent MISSING vs. absent here?
+
+currency: "USD" }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          units {
+            number {
+              exact: "-45.23"
+            }
+            currency: "USD"
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(0, len(errors))
-        self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        posting = entries[0].postings[0]
-        self.assertEqual(A('20 AAPL'), posting.units)
-        self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
-                         // posting.cost)
+  // self.assertEqual(0, len(errors))
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // posting = entries[0].postings[0]
+  // self.assertEqual(A('20 AAPL'), posting.units)
+  // self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
+  // posting.cost)
 }
 
-TEST(TestParseLots, cost_total_just_currency) {
+TEST(TestParseLots, CostTotalJustCurrency) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL   20 AAPL {USD}
@@ -2012,25 +2273,25 @@ TEST(TestParseLots, cost_total_just_currency) {
       Assets:Invest:Cash    0 USD
   )", R"(
   )");
-        // self.assertTrue(parser.is_entry_incomplete(entries[0]))
+  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
-TEST(TestParseLots, cost_with_slashes) {
+TEST(TestParseLots, CostWithSlashes) {
   ExpectParse(R"(
     2014-01-01 *
       Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
       Assets:Invest:Cash   -45.23 USD
   )", R"(
   )");
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "unexpected SLASH")
-        // self.assertEqual(0, len(entries))
+  // self.assertEqual(1, len(errors))
+  // self.assertRegex(errors[0].message, "unexpected SLASH")
+  // self.assertEqual(0, len(entries))
 }
 
 //------------------------------------------------------------------------------
 // TestCurrencies
 
-TEST(TestCurrencies, parse_currencies) {
+TEST(TestCurrencies, ParseCurrencies) {
   ExpectParse(R"(
     2014-01-19 open Assets:Underscore    DJ_EURO
     2014-01-19 open Assets:Period        DJ.EURO
@@ -2041,7 +2302,7 @@ TEST(TestCurrencies, parse_currencies) {
         // self.assertFalse(errors)
 }
 
-TEST(TestCurrencies, different_cost_and_price_currency) {
+TEST(TestCurrencies, DifferentCostAndPriceCurrency) {
   ExpectParse(R"(
     2018-03-21 * "Convert MR to KrisFlyer"
       Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
@@ -2053,7 +2314,7 @@ TEST(TestCurrencies, different_cost_and_price_currency) {
 //------------------------------------------------------------------------------
 // TestTotalsAndSigns
 
-TEST(TestTotalsAndSigns, zero_amount) {
+TEST(TestTotalsAndSigns, ZeroAmount) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      0 MSFT {200.00 USD}
@@ -2063,7 +2324,7 @@ TEST(TestTotalsAndSigns, zero_amount) {
         // pass # Should produce no errors.
 }
 
-TEST(TestTotalsAndSigns, zero_cost) {
+TEST(TestTotalsAndSigns, ZeroCost) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      -10 MSFT {0.00 USD}
@@ -2073,7 +2334,7 @@ TEST(TestTotalsAndSigns, zero_cost) {
         // pass # Should produce no errors.
 }
 
-TEST(TestTotalsAndSigns, cost_negative) {
+TEST(TestTotalsAndSigns, CostNegative) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
@@ -2085,7 +2346,7 @@ TEST(TestTotalsAndSigns, cost_negative) {
         // pass
 }
 
-TEST(TestTotalsAndSigns, total_cost) {
+TEST(TestTotalsAndSigns, TotalCost) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
@@ -2108,7 +2369,7 @@ TEST(TestTotalsAndSigns, total_cost) {
             // self.assertEqual(None, posting.price)
 }
 
-TEST(TestTotalsAndSigns, total_cost__invalid) {
+TEST(TestTotalsAndSigns, TotalCostInvalid) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT {{100 # 2,000 USD}}
@@ -2125,7 +2386,7 @@ TEST(TestTotalsAndSigns, total_cost__invalid) {
         // self.assertEqual(None, posting.price)
 }
 
-TEST(TestTotalsAndSigns, total_cost_negative) {
+TEST(TestTotalsAndSigns, TotalCostNegative) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      -10 MSFT {{-200.00 USD}}
@@ -2137,7 +2398,7 @@ TEST(TestTotalsAndSigns, total_cost_negative) {
         // pass
 }
 
-TEST(TestTotalsAndSigns, price_negative) {
+TEST(TestTotalsAndSigns, PriceNegative) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
@@ -2147,7 +2408,7 @@ TEST(TestTotalsAndSigns, price_negative) {
         // self.assertRegex(errors[0].message, 'Negative.*allowed')
 }
 
-TEST(TestTotalsAndSigns, total_price_positive) {
+TEST(TestTotalsAndSigns, TotalPricePositive) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT        10 MSFT @@ 2000.00 USD
@@ -2159,7 +2420,7 @@ TEST(TestTotalsAndSigns, total_price_positive) {
         // self.assertEqual(None, posting.cost)
 }
 
-TEST(TestTotalsAndSigns, total_price_negative) {
+TEST(TestTotalsAndSigns, TotalPriceNegative) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT       -10 MSFT @@ 2000.00 USD
@@ -2171,7 +2432,7 @@ TEST(TestTotalsAndSigns, total_price_negative) {
         // self.assertEqual(None, posting.cost)
 }
 
-TEST(TestTotalsAndSigns, total_price_inverted) {
+TEST(TestTotalsAndSigns, TotalPriceInverted) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
@@ -2181,7 +2442,7 @@ TEST(TestTotalsAndSigns, total_price_inverted) {
         // self.assertRegex(errors[0].message, 'Negative.*allowed')
 }
 
-TEST(TestTotalsAndSigns, total_price_with_missing) {
+TEST(TestTotalsAndSigns, TotalPriceWithMissing) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT            MSFT @@ 2000.00 USD
@@ -2194,7 +2455,7 @@ TEST(TestTotalsAndSigns, total_price_with_missing) {
 //------------------------------------------------------------------------------
 // TestBalance
 
-TEST(TestBalance, total_price) {
+TEST(TestBalance, TotalPrice) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -2206,7 +2467,7 @@ TEST(TestBalance, total_price) {
         // self.assertEqual(None, posting.cost)
 }
 
-TEST(TestBalance, total_cost) {
+TEST(TestBalance, TotalCost) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
@@ -2228,7 +2489,7 @@ TEST(TestBalance, total_cost) {
 //------------------------------------------------------------------------------
 // TestMetaData
 
-TEST(TestMetaData, metadata_transaction__begin) {
+TEST(TestMetaData, MetadataTransactionBegin) {
   ExpectParse(R"(
     2013-05-18 * ""
       test: "Something"
@@ -2240,7 +2501,7 @@ TEST(TestMetaData, metadata_transaction__begin) {
         // self.assertEqual('Something', entries[0].meta['test'])
 }
 
-TEST(TestMetaData, metadata_transaction__middle) {
+TEST(TestMetaData, MetadataTransactionMiddle) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -2253,7 +2514,7 @@ TEST(TestMetaData, metadata_transaction__middle) {
                          // self.strip_meta(entries[0].postings[0].meta))
 }
 
-TEST(TestMetaData, metadata_transaction__end) {
+TEST(TestMetaData, MetadataTransactionEnd) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -2266,7 +2527,7 @@ TEST(TestMetaData, metadata_transaction__end) {
                          // self.strip_meta(entries[0].postings[1].meta))
 }
 
-TEST(TestMetaData, metadata_transaction__many) {
+TEST(TestMetaData, MetadataTransactionMany) {
   ExpectParse(R"(
     2013-05-18 * ""
       test1: "Something"
@@ -2287,7 +2548,7 @@ TEST(TestMetaData, metadata_transaction__many) {
                          // self.strip_meta(entries[0].postings[1].meta))
 }
 
-TEST(TestMetaData, metadata_transaction__indented) {
+TEST(TestMetaData, MetadataTransactionIndented) {
   ExpectParse(R"(
     2013-05-18 * ""
         test1: "Something"
@@ -2308,7 +2569,7 @@ TEST(TestMetaData, metadata_transaction__indented) {
                          // self.strip_meta(entries[0].postings[1].meta))
 }
 
-TEST(TestMetaData, metadata_transaction__repeated) {
+TEST(TestMetaData, MetadataTransactionRepeated) {
   ExpectParse(R"(
     2013-05-18 * ""
       test: "Bananas"
@@ -2329,7 +2590,7 @@ TEST(TestMetaData, metadata_transaction__repeated) {
                             // for error in errors))
 }
 
-TEST(TestMetaData, metadata_empty) {
+TEST(TestMetaData, MetadataEmpty) {
   ExpectParse(R"(
     2013-05-18 * "blabla"
       oranges:
@@ -2348,7 +2609,7 @@ TEST(TestMetaData, metadata_empty) {
         // self.assertEqual(entries[1].meta['apples'], None)
 }
 
-TEST(TestMetaData, metadata_other) {
+TEST(TestMetaData, MetadataOther) {
   ExpectParse(R"(
     2013-01-01 open Equity:Other
 
@@ -2381,7 +2642,7 @@ TEST(TestMetaData, metadata_other) {
         // self.assertEqual(9, len(entries))
 }
 
-TEST(TestMetaData, metadata_data_types) {
+TEST(TestMetaData, MetadataDataTypes) {
   ExpectParse(R"(
     2013-05-18 * ""
       string: "Something"
@@ -2413,7 +2674,7 @@ TEST(TestMetaData, metadata_data_types) {
             // }, entries[0].meta)
 }
 
-TEST(TestMetaData, metadata_key_syntax) {
+TEST(TestMetaData, MetadataKeySyntax) {
   ExpectParse(R"(
     2013-05-18 * ""
       nameoncard: "Jim"

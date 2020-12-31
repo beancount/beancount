@@ -1078,20 +1078,18 @@ cost_spec:
     }
   | LCURLCURL cost_comp_list RCURLCURL
     {
-      if ($2 != nullptr) {
-        // Note: This is using the total syntax; it is an error to set
-        // `number_total` to a value in the input when using `{{...}}`.
-        if ($2->has_number_total()) {
-          // TODO(blais): Move this to post-parsing.
-          builder.AddError(
-              absl::StrFormat(
-                  "Per-unit cost may not be specified using total cost "
-                  "syntax: '%s'; ignoring per-unit cost", $2->DebugString()), @$);
-        } else {
-          $2->mutable_number_total()->CopyFrom($2->number_per());
-        }
-        $2->clear_number_per();
+      // Note: This is using the total syntax; it is an error to set
+      // `number_total` to a value in the input when using `{{...}}`.
+      if ($2->has_number_total()) {
+        // TODO(blais): Move this to post-parsing.
+        builder.AddError(
+            absl::StrFormat(
+                "Per-unit cost may not be specified using total cost "
+                "syntax: '%s'; ignoring per-unit cost", $2->DebugString()), @$);
+      } else {
+        $2->mutable_number_total()->CopyFrom($2->number_per());
       }
+      $2->clear_number_per();
       $$ = $2;
     }
   | %empty
@@ -1103,14 +1101,18 @@ cost_spec:
 cost_comp_list:
   %empty
     {
-      $$ = nullptr;
+      $$ = new inter::CostSpec();
     }
   | cost_comp
   | cost_comp_list COMMA cost_comp
     {
-      $$ = ($1 != nullptr) ? ($1) : new inter::CostSpec();
-      builder.MergeCost(*$3, $$);
+      $$ = $1;
+      auto status = builder.MergeCost(*$3, $$);
       delete $3;
+      if (!status.ok()) {
+        builder.AddError(status.message(), @3);
+        YYERROR;
+      }
     }
 
 /* One component of a cost specification. */

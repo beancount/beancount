@@ -7,6 +7,7 @@
 #include "google/protobuf/text_format.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_cat.h"
+#include "absl/status/status.h"
 
 namespace beancount {
 namespace parser {
@@ -286,9 +287,28 @@ void Builder::AddActiveMetadata(Meta* meta, Directive* dir) const {
   //
 }
 
-void Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator) {
-  // TODO(blais): Check for collisions here.
+absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator) {
+  if (new_cost_spec.has_number_per() && accumulator->has_number_per()) {
+    return absl::InvalidArgumentError("Duplicate `number_per` cost spec field.");
+  }
+  if (new_cost_spec.has_number_total() && accumulator->has_number_total()) {
+    return absl::InvalidArgumentError("Duplicate `number_total` cost spec field.");
+  }
+  if (new_cost_spec.has_currency() && accumulator->has_currency()) {
+    return absl::InvalidArgumentError("Duplicate `currency` cost spec field.");
+  }
+  if (new_cost_spec.has_date() && accumulator->has_date()) {
+    return absl::InvalidArgumentError("Duplicate `date` cost spec field.");
+  }
+  if (new_cost_spec.has_label() && accumulator->has_label()) {
+    return absl::InvalidArgumentError("Duplicate `label` cost spec field.");
+  }
+  if (new_cost_spec.has_merge_cost() && accumulator->has_merge_cost()) {
+    return absl::InvalidArgumentError("Duplicate `merge_cost` cost spec field.");
+  }
+
   accumulator->MergeFrom(new_cost_spec);
+  return absl::OkStatus();
 }
 
 
@@ -396,7 +416,7 @@ void SetLocationFromLocation(const location& loc, Location* output) {
   output->set_lineno_end(loc.end.line);
 }
 
-void Builder::AddError(const string& message, const location& loc) {
+void Builder::AddError(std::string_view message, const location& loc) {
   auto* error = new Error();
   errors_.push_back(error);
   error->set_message(Capitalize(message));
