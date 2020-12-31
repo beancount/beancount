@@ -1106,260 +1106,301 @@ TEST(TestSyntaxErrors, NoFinalNewline) {
   )", true);
 }
 
-#if 0
+// TODO(blais): Test all the other error cases.
+
 //------------------------------------------------------------------------------
 // TestParserOptions
 
-TEST(TestParserOptions, option_single_value) {
+TEST(TestParserOptions, OptionSingleValue) {
   ExpectParse(R"(
     option "title" "Super Rich"
   )", R"(
+    options {
+      title: "Super Rich"
+    }
   )");
-        // option = options_map['title']
-        // self.assertEqual(option, 'Super Rich')
 }
 
-TEST(TestParserOptions, option_list_value) {
+TEST(TestParserOptions, OptionListValue) {
   ExpectParse(R"(
     option "documents" "/path/docs/a"
     option "documents" "/path/docs/b"
     option "documents" "/path/docs/c"
   )", R"(
+    options {
+      documents: "/path/docs/a"
+      documents: "/path/docs/b"
+      documents: "/path/docs/c"
+    }
   )");
-        // documents = options_map['documents']
-        // self.assertEqual(['/path/docs/a',
-        //                   '/path/docs/b',
-        //                   '/path/docs/c'], documents)
 }
 
-TEST(TestParserOptions, invalid_option) {
+TEST(TestParserOptions, InvalidOption) {
   ExpectParse(R"(
     option "bladibla_invalid" "Some value"
   )", R"(
+    errors {
+      message: "Invalid option: \'bladibla_invalid\'"
+    }
   )");
-        // check_list(self, errors, [parser.ParserError])
-        // self.assertFalse("bladibla_invalid" in options_map)
 }
 
-TEST(TestParserOptions, readonly_option) {
+TEST(TestParserOptions, ReadonlyOption) {
   ExpectParse(R"(
     option "filename" "gniagniagniagniagnia"
   )", R"(
+    errors {
+      message: "Invalid option: \'filename\'"
+    }
   )");
-        // check_list(self, errors, [parser.ParserError])
-        // self.assertNotEqual("filename", "gniagniagniagniagnia")
 }
 
 //------------------------------------------------------------------------------
 // TestParserInclude
 
-TEST(TestParserInclude, parse_nonexist) {
-  ExpectParse(R"(
-  )", R"(
-  )");
-        with self.assertRaises(OSError):
-            parser.parse_file('/some/bullshit/filename.beancount')
+TEST(TestParserInclude, ParseNonExisting) {
+  auto ledger = parser::ParseFile("/some/bullshit/filename.beancount");
+  auto ledger_proto = LedgerToProto(*ledger);
+  for (auto& error : *ledger_proto->mutable_errors()) {
+    error.clear_location();
+  }
+  EXPECT_TRUE(EqualsMessages(*ledger_proto, R"(
+    errors {
+      message: "An IO error has occurred."
+    }
+  )"));
 }
 
-TEST(TestParserInclude, include_absolute) {
+TEST(TestParserInclude, IncludeAbsolute) {
   ExpectParse(R"(
     include "/some/absolute/filename.beancount"
   )", R"(
+    info {
+      include: "/some/absolute/filename.beancount"
+    }
   )");
-        // entries, errors, options_map = parser.parse_file(filename)
-        // self.assertFalse(errors)
-        // self.assertEqual(['/some/absolute/filename.beancount'],
-        //                  options_map['include'])
 }
 
-TEST(TestParserInclude, include_relative) {
+TEST(TestParserInclude, IncludeRelativeFromString) {
   ExpectParse(R"(
     include "some/relative/filename.beancount"
   )", R"(
-  )");
-        // entries, errors, options_map = parser.parse_file(filename)
-        // self.assertFalse(errors)
-        // self.assertEqual(['some/relative/filename.beancount'],
-        //                  options_map['include'])
-}
-
-TEST(TestParserInclude, include_relative_from_string) {
-        // input_string = 'include "some/relative/filename.beancount"'
-        // entries, errors, options_map = parser.parse_string(input_string)
-        // self.assertFalse(errors)
-        // self.assertEqual(['some/relative/filename.beancount'],
-        //                  options_map['include'])
-  ExpectParse(R"(
-  )", R"(
+    info {
+      include: "some/relative/filename.beancount"
+    }
   )");
 }
 
 //------------------------------------------------------------------------------
 // TestParserPlugin
 
-TEST(TestParserPlugin, plugin) {
+TEST(TestParserPlugin, Plugin) {
   ExpectParse(R"(
     plugin "beancount.plugin.unrealized"
   )", R"(
+    info {
+      plugin {
+        name: "beancount.plugin.unrealized"
+      }
+    }
   )");
-        // self.assertFalse(errors)
-        // self.assertEqual([('beancount.plugin.unrealized', None)],
-        //                  options_map['plugin'])
 }
 
-TEST(TestParserPlugin, plugin_with_config) {
+TEST(TestParserPlugin, PluginWithConfig) {
   ExpectParse(R"(
     plugin "beancount.plugin.unrealized" "Unrealized"
   )", R"(
+    info {
+      plugin {
+        name: "beancount.plugin.unrealized"
+        config: "Unrealized"
+      }
+    }
   )");
-        // self.assertFalse(errors)
-        // self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
-        //                  options_map['plugin'])
 }
 
-TEST(TestParserPlugin, plugin_as_option) {
+TEST(TestParserPlugin, PluginAsOption) {
   ExpectParse(R"(
     option "plugin" "beancount.plugin.unrealized"
   )", R"(
+    errors {
+      message: "Invalid option: \'plugin\'"
+    }
   )");
-        // # Test that the very old method of plugin specification is disallowed.
-        // self.assertEqual(1, len(errors))
-        // self.assertEqual([], options_map['plugin'])
 }
 
 //------------------------------------------------------------------------------
 // TestDisplayContextOptions
 
-TEST(TestDisplayContextOptions, render_commas_no) {
+TEST(TestDisplayContextOptions, RenderCommasNo) {
   ExpectParse(R"(
     option "render_commas" "0"
   )", R"(
+    options {
+      render_commas: false
+    }
   )");
-        // self.assertEqual(False, options_map['render_commas'])
 }
 
-TEST(TestDisplayContextOptions, render_commas_yes) {
+TEST(TestDisplayContextOptions, RenderCommasYes) {
   ExpectParse(R"(
     option "render_commas" "1"
   )", R"(
+    options {
+      render_commas: true
+    }
   )");
-        // self.assertEqual(True, options_map['render_commas'])
 }
 
-TEST(TestDisplayContextOptions, render_commas_yes2) {
+TEST(TestDisplayContextOptions, RenderCommasYes2) {
+  ExpectParse(R"(
+    option "render_commas" "true"
+  )", R"(
+    options {
+      render_commas: true
+    }
+  )");
+}
+
+TEST(TestDisplayContextOptions, RenderCommasError) {
   ExpectParse(R"(
     option "render_commas" "TRUE"
   )", R"(
+    errors {
+      message: "Could not parse and set option 'render_commas' with value 'TRUE'; ignored."
+    }
   )");
-        // self.assertEqual(True, options_map['render_commas'])
 }
 
 //------------------------------------------------------------------------------
 // TestMiscOptions
 
-TEST(TestMiscOptions, plugin_processing_mode__default) {
+TEST(TestMiscOptions, PluginProcessingModeDefault) {
   ExpectParse(R"(
-    option "plugin_processing_mode" "default"
+    option "plugin_processing_mode" "DEFAULT"
   )", R"(
+    options {
+      plugin_processing_mode: DEFAULT
+    }
   )");
-        // self.assertEqual("default", options_map['plugin_processing_mode'])
 }
 
-TEST(TestMiscOptions, plugin_processing_mode__raw) {
+TEST(TestMiscOptions, PluginProcessingModeRaw) {
   ExpectParse(R"(
-    option "plugin_processing_mode" "raw"
+    option "plugin_processing_mode" "RAW"
   )", R"(
+    options {
+      plugin_processing_mode: RAW
+    }
   )");
-        // self.assertEqual("raw", options_map['plugin_processing_mode'])
 }
 
-TEST(TestMiscOptions, plugin_processing_mode__invalid) {
+TEST(TestMiscOptions, PluginProcessingModeInvalid) {
   ExpectParse(R"(
-    option "plugin_processing_mode" "invalid"
+    option "plugin_processing_mode" "INVALID"
   )", R"(
+    errors {
+      message: "Could not parse and set option 'plugin_processing_mode' with value 'INVALID'; ignored."
+    }
   )");
-        // self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, "Error for option")
-        // self.assertEqual("default", options_map['plugin_processing_mode'])
 }
 
 //------------------------------------------------------------------------------
 // TestToleranceOptions
 
-TEST(TestToleranceOptions, tolerance_defaults) {
-  ExpectParse(R"(
-  )", R"(
-  )");
-        // self.assertEqual({},
-        //                   options_map['inferred_tolerance_default'])
-}
-
-TEST(TestToleranceOptions, inferred_tolerance_default) {
+TEST(TestToleranceOptions, InferredToleranceDefault) {
   ExpectParse(R"(
     option "inferred_tolerance_default" "*:0"
     option "inferred_tolerance_default" "USD:0.05"
     option "inferred_tolerance_default" "JPY:0.5"
   )", R"(
+    options {
+      inferred_tolerance_default: "*:0"
+      inferred_tolerance_default: "USD:0.05"
+      inferred_tolerance_default: "JPY:0.5"
+    }
   )");
-        // self.assertEqual({"*": D("0"),
-        //                   "USD": D("0.05"),
-        //                   "JPY": D("0.5")},
-        //                  options_map['inferred_tolerance_default'])
 }
 
 //------------------------------------------------------------------------------
 // TestDeprecatedOptions
 
-TEST(TestDeprecatedOptions, deprecated_plugin) {
+TEST(TestDeprecatedOptions, DeprecatedPlugin) {
   ExpectParse(R"(
     option "plugin" "beancount.plugins.module_name"
   )", R"(
+    errors {
+      message: "Invalid option: 'plugin'"
+    }
   )");
-        // self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, 'may not be set')
 }
 
-TEST(TestDeprecatedOptions, deprecated_option) {
+TEST(TestDeprecatedOptions, DeprecatedOption) {
   ExpectParse(R"(
     option "allow_pipe_separator" "TRUE"
   )", R"(
+    errors {
+      message: "Invalid option: 'allow_pipe_separator'"
+    }
   )");
-        // self.assertEqual(1, len(errors))
-        // self.assertEqual(True, options_map['allow_pipe_separator'])
-        // self.assertRegex(errors[0].message, "this will go away")
 }
 
 //------------------------------------------------------------------------------
 // TestParserLinks
 
-TEST(TestParserLinks, links) {
+TEST(TestParserLinks, ParseLinks) {
   ExpectParse(R"(
     2013-05-18 * "Something something" ^38784734873
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      links: "38784734873"
+      transaction {
+        flag: "*"
+        narration: "Something something"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        // self.assertEqual(entries[0].links, set(['38784734873']))
 }
 
 //------------------------------------------------------------------------------
 // TestTransactions
 
-TEST(TestTransactions, simple_1) {
+TEST(TestTransactions, Simple1) {
   ExpectParse(R"(
     2013-05-18 * "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual(None, entries[0].payee)
-        // self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
 }
 
-TEST(TestTransactions, simple_2) {
+TEST(TestTransactions, Simple2) {
   ExpectParse(R"(
     2013-05-18 * "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         100 USD
@@ -1369,209 +1410,396 @@ TEST(TestTransactions, simple_2) {
       Expenses:BathroomSupplies         4 USD
       Assets:US:BestBank:Checking      -4 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Nice dinner at Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 20 }
+      transaction {
+        flag: "*"
+        payee: "Duane Reade"
+        narration: "Toothbrush"
+        postings {
+          account: "Expenses:BathroomSupplies"
+          units { number { exact: "4" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:BestBank:Checking"
+          units { number { exact: "-4" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction, data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual(None, entries[0].payee)
-        self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
-        self.assertEqual("Duane Reade", entries[1].payee)
-        // self.assertEqual("Toothbrush", entries[1].narration)
 }
 
-TEST(TestTransactions, empty_narration) {
+TEST(TestTransactions, EmptyNarration) {
   ExpectParse(R"(
     2013-05-18 * ""
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual("", entries[0].narration)
-        // self.assertEqual(None, entries[0].payee)
 }
 
-TEST(TestTransactions, no_narration) {
+TEST(TestTransactions, NoNarration) {
   ExpectParse(R"(
     2013-05-18 *
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual("", entries[0].narration)
-        // self.assertEqual(None, entries[0].payee)
 }
 
-TEST(TestTransactions, payee_no_narration) {
+TEST(TestTransactions, PayeeNoNarration) {
   ExpectParse(R"(
     2013-05-18 * "Mermaid Inn"
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Mermaid Inn"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual(None, entries[0].payee)
-        // self.assertEqual("Mermaid Inn", entries[0].narration)
 }
 
-TEST(TestTransactions, too_many_strings) {
+TEST(TestTransactions, TooManyStrings) {
   ExpectParse(R"(
     2013-05-18 * "A" "B" "C"
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    errors {
+      message: "Syntax error, unexpected STRING, expecting EOL or TAG or LINK"
+    }
   )");
-        check_list(self, entries, [])
-        // check_list(self, errors, [parser.ParserError])
 }
 
-TEST(TestTransactions, link_and_then_tag) {
+TEST(TestTransactions, LinkAndThenTag) {
   ExpectParse(R"(
     2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      tags: "trip"
+      links: "610fa7f17e7a"
+      transaction {
+        flag: "*"
+        narration: "Money from CC"
+        postings {
+          account: "Expenses:Restaurant"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:US:Cash"
+          units { number { exact: "-100" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual("Money from CC", entries[0].narration)
-        self.assertEqual(None, entries[0].payee)
-        self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
-        // self.assertEqual(set(["trip"]), entries[0].tags)
 }
 
-TEST(TestTransactions, tag_then_link) {
+TEST(TestTransactions, TagThenLink) {
   ExpectParse(R"(
     2014-04-20 * #trip "Money from CC" ^610fa7f17e7a
       Expenses:Restaurant         100 USD
       Assets:US:Cash             -100 USD
   )", R"(
+    errors {
+      message: "Syntax error, unexpected STRING, expecting EOL or TAG or LINK"
+    }
   )");
-        check_list(self, entries, [])
-        // check_list(self, errors, [parser.ParserSyntaxError])
 }
 
-TEST(TestTransactions, zero_prices) {
+TEST(TestTransactions, ZeroPrices) {
   ExpectParse(R"(
     2014-04-20 * "Like a conversion entry"
       Equity:Conversions         100 USD @ 0 XFER
       Equity:Conversions         101 CAD @ 0 XFER
       Equity:Conversions         102 AUD @ 0 XFER
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Like a conversion entry"
+        postings {
+          account: "Equity:Conversions"
+          units { number { exact: "100" } currency: "USD" }
+          price { number { exact: "0" } currency: "XFER" }
+        }
+        postings {
+          account: "Equity:Conversions"
+          units { number { exact: "101" } currency: "CAD" }
+          price { number { exact: "0" } currency: "XFER" }
+        }
+        postings {
+          account: "Equity:Conversions"
+          units { number { exact: "102" } currency: "AUD" }
+          price { number { exact: "0" } currency: "XFER" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        // check_list(self, errors, [])
 }
 
-TEST(TestTransactions, zero_units) {
+TEST(TestTransactions, ZeroUnits) {
+  // Note: Zero amount is caught only at booking time.
   ExpectParse(R"(
     2014-04-20 * "Zero number of units"
       Assets:Investment         0 HOOL {500.00 USD}
       Assets:Cash               0 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Zero number of units"
+        postings {
+          account: "Assets:Investment"
+          units { number { exact: "0" } currency: "HOOL" }
+          cost_spec { number_per { exact: "500.00" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Cash"
+          units { number { exact: "0" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        # Note: Zero amount is caught only at booking time.
-        // self.assertFalse(errors)
 }
 
-TEST(TestTransactions, zero_costs) {
+TEST(TestTransactions, ZeroCosts) {
   ExpectParse(R"(
     2014-04-20 * "Like a conversion entry"
       Assets:Investment         10 HOOL {0 USD}
       Assets:Cash                0 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Like a conversion entry"
+        postings {
+          account: "Assets:Investment"
+          units { number { exact: "10" } currency: "HOOL" }
+          cost_spec { number_per { exact: "0" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Cash"
+          units { number { exact: "0" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        // check_list(self, errors, [])
 }
 
-TEST(TestTransactions, imbalance) {
+TEST(TestTransactions, Imbalance) {
   ExpectParse(R"(
     2014-04-20 * "Busted!"
       Assets:Checking         100 USD
       Assets:Checking         -99 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Busted!"
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "-99" } currency: "USD" }
+        }
+      }
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        // check_list(self, errors, [])
 }
 
-TEST(TestTransactions, no_postings) {
+TEST(TestTransactions, NoPostings) {
   ExpectParse(R"(
     2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
   )", R"(
+    directives {
+      date { year: 2014 month: 7 day: 17 }
+      links: "795422780"
+      transaction {
+        flag: "*"
+        narration: "(JRN) INTRA-ACCOUNT TRANSFER"
+      }
+    }
   )");
-        // self.assertTrue(isinstance(entries[0].postings, list))
 }
 
-TEST(TestTransactions, blank_line_not_allowed) {
+TEST(TestTransactions, BlankLineNotAllowed) {
   ExpectParse(R"(
     2014-04-20 * "Busted!"
       Assets:Checking         100 USD
 
       Assets:Checking         -99 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Busted!"
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "100" } currency: "USD" }
+        }
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected INDENT"
+    }
   )");
-        check_list(self, entries, [data.Transaction])
-        check_list(self, entries[0].postings, [data.Posting])
-        // check_list(self, errors, [parser.ParserSyntaxError])
 }
 
-TEST(TestTransactions, blank_line_with_spaces_not_allowed) {
-  ExpectParse(R"(
-            '2014-04-20 * "Busted!"',
-            '  Assets:Checking         100 USD',
-            '  ',  # This cuts off the transaction
-            '  Assets:Checking         -99 USD'
-  )", R"(
-  )");
-        entries, errors, _ = parser.parse_string(input_)
-        check_list(self, entries, [data.Transaction])
-        check_list(self, entries[0].postings, [data.Posting])
-        check_list(self, errors, [parser.ParserSyntaxError])
+TEST(TestTransactions, BlankLineWithSpacesNotAllowed) {
+  // Note: This resulted in an error in v2. The difference is due to how
+  // processing of indents is improved in v3.
+  ExpectParse(absl::StrCat(
+            "2014-04-20 * \"Busted!\"\n",
+            "  Assets:Checking         100 USD\n",
+            "  \n",  // This is not allowed.
+            "  Assets:Checking         -99 USD\n"),
+  R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      transaction {
+        flag: "*"
+        narration: "Busted!"
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "-99" } currency: "USD" }
+        }
+      }
+    }
+  )", true);
 }
 
-TEST(TestTransactions, tags_after_first_line) {
+TEST(TestTransactions, TagsAfterFirstLine) {
   ExpectParse(R"(
     2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
-      #tag1 #tag2
-      ^link1 #tag3
-      #tag4 ^link2
-      ^link3 ^link4
-      #tag6
-      ^link5
+      #tag1
+      ^link1
+      #tag2
+      ^link2
       Assets:Checking         100 USD
       Assets:Checking         -99 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 4 day: 20 }
+      meta {
+        kv { value { tag: "tag1" } }
+        kv { value { link: "link1" } }
+        kv { value { tag: "tag2" } }
+        kv { value { link: "link2" } }
+      }
+      tags: "basetag"
+      links: "baselink"
+      transaction {
+        flag: "*"
+        narration: "Links and tags on subsequent lines"
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "100" } currency: "USD" }
+        }
+        postings {
+          account: "Assets:Checking"
+          units { number { exact: "-99" } currency: "USD" }
+        }
+      }
+    }
   )");
-        // check_list(self, entries, [data.Transaction])
-        // check_list(self, entries[0].postings, [data.Posting, data.Posting])
-        // check_list(self, errors, [])
-        // self.assertEqual({"basetag", "tag1", "tag2", "tag3", "tag4", "tag6"},
-        //                  entries[0].tags)
-        // self.assertEqual({"baselink", "link1", "link2", "link3", "link4", "link5"},
-        //                  entries[0].links)
 }
 
-TEST(TestTransactions, tags_after_first_posting) {
+TEST(TestTransactions, MultipleTagsLinksOnMetadataLine) {
+  ExpectParse(R"(
+    2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+      #tag1 #tag2 ^link1
+      Assets:Checking         100 USD
+      Assets:Checking         -99 USD
+  )", R"(
+    errors {
+      message: "Syntax error, unexpected TAG, expecting EOL"
+    }
+  )");
+}
+
+TEST(TestTransactions, TagsAfterFirstPosting) {
   ExpectParse(R"(
     2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
       Assets:Checking         100 USD
-      #tag1 ^link1
+      #tag1
       Assets:Checking         -99 USD
   )", R"(
+    errors {
+      message: "Syntax error, unexpected TAG, expecting ACCOUNT"
+    }
   )");
-        // check_list(self, entries, [data.Transaction])
-        // check_list(self, entries[0].postings, [data.Posting, data.Posting])
-        // check_list(self, errors, [parser.ParserError])
-        // self.assertEqual({"basetag"}, entries[0].tags)
-        // self.assertEqual({"baselink"}, entries[0].links)
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // TestParseLots
 
@@ -3181,6 +3409,9 @@ TEST(TestDocument, document_links) {
         // self.assertEqual({'something'}, entries[0].links)
 }
 #endif
+
+// TODO(blais): Don't forget to explicitly test for each of the error conditions
+// raised in the scanner.
 
 }  // namespace
 }  // namespace beancount

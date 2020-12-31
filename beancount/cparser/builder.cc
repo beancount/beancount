@@ -64,7 +64,7 @@ void Builder::AddOption(const string& key, string&& value, const location& loc) 
   }
   if (!TextFormat::ParseFieldValueFromString(value_str, field, options_.get())) {
     AddError(StrFormat("Could not parse and set option '%s' with value '%s'; ignored.",
-                       key, value), loc);
+                       key, value_str), loc);
     return;
   }
 
