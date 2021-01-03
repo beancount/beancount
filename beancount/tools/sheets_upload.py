@@ -72,7 +72,8 @@ def get_credentials(scopes: List[str],
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
     import __main__  # pylint: disable=import-outside-toplevel
-    cache_basename = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
+    cache_basename = path.expanduser(path.join("~/.google",
+                                               path.basename(__main__.__file__)))
     if secrets_filename is None:
         secrets_filename = "{}.json".format(cache_basename)
     if storage_filename is None:

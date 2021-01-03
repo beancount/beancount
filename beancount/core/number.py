@@ -12,11 +12,9 @@ About Decimal usage:
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import decimal
-import math
 import re
 from decimal import Decimal
-from typing import List, Optional, Union
+from typing import List, Optional
 
 
 # Constants.
