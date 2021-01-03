@@ -252,66 +252,49 @@ def do_linked(filename, args):
 
     # Parse the arguments, get the line number.
     if len(args) != 1:
-        raise SystemExit("Missing line number argument.")
+        raise SystemExit("Missing line number or link argument.")
+    location_spec = args[0]
 
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    # Parse the arguments, get the line number.
-    match = re.match(r"(.+):(\d+)$", args[0])
-    if match:
-        search_filename = path.abspath(match.group(1))
-        lineno = int(match.group(2))
-    elif re.match(r"(\d+)$", args[0]):
-        # Note: Make sure to use the absolute filename used by the parser to
-        # resolve the file.
+    # Accept an explicit link name as the location. Must include the '^'
+    # character.
+    if re.match(r"\^(.*)$", location_spec):
         search_filename = options_map['filename']
-        lineno = int(args[0])
-    else:
-        raise SystemExit("Invalid format for location.")
+        links = {location_spec[1:]}
+        linked_entries = find_linked_entries(entries, links, False)
 
-    # Find the closest entry.
-    closest_entry = data.find_closest(entries, search_filename, lineno)
-
-    # Find its links.
-    if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(
-            search_filename, lineno))
-    links = (closest_entry.links
-             if isinstance(closest_entry, data.Transaction)
-             else data.EMPTY_SET)
-    if not links:
-        linked_entries = [closest_entry]
     else:
-        # Find all linked entries.
-        #
-        # Note that there is an option here: You can either just look at the links
-        # on the closest entry, or you can include the links of the linked
-        # transactions as well. Whichever one you want depends on how you use your
-        # links. Best would be to query the user (in Emacs) when there are many
-        # links present.
-        follow_links = True
-        if not follow_links:
-            linked_entries = [entry
-                              for entry in entries
-                              if (isinstance(entry, data.Transaction) and
-                                  entry.links and
-                                  entry.links & links)]
+        # Parse the argument as a line number or a "<filename>:<lineno>" spec to
+        # pull context from.
+        match = re.match(r"(.+):(\d+)$", location_spec)
+        if match:
+            search_filename = path.abspath(match.group(1))
+            lineno = int(match.group(2))
+        elif re.match(r"(\d+)$", location_spec):
+            # Parse the argument as just a line number to pull context from on
+            # the main filename.
+            search_filename = options_map['filename']
+            lineno = int(location_spec)
         else:
-            links = set(links)
-            linked_entries = []
-            while True:
-                num_linked = len(linked_entries)
-                linked_entries = [entry
-                                  for entry in entries
-                                  if (isinstance(entry, data.Transaction) and
-                                      entry.links and
-                                      entry.links & links)]
-                if len(linked_entries) == num_linked:
-                    break
-                for entry in linked_entries:
-                    if entry.links:
-                        links.update(entry.links)
+            raise SystemExit("Invalid line number or link format for location.")
+
+        # Find the closest entry.
+        closest_entry = data.find_closest(entries, search_filename, lineno)
+
+        # Find its links.
+        if closest_entry is None:
+            raise SystemExit("No entry could be found before {}:{}".format(
+                search_filename, lineno))
+        links = (closest_entry.links
+                 if isinstance(closest_entry, data.Transaction)
+                 else data.EMPTY_SET)
+
+        # Get the linked entries, or just the closest one, if no links.
+        linked_entries = (find_linked_entries(entries, links, True)
+                          if links
+                          else [closest_entry])
 
     # Render linked entries (in date order) as errors (for Emacs).
     errors = [RenderError(entry.meta, '', entry)
@@ -333,6 +316,42 @@ def do_linked(filename, args):
 
     print()
     print('Net Income: {}'.format(-net_income))
+
+
+def find_linked_entries(entries, links, follow_links: bool):
+    """Find all linked entries.
+
+    Note that there is an option here: You can either just look at the links
+    on the closest entry, or you can include the links of the linked
+    transactions as well. Whichever one you want depends on how you use your
+    links. Best would be to query the user (in Emacs) when there are many
+    links present.
+    """
+    from beancount.core import data
+
+    linked_entries = []
+    if not follow_links:
+        linked_entries = [entry
+                          for entry in entries
+                          if (isinstance(entry, data.Transaction) and
+                              entry.links and
+                              entry.links & links)]
+    else:
+        links = set(links)
+        linked_entries = []
+        while True:
+            num_linked = len(linked_entries)
+            linked_entries = [entry
+                              for entry in entries
+                              if (isinstance(entry, data.Transaction) and
+                                  entry.links and
+                                  entry.links & links)]
+            if len(linked_entries) == num_linked:
+                break
+            for entry in linked_entries:
+                if entry.links:
+                    links.update(entry.links)
+    return linked_entries
 
 
 def do_missing_open(filename, args):

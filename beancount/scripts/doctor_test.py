@@ -172,7 +172,7 @@ class TestScriptDisplayContext(cmptest.TestCase):
         self.assertTrue(stdout.getvalue())
 
 
-class TestScriptContextualCommands(cmptest.TestCase):
+class TestContext(cmptest.TestCase):
 
     @test_utils.docfile
     def test_context(self, filename):
@@ -223,27 +223,30 @@ class TestScriptContextualCommands(cmptest.TestCase):
             self.assertRegex(stdout.getvalue(), 'Location:')
             self.assertRegex(stdout.getvalue(), '50.02')
 
-    @test_utils.docfile
-    def test_linked(self, filename):
-        """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
+class TestLinked(cmptest.TestCase):
 
-            2014-03-03 * "Apples" ^abc
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+    test_string = """
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Assets:Cash
 
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-03 * "Apples" ^abc
+          Expenses:Restaurant   50.02 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
 
-            2014-05-05 * "Oranges" ^abc
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
-        """
+        2014-04-04 * "Something"
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
+
+        2014-05-05 * "Oranges" ^abc
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
+    """
+
+    @test_utils.docfile_extra(contents=test_string)
+    def test_linked_lineno_only(self, filename):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
         self.assertRegex(stdout.getvalue(), 'Apples')
@@ -251,27 +254,8 @@ class TestScriptContextualCommands(cmptest.TestCase):
         self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
                                                  stdout.getvalue()))))
 
-    @test_utils.docfile
+    @test_utils.docfile_extra(contents=test_string)
     def test_linked_multiple_files(self, filename):
-        """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
-
-            2014-03-03 * "Apples" ^abc
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
-
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
-
-            2014-05-05 * "Oranges" ^abc
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
-        """
         with tempfile.NamedTemporaryFile('w') as topfile:
             topfile.write(textwrap.dedent("""
                 include "{}"
@@ -284,6 +268,15 @@ class TestScriptContextualCommands(cmptest.TestCase):
             self.assertRegex(stdout.getvalue(), 'Oranges')
             self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
                                                      stdout.getvalue()))))
+
+    @test_utils.docfile_extra(contents=test_string)
+    def test_linked_explicit_link(self, filename):
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['linked', filename, '^abc'])
+        self.assertRegex(stdout.getvalue(), 'Apples')
+        self.assertRegex(stdout.getvalue(), 'Oranges')
+        self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
+                                                 stdout.getvalue()))))
 
 
 if __name__ == '__main__':

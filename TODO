@@ -5527,6 +5527,12 @@ http://furius.ca/beancount/doc/proposal-query
       "Ben, en fait j'attendais de r?soudre le probl?me du TAB, et pour ?a j'ai
       besoin d'un "recipe" vu que ce que j'ai essay? fonctionne."
 
+  - Make it possible to bean-doctor context on a specific link or tag
+    (thing-at-point).
+
+  - Fix amounts alignment function, it always seems to pick up stuff from the
+    narration. Make it a fixed column!
+
 ** Open Tickets - TODO
 
   - Issue #130: Padding involving the same account doesn't work incrementally (blais/beancount)
