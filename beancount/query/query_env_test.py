@@ -203,6 +203,28 @@ class TestEnv(unittest.TestCase):
         self.assertEqual([('Savings', '(-2 USD)')], rrows)
 
     @parser.parse_doc()
+    def test_Upper(self, entries, _, options_map):
+        """
+        2016-11-20 * "I love candy"
+          Assets:Banking       -1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT Upper(narration) as m where date = 2016-11-20
+        ''')
+        self.assertEqual([('I LOVE CANDY',)], rrows)
+
+    @parser.parse_doc()
+    def test_Lower(self, entries, _, options_map):
+        """
+        2016-11-20 * "I love candy"
+          Assets:Banking       -1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT Lower(narration) as m where date = 2016-11-20
+        ''')
+        self.assertEqual([('i love candy',)], rrows)
+
+    @parser.parse_doc()
     def test_Coalesce(self, entries, _, options_map):
         """
         2016-11-20 *
