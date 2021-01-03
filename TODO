@@ -1194,6 +1194,10 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** CSV Importer
 
+  - Separate the concern of the file format and table importers. This is a
+    "table importer" which happens to have a CSV container. Similarly, XLSX
+    containers are other table importers. Name things appropriately.
+
   - Create a good, default, useful, configurable importer for CSV files.
 
   - Write a CSV file sniffer that automatically infers which columns should
