@@ -230,13 +230,15 @@ def docfile(function, **kwargs):
     Returns:
       The decorated function.
     """
+    contents = kwargs.pop('contents', None)
+
     @functools.wraps(function)
     def new_function(self):
         allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
         if any([key not in allowed for key in kwargs]):
             raise ValueError("Invalid kwarg to docfile_extra")
         with tempfile.NamedTemporaryFile('w', **kwargs) as file:
-            text = function.__doc__
+            text = contents or function.__doc__
             file.write(textwrap.dedent(text))
             file.flush()
             return function(self, file.name)
