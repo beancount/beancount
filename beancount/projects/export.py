@@ -262,6 +262,9 @@ def main():
             type=argparse.FileType('w'),
             help="CSV filename to write out the {} table to.".format(longname))
 
+    parser.add_argument('--insert-date', action='store_true',
+                        help="Insert the date in the header of the output")
+
     parser.add_argument('-o', '--output',
                         type=argparse.FileType('w'),
                         help="CSV filename to write out the final joined table to.")
@@ -277,7 +280,7 @@ def main():
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
-        entries, ['export', 'assetcls', 'strategy', 'issuer'])
+        entries, ['export', 'assetcls', 'strategy', 'issuer', 'name'])
     if args.output_commodities is not None:
         write_table(commodities_table, args.output_commodities)
 
@@ -323,7 +326,8 @@ def main():
     table = Table(final_table.header, rows)
 
     if args.output is not None:
-        table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
+        if args.insert_date:
+            table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
         write_table(table, args.output)
 
     return 0
