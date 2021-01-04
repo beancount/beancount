@@ -394,7 +394,6 @@ def _main():
 
     # Discover the service.
     creds = get_credentials(['https://www.googleapis.com/auth/spreadsheets'])
-    url = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
     service = discovery.build('sheets', 'v4', credentials=creds)
 
     # Figure out what the name mappings should be, from the filenames (or
