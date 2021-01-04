@@ -106,7 +106,10 @@ def iter_links(document: Json) -> List[Tuple[str, str]]:
         for item in jpath:
             if 'textRun' in item:
                 content = item['textRun']['content']
-                url = item['textRun']['textStyle']['link']['url']
+                link = item['textRun']['textStyle']['link']
+                if 'url' not in link:
+                    continue
+                url = link['url']
                 yield (url, content, item)
 
 
