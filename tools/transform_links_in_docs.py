@@ -28,6 +28,7 @@ import logging
 import pickle
 import pprint
 import re
+import sys
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport import requests as grequests
@@ -141,27 +142,31 @@ def transform_links(service, docid: str, mapping: Dict[str, str], dry_run: bool)
     # Get the document.
     document = service.documents().get(documentId=docid).execute()
 
+    links = list(iter_links(document))
+    width = max(len(url) for url, _, __ in links)
+    for url, content, _ in links:
+        print(f"# {url:{width}}  {content}")
+    if links:
+        print()
+
     if dry_run:
         # Print the links only.
-        links = list(iter_links(document))
-        width = max(len(url) for url, _, __ in links)
-        for url, content, _ in links:
-            print(f"{url:{width}}  {content}")
-        if links:
-            print()
+        string = json.dumps({url: url for url, _, __ in links}, indent=4, sort_keys=True)
+        string = re.sub(r'",', '",\n', re.sub(r": ", "\n    ", string))
+        print(string)
 
     # Create replacement requests.
     requests = process_links(document, functools.partial(propose_url, mapping))
+    if dry_run:
+        return
 
     # Put together a batch update.
     if requests:
-        if dry_run:
-            pprint.pprint(requests)
-        else:
-            print("Sending {} requests".format(len(requests)))
-            resp = service.documents().batchUpdate(
-                documentId=docid,
-                body={'requests': list(reversed(requests))}).execute()
+        # Execute them.
+        print("Sending {} requests".format(len(requests)))
+        resp = service.documents().batchUpdate(
+            documentId=docid,
+            body={'requests': list(reversed(requests))}).execute()
     else:
         print("No changes.")
 
