@@ -179,7 +179,6 @@ def rebook_inventory_at_average_cost(full_inventory: Inventory,
 
     Args:
         full_inventory: The ante-inventory that we want to rebook at average cost.
-          The inventory passed in will be updated.
         account: The account name this inventory is held for.
         unit_currency: The unit currency (commodity) that we want to rebook our
           holdings for.
@@ -201,12 +200,11 @@ def rebook_inventory_at_average_cost(full_inventory: Inventory,
     if len(filtered_inv) <= 1:
         return []
 
-    booked_postings = []
+    rebooking_postings = []
     avg_position = filtered_inv.average().get_only_position()
     # Negate existing inventory.
     for inv_position in filtered_inv:
-        full_inventory.add_amount(-inv_position.units, inv_position.cost)
-        booked_postings.append(Posting(
+        rebooking_postings.append(Posting(
                 account=account,
                 units=-inv_position.units,
                 cost=inv_position.cost,
@@ -215,8 +213,7 @@ def rebook_inventory_at_average_cost(full_inventory: Inventory,
                 meta=None,
             ))
     # Now rebook at average cost.
-    full_inventory.add_amount(avg_position.units, avg_position.cost)
-    booked_postings.append(
+    rebooking_postings.append(
         Posting(
             account=account,
             units=avg_position.units,
@@ -226,7 +223,7 @@ def rebook_inventory_at_average_cost(full_inventory: Inventory,
             meta=None,
         )
     )
-    return booked_postings
+    return rebooking_postings
 
 
 

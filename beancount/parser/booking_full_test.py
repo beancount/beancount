@@ -1479,10 +1479,10 @@ class TestBookAugmentations(_BookingTestBase):
 
         2015-10-01 * #booked
           Assets:Account          1 HOOL {5 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {1 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {3 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {5 USD, 2015-10-01}
-          Assets:Account          3 HOOL {3 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {1 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {3 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {5 USD, 2015-10-01}
+          M Assets:Account          3 HOOL {3 USD, 2015-10-01}
 
         2015-10-01 * #ex
           Assets:Account          3 HOOL {3 USD, 2015-10-01}
@@ -1505,11 +1505,11 @@ class TestBookAugmentations(_BookingTestBase):
         2015-10-01 * #booked
           Assets:Account          1 HOOL {5 USD, 2015-10-01}
           Assets:Account          1 HOOL {7 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {1 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {3 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {5 USD, 2015-10-01}
-          Assets:Account          -1 HOOL {7 USD, 2015-10-01}
-          Assets:Account          4 HOOL {4 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {1 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {3 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {5 USD, 2015-10-01}
+          M Assets:Account          -1 HOOL {7 USD, 2015-10-01}
+          M Assets:Account          4 HOOL {4 USD, 2015-10-01}
 
         2015-10-01 * #ex
           Assets:Account          4 HOOL {4 USD, 2015-10-01}
@@ -1797,9 +1797,9 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account          -5 HOOL {15 USD, *}
 
         2016-05-02 * #booked
-          Assets:Account          -10 HOOL {10.00 USD, 2016-01-01}
-          Assets:Account          -10 HOOL {20.00 USD, 2016-04-15}
-          Assets:Account          20 HOOL {15.00 USD, 2016-01-01}
+          M Assets:Account          -10 HOOL {10.00 USD, 2016-01-01}
+          M Assets:Account          -10 HOOL {20.00 USD, 2016-04-15}
+          M Assets:Account          20 HOOL {15.00 USD, 2016-01-01}
           Assets:Account          -5 HOOL {15.00 USD, 2016-01-01}
 
         2016-05-02 * #ex
@@ -2473,7 +2473,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
-class _TestBookAmbiguousAVERAGE(_BookingTestBase):
+class TestBookAmbiguousAVERAGE(_BookingTestBase):
     @book_test(Booking.AVERAGE)
     def test_AVERAGE__simple_augmentation(self, _, __):
         """
@@ -2485,9 +2485,9 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
         2015-06-01 * #booked
           Assets:Account         2 HOOL {202.00 USD, 2015-06-01}
-          Assets:Account        -100 HOOL {100.00 USD, 2015-01-01, *}
-          Assets:Account         -2 HOOL {202.00 USD, 2015-06-01, *}
-          Assets:Account         102 HOOL {102.00 USD, 2015-01-01, *}
+          M Assets:Account        -100 HOOL {100.00 USD, 2015-01-01, *}
+          M Assets:Account         -2 HOOL {202.00 USD, 2015-06-01, *}
+          M Assets:Account         102 HOOL {102.00 USD, 2015-01-01, *}
 
         2015-01-01 * #ex
           Assets:Account         102 HOOL {102.USD, 2015-01-01}
@@ -2505,14 +2505,14 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
         2015-06-01 * #booked
           Assets:Account         1 HOOL {200.00 USD, 2015-06-01}
-          Assets:Account         -200 USD
+          Assets:Account        -200 USD
           M Assets:Account      -1 HOOL {100.00 USD, 2015-01-01}
           M Assets:Account      -1 HOOL {200.00 USD, 2015-06-01}
-          Assets:Account         2 HOOL {150.00 USD, 2015-01-01}
+          M Assets:Account       2 HOOL {150.00 USD, 2015-01-01}
 
         2015-01-01 * #ex
           Assets:Account         2 HOOL {150.USD, 2015-01-01}
-          Assets:Account         -200 USD
+          Assets:Account        -200 USD
         """
 
     @book_test(Booking.AVERAGE)
@@ -2615,24 +2615,6 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
         2015-01-01 * #ex
           Assets:Account         49 HOOL {100.50 USD, 2015-10-01}
-        """
-
-    # Just another of the same.
-    @book_test(Booking.AVERAGE)
-    def test_AVERAGE__simple_merge2_match2_b(self, _, __):
-        """
-        2015-01-01 * #ante
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {}
-
-        2015-06-01 * #booked
-          Assets:Account        -20 HOOL {104.00 USD, 2015-10-01}
-
-        2015-01-01 * #ex
-          Assets:Account         80 HOOL {104.00 USD, 2015-10-01}
         """
 
     @book_test(Booking.AVERAGE)
