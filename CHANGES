@@ -5,6 +5,11 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2021-01-08
+
+ - Fixed bug with printer leaving trailing whitespace. Was annoying.
+
+
 2020-12-20
 
  - Merged half of branch pr128_seltzered_beanpriceupdate on this side of
