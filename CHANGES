@@ -7,6 +7,8 @@ The master branch will rely on the Git repository history.
 
 2021-01-08
 
+ - Fixed recently introduced bug with the export script that reordered the
+   columns.
  - Fixed bug with printer leaving trailing whitespace. Was annoying.
 
 
