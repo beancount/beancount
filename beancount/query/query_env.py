@@ -296,6 +296,32 @@ class Subst(query_compile.EvalFunction):
             return None
         return re.sub(args[0], args[1], args[2])
 
+class Upper(query_compile.EvalFunction):
+    "Convert string to uppercase"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return args[0].upper()
+
+class Lower(query_compile.EvalFunction):
+    "Convert string to lowercase"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return args[0].lower()
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -869,6 +895,8 @@ SIMPLE_FUNCTIONS = {
     'grep'                                               : Grep,
     'grepn'                                              : GrepN,
     'subst'                                              : Subst,
+    'upper'                                              : Upper,
+    'lower'                                              : Lower,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,

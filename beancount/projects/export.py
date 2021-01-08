@@ -284,6 +284,13 @@ def main():
     if args.output_commodities is not None:
         write_table(commodities_table, args.output_commodities)
 
+    # Get a table of the commodity names.
+    #
+    # Note: We're fetching the table separately in order to avoid changes to the
+    # spreadsheet upstream, and want to tack on the values as new columns on the
+    # right.
+    names_table = get_commodities_table(entries, ['name'])
+
     # Get the map of accounts to their meta tags.
     accounts_table, accounts_map = get_accounts_table(
         entries, ['tax', 'liquid'])
@@ -312,7 +319,8 @@ def main():
                         (('currency',), commodities_table),
                         (('account',), accounts_table),
                         (('currency', 'cost_currency'), prices_table),
-                        (('cost_currency',), rates_table))
+                        (('cost_currency',), rates_table),
+                        (('currency',), names_table))
 
     # Reorder columns.
     # We do this in order to avoid having to change the spreadsheet when we add new columns.

@@ -209,13 +209,13 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "{0}{{:{1}}}  {{:{2}}}\n".format(
+            fmt_str = "{0}{{:{1}}}  {{:{2}}}".format(
                 self.prefix, width_account, max(1, width_position))
             fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
                                                       strs_position):
-                oss.write(fmt(account, position_str))
+                print(fmt(account, position_str).rstrip(), file=oss)
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
 
