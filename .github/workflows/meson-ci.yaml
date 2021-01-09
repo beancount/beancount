@@ -1,0 +1,32 @@
+name: meson-ci
+
+on:
+  [push, pull_request]
+
+jobs:
+  compile:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install build tools
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install ninja
+          python3 -m pip install meson
+      - name: Install Bison
+        run: |
+          wget https://ftp.gnu.org/gnu/bison/bison-3.7.4.tar.xz
+          tar xJf bison-3.7.4.tar.xz
+          cd bison-3.7.4 && ./configure && make && sudo make install
+      - name: Meson configure
+        run: |
+          meson build/
+      - name: Meson build
+        run: |
+          meson compile -C build/
+      - name: Meson test
+        run: |
+          meson test -C build/
