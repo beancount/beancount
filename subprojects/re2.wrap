@@ -1,0 +1,12 @@
+[wrap-file]
+directory = re2-2020-11-01
+source_url = https://github.com/google/re2/archive/2020-11-01.tar.gz
+source_filename = re2-2020-11-01.tar.gz
+source_hash = 8903cc66c9d34c72e2bc91722288ebc7e3ec37787ecfef44d204b2d6281954d7
+patch_url = https://wrapdb.mesonbuild.com/v1/projects/re2/20201101/1/get_zip
+patch_filename = re2-20201101-1-wrap.zip
+patch_hash = 9ead358791dd104c3f355b2626c52670cbb5c0ac29dd2771f3b08291c0444dc1
+
+[provide]
+re2 = re2_dep
+
