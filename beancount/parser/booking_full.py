@@ -935,7 +935,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             errors.append(InterpolationError(
                 posting.meta,
                 'Amount is zero: "{}"'.format(posting.units), None))
-        if posting.cost.number < ZERO:
+        if posting.cost.number is not None and posting.cost.number < ZERO:
             errors.append(InterpolationError(
                 posting.meta,
                 'Cost is negative: "{}"'.format(posting.cost), None))
