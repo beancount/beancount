@@ -265,6 +265,11 @@ def do_linked(filename, args):
         links = {location_spec[1:]}
         linked_entries = find_linked_entries(entries, links, False)
 
+    elif re.match(r"#(.*)$", location_spec):
+        search_filename = options_map['filename']
+        tag = location_spec[1:]
+        linked_entries = find_tagged_entries(entries, tag)
+
     else:
         # Parse the argument as a line number or a "<filename>:<lineno>" spec to
         # pull context from.
@@ -352,6 +357,16 @@ def find_linked_entries(entries, links, follow_links: bool):
                 if entry.links:
                     links.update(entry.links)
     return linked_entries
+
+
+def find_tagged_entries(entries, tag):
+    """Find all entries with the given tag."""
+    from beancount.core import data
+    return [entry
+            for entry in entries
+            if (isinstance(entry, data.Transaction) and
+                entry.tags and
+                tag in entry.tags)]
 
 
 def do_missing_open(filename, args):
