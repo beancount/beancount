@@ -87,7 +87,7 @@ class Open(NamedTuple):
     date: datetime.date
     account: Account
     currencies: List[Currency]
-    booking: Booking
+    booking: Optional[Booking]
 
 
 class Close(NamedTuple):
