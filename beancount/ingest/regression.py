@@ -11,7 +11,7 @@ regression tests for your importers. Use it like this in your own importer code:
 
 WARNING: This is deprecated. Nose itself has been deprecated for a while and
 Beancount is now using only pytest. Ignore this and use
-beancount.ingest.regression_ptest instead.
+beancount.ingest.regression_pytest instead.
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
