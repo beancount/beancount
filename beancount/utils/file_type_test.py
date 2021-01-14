@@ -20,7 +20,8 @@ class TestFileType(unittest.TestCase):
         self.assertIn(mime_type, expected_mime_types)
 
     def test_csv(self):
-        self.check_mime_type('example.csv', 'text/csv')
+        self.check_mime_type('example.csv', ['text/csv',
+                                             'text/x-comma-separated-values'])
 
     def test_xls(self):
         self.check_mime_type('example.xls', ['application/excel',
@@ -51,6 +52,7 @@ class TestFileType(unittest.TestCase):
 
     def test_sh(self):
         self.check_mime_type('example.sh', ['text/x-sh',
+                                            'application/x-shellscript',
                                             'application/x-sh'])
 
     def test_jpg(self):
