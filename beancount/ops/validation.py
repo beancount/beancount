@@ -69,11 +69,17 @@ def validate_open_close(entries, unused_options_map):
 
         if isinstance(entry, Open):
             if entry.account in open_map:
-                errors.append(
-                    ValidationError(
-                        entry.meta,
-                        "Duplicate open directive for {}".format(entry.account),
-                        entry))
+                close_entry = close_map.get(entry.account, None)
+                if close_entry is not None and close_entry.date < entry.date:
+                    # reopening closed account
+                    del close_map[entry.account]
+                    open_map[entry.account] = entry
+                else:
+                    errors.append(
+                        ValidationError(
+                            entry.meta,
+                            "Duplicate open directive for {}".format(entry.account),
+                            entry))
             else:
                 open_map[entry.account] = entry
 

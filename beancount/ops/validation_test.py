@@ -75,6 +75,28 @@ class TestValidateOpenClose(cmptest.TestCase):
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
 
+    @loader.load_doc(expect_errors=True)
+    def test_validate_open_close__reopen(self, entries, _, options_map):
+        """
+        ;; Open then close account
+        2014-02-10 open  Assets:US:Bank:Checking1
+        2014-02-11 close Assets:US:Bank:Checking1
+
+        ;; Try re-opening and closing it later, no error
+        2014-02-12 open  Assets:US:Bank:Checking1
+        2014-02-13 close Assets:US:Bank:Checking1
+
+        ;; Open then close account
+        2014-02-10 open  Assets:US:Bank:Checking2
+        2014-02-20 close Assets:US:Bank:Checking2
+
+        ;; Try re-opening while not closed yet
+        2014-02-15 open  Assets:US:Bank:Checking2
+        """
+        errors = validation.validate_open_close(entries, options_map)
+        self.assertEqual(['Assets:US:Bank:Checking2'],
+                         [error.entry.account for error in errors])
+
 
 class TestValidateDuplicateBalances(cmptest.TestCase):
 
