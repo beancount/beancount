@@ -280,7 +280,7 @@ def main():
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
-        entries, ['export', 'assetcls', 'strategy', 'issuer', 'name'])
+        entries, ['export', 'assetcls', 'strategy', 'issuer'])
     if args.output_commodities is not None:
         write_table(commodities_table, args.output_commodities)
 
