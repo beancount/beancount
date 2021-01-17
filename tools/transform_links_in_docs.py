@@ -30,53 +30,8 @@ import pprint
 import re
 import sys
 
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport import requests as grequests
 from googleapiclient import discovery
-
-
-def get_credentials(scopes: List[str],
-                    secrets_filename: Optional[str] = None,
-                    storage_filename: Optional[str] = None):
-    """Authenticate via oauth2 and return credentials."""
-    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
-
-    import __main__  # pylint: disable=import-outside-toplevel
-    cache_basename = path.expanduser(
-        path.join("~/.google", path.splitext(path.basename(__main__.__file__))[0]))
-    if secrets_filename is None:
-        secrets_filename = "{}.json".format(cache_basename)
-    if storage_filename is None:
-        storage_filename = "{}.cache".format(cache_basename)
-
-    # Load the secrets file, to figure if it's for a service account or an OAUTH
-    # secrets file.
-    secrets_info = json.load(open(secrets_filename))
-    if secrets_info.get("type") == "service_account":
-        # Process service account flow.
-        # pylint: disable=import-outside-toplevel
-        import google.oauth2.service_account as sa
-        credentials = sa.Credentials.from_service_account_info(
-            secrets_info, scopes=scopes)
-    else:
-        # Process OAuth flow.
-        credentials = None
-        if path.exists(storage_filename):
-            with open(storage_filename, 'rb') as token:
-                credentials = pickle.load(token)
-        # If there are no (valid) credentials available, let the user log in.
-        if not credentials or not credentials.valid:
-            if credentials and credentials.expired and credentials.refresh_token:
-                credentials.refresh(grequests.Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    secrets_filename, scopes)
-                credentials = flow.run_console()
-            # Save the credentials for the next run
-            with open(storage_filename, 'wb') as token:
-                pickle.dump(credentials, token)
-
-    return credentials
+import gapis  # See http://github.com/blais/gapis
 
 
 Json = Mapping[str, 'Json']
@@ -200,7 +155,8 @@ def main():
         mapping = {}
 
     # Discover the service.
-    creds = get_credentials(['https://www.googleapis.com/auth/documents'])
+    creds = gapis.get_credentials(['https://www.googleapis.com/auth/documents'],
+                                  'beancount-docs')
     service = discovery.build('docs', 'v1', credentials=creds)
 
     transform_links(service, args.docid, mapping, args.dry_run)
