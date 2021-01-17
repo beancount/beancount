@@ -10,6 +10,7 @@ import datetime
 import shutil
 import unittest
 import functools
+import warnings
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
@@ -346,6 +347,12 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
     def test_file_examples(self):
         config_filename = path.join(test_utils.find_repository_root(__file__),
                                     'examples', 'ingest', 'office', 'example.import')
+
+        # For some reason via Bazel this isn't active from beancount.__init__.
+        warnings.filterwarnings(
+            'ignore', module='html5lib', category=DeprecationWarning,
+            message='Using or importing the ABCs from')
+
         with test_utils.capture('stdout', 'stderr') as (_, stderr):
             result = test_utils.run_with_args(file_main, [
                 config_filename,

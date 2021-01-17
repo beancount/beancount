@@ -24,5 +24,6 @@ build -c fastbuild
 ## Make Python protos faster by backing them with C++ protos.
 build --define=use_fast_cpp_protos=true
 
-# # Use local Python3 install.
-# build --python_path=/usr/local/bin/python3
+# Set location of Python installation (read by python_configure.bzl).
+#build --python_path=/usr/bin/python3
+#build --repo_env=PYTHON_BIN_PATH=/usr/bin/python3
