@@ -279,5 +279,16 @@ class TestLinked(cmptest.TestCase):
                                                  stdout.getvalue()))))
 
 
+class TestRegion(cmptest.TestCase):
+
+    test_string = TestLinked.test_string
+
+    @test_utils.docfile_extra(contents=test_string)
+    def test_region(self, filename):
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['region', filename, '4:12'])
+        self.assertRegex(stdout.getvalue(), r'Cash\s+-110.32 USD')
+
+
 if __name__ == '__main__':
     unittest.main()

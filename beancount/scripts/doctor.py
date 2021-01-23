@@ -239,15 +239,12 @@ def do_linked(filename, args):
     Args:
       filename: A string, which consists in the filename.
       args: A tuple of the rest of arguments. We're expecting the first argument
-        to be a string which contains either a lineno integer or a filename:lineno
-        combination (which can be used if the location is not in the top-level file).
+        to be a string which contains either a lineno integer or a
+        (filename:)?lineno(:lineno)? combination (which can be used if the
+        location is not in the top-level file).
     """
-    from beancount.parser import options
-    from beancount.parser import printer
-    from beancount.core import account_types
-    from beancount.core import inventory
     from beancount.core import data
-    from beancount.core import realization
+    from beancount.core import prices
     from beancount import loader
 
     # Parse the arguments, get the line number.
@@ -271,45 +268,158 @@ def do_linked(filename, args):
         linked_entries = find_tagged_entries(entries, tag)
 
     else:
-        # Parse the argument as a line number or a "<filename>:<lineno>" spec to
-        # pull context from.
-        match = re.match(r"(.+):(\d+)$", location_spec)
+        # Parse the argument as a line number or a
+        # "<filename>:<lineno>:<lineno>" spec to pull context from, with
+        # optional filename and optional last line number.
+        #
+        # If a filename is not provided, the ledger's top-level filename is used
+        # (this is the common case). An explicit filename is used to get context
+        # in included files.
+        #
+        # If a single line number is provided the closest transaction is
+        # selected. If an internal of line numbers is provided, the list of all
+        # transactions whose first line is inside the interval are selected.
+        match = re.match(r"(\d+)(?::(\d+))?$", location_spec)
         if match:
-            search_filename = path.abspath(match.group(1))
-            lineno = int(match.group(2))
-        elif re.match(r"(\d+)$", location_spec):
-            # Parse the argument as just a line number to pull context from on
-            # the main filename.
-            search_filename = options_map['filename']
-            lineno = int(location_spec)
+            included_filename = None
+            first_line, last_line = match.groups()
         else:
-            raise SystemExit("Invalid line number or link format for location.")
+            match = re.match(r"(.+?):(\d+)(?::(\d+))?$", location_spec)
+            if match:
+                included_filename, first_line, last_line = match.groups()
+            else:
+                raise SystemExit("Invalid line number or link format for location.")
 
-        # Find the closest entry.
-        closest_entry = data.find_closest(entries, search_filename, lineno)
+        search_filename = (path.abspath(included_filename)
+                           if included_filename else
+                           options_map['filename'])
+        lineno = int(first_line)
+        if last_line is None:
+            # Find the closest entry.
+            closest_entry = data.find_closest(entries, search_filename, lineno)
 
-        # Find its links.
-        if closest_entry is None:
-            raise SystemExit("No entry could be found before {}:{}".format(
-                search_filename, lineno))
-        links = (closest_entry.links
-                 if isinstance(closest_entry, data.Transaction)
-                 else data.EMPTY_SET)
+            # Find its links.
+            if closest_entry is None:
+                raise SystemExit("No entry could be found before {}:{}".format(
+                    search_filename, lineno))
+            links = (closest_entry.links
+                     if isinstance(closest_entry, data.Transaction)
+                     else data.EMPTY_SET)
+        else:
+            # Find all the entries in the interval, following all links.
+            last_lineno = int(last_line)
+            links = set()
+            for entry in data.filter_txns(entries):
+                if (entry.meta['filename'] == search_filename and
+                    lineno <= entry.meta['lineno'] <= last_lineno):
+                    links.update(entry.links)
 
         # Get the linked entries, or just the closest one, if no links.
         linked_entries = (find_linked_entries(entries, links, True)
                           if links
                           else [closest_entry])
 
+    render_mini_balances(linked_entries, options_map, None)
+
+
+# TODO(blais): This should be folded as an option when we convert this to click.
+def do_region_value(filename, args):
+    """Print out a list of transactions in a region and balances at market value.
+    """
+    return do_region(filename, args, at_value=True)
+
+
+def do_region(filename, args, at_value=False):
+    """Print out a list of transactions in a region and balances.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be a string which contains either a lineno integer or a
+        (filename:)?lineno:lineno combination (which can be used if the location
+        is not in the top-level file).
+      at_value: A boolean, if true, convert balances output to market value.
+    """
+    from beancount.core import data
+    from beancount.core import prices
+    from beancount import loader
+
+    # Parse the arguments, get the line number.
+    if len(args) != 1:
+        raise SystemExit("Missing line number or link argument.")
+    location_spec = args[0]
+
+    # Load the input file.
+    entries, errors, options_map = loader.load_file(filename)
+
+    # Parse the argument as a line number or a
+    # "<filename>:<lineno>:<lineno>" spec to pull context from, with
+    # optional filename and optional last line number.
+    #
+    # If a filename is not provided, the ledger's top-level filename is used
+    # (this is the common case). An explicit filename is used to get context
+    # in included files.
+    #
+    # If a single line number is provided the closest transaction is
+    # selected. If an internal of line numbers is provided, the list of all
+    # transactions whose first line is inside the interval are selected.
+    match = re.match(r"(?:(.+?):)?(\d+):(\d+)$", location_spec)
+    if not match:
+        raise SystemExit("Invalid line number or link format for region.")
+
+    included_filename, first_line, last_line = match.groups()
+    search_filename = (path.abspath(included_filename)
+                       if included_filename else
+                       options_map['filename'])
+    lineno = int(first_line)
+    last_lineno = int(last_line)
+
+    # Find all the entries in the region. (To be clear, this isn't like the
+    # 'linked' command, none of the links are followed.)
+    region_entries = [
+        entry
+        for entry in data.filter_txns(entries)
+        if (entry.meta['filename'] == search_filename and
+            lineno <= entry.meta['lineno'] <= last_lineno)]
+
+    price_map = prices.build_price_map(entries) if at_value else None
+    render_mini_balances(region_entries, options_map, price_map)
+
+
+def render_mini_balances(entries, options_map, price_map=None):
+    """Render a treeified list of the balances for the given transactions.
+
+    Args:
+      entries: A list of selected transactions to render.
+      options_map: The parsed options.
+      price_map: A price map from the original entries. If this isn't provided,
+        the inventories are rendered directly. If it is, their contents are
+        converted to market value.
+    """
+    from beancount.parser import options
+    from beancount.parser import printer
+    from beancount.core import account_types
+    from beancount.core import convert
+    from beancount.core import inventory
+    from beancount.core import realization
+
     # Render linked entries (in date order) as errors (for Emacs).
     errors = [RenderError(entry.meta, '', entry)
-              for entry in linked_entries]
+              for entry in entries]
     printer.print_errors(errors)
 
     # Print out balances.
-    real_root = realization.realize(linked_entries)
+    real_root = realization.realize(entries)
     dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
                                             reserved=2)
+
+    if price_map is not None:
+        # Warning: Mutate the inventories in-place, converting them to market
+        # value.
+        for real_account in realization.iter_children(real_root):
+            real_account.balance = real_account.balance.reduce(
+                convert.get_value, price_map)
+
     realization.dump_balances(real_root, dformat, file=sys.stdout)
 
     # Print out net income change.

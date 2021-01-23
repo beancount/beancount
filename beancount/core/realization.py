@@ -315,6 +315,7 @@ def postings_by_account(entries):
     return txn_postings_map
 
 
+# TODO(blais): Invert this in v3, so it's isomorphic to functools.filter().
 def filter(real_account, predicate):
     """Filter a RealAccount tree of nodes by the predicate.
 
@@ -326,7 +327,7 @@ def filter(real_account, predicate):
 
     Args:
       real_account: An instance of RealAccount.
-      predicate: A callable/function which accepts a real_account and returns
+      predicate: A callable/function which accepts a RealAccount and returns
         a boolean. If the function returns True, the node is kept.
     Returns:
       A shallow clone of RealAccount is always returned.
