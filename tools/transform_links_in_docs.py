@@ -19,16 +19,11 @@ matching any entry are ignored.
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
 from typing import List, Optional, Dict, Any, Mapping, Iterator, Callable, Tuple
 import argparse
 import json
 import functools
-import logging
-import pickle
-import pprint
 import re
-import sys
 
 from googleapiclient import discovery
 import gapis  # See http://github.com/blais/gapis
@@ -69,12 +64,12 @@ def iter_links(document: Json) -> List[Tuple[str, str]]:
 
 
 def process_links(document: Json,
-                  fn: Callable[[str, str], Optional[str]]) -> List[Json]:
+                  func: Callable[[str, str], Optional[str]]) -> List[Json]:
     """Find all the links and prepare updates.
     Outputs a list of batchUpdate requests to apply."""
     requests = []
     for url, content, item in iter_links(document):
-        proposed_url = fn(url, content)
+        proposed_url = func(url, content)
         if proposed_url:
             requests.append({
                 'updateTextStyle': {
@@ -86,7 +81,7 @@ def process_links(document: Json,
     return requests
 
 
-def propose_url(mapping: Dict[str, str], url: str, content: str) -> Optional[str]:
+def propose_url(mapping: Dict[str, str], url: str, unused_content: str) -> Optional[str]:
     """Process a URL, and optionally propose a replacement."""
     try:
         return mapping[url]
@@ -122,7 +117,7 @@ def transform_links(service, docid: str, mapping: Dict[str, str], dry_run: bool)
     if requests:
         # Execute them.
         print("Sending {} requests".format(len(requests)))
-        resp = service.documents().batchUpdate(
+        service.documents().batchUpdate(
             documentId=docid,
             body={'requests': list(reversed(requests))}).execute()
     else:
@@ -130,6 +125,7 @@ def transform_links(service, docid: str, mapping: Dict[str, str], dry_run: bool)
 
 
 def main():
+    """Main function."""
     parser = argparse.ArgumentParser(description=__doc__.strip(),
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('docid', action='store',

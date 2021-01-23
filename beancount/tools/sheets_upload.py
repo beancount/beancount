@@ -45,14 +45,11 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import csv
-import json
 import logging
-import pickle
 import re
 import string
 import sys
 from os import path
-from typing import List, Optional
 
 from googleapiclient import discovery
 from googleapiclient import errors

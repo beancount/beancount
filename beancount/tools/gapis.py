@@ -15,8 +15,6 @@ import pickle
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport import requests as grequests
 from google.auth.credentials import Credentials
-import google.auth
-
 
 
 DEFAULT_CONFIG_DIR = "~/.google"
@@ -33,18 +31,28 @@ def get_credentials(scopes: List[str],
         looks up the corresponding JSON secrets and/or cache files. If this is
         not set, the basename of the top-level script is inferred as the key,
         e.g., if the program that launched this is `~/scripts/upload-my-doc.py`,
-        the key is automatically 'upload-my-doc'.
+        the key is automatically 'upload-my-doc'. If a filename is provided,
+        this should be the name of the JSON secrets file (the cache will still
+        be stored in the config dir).
     Returns:
       A credentials object.
 
     """
+    config_dir = path.expanduser(DEFAULT_CONFIG_DIR)
     if not program_key:
         import __main__  # pylint: disable=import-outside-toplevel
-        program_key = path.expanduser(
-            path.join(DEFAULT_CONFIG_DIR, path.splitext(path.basename(__main__.__file__))[0]))
-    assert re.match(r"[A-Za-z0-9_-]", program_key)
-    secrets_filename = "{}.json".format(program_key)
-    storage_filename = "{}.cache".format(program_key)
+        program_key = path.splitext(path.basename(__main__.__file__))[0]
+
+    if path.isabs(program_key):
+        # Handle the special case that the program key passed in is a filename.
+        program_key = path.splitext(path.basename(program_key))[0]
+        secrets_filename = program_key
+        storage_filename = path.join(config_dir, "{}.cache".format(program_key))
+    else:
+        # Normal case, we infer two filenames in the configuration directory.
+        secrets_filename = path.join(config_dir, "{}.json".format(program_key))
+        storage_filename = path.join(config_dir, "{}.cache".format(program_key))
+
     return get_credentials_from_files(scopes, secrets_filename, storage_filename)
 
 
@@ -66,7 +74,7 @@ def get_credentials_from_files(scopes: List[str],
     else:
         # Process OAuth flow.
         credentials = None
-        if path.exists(storage_filename):
+        if storage_filename and path.exists(storage_filename):
             with open(storage_filename, 'rb') as token:
                 credentials = pickle.load(token)
         # If there are no (valid) credentials available, let the user log in.
@@ -78,7 +86,7 @@ def get_credentials_from_files(scopes: List[str],
                     secrets_filename, scopes)
                 credentials = flow.run_console()
             # Save the credentials for the next run
-            with open(storage_filename, 'wb') as token:
+            with storage_filename and open(storage_filename, 'wb') as token:
                 pickle.dump(credentials, token)
 
     return credentials

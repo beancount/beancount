@@ -244,7 +244,6 @@ def do_linked(filename, args):
         location is not in the top-level file).
     """
     from beancount.core import data
-    from beancount.core import prices
     from beancount import loader
 
     # Parse the arguments, get the line number.
@@ -326,10 +325,15 @@ def do_linked(filename, args):
 def do_region_value(filename, args):
     """Print out a list of transactions in a region and balances at market value.
     """
-    return do_region(filename, args, at_value=True)
+    return do_region(filename, args, conversion='value')
 
+# TODO(blais): This should be folded as an option when we convert this to click.
+def do_region_cost(filename, args):
+    """Print out a list of transactions in a region and balances at cost.
+    """
+    return do_region(filename, args, conversion='cost')
 
-def do_region(filename, args, at_value=False):
+def do_region(filename, args, conversion=None):
     """Print out a list of transactions in a region and balances.
 
     Args:
@@ -338,7 +342,8 @@ def do_region(filename, args, at_value=False):
         to be a string which contains either a lineno integer or a
         (filename:)?lineno:lineno combination (which can be used if the location
         is not in the top-level file).
-      at_value: A boolean, if true, convert balances output to market value.
+      convert: A string, one of None, 'value', or 'cost'; if set, convert
+        balances output to market value (or cost).
     """
     from beancount.core import data
     from beancount.core import prices
@@ -382,16 +387,17 @@ def do_region(filename, args, at_value=False):
         if (entry.meta['filename'] == search_filename and
             lineno <= entry.meta['lineno'] <= last_lineno)]
 
-    price_map = prices.build_price_map(entries) if at_value else None
-    render_mini_balances(region_entries, options_map, price_map)
+    price_map = prices.build_price_map(entries) if conversion == 'value' else None
+    render_mini_balances(region_entries, options_map, conversion, price_map)
 
 
-def render_mini_balances(entries, options_map, price_map=None):
+def render_mini_balances(entries, options_map, conversion=None, price_map=None):
     """Render a treeified list of the balances for the given transactions.
 
     Args:
       entries: A list of selected transactions to render.
       options_map: The parsed options.
+      conversion: Conversion method string, None, 'value' or 'cost'.
       price_map: A price map from the original entries. If this isn't provided,
         the inventories are rendered directly. If it is, their contents are
         converted to market value.
@@ -413,12 +419,25 @@ def render_mini_balances(entries, options_map, price_map=None):
     dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
                                             reserved=2)
 
-    if price_map is not None:
+    # TODO(blais): I always want to be able to convert at cost. We need
+    # arguments capability.
+    #
+    # TODO(blais): Ideally this conversion inserts a new transactions to
+    # 'Unrealized' to account for the difference between cost and market value.
+    # Insert one and update the realization. Add an update() method to the
+    # realization, given a transaction.
+    if conversion == 'value':
+        assert price_map is not None
+
         # Warning: Mutate the inventories in-place, converting them to market
         # value.
         for real_account in realization.iter_children(real_root):
             real_account.balance = real_account.balance.reduce(
                 convert.get_value, price_map)
+
+    elif conversion == 'cost':
+        for real_account in realization.iter_children(real_root):
+            real_account.balance = real_account.balance.reduce(convert.get_cost)
 
     realization.dump_balances(real_root, dformat, file=sys.stdout)
 
