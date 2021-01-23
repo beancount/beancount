@@ -129,7 +129,9 @@ class Str(query_compile.EvalFunction):
         return repr(args[0])
 
 class MaxWidth(query_compile.EvalFunction):
-    "Convert the argument to a substring. This can be used to ensure maximum width"
+    """Convert the argument to a substring. This can be used to ensure maximum width.
+    This will insert an ellipsis ([...]) if necessary.
+    """
     __intypes__ = [str, int]
 
     def __init__(self, operands):
@@ -138,6 +140,28 @@ class MaxWidth(query_compile.EvalFunction):
     def __call__(self, context):
         string, width = self.eval_args(context)
         return textwrap.shorten(string, width=width)
+
+class SubStr(query_compile.EvalFunction):
+    "Extract a substring of the argument."
+    __intypes__ = [str, int, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        string, start, end = self.eval_args(context)
+        return string[start:end]
+
+class SplitComp(query_compile.EvalFunction):
+    "Split a string and extract one of its components."
+    __intypes__ = [str, str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        string, delimiter, index = self.eval_args(context)
+        return string.split(delimiter)[index]
 
 
 # Operations on dates.
@@ -889,6 +913,8 @@ SIMPLE_FUNCTIONS = {
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,
+    'substr'                                             : SubStr,
+    'splitcomp'                                          : SplitComp,
     'root'                                               : Root,
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
