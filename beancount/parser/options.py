@@ -287,6 +287,16 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("account_current_conversions", "Conversions:Current")]),
 
     OptGroup("""
+      The name of an account to be used to post unrealized gains to. This is used
+      when making any kind of conversion from cost to price on a balance sheet
+      (or any realization). The amount inserted - the difference between book
+      value and market value - has to be posted to a gains account to keep the
+      balance on the sheet. This has no effect on behavior, other than providing
+      a configurable account name for such postings to occur.
+    """, [Opt("account_unrealized_gains",
+              "Earnings:Unrealized", "Earnings:Unrealized")]),
+
+    OptGroup("""
       The name of an account to be used to post to and accumulate rounding error.
       This is unset and this feature is disabled by default; setting this value to
       an account name will automatically enable the addition of postings on all

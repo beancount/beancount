@@ -378,6 +378,8 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
+    # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
+    # print in-between other statements.
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
                       if hasattr(sys.stdout, 'buffer') else
                       sys.stdout)

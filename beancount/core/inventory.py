@@ -316,6 +316,11 @@ class Inventory(dict):
     # Methods to convert an Inventory into another.
     #
 
+    # TODO(blais): An improved design would allow conversions to market value to
+    # return the difference between the weight and the inserted value, so it can
+    # get inserted elsewhere on the balance sheet (e.g. to an unrealized gains
+    # account). This should be a natural by-product of conversions and operators
+    # should be modified to make this obvious or even difficult to ignore.
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 

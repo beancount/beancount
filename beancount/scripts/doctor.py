@@ -404,6 +404,7 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
     """
     from beancount.parser import options
     from beancount.parser import printer
+    from beancount.core import account
     from beancount.core import account_types
     from beancount.core import convert
     from beancount.core import inventory
@@ -426,14 +427,24 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
     # 'Unrealized' to account for the difference between cost and market value.
     # Insert one and update the realization. Add an update() method to the
     # realization, given a transaction.
+    acctypes = options.get_account_types(options_map)
     if conversion == 'value':
         assert price_map is not None
 
         # Warning: Mutate the inventories in-place, converting them to market
         # value.
+        balance_diff = inventory.Inventory()
         for real_account in realization.iter_children(real_root):
-            real_account.balance = real_account.balance.reduce(
-                convert.get_value, price_map)
+            balance_cost = real_account.balance.reduce(convert.get_cost)
+            balance_value = real_account.balance.reduce(convert.get_value, price_map)
+            real_account.balance = balance_value
+            balance_diff.add_inventory(balance_cost)
+            balance_diff.add_inventory(-balance_value)
+        if not balance_diff.is_empty():
+            account_unrealized = account.join(acctypes.income,
+                                              options_map["account_unrealized_gains"])
+            unrealized = realization.get_or_create(real_root, account_unrealized)
+            unrealized.balance.add_inventory(balance_diff)
 
     elif conversion == 'cost':
         for real_account in realization.iter_children(real_root):
@@ -442,7 +453,6 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
     realization.dump_balances(real_root, dformat, file=sys.stdout)
 
     # Print out net income change.
-    acctypes = options.get_account_types(options_map)
     net_income = inventory.Inventory()
     for real_node in realization.iter_children(real_root):
         if account_types.is_income_statement_account(real_node.account, acctypes):
