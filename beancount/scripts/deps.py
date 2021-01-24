@@ -163,3 +163,7 @@ def check_import(package_name, min_version=None, module_name=None):
 def parse_version(version_str: str) -> str:
     """Parse the version string into a comparable tuple."""
     return [int(v) for v in version_str.split('.')]
+
+
+if __name__ == '__main__':
+    list_dependencies(sys.stdout)
