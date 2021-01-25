@@ -53,7 +53,8 @@ from os import path
 
 from googleapiclient import discovery
 from googleapiclient import errors
-import gapis  # See http://github.com/blais/gapis
+
+from . import gapis # See http://github.com/blais/gapis
 
 
 # The name of a sheet left as the unique sheet temporarily, while creating a new
