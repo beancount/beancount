@@ -31,7 +31,6 @@ from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import version
-from beancount.scripts import deps
 from beancount.scripts import directories
 from beancount.utils import misc_utils
 
@@ -522,6 +521,7 @@ def do_validate_html(directory, args):
       directory: A string, the root directory whose contents to validate.
       args: A tuple of the rest of arguments.
     """
+    # pylint: disable=import-outside-toplevel
     from beancount.utils import scrape  # To avoid lxml dependency.
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
