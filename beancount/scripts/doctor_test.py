@@ -80,11 +80,6 @@ class TestScriptDoctor(test_utils.TestCase):
             test_utils.run_with_args(doctor.main, ['list_options'])
             test_utils.run_with_args(doctor.main, ['list-options'])
 
-    def test_deps(self):
-        with test_utils.capture():
-            test_utils.run_with_args(doctor.main, ['deps'])
-            test_utils.run_with_args(doctor.main, ['checkdeps'])
-
 
 class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
 

@@ -34,7 +34,6 @@ from beancount.parser import version
 from beancount.scripts import deps
 from beancount.scripts import directories
 from beancount.utils import misc_utils
-from beancount.utils import scrape
 
 
 def do_lex(filename, unused_args):
@@ -523,6 +522,7 @@ def do_validate_html(directory, args):
       directory: A string, the root directory whose contents to validate.
       args: A tuple of the rest of arguments.
     """
+    from beancount.utils import scrape  # To avoid lxml dependency.
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
     for target in missing:

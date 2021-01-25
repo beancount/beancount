@@ -4502,9 +4502,6 @@ http://furius.ca/beancount/doc/proposal-query
     always links all the transactions, so it's not good enough. Just add this by
     default to the context command.
 
-  - bean-doctor context should accept a LINK, not just a line number from
-    context.
-
   - Great idea: Make the printer able to (1) output "incomplete" entries and (2)
     print out the entries in the order of (filename, line-no) in which they were
     parsed, to produce a file that is as close as possible to output. (bw3443
@@ -4668,6 +4665,8 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Add HIGHEST_COST booking method.
 
   - Make queries with group by order by unaggregated columns by default (output
     should be stable even without ORDER BY clause.
