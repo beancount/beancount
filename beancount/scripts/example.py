@@ -1,10 +1,3 @@
-"""Generate a decently-sized example history, based on some rules.
-
-This script is used to generate some meaningful input to Beancount, input that
-looks as realistic as possible for a moderately complex mock individual. This
-can also be used as an input generator for a stress test for performance
-evaluation.
-"""
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,6 +19,8 @@ import textwrap
 
 from dateutil import rrule
 
+import click
+
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core.number import round_to
@@ -45,7 +40,7 @@ from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
-from beancount.parser import version
+from beancount.parser.version import VERSION
 from beancount import loader
 
 
@@ -1739,49 +1734,44 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
                     replace('CCY', replacements))
 
 
-def main():
+class LiberalDate(click.ParamType):
+    name = "date"
+
+    def convert(self, value, param, ctx):
+        try:
+            date_utils.parse_date_liberally(value)
+        except ValueError:
+            self.fail("{!r} is not a valid date".format(value), param, ctx)
+
+
+@click.command()
+@click.option('--date-begin', type=LiberalDate(), help="Beginning date.")
+@click.option('--date-end', type=LiberalDate(), help="End date.")
+@click.option('--date-birth', type=LiberalDate(), help="Fictional date of birth.")
+@click.option('--seed', '-s', type=int, help="Random seed.")
+@click.option('--no-reformat', is_flag=True, help="Do not reformat the output.")
+@click.option('--output', '-o', type=click.File('w'), default='-', help="Output filename.")
+@click.version_option(message=VERSION)
+def main(date_begin, date_end, date_birth, seed, no_reformat, output):
+    """Generate a decently-sized example history, based on some rules.
+
+    This script is used to generate some meaningful input to
+    Beancount, input that looks as realistic as possible for a
+    moderately complex mock individual. This can also be used as an
+    input generator for a stress test for performance evaluation.
+
+    """
     today = datetime.date.today()
-
-    argparser = version.ArgumentParser(description=__doc__.strip())
-
     default_years = 2
-    argparser.add_argument('--date-begin', '--begin-date',
-                           action='store', type=date_utils.parse_date_liberally,
-                           default=datetime.date(today.year - default_years, 1, 1),
-                           help="Beginning date")
 
-    argparser.add_argument('--date-end', '--end-date',
-                           action='store', type=date_utils.parse_date_liberally,
-                           default=today,
-                           help="End date.")
-
-    argparser.add_argument('--date-birth', '--birth-date',
-                           action='store', type=date_utils.parse_date_liberally,
-                           default=datetime.date(1980, 5, 12),
-                           help="Date of birth of our fictional character.")
-
-    argparser.add_argument('-s', '--seed', action='store', type=int,
-                           help="Fix the random seed for debugging.")
-
-    argparser.add_argument('--no-reformat', dest='reformat',
-                           action='store_false', default=True,
-                           help="Don't format the output")
-
-    argparser.add_argument('-o', '--output', action='store',
-                           help="Output filename (default stdout)")
-
-    opts = argparser.parse_args()
+    date_begin = date_begin or datetime.date(today.year - default_years, 1, 1)
+    date_end = date_end or today
+    date_birth = date_birth or datetime.date(1980, 5, 12)
+    reformat = not no_reformat
 
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    if opts.seed is not None:
-        logging.info("Seed = %s", opts.seed)
-        random.seed(opts.seed)
+    if seed is not None:
+        logging.info("Seed = %s", seed)
+        random.seed(seed)
 
-    output_file = open(opts.output, 'w') if opts.output else sys.stdout
-    write_example_file(opts.date_birth,
-                       opts.date_begin,
-                       opts.date_end,
-                       opts.reformat,
-                       file=output_file)
-
-    return 0
+    write_example_file(date_birth, date_begin, date_end, reformat, file=output)
