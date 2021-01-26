@@ -64,7 +64,8 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     Args:
       filename: The name of the file to be parsed.
       log_timings: A file object or function to write timings to,
-        or None, if it should remain quiet.
+        or None, if it should remain quiet. (Note that this is intended to use
+        the logging methods and does not insert a newline.)
       log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
