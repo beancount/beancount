@@ -25,6 +25,3 @@ jobs:
         # little value in running them for different Python version.
         if: ${{ matrix.python == '3.9' }}
       - run: make test
-      - run: make lint
-        # There is no need to run pylint with all Python versions.
-        if: ${{ matrix.python == '3.9' }}
