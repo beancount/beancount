@@ -1,5 +1,3 @@
-"""An interactive command-line shell interpreter for the Beancount Query Language.
-"""
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -21,6 +19,8 @@ try:
 except ImportError:
     readline = None
 
+import click
+
 from beancount.query import query_parser
 from beancount.query import query_compile
 from beancount.query import query_env
@@ -31,7 +31,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
-from beancount.parser import version
+from beancount.parser.version import VERSION
 from beancount import loader
 
 
@@ -772,46 +772,38 @@ def create_custom_query_map(entries):
 _SUPPORTED_FORMATS = ('text', 'csv')
 
 
-def main():
-    parser = version.ArgumentParser(description=__doc__)
+@click.command()
+@click.argument('filename')
+@click.argument('query', nargs=-1)
+@click.option('--numberify', '-m', is_flag=True,
+              help="Numberify the output, removing the currencies.")
+@click.option('--format', '-f', type=click.Choice(_SUPPORTED_FORMATS),
+              default=_SUPPORTED_FORMATS[0], help="Output format.")
+@click.option('--output', '-o', type=click.File('w'), default='-',
+              help="Output filename.")
+@click.option('--no-errors', '-q', is_flag=True,
+              help="Do not report errors.")
+@click.version_option(message=VERSION)
+def main(filename, query, numberify, format, output, no_errors):
+    """An interactive interpreter for the Beancount Query Language.
 
-    parser.add_argument('-f', '--format', action='store', default=_SUPPORTED_FORMATS[0],
-                        choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',
-                        help="Output format.")
+    Load Beancount ledger FILENAME and run Beancount Query Language
+    QUERY on it, if specified, or drop into the interactive shell. If
+    not explicitly set with the dedicated option, the output format is
+    inferred from the output file name, if specified.
 
-    parser.add_argument('-m', '--numberify', action='store_true', default=False,
-                        help="Numberify the output, removing the currencies.")
-
-    parser.add_argument('-o', '--output', action='store',
-                        help=("Output filename. If not specified, the output goes "
-                              "to stdout. The filename is inspected to select a "
-                              "sensible default format, if one is not requested."))
-
-    parser.add_argument('-q', '--no-errors', action='store_true',
-                        help='Do not report errors')
-
-    parser.add_argument('filename', metavar='FILENAME.beancount',
-                        help='The Beancount input filename to load')
-
-    parser.add_argument('query', nargs='*',
-                        help='A query to run directly')
-
-    args = parser.parse_args()
-
+    """
     # Parse the input file.
     def load():
-        errors_file = None if args.no_errors else sys.stderr
+        errors_file = None if no_errors else sys.stderr
         with misc_utils.log_time('beancount.loader (total)', logging.info):
-            return loader.load_file(args.filename,
+            return loader.load_file(filename,
                                     log_timings=logging.info,
                                     log_errors=errors_file)
 
-    # Create a receiver for output.
-    outfile = sys.stdout if args.output is None else open(args.output, 'w')
-
     # Create the shell.
-    is_interactive = sys.stdin.isatty() and not args.query
-    shell_obj = BQLShell(is_interactive, load, outfile, args.format, args.numberify)
+    is_interactive = sys.stdin.isatty() and not query
+    shell_obj = BQLShell(is_interactive, load, output, format, numberify)
     shell_obj.on_Reload()
 
     # Run interactively if we're a TTY and no query is supplied.
@@ -822,17 +814,15 @@ def main():
             print('\nExit')
     else:
         # Run in batch mode (Non-interactive).
-        if args.query:
+        if query:
             # We have a query to run.
-            query = ' '.join(args.query)
+            query = ' '.join(query)
         else:
             # If we have no query and we're not a TTY, read the BQL command from
             # standard input.
             query = sys.stdin.read()
 
         shell_obj.onecmd(query)
-
-    return 0
 
 
 if __name__ == '__main__':
