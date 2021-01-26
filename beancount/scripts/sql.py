@@ -1,5 +1,3 @@
-"""Convert a Beancount ledger into an SQL database.
-"""
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -8,13 +6,16 @@ import logging
 import sys
 import os
 import itertools
+
 from os import path
 from decimal import Decimal
+
+import click
 
 from beancount import loader
 from beancount.core import data
 from beancount.utils import misc_utils
-from beancount.parser import version
+from beancount.parser.version import VERSION
 
 
 def output_common(connection, unused_entries):
@@ -332,25 +333,28 @@ def setup_decimal_support():
     dbapi.register_converter("decimal", convert_decimal)
 
 
-def main():
-    parser = version.ArgumentParser(description=__doc__)
-    parser.add_argument('filename',
-                        help='Beancount input filename')
-    parser.add_argument('database',
-                        help='Filename of database file to create')
-    args = parser.parse_args()
+@click.command()
+@click.argument('filename', type=click.Path())
+@click.argument('database', type=click.Path())
+@click.version_option(message=VERSION)
+def main(filename, database):
+    """Convert a Beancount ledger into an SQL database.
+
+    Write ledger FILENAME contents into SQLite database DATABASE.
+
+    """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
-    entries, errors, options_map = loader.load_file(args.filename,
+    entries, errors, options_map = loader.load_file(filename,
                                                     log_timings=logging.info,
                                                     log_errors=sys.stderr)
 
     # Delete previous database if it already exists.
-    if path.exists(args.database):
-        os.remove(args.database)
+    if path.exists(database):
+        os.remove(database)
 
     # The only supported DBAPI-2.0 backend for now is SQLite3.
-    connection = dbapi.connect(args.database)
+    connection = dbapi.connect(database)
 
     setup_decimal_support()
     for function in [
@@ -367,5 +371,3 @@ def main():
         step_name = getattr(function, '__name__', function.__class__.__name__)
         with misc_utils.log_time(step_name, logging.info):
             function(connection, entries)
-
-    return 0
