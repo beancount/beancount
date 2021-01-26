@@ -9,7 +9,6 @@ __license__ = "GNU GPLv2"
 import itertools
 import inspect
 import logging
-import sys
 import textwrap
 
 from beancount.core import data
@@ -17,7 +16,6 @@ from beancount.parser import printer
 from beancount.ingest import similar
 from beancount.ingest import identify
 from beancount.ingest import cache
-from beancount import loader
 
 
 # The format for the header in the extracted output.
@@ -212,38 +210,3 @@ def extract(importer_config,
         if not ascending:
             new_entries.reverse()
         print_extracted_entries(new_entries, output)
-
-
-DESCRIPTION = "Extract transactions from downloads"
-
-
-def add_arguments(parser):
-    """Add arguments for the extract command."""
-
-    parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
-                        default=None,
-                        help=('Beancount file or existing entries for de-duplication '
-                              '(optional)'))
-
-    parser.add_argument('-r', '--reverse', '--descending',
-                        action='store_const', dest='ascending',
-                        default=True, const=False,
-                        help='Write out the entries in descending order')
-
-
-def run(args, _, importers_list, files_or_directories, hooks=None):
-    """Run the subcommand."""
-
-    # Load the ledger, if one is specified.
-    if args.existing:
-        entries, _, options_map = loader.load_file(args.existing)
-    else:
-        entries, options_map = None, None
-
-    extract(importers_list, files_or_directories, sys.stdout,
-            entries=entries,
-            options_map=options_map,
-            mindate=None,
-            ascending=args.ascending,
-            hooks=hooks)
-    return 0

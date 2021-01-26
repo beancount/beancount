@@ -6,10 +6,10 @@ import unittest
 import datetime
 import io
 import os
-import re
 import textwrap
-import functools
 from unittest import mock
+
+import click
 
 from beancount.utils import test_utils
 from beancount.utils import misc_utils
@@ -17,7 +17,7 @@ from beancount.parser import parser
 from beancount import loader
 from beancount.ingest import extract
 from beancount.ingest import importer
-from beancount.ingest import scripts_utils
+from beancount.ingest import Ingest
 from beancount.ingest.test_utils import TestScriptsBase, TestExamplesBase
 
 class TestScriptExtractFromFile(test_utils.TestCase):
@@ -227,6 +227,11 @@ class _LoaderImporter(importer.ImporterProtocol):
 
 class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
 
+    def ingest(self, *args):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(self.cli, args)
+        return result
+
     def setUp(self):
         super().setUp()
 
@@ -234,7 +239,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
             _LoaderImporter('checking.dl', 'Assets:Checking'),
             _LoaderImporter('credit.dl', 'Liabilities:CreditCard'),
         ]
-        self.ingest = functools.partial(scripts_utils.ingest, importers)
+        self.cli = Ingest(importers).cli()
 
         self.downloads = path.join(self.tempdir, 'Downloads')
         os.mkdir(self.downloads)
@@ -280,12 +285,9 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
             """))
 
     def test_extract(self):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(
-                self.ingest,
-                ['-d', path.join(self.tempdir, 'Downloads'), 'extract'],
-                extract.__file__)
-        output = stdout.getvalue()
+        result = self.ingest('extract', path.join(self.tempdir, 'Downloads'))
+        self.assertEqual(result.exit_code, 0)
+        output = result.stdout
 
         self.assertRegex(output, r'/checking.dl')
         self.assertRegex(output, r'Assets:Cash +300.00 USD')
@@ -300,12 +302,8 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
     @mock.patch.object(extract, 'find_duplicate_entries',
                        wraps=extract.find_duplicate_entries)
     def test_extract_find_dups_once_only_with_many_files(self, mock):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(
-                self.ingest,
-                ['-d', path.join(self.tempdir, 'Downloads'), 'extract'],
-                extract.__file__)
-        output = stdout.getvalue()
+        result = self.ingest('extract', path.join(self.tempdir, 'Downloads'))
+        self.assertEqual(result.exit_code, 0)
         mock.assert_called_once()
 
     def test_extract_with_previous_entries(self):
@@ -338,12 +336,10 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
 
             """))
 
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(self.ingest,
-                                     ['-d', path.join(self.tempdir, 'Downloads'),
-                                      'extract', '--existing={}'.format(existing_filename)],
-                                     extract.__file__)
-        output = stdout.getvalue()
+        downloads = path.join(self.tempdir, 'Downloads')
+        result = self.ingest('extract', downloads, '--existing', existing_filename)
+        self.assertEqual(result.exit_code, 0)
+        output = result.stdout
 
         self.assertRegex(output, r'/checking.dl')
         self.assertRegex(output, r'; +Assets:Cash +300.00 USD')
@@ -358,29 +354,19 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
     def test_extract_no_files(self):
         emptydir = path.join(self.tempdir, 'Empty')
         os.makedirs(emptydir)
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(self.ingest,
-                                     ['-d', emptydir, 'extract'],
-                                     extract.__file__)
-        output = stdout.getvalue()
-        self.assertRegex(output, r';; -\*- mode: beancount -\*-')
+        result = self.ingest('extract', emptydir)
+        self.assertEqual(result.exit_code, 0)
+        self.assertRegex(result.stdout, r';; -\*- mode: beancount -\*-')
 
 
 class TestExtractExamples(TestExamplesBase):
 
     def test_extract_examples(self):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            result = test_utils.run_with_args(
-                self.ingest,
-                ['-d', path.join(self.example_dir, 'Downloads'), 'extract',
-                 '--existing={}'.format(path.join(self.example_dir, 'example.beancount'))],
-                extract.__file__)
-
-        self.assertEqual(0, result)
-        errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
-
-        output = stdout.getvalue()
+        existing = path.join(self.example_dir, 'office', 'example.beancount')
+        downloads = path.join(self.example_dir, 'Downloads')
+        result = self.ingest('extract', downloads, '--existing', existing)
+        self.assertEqual(result.exit_code, 0)
+        output = result.stdout
 
         self.assertRegex(output, r';; -\*- mode: beancount -\*-')
 

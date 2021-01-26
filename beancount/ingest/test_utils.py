@@ -1,4 +1,3 @@
-import functools
 import os
 import re
 import stat
@@ -7,10 +6,12 @@ import unittest
 
 from os import path
 
+import click
+
 from beancount.ingest import importer
 from beancount.ingest import cache
 from beancount.utils import test_utils
-from beancount.ingest import scripts_utils
+from beancount.ingest import Ingest
 
 
 class _TestFileImporter(importer.ImporterProtocol):
@@ -74,6 +75,11 @@ class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
         'Downloads/Subdir/readme.txt': TXT_FILE,
     }
 
+    def ingest(self, *args):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(self.cli, args)
+        return result
+
     def setUp(self):
         super().setUp()
 
@@ -93,10 +99,15 @@ class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
                 'mybank-credit-csv', 'Liabilities:CreditCard',
                 'text/csv', '.*DATE,TRANSACTION ID,DESCRIPTION,QUANTITY,SYMBOL'),
         ]
-        self.ingest = functools.partial(scripts_utils.ingest, importers)
+        self.cli = Ingest(importers).cli()
 
 
 class TestExamplesBase(test_utils.TestTempdirMixin, unittest.TestCase):
+
+    def ingest(self, *args):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(self.cli, args)
+        return result
 
     def setUp(self):
         super().setUp()
@@ -127,7 +138,7 @@ class TestExamplesBase(test_utils.TestTempdirMixin, unittest.TestCase):
 
             acme_pdf.Importer("Assets:US:AcmeBank"),
         ]
-        self.ingest = functools.partial(scripts_utils.ingest, importers)
+        self.cli = Ingest(importers).cli()
 
     def tearDown(self):
         # Restore the Python path

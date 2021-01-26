@@ -1,9 +1,3 @@
-"""Filing script.
-
-Read an import script and a list of downloaded filenames or directories of
-downloaded files, and for each of those files, move the file under an account
-corresponding to the filing directory.
-"""
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -13,7 +7,6 @@ import datetime
 import logging
 import os
 import shutil
-import sys
 import re
 
 from beancount.core import account
@@ -255,49 +248,3 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     # cross-device moves, because it's sensible that the destination might
     # be on an encrypted device.
     os.remove(src_filename)
-
-
-DESCRIPTION = ("Move and rename downloaded files to a documents tree "
-               "mirroring the chart of accounts")
-
-
-def add_arguments(parser):
-    """Add arguments for the extract command."""
-
-    parser.add_argument('-o', '--output', '--output-dir', '--destination',
-                        dest='output_dir', action='store',
-                        help="The root of the documents tree to move the files to.")
-
-    parser.add_argument('-n', '--dry-run', action='store_true',
-                        help=("Just print where the files would be moved; "
-                              "don't actually move them."))
-
-    parser.add_argument('--no-overwrite', dest='overwrite',
-                        action='store_false', default=True,
-                        help="Don't overwrite destination files with the same name.")
-
-
-def run(args, parser, importers_list, files_or_directories, hooks=None):
-    """Run the subcommand."""
-
-    # If the output directory is not specified, move the files at the root where
-    # the import configuration file is located. (Providing this default seems
-    # better than using a required option.)
-    if args.output_dir is None:
-        if hasattr(args, 'config'):
-            args.output_dir = path.dirname(path.abspath(args.config))
-        else:
-            import __main__ # pylint: disable=import-outside-toplevel
-            args.output_dir = path.dirname(path.abspath(__main__.__file__))
-
-    # Make sure the output directory exists.
-    if not path.exists(args.output_dir):
-        parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
-
-    file(importers_list, files_or_directories, args.output_dir,
-         dry_run=args.dry_run,
-         mkdirs=True,
-         overwrite=args.overwrite,
-         idify=True,
-         logfile=sys.stdout)
-    return 0
