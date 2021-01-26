@@ -18,7 +18,7 @@ from beancount import loader
 from beancount.ingest import extract
 from beancount.ingest import importer
 from beancount.ingest import scripts_utils
-
+from beancount.ingest.test_utils import TestScriptsBase, TestExamplesBase
 
 class TestScriptExtractFromFile(test_utils.TestCase):
 
@@ -163,7 +163,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
             extract.extract_from_file('/tmp/blabla.ofx', imp, [])
 
 
-class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):
+class TestPrintExtractedEntries(TestScriptsBase, unittest.TestCase):
 
     class ExtractTestImporter(importer.ImporterProtocol):
 
@@ -366,7 +366,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         self.assertRegex(output, r';; -\*- mode: beancount -\*-')
 
 
-class TestExtractExamples(scripts_utils.TestExamplesBase):
+class TestExtractExamples(TestExamplesBase):
 
     def test_extract_examples(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):

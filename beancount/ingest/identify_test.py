@@ -10,7 +10,7 @@ import unittest
 from beancount.utils import test_utils
 from beancount.ingest.importer import ImporterProtocol
 from beancount.ingest import identify
-from beancount.ingest import scripts_utils
+from beancount.ingest.test_utils import TestScriptsBase, TestExamplesBase
 
 
 class _TestImporter(ImporterProtocol):
@@ -67,7 +67,7 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
         self.assertEqual([(file1, [])], imports)
 
 
-class TestScriptIdentify(scripts_utils.TestScriptsBase):
+class TestScriptIdentify(TestScriptsBase):
 
     def test_identify(self):
         regexp = textwrap.dedent("""\
@@ -91,7 +91,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertTrue(re.match(regexp, output))
 
 
-class TestIdentifyExamples(scripts_utils.TestExamplesBase, scripts_utils.TestScriptsBase):
+class TestIdentifyExamples(TestExamplesBase, TestScriptsBase):
 
     def test_identify_examples(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
