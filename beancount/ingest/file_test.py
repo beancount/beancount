@@ -14,10 +14,10 @@ import warnings
 from beancount.utils import test_utils
 from beancount.utils import file_utils
 from beancount.ingest import file
-from beancount.ingest import scripts_utils
+from beancount.ingest.test_utils import TestScriptsBase, TestExamplesBase
 
 
-class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
+class TestScriptFile(TestScriptsBase, test_utils.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -331,7 +331,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
             self.assertTrue(any(re.match(regexp, filename) for filename in moved_files))
 
 
-class TestFileExamples(scripts_utils.TestExamplesBase, scripts_utils.TestScriptsBase):
+class TestFileExamples(TestExamplesBase, TestScriptsBase):
 
     def test_file_examples(self):
         # For some reason via Bazel this isn't active from beancount.__init__.
