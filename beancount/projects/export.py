@@ -329,8 +329,9 @@ def main():
     headers.append('issuer')
     final_table = reorder_columns(joined_table, headers)
 
-    # Filter table.
-    rows = [row for row in final_table.rows if row[7].lower() != 'ignore']
+    # Filter table removing rows to ignore (rows not to export).
+    index_export = final_table.header.index('export')
+    rows = [row for row in final_table.rows if row[index].lower() != 'ignore']
     table = Table(final_table.header, rows)
 
     if args.output is not None:
