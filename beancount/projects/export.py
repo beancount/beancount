@@ -265,6 +265,10 @@ def main():
     parser.add_argument('--insert-date', action='store_true',
                         help="Insert the date in the header of the output")
 
+    parser.add_argument('--ignore-options', action='store_true',
+                        help=("Ignore options symbols before export. "
+                              "This assumes a separate options trading strategy."))
+
     parser.add_argument('-o', '--output',
                         type=argparse.FileType('w'),
                         help="CSV filename to write out the final joined table to.")
@@ -330,8 +334,17 @@ def main():
     final_table = reorder_columns(joined_table, headers)
 
     # Filter table removing rows to ignore (rows not to export).
-    index_export = final_table.header.index('export')
-    rows = [row for row in final_table.rows if row[index].lower() != 'ignore']
+    index = final_table.header.index('export')
+    rows = [row for row in final_table.rows
+            if row[index] is None or row[index].lower() != 'ignore']
+
+    # Filter out options if requested.
+    if args.ignore_options:
+        index = final_table.header.index('currency')
+        IsOption = re.compile(r"[A-Z]+_\d{6,}[CP]\d+", re.I).match
+        rows = [row for row in rows
+                if row[index] is None or not IsOption(row[index])]
+
     table = Table(final_table.header, rows)
 
     if args.output is not None:
