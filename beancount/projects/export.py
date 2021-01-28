@@ -341,9 +341,9 @@ def main():
     # Filter out options if requested.
     if args.ignore_options:
         index = final_table.header.index('currency')
-        IsOption = re.compile(r"[A-Z]+_\d{6,}[CP]\d+", re.I).match
+        is_option = re.compile(r"[A-Z]+_\d{6,}[CP]\d+", re.I).match
         rows = [row for row in rows
-                if row[index] is None or not IsOption(row[index])]
+                if row[index] is None or not is_option(row[index])]
 
     table = Table(final_table.header, rows)
 
