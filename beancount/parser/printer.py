@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import codecs
 import datetime
+import enum
 import io
 import re
 import sys
@@ -141,7 +142,7 @@ class EntryPrinter:
                 value_str = None
                 if isinstance(value, str):
                     value_str = '"{}"'.format(misc_utils.escape_string(value))
-                elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
+                elif isinstance(value, (Decimal, datetime.date, amount.Amount, enum.Enum)):
                     value_str = str(value)
                 elif isinstance(value, bool):
                     value_str = 'TRUE' if value else 'FALSE'
