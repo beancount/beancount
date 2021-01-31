@@ -98,6 +98,8 @@ class Inventory(dict):
         """Inequality comparison operator."""
         return sorted(self) < sorted(other)
 
+    # TODO(blais): In v3, remove 'parens' and never render parens. (What a
+    # stupid idea this was.)
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
 

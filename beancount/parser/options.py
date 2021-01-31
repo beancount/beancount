@@ -536,6 +536,19 @@ def get_current_accounts(options):
             account_current_conversions)
 
 
+def get_unrealized_account(options):
+    """Return the full account name for the unrealized account.
+
+    Args:
+      options: a dict of ledger options.
+    Returns:
+      A tuple of 2 account objects, one for booking current earnings, and one
+      for current conversions.
+    """
+    income = options['name_income']
+    return  account.join(income, options['account_unrealized_gains'])
+
+
 def list_options():
     """Produce a formatted text of the available options and their description.
 

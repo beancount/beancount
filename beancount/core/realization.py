@@ -206,6 +206,7 @@ def contains(real_account, account_name):
     return get(real_account, account_name) is not None
 
 
+# TODO(blais): Reconcile this with balance_by_account() {2196104406ab}.
 def realize(entries, min_accounts=None, compute_balance=True):
     r"""Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of

@@ -145,6 +145,7 @@ def close(entries,
     return entries, index
 
 
+# TODO(blais): This needs to be renamed in v3. Long name. Not obvious enough.
 def clear(entries,
           date,
           account_types,
@@ -583,7 +584,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
     return new_entries
 
 
-# TODO(blais): Reconcile this with beancount.core.realization.realize().
+# TODO(blais): Reconcile this with beancount.core.realization.realize() {2196104406ab}.
+# TODO(blais): This should be generalized to any type of key, i.e., provide a key func.
 def balance_by_account(entries, date=None, compress_unbooked=False):
     """Sum up the balance per account for all entries strictly before 'date'.
 
