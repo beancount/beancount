@@ -112,6 +112,20 @@ class TestAccountTypes(unittest.TestCase):
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
 
+    def test_is_inverted_account(self):
+        for account_name, expected in [
+                ("Assets:US:RBS:Savings", False),
+                ("Liabilities:US:RBS:MortgageLoan", True),
+                ("Equity:Opening-Balances", True),
+                ("Income:US:ETrade:Dividends", True),
+                ("Expenses:Toys:Computer", False),
+        ]:
+            self.assertEqual(
+                expected,
+                account_types.is_inverted_account(
+                    account_name, account_types.DEFAULT_ACCOUNT_TYPES))
+
+
     def test_get_account_sign(self):
         for account_name, expected in [
                 ("Assets:US:RBS:Savings", +1),
