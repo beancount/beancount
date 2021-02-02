@@ -108,7 +108,7 @@ class TestExamplesBase(test_utils.TestTempdirMixin, unittest.TestCase):
         sys.path.insert(0, path.join(self.example_dir, 'office'))
 
         # pylint: disable=import-outside-toplevel
-        from beancount.ingest.importers import ofx
+        from beancount.ingest.importers import ofx_importer
         from importers.utrade import utrade_csv
         from importers.acme import acme_pdf
 
@@ -121,9 +121,9 @@ class TestExamplesBase(test_utils.TestTempdirMixin, unittest.TestCase):
                                 "Expenses:Financial:Fees",
                                 "Assets:US:BofA:Checking"),
 
-            ofx.Importer("379700001111222",
-                         "Liabilities:US:CreditCard",
-                         "bofa"),
+            ofx_importer.Importer("379700001111222",
+                                  "Liabilities:US:CreditCard",
+                                  "bofa"),
 
             acme_pdf.Importer("Assets:US:AcmeBank"),
         ]

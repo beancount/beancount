@@ -109,7 +109,8 @@ class TestIdentifyExamples(TestExamplesBase, TestScriptsBase):
         self.assertRegex(output, 'Account:.*Assets:US:UTrade')
 
         self.assertRegex(output, 'Downloads/ofxdownload.ofx')
-        self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
+        self.assertRegex(output,
+                         'Importer:.*beancount.ingest.importers.ofx_importer.Importer')
         self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')
 
 

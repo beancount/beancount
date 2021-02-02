@@ -7,11 +7,11 @@ from pprint import pformat
 
 from beancount.core import data
 from beancount.ingest import cache
-from beancount.ingest.importers import csv
+from beancount.ingest.importers import csv_importer as csvimp
 from beancount.parser import cmptest
 from beancount.utils import test_utils
 
-Col = csv.Col
+Col = csvimp.Col
 
 
 class TestCSVFunctions(unittest.TestCase):
@@ -23,19 +23,19 @@ class TestCSVFunctions(unittest.TestCase):
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,
         """)
-        iconfig, has_header = csv.normalize_config({Col.DATE: 'Posting Date'}, head)
+        iconfig, has_header = csvimp.normalize_config({Col.DATE: 'Posting Date'}, head)
         self.assertEqual({Col.DATE: 1}, iconfig)
         self.assertTrue(has_header)
 
-        iconfig, _ = csv.normalize_config({Col.NARRATION: 'Description'}, head)
+        iconfig, _ = csvimp.normalize_config({Col.NARRATION: 'Description'}, head)
         self.assertEqual({Col.NARRATION: 2}, iconfig)
 
-        iconfig, _ = csv.normalize_config({Col.DATE: 1,
+        iconfig, _ = csvimp.normalize_config({Col.DATE: 1,
                                            Col.NARRATION: 'Check or Slip #'},
                                           head)
         self.assertEqual({Col.DATE: 1, Col.NARRATION: 6}, iconfig)
 
-        iconfig, _ = csv.normalize_config({Col.DATE: 1}, head)
+        iconfig, _ = csvimp.normalize_config({Col.DATE: 1}, head)
         self.assertEqual({Col.DATE: 1}, iconfig)
 
     def test_normalize_config__with_skip_and_header(self):
@@ -49,21 +49,21 @@ class TestCSVFunctions(unittest.TestCase):
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,
         """)
-        iconfig, has_header = csv.normalize_config({Col.DATE: 'Posting Date'}, head,
+        iconfig, has_header = csvimp.normalize_config({Col.DATE: 'Posting Date'}, head,
                                                    skip_lines=4)
         self.assertEqual({Col.DATE: 1}, iconfig)
         self.assertTrue(has_header)
 
-        iconfig, _ = csv.normalize_config({Col.NARRATION: 'Description'}, head,
+        iconfig, _ = csvimp.normalize_config({Col.NARRATION: 'Description'}, head,
                                           skip_lines=4)
         self.assertEqual({Col.NARRATION: 2}, iconfig)
 
-        iconfig, _ = csv.normalize_config({Col.DATE: 1,
+        iconfig, _ = csvimp.normalize_config({Col.DATE: 1,
                                            Col.NARRATION: 'Check or Slip #'},
                                           head, skip_lines=4)
         self.assertEqual({Col.DATE: 1, Col.NARRATION: 6}, iconfig)
 
-        iconfig, _ = csv.normalize_config({Col.DATE: 1}, head, skip_lines=4)
+        iconfig, _ = csvimp.normalize_config({Col.DATE: 1}, head, skip_lines=4)
         self.assertEqual({Col.DATE: 1}, iconfig)
 
     def test_normalize_config__without_header(self):
@@ -72,11 +72,11 @@ class TestCSVFunctions(unittest.TestCase):
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,
         """)
-        iconfig, has_header = csv.normalize_config({Col.DATE: 1}, head)
+        iconfig, has_header = csvimp.normalize_config({Col.DATE: 1}, head)
         self.assertEqual({Col.DATE: 1}, iconfig)
         self.assertFalse(has_header)
         with self.assertRaises(ValueError):
-            csv.normalize_config({Col.DATE: 'Posting Date'}, head)
+            csvimp.normalize_config({Col.DATE: 'Posting Date'}, head)
 
     def test_normalize_config__with_skip_and_without_header(self):
         head = textwrap.dedent("""\
@@ -88,11 +88,11 @@ class TestCSVFunctions(unittest.TestCase):
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,
         """)
-        iconfig, has_header = csv.normalize_config({Col.DATE: 1}, head, skip_lines=4)
+        iconfig, has_header = csvimp.normalize_config({Col.DATE: 1}, head, skip_lines=4)
         self.assertEqual({Col.DATE: 1}, iconfig)
         self.assertFalse(has_header)
         with self.assertRaises(ValueError):
-            csv.normalize_config({Col.DATE: 'Posting Date'}, head, skip_lines=4)
+            csvimp.normalize_config({Col.DATE: 'Posting Date'}, head, skip_lines=4)
 
 
 class TestCSVImporter(cmptest.TestCase):
@@ -111,17 +111,17 @@ class TestCSVImporter(cmptest.TestCase):
         """
         file = cache.get_file(filename)
 
-        importer = csv.Importer({Col.DATE: 'Posting Date',
-                                 Col.NARRATION1: 'Description',
-                                 Col.NARRATION2: 'Check or Slip #',
-                                 Col.AMOUNT: 'Amount',
-                                 Col.BALANCE: 'Balance',
-                                 Col.DRCR: 'Details'},
-                                'Assets:Bank',
-                                'USD',
-                                ('Details,Posting Date,"Description",Amount,'
-                                 'Type,Balance,Check or Slip #,'),
-                                institution='chafe')
+        importer = csvimp.Importer({Col.DATE: 'Posting Date',
+                                    Col.NARRATION1: 'Description',
+                                    Col.NARRATION2: 'Check or Slip #',
+                                    Col.AMOUNT: 'Amount',
+                                    Col.BALANCE: 'Balance',
+                                    Col.DRCR: 'Details'},
+                                   'Assets:Bank',
+                                   'USD',
+                                   ('Details,Posting Date,"Description",Amount,'
+                                    'Type,Balance,Check or Slip #,'),
+                                   institution='chafe')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -156,11 +156,11 @@ class TestCSVImporter(cmptest.TestCase):
           13/7/2016,C,4
         """
         file = cache.get_file(filename)
-        importer = csv.Importer({Col.DATE: 'Posting',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount'},
-                                'Assets:Bank', 'EUR', [],
-                                dateutil_kwds={'dayfirst': True})
+        importer = csvimp.Importer({Col.DATE: 'Posting',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount'},
+                                   'Assets:Bank', 'EUR', [],
+                                   dateutil_kwds={'dayfirst': True})
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -184,11 +184,11 @@ class TestCSVImporter(cmptest.TestCase):
           2020-07-03,B,3,123
         """
         file = cache.get_file(filename)
-        importer = csv.Importer({Col.DATE: 'Date',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount',
-                                 Col.REFERENCE_ID: 'Link'},
-                                'Assets:Bank', 'EUR', [])
+        importer = csvimp.Importer({Col.DATE: 'Date',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount',
+                                    Col.REFERENCE_ID: 'Link'},
+                                   'Assets:Bank', 'EUR', [])
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -208,11 +208,11 @@ class TestCSVImporter(cmptest.TestCase):
           2020-07-03,B,3,foo
         """
         file = cache.get_file(filename)
-        importer = csv.Importer({Col.DATE: 'Date',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount',
-                                 Col.TAG: 'Tag'},
-                                'Assets:Bank', 'EUR', [])
+        importer = csvimp.Importer({Col.DATE: 'Date',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount',
+                                    Col.TAG: 'Tag'},
+                                   'Assets:Bank', 'EUR', [])
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -233,17 +233,17 @@ class TestCSVImporter(cmptest.TestCase):
         """
         file = cache.get_file(filename)
 
-        importer = csv.Importer({Col.DATE: 'Posting Date',
-                                 Col.NARRATION1: 'Description',
-                                 Col.NARRATION2: 'Check or Slip #',
-                                 Col.AMOUNT: 'Amount',
-                                 Col.BALANCE: 'Balance',
-                                 Col.DRCR: 'Details'},
-                                'Assets:Bank',
-                                'USD',
-                                ('Details,Posting Date,"Description",Amount,'
-                                 'Type,Balance,Check or Slip #,'),
-                                institution='chafe')
+        importer = csvimp.Importer({Col.DATE: 'Posting Date',
+                                    Col.NARRATION1: 'Description',
+                                    Col.NARRATION2: 'Check or Slip #',
+                                    Col.AMOUNT: 'Amount',
+                                    Col.BALANCE: 'Balance',
+                                    Col.DRCR: 'Details'},
+                                   'Assets:Bank',
+                                   'USD',
+                                   ('Details,Posting Date,"Description",Amount,'
+                                    'Type,Balance,Check or Slip #,'),
+                                   institution='chafe')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -272,14 +272,14 @@ class TestCSVImporter(cmptest.TestCase):
 
             return txn
 
-        importer = csv.Importer({Col.DATE: 'Date',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount'},
-                                'Assets:Bank',
-                                'EUR',
-                                ('Date,Amount,Payee,Description'),
-                                categorizer=categorizer,
-                                institution='foobar')
+        importer = csvimp.Importer({Col.DATE: 'Date',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount'},
+                                   'Assets:Bank',
+                                   'EUR',
+                                   ('Date,Amount,Payee,Description'),
+                                   categorizer=categorizer,
+                                   institution='foobar')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -305,14 +305,14 @@ class TestCSVImporter(cmptest.TestCase):
             txn.meta['source'] = pformat(row)
             return txn
 
-        importer = csv.Importer({Col.DATE: 'Date',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount'},
-                                'Assets:Bank',
-                                'EUR',
-                                ('Date,Amount,Payee,Description'),
-                                categorizer=categorizer,
-                                institution='foobar')
+        importer = csvimp.Importer({Col.DATE: 'Date',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount'},
+                                   'Assets:Bank',
+                                   'EUR',
+                                   ('Date,Amount,Payee,Description'),
+                                   categorizer=categorizer,
+                                   institution='foobar')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 
@@ -332,11 +332,11 @@ class TestCSVImporter(cmptest.TestCase):
           2020/08/08,🍏,2
         """
         file = cache.get_file(filename)
-        importer = csv.Importer({Col.DATE: 'Posting',
-                                 Col.NARRATION: 'Description',
-                                 Col.AMOUNT: 'Amount'},
-                                'Assets:Bank', 'EUR', [],
-                                encoding='utf-8')
+        importer = csvimp.Importer({Col.DATE: 'Posting',
+                                    Col.NARRATION: 'Description',
+                                    Col.AMOUNT: 'Amount'},
+                                   'Assets:Bank', 'EUR', [],
+                                   encoding='utf-8')
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 

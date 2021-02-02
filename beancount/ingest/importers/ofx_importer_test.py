@@ -8,7 +8,7 @@ import unittest
 import bs4
 
 from beancount.core.number import D
-from beancount.ingest.importers import ofx
+from beancount.ingest.importers import ofx_importer as ofximp
 from beancount.parser import parser
 from beancount.parser import cmptest
 
@@ -23,9 +23,9 @@ class TestOFXImporter(cmptest.TestCase):
 
     def test_parse_ofx_time(self):
         dtime = datetime.datetime(2014, 1, 12, 5, 0, 0)
-        self.assertEqual(dtime, ofx.parse_ofx_time('20140112050000.000[-7:MST]'))
-        self.assertEqual(dtime, ofx.parse_ofx_time('20140112050000'))
-        self.assertEqual(dtime.replace(hour=0), ofx.parse_ofx_time('20140112'))
+        self.assertEqual(dtime, ofximp.parse_ofx_time('20140112050000.000[-7:MST]'))
+        self.assertEqual(dtime, ofximp.parse_ofx_time('20140112050000'))
+        self.assertEqual(dtime.replace(hour=0), ofximp.parse_ofx_time('20140112'))
 
     def test_find_acctids(self):
         contents = clean_xml("""
@@ -40,7 +40,7 @@ class TestOFXImporter(cmptest.TestCase):
                     <DOWNLOAD.FLAG>false
         """)
         self.assertEqual(['379700001111222'],
-                         list(ofx.find_acctids(contents)))
+                         list(ofximp.find_acctids(contents)))
 
     def test_find_max_date(self):
         contents = clean_xml("""
@@ -75,7 +75,7 @@ class TestOFXImporter(cmptest.TestCase):
             </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        date = ofx.find_max_date(contents)
+        date = ofximp.find_max_date(contents)
         self.assertEqual(datetime.date(2014, 1, 12), date)
 
     def test_find_currency(self):
@@ -101,7 +101,7 @@ class TestOFXImporter(cmptest.TestCase):
           </OFX>
         """)
         soup = bs4.BeautifulSoup(contents, 'lxml')
-        self.assertEqual("USD", ofx.find_currency(soup))
+        self.assertEqual("USD", ofximp.find_currency(soup))
 
     def test_find_statement_transactions(self):
         contents = clean_xml("""
@@ -222,7 +222,7 @@ class TestOFXImporter(cmptest.TestCase):
           </OFX>
         """)
         soup = bs4.BeautifulSoup(contents, 'lxml')
-        txns = list(ofx.find_statement_transactions(soup))
+        txns = list(ofximp.find_statement_transactions(soup))
 
         self.assertEqual(2, len(txns))
 
@@ -258,23 +258,23 @@ class TestOFXImporter(cmptest.TestCase):
         node = bs4.BeautifulSoup(contents, 'lxml')
 
         self.assertEqual('20131122000000.000[-7:MST]',
-                         ofx.find_child(node, 'dtposted'))
+                         ofximp.find_child(node, 'dtposted'))
         self.assertEqual('-13.93',
-                         ofx.find_child(node, 'trnamt'))
+                         ofximp.find_child(node, 'trnamt'))
         self.assertEqual('320133260227320537',
-                         ofx.find_child(node, 'fitid'))
+                         ofximp.find_child(node, 'fitid'))
         self.assertEqual('320133260227320537',
-                         ofx.find_child(node, 'refnum'))
+                         ofximp.find_child(node, 'refnum'))
         self.assertEqual('WHOLE & FDS HOU 10236 02124201320',
-                         ofx.find_child(node, 'name'))
+                         ofximp.find_child(node, 'name'))
         self.assertEqual('042102720272124201320',
-                         ofx.find_child(node, 'memo'))
+                         ofximp.find_child(node, 'memo'))
 
         # Test conversions.
         self.assertEqual(datetime.datetime(2013, 11, 22, 0, 0, 0),
-                         ofx.find_child(node, 'dtposted', ofx.parse_ofx_time))
+                         ofximp.find_child(node, 'dtposted', ofximp.parse_ofx_time))
         self.assertEqual(D('-13.93'),
-                         ofx.find_child(node, 'trnamt', D))
+                         ofximp.find_child(node, 'trnamt', D))
 
     def test_build_transaction(self):
         contents = clean_xml("""
@@ -296,7 +296,7 @@ class TestOFXImporter(cmptest.TestCase):
           </STMTTRN>
         """)
         node = bs4.BeautifulSoup(contents, 'lxml')
-        entry = ofx.build_transaction(node, '&', 'Liabilities:CreditCard', 'EUR')
+        entry = ofximp.build_transaction(node, '&', 'Liabilities:CreditCard', 'EUR')
         self.assertEqualEntries("""
           2013-11-22 & "WHOLEFDS HOU 10236 02124201320 / 042102720272124201320"
             Liabilities:CreditCard  -13.93 EUR
@@ -455,9 +455,9 @@ class TestOFXImporter(cmptest.TestCase):
 
     def test_extract_with_balance_declared(self):
         soup, exp_entries = self._extract_with_balance()
-        entries = ofx.extract(soup, 'test.ofx',
+        entries = ofximp.extract(soup, 'test.ofx',
                               '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.DECLARED)
+                              ofximp.BalanceType.DECLARED)
         balance_entries, _, __ = parser.parse_string("""
           2014-01-13 balance Liabilities:CreditCard            -2356.38 USD
         """)
@@ -465,9 +465,9 @@ class TestOFXImporter(cmptest.TestCase):
 
     def test_extract_with_balance_last(self):
         soup, exp_entries = self._extract_with_balance()
-        entries = ofx.extract(soup, 'test.ofx',
+        entries = ofximp.extract(soup, 'test.ofx',
                               '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.LAST)
+                              ofximp.BalanceType.LAST)
         balance_entries, _, __ = parser.parse_string("""
           2013-11-27 balance Liabilities:CreditCard            -2356.38 USD
         """)
@@ -522,9 +522,9 @@ class TestOFXImporter(cmptest.TestCase):
           </OFX>
         """)
         soup = bs4.BeautifulSoup(ofx_contents, 'lxml')
-        entries = ofx.extract(soup, 'test.ofx',
+        entries = ofximp.extract(soup, 'test.ofx',
                               '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.DECLARED)
+                              ofximp.BalanceType.DECLARED)
         balance_entries, _, __ = parser.parse_string("""
           2014-01-02 balance Liabilities:CreditCard   100.00 USD
           2014-01-03 balance Liabilities:CreditCard   200.00 USD

@@ -4,13 +4,8 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-# TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
-from beancount.utils import test_utils
-test_utils.remove_alt_csv_path()
-# pylint: disable=wrong-import-order
-import csv
-
 import collections
+import csv
 import datetime
 import enum
 import io

@@ -31,7 +31,7 @@ from importers.acme import acme_pdf
 from beancount.core import data
 from beancount.ingest import scripts_utils
 from beancount.ingest import extract
-from beancount.ingest.importers import ofx
+from beancount.ingest.importers import ofx_importer
 
 
 # Setting this variable provides a list of importer instances.
@@ -44,9 +44,9 @@ CONFIG = [
                         "Expenses:Financial:Fees",
                         "Assets:US:BofA:Checking"),
 
-    ofx.Importer("379700001111222",
-                 "Liabilities:US:CreditCard",
-                 "bofa"),
+    ofx_importer.Importer("379700001111222",
+                          "Liabilities:US:CreditCard",
+                          "bofa"),
 
     acme_pdf.Importer("Assets:US:AcmeBank"),
 ]

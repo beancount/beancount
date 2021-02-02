@@ -452,16 +452,3 @@ def record(fun):
         return return_value
     wrapped.calls = []
     return wrapped
-
-
-# TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
-def remove_alt_csv_path():
-    """Remove folder containing the csv module from the import path.
-
-    For some strange reason Bazel insists on inserting the local directory of
-    the file on sys.path and 'import csv' will fail to resolve to the global
-    module. TODO(blais): In the next version, renmame 'csv' to a different name.
-    """
-    sys.path[:] = [dirname
-                   for dirname in sys.path
-                   if not dirname.endswith('beancount/ingest/importers')]
