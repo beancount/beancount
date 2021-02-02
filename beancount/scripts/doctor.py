@@ -7,12 +7,12 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import logging
 import os
 import re
 import sys
-import argparse
-import logging
-from os import path
+
+import click
 
 from beancount import loader
 from beancount.core import account
@@ -20,54 +20,106 @@ from beancount.core import account_types
 from beancount.core import compare
 from beancount.core import convert
 from beancount.core import data
-from beancount.core import display_context
+from beancount.core.display_context import Align
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import prices
 from beancount.core import realization
-from beancount.parser import context
+from beancount.parser.context import render_file_context
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
-from beancount.parser import version
-from beancount.scripts import directories
-from beancount.utils import misc_utils
+from beancount.parser.version import VERSION
+from beancount.scripts.directories import validate_directories
 
 
-def do_lex(filename, unused_args):
-    """Dump the lexer output for a Beancount syntax file.
+class FileLocation(click.ParamType):
+    name = "location"
 
-    Args:
-      filename: A string, the Beancount input filename.
-    """
+    def convert(self, value, param, ctx):
+        match = re.match(r"(?:(.+):)?(\d+)$", value)
+        if not match:
+            self.fail("{!r} is not a valid location".format(value), param, ctx)
+        filename, lineno = match.groups()
+        if filename:
+            filename = os.path.abspath(filename)
+        return filename, int(lineno)
+
+
+class FileRegion(click.ParamType):
+    name = "region"
+
+    def convert(self, value, param, ctx):
+        match = re.match(r"(?:(.+):)?(\d+):(\d+)$", value)
+        if not match:
+            self.fail("{!r} is not a valid region".format(value), param, ctx)
+        filename, start_lineno, end_lineno = match.groups()
+        if filename:
+            filename = os.path.abspath(filename)
+        return filename, int(start_lineno), int(end_lineno)
+
+
+class Group(click.Group):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aliases = {}
+
+    def command(self, *args, alias=None, **kwargs):
+        wrap = click.Group.command(self, *args, **kwargs)
+        def decorator(f):
+            cmd = wrap(f)
+            if alias:
+                self.aliases[alias] = cmd.name
+            return cmd
+        return decorator
+
+    def get_command(self, ctx, name):
+        # aliases
+        name = self.aliases.get(name, name)
+        # allow to use '_' or '-' in command names.
+        name = name.replace('_', '-')
+        return click.Group.get_command(self, ctx, name)
+
+
+@click.command(cls=Group)
+@click.version_option(message=VERSION)
+def doctor():
+    pass
+
+
+@doctor.command(alias='dump-lexer')
+@click.argument('filename', type=click.Path())
+def lex(filename):
+    """Dump the lexer output for a Beancount syntax file."""
+
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
 
-do_dump_lexer = do_lex
 
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def parse(filename):
+    """Parse the a ledger in debug mode.
 
-def do_parse(filename, unused_args):
-    """Run the parser in debug mode.
+    Run the parser on ledger FILENAME with debug mode active.
 
-    Args:
-      filename: A string, the Beancount input filename.
     """
     entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
-def do_roundtrip(filename, unused_args):
-    """Round-trip test on arbitrary Ledger.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def roundtrip(filename):
+    """Round-trip test on arbitrary ledger.
 
-    Read a Ledger's transactions, print them out, re-read them again and compare
-    them. Both sets of parsed entries should be equal. Both printed files are
-    output to disk, so you can also run diff on them yourself afterwards.
+    Read transactions from ledger FILENAME, print them out, re-read
+    them again and compare them. Both sets of parsed entries should be
+    equal.  Both printed files are output to disk, so you can also run
+    diff on them yourself afterwards.
 
-    Args:
-      filename: A string, the Beancount input filename.
     """
-
     round1_filename = round2_filename = None
     try:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
@@ -76,7 +128,7 @@ def do_roundtrip(filename, unused_args):
         printer.print_errors(errors, file=sys.stderr)
 
         logging.info("Print them out to a file")
-        basename, extension = path.splitext(filename)
+        basename, extension = os.path.splitext(filename)
         round1_filename = ''.join([basename, '.roundtrip1', extension])
         with open(round1_filename, 'w') as outfile:
             printer.print_entries(entries, file=outfile)
@@ -124,12 +176,15 @@ def do_roundtrip(filename, unused_args):
                 print()
     finally:
         for rfilename in (round1_filename, round2_filename):
-            if path.exists(rfilename):
+            if os.path.exists(rfilename):
                 os.remove(rfilename)
 
 
-def do_directories(filename, args):
-    """Validate a directory hierarchy against a ledger's account names.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('dirs', type=click.Path(file_okay=False), nargs=-1)
+def directories(filename, dirs):
+    """Validate a directory hierarchy against the ledger's account names.
 
     Read a ledger's list of account names and check that all the capitalized
     subdirectory names under the given roots match the account names.
@@ -141,106 +196,80 @@ def do_directories(filename, args):
         the accounts in the given ledger.
     """
     entries, _, __ = loader.load_file(filename)
-    directories.validate_directories(entries, args)
+    validate_directories(entries, dirs)
 
 
-def do_list_options(*unused_args):
-    """Print out a list of the available options.
-
-    Args:
-      unused_args: Ignored.
-    """
+@doctor.command()
+def list_options():
+    """List available options."""
     print(options.list_options())
 
 
-def do_print_options(filename, *args):
-    """Print out the actual options parsed from a file.
-
-    Args:
-      unused_args: Ignored.
-    """
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def print_options(filename):
+    """List options parsed from a ledger."""
     _, __, options_map = loader.load_file(filename)
     for key, value in sorted(options_map.items()):
         print('{}: {}'.format(key, value))
 
 
-def get_commands():
-    """Return a list of available commands in this file.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('location', type=FileLocation())
+def context(filename, location):
+    """Describe transaction context.
 
-    Returns:
-      A list of pairs of (command-name string, docstring).
+    The transaction is looked up in ledger FILENAME at LOCATION. The
+    LOCATION argument is either a line number or a filename:lineno
+    tuple to indicate a location in a ledger included from the main
+    input file.
+
     """
-    commands = []
-    for attr_name, attr_value in globals().items():
-        match = re.match('do_(.*)', attr_name)
-        if match:
-            commands.append((match.group(1),
-                             misc_utils.first_paragraph(attr_value.__doc__)))
-    return commands
-
-
-def do_context(filename, args):
-    """Describe the context that a particular transaction is applied to.
-
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be a string which contains either a lineno integer or a filename:lineno
-        combination (which can be used if the location is not in the top-level file).
-    """
-    # Check we have the required number of arguments.
-    if len(args) != 1:
-        raise SystemExit("Missing line number argument.")
+    search_filename, lineno = location
+    if search_filename is None:
+        search_filename = filename
 
     # Load the input files.
     entries, errors, options_map = loader.load_file(filename)
 
-    # Parse the arguments, get the line number.
-    match = re.match(r"(.+):(\d+)$", args[0])
-    if match:
-        search_filename = path.abspath(match.group(1))
-        lineno = int(match.group(2))
-    elif re.match(r"(\d+)$", args[0]):
-        # Note: Make sure to use the absolute filename used by the parser to
-        # resolve the file.
-        search_filename = options_map['filename']
-        lineno = int(args[0])
-    else:
-        raise SystemExit("Invalid format for location.")
-
-    str_context = context.render_file_context(entries, options_map,
-                                              search_filename, lineno)
+    str_context = render_file_context(entries, options_map,
+                                      search_filename, lineno)
     sys.stdout.write(str_context)
 
 
 RenderError = collections.namedtuple('RenderError', 'source message entry')
 
 
-def do_linked(filename, args):
-    """Print out a list of transactions linked to the one at the given line.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('location_spec', metavar='[LINK|TAG|LOCATION|REGION]')
+def linked(filename, location_spec):
+    """List related transactions.
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be a string which contains either a lineno integer or a
-        (filename:)?lineno(:lineno)? combination (which can be used if the
-        location is not in the top-level file).
+    List all transaction in ledger FILENAME linked to LINK or tagged
+    with TAG, or linked to the one at LOCATION, or linked to any
+    transaction in REGION.
+
+    The LINK and TAG arguments must include the leading ^ or #
+    charaters. The LOCATION argument is either a line number or a
+    filename:lineno tuple to indicate a location in a ledger file
+    included from the main input file. The REGION argument is either a
+    stard:end line numbers tuple or a filename:start:end triplet to
+    indicate a region in a ledger file included from the main input
+    file.
+
     """
-    # Parse the arguments, get the line number.
-    if len(args) != 1:
-        raise SystemExit("Missing line number or link argument.")
-    location_spec = args[0]
-
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    # Accept an explicit link name as the location. Must include the '^'
-    # character.
+    # Link name.
     if re.match(r"\^(.*)$", location_spec):
         search_filename = options_map['filename']
         links = {location_spec[1:]}
         linked_entries = find_linked_entries(entries, links, False)
 
+    # Tag name.
     elif re.match(r"#(.*)$", location_spec):
         search_filename = options_map['filename']
         tag = location_spec[1:]
@@ -269,7 +298,7 @@ def do_linked(filename, args):
             else:
                 raise SystemExit("Invalid line number or link format for location.")
 
-        search_filename = (path.abspath(included_filename)
+        search_filename = (os.path.abspath(included_filename)
                            if included_filename else
                            options_map['filename'])
         lineno = int(first_line)
@@ -301,59 +330,24 @@ def do_linked(filename, args):
     render_mini_balances(linked_entries, options_map, None)
 
 
-# TODO(blais): This should be folded as an option when we convert this to click.
-def do_region_value(filename, args):
-    """Print out a list of transactions in a region and balances at market value.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('region', type=FileRegion())
+@click.option('--conversion', type=click.Choice(['value', 'cost']),
+              help='Convert balances output to market value or cost.')
+def region(filename, region, conversion):
+    """Print out a list of transactions within REGION and compute balances.
+
+    The REGION argument is either a stard:end line numbers tuple or a
+    filename:start:end triplet to indicate a region in a ledger file
+    included from the main input file.
+
     """
-    return do_region(filename, args, conversion='value')
+    search_filename, first_lineno, last_lineno = region
+    if search_filename is None:
+        search_filename = filename
 
-# TODO(blais): This should be folded as an option when we convert this to click.
-def do_region_cost(filename, args):
-    """Print out a list of transactions in a region and balances at cost.
-    """
-    return do_region(filename, args, conversion='cost')
-
-def do_region(filename, args, conversion=None):
-    """Print out a list of transactions in a region and balances.
-
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be a string which contains either a lineno integer or a
-        (filename:)?lineno:lineno combination (which can be used if the location
-        is not in the top-level file).
-      convert: A string, one of None, 'value', or 'cost'; if set, convert
-        balances output to market value (or cost).
-    """
-    # Parse the arguments, get the line number.
-    if len(args) != 1:
-        raise SystemExit("Missing line number or link argument.")
-    location_spec = args[0]
-
-    # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
-
-    # Parse the argument as a line number or a
-    # "<filename>:<lineno>:<lineno>" spec to pull context from, with
-    # optional filename and optional last line number.
-    #
-    # If a filename is not provided, the ledger's top-level filename is used
-    # (this is the common case). An explicit filename is used to get context
-    # in included files.
-    #
-    # If a single line number is provided the closest transaction is
-    # selected. If an internal of line numbers is provided, the list of all
-    # transactions whose first line is inside the interval are selected.
-    match = re.match(r"(?:(.+?):)?(\d+):(\d+)$", location_spec)
-    if not match:
-        raise SystemExit("Invalid line number or link format for region.")
-
-    included_filename, first_line, last_line = match.groups()
-    search_filename = (path.abspath(included_filename)
-                       if included_filename else
-                       options_map['filename'])
-    lineno = int(first_line)
-    last_lineno = int(last_line)
 
     # Find all the entries in the region. (To be clear, this isn't like the
     # 'linked' command, none of the links are followed.)
@@ -361,7 +355,7 @@ def do_region(filename, args, conversion=None):
         entry
         for entry in data.filter_txns(entries)
         if (entry.meta['filename'] == search_filename and
-            lineno <= entry.meta['lineno'] <= last_lineno)]
+            first_lineno <= entry.meta['lineno'] <= last_lineno)]
 
     price_map = prices.build_price_map(entries) if conversion == 'value' else None
     render_mini_balances(region_entries, options_map, conversion, price_map)
@@ -385,8 +379,7 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
 
     # Print out balances.
     real_root = realization.realize(entries)
-    dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
-                                            reserved=2)
+    dformat = options_map['dcontext'].build(alignment=Align.DOT, reserved=2)
 
     # TODO(blais): I always want to be able to convert at cost. We need
     # arguments capability.
@@ -473,16 +466,14 @@ def find_tagged_entries(entries, tag):
                 tag in entry.tags)]
 
 
-def do_missing_open(filename, args):
-    """Print out Open directives that are missing for the given input file.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def missing_open(filename):
+    """Print Open directives missing in FILENAME.
 
     This can be useful during demos in order to quickly generate all the
     required Open directives without having to type them manually.
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
     """
     entries, errors, options_map = loader.load_file(filename)
 
@@ -501,28 +492,22 @@ def do_missing_open(filename, args):
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
-def do_display_context(filename, args):
-    """Print out the precision inferred from the parsed numbers in the input file.
-
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
-    """
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def display_context(filename):
+    """Print the precision inferred from the parsed numbers in the input file."""
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['dcontext']
     sys.stdout.write(str(dcontext))
 
 
-def do_validate_html(directory, args):
-    """Validate all the HTML files under a directory hierarchy.
-
-    Args:
-      directory: A string, the root directory whose contents to validate.
-      args: A tuple of the rest of arguments.
-    """
+@doctor.command()
+@click.argument('directory', type=click.Path(file_okay=False))
+def validate_html(directory, args):
+    """Validate all the HTML files in a directory."""
     # pylint: disable=import-outside-toplevel
     from beancount.utils import scrape  # To avoid lxml dependency.
+
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
     for target in missing:
@@ -531,27 +516,7 @@ def do_validate_html(directory, args):
         logging.error('Empty %s', target)
 
 
-def main():
-    commands_doc = ('Available Commands:\n' +
-                    '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    argparser = version.ArgumentParser(description=__doc__,
-                                       formatter_class=argparse.RawTextHelpFormatter,
-                                       epilog=commands_doc)
-    argparser.add_argument('command', action='store',
-                           help="The command to run.")
-    argparser.add_argument('filename', nargs='?', help='Beancount input filename.')
-    argparser.add_argument('rest', nargs='*', help='All remaining arguments.')
-    opts = argparser.parse_args()
-
-    # Run the command.
-    try:
-        command_name = "do_{}".format(opts.command.replace('-', '_'))
-        function = globals()[command_name]
-    except KeyError:
-        argparser.error("Invalid command name: '{}'".format(opts.command))
-    else:
-        function(opts.filename, opts.rest)
-
+main = doctor
 
 if __name__ == '__main__':
     main()

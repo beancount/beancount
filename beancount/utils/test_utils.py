@@ -5,21 +5,23 @@ __license__ = "GNU GPLv2"
 
 import builtins
 import collections
-import textwrap
-import unittest
-import io
-import re
-import tempfile
-import logging
-import sys
 import contextlib
 import functools
-import shutil
+import io
 import itertools
+import logging
 import os
+import re
+import shutil
 import subprocess
+import sys
+import tempfile
+import textwrap
+import unittest
+
 from os import path
 
+import click.testing
 
 # A port allocation global. All the tests should use this global in order to
 # avoid port collisions during testing.
@@ -365,6 +367,14 @@ class TestCase(unittest.TestCase):
         with capture() as oss:
             yield oss
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
+
+
+class ClickTestCase(TestCase):
+    def run_with_args(self, function, *args):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(function, args)
+        self.assertEqual(result.exit_code, 0)
+        return result
 
 
 @contextlib.contextmanager

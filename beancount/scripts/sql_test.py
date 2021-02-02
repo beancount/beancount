@@ -44,14 +44,11 @@ ONE_OF_EACH_TYPE = """
 """
 
 
-class TestScriptSQL(test_utils.TestCase):
+class TestScriptSQL(test_utils.ClickTestCase):
 
     def convert_to_sql(self, filename):
         dbfile = tempfile.NamedTemporaryFile('w', suffix='.db')
-        with test_utils.capture('stdout', 'stderr'):
-            result = test_utils.run_with_args(sql.main,
-                                              [filename, dbfile.name])
-        self.assertEqual(0, result)
+        result = self.run_with_args(sql.main, filename, dbfile.name)
         self.assertNotEqual(0, path.getsize(dbfile.name))
         return dbfile
 
