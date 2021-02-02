@@ -3,22 +3,14 @@ __license__ = "GNU GPLv2"
 
 from os import path
 from unittest import mock
-import os
 import re
-import subprocess
-import sys
 import textwrap
 import unittest
-import functools
 
 from beancount.utils import test_utils
 from beancount.ingest.importer import ImporterProtocol
 from beancount.ingest import identify
-from beancount.ingest import scripts_utils
-
-
-
-identify_main = functools.partial(scripts_utils.trampoline_to_ingest, identify)
+from beancount.ingest.test_utils import TestScriptsBase, TestExamplesBase
 
 
 class _TestImporter(ImporterProtocol):
@@ -75,7 +67,7 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
         self.assertEqual([(file1, [])], imports)
 
 
-class TestScriptIdentify(scripts_utils.TestScriptsBase):
+class TestScriptIdentify(TestScriptsBase):
 
     def test_identify(self):
         regexp = textwrap.dedent("""\
@@ -91,42 +83,20 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
             """).strip()
 
-        # Invoke with new-style imports as script, with an ingest() call in the script.
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            env = os.environ.copy()
-            env['PYTHONPATH'] = ':'.join(sys.path)
-            output = subprocess.check_output(
-                [sys.executable, path.join(self.tempdir, 'testimport.py'),
-                 '--downloads', path.join(self.tempdir, 'Downloads'),
-                 'identify'], shell=False, env=env)
-        self.assertTrue(re.match(regexp, output.decode().strip()))
-
-        # Invoke with old-style imports script via tool (with no ingest() call).
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(identify_main,
-                                     [path.join(self.tempdir, 'test.import'),
-                                      path.join(self.tempdir, 'Downloads')],
-                                     identify.__file__)
+            test_utils.run_with_args(
+                self.ingest, ['-d', path.join(self.tempdir, 'Downloads'), 'identify'],
+                identify.__file__)
         output = stdout.getvalue().strip()
         self.assertTrue(re.match(regexp, output))
 
-        # Invoke with new-style imports script via tool (with an ingest() call).
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(identify_main,
-                                     [path.join(self.tempdir, 'testimport.py'),
-                                      path.join(self.tempdir, 'Downloads')],
-                                     identify.__file__)
-        output = stdout.getvalue().strip()
-        self.assertTrue(re.match(regexp, output))
+
+class TestIdentifyExamples(TestExamplesBase, TestScriptsBase):
 
     def test_identify_examples(self):
-        example_dir = path.join(
-            test_utils.find_repository_root(__file__), 'examples', 'ingest')
-        config_filename = path.join(example_dir, 'office', 'example.import')
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             result = test_utils.run_with_args(
-                identify_main,
-                [config_filename, path.join(example_dir, 'Downloads')],
+                self.ingest, ['-d', path.join(self.example_dir, 'Downloads'), 'identify'],
                 identify.__file__)
 
         self.assertEqual(0, result)
