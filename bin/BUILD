@@ -52,57 +52,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_extract_py",
-    srcs = ["bean-extract"],
-    outs = ["bean_extract.py"],
-    cmd = "cat $(locations :bean-extract) > $@",
-)
-
-py_binary(
-    name = "bean_extract",
-    srcs = ["bean_extract.py"],
-    deps = [
-        "//beancount/ingest:extract",
-        "//beancount/ingest:scripts_utils",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
-    name = "bean_file_py",
-    srcs = ["bean-file"],
-    outs = ["bean_file.py"],
-    cmd = "cat $(locations :bean-file) > $@",
-)
-
-py_binary(
-    name = "bean_file",
-    srcs = ["bean_file.py"],
-    deps = [
-        "//beancount/ingest:file",
-        "//beancount/ingest:scripts_utils",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
-    name = "bean_identify_py",
-    srcs = ["bean-identify"],
-    outs = ["bean_identify.py"],
-    cmd = "cat $(locations :bean-identify) > $@",
-)
-
-py_binary(
-    name = "bean_identify",
-    srcs = ["bean_identify.py"],
-    deps = [
-        "//beancount/ingest:identify",
-        "//beancount/ingest:scripts_utils",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "bean_format_py",
     srcs = ["bean-format"],
     outs = ["bean_format.py"],
