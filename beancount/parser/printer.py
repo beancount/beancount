@@ -199,7 +199,7 @@ class EntryPrinter:
                                else False)
         if non_trivial_balance:
             fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
-                self.prefix, width_account, width_position, width_weight).format
+                self.prefix, width_account, width_position, width_weight or 1).format
             for posting, account, position_str, weight_str in zip(entry.postings,
                                                                   strs_account,
                                                                   strs_position,
