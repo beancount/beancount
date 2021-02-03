@@ -34,6 +34,9 @@ from beancount.parser.version import VERSION
 from beancount.scripts.directories import validate_directories
 
 
+ledger_path = click.Path(resolve_path=True, exists=True)
+
+
 class FileLocation(click.ParamType):
     name = "location"
 
@@ -89,7 +92,7 @@ def doctor():
 
 
 @doctor.command(alias='dump-lexer')
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def lex(filename):
     """Dump the lexer output for a Beancount syntax file."""
 
@@ -99,7 +102,7 @@ def lex(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def parse(filename):
     """Parse the a ledger in debug mode.
 
@@ -110,7 +113,7 @@ def parse(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def roundtrip(filename):
     """Round-trip test on arbitrary ledger.
 
@@ -181,8 +184,10 @@ def roundtrip(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
-@click.argument('dirs', type=click.Path(file_okay=False), nargs=-1)
+@click.argument('filename', type=ledger_path)
+@click.argument('dirs',
+                type=click.Path(resolve_path=True, exists=True, file_okay=False),
+                nargs=-1)
 def directories(filename, dirs):
     """Validate a directory hierarchy against the ledger's account names.
 
@@ -206,7 +211,7 @@ def list_options():
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def print_options(filename):
     """List options parsed from a ledger."""
     _, __, options_map = loader.load_file(filename)
@@ -215,7 +220,7 @@ def print_options(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 @click.argument('location', type=FileLocation())
 def context(filename, location):
     """Describe transaction context.
@@ -242,7 +247,7 @@ RenderError = collections.namedtuple('RenderError', 'source message entry')
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 @click.argument('location_spec', metavar='[LINK|TAG|LOCATION|REGION]')
 def linked(filename, location_spec):
     """List related transactions.
@@ -305,6 +310,7 @@ def linked(filename, location_spec):
         if last_line is None:
             # Find the closest entry.
             closest_entry = data.find_closest(entries, search_filename, lineno)
+            selected_entries = [closest_entry]
 
             # Find its links.
             if closest_entry is None:
@@ -317,21 +323,23 @@ def linked(filename, location_spec):
             # Find all the entries in the interval, following all links.
             last_lineno = int(last_line)
             links = set()
+            selected_entries = []
             for entry in data.filter_txns(entries):
                 if (entry.meta['filename'] == search_filename and
                     lineno <= entry.meta['lineno'] <= last_lineno):
                     links.update(entry.links)
+                    selected_entries.append(entry)
 
         # Get the linked entries, or just the closest one, if no links.
         linked_entries = (find_linked_entries(entries, links, True)
                           if links
-                          else [closest_entry])
+                          else selected_entries)
 
     render_mini_balances(linked_entries, options_map, None)
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 @click.argument('region', type=FileRegion())
 @click.option('--conversion', type=click.Choice(['value', 'cost']),
               help='Convert balances output to market value or cost.')
@@ -467,7 +475,7 @@ def find_tagged_entries(entries, tag):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def missing_open(filename):
     """Print Open directives missing in FILENAME.
 
@@ -493,7 +501,7 @@ def missing_open(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=click.Path())
+@click.argument('filename', type=ledger_path)
 def display_context(filename):
     """Print the precision inferred from the parsed numbers in the input file."""
     entries, errors, options_map = loader.load_file(filename)
@@ -502,7 +510,8 @@ def display_context(filename):
 
 
 @doctor.command()
-@click.argument('directory', type=click.Path(file_okay=False))
+@click.argument('directory',
+                type=click.Path(resolve_path=True, file_okay=False, exists=True))
 def validate_html(directory, args):
     """Validate all the HTML files in a directory."""
     # pylint: disable=import-outside-toplevel
