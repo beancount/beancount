@@ -97,24 +97,10 @@ install_requires = [
     # The SQL parser uses PLY in order to parse the input syntax.
     'ply',
 
-    # This library is needed to parse XML files (for the OFX examples).
-    'beautifulsoup4',
-
-    # This library is needed to identify the character set of a file for
-    # import, in order to read its contents and match expressions
-    # against it.
-    'chardet',
-
     # This library is used to download and convert the documentation
     # programmatically and to upload lists of holdings to a Google
     # Spreadsheet for live intra-day monitoring.
     'google-api-python-client',
-
-    # This library is needed to identify the type of a file for
-    # import. It uses ctypes to wrap the libmagic library which is
-    # not generally available on Windows nor is easily installed,
-    # thus the conditional dependency.
-    'python-magic; sys_platform != "win32"',
 
     # Command line parsing.
     'click',
