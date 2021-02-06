@@ -101,8 +101,9 @@ class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories,
         rv = self.run_with_args(doctor, 'directories', filename, self.tmpdir)
         self.assertEqual(2, len(rv.stdout.splitlines()))
         matches = set(match.group(1) for match in re.finditer("'(.*?)'", rv.stdout))
-        clean_matches = set(match[len(self.tmpdir)+1:]
-                            if match.startswith(self.tmpdir)
+        tmpdir = path.realpath(self.tmpdir)
+        clean_matches = set(match[len(tmpdir)+1:]
+                            if match.startswith(tmpdir)
                             else match
                             for match in matches)
         self.assertEqual({'Expenses/Restaurant/Sub',
