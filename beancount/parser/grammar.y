@@ -723,10 +723,10 @@ query:
        }
 
 note:
-  DATE NOTE account STRING eol key_value_list
+  DATE NOTE account STRING tags_links eol key_value_list
     {
-        BUILDY(DECREF($1, $3, $4, $6),
-               $$, "note", "OOOO", $1, $3, $4, $6);
+      BUILDY(DECREF($1, $3, $4, $5, $7),
+               $$, "note", "OOOOO", $1, $3, $4, $5, $7);
     }
 
 filename: STRING

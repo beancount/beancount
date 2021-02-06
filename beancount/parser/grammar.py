@@ -704,7 +704,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Price(meta, date, currency, amount)
 
-    def note(self, filename, lineno, date, account, comment, kvlist):
+    def note(self, filename, lineno, date, account, comment, tags_links, kvlist):
         """Process a note directive.
 
         Args:
@@ -718,7 +718,8 @@ class Builder(lexer.LexBuilder):
           A new Note object.
         """
         meta = new_metadata(filename, lineno, kvlist)
-        return Note(meta, date, account, comment)
+        tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
+        return Note(meta, date, account, comment, tags, links)
 
     def document(self, filename, lineno, date, account, document_filename, tags_links,
                  kvlist):

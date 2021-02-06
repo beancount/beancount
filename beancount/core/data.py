@@ -272,6 +272,8 @@ class Note(NamedTuple):
     date: datetime.date
     account: Account
     comment: str
+    tags: Optional[Set]
+    links: Optional[Set]
 
 
 class Event(NamedTuple):

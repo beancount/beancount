@@ -7,7 +7,7 @@ import unittest
 import io
 import textwrap
 
-import pytest  # pylint: disable=wrong-import-order
+import pytest
 
 from beancount.core import amount
 from beancount.core import compare

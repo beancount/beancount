@@ -195,9 +195,10 @@ class TestParserEntryTypes(unittest.TestCase):
     @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
         """
-          2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
+          2013-05-18 note Assets:US:BestBank  "Blah, di blah."
+          2013-05-18 note Assets:US:BestBank  "Blah." ^984446a67382 #something
         """
-        check_list(self, entries, [data.Note])
+        check_list(self, entries, [data.Note, data.Note])
 
     @parser.parse_doc()
     def test_entry_document(self, entries, _, __):
