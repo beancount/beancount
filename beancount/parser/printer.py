@@ -287,7 +287,14 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Note(self, entry, oss):
-        oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
+        oss.write('{e.date} note {e.account} "{e.comment}"'.format(e=entry))
+        if entry.tags or entry.links:
+            oss.write(' ')
+            for tag in sorted(entry.tags):
+                oss.write('#{}'.format(tag))
+            for link in sorted(entry.links):
+                oss.write('^{}'.format(link))
+        oss.write('\n')
         self.write_metadata(entry.meta, oss)
 
     def Document(self, entry, oss):
