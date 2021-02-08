@@ -62,7 +62,7 @@ def setup_proto():
 def setup_upb():
     # upb, a smaller alternative to protobuf.
     if not native.existing_rule("upb"):
-        if True:
+        if False:
             native.local_repository(
                 name = "upb",
                 path = "/home/blais/src/github/protocolbuffers/upb",

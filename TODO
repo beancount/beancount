@@ -4502,9 +4502,6 @@ http://furius.ca/beancount/doc/proposal-query
     always links all the transactions, so it's not good enough. Just add this by
     default to the context command.
 
-  - bean-doctor context should accept a LINK, not just a line number from
-    context.
-
   - Great idea: Make the printer able to (1) output "incomplete" entries and (2)
     print out the entries in the order of (filename, line-no) in which they were
     parsed, to produce a file that is as close as possible to output. (bw3443
@@ -4668,6 +4665,58 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Add HIGHEST_COST booking method.
+
+  - Make queries with group by order by unaggregated columns by default (output
+    should be stable even without ORDER BY clause.
+
+  - IDEA: In linked and context commands, output the sum of all positive and all
+    negatives numbers (like "Net Income" sum in 'linked').
+
+  - IDEA: For ugly transactions like this, it's convenient to repeat account
+    names and amounts, like this:
+
+      2020-08-09 * "Delta Dental" "Processing claim" ^deltadental-XXXXXXXXXXXx
+        service: 2020-08-07
+        Expenses:Health:Dental:NonEligible             295.00 USD
+        Expenses:Health:Dental:NonEligible             -50.00 USD
+        Expenses:Health:Dental:Deductible               50.00 USD
+        Expenses:Health:Dental:NonEligible          0.20 * -202.00 USD
+        Expenses:Health:Dental:Coinsurance          0.20 *  202.00 USD
+        Expenses:Health:Dental:NonEligible          0.80 * -202.00 USD
+        Expenses:Health:Dental:Allowed              0.80 *  202.00 USD
+        Expenses:Health:Dental:Reimbursement          -161.60 USD
+        Assets:AccountsReceivable:Anthem:Dental
+
+    But we don't want them applied as such. It would be nice to have those
+    automatically turned into:
+
+      2020-08-09 * "Delta Dental" "Processing claim" ^deltadental-XXXXXXXXXXXx
+        service: 2020-08-07
+        Expenses:Health:Dental:NonEligible              43.00 USD  <--- here.
+        Expenses:Health:Dental:Deductible               50.00 USD
+        Expenses:Health:Dental:Coinsurance              40.40 USD
+        Expenses:Health:Dental:Allowed                 161.60 USD
+        Expenses:Health:Dental:Reimbursement          -161.60 USD
+        Assets:AccountsReceivable:Anthem:Dental
+
+    It's fine if this is done only for postings with the same currency and no
+    cost basis, or postings with a particular flag on, or just for some subset
+    of accounts. "automeld"? This would be nice in v3, as the original parsed
+    transaction can keep all the original detail while the reduced one only
+    appears in the finaly flow.
+
+    Or maybe... this shoule be global and automatic?  Impelment it, and print
+    out which transactions would be affected to find out.
+
+  - `bean-doctor linked` command should render the balances after each
+    transaction. Either horizontally (new columns), or a dedicated tree right
+    after each. Add an option. This would be nice for debugging.
+
+  - `bean-doctor linked`: The account types aren't in the correct order. It
+    shows Assets, Expenses, Liabilities... put all the balance statemnet
+    accounts first, then income statement accounts, finally, equity.
 
   - Plugin idea: A plugin that ensures that there is no residual commodity in an
     account as of its closing.
@@ -5563,7 +5612,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Fix amounts alignment function, it always seems to pick up stuff from the
     narration. Make it a fixed column!
-
+p
 ** Open Tickets - TODO
 
   - Issue #130: Padding involving the same account doesn't work incrementally (blais/beancount)

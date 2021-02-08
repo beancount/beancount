@@ -19,7 +19,6 @@ def gen_inputs(template, args):
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    #parser.add_argument('filenames', nargs='+', help='Filenames')
     args = parser.parse_args()
 
     gen_inputs('  Assets:Account        {:7} {:3}\n',

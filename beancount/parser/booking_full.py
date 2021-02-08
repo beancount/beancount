@@ -848,7 +848,8 @@ def interpolate_group(postings, balances, currency, tolerances):
             # to be interpolated.
             if cost is not None:
                 assert isinstance(cost.number, Decimal), (
-                    "Internal error: cost has no number: {}".format(cost))
+                    "Internal error: cost has no number: {}; on postings: {}".format(
+                        cost, postings))
 
         if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
@@ -1013,7 +1014,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             errors.append(InterpolationError(
                 posting.meta,
                 'Amount is zero: "{}"'.format(posting.units), None))
-        if posting.cost.number < ZERO:
+        if posting.cost.number is not None and posting.cost.number < ZERO:
             errors.append(InterpolationError(
                 posting.meta,
                 'Cost is negative: "{}"'.format(posting.cost), None))

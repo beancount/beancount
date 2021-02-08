@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import codecs
 import datetime
+import enum
 import io
 import re
 import sys
@@ -141,7 +142,7 @@ class EntryPrinter:
                 value_str = None
                 if isinstance(value, str):
                     value_str = '"{}"'.format(misc_utils.escape_string(value))
-                elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
+                elif isinstance(value, (Decimal, datetime.date, amount.Amount, enum.Enum)):
                     value_str = str(value)
                 elif isinstance(value, bool):
                     value_str = 'TRUE' if value else 'FALSE'
@@ -198,7 +199,7 @@ class EntryPrinter:
                                else False)
         if non_trivial_balance:
             fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
-                self.prefix, width_account, width_position, width_weight).format
+                self.prefix, width_account, width_position, width_weight or 1).format
             for posting, account, position_str, weight_str in zip(entry.postings,
                                                                   strs_account,
                                                                   strs_position,
@@ -209,13 +210,13 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "{0}{{:{1}}}  {{:{2}}}\n".format(
+            fmt_str = "{0}{{:{1}}}  {{:{2}}}".format(
                 self.prefix, width_account, max(1, width_position))
             fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
                                                       strs_position):
-                oss.write(fmt(account, position_str))
+                print(fmt(account, position_str).rstrip(), file=oss)
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
 
@@ -378,6 +379,8 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
+    # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
+    # print in-between other statements.
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
                       if hasattr(sys.stdout, 'buffer') else
                       sys.stdout)

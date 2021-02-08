@@ -95,6 +95,7 @@ message AccountRoots {
 }
 
 // Options that are visible to the user and that can be set.
+// Next token: 20
 message Options {
   //  The title of this ledger / input file. This shows up at the top of every
   //  page. e.g. "Joe Smith's Personal Ledger".
@@ -133,6 +134,15 @@ message Options {
   // zero out remaining amounts due to transfers during the exercise period.
   // e.g., "Conversions:Current".
   optional string account_current_conversions = 7;
+
+  // The name of an account to be used to post unrealized gains to. This is used
+  // when making any kind of conversion from cost to price on a balance sheet
+  // (or any realization). The amount inserted - the difference between book
+  // value and market value - has to be posted to a gains account to keep the
+  // balance on the sheet. This has no effect on behavior, other than providing
+  // a configurable account name for such postings to occur. Its value should
+  // not include the root account (e.g., defaults to "Unrealized").
+  optional string account_unrealized_gains = 19;
 
   // The name of an account to be used to post to and accumulate rounding error.
   // This is unset and this feature is disabled by default; setting this value

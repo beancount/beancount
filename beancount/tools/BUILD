@@ -1,9 +1,17 @@
 package(default_visibility = ["//visibility:public"])
 
 py_library(
+    name = "gapis",
+    srcs = ["gapis.py"],
+    deps = [
+    ],
+)
+
+py_library(
     name = "sheets_upload",
     srcs = ["sheets_upload.py"],
     deps = [
+        ":gapis",
     ],
 )
 

@@ -23,7 +23,7 @@ Ledger::~Ledger() {
 // TODO(blais): Pull error code.
 int WriteToText(const Ledger& ledger, const std::string& filename) {
   // Open output file.
-  int outfd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC);
+  int outfd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
   if (outfd == -1) {
     // TODO(blais): handle this properly, with Status<>.
     std::cerr << "Error opening file '" << filename << "': " << strerror(errno) << std::endl;

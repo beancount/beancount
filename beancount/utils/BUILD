@@ -67,23 +67,6 @@ py_test(
 )
 
 py_library(
-    name = "file_type",
-    srcs = ["file_type.py"],
-    deps = [
-        "@python_magic//:magic"
-    ],
-)
-
-py_test(
-    name = "file_type_test",
-    srcs = ["file_type_test.py"],
-    data = glob(["file_type_testdata/*"]),
-    deps = [
-        ":file_type",
-    ],
-)
-
-py_library(
     name = "file_utils",
     srcs = ["file_utils.py"],
 )

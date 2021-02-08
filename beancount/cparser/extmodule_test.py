@@ -5,7 +5,11 @@ import tempfile
 import time
 import unittest
 
-from beancount.cparser import extmodule
+try:
+  from beancount.cparser import extmodule
+except ImportError:
+  extmodule = None
+
 from beancount.parser import printer
 
 
@@ -15,6 +19,7 @@ class CppParserModuleTests(unittest.TestCase):
     print(extmodule.__doc__)
     print(extmodule.parse.__doc__)
 
+  @unittest.skipIf(extmodule is None, "Old pytest tests only.")
   def test_parse(self):
     # TODO(blais): Remove, this is temporary, for testing locally.
     filename = os.getenv("L")

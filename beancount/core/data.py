@@ -87,7 +87,7 @@ class Open(NamedTuple):
     date: datetime.date
     account: Account
     currencies: List[Currency]
-    booking: Booking
+    booking: Optional[Booking]
 
 
 class Close(NamedTuple):
@@ -272,6 +272,8 @@ class Note(NamedTuple):
     date: datetime.date
     account: Account
     comment: str
+    tags: Optional[Set]
+    links: Optional[Set]
 
 
 class Event(NamedTuple):

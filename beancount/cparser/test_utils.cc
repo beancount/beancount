@@ -21,7 +21,7 @@ using std::string;
 namespace {
 
 // Return the number of whitespace characters leading the string.
-inline int CountIndentSpaces(const string& line) {
+inline size_t CountIndentSpaces(const string& line) {
   int index = 0;
   for (const char c : line) {
     if (c != ' ')
@@ -47,12 +47,12 @@ string StripAndDedent(std::string_view input_string) {
   lines.pop_back();
 
   // Dedent the lines.
-  int min_column = std::numeric_limits<int>::max();
+  size_t min_column = std::numeric_limits<int>::max();
   for (const auto& line : lines) {
     if (line.empty()) {
       continue;
     }
-    int num_spaces = CountIndentSpaces(line);
+    size_t num_spaces = CountIndentSpaces(line);
     if (num_spaces < min_column) {
       min_column = num_spaces;
     }

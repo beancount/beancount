@@ -118,7 +118,7 @@ def get_value(pos, price_map, date=None, output_date_prices=None):
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
       output_date_prices: An optional output list of (date, price). If this list
-        is provided, it will be appended to (mutated) to output the prices
+        is provided, it will be appended to (mutated) to output the price
         pulled in making the conversions.
     Returns:
       An Amount, either with a successful value currency conversion, or if we
@@ -152,6 +152,9 @@ def get_value(pos, price_map, date=None, output_date_prices=None):
     return units
 
 
+# TODO(blais): This function needs to be modified to return the difference in
+# value from the conversion, so that it can be inserted elsewhere (e.g. an
+# unrealized gains account).
 def convert_position(pos, target_currency, price_map, date=None):
     """Return the market value of a Position or Posting in a particular currency.
 

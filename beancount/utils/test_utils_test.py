@@ -4,23 +4,12 @@ __license__ = "GNU GPLv2"
 import unittest
 import io
 import os
-import sys
 from os import path
 
 from beancount.utils import test_utils
 
 
 class TestTestUtils(unittest.TestCase):
-
-    def test_run_with_args(self):
-        sentinel = []
-        def main():
-            sentinel.append(sys.argv)
-        test_utils.run_with_args(main, ['a', 'b', 'c'])
-        self.assertEqual(1, len(sentinel))
-        sys_argv = sentinel[0]
-        self.assertTrue(sys_argv[0].endswith('beancount/utils/test_utils_test.py'))
-        self.assertEqual(['a', 'b', 'c'], sys_argv[1:])
 
     def test_tempdir(self):
         with test_utils.tempdir() as tempdir:

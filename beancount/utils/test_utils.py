@@ -5,26 +5,20 @@ __license__ = "GNU GPLv2"
 
 import builtins
 import collections
-import textwrap
-import unittest
-import io
-import re
-import tempfile
-import logging
-import sys
 import contextlib
 import functools
-import shutil
-import itertools
+import io
 import os
-import subprocess
+import re
+import shutil
+import sys
+import tempfile
+import textwrap
+import unittest
+
 from os import path
 
-
-# A port allocation global. All the tests should use this global in order to
-# avoid port collisions during testing.
-# pylint: disable=invalid-name
-get_test_port = itertools.count(9470).__next__
+import click.testing
 
 
 def nottest(func):
@@ -50,7 +44,7 @@ def find_repository_root(filename=None):
         return match.group(1)
 
     while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKG-INFO', 'COPYING', 'README.rst')):
+                  for sigfile in ('PKG-INFO', 'COPYING')):
         prev_filename = filename
         filename = path.dirname(filename)
         if prev_filename == filename:
@@ -81,51 +75,6 @@ def subprocess_env():
         os.environ.get('PATH', '').strip(':')]).strip(':')
     return {'PATH': binpath,
             'PYTHONPATH': find_python_lib()}
-
-
-def run_with_args(function, args, runner_file=None):
-    """Run the given function with sys.argv set to argv. The first argument is
-    automatically inferred to be where the function object was defined. sys.argv
-    is restored after the function is called.
-
-    Args:
-      function: A function object to call with no arguments.
-      argv: A list of arguments, excluding the script name, to be temporarily
-        set on sys.argv.
-      runner_file: An optional name of the top-level file being run.
-    Returns:
-      The return value of the function run.
-    """
-    saved_argv = sys.argv
-    saved_handlers = logging.root.handlers
-
-    try:
-        if runner_file is None:
-            module = sys.modules[function.__module__]
-            runner_file = module.__file__
-        sys.argv = [runner_file] + args
-        logging.root.handlers = []
-        return function()
-    finally:
-        sys.argv = saved_argv
-        logging.root.handlers = saved_handlers
-
-
-def call_command(command):
-    """Run the script with a subprocess.
-
-    Args:
-      script_args: A list of strings, the arguments to the subprocess,
-        including the script name.
-    Returns:
-      A triplet of (return code integer, stdout ext, stderr text).
-    """
-    assert isinstance(command, list), command
-    p = subprocess.Popen(command,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    return p.returncode, stdout.decode(), stderr.decode()
 
 
 @contextlib.contextmanager
@@ -367,6 +316,14 @@ class TestCase(unittest.TestCase):
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
 
 
+class ClickTestCase(TestCase):
+    def run_with_args(self, function, *args):
+        runner = click.testing.CliRunner()
+        result = runner.invoke(function, args)
+        self.assertEqual(result.exit_code, 0)
+        return result
+
+
 @contextlib.contextmanager
 def skipIfRaises(*exc_types):
     """A context manager (or decorator) that skips a test if an exception is raised.
@@ -442,16 +399,3 @@ def record(fun):
         return return_value
     wrapped.calls = []
     return wrapped
-
-
-# TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
-def remove_alt_csv_path():
-    """Remove folder containing the csv module from the import path.
-
-    For some strange reason Bazel insists on inserting the local directory of
-    the file on sys.path and 'import csv' will fail to resolve to the global
-    module. TODO(blais): In the next version, renmame 'csv' to a different name.
-    """
-    sys.path[:] = [dirname
-                   for dirname in sys.path
-                   if not dirname.endswith('beancount/ingest/importers')]

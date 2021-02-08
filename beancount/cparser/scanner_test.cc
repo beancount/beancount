@@ -169,7 +169,7 @@ TEST(ScannerTest, UnicodeAccountName) {
         //
         {symbol::S_KEY,     3, u8"abc1"},
         {symbol::S_COLON,   3, u8":"},
-        {symbol::S_YYerror, 3, u8"Invalid token: 'abc1'"},
+        {symbol::S_YYUNDEF, 3, u8"abc1"},
         {symbol::S_EOL,     3, u8"\n"},
         //
         {symbol::S_ACCOUNT, 4, u8"ΑβγⅠ:ΑβγⅠ"},
@@ -298,7 +298,7 @@ TEST(ScannerTest, NumberDots) {
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_NUMBER,   1, "1.234"},
-        {symbol::S_YYerror,  1, "Invalid token: '.00'"},
+        {symbol::S_YYUNDEF,  1, ".00"},
         {symbol::S_CURRENCY, 1, "USD"},
         {symbol::S_EOL,      1, "\n"},
       }));
@@ -310,7 +310,7 @@ TEST(ScannerTest, NumberNoInteger) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror,  1, "Invalid token: '.2347'"},
+        {symbol::S_YYUNDEF,  1, ".2347"},
         {symbol::S_CURRENCY, 1, "USD"},
         {symbol::S_EOL,      1, "\n"},
       }));
@@ -345,7 +345,7 @@ TEST(ScannerTest, BadDateInvalidToken) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror, 1, "Invalid date: '2013-12-98'"},
+        {symbol::S_YYUNDEF, 1, "2013-12-98"},
         {symbol::S_EOL,     1, "\n"},
       }));
 }
@@ -356,7 +356,7 @@ TEST(ScannerTest, BadDateValidButInvalid) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror, 1, "Invalid date: '2013-15-01'"},
+        {symbol::S_YYUNDEF, 1, "2013-15-01"},
         {symbol::S_EOL,     1, "\n"},
       }));
 }
@@ -389,7 +389,7 @@ TEST(ScannerTest, BadTime) {
         {symbol::S_COLON,   1, ":"},
         {symbol::S_NUMBER,  1, "99"},
         {symbol::S_EOL,     1, "\n"},
-        {symbol::S_YYerror, 2, "Invalid time: '99:99'"},
+        {symbol::S_YYUNDEF, 2, "2000-09-10 99:99"},
         {symbol::S_EOL,     2, "\n"},
       }));
 }
@@ -417,7 +417,7 @@ TEST(ScannerTest, AccountNamesWithNumbers) {
         {symbol::S_EOL,     1, "\n"},
         {symbol::S_ACCOUNT, 2, "Assets:99Test"},
         {symbol::S_EOL,     2, "\n"},
-        {symbol::S_YYerror, 3, "Invalid token: 'Assets:signals'"},
+        {symbol::S_YYUNDEF, 3, "Assets:signals"},
         {symbol::S_EOL,     3, "\n"},
       }));
 }
@@ -440,7 +440,7 @@ TEST(ScannerTest, InvalidDirective) {
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_DATE,     1, "2008-03-01"},
-        {symbol::S_YYerror,  1, "Invalid token: 'check'"},
+        {symbol::S_YYUNDEF,  1, "check"},
         {symbol::S_ACCOUNT,  1, "Assets:BestBank:Savings"},
         {symbol::S_NUMBER,   1, "2340.19"},
         {symbol::S_CURRENCY, 1, "USD"},
@@ -474,7 +474,7 @@ TEST(ScannerTest, StringTooLong) {
       "2014-02-02 note Assets:Temporary \"Bla bla\"\n");
   const auto symbols = Tokenize(test, true);
   EXPECT_EQ(symbols.size(), 9);
-  EXPECT_EQ(std::get<0>(symbols[5]), symbol::S_YYerror);
+  EXPECT_EQ(std::get<0>(symbols[5]), symbol::S_YYUNDEF);
 }
 
 TEST(ScannerTest, VeryLongNumber) {
@@ -496,7 +496,7 @@ TEST(ScannerTest, VeryLongString) {
   buffer[262144] = '\0';
   const auto symbols = Tokenize(buffer, true);
   EXPECT_EQ(symbols.size(), 2);
-  EXPECT_EQ(std::get<0>(symbols[0]), symbol::S_YYerror);
+  EXPECT_EQ(std::get<0>(symbols[0]), symbol::S_YYUNDEF);
 }
 
 TEST(ScannerTest, NoFinalNewline) {
@@ -561,7 +561,7 @@ TEST(ScannerTest, StringNewlineTooLong) {
   }
   const auto symbols = Tokenize(oss.str(), true);
   EXPECT_EQ(256, symbols.size());
-  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[0]));
+  EXPECT_EQ(symbol::S_YYUNDEF, std::get<0>(symbols[0]));
   EXPECT_EQ(symbol::S_EOL, std::get<0>(symbols[1]));
 }
 
@@ -686,8 +686,8 @@ TEST(IgnoredLinesTest, NonCommentNonFlag) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols.size(), 9);
-  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[0]));
-  EXPECT_EQ(symbol::S_YYerror, std::get<0>(symbols[1]));
+  EXPECT_EQ(symbol::S_YYUNDEF, std::get<0>(symbols[0]));
+  EXPECT_EQ(symbol::S_YYUNDEF, std::get<0>(symbols[1]));
   EXPECT_EQ(symbol::S_EOL, std::get<0>(symbols.back()));
 }
 
@@ -725,7 +725,7 @@ TEST(LexerErrorsTest, InvalidToken) {
   EXPECT_EQ(symbols, symbol_tuples({
         {symbol::S_DATE, 1, "2000-01-01"},
         {symbol::S_OPEN, 1, "open"},
-        {symbol::S_YYerror, 1, "Invalid token: '`'"},
+        {symbol::S_YYUNDEF, 1, "`"},
         {symbol::S_CURRENCY, 1, "USD"},
         {symbol::S_EOL, 1, "\n"},
       }));
@@ -738,7 +738,7 @@ TEST(LexerErrorsTest, ErrorRecovery) {
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
-        {symbol::S_YYerror, 1, "Invalid date: '2000-13-32'"},
+        {symbol::S_YYUNDEF, 1, "2000-13-32"},
         {symbol::S_OPEN,    1, "open"},
         {symbol::S_ACCOUNT, 1, "Assets:Something"},
         {symbol::S_EOL,     1, "\n"},

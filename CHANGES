@@ -5,6 +5,20 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2021-01-09
+
+ - Fixed bug in booking that assumed number is set on cost. I did this while
+   running booking manually on entries freshly created on an importer (never ahd
+   done that before, will be customary in v3).
+
+
+2021-01-08
+
+ - Fixed recently introduced bug with the export script that reordered the
+   columns.
+ - Fixed bug with printer leaving trailing whitespace. Was annoying.
+
+
 2020-12-20
 
  - Merged half of branch pr128_seltzered_beanpriceupdate on this side of

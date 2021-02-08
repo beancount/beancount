@@ -24,14 +24,13 @@ def find_example_files():
                 yield path.join(root, filename)
 
 
-class TestCheckExamples(test_utils.TestCase):
+class TestCheckExamples(test_utils.ClickTestCase):
 
     def test_example_files(self):
         for filename in find_example_files():
-            with test_utils.capture('stdout', 'stderr') as (stdout, _):
-                result = test_utils.run_with_args(check.main, [filename])
-            self.assertEqual(0, result)
-            self.assertLines("", stdout.getvalue())
+            result = self.run_with_args(check.main, filename)
+            self.assertEqual(0, result.exit_code)
+            self.assertLines("", result.stdout)
 
 
 if __name__ == '__main__':

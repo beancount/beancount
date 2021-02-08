@@ -200,7 +200,7 @@ class TestRun(unittest.TestCase):
         self.assertRegex(output, 'Expenses:Home:Rent')
 
 
-class TestShell(test_utils.TestCase):
+class TestShell(test_utils.ClickTestCase):
 
     @test_utils.docfile
     def test_success(self, filename):
@@ -222,9 +222,8 @@ class TestShell(test_utils.TestCase):
           Assets:Account1     -1000 USD
           Assets:Account3       800 EUR @ 1.25 USD
         """
-        with test_utils.capture('stdout', 'stderr') as (stdout, _):
-            test_utils.run_with_args(shell.main, [filename, "SELECT 1;"])
-        self.assertTrue(stdout.getvalue())
+        result = self.run_with_args(shell.main, filename, "SELECT 1;")
+        self.assertTrue(result.stdout)
 
 
 __incomplete__ = True

@@ -129,7 +129,9 @@ class Str(query_compile.EvalFunction):
         return repr(args[0])
 
 class MaxWidth(query_compile.EvalFunction):
-    "Convert the argument to a substring. This can be used to ensure maximum width"
+    """Convert the argument to a substring. This can be used to ensure maximum width.
+    This will insert an ellipsis ([...]) if necessary.
+    """
     __intypes__ = [str, int]
 
     def __init__(self, operands):
@@ -138,6 +140,28 @@ class MaxWidth(query_compile.EvalFunction):
     def __call__(self, context):
         string, width = self.eval_args(context)
         return textwrap.shorten(string, width=width)
+
+class SubStr(query_compile.EvalFunction):
+    "Extract a substring of the argument."
+    __intypes__ = [str, int, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        string, start, end = self.eval_args(context)
+        return string[start:end]
+
+class SplitComp(query_compile.EvalFunction):
+    "Split a string and extract one of its components."
+    __intypes__ = [str, str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        string, delimiter, index = self.eval_args(context)
+        return string.split(delimiter)[index]
 
 
 # Operations on dates.
@@ -295,6 +319,32 @@ class Subst(query_compile.EvalFunction):
         if any([arg is None for arg in args]):
             return None
         return re.sub(args[0], args[1], args[2])
+
+class Upper(query_compile.EvalFunction):
+    "Convert string to uppercase"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return args[0].upper()
+
+class Lower(query_compile.EvalFunction):
+    "Convert string to lowercase"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return args[0].lower()
 
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
@@ -863,12 +913,16 @@ SIMPLE_FUNCTIONS = {
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,
+    'substr'                                             : SubStr,
+    'splitcomp'                                          : SplitComp,
     'root'                                               : Root,
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
     'grep'                                               : Grep,
     'grepn'                                              : GrepN,
     'subst'                                              : Subst,
+    'upper'                                              : Upper,
+    'lower'                                              : Lower,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,
