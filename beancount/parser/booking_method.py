@@ -168,10 +168,10 @@ def booking_method_NONE(entry, posting, matches):
     return [posting], [], False
 
 
-def rebook_inventory_at_average_cost(full_inventory: Inventory,
-                                     account,
-                                     unit_currency,
-                                     cost_currency):
+def generate_rebook_at_average_postings(full_inventory: Inventory,
+                                        account,
+                                        unit_currency,
+                                        cost_currency):
     """ Returns a set of postings that rebook an inventory at average cost.
 
     An inventory can be held in multiple cost currencies, so we treat units
@@ -191,27 +191,28 @@ def rebook_inventory_at_average_cost(full_inventory: Inventory,
     the specified cost_currency, an empty list is returned as no rebooking is
     necessary.
     """
-    filtered_inv = inventory.Inventory()
+    ante_inventory = inventory.Inventory()
     for inv_position in full_inventory:
-        if inv_position.units.currency == unit_currency and \
-        inv_position.cost.currency == cost_currency:
-            filtered_inv.add_position(inv_position)
+        if (inv_position.cost is not None and
+                inv_position.units.currency == unit_currency and
+                inv_position.cost.currency == cost_currency):
+            ante_inventory.add_position(inv_position)
 
-    if len(filtered_inv) <= 1:
+    if len(ante_inventory) <= 1:
         return []
 
     rebooking_postings = []
-    avg_position = filtered_inv.average().get_only_position()
+    avg_position = ante_inventory.average().get_only_position()
     # Negate existing inventory.
-    for inv_position in filtered_inv:
+    for inv_position in ante_inventory:
         rebooking_postings.append(Posting(
-                account=account,
-                units=-inv_position.units,
-                cost=inv_position.cost,
-                price=None,
-                flag=flags.FLAG_MERGING,
-                meta=None,
-            ))
+            account=account,
+            units=-inv_position.units,
+            cost=inv_position.cost,
+            price=None,
+            flag=flags.FLAG_MERGING,
+            meta=None,
+        ))
     # Now rebook at average cost.
     rebooking_postings.append(
         Posting(

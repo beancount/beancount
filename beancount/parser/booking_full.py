@@ -274,7 +274,7 @@ def rebook_inventory_at_average(local_balances, booked_postings, inter_postings,
                            inter_posting.cost.currency)] = True
     for account, unit_currency, cost_currency in rebook_groups:
         balance = local_balances[account]
-        merging_postings = booking_method.rebook_inventory_at_average_cost(
+        merging_postings = booking_method.generate_rebook_at_average_postings(
             balance,
             account,
             unit_currency,
@@ -640,7 +640,7 @@ def book_reductions(entry, group_postings, balances,
                 # average cost before matching lots, so the match is more
                 # likely unambiguous.
                 if costspec.merge:
-                    rebooking_postings = booking_method.rebook_inventory_at_average_cost(
+                    rebooking_postings = booking_method.generate_rebook_at_average_postings(
                         balance, account, units.currency, costspec.currency
                     )
                     booked_postings.extend(rebooking_postings)
