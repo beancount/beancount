@@ -64,6 +64,7 @@ class FileRegion(click.ParamType):
 
 
 class Group(click.Group):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.aliases = {}
