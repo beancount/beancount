@@ -29,7 +29,7 @@ def main(filename, verbose, no_cache, cache_filename):
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
     # Override loader caching setup.
-    if use_cache or cache_filename:
+    if not use_cache or cache_filename:
         loader.initialize(use_cache, cache_filename)
 
     with misc_utils.log_time('beancount.loader (total)', logging.info):
