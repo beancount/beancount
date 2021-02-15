@@ -145,10 +145,12 @@ def _book(entries, options_map, methods):
 
             # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
+
             # This local balance tracks changes while processing this transaction.
             local_balances = collections.defaultdict(inventory.Inventory)
             for acct in balances:
                 local_balances[acct].add_inventory(balances[acct])
+
             for currency, group_postings in posting_groups:
                 # Important note: the group of 'postings' here is a subset of
                 # that from entry.postings, and may include replicated
@@ -215,7 +217,6 @@ def _book(entries, options_map, methods):
                 for posting in merging_postings:
                     local_balances[posting.account].add_position(posting)
 
-
             # Replace postings with interpolated ones.
             meta = entry.meta.copy()
             meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
@@ -232,8 +233,8 @@ def _book(entries, options_map, methods):
                 balance = balances[posting.account]
                 balance.add_position(posting)
 
-            assert local_balances == balances,\
-                "Internal error, local_balances diverged from balances."
+            assert local_balances == balances, (
+                "Internal error, local_balances diverged from balances.")
 
         new_entries.append(entry)
 
@@ -241,7 +242,7 @@ def _book(entries, options_map, methods):
 
 
 def rebook_inventory_at_average(local_balances, booked_postings, inter_postings, methods):
-    """ Rebook inventory at average cost where appropriate.
+    """Rebook inventory at average cost where appropriate.
 
     This works by checking for AVERAGE booking or a merge flag. When found, it checks if
     this inventory is held at average or not. If not, it returns postings that will rebook
@@ -249,13 +250,13 @@ def rebook_inventory_at_average(local_balances, booked_postings, inter_postings,
     local_balances.
 
     Args:
-        local_balances: The running balances that accounts for previously processed postings
-         in this transaction.
-        booked_postings: The pre-interpolation postings, used to check for merge flags.
-        inter_postings: The interpolated postings, used to derive the final lots to merge.
-        methods: the dictionary mapping accounts to configured booking method.
-
-    Returns: repl_postings: a list of postings to rebook the inventory at average cost.
+      local_balances: The running balances that accounts for previously
+        processed postings in this transaction.
+      booked_postings: The pre-interpolation postings, used to check for merge flags.
+      inter_postings: The interpolated postings, used to derive the final lots to merge.
+      methods: the dictionary mapping accounts to configured booking method.
+    Returns:
+      A list of postings to rebook the inventory at average cost.
     """
     merging_requested = False
     repl_postings = []

@@ -172,24 +172,24 @@ def generate_rebook_at_average_postings(full_inventory: Inventory,
                                         account,
                                         unit_currency,
                                         cost_currency):
-    """ Returns a set of postings that rebook an inventory at average cost.
+    """Returns a set of postings that rebook an inventory at average cost.
 
     An inventory can be held in multiple cost currencies, so we treat units
     held in differing cost currencies completely separately.
 
     Args:
-        full_inventory: The ante-inventory that we want to rebook at average cost.
-        account: The account name this inventory is held for.
-        unit_currency: The unit currency (commodity) that we want to rebook our
-          holdings for.
-        cost_currency: The cost currency to filter the inventory's positions,
-          since we treat units held in differing cost currencies completely
-          indepdendently.
-
-    Returns: a list of postings that will negate the inventory and rebook it
-    as an average position. If the inventory is already a single position for
-    the specified cost_currency, an empty list is returned as no rebooking is
-    necessary.
+      full_inventory: The ante-inventory that we want to rebook at average cost.
+      account: The account name this inventory is held for.
+      unit_currency: The unit currency (commodity) that we want to rebook our
+        holdings for.
+      cost_currency: The cost currency to filter the inventory's positions,
+        since we treat units held in differing cost currencies completely
+        indepdendently.
+    Returns:
+      A list of postings that will negate the inventory and rebook it as an
+      average position. If the inventory is already a single position for the
+      specified cost_currency, an empty list is returned as no rebooking is
+      necessary.
     """
     ante_inventory = inventory.Inventory()
     for inv_position in full_inventory:
