@@ -145,6 +145,10 @@ def _book(entries, options_map, methods):
 
             # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
+            # This local balance tracks changes while processing this transaction.
+            local_balances = collections.defaultdict(inventory.Inventory)
+            for acct in balances:
+                local_balances[acct].add_inventory(balances[acct])
             for currency, group_postings in posting_groups:
                 # Important note: the group of 'postings' here is a subset of
                 # that from entry.postings, and may include replicated
@@ -197,7 +201,22 @@ def _book(entries, options_map, methods):
                     errors.extend(interpolation_errors)
                 repl_postings.extend(inter_postings)
 
-            # Replace postings by interpolated ones.
+                # Lot merging needs to incorporate the state from this transaction.
+                for posting in inter_postings:
+                    local_balances[posting.account].add_position(posting)
+
+                # If lot merging was requested via {*} or setting the account
+                # booking to AVERAGE, do that after interpolation so it can
+                # account for missing numbers.
+                merging_postings = rebook_inventory_at_average(local_balances,
+                                                               booked_postings,
+                                                               inter_postings, methods)
+                repl_postings.extend(merging_postings)
+                for posting in merging_postings:
+                    local_balances[posting.account].add_position(posting)
+
+
+            # Replace postings with interpolated ones.
             meta = entry.meta.copy()
             meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
             entry = entry._replace(postings=repl_postings,
@@ -213,9 +232,56 @@ def _book(entries, options_map, methods):
                 balance = balances[posting.account]
                 balance.add_position(posting)
 
+            assert local_balances == balances,\
+                "Internal error, local_balances diverged from balances."
+
         new_entries.append(entry)
 
     return new_entries, errors, balances
+
+
+def rebook_inventory_at_average(local_balances, booked_postings, inter_postings, methods):
+    """ Rebook inventory at average cost where appropriate.
+
+    This works by checking for AVERAGE booking or a merge flag. When found, it checks if
+    this inventory is held at average or not. If not, it returns postings that will rebook
+    the inventory as average cost, along with an inventory_diff for the caller to apply to
+    local_balances.
+
+    Args:
+        local_balances: The running balances that accounts for previously processed postings
+         in this transaction.
+        booked_postings: The pre-interpolation postings, used to check for merge flags.
+        inter_postings: The interpolated postings, used to derive the final lots to merge.
+        methods: the dictionary mapping accounts to configured booking method.
+
+    Returns: repl_postings: a list of postings to rebook the inventory at average cost.
+    """
+    merging_requested = False
+    repl_postings = []
+    for posting in booked_postings:
+        if posting.cost and isinstance(posting.cost, CostSpec) and posting.cost.merge:
+            merging_requested = True
+    # If lot merging was requested, resolve it after interpolation.
+    # This allows interpolation to resolve an unspecified cost before
+    # it gets merged together into a merged inventory.
+    rebook_groups = {}
+    for inter_posting in inter_postings:
+        if inter_posting.cost is None:
+            continue
+        if merging_requested or methods[inter_posting.account] is Booking.AVERAGE:
+            rebook_groups[(inter_posting.account, inter_posting.units.currency,
+                           inter_posting.cost.currency)] = True
+    for account, unit_currency, cost_currency in rebook_groups:
+        balance = local_balances[account]
+        merging_postings = booking_method.generate_rebook_at_average_postings(
+            balance,
+            account,
+            unit_currency,
+            cost_currency
+        )
+        repl_postings.extend(merging_postings)
+    return repl_postings
 
 
 # An error raised if we failed to bucket a posting to a particular currency.
@@ -570,6 +636,18 @@ def book_reductions(entry, group_postings, balances,
                 balance.is_reduced_by(units)):
                 # This posting is a reduction.
 
+                # If {*} if specified for this posting, re-book inventory at
+                # average cost before matching lots, so the match is more
+                # likely unambiguous.
+                if costspec.merge:
+                    rebooking_postings = booking_method.generate_rebook_at_average_postings(
+                        balance, account, units.currency, costspec.currency
+                    )
+                    booked_postings.extend(rebooking_postings)
+                    # Local inventory is updated so reductions will apply to the merged lot.
+                    for rebooking_posting in rebooking_postings:
+                        balance.add_position(rebooking_posting)
+
                 # Match the positions.
                 cost_number = compute_cost_number(costspec, units)
                 matches = []
@@ -731,7 +809,7 @@ def interpolate_group(postings, balances, currency, tolerances):
       tolerances: A dict of currency to tolerance values.
     Returns:
       A tuple of
-        postings: A lit of new posting instances.
+        postings: A list of new posting instances.
         errors: A list of errors generated during interpolation.
         interpolated: A boolean, true if we did have to interpolate.
 
