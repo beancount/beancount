@@ -102,8 +102,13 @@ message Posting {
   // A string, the account that is modified by this posting.
   optional string account = 5;
 
-  // NOTE(blais): Maybe units + cost really ought to actually just be an
-  // instance of Position, defined as a proto instead of a module, in here.
+
+  //******************************************************************************
+  // TODO(blais): Units + cost really ought to actually just be an instance of
+  // Position, defined as a proto here, so that inclusion of these in Inventory
+  // is really clear. An accessor can make the interface nicer, but we shouldn't
+  // compromise here.
+  //******************************************************************************
 
   // An Amount, the units of the position.
   optional Amount units = 6;
@@ -111,16 +116,31 @@ message Posting {
   // A Cost instances, the units of the position.
   optional Cost cost = 7;
 
+
   // An Amount, the price at which the position took place, or None, where not
   // relevant. Providing a price member to a posting automatically adds a price
   // in the prices database at the date of the transaction.
   optional Amount price = 8;
+
+  //---------------------------------------------------------------------------
+  // WARNING: The following fields are only used in the production of the
+  // intermediate representation produced by the parser and never set in the
+  // final processed output from Beancount. Do not use this in the finalized
+  // data.
+
+  // TODO(blais): Contemplate lumping these into a single message.
+
+  // A UnitSpec instance.
+  optional inter.UnitSpec units_spec = 10;
 
   // A CostSpec instance. Warning: This partically filled field is only used in
   // the production of the intermediate representation produced by the parser
   // and never set in the final processed output from Beancount. Do not use
   // this.
   optional inter.CostSpec cost_spec = 9;
+
+  // A PriceSpec instance.
+  optional inter.PriceSpec price_spec = 11;
 }
 
 // A pair of a Posting and its parent Transaction. This is inserted as
@@ -428,4 +448,4 @@ message LedgerProto {
   optional options.ProcessingInfo info = 4;
 }
 
-// TODO(blais): Renumber all proto fields before publishing.
+// TODO(blais): Renumber all proto fields before publishing final version.

@@ -8,6 +8,7 @@
 
 #include "beancount/cparser/ledger.h"
 
+#include <stdexcept>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -30,9 +31,11 @@ template <typename T>
 bool EqualsMessages(const T& actual, std::string_view expected_proto_string) {
   // TODO(blais): Remove string() when protobuf is upgraded.
   T expected;
-  assert(google::protobuf::TextFormat::ParseFromString(
-             std::string(expected_proto_string),
-             &expected));
+  if (!google::protobuf::TextFormat::ParseFromString(
+          std::string(expected_proto_string),
+          &expected)) {
+    throw std::domain_error("Could not parse expected proto.");
+  }
   return EqualsMessages(expected, actual);
 }
 

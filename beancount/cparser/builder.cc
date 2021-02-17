@@ -1,3 +1,6 @@
+// TODO(blais): Complete this module. This isn't hooked up yet, needs to get
+// completed.
+
 #include "beancount/cparser/builder.h"
 #include "beancount/ccore/std_utils.h"
 
@@ -350,11 +353,23 @@ void Builder::AppendDirective(Directive* directive) {
 }
 
 void Builder::PreparePosting(Posting* posting,
+                             const Amount* units_spec,
                              const char flag,
                              const string& account,
-                             bool is_total,
+                             bool is_total_price,
                              const location& loc) {
   assert(posting != nullptr);
+
+  // Set the units spec on the posting, if present.
+  if (units_spec != nullptr) {
+    auto* spec = posting->mutable_units_spec();
+    if (units_spec->has_number()) {
+      spec->mutable_number()->CopyFrom(units_spec->number());
+    }
+    if (units_spec->has_currency()) {
+      spec->set_currency(units_spec->currency());
+    }
+  }
 
   // Store flag and account name.
   if (flag != '\0') {
@@ -363,29 +378,32 @@ void Builder::PreparePosting(Posting* posting,
   posting->set_account(account);
 
   // Check conditions renamed to price annotations.
-  if (posting->has_price()) {
-    const auto& price = posting->price();
+  if (posting->has_price_spec()) {
+    const auto& price = posting->price_spec();
+
+    // TODO(blais): Do not make the computation here! Keep it as total and
+    // resolve the final amount on interpolation.
 
     // If the price is specified for the entire amount, compute the effective
     // price here and forget about that detail of the input syntax.
-    if (is_total) {
-      if (!posting->has_units() || !posting->units().has_number()){
+    if (is_total_price) {
+      if (!posting->has_units_spec() || !posting->units_spec().has_number()){
         // units.number is MISSING.
         // Note: we could potentially do a better job and attempt to f
         // this up after interpolation, but this syntax is pretty rare
         // anyway.
         AddError(StrFormat("Total price on a posting without units: %s.",
                            price.DebugString()), loc);
-        posting->clear_price();
+        posting->clear_price_spec();
       } else if (price.has_number()) {
-        decimal::Decimal dunits = ProtoToDecimal(posting->units().number());
+        decimal::Decimal dunits = ProtoToDecimal(posting->units_spec().number());
         decimal::Decimal dprice;
         if (dunits.iszero()) {
           dprice = dunits;
         } else {
           dprice = ProtoToDecimal(price.number()).div(dunits.abs(), context());
         }
-        DecimalProto(dprice, posting->mutable_price()->mutable_number());
+        DecimalProto(dprice, posting->mutable_price_spec()->mutable_number());
       }
     }
 

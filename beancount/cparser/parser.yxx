@@ -1,6 +1,9 @@
 /* -*- mode: c++ -*- */
 // Parser grammar for beancount 3.0 input syntax (Bison C++).
 
+// TODO(blais): Review ownership and leakage. This parser does not currently
+// apply much rigor on reclaimining memory.
+
 //- Options -------------------------------------------------------------------
 
 %require "3.7"
@@ -221,7 +224,7 @@ namespace parser {
 %type <beancount::Amount*> partial_amount
 %type <std::optional<decimal::Decimal>> maybe_number
 %type <std::optional<std::string>> maybe_currency
-%type <beancount::Amount*> price_annotation
+%type <beancount::inter::PriceSpec*> price_annotation
 %type <beancount::inter::CostSpec*> compound_amount
 %type <beancount::inter::CostSpec*> cost_comp
 %type <beancount::inter::CostSpec*> cost_comp_list
@@ -435,7 +438,9 @@ transaction:
       auto* txn = $$->mutable_transaction();
       for (const auto* posting : $posting_list) {
         txn->mutable_postings()->Add()->CopyFrom(*posting);
+        delete posting;
       }
+      $posting_list.clear();
     }
 
 /* Matches just the first line of a transaction, without its metadata. */
@@ -912,58 +917,63 @@ posting:
   optflag account partial_amount cost_spec eol
     {
       $$ = new Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
-      builder.PreparePosting($$, $optflag, $account, false, @$);
+      builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
+      delete $partial_amount;
     }
   /* Variation with price. */
   | optflag account partial_amount cost_spec AT price_annotation eol
     {
       $$ = new Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
-      $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, false, @$);
+      $$->mutable_price_spec()->CopyFrom(*$price_annotation);
+      builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
+      delete $partial_amount;
+      delete $price_annotation;
     }
   /* Variation with complete price. */
   | optflag account partial_amount cost_spec ATAT price_annotation eol
     {
       $$ = new Posting();
-      $$->mutable_units()->CopyFrom(*$partial_amount);
       if ($cost_spec != nullptr) {
         $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
       }
-      $$->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $optflag, $account, true, @$);
+      $$->mutable_price_spec()->CopyFrom(*$price_annotation);
+      $$->mutable_price_spec()->set_is_total(true);
+      builder.PreparePosting($$, $partial_amount, $optflag, $account, true, @$);
+      delete $partial_amount;
+      delete $price_annotation;
     }
   /* Variation with just an account name. */
   | optflag account eol
     {
       $$ = new Posting();
-      builder.PreparePosting($$, $optflag, $account, false, @$);
+      builder.PreparePosting($$, nullptr, $optflag, $account, false, @$);
     }
 
 /* A price annotation on a posting. */
 price_annotation:
   partial_amount
     {
-      $price_annotation = $partial_amount;
+      $$ = new inter::PriceSpec();
+      $$->mutable_number()->CopyFrom($partial_amount->number());
+      $$->set_currency($partial_amount->currency());
 
       // Prices may not be negative. Check and issue an error if found; fix up
       // the price to its absolute value and continue.
-      if ($price_annotation->has_number()) {
-        decimal::Decimal dec = ProtoToDecimal($price_annotation->number());
+      if ($$->has_number()) {
+        decimal::Decimal dec = ProtoToDecimal($$->number());
         if (dec.sign() == -1) {
           // TODO(blais): Move this to post-parsing.
           builder.AddError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)", @$);
           // Invert and continue.
-          builder.DecimalProto(-dec, $price_annotation->mutable_number());
+          builder.DecimalProto(-dec, $$->mutable_number());
         }
       }
     }
@@ -1183,13 +1193,14 @@ std::unique_ptr<Ledger> Parse(
     parser.set_debug_level(1);
     scanner.set_debug(1);
   }
+  int result;
   try {
-    int result = parser.parse();
+    result = parser.parse();
     (void)result; // TODO(blais): ERROR Handle the result and corresponding error.
 
   } catch (const std::runtime_error& exc) {
     // TODO(blais): Implement this.
-    std::cerr << "exc " << exc.what() << std::endl;
+    std::cerr << "EXC " << exc.what() << std::endl;
   }
 
   if (debug) {

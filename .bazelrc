@@ -37,3 +37,13 @@ build --define=use_fast_cpp_protos=true
 #
 # TODO(blais): Update rules_foreign_cc.
 build --incompatible_require_linker_input_cc_api=false
+
+# Add address sanitizer support.
+# Run like this: bazel test -c dbg --config=asan //beancount/{cparser,ccore}:all``
+build:asan --strip=never
+build:asan --copt -fsanitize=address
+build:asan --copt -DADDRESS_SANITIZER
+build:asan --copt -O1
+build:asan --copt -g
+build:asan --copt -fno-omit-frame-pointer
+build:asan --linkopt -fsanitize=address

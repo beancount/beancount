@@ -121,6 +121,7 @@ public:
 
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
+                      const Amount* units_spec,
                       const char flag,
                       const std::string& account,
                       bool is_total,
