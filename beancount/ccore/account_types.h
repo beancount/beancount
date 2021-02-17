@@ -57,6 +57,11 @@ bool IsIncomeStatementAccount(std::string_view account_name, const AccountTypes&
 // Return true if the given account is an equity account.
 bool IsEquityAccount(std::string_view account_name, const AccountTypes& account_types);
 
+// Return true if the given account has inverted signs. An inverted sign is the
+// inverse as you'd expect in an external report, i.e., with all positive signs
+// expected.
+bool IsInvertedAccount(std::string_view account_name, const AccountTypes& account_types);
+
 // Return the sign of the normal balance of a particular account. +1 or -1,
 // depending on the account's type.
 int GetAccountSign(std::string_view account_name, const AccountTypes& account_types);

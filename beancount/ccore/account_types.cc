@@ -83,6 +83,13 @@ bool IsEquityAccount(string_view account_name, const AccountTypes& account_types
   return atype == account_types.equity();
 }
 
+bool IsInvertedAccount(string_view account_name, const AccountTypes& account_types) {
+  auto atype = GetAccountType(account_name);
+  return (atype == account_types.income() ||
+          atype == account_types.liabilities() ||
+          atype == account_types.equity());
+}
+
 int GetAccountSign(string_view account_name, const AccountTypes& account_types) {
   auto atype = GetAccountType(account_name);
   return (atype == account_types.assets() ||

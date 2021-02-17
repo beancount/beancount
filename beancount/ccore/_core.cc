@@ -94,6 +94,7 @@ void ExportAccountTypes(py::module& mod) {
   mod.def("is_balance_sheet_account", &IsBalanceSheetAccount);
   mod.def("is_income_statement_account", &IsIncomeStatementAccount);
   mod.def("is_equity_account", &IsEquityAccount);
+  mod.def("is_inverted_account", &IsInvertedAccount);
   mod.def("get_account_sign", &GetAccountSign);
 }
 
