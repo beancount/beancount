@@ -77,6 +77,11 @@ class TestContext(test_utils.TestCase):
           Expenses:Financial:Commissions                                          35.80 USD
 
 
+        ** Average Costs --------------------------------
+
+          Assets:US:ETrade:ITOT    4.00 ITOT {173.11 USD, 2012-08-31}
+
+
         ** Unbooked Transaction --------------------------------
 
         2013-02-07 * "Buy shares of ITOT"

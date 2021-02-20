@@ -111,8 +111,12 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
     pr(header.format("Balances before transaction"))
     pr()
     before_hashes = set()
+    average_costs = {}
     for account in accounts:
-        positions = balance_before[account].get_positions()
+        balance = balance_before[account]
+        positions = balance.get_positions()
+        if any(pos.cost is not None for pos in positions):
+            average_costs[account] = balance.average()
         for position in positions:
             before_hashes.add((account, hash(position)))
             pr(position_line.format('', account, str(position)))
@@ -120,6 +124,16 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
             pr(position_line.format('', account, ''))
         pr()
     pr()
+
+    # Print average cost per account, if relevant.
+    if average_costs:
+        pr(header.format("Average Costs"))
+        pr()
+        for account, average_cost in sorted(average_costs.items()):
+            for position in average_cost:
+                pr(position_line.format('', account, str(position)))
+        pr()
+        pr()
 
     # Print the entry itself.
     dcontext = options_map['dcontext']
