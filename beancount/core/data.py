@@ -40,6 +40,11 @@ class Booking(enum.Enum):
     # Reject ambiguous matches with an error.
     STRICT = 'STRICT'
 
+    # Strict booking method, but disambiguate further with sizes. Reject
+    # ambiguous matches with an error but if a lot matches the size exactly,
+    # accept it the oldest.
+    STRICT_WITH_SIZE = 'STRICT_WITH_SIZE'
+
     # Disable matching and accept the creation of mixed inventories.
     NONE = 'NONE'
 

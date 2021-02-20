@@ -33,10 +33,12 @@ def handle_ambiguous_matches(entry, posting, matches, method):
       methods: A mapping of account name to their corresponding booking
         method.
     Returns:
-      A pair of
+      A triple of
         booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
         errors: A list of errors to be generated.
+        insufficient: A boolean, true if we could not find enough matches to
+        cover the entire position.
     """
     assert isinstance(method, Booking), (
         "Invalid type: {}".format(method))
@@ -59,26 +61,13 @@ def handle_ambiguous_matches(entry, posting, matches, method):
 
 
 def booking_method_STRICT(entry, posting, matches):
-    """Strict booking method.
-
-    Args:
-      entry: The parent Transaction instance.
-      posting: An instance of Posting, the reducing posting which we're
-        attempting to match.
-      matches: A list of matching Position instances from the ante-inventory.
-        Those positions are known to already match the 'posting' spec.
-    Returns:
-      A triple of
-        booked_reductions: A list of matched Posting instances, whose 'cost'
-          attributes are ensured to be of type Cost.
-        errors: A list of errors to be generated.
-        insufficient: A boolean, true if we could not find enough matches
-          to fulfill the reduction.
+    """Strict booking method. This method fails if there are ambiguous matches.
     """
     booked_reductions = []
     booked_matches = []
     errors = []
     insufficient = False
+
     # In strict mode, we require at most a single matching posting.
     if len(matches) > 1:
         # If the total requested to reduce matches the sum of all the
@@ -105,6 +94,36 @@ def booking_method_STRICT(entry, posting, matches):
         booked_reductions.append(posting._replace(units=match_units, cost=match.cost))
         booked_matches.append(match)
         insufficient = (match_units.number != posting.units.number)
+
+    return booked_reductions, booked_matches, errors, insufficient
+
+
+def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
+    """Strict booking method, but disambiguate further with sizes.
+
+    This booking method applies the same algorithm as the STRICT method, but if
+    only one of the ambiguous lots matches the desired size, select that one
+    automatically.
+    """
+    (booked_reductions, booked_matches, errors,
+     insufficient) = booking_method_STRICT(entry, posting, matches)
+
+    # If we couldn't match strictly, attempt to find a match with the same
+    # number of units. If there is one or more of these, accept the oldest lot.
+    if errors and len(matches) > 1:
+        number = -posting.units.number
+        matching_units = [match
+                          for match in matches
+                          if number == match.units.number]
+        if matching_units:
+            matching_units.sort(key=lambda match: match.cost.date)
+
+            # Replace the posting's units and cost values.
+            match = matching_units[0]
+            booked_reductions.append(posting._replace(units=-match.units, cost=match.cost))
+            booked_matches.append(match)
+            insufficient = False
+            errors = []
 
     return booked_reductions, booked_matches, errors, insufficient
 
@@ -244,9 +263,10 @@ def booking_method_AVERAGE(entry, posting, matches):
 
 
 _BOOKING_METHODS = {
-    Booking.STRICT : booking_method_STRICT,
-    Booking.FIFO   : booking_method_FIFO,
-    Booking.LIFO   : booking_method_LIFO,
-    Booking.NONE   : booking_method_NONE,
-    Booking.AVERAGE: booking_method_AVERAGE,
+    Booking.STRICT           : booking_method_STRICT,
+    Booking.STRICT_WITH_SIZE : booking_method_STRICT_WITH_SIZE,
+    Booking.FIFO             : booking_method_FIFO,
+    Booking.LIFO             : booking_method_LIFO,
+    Booking.NONE             : booking_method_NONE,
+    Booking.AVERAGE          : booking_method_AVERAGE,
 }

@@ -2734,6 +2734,44 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
 
+
+class TestStrictWithSize(_BookingTestBase):
+
+    @book_test(Booking.STRICT_WITH_SIZE)
+    def test_strict_with_size_single(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          1 HOOL {101.00 USD}
+          Assets:Account          2 HOOL {102.00 USD}
+
+        2015-10-02 * #apply
+          Assets:Account         -1 HOOL {}
+
+        2015-10-02 * #booked
+          Assets:Account         -1 HOOL {101.00 USD, 2015-10-01}
+
+        2015-11-04 * #ex
+          Assets:Account          2 HOOL {102.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.STRICT_WITH_SIZE)
+    def test_strict_with_size_multiple(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          2 HOOL {101.00 USD, 2014-06-02}
+          Assets:Account          2 HOOL {102.00 USD, 2014-06-01}
+
+        2015-10-02 * #apply
+          Assets:Account         -2 HOOL {}
+
+        2015-10-02 * #booked
+          Assets:Account         -2 HOOL {102.00 USD, 2014-06-01}
+
+        2015-11-04 * #ex
+          Assets:Account          2 HOOL {101.00 USD, 2014-06-02}
+        """
+
+
 class TestBookingApi(unittest.TestCase):
     def test_book_single(self):
         txn = data.Transaction(data.new_metadata(__file__, 0),
