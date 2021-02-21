@@ -77,6 +77,17 @@ message Cost {
   optional string label = 4;
 }
 
+// A Position is a pair of units and optional cost. This is used to represent
+// lots accumulated over time in inventories, and the impact of posting on an
+// inventory is also a position. It is synonymous with a "lot."
+message Position {
+  // An Amount, the number of units and its currency.
+  optional Amount units = 1;
+
+  // An optional Cost that stores the cost basis and lot identification.
+  optional Cost cost = 2;
+}
+
 // Postings are contained in Transaction entries. These represent the individual
 // legs of a transaction. Note: a posting may only appear within a single entry
 // (multiple transactions may not share a Posting instance), and that's what the
@@ -102,25 +113,13 @@ message Posting {
   // A string, the account that is modified by this posting.
   optional string account = 5;
 
-
-  //******************************************************************************
-  // TODO(blais): Units + cost really ought to actually just be an instance of
-  // Position, defined as a proto here, so that inclusion of these in Inventory
-  // is really clear. An accessor can make the interface nicer, but we shouldn't
-  // compromise here.
-  //******************************************************************************
-
-  // An Amount, the units of the position.
-  optional Amount units = 6;
-
-  // A Cost instances, the units of the position.
-  optional Cost cost = 7;
-
+  // The position this posting impacts on its inventory.
+  optional Position position = 6;
 
   // An Amount, the price at which the position took place, or None, where not
   // relevant. Providing a price member to a posting automatically adds a price
   // in the prices database at the date of the transaction.
-  optional Amount price = 8;
+  optional Amount price = 7;
 
   //---------------------------------------------------------------------------
   // WARNING: The following fields are only used in the production of the
@@ -128,10 +127,10 @@ message Posting {
   // final processed output from Beancount. Do not use this in the finalized
   // data.
 
-  // TODO(blais): Contemplate lumping these into a single message.
+  // TODO(blais): Contemplate lumping these into a single 'spec' message.
 
   // A UnitSpec instance.
-  optional inter.UnitSpec units_spec = 10;
+  optional inter.UnitSpec units_spec = 8;
 
   // A CostSpec instance. Warning: This partically filled field is only used in
   // the production of the intermediate representation produced by the parser
@@ -140,7 +139,7 @@ message Posting {
   optional inter.CostSpec cost_spec = 9;
 
   // A PriceSpec instance.
-  optional inter.PriceSpec price_spec = 11;
+  optional inter.PriceSpec price_spec = 10;
 }
 
 // A pair of a Posting and its parent Transaction. This is inserted as

@@ -38,6 +38,14 @@ py::object GetDate(const T& parent) {
   return py::reinterpret_steal<py::object>(py_date);
 }
 
+Amount GetUnits(const Posting& posting) {
+  return posting.position().units();
+}
+
+Cost GetCost(const Posting& posting) {
+  return posting.position().cost();
+}
+
 // Explicit interface to protobuf schema.
 //
 // For a more complete and read/write setup, it'll be wiser to complete the
@@ -131,8 +139,8 @@ void ExportDataTypesToPython(py::module& mod) {
     .def_property_readonly("date", &GetDate<Posting>)
     .def_property_readonly("flag", &Posting::flag)
     .def_property_readonly("account", &Posting::account)
-    .def_property_readonly("units", &Posting::units)
-    .def_property_readonly("cost", &Posting::cost)
+    .def_property_readonly("units", &GetUnits)
+    .def_property_readonly("cost", &GetCost)
     .def_property_readonly("price", &Posting::price)
     ;
 
