@@ -1751,8 +1751,9 @@ class LiberalDate(click.ParamType):
 @click.option('--seed', '-s', type=int, help="Random seed.")
 @click.option('--no-reformat', is_flag=True, help="Do not reformat the output.")
 @click.option('--output', '-o', type=click.File('w'), default='-', help="Output filename.")
+@click.option('--verbose', '-v', type=bool, help="Produce logging output.")
 @click.version_option(message=VERSION)
-def main(date_begin, date_end, date_birth, seed, no_reformat, output):
+def main(date_begin, date_end, date_birth, seed, no_reformat, output, verbose):
     """Generate a decently-sized example history, based on some rules.
 
     This script is used to generate some meaningful input to
@@ -1769,7 +1770,8 @@ def main(date_begin, date_end, date_birth, seed, no_reformat, output):
     date_birth = date_birth or datetime.date(1980, 5, 12)
     reformat = not no_reformat
 
-    logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
+    level = logging.DEBUG if verbose else logging.WARN
+    logging.basicConfig(level=level, format='%(levelname)-8s: %(message)s')
     if seed is not None:
         logging.info("Seed = %s", seed)
         random.seed(seed)

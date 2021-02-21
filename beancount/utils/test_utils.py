@@ -317,6 +317,8 @@ class TestCase(unittest.TestCase):
 
 
 class ClickTestCase(TestCase):
+    """Base class for command-line program test cases."""
+
     def run_with_args(self, function, *args):
         runner = click.testing.CliRunner()
         result = runner.invoke(function, args)
