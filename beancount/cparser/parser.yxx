@@ -918,7 +918,7 @@ posting:
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
-        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+        $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
       builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
       delete $partial_amount;
@@ -928,9 +928,9 @@ posting:
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
-        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+        $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
-      $$->mutable_price_spec()->CopyFrom(*$price_annotation);
+      $$->mutable_spec()->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
       delete $partial_amount;
       delete $price_annotation;
@@ -940,10 +940,11 @@ posting:
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
-        $$->mutable_cost_spec()->CopyFrom(*$cost_spec);
+        $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
-      $$->mutable_price_spec()->CopyFrom(*$price_annotation);
-      $$->mutable_price_spec()->set_is_total(true);
+      auto* price_spec = $$->mutable_spec()->mutable_price();
+      price_spec->CopyFrom(*$price_annotation);
+      price_spec->set_is_total(true);
       builder.PreparePosting($$, $partial_amount, $optflag, $account, true, @$);
       delete $partial_amount;
       delete $price_annotation;

@@ -121,25 +121,11 @@ message Posting {
   // in the prices database at the date of the transaction.
   optional Amount price = 7;
 
-  //---------------------------------------------------------------------------
-  // WARNING: The following fields are only used in the production of the
+  // WARNING: The following fields is only used in the production of the
   // intermediate representation produced by the parser and never set in the
-  // final processed output from Beancount. Do not use this in the finalized
-  // data.
-
-  // TODO(blais): Contemplate lumping these into a single 'spec' message.
-
-  // A UnitSpec instance.
-  optional inter.UnitSpec units_spec = 8;
-
-  // A CostSpec instance. Warning: This partically filled field is only used in
-  // the production of the intermediate representation produced by the parser
-  // and never set in the final processed output from Beancount. Do not use
-  // this.
-  optional inter.CostSpec cost_spec = 9;
-
-  // A PriceSpec instance.
-  optional inter.PriceSpec price_spec = 10;
+  // final processed output from Beancount. This is never set in the finalized
+  // interpolated and booked data.
+  optional inter.Spec spec = 8;
 }
 
 // A pair of a Posting and its parent Transaction. This is inserted as

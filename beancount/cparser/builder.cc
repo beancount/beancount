@@ -362,7 +362,7 @@ void Builder::PreparePosting(Posting* posting,
 
   // Set the units spec on the posting, if present.
   if (units_spec != nullptr) {
-    auto* spec = posting->mutable_units_spec();
+    auto* spec = posting->mutable_spec()->mutable_units();
     if (units_spec->has_number()) {
       spec->mutable_number()->CopyFrom(units_spec->number());
     }
@@ -378,8 +378,9 @@ void Builder::PreparePosting(Posting* posting,
   posting->set_account(account);
 
   // Check conditions renamed to price annotations.
-  if (posting->has_price_spec()) {
-    const auto& price = posting->price_spec();
+  if (posting->has_spec() and posting->spec().has_price()) {
+    auto& spec = posting->spec();
+    const auto& price = spec.price();
 
     // TODO(blais): Do not make the computation here! Keep it as total and
     // resolve the final amount on interpolation.
@@ -387,23 +388,23 @@ void Builder::PreparePosting(Posting* posting,
     // If the price is specified for the entire amount, compute the effective
     // price here and forget about that detail of the input syntax.
     if (is_total_price) {
-      if (!posting->has_units_spec() || !posting->units_spec().has_number()){
+      if (!spec.has_units() || !spec.units().has_number()){
         // units.number is MISSING.
         // Note: we could potentially do a better job and attempt to f
         // this up after interpolation, but this syntax is pretty rare
         // anyway.
         AddError(StrFormat("Total price on a posting without units: %s.",
                            price.DebugString()), loc);
-        posting->clear_price_spec();
+        posting->mutable_spec()->clear_price();
       } else if (price.has_number()) {
-        decimal::Decimal dunits = ProtoToDecimal(posting->units_spec().number());
+        decimal::Decimal dunits = ProtoToDecimal(spec.units().number());
         decimal::Decimal dprice;
         if (dunits.iszero()) {
           dprice = dunits;
         } else {
           dprice = ProtoToDecimal(price.number()).div(dunits.abs(), context());
         }
-        DecimalProto(dprice, posting->mutable_price_spec()->mutable_number());
+        DecimalProto(dprice, posting->mutable_spec()->mutable_price()->mutable_number());
       }
     }
 
@@ -416,12 +417,12 @@ void Builder::PreparePosting(Posting* posting,
 
     // If both cost and price are specified, the currencies must match, or
     // that is an error.
-    if (posting->has_cost_spec() &&
-        posting->cost_spec().has_currency() &&
+    if (spec.has_cost() &&
+        spec.cost().has_currency() &&
         price.has_currency() &&
-        posting->cost_spec().currency() != price.currency()) {
+        spec.cost().currency() != price.currency()) {
       AddError(StrFormat("Cost and price currencies must match: %s != %s",
-                         posting->cost_spec().currency(), price.currency()), loc);
+                         posting->spec().cost().currency(), price.currency()), loc);
     }
   }
 }

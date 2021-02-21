@@ -57,11 +57,11 @@ TEST(ParserTest, TestBasicTesting) {
         narration: "UNION MARKET"
         postings {
           account: "Liabilities:US:Amex:BlueCash"
-          units_spec { number { exact: "-22.02" } currency: "USD" }
+          spec { units { number { exact: "-22.02" } currency: "USD" } }
         }
         postings {
           account: "Expenses:Food:Grocery"
-          units_spec { number { exact: "22.02" } currency: "USD" }
+          spec { units { number { exact: "22.02" } currency: "USD" } }
         }
       }
     }
@@ -82,11 +82,11 @@ TEST(TestParserEntryTypes, TransactionOneString) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -107,11 +107,11 @@ TEST(TestParserEntryTypes, TransactionTwoStrings) {
         narration: "Nice dinner"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -143,11 +143,11 @@ TEST(TestParserEntryTypes, TransactionWithTxnKeyword) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -479,7 +479,7 @@ TEST(TestParserComplete, TransactionSinglePostingAtZero) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "0" } currency: "USD" }
+          spec { units { number { exact: "0" } currency: "USD" } }
         }
       }
     }
@@ -499,7 +499,7 @@ TEST(TestParserComplete, TransactionImbalanceFromSinglePosting) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
       }
     }
@@ -555,7 +555,7 @@ TEST(TestParserComplete, ExtraWhitespaceTransaction) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
@@ -578,7 +578,7 @@ TEST(TestParserComplete, ExtraWhitespaceComment) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
@@ -601,7 +601,7 @@ TEST(TestParserComplete, ExtraWhitespaceCommentIndented) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
@@ -670,11 +670,11 @@ TEST(TestParserComplete, NoEmptyLines) {
         narration: "Narration"
         postings {
           account: "Assets:US:BestBank:Checking"
-          units_spec { number { exact: "100.00" } currency: "USD" }
+          spec { units { number { exact: "100.00" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-100.00" } currency: "USD" }
+          spec { units { number { exact: "-100.00" } currency: "USD" } }
         }
       }
     }
@@ -711,11 +711,11 @@ TEST(TestComment, CommentBeforeTransaction) {
         flag: "*"
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -735,11 +735,11 @@ TEST(TestComment, CommentAfterTransaction) {
         flag: "*"
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -759,11 +759,11 @@ TEST(TestComment, CommentBetweenPostings) {
         flag: "*"
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -782,11 +782,11 @@ TEST(TestComment, CommentAfterPostings) {
         flag: "*"
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -805,11 +805,11 @@ TEST(TestComment, CommentAfterTransactionStart) {
         flag: "*"
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -862,11 +862,11 @@ TEST(TestPushPopMeta, PushmetaNormal) {
         narration: "Something"
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -897,11 +897,11 @@ TEST(TestPushPopMeta, PushmetaShadow) {
         narration: "Something"
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -935,11 +935,11 @@ TEST(TestPushPopMeta, PushmetaOverride) {
         narration: "Something"
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }
@@ -953,11 +953,11 @@ TEST(TestPushPopMeta, PushmetaOverride) {
         narration: "Something"
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "1" } currency: "USD" }
+          spec { units { number { exact: "1" } currency: "USD" } }
         }
         postings {
           account: "Assets:Something"
-          units_spec { number { exact: "-1" } currency: "USD" }
+          spec { units { number { exact: "-1" } currency: "USD" } }
         }
       }
     }  )");
@@ -1007,11 +1007,11 @@ TEST(TestMultipleLines, MultilineNarration) {
         narration: "Hello one line\nand yet another,\nand why not another!"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1362,11 +1362,11 @@ TEST(TestParserLinks, ParseLinks) {
         narration: "Something something"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1389,11 +1389,11 @@ TEST(TestTransactions, Simple1) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1417,11 +1417,11 @@ TEST(TestTransactions, Simple2) {
         narration: "Nice dinner at Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1433,11 +1433,11 @@ TEST(TestTransactions, Simple2) {
         narration: "Toothbrush"
         postings {
           account: "Expenses:BathroomSupplies"
-          units_spec { number { exact: "4" } currency: "USD" }
+          spec { units { number { exact: "4" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:BestBank:Checking"
-          units_spec { number { exact: "-4" } currency: "USD" }
+          spec { units { number { exact: "-4" } currency: "USD" } }
         }
       }
     }
@@ -1456,11 +1456,11 @@ TEST(TestTransactions, EmptyNarration) {
         flag: "*"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1479,11 +1479,11 @@ TEST(TestTransactions, NoNarration) {
         flag: "*"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1503,11 +1503,11 @@ TEST(TestTransactions, PayeeNoNarration) {
         narration: "Mermaid Inn"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1541,11 +1541,11 @@ TEST(TestTransactions, LinkAndThenTag) {
         narration: "Money from CC"
         postings {
           account: "Expenses:Restaurant"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:US:Cash"
-          units_spec { number { exact: "-100" } currency: "USD" }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
@@ -1578,18 +1578,18 @@ TEST(TestTransactions, ZeroPrices) {
         narration: "Like a conversion entry"
         postings {
           account: "Equity:Conversions"
-          units_spec { number { exact: "100" } currency: "USD" }
-          price_spec { number { exact: "0" } currency: "XFER" }
+          spec { units { number { exact: "100" } currency: "USD" }
+                 price { number { exact: "0" } currency: "XFER" } }
         }
         postings {
           account: "Equity:Conversions"
-          units_spec { number { exact: "101" } currency: "CAD" }
-          price_spec { number { exact: "0" } currency: "XFER" }
+          spec { units { number { exact: "101" } currency: "CAD" }
+                 price { number { exact: "0" } currency: "XFER" } }
         }
         postings {
           account: "Equity:Conversions"
-          units_spec { number { exact: "102" } currency: "AUD" }
-          price_spec { number { exact: "0" } currency: "XFER" }
+          spec { units { number { exact: "102" } currency: "AUD" }
+                 price { number { exact: "0" } currency: "XFER" } }
         }
       }
     }
@@ -1610,12 +1610,12 @@ TEST(TestTransactions, ZeroUnits) {
         narration: "Zero number of units"
         postings {
           account: "Assets:Investment"
-          units_spec { number { exact: "0" } currency: "HOOL" }
-          cost_spec { number_per { exact: "500.00" } currency: "USD" }
+          spec { units { number { exact: "0" } currency: "HOOL" }
+                 cost { number_per { exact: "500.00" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "0" } currency: "USD" }
+          spec { units { number { exact: "0" } currency: "USD" } }
         }
       }
     }
@@ -1635,12 +1635,12 @@ TEST(TestTransactions, ZeroCosts) {
         narration: "Like a conversion entry"
         postings {
           account: "Assets:Investment"
-          units_spec { number { exact: "10" } currency: "HOOL" }
-          cost_spec { number_per { exact: "0" } currency: "USD" }
+          spec { units { number { exact: "10" } currency: "HOOL" }
+                 cost { number_per { exact: "0" } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
-          units_spec { number { exact: "0" } currency: "USD" }
+          spec { units { number { exact: "0" } currency: "USD" } }
         }
       }
     }
@@ -1660,11 +1660,11 @@ TEST(TestTransactions, Imbalance) {
         narration: "Busted!"
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "-99" } currency: "USD" }
+          spec { units { number { exact: "-99" } currency: "USD" } }
         }
       }
     }
@@ -1700,7 +1700,7 @@ TEST(TestTransactions, BlankLineNotAllowed) {
         narration: "Busted!"
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
       }
     }
@@ -1726,11 +1726,11 @@ TEST(TestTransactions, BlankLineWithSpacesNotAllowed) {
         narration: "Busted!"
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "-99" } currency: "USD" }
+          spec { units { number { exact: "-99" } currency: "USD" } }
         }
       }
     }
@@ -1762,11 +1762,11 @@ TEST(TestTransactions, TagsAfterFirstLine) {
         narration: "Links and tags on subsequent lines"
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "100" } currency: "USD" }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Assets:Checking"
-          units_spec { number { exact: "-99" } currency: "USD" }
+          spec { units { number { exact: "-99" } currency: "USD" } }
         }
       }
     }
@@ -1814,11 +1814,11 @@ TEST(TestParseLots, CostNone) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "45.23" } currency: "USD" }
+          spec { units { number { exact: "45.23" } currency: "USD" } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-45.23" } currency: "USD" }
+          spec { units { number { exact: "-45.23" } currency: "USD" } }
         }
       }
     }
@@ -1838,12 +1838,12 @@ TEST(TestParseLots, CostEmpty) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-20" } currency: "AAPL" }
+          spec { units { number { exact: "-20" } currency: "AAPL" } }
         }
       }
     }
@@ -1867,12 +1867,12 @@ TEST(TestParseLots, CostAmount) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { number_per { exact: "45.23" } currency: "USD" }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { number_per { exact: "45.23" } currency: "USD" } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-90.46" } currency: "USD" }
+          spec { units { number { exact: "-90.46" } currency: "USD" } }
         }
       }
     }
@@ -1896,12 +1896,12 @@ TEST(TestParseLots, CostDate) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { date { year: 2014 month: 12 day: 26 } }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { date { year: 2014 month: 12 day: 26 } } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-20" } currency: "AAPL" }
+          spec { units { number { exact: "-20" } currency: "AAPL" } }
         }
       }
     }
@@ -1927,12 +1927,12 @@ TEST(TestParseLots, CostLabel) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { label: "d82d55a0dbe8" }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-20" } currency: "AAPL" }
+          spec { units { number { exact: "-20" } currency: "AAPL" } }
         }
       }
     }
@@ -1956,12 +1956,12 @@ TEST(TestParseLots, CostMerge) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { merge_cost: true }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { merge_cost: true } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-20" } currency: "AAPL" }
+          spec { units { number { exact: "-20" } currency: "AAPL" } }
         }
       }
     }
@@ -1988,41 +1988,41 @@ TEST(TestParseLots, CostTwoComponents) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" }
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" }
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost { number_per { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" }
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" }
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost { date { year: 2014 month: 12 day: 26 } label: "d82d55a0dbe8" } }
         }
       }
     }
@@ -2047,63 +2047,63 @@ TEST(TestParseLots, CostThreeComponents) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "1" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "1" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
-          }
+          } }
         }
       }
     }
@@ -2171,16 +2171,16 @@ TEST(TestParseLots, CostBothCosts) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "10" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "10" } currency: "AAPL" }
+                 cost {
             number_per { exact: "45.23" }
             number_total { exact: "9.95" }
             currency: "USD"
-          }
+          } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-110.36" } currency: "USD" }
+          spec { units { number { exact: "-110.36" } currency: "USD" } }
         }
       }
     }
@@ -2206,16 +2206,16 @@ TEST(TestParseLots, CostTotalCostOnly) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "10" } currency: "AAPL" }
-          cost_spec {
+          spec { units { number { exact: "10" } currency: "AAPL" }
+                 cost {
 
 # How to represent MISSING vs. absent here?
 
-number_total { exact: "9.95" } currency: "USD" }
+number_total { exact: "9.95" } currency: "USD" } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec { number { exact: "-19.90" } currency: "USD" }
+          spec { units { number { exact: "-19.90" } currency: "USD" } }
         }
       }
     }
@@ -2238,16 +2238,16 @@ TEST(TestParseLots, CostTotalEmptyTotal) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          units_spec { number { exact: "20" } currency: "AAPL" }
-          cost_spec { number_per { exact: "45.23" }
+          spec { units { number { exact: "20" } currency: "AAPL" }
+                 cost { number_per { exact: "45.23" }
 
 # TODO(blais):  How to represent MISSING vs. absent here?
-currency: "USD" }
+currency: "USD" } }
 
         }
         postings {
           account: "Assets:Invest:Cash"
-          units_spec {
+          spec { units { }
             number {
               exact: "-45.23"
             }
