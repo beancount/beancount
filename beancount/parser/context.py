@@ -114,9 +114,13 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
     average_costs = {}
     for account in accounts:
         balance = balance_before[account]
+
+        pc_balances = balance.split()
+        for currency, pc_balance in pc_balances.items():
+            if len(pc_balance) > 1:
+                average_costs[account] = pc_balance.average()
+
         positions = balance.get_positions()
-        if any(pos.cost is not None for pos in positions):
-            average_costs[account] = balance.average()
         for position in positions:
             before_hashes.add((account, hash(position)))
             pr(position_line.format('', account, str(position)))

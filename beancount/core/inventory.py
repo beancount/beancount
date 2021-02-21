@@ -285,6 +285,7 @@ class Inventory(dict):
         return Amount(total_units, currency)
 
     # TODO(blais): Remove this, use split() below instead when needed.
+    # TODO(blais): Rename this method to something more explicitly clear.
     def segregate_units(self, currencies):
         """Split up the list of positions to the given currencies.
 

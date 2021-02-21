@@ -22,6 +22,11 @@ class TestContext(test_utils.TestCase):
         2012-01-01 open Income:US:ETrade:Gains                      USD
         2012-01-01 open Expenses:Financial:Commissions              USD
 
+        2012-07-30 * "Buy shares of ITOT"
+          Assets:US:ETrade:Cash              -343.35 USD
+          Assets:US:ETrade:ITOT                 2.00 ITOT       {167.20 USD}
+          Expenses:Financial:Commissions        8.95 USD
+
         2012-08-31 * "Buy shares of GLD"
           Assets:US:ETrade:Cash              -784.06 USD
           Assets:US:ETrade:GLD                  7.00 GLD       {110.73 USD}
@@ -61,25 +66,28 @@ class TestContext(test_utils.TestCase):
         str_context = context.render_file_context(entries, options_map,
                                                   search_filename, search_lineno)
 
+        print(str_context)
         self.assertLines(textwrap.dedent("""
+
         ** Transaction Id --------------------------------
 
-        Hash:a62bcf48b818459f06c6d7f9b78029b4
-        Location: <string>:31
+        Hash:a4d4f63da17fc113b6b3b902a7dbc6a7
+        Location: <string>:36
 
 
         ** Balances before transaction --------------------------------
 
-          Assets:US:ETrade:Cash                                                -1411.44 USD
+          Assets:US:ETrade:Cash                                                -1754.79 USD
 
+          Assets:US:ETrade:ITOT                          2.00 ITOT {167.20 USD, 2012-07-30}
           Assets:US:ETrade:ITOT                          4.00 ITOT {173.11 USD, 2012-08-31}
 
-          Expenses:Financial:Commissions                                          35.80 USD
+          Expenses:Financial:Commissions                                          44.75 USD
 
 
         ** Average Costs --------------------------------
 
-          Assets:US:ETrade:ITOT    4.00 ITOT {173.11 USD, 2012-08-31}
+          Assets:US:ETrade:ITOT                          6.00 ITOT {171.14 USD, 2012-07-30}
 
 
         ** Unbooked Transaction --------------------------------
@@ -106,12 +114,13 @@ class TestContext(test_utils.TestCase):
 
         ** Balances after transaction --------------------------------
 
-        * Assets:US:ETrade:Cash                                                -2537.65 USD
+        * Assets:US:ETrade:Cash                                                -2881.00 USD
 
+          Assets:US:ETrade:ITOT                          2.00 ITOT {167.20 USD, 2012-07-30}
           Assets:US:ETrade:ITOT                          4.00 ITOT {173.11 USD, 2012-08-31}
         * Assets:US:ETrade:ITOT                          6.00 ITOT {186.21 USD, 2013-02-07}
 
-        * Expenses:Financial:Commissions                                          44.75 USD
+        * Expenses:Financial:Commissions                                          53.70 USD
 
         """), str_context)
 
