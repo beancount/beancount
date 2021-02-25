@@ -771,7 +771,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
     stocks_inventory = inventory.Inventory()
     new_entries = []
     dividend_date_iter = iter(dividend_dates)
-    next_dividend_date = next(dividend_date_iter)
+    next_dividend_date = next(dividend_date_iter, None)
     for date, balances in iter_dates_with_balance(date_begin, date_end,
                                                   entries, [account_cash]):
 
@@ -799,10 +799,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             new_entries.append(cash_dividend)
 
             # Advance the next dividend date.
-            try:
-                next_dividend_date = next(dividend_date_iter)
-            except StopIteration:
-                next_dividend_date = None
+            next_dividend_date = next(dividend_date_iter, None)
 
         # If the balance is high, buy with high probability.
         balance = balances[account_cash]
@@ -937,7 +934,8 @@ def generate_clearing_entries(date_iter,
       A list of directives.
     """
     # The next date we're looking for.
-    next_date = next(iter(date_iter))
+    date_iter = iter(date_iter)
+    next_date = next(date_iter)
 
     # Iterate over all the postings of the account to clear.
     new_entries = []
@@ -956,9 +954,8 @@ def generate_clearing_entries(date_iter,
             balance_clear.add_amount(neg_amount)
 
             # Advance to the next date we're looking for.
-            try:
-                next_date = next(iter(date_iter))
-            except StopIteration:
+            next_date = next(date_iter, None)
+            if not next_date:
                 break
 
     return new_entries
