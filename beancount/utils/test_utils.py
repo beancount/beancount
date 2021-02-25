@@ -321,7 +321,7 @@ class ClickTestCase(TestCase):
 
     def run_with_args(self, function, *args):
         runner = click.testing.CliRunner()
-        result = runner.invoke(function, args)
+        result = runner.invoke(function, args, catch_exceptions=False)
         self.assertEqual(result.exit_code, 0)
         return result
 
