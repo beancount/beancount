@@ -14,7 +14,6 @@ import operator
 import random
 import re
 import sys
-import string
 import textwrap
 
 from dateutil import rrule
