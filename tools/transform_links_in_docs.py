@@ -26,7 +26,7 @@ import functools
 import re
 
 from googleapiclient import discovery
-import gapis  # See http://github.com/blais/gapis
+from beancount.tools import gapis  # See http://github.com/blais/gapis
 
 
 Json = Mapping[str, 'Json']
