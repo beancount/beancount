@@ -198,25 +198,21 @@ class EntryPrinter:
                                if self.render_weight
                                else False)
         if non_trivial_balance:
-            fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
-                self.prefix, width_account, width_position, width_weight or 1).format
-            for posting, account, position_str, weight_str in zip(entry.postings,
-                                                                  strs_account,
-                                                                  strs_position,
-                                                                  strs_weight):
-                oss.write(fmt(account,
-                              position_str,
-                              weight_str if non_trivial_balance else ''))
+            for posting, account, position, weight in zip(entry.postings,
+                                                          strs_account,
+                                                          strs_position,
+                                                          strs_weight):
+                oss.write(f"{self.prefix}{account:{width_account}}  "
+                          f"{position:{width_position}}  "
+                          f"; {weight:{max(1, width_weight)}}".rstrip() + '\n')
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "{0}{{:{1}}}  {{:{2}}}".format(
-                self.prefix, width_account, max(1, width_position))
-            fmt = fmt_str.format
-            for posting, account, position_str in zip(entry.postings,
-                                                      strs_account,
-                                                      strs_position):
-                print(fmt(account, position_str).rstrip(), file=oss)
+            for posting, account, position in zip(entry.postings,
+                                                  strs_account,
+                                                  strs_position):
+                oss.write(f"{self.prefix}{account:{width_account}}  "
+                          f"{position:{max(1, width_position)}}".rstrip() + '\n')
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
 

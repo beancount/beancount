@@ -316,7 +316,7 @@ class Subst(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        if any([arg is None for arg in args]):
+        if any(arg is None for arg in args):
             return None
         return re.sub(args[0], args[1], args[2])
 
@@ -329,7 +329,7 @@ class Upper(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        if any([arg is None for arg in args]):
+        if any(arg is None for arg in args):
             return None
         return args[0].upper()
 
@@ -342,7 +342,7 @@ class Lower(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        if any([arg is None for arg in args]):
+        if any(arg is None for arg in args):
             return None
         return args[0].lower()
 
