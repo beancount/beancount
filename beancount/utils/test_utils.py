@@ -184,7 +184,7 @@ def docfile(function, **kwargs):
     @functools.wraps(function)
     def new_function(self):
         allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
-        if any([key not in allowed for key in kwargs]):
+        if any(key not in allowed for key in kwargs):
             raise ValueError("Invalid kwarg to docfile_extra")
         with tempfile.NamedTemporaryFile('w', **kwargs) as file:
             text = contents or function.__doc__
@@ -321,7 +321,7 @@ class ClickTestCase(TestCase):
 
     def run_with_args(self, function, *args):
         runner = click.testing.CliRunner()
-        result = runner.invoke(function, args)
+        result = runner.invoke(function, args, catch_exceptions=False)
         self.assertEqual(result.exit_code, 0)
         return result
 
