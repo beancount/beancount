@@ -1,3 +1,5 @@
+// Basic types and general helper functions.
+//
 // Copyright (C) 2020  Martin Blais
 // License: "GNU GPLv2"
 
@@ -11,6 +13,7 @@
 
 namespace std {
 
+// Define hash functions over dates and costs.
 template<>
 struct hash<beancount::Date> {
   size_t operator()(const beancount::Date& date) const {
