@@ -1228,7 +1228,14 @@ std::unique_ptr<Ledger> ParseString(string_view input_string,
   return parser::Parse(input, filename, line_offset, debug);
 }
 
+// TODO(blais): Add leading / for futures and options on futures contracts
+// natural names.
+
 // TODO(blais): Implement string parser and stdin parser functions.
+
+// TODO(blais): Establish a distinction between strings and currencies in type;
+// this allows us to process metadata correctly. See
+// beancount.plugins.check_commodity for a use case.
 
 
 }  // namespace parser

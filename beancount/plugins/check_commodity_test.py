@@ -1,6 +1,7 @@
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import textwrap
 import unittest
 
 from beancount import loader
@@ -35,9 +36,12 @@ class TestCheckCommodity(unittest.TestCase):
 
             2011-05-20 price BAR 1.00 TEST6
         """
-        commodities = check_commodity.get_commodity_map_ex(entries, metadata=True)
-        self.assertEqual(commodities.keys(), {'TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5',
-                                              'TEST6', 'TEST7', 'FOO', 'BAR', 'BAZ'})
+        occurrences, commodities = check_commodity.get_commodity_map_ex(entries,
+                                                                        metadata=True)
+        self.assertEqual(set([value for _, value in occurrences]),
+                         {'TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5',
+                          'TEST6', 'TEST7', 'FOO', 'BAR'})
+        self.assertEqual(commodities.keys(), {'BAZ'})
 
     @loader.load_doc(expect_errors=True)
     def test_check_commodity_transaction(self, _, errors, __):
@@ -96,6 +100,33 @@ class TestCheckCommodity(unittest.TestCase):
 
         """
         self.assertFalse(errors)
+
+    def test_check_commodity_ignore(self):
+        for account_re, currency_re in [(".*", ".*"),
+                                        ("Assets:Options", ".*"),
+                                        (".*", "QQQ_.*"),
+                                        ("Assets:.*Options", r"QQQ_[0-9]{6}[CP][0-9]+")]:
+            _, errors, __ = loader.load_string(textwrap.dedent("""
+                plugin "beancount.plugins.check_commodity" "{'ACCOUNT': 'CURRENCY'}"
+
+                2000-01-01 commodity USD
+
+                2011-01-01 open Assets:Cash
+                2011-01-01 open Assets:Options
+
+                2011-05-17 * "Something"
+                  Assets:Options     -100 QQQ_041621C341 {1.470 USD}
+                  Assets:Cash      147.00 USD
+
+                2011-05-17 * "Deposit - for posting metadata"
+                  related: QQQ_041621C341
+                  Assets:Options     -200.00
+                    related: QQQ_041621C341
+                  Assets:Cash      200.00 USD
+
+                2011-05-19 price QQQ_041621C341   1.33 USD
+            """).replace("ACCOUNT", account_re).replace("CURRENCY", currency_re))
+            self.assertFalse(errors)
 
 
 if __name__ == '__main__':
