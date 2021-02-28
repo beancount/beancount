@@ -16,6 +16,7 @@ from typing import NamedTuple, Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core.number import D
 
 
@@ -58,9 +59,12 @@ class Amount(_Amount):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        number_fmt = (dformat.format(self.number, self.currency)
-                      if isinstance(self.number, Decimal)
-                      else str(self.number))
+        if isinstance(self.number, Decimal):
+            number_fmt = dformat.format(self.number, self.currency)
+        elif self.number is MISSING:
+            number_fmt = ''
+        else:
+            number_fmt = str(self.number)
         return "{} {}".format(number_fmt, self.currency)
 
     def __str__(self):
