@@ -2381,6 +2381,36 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
+@unittest.skip('Crossing is not supported yet. Handle this in the v3 C++ rewrite. '
+               '{d3cbd78f1029}.')
+class TestBookCrossover(_BookingTestBase):
+    """Test reducing + augmenting in a single leg.
+    This happens in futures when you cross the zero position line.
+    For example, if you're short 1 contract and buy 2 contracts,
+    you need to reduce 1 contract and augment 1 contract in the
+    balance. These result must be two legs."""
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__no_match_against_any_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          -1 HOOL {110.00 USD, 2015-10-02}
+
+        2015-02-22 * #apply
+          Assets:Account           2 HOOL {112.00 USD}
+
+        2015-02-22 * #reduced
+          Assets:Account           1 HOOL {110.00 USD, 2015-02-22}
+
+        2015-02-22 * #booked
+          Assets:Account           1 HOOL {110.00 USD, 2015-10-02}
+          Assets:Account           1 HOOL {112.00 USD, 2015-02-22}
+
+        2015-01-01 * #ex
+          Assets:Account           1 HOOL {112.00 USD, 2015-02-22}
+        """
+
+
 @unittest.skip('Booking.AVERAGE is disabled.')
 class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 

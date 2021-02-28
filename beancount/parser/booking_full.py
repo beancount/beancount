@@ -604,6 +604,9 @@ def book_reductions(entry, group_postings, balances,
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
+                # TODO(blais): We'll have to change this, as we want to allow
+                # positions crossing from negative to positive and vice-versa in
+                # a simple application. See {d3cbd78f1029}.
                 reduction_postings, matched_postings, ambi_errors = (
                     booking_method.handle_ambiguous_matches(entry, posting, matches,
                                                             method))
