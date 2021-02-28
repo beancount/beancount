@@ -99,9 +99,11 @@ def csv_split_sections(rows):
     sections = []
     current_section = []
     for row in rows:
-        if row:
+        if any(cell.strip() for cell in row):
+            # Append to existing section.
             current_section.append(row)
         else:
+            # Row is empty, end section.
             sections.append(current_section)
             current_section = []
     if current_section:
@@ -120,8 +122,7 @@ def csv_split_sections_with_titles(rows):
     Args:
       rows: A list of rows (list-of-strings).
     Returns:
-     A list of lists of rows (list-of-strings).
-
+      A list of lists of rows (list-of-strings).
     """
     sections_map = {}
     for index, section in enumerate(csv_split_sections(rows)):
