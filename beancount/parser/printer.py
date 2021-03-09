@@ -124,7 +124,7 @@ class EntryPrinter:
         method(obj, oss)
         return oss.getvalue()
 
-    META_IGNORE = set(['filename', 'lineno', '__automatic__'])
+    META_IGNORE = {'filename', 'lineno'}
 
     def write_metadata(self, meta, oss, prefix=None):
         """Write metadata to the file object, excluding filename and line number.
@@ -138,7 +138,7 @@ class EntryPrinter:
         if prefix is None:
             prefix = self.prefix
         for key, value in sorted(meta.items()):
-            if key not in self.META_IGNORE:
+            if key not in self.META_IGNORE and not key.startswith('__'):
                 value_str = None
                 if isinstance(value, str):
                     value_str = '"{}"'.format(misc_utils.escape_string(value))
