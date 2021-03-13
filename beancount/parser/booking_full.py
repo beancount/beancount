@@ -102,7 +102,7 @@ def unique_label() -> Text:
 SelfReduxError = collections.namedtuple('SelfReduxError', 'source message entry')
 
 
-def book(entries, options_map, methods):
+def book(entries, options_map, methods, initial_balances=None):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
     This method only stripes some of the return values.
@@ -113,7 +113,7 @@ def book(entries, options_map, methods):
     return entries, errors
 
 
-def _book(entries, options_map, methods):
+def _book(entries, options_map, methods, initial_balances=None):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
@@ -122,6 +122,8 @@ def _book(entries, options_map, methods):
       options_map: An options dict as produced by the parser.
       methods: A mapping of account name to their corresponding booking
         method.
+      initial_balances: A dict of (account, inventory) pairs to start booking from.
+        This is useful when attempting to book on top of an existing state.
     Returns:
       A triple of
         entries: A list of interpolated entries with all their postings completed.
@@ -130,7 +132,16 @@ def _book(entries, options_map, methods):
     """
     new_entries = []
     errors = []
-    balances = collections.defaultdict(inventory.Inventory)
+
+    # Set initial state to start booking from.
+    #
+    # TODO(blais): In v3 we want to explode this to that this is a common
+    # operation and also abstract the initial balances to a Realization object.
+    balances = (collections.defaultdict(inventory.Inventory)
+                if initial_balances is None
+                else initial_balances)
+    assert isinstance(balances, (dict, collections.defaultdict))
+
     for entry in entries:
         if isinstance(entry, Transaction):
             # Group postings by currency.
