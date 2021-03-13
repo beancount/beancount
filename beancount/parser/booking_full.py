@@ -109,7 +109,7 @@ def book(entries, options_map, methods, initial_balances=None):
 
     See _book() for arguments and return values.
     """
-    entries, errors, _ = _book(entries, options_map, methods)
+    entries, errors, _ = _book(entries, options_map, methods, initial_balances)
     return entries, errors
 
 
@@ -745,7 +745,7 @@ def interpolate_group(postings, balances, currency, tolerances):
       tolerances: A dict of currency to tolerance values.
     Returns:
       A tuple of
-        postings: A lit of new posting instances.
+        postings: A list of new posting instances.
         errors: A list of errors generated during interpolation.
         interpolated: A boolean, true if we did have to interpolate.
 
