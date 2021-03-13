@@ -30,3 +30,7 @@ message Ledger {
   // Processing details.
   optional options.ProcessingInfo info = 4;
 }
+
+// TODO(blais): the final balances accumulated from processing the Ledger shoudl
+// be produced as output, so that booking on top of it is cheap and fast. This
+// would be useful for importers, for example.
