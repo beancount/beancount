@@ -151,6 +151,31 @@ FLAGS           [!&#?%PSTCURM]
  /* Comments. */
 ;.* { }
 
+ /* Boolean values. Must be before currencies. */
+TRUE {
+    return TOKEN(BOOL, true);
+}
+
+FALSE {
+    return TOKEN(BOOL, false);
+}
+
+NULL {
+    return TOKEN(NONE);
+}
+
+ /* Currencies.
+  *
+  * These are defined as uppercase only in order to disambiguate the syntax.
+  * This is to be kept in sync with beancount.core.amount.CURRENCY_RE.
+  *
+  * Note: We locate this here so a name starting with '/' for a futures contract
+  * will match before the divide '/' character.
+  */
+\/?[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
+    return TOKEN(CURRENCY, yytext, yyleng);
+}
+
  /* Characters with special meanings. */
 \|		{ return PIPE; }
 @@		{ return ATAT; }
@@ -196,18 +221,6 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
-TRUE {
-    return TOKEN(BOOL, true);
-}
-
-FALSE {
-    return TOKEN(BOOL, false);
-}
-
-NULL {
-    return TOKEN(NONE);
-}
-
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
     return TOKEN(DATE, yytext);
@@ -216,13 +229,6 @@ NULL {
  /* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
     return TOKEN(ACCOUNT, yytext);
-}
-
- /* Currencies. These are defined as uppercase only in order to
-  * disambiguate the syntax. This is to be kept in sync with
-  * beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
-    return TOKEN(CURRENCY, yytext, yyleng);
 }
 
  /* String literals. */

@@ -58,7 +58,7 @@ class TestLexer(unittest.TestCase):
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
           Other:Bank
-          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
+          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT /NQH21
           "Nice dinner at Mermaid Inn"
           ""
           123 123.45 123.456789 -123 -123.456789
@@ -84,6 +84,7 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, b'TEST-D', 'TEST-D'),
             ('CURRENCY', 5, b'TEST-3', 'TEST-3'),
             ('CURRENCY', 5, b'NT', 'NT'),
+            ('CURRENCY', 5, b'/NQH21', '/NQH21'),
             ('EOL', 6, b'\n', None),
             ('STRING', 6, b'"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, b'\n', None),

@@ -131,11 +131,14 @@ TIME		\d{1,2}:\d{2}(:\d{2})?
 
 %%
 
- /* Newlines matter. */
+/* Newlines matter. */
 \n { return Parser::make_EOL(DEFLOC); }
 
-/* Indentation. This makes use of RE/flex's indentation stops feature and
- * results in much tighter indentation handling. */
+/* Indentation.
+ *
+ * This makes use of RE/flex's indentation stops feature and results in much
+ * tighter indentation handling.
+ */
 ^\h+                      // nodent, text is aligned to current margin column
 ^\h+\i                    { return Parser::make_INDENT(DEFLOC); }
 ^\h*\j                    { return Parser::make_DEDENT(DEFLOC); }
@@ -145,7 +148,32 @@ TIME		\d{1,2}:\d{2}(:\d{2})?
 [ \t\r]+                  /* Ignored whitespace. */
 ;.*                       /* Eat up Comments, anywhere. */
 
- /* Characters with special meanings. */
+/* Boolean values. Must be before currencies. */
+TRUE {
+  return Parser::make_BOOL(true, DEFLOC);
+}
+
+FALSE {
+  return Parser::make_BOOL(false, DEFLOC);
+}
+
+NULL {
+  return Parser::make_NONE(DEFLOC);
+}
+
+/* Currencies.
+ *
+ * These are defined as uppercase only in order to disambiguate the syntax.
+ * This is to be kept in sync with beancount.core.amount.CURRENCY_RE.
+ *
+ * Note: We locate this here so a name starting with '/' for a futures contract
+ * will match before the divide '/' character.
+ */
+[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
+  return Parser::make_CURRENCY(str(), location());
+}
+
+/* Characters with special meanings. */
 \|		{ return Parser::make_PIPE(DEFLOC); }
 @@		{ return Parser::make_ATAT(DEFLOC); }
 @		{ return Parser::make_AT(DEFLOC); }
@@ -168,7 +196,7 @@ TIME		\d{1,2}:\d{2}(:\d{2})?
   return Parser::make_FLAG(wchr(), DEFLOC);
 }
 
- /* Keywords. */
+/* Keywords. */
 txn		{ return Parser::make_TXN(DEFLOC); }
 balance		{ return Parser::make_BALANCE(DEFLOC); }
 open		{ return Parser::make_OPEN(DEFLOC); }
@@ -189,21 +217,12 @@ option		{ return Parser::make_OPTION(DEFLOC); }
 plugin		{ return Parser::make_PLUGIN(DEFLOC); }
 include		{ return Parser::make_INCLUDE(DEFLOC); }
 
-TRUE {
-  return Parser::make_BOOL(true, DEFLOC);
-}
-
-FALSE {
-  return Parser::make_BOOL(false, DEFLOC);
-}
-
-NULL {
-  return Parser::make_NONE(DEFLOC);
-}
-
- /* Date or date/time. Note that we're not parsing time separately because
-  * absorbing that pattern at the top level adds more than 10% to the total
-  * parsing time, so we process it as an optional group only after dates. */
+/* Date or date/time.
+ *
+ * Note that we're not parsing time separately because absorbing that pattern at
+ * the top level adds more than 10% to the total parsing time, so we process it
+ * as an optional group only after dates.
+ */
 {DATE}([ \t]+({TIME}))?\b {
   // Parse date.
   const auto& m = matcher();
@@ -236,19 +255,12 @@ NULL {
   return Parser::make_DATETIME(datetime, location());
 }
 
- /* Account names. */
+/* Account names. */
 {ACCOUNTTYPE}(:{ACCOUNTNAME})+ {
   return Parser::make_ACCOUNT(str(), location());
 }
 
- /* Currencies. These are defined as uppercase only in order to
-  * disambiguate the syntax. This is to be kept in sync with
-  * beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9] {
-  return Parser::make_CURRENCY(str(), location());
-}
-
- /* String literals. */
+/* String literals. */
 \"([^\\\"]|\\.)*\" {
   // Check for very long strings and issue an error. This helps narrow down
   // errors when an unterminated string occurs.
@@ -266,7 +278,7 @@ NULL {
   return Parser::make_STRING(std::move(unescaped), location());
 }
 
- /* Numbers. */
+/* Numbers. */
 (\d+|\d[0-9,]+\d)(\.\d*)? {
   // Strip commas from the local buffer (without allocating memory).
   static char buffer[1024];
@@ -277,30 +289,30 @@ NULL {
   return Parser::make_NUMBER(number, location());
 }
 
- /* Tags. */
+/* Tags. */
 #[A-Za-z0-9\-_/.]+ {
   std::string text = {matcher().begin() + 1, matcher().size() - 1};
   return Parser::make_TAG(std::move(text), location());
 }
 
- /* Links. */
+/* Links. */
 \^[A-Za-z0-9\-_/.]+ {
   std::string text = {matcher().begin() + 1, matcher().size() - 1};
   return Parser::make_LINK(std::move(text), location());
 }
 
- /* Keys. */
+/* Keys. */
 [a-z][a-zA-Z0-9\-_]+/: {
   return Parser::make_KEY(str(), location());
 }
 
- /* Lines starting with an asterisk, a colon, an hash, or a character
-  * in the FLAGS characters set are ignored. This rule is inserted
-  * here to give higher precedence to rules matching valid tokens. */
+/* Lines starting with an asterisk, a colon, an hash, or a character in the
+ * FLAGS characters set are ignored. This rule is inserted here to give higher
+ * precedence to rules matching valid tokens. */
 ^[\*\:\#]/.	{ start(IGNORE); }
 ^{FLAGS}/.	{ start(IGNORE); }
 
- /* Default rule. {bf253a29a820} */
+/* Default rule. {bf253a29a820} */
 . {
   matcher().unput(*text());
   start(INVALID);
@@ -317,7 +329,7 @@ NULL {
   return Parser::make_YYEOF(location());
 }
 
- /* Invalid input: skip over to to the next whitespace character. */
+/* Invalid input: skip over to to the next whitespace character. */
 <INVALID>[^ \t\n\r]+ {
 
   // Go back to initial state.
@@ -331,7 +343,7 @@ NULL {
                               location());
 }
 
- /* Ignore input till the newline. */
+/* Ignore input till the newline. */
 <IGNORE>.* {
     start(INITIAL);
 }
