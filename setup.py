@@ -34,7 +34,7 @@ def get_cflags():
         # See https://bitbucket.org/blais/beancount/issues/173/
         return ["-DYY_NO_UNISTD_H"]
     else:
-        return None
+        return ["-std=gnu99"]
 
 # Read the version.
 with open("beancount/VERSION") as version_file:

@@ -140,6 +140,7 @@ debug:
 
 # Bake a release, upload the source.
 release:
+	python3 setup.py sdist bdist_wheel
 	twine upload dist/*.tar.gz
 
 vtest vtests verbose-test verbose-tests:
