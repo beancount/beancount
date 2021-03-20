@@ -4,6 +4,7 @@ Tests for lexer.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from decimal import Decimal
 import datetime
 import functools
 import textwrap
@@ -58,13 +59,15 @@ class TestLexer(unittest.TestCase):
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
           Other:Bank
-          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT /NQH21
+          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT.TO V P V12
+          /NQH21 /NQH21_QNEG21C13100 /6A /6J8 ABC.TO /3.2
           "Nice dinner at Mermaid Inn"
           ""
           123 123.45 123.456789 -123 -123.456789
           #sometag123
           ^sometag123
           somekey:
+          % # 'V 'C
         """
         self.assertEqual([
             ('DATE', 1, b'2013-05-18', datetime.date(2013, 5, 18)),
@@ -83,29 +86,41 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, b'TEST_3', 'TEST_3'),
             ('CURRENCY', 5, b'TEST-D', 'TEST-D'),
             ('CURRENCY', 5, b'TEST-3', 'TEST-3'),
-            ('CURRENCY', 5, b'NT', 'NT'),
-            ('CURRENCY', 5, b'/NQH21', '/NQH21'),
+            ('CURRENCY', 5, b'NT.TO', 'NT.TO'),
+            # TODO(blais): Not supported in flex parser.
+            ('error', 5, b'V', None),
+            ('error', 5, b'P', None),
+            ('CURRENCY', 5, b'V12', 'V12'),
             ('EOL', 6, b'\n', None),
-            ('STRING', 6, b'"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('CURRENCY', 6, b'/NQH21', '/NQH21'),
+            ('CURRENCY', 6, b'/NQH21_QNEG21C13100', '/NQH21_QNEG21C13100'),
+            ('CURRENCY', 6, b'/6A', '/6A'),
+            ('CURRENCY', 6, b'/6J8', '/6J8'),
+            ('CURRENCY', 6, b'ABC.TO', 'ABC.TO'),
+            ('SLASH', 6, b'/', None),
+            ('NUMBER', 6, b'3.2', Decimal('3.2')),
             ('EOL', 7, b'\n', None),
-            ('STRING', 7, b'""', ''),
+            ('STRING', 7, b'"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 8, b'\n', None),
-            ('NUMBER', 8, b'123', D('123')),
-            ('NUMBER', 8, b'123.45', D('123.45')),
-            ('NUMBER', 8, b'123.456789', D('123.456789')),
-            ('MINUS', 8, b'-', None),
-            ('NUMBER', 8, b'123', D('123')),
-            ('MINUS', 8, b'-', None),
-            ('NUMBER', 8, b'123.456789', D('123.456789')),
+            ('STRING', 8, b'""', ''),
             ('EOL', 9, b'\n', None),
-            ('TAG', 9, b'#sometag123', 'sometag123'),
+            ('NUMBER', 9, b'123', Decimal('123')),
+            ('NUMBER', 9, b'123.45', Decimal('123.45')),
+            ('NUMBER', 9, b'123.456789', Decimal('123.456789')),
+            ('MINUS', 9, b'-', None),
+            ('NUMBER', 9, b'123', Decimal('123')),
+            ('MINUS', 9, b'-', None),
+            ('NUMBER', 9, b'123.456789', Decimal('123.456789')),
             ('EOL', 10, b'\n', None),
-            ('LINK', 10, b'^sometag123', 'sometag123'),
+            ('TAG', 10, b'#sometag123', 'sometag123'),
             ('EOL', 11, b'\n', None),
-            ('KEY', 11, b'somekey', 'somekey'),
-            ('COLON', 11, b':', None),
+            ('LINK', 11, b'^sometag123', 'sometag123'),
             ('EOL', 12, b'\n', None),
-            ], tokens)
+            ('KEY', 12, b'somekey', 'somekey'),
+            ('COLON', 12, b':', None),
+            ('EOL', 13, b'\n', None),
+            ('EOL', 14, b'\n', None),
+        ], tokens)
 
     @lex_tokens
     def test_lex_unicode_account(self, tokens, errors):
@@ -444,13 +459,17 @@ class TestIgnoredLines(unittest.TestCase):
     @lex_tokens
     def test_ignored__something_else(self, tokens, errors):
         """
-        Regular prose appearing mid-file which starts with a flag character.
+        Regular prose appearing mid-file.
         """
-        self.assertEqual([
-            ('EOL', 2, b'\n', None),
-            ('EOL', 3, b'\n', None),
-            ], tokens)
-        self.assertFalse(errors)
+        # In v2, this used to be ignore. In v3, it generates an error.
+        # You have to insert comments.
+        self.assertEqual([('EOL', 2, b'\n', None),
+                          ('error', 2, b'Regular', None),
+                          ('error', 2, b'prose', None),
+                          ('error', 2, b'appearing', None),
+                          ('error', 2, b'mid-file.', None),
+                          ('EOL', 3, b'\n', None)], tokens)
+        self.assertTrue(errors)
 
     @lex_tokens
     def test_ignored__something_else_non_flag(self, tokens, errors):

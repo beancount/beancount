@@ -38,7 +38,7 @@ class TestPadding(cmptest.TestCase):
           2013-05-01 pad Assets:Checking Equity:Opening-Balances
 
           ;; Check this is inserted.
-          2013-05-01 P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
+          2013-05-01 'P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
             Assets:Checking                                                        172.45 USD
             Equity:Opening-Balances                                                -172.45 USD
 
@@ -75,7 +75,7 @@ class TestPadding(cmptest.TestCase):
           2013-05-01 pad Assets:Checking Equity:Opening-Balances
 
           ;; Check this is inserted.
-          2013-05-01 P "(Padding inserted for Balance of 0.00 USD for difference -234.56 USD)"
+          2013-05-01 'P "(Padding inserted for Balance of 0.00 USD for difference -234.56 USD)"
             Assets:Checking          -234.56 USD
             Equity:Opening-Balances   234.56 USD
 
@@ -114,7 +114,7 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-01 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-01 P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
+          2013-05-01 'P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
             Assets:Checking                                                        172.45 USD
             Equity:Opening-Balances                                                -172.45 USD
 
@@ -160,7 +160,7 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-01 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-01 P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
+          2013-05-01 'P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
             Assets:Checking                                                        172.45 USD
             Equity:Opening-Balances                                                -172.45 USD
 
@@ -172,7 +172,7 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-20 P "(Padding inserted for Balance of 200 USD for difference 7.55 USD)"
+          2013-05-20 'P "(Padding inserted for Balance of 200 USD for difference 7.55 USD)"
             Assets:Checking                                                          7.55 USD
             Equity:Opening-Balances                                                  -7.55 USD
 
@@ -208,7 +208,7 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-20 P "(Padding inserted for Balance of 200 USD for difference 200 USD)"
+          2013-05-20 'P "(Padding inserted for Balance of 200 USD for difference 200 USD)"
             Assets:Checking                                                        200 USD
             Equity:Opening-Balances                                               -200 USD
 
@@ -294,7 +294,7 @@ class TestPadding(cmptest.TestCase):
           2013-05-20 pad Assets:US Equity:Opening-Balances
 
           ;; A single pad that does not include child accounts should be inserted.
-          2013-05-20 P "(Padding inserted for Balance of 100.00 USD for difference 90.00 USD)"
+          2013-05-20 'P "(Padding inserted for Balance of 100.00 USD for difference 90.00 USD)"
             Assets:US                                                              90.00 USD
             Equity:Opening-Balances                                                -90.00 USD
 
@@ -339,11 +339,11 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-20 P "(Padding inserted for Balance of 5.00 USD for difference 4.00 USD)"
+          2013-05-20 'P "(Padding inserted for Balance of 5.00 USD for difference 4.00 USD)"
             Assets:Checking                    4.00 USD
             Equity:Opening-Balances           -4.00 USD
 
-          2013-05-20 P "(Padding inserted for Balance of 3.00 CAD for difference 2.00 CAD)"
+          2013-05-20 'P "(Padding inserted for Balance of 3.00 CAD for difference 2.00 CAD)"
             Assets:Checking                    2.00 CAD
             Equity:Opening-Balances           -2.00 CAD
 

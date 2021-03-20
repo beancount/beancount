@@ -22,7 +22,9 @@ from beancount.core.number import D
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
+CURRENCY_RE = ('|'.join([r'[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b',
+                         r'/[A-Z0-9\'\.\_\-]*[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?']))
+
 
 _Amount = NamedTuple('_Amount', [
     ('number', Optional[Decimal]),

@@ -95,7 +95,8 @@ TEST(ScannerTest, BasicTokens) {
     Assets:US:Bank:Checking
     Liabilities:US:Bank:Credit
     Other:Bank
-    USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
+    USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT V V12
+    /NQH21 /6A /6J8 ABC.TO /3.2
     "Nice dinner at Mermaid Inn"
     ""
     123 123.45 123.456789 -123 -123.456789
@@ -128,26 +129,35 @@ TEST(ScannerTest, BasicTokens) {
         {symbol::S_CURRENCY, 6, "TEST-D"},
         {symbol::S_CURRENCY, 6, "TEST-3"},
         {symbol::S_CURRENCY, 6, "NT"},
+        {symbol::S_CURRENCY, 6, "V"},
+        {symbol::S_CURRENCY, 6, "V12"},
         {symbol::S_EOL,      6, "\n"},
-        {symbol::S_STRING,   7, "Nice dinner at Mermaid Inn"},
+        {symbol::S_CURRENCY, 7, "/NQH21"},
+        {symbol::S_CURRENCY, 7, "/6A"},
+        {symbol::S_CURRENCY, 7, "/6J8"},
+        {symbol::S_CURRENCY, 7, "ABC.TO"},
+        {symbol::S_SLASH,    7, "/"},
+        {symbol::S_NUMBER,   7, "3.2"},
         {symbol::S_EOL,      7, "\n"},
-        {symbol::S_STRING,   8, ""},
+        {symbol::S_STRING,   8, "Nice dinner at Mermaid Inn"},
         {symbol::S_EOL,      8, "\n"},
-        {symbol::S_NUMBER,   9, "123"},
-        {symbol::S_NUMBER,   9, "123.45"},
-        {symbol::S_NUMBER,   9, "123.456789"},
-        {symbol::S_MINUS,    9, "-"},
-        {symbol::S_NUMBER,   9, "123"},
-        {symbol::S_MINUS,    9, "-"},
-        {symbol::S_NUMBER,   9, "123.456789"},
+        {symbol::S_STRING,   9, ""},
         {symbol::S_EOL,      9, "\n"},
-        {symbol::S_TAG,      10, "sometag123"},
+        {symbol::S_NUMBER,   10, "123"},
+        {symbol::S_NUMBER,   10, "123.45"},
+        {symbol::S_NUMBER,   10, "123.456789"},
+        {symbol::S_MINUS,    10, "-"},
+        {symbol::S_NUMBER,   10, "123"},
+        {symbol::S_MINUS,    10, "-"},
+        {symbol::S_NUMBER,   10, "123.456789"},
         {symbol::S_EOL,      10, "\n"},
-        {symbol::S_LINK,     11, "sometag123"},
+        {symbol::S_TAG,      11, "sometag123"},
         {symbol::S_EOL,      11, "\n"},
-        {symbol::S_KEY,      12, "somekey"},
-        {symbol::S_COLON,    12, ":"},
+        {symbol::S_LINK,     12, "sometag123"},
         {symbol::S_EOL,      12, "\n"},
+        {symbol::S_KEY,      13, "somekey"},
+        {symbol::S_COLON,    13, ":"},
+        {symbol::S_EOL,      13, "\n"},
       }));
 }
 
@@ -672,10 +682,14 @@ TEST(IgnoredLinesTest, IndentedComment) {
 
 TEST(IgnoredLinesTest, NonCommentIgnored) {
   const char* test = R"(
-    Regular prose appearing mid-file which starts with a flag character.
+    Regular prose appearing mid-file.
   )";
   const auto symbols = Tokenize(test);
   EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_YYUNDEF, 1, "Regular"},
+        {symbol::S_YYUNDEF, 1, "prose"},
+        {symbol::S_YYUNDEF, 1, "appearing"},
+        {symbol::S_YYUNDEF, 1, "mid-file."},
         {symbol::S_EOL, 1, "\n"},
       }));
 }

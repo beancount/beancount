@@ -1057,7 +1057,7 @@ TEST(TestSyntaxErrors, ErrorInTransactionLine) {
        }
      }
      errors {
-       message: "Syntax error, unexpected invalid token, expecting EOL or TAG or LINK"
+       message: "Syntax error, unexpected CURRENCY, expecting EOL or TAG or LINK"
        location { lineno: 3 }
      }
   )", false, true);

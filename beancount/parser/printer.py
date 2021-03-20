@@ -11,6 +11,7 @@ import re
 import sys
 import textwrap
 from decimal import Decimal
+from typing import Optional
 
 from beancount.core import position
 from beancount.core import convert
@@ -179,7 +180,8 @@ class EntryPrinter:
             for link in sorted(entry.links):
                 strings.append('^{}'.format(link))
 
-        oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
+        oss.write('{e.date} {flag} {}\n'.format(' '.join(strings), e=entry,
+                                                flag=render_flag(entry.flag)))
         self.write_metadata(entry.meta, oss)
 
         rows = [self.render_posting_strings(posting)
@@ -230,7 +232,7 @@ class EntryPrinter:
             weight_str: A string, the rendered weight of the posting.
         """
         # Render a string of the flag and the account.
-        flag = '{} '.format(posting.flag) if posting.flag else ''
+        flag = '{} '.format(render_flag(posting.flag)) if posting.flag else ''
         flag_account = flag + posting.account
 
         # Render a string with the amount and cost and optional price, if
@@ -358,6 +360,15 @@ class EntryPrinter:
         oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values),
                                                            e=entry))
         self.write_metadata(entry.meta, oss)
+
+
+def render_flag(inflag: Optional[str]) -> str:
+    """Render a flag, which can be None, a symbol of a character to a string."""
+    if not inflag:
+        return ''
+    if re.match(r"[A-Z]$", inflag):
+        return "'{}".format(inflag)
+    return inflag
 
 
 def format_entry(entry, dcontext=None, render_weights=False, prefix=None):

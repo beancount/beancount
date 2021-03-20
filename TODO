@@ -3051,7 +3051,7 @@ http://furius.ca/beancount/doc/proposal-query
 
         %option account_unrealized  "Unrealized"
 
-        2013-05-23 A "Booking unrealized gains for AAPL"
+        2013-05-23 'A "Booking unrealized gains for AAPL"
           Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
           Income:Unrealized                                -230.45 USD
 

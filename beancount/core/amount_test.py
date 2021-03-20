@@ -56,8 +56,8 @@ class TestAmount(unittest.TestCase):
         with self.assertRaises(ValueError):
             Amount.from_string('USD')
 
-        with self.assertRaises(ValueError):
-            Amount.from_string('100.00 U')
+        # Starting in v3 we will accept single character stock names.
+        Amount.from_string('100.00 U')
 
     def test_tostring(self):
         amount1 = Amount(D('100034.023'), 'USD')

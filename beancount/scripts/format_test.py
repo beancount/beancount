@@ -111,7 +111,7 @@ class TestScriptFormat(test_utils.ClickTestCase):
           2014-03-05 balance   Assets:Cash  -1,050.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other   10 HOOL {5,000.23} USD ; Bla
+            Assets:Other   10 HOOL {5,000.23 USD} ; Bla
             Assets:Cash
 
         """
@@ -131,7 +131,7 @@ class TestScriptFormat(test_utils.ClickTestCase):
           2014-03-05 balance   Assets:Cash  -1,050.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other                           10 HOOL {5,000.23} USD ; Bla
+            Assets:Other                           10 HOOL {5,000.23 USD} ; Bla
             Assets:Cash
 
         """), result.stdout)
