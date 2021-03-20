@@ -5,6 +5,11 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2021-03-20
+
+ - Fixed #639: Released 2.3.4.
+
+
 2021-01-09
 
  - Fixed bug in booking that assumed number is set on cost. I did this while
