@@ -13,14 +13,6 @@ Files:
   tutorial/         : Output files from the tutorial, see
                       http://furius.ca/beancount/doc/tutorial
 
-  sharing/          : Example input file from a document that explains how to
-                      share expenses, see
-                      http://furius.ca/beancount/doc/sharing
-
   vesting/          : Example input file from a document that explains how to
                       track the vesting of restricted stock units, see
                       http://furius.ca/beancount/doc/vesting
-
-  forecast/         : Example using the forecasting plugin.
-
-  ingest/           : Example using importers and their configuration.
