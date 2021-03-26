@@ -33,7 +33,8 @@ Builder::~Builder() {
   for (auto* error : errors_) delete error;
 }
 
-// TODO(blais): Review this, not needed.
+// TODO(blais): Review and remove this, this will not be needed once we process
+// all the numbers in a second processing step.
 void Builder::Initialize() {
   //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
 
@@ -315,7 +316,7 @@ absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::Cos
 }
 
 
-void Builder::UpdatePrecisionStats(const decimal::Decimal& dec, const string& currency) {
+void Builder::WitnessDecimal(const decimal::Decimal& dec, const string& currency) {
   // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
 }
 

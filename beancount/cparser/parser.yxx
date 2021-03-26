@@ -1,9 +1,6 @@
 /* -*- mode: c++ -*- */
 // Parser grammar for beancount 3.0 input syntax (Bison C++).
 
-// TODO(blais): Review ownership and leakage. This parser does not currently
-// apply much rigor on reclaimining memory.
-
 //- Options -------------------------------------------------------------------
 
 %require "3.7"
@@ -277,8 +274,8 @@ namespace parser {
 /* TODO(blais): Have another go at taking that to zero. */
 %expect 18
 
-/* TODO(blais): Still have specify %destructor code in order to free up memory
- * for discarded tokens in case of shifting during error recovery. */
+/* TODO(blais): We still have specify %destructor code in order to free up
+ * memory for discarded tokens in case of shifting during error recovery. */
 
 
 /*- Grammar rules -----------------------------------------------------------*/
@@ -969,7 +966,7 @@ price_annotation:
       if ($$->has_number()) {
         decimal::Decimal dec = ProtoToDecimal($$->number());
         if (dec.sign() == -1) {
-          // TODO(blais): Move this to post-parsing.
+          // TODO(blais): Move all the number processing to post-parsing.
           builder.AddError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)", @$);
@@ -985,7 +982,7 @@ price_annotation:
 amount:
   number_expr CURRENCY
     {
-      builder.UpdatePrecisionStats($1, $2);
+      builder.WitnessDecimal($1, $2);
 
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
@@ -1001,8 +998,8 @@ amount_tolerance:
     }
   | number_expr TILDE number_expr[tolerance] CURRENCY
     {
-      builder.UpdatePrecisionStats($1, $4);
-      builder.UpdatePrecisionStats($tolerance, $4);
+      builder.WitnessDecimal($1, $4);
+      builder.WitnessDecimal($tolerance, $4);
 
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
@@ -1054,7 +1051,7 @@ compound_amount:
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
         builder.DecimalProto($1.value(), $$->mutable_number_per());
-        builder.UpdatePrecisionStats($1.value(), $2);
+        builder.WitnessDecimal($1.value(), $2);
       }
       $$->set_currency(std::move($2));
     }
@@ -1064,7 +1061,7 @@ compound_amount:
       builder.DecimalProto($1, $$->mutable_number_per());
       if ($2.has_value()) {
         $$->set_currency($2.value());
-        builder.UpdatePrecisionStats($1, $2.value());
+        builder.WitnessDecimal($1, $2.value());
       }
     }
   | maybe_number HASH maybe_number CURRENCY
@@ -1072,11 +1069,11 @@ compound_amount:
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
         builder.DecimalProto($1.value(), $$->mutable_number_per());
-        builder.UpdatePrecisionStats($1.value(), $4);
+        builder.WitnessDecimal($1.value(), $4);
       }
       if ($3.has_value()) {
         builder.DecimalProto($3.value(), $$->mutable_number_total());
-        builder.UpdatePrecisionStats($3.value(), $4);
+        builder.WitnessDecimal($3.value(), $4);
       }
       $$->set_currency(std::move($4));
     }
@@ -1092,7 +1089,7 @@ cost_spec:
       // Note: This is using the total syntax; it is an error to set
       // `number_total` to a value in the input when using `{{...}}`.
       if ($2->has_number_total()) {
-        // TODO(blais): Move this to post-parsing.
+        // TODO(blais): Move number processing to post-parsing.
         builder.AddError(
             absl::StrFormat(
                 "Per-unit cost may not be specified using total cost "
@@ -1153,7 +1150,6 @@ cost_comp:
 void beancount::parser::Parser::error(const location& loc, const string& msg)
 {
   // Log an error.
-  // TODO(blais): Add location.
   builder.AddError(msg, loc);
 
   // If token is unknown (no match).
@@ -1197,10 +1193,10 @@ std::unique_ptr<Ledger> Parse(
   int result;
   try {
     result = parser.parse();
-    (void)result; // TODO(blais): ERROR Handle the result and corresponding error.
+    (void)result; // TODO(blais): Handle the result and corresponding error.
 
   } catch (const std::runtime_error& exc) {
-    // TODO(blais): Implement this.
+    // TODO(blais): Implement this as well, properly.
     std::cerr << "EXC " << exc.what() << std::endl;
   }
 
@@ -1228,15 +1224,17 @@ std::unique_ptr<Ledger> ParseString(string_view input_string,
   return parser::Parse(input, filename, line_offset, debug);
 }
 
-// TODO(blais): Add leading / for futures and options on futures contracts
-// natural names.
+}  // namespace parser
+}  // namespace beancount
+
+//-------------------------------------------------------------------------------
+// To Do items - temporary:
 
 // TODO(blais): Implement string parser and stdin parser functions.
 
-// TODO(blais): Establish a distinction between strings and currencies in type;
+// TODO(blais): Establish a distinction between strings and currencies in data type;
 // this allows us to process metadata correctly. See
 // beancount.plugins.check_commodity for a use case.
 
-
-}  // namespace parser
-}  // namespace beancount
+// TODO(blais): Review and test pointer ownership and leakage. This parser does
+// not currently apply much rigor on reclaimining memory.
