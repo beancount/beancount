@@ -181,15 +181,17 @@ RedirectMatch /doc/fetch-price$        	  /beancount/doc/prices
 
 RedirectMatch /doc/bug-negative-prices 	  https://groups.google.com/forum/#!topic/beancount/2Y7EWFUA3OA
 
-RedirectMatch /doc/ingest$                https://docs.google.com/document/d/11EwQdujzEo2cxqaF5PgxCEZXWfKKQCYSMfdJowp_1S8/
-RedirectMatch /doc/import$                /beancount/doc/ingest
-RedirectMatch /doc/ingesting$             /beancount/doc/ingest
-RedirectMatch /doc/importing$             /beancount/doc/ingest
-
 RedirectMatch /doc/self-reductions        https://docs.google.com/document/d/16dKnXJ7KZhemPs5NPHmSTNCV7LUPrMD9jFgiV79Npb8/
 RedirectMatch /doc/selfreductions         /doc/ledgerhub/self-reductions
 RedirectMatch /doc/self-redux             /doc/ledgerhub/self-reductions
 RedirectMatch /doc/selfredux              /doc/ledgerhub/self-reductions
+
+# Old document
+RedirectMatch /doc/ingest$                https://docs.google.com/document/d/11EwQdujzEo2cxqaF5PgxCEZXWfKKQCYSMfdJowp_1S8/
+RedirectMatch /doc/beangulp$              https://docs.google.com/document/d/1hBfsHZcoHgz5rvhCdP42g2FJ5ouycIMV4H1tfgXpwBU/
+RedirectMatch /doc/import$                /beancount/doc/beangulp
+RedirectMatch /doc/ingesting$             /beancount/doc/beangulp
+RedirectMatch /doc/importing$             /beancount/doc/beangulp
 
 # Old LedgerHub documents now redirected from here.
 
@@ -213,5 +215,25 @@ RedirectMatch /doc/v3$                    https://docs.google.com/document/d/1qP
 RedirectMatch /doc/proposal-v3$           /beancount/doc/v3
 
 RedirectMatch /doc/v3-changes             https://docs.google.com/document/d/1Ia4zYmkB6I6IbWPRlcZYYuMS1ZI55T99dp9LiMJqXCE/
-
 RedirectMatch /doc/v3-booking             https://docs.google.com/document/d/1H0UDD1cKenraIMe40PbdMgnqJdeqI6yKv0og51mXk-0/
+
+RedirectMatch /doc/parsed-comments        https://docs.google.com/document/d/1yestw21g4AEMNrIUsBuOaxucfz3_7eMAR6NYnVnTzV0/
+RedirectMatch /doc/ingest-design          /beancount/doc/ledgerhub/design-doc
+
+RedirectMatch /doc/ledgerhub/manual       https://docs.google.com/document/d/1vnvqQNGaHOM3opRnEZspvALpv-G6fVQq0bSgAchVpuk/
+RedirectMatch /doc/ledgerhub/status       /beancount/doc/ledgerhub/manual
+
+RedirectMatch /doc/ledgerhub/postmortem   https://docs.google.com/document/d/1Bln8Zo11Cvez2rdEgpnM-oBHC1B6uPC18Qm7ulobolM/
+RedirectMatch /doc/ledgerhub/proposal-v2  /beancount/doc/ledgerhub/postmortem
+
+RedirectMatch /doc/v3-dependencies        https://docs.google.com/document/d/10R-msZljuqFY8nckUnR1jVxMX1ol7rJUCMZo7w7QUQs/
+RedirectMatch /doc/v3-deps                /beancount/doc/v3-dependencies
+
+RedirectMatch /doc/v3-install             https://docs.google.com/document/d/1WwZYqsp28Uuk5eFqHQ1u1zqdjghymy8S_Yo-OJENoa4/
+
+RedirectMatch /doc/v3$                    https://docs.google.com/document/d/1qPdNXaz5zuDQ8M9uoZFyyFis7hA0G55BEfhWhrVBsfc/
+RedirectMatch /doc/proposal-v3$           /beancount/doc/v3
+
+RedirectMatch /doc/v3-changes             https://docs.google.com/document/d/1Ia4zYmkB6I6IbWPRlcZYYuMS1ZI55T99dp9LiMJqXCE/
+
+RedirectMatch /doc/parsed-comments        https://docs.google.com/document/d/1yestw21g4AEMNrIUsBuOaxucfz3_7eMAR6NYnVnTzV0/
