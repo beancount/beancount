@@ -213,3 +213,5 @@ RedirectMatch /doc/v3$                    https://docs.google.com/document/d/1qP
 RedirectMatch /doc/proposal-v3$           /beancount/doc/v3
 
 RedirectMatch /doc/v3-changes             https://docs.google.com/document/d/1Ia4zYmkB6I6IbWPRlcZYYuMS1ZI55T99dp9LiMJqXCE/
+
+RedirectMatch /doc/v3-booking             https://docs.google.com/document/d/1H0UDD1cKenraIMe40PbdMgnqJdeqI6yKv0og51mXk-0/
