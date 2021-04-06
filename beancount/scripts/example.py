@@ -958,12 +958,15 @@ def generate_clearing_entries(date_iter,
     Returns:
       A list of directives.
     """
+    new_entries = []
+
     # The next date we're looking for.
     date_iter = iter(date_iter)
-    next_date = next(date_iter)
+    next_date = next(date_iter, None)
+    if not next_date:
+        return new_entries
 
     # Iterate over all the postings of the account to clear.
-    new_entries = []
     for txn_posting, balances in postings_for(entries, [account_clear]):
         balance_clear = balances[account_clear]
 
