@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import tempfile
 import shutil
+import sys
 import unittest
 from unittest import mock
 
@@ -48,13 +49,23 @@ class TestFileMemo(unittest.TestCase):
             self.assertRegex(mimetype, r'text/(x-(python|c\+\+)|plain)')
 
     def test_cache_head_obeys_explict_utf8_encoding_avoids_chardet_exception(self):
-        emoji_header = 'asciiHeader1,🍏Header1,asciiHeader2'.encode('utf-8')
-        with mock.patch('builtins.open',
-                mock.mock_open(read_data=emoji_header)):
-            try:
-                function_return = cache._FileMemo('anyFile').head(encoding='utf-8')
-            except UnicodeDecodeError:
-                self.fail("Failed to decode emoji")
+        data = b'asciiHeader1,\xf0\x9f\x8d\x8fHeader1,asciiHeader2'
+        with mock.patch('builtins.open', mock.mock_open(read_data=data)):
+            string = cache._FileMemo('filepath').head(encoding='utf-8')
+            self.assertEqual(string, data.decode('utf8'))
+
+    def test_cache_head_encoding(self):
+        data = b'asciiHeader1,\xf0\x9f\x8d\x8fHeader1,asciiHeader2'
+        # The 15th bytes is in the middle of the unicode character.
+        num_bytes = 15
+        if sys.version_info < (3, 7):
+            # Reading the documentation, a partial read from longer
+            # mocked file data should work just fine, however, this
+            # does not seem the case in practice.
+            data = data[:num_bytes]
+        with mock.patch('builtins.open', mock.mock_open(read_data=data)):
+            string = cache._FileMemo('filepath').head(num_bytes, encoding='utf-8')
+            self.assertEqual(string, 'asciiHeader1,')
 
 if __name__ == '__main__':
     unittest.main()
