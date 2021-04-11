@@ -7,6 +7,7 @@ text, can be expensive.
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import codecs
 from os import path
 
 import chardet
@@ -79,16 +80,25 @@ def mimetype(filename):
 def head(num_bytes=8192, encoding=None):
     """A converter that just reads the first bytes of a file.
 
+    Note that the returned string may represent less bytes than
+    specified if the encoded bytes read from the file terminate with
+    an incomplete unicode character. This is likely to occur for
+    variable width encodings suach as utf8.
+
     Args:
       num_bytes: The number of bytes to read.
     Returns:
       A converter function.
+
     """
     def head_reader(filename):
-        with open(filename, 'rb') as file:
-            rawdata = file.read(num_bytes)
-            file_encoding = encoding or chardet.detect(rawdata)['encoding']
-            return rawdata.decode(file_encoding)
+        with open(filename, 'rb') as fd:
+            data = fd.read(num_bytes)
+            enc = encoding or chardet.detect(data)['encoding']
+            # A little trick to handle an encoded byte array that
+            # terminates with an incomplete unicode character.
+            decoder = codecs.iterdecode(iter([data]), enc)
+            return next(decoder)
     return head_reader
 
 
