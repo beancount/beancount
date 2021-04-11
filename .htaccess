@@ -237,3 +237,4 @@ RedirectMatch /doc/proposal-v3$           /beancount/doc/v3
 RedirectMatch /doc/v3-changes             https://docs.google.com/document/d/1Ia4zYmkB6I6IbWPRlcZYYuMS1ZI55T99dp9LiMJqXCE/
 
 RedirectMatch /doc/parsed-comments        https://docs.google.com/document/d/1yestw21g4AEMNrIUsBuOaxucfz3_7eMAR6NYnVnTzV0/
+RedirectMatch /doc/symbology              https://docs.google.com/document/d/1_52VhapAuR-ej4yB8rFovA8MyMmF8IOcqO44apsdtKU/
