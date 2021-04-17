@@ -355,7 +355,7 @@ class Meta(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        meta = context.posting.meta
+        meta = context.posting.meta if context.posting else None
         if meta is None:
             return None
         return meta.get(args[0], None)
