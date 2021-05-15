@@ -153,6 +153,11 @@ class _CurrencyContext:
         integer_digits = len(num_tuple.digits) + num_tuple.exponent
         self.integer_max = max(self.integer_max, integer_digits)
 
+    def update_from(self, other):
+        self.has_sign = self.has_sign or other.has_sign
+        self.fractional_dist.update_from(other.fractional_dist)
+        self.integer_max = max(self.integer_max, other.integer_max)
+
     def get_fractional(self, precision):
         """
         Returns:
@@ -200,6 +205,15 @@ class DisplayContext:
           currency: An optional string, the currency this numbers applies to.
         """
         self.ccontexts[currency].update(number)
+
+    def update_from(self, other):
+        """Update the builder with the other given DisplayContext.
+
+        Args:
+          other: Another DisplayContext.
+        """
+        for currency, ccontext in other.ccontexts.items():
+            self.ccontexts[currency].update_from(ccontext)
 
     def quantize(self, number, currency, precision=Precision.MOST_COMMON):
         """Quantize the given number to the given precision.

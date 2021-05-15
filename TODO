@@ -12,8 +12,6 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
-- Fix #131
-- Make included files accumulate the state of their DisplayContext.
 
 {booking}
 {holding}
@@ -5592,8 +5590,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Issue #128: bean-report holdings market value incorrect if no price given
     initially (blais/beancount)
-
-  - Issue #131: Aggregate the state of DisplayContext across all parsed files.
 
 ** TaxMin Reporting
 
