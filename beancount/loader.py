@@ -464,6 +464,7 @@ def aggregate_options_map(options_map, src_options_map):
     for currency in src_options_map["operating_currency"]:
         if currency not in op_currencies:
             op_currencies.append(currency)
+    options_map["dcontext"].update_from(src_options_map["dcontext"])
 
 
 def _load(sources, log_timings, extra_validations, encoding):
