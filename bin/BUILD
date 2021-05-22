@@ -112,19 +112,3 @@ py_binary(
         "//beancount/tools:treeify",
     ],
 )
-
-genrule(
-    name = "upload_to_sheets_py",
-    srcs = ["upload-to-sheets"],
-    outs = ["upload_to_sheets.py"],
-    cmd = "cat $(locations :upload-to-sheets) > $@",
-)
-
-py_binary(
-    name = "upload_to_sheets",
-    srcs = ["upload_to_sheets.py"],
-    deps = [
-        "//beancount/tools:sheets_upload",
-        "//beancount:loader_with_plugins",
-    ],
-)

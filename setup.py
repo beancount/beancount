@@ -166,7 +166,6 @@ setup(name="beancount",
               'bean-query = beancount.query.shell:main',
               'bean-sql = beancount.scripts.sql:main',
               'treeify = beancount.tools.treeify:main',
-              'upload-to-sheets = beancount.tools.sheets_upload:main',
           ]
       },
 
