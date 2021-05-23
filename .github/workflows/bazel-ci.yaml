@@ -1,8 +1,7 @@
 name: bazel-ci
-
 on:
-  [push, pull_request]
-
+  - push
+  - pull_request
 jobs:
   compile:
     runs-on: ubuntu-latest

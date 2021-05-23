@@ -1,8 +1,7 @@
 name: linux-ci
-
 on:
-  [push, pull_request]
-
+  - push
+  - pull_request
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,7 +14,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install -r requirements_dev.txt
+      - run: pip install -r requirements/dev.txt
       - run: python setup.py build_ext -i
       - run: make ctest
         env:

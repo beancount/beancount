@@ -27,6 +27,7 @@ from beancount.core.amount import CURRENCY_RE
 __plugins__ = ('validate_commodity_directives',)
 
 
+ConfigError = collections.namedtuple('ConfigError', 'source message entry')
 CheckCommodityError = collections.namedtuple('CheckCommodityError', 'source message entry')
 
 

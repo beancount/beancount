@@ -11,8 +11,6 @@ import textwrap
 import sys
 import subprocess
 
-from pytest import mark
-
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
@@ -49,7 +47,7 @@ class TestParserDoc(unittest.TestCase):
         self.assertTrue(errors)
 
     @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
-    @mark.xfail
+    @unittest.expectedFailure
     @parser.parse_doc(expect_errors=False)
     def test_parse_doc__errors(self, _, __, ___):
         """
@@ -59,7 +57,7 @@ class TestParserDoc(unittest.TestCase):
         """
 
     @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
-    @mark.xfail
+    @unittest.expectedFailure
     @parser.parse_doc(expect_errors=True)
     def test_parse_doc__noerrors(self, _, __, ___):
         """
