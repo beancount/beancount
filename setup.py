@@ -97,11 +97,6 @@ install_requires = [
     # The SQL parser uses PLY in order to parse the input syntax.
     'ply',
 
-    # This library is used to download and convert the documentation
-    # programmatically and to upload lists of holdings to a Google
-    # Spreadsheet for live intra-day monitoring.
-    'google-api-python-client',
-
     # Command line parsing.
     'click',
 ]
