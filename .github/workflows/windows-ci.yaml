@@ -1,8 +1,7 @@
 name: windows-ci
-
 on:
-  [push, pull_request]
-
+  - push
+  - pull_request
 jobs:
   compile:
     runs-on: windows-latest
