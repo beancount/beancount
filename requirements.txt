@@ -1,4 +1,0 @@
-python-dateutil>=2.6.0
-ply>=3.4
-lxml>=3.0
-click>=7.0
