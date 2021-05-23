@@ -160,7 +160,8 @@ class TestCase(unittest.TestCase):
         expected_entries = read_string_or_entries(expected_entries, allow_incomplete)
         actual_entries = read_string_or_entries(actual_entries, allow_incomplete)
 
-        same, expected_missing, actual_missing = compare.compare_entries(expected_entries, actual_entries)
+        same, expected_missing, actual_missing = \
+            compare.compare_entries(expected_entries, actual_entries)
         if not same:
             assert expected_missing or actual_missing, \
                 "Missing is missing: {}, {}".format(expected_missing, actual_missing)
