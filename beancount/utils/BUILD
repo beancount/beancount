@@ -12,20 +12,6 @@ py_test(
 )
 
 py_library(
-    name = "csv_utils",
-    srcs = ["csv_utils.py"],
-)
-
-py_test(
-    name = "csv_utils_test",
-    srcs = ["csv_utils_test.py"],
-    deps = [
-        ":csv_utils",
-        ":test_utils",
-    ],
-)
-
-py_library(
     name = "date_utils",
     srcs = ["date_utils.py"],
     deps = [],
