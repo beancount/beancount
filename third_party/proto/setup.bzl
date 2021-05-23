@@ -7,8 +7,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def setup_proto():
     # Protobuf
     if not native.existing_rule("com_google_protobuf"):
-        use_unreleased_version = True
-        use_local_copy = True
+        use_unreleased_version = False
+        use_local_copy = False
         if use_unreleased_version:
             if use_local_copy:
                 native.local_repository(
@@ -31,9 +31,9 @@ def setup_proto():
         else:
             http_archive(
                 name = "com_google_protobuf",
-                urls = ["https://github.com/protocolbuffers/protobuf/archive/v4.0.0-rc2.tar.gz"],
-                sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
-                strip_prefix = "protobuf-4.0.0-rc2",
+                urls = ["https://github.com/protocolbuffers/protobuf/archive/ee5887daf18581d9b28b8f8c5c92d6d5fa7be182.tar.gz"],
+                sha256 = "c469ab656c9529472f6012a9e2ca3a016df42e00be5db846cec5848eb986ef56",
+                strip_prefix = "protobuf-ee5887daf18581d9b28b8f8c5c92d6d5fa7be182",
             )
 
     # Rules for building protos.
