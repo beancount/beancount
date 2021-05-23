@@ -1,0 +1,38 @@
+name: install
+on:
+  - push
+  - pull_request
+jobs:
+  install-from-sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          # The oldest supported python version
+          python-version: 3.6
+      - run: python setup.py install
+      - run: |
+          bean-check --help
+          bean-doctor --help
+          bean-example --help
+          bean-format --help
+          bean-query --help
+          bean-sql --help
+  install-from-sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          # The oldest supported python version
+          python-version: 3.6
+      - run: python setup.py sdist --format zip
+      - run: pip install dist/beancount-*.zip
+      - run: |
+          bean-check --help
+          bean-doctor --help
+          bean-example --help
+          bean-format --help
+          bean-query --help
+          bean-sql --help
