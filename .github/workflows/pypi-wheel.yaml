@@ -1,16 +1,12 @@
 name: upload-wheel
-
 on:
   push:
     tags:
       - "2.*"
-
   workflow_dispatch:
     inputs:
       tags:
         description: 'Tag for wheel'
-
-
 jobs:
   build-and-upload:
     runs-on: ${{ matrix.os }}-latest

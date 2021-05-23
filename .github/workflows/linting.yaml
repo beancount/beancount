@@ -1,10 +1,9 @@
 name: linting
-
 on:
-  [push, pull_request]
-
+  - push
+  - pull_request
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

@@ -38,7 +38,7 @@ class TestCheckCommodity(unittest.TestCase):
         """
         occurrences, commodities = check_commodity.get_commodity_map_ex(entries,
                                                                         metadata=True)
-        self.assertEqual(set([value for _, value in occurrences]),
+        self.assertEqual({value for _, value in occurrences},
                          {'TEST1', 'TEST2', 'TEST3', 'TEST4', 'TEST5',
                           'TEST6', 'TEST7', 'FOO', 'BAR'})
         self.assertEqual(commodities.keys(), {'BAZ'})

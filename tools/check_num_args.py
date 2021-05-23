@@ -8,6 +8,7 @@ import ast
 import os
 import argparse
 import logging
+import sys
 from os import path
 
 
@@ -36,21 +37,19 @@ def main():
 
     args = parser.parse_args()
 
-    stdout = open(1, 'w', encoding='utf-8', closefd=False) # fd 1 is stdout
-
     for filename in find_files(args.root):
         #logging.info("Processing %s", filename)
         code = ast.parse(open(filename, encoding='utf8').read(), filename)
         for node in ast.walk(code):
             if isinstance(node, ast.Call):
-                # stdout.write(ast.dump(node))
-                # stdout.write('\n')
+                # sys.stdout.write(ast.dump(node))
+                # sys.stdout.write('\n')
                 if get_name(node.func) == args.funcname:
                     if len(node.args) != args.numargs:
-                        stdout.write('{}:{}:\n'.format(filename, node.lineno))
-                        stdout.write(ast.dump(node.func))
-                        stdout.write('\n')
-                        stdout.write('{}\n'.format(len(node.args)))
+                        sys.stdout.write('{}:{}:\n'.format(filename, node.lineno))
+                        sys.stdout.write(ast.dump(node.func))
+                        sys.stdout.write('\n')
+                        sys.stdout.write('{}\n'.format(len(node.args)))
 
 
 if __name__ == '__main__':
