@@ -195,20 +195,3 @@ py_test(
         ":table",
     ],
 )
-
-py_library(
-    name = "scrape",
-    srcs = ["scrape.py"],
-    deps = [
-        # Add lxml here?
-    ],
-)
-
-py_test(
-    name = "scrape_test",
-    srcs = ["scrape_test.py"],
-    deps = [
-        ":test_utils",
-        ":scrape",
-    ],
-)
