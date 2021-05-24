@@ -522,6 +522,12 @@ def _load(sources, log_timings, extra_validations, encoding):
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
+    # Add the main filename to the list of includes.
+    if isinstance(file, os.PathLike):
+        file = str(file)
+    if isinstance(file, str):
+        options_map['include'].insert(0, file)
+
     # Compute the input hash.
     options_map['input_hash'] = compute_input_hash(options_map['include'])
 

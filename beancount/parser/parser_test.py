@@ -11,6 +11,9 @@ import textwrap
 import sys
 import subprocess
 
+from os import path
+from unittest import mock
+
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
@@ -391,6 +394,48 @@ class TestLineno(unittest.TestCase):
         self.assertEqual(entries[1].meta['lineno'], lineno + 2)
         self.assertEqual(entries[2].meta['lineno'], lineno + 6)
         self.assertEqual(entries[3].meta['lineno'], lineno + 8)
+
+
+class TestInclude(unittest.TestCase):
+
+    def test_lex_include(self):
+        f = io.BytesIO(textwrap.dedent("""\
+        1.0
+        include "foo.beancount"
+        3.0
+        """).encode('utf8'))
+
+        with mock.patch('beancount.parser.lexer.open') as patch:
+            patch.return_value = io.BytesIO(b"""2.0""")
+            builder = lexer.LexBuilder()
+            parser = _parser.Parser(builder)
+            tokens = list(parser.lex(f))
+
+        self.assertFalse(builder.errors)
+        numbers = [token[3] for token in tokens if token[0] == 'NUMBER']
+        self.assertEqual(numbers, [D(i) for i in range(1, 4)])
+
+    def test_parse_include(self):
+        f1 = io.BytesIO(textwrap.dedent("""\
+        2021-05-24 open Assets:Tests
+        include "foo.beancount"
+        2021-05-25 close Assets:Tests
+        """).encode('utf8'))
+
+        f2 = io.BytesIO(textwrap.dedent("""\
+        2021-05-24 * "Test"
+          Assets:Tests 1.00 EUR
+        """).encode('utf8'))
+
+        with mock.patch('beancount.parser.lexer.open') as patch:
+            patch.return_value = f2
+            builder = grammar.Builder()
+            parser = _parser.Parser(builder)
+            parser.parse(f1)
+
+        entries, errors, options = builder.finalize()
+        self.assertFalse(errors)
+        self.assertCountEqual(map(path.basename, options['include']), ['foo.beancount'])
 
 
 if __name__ == '__main__':

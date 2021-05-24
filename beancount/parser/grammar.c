@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.7.5.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -46,10 +46,10 @@
    USER NAME SPACE" below.  */
 
 /* Identify Bison output, and Bison version.  */
-#define YYBISON 30705
+#define YYBISON 30706
 
 /* Bison version string.  */
-#define YYBISON_VERSION "3.7.5"
+#define YYBISON_VERSION "3.7.6"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -214,71 +214,69 @@ enum yysymbol_kind_t
   YYSYMBOL_PUSHMETA = 37,                  /* PUSHMETA  */
   YYSYMBOL_POPMETA = 38,                   /* POPMETA  */
   YYSYMBOL_OPTION = 39,                    /* OPTION  */
-  YYSYMBOL_INCLUDE = 40,                   /* INCLUDE  */
-  YYSYMBOL_PLUGIN = 41,                    /* PLUGIN  */
-  YYSYMBOL_NONE = 42,                      /* NONE  */
-  YYSYMBOL_BOOL = 43,                      /* BOOL  */
-  YYSYMBOL_DATE = 44,                      /* DATE  */
-  YYSYMBOL_ACCOUNT = 45,                   /* ACCOUNT  */
-  YYSYMBOL_CURRENCY = 46,                  /* CURRENCY  */
-  YYSYMBOL_STRING = 47,                    /* STRING  */
-  YYSYMBOL_NUMBER = 48,                    /* NUMBER  */
-  YYSYMBOL_TAG = 49,                       /* TAG  */
-  YYSYMBOL_LINK = 50,                      /* LINK  */
-  YYSYMBOL_KEY = 51,                       /* KEY  */
-  YYSYMBOL_NEGATIVE = 52,                  /* NEGATIVE  */
-  YYSYMBOL_YYACCEPT = 53,                  /* $accept  */
-  YYSYMBOL_txn = 54,                       /* txn  */
-  YYSYMBOL_eol = 55,                       /* eol  */
-  YYSYMBOL_number_expr = 56,               /* number_expr  */
-  YYSYMBOL_txn_strings = 57,               /* txn_strings  */
-  YYSYMBOL_tags_links = 58,                /* tags_links  */
-  YYSYMBOL_transaction = 59,               /* transaction  */
-  YYSYMBOL_optflag = 60,                   /* optflag  */
-  YYSYMBOL_price_annotation = 61,          /* price_annotation  */
-  YYSYMBOL_account = 62,                   /* account  */
-  YYSYMBOL_posting = 63,                   /* posting  */
-  YYSYMBOL_key_value = 64,                 /* key_value  */
-  YYSYMBOL_key_value_line = 65,            /* key_value_line  */
-  YYSYMBOL_key_value_value = 66,           /* key_value_value  */
-  YYSYMBOL_posting_or_kv_list = 67,        /* posting_or_kv_list  */
-  YYSYMBOL_key_value_list = 68,            /* key_value_list  */
-  YYSYMBOL_currency_list = 69,             /* currency_list  */
-  YYSYMBOL_pushtag = 70,                   /* pushtag  */
-  YYSYMBOL_poptag = 71,                    /* poptag  */
-  YYSYMBOL_pushmeta = 72,                  /* pushmeta  */
-  YYSYMBOL_popmeta = 73,                   /* popmeta  */
-  YYSYMBOL_open = 74,                      /* open  */
-  YYSYMBOL_opt_booking = 75,               /* opt_booking  */
-  YYSYMBOL_close = 76,                     /* close  */
-  YYSYMBOL_commodity = 77,                 /* commodity  */
-  YYSYMBOL_pad = 78,                       /* pad  */
-  YYSYMBOL_balance = 79,                   /* balance  */
-  YYSYMBOL_amount = 80,                    /* amount  */
-  YYSYMBOL_amount_tolerance = 81,          /* amount_tolerance  */
-  YYSYMBOL_maybe_number = 82,              /* maybe_number  */
-  YYSYMBOL_maybe_currency = 83,            /* maybe_currency  */
-  YYSYMBOL_compound_amount = 84,           /* compound_amount  */
-  YYSYMBOL_incomplete_amount = 85,         /* incomplete_amount  */
-  YYSYMBOL_cost_spec = 86,                 /* cost_spec  */
-  YYSYMBOL_cost_comp_list = 87,            /* cost_comp_list  */
-  YYSYMBOL_cost_comp = 88,                 /* cost_comp  */
-  YYSYMBOL_price = 89,                     /* price  */
-  YYSYMBOL_event = 90,                     /* event  */
-  YYSYMBOL_query = 91,                     /* query  */
-  YYSYMBOL_note = 92,                      /* note  */
-  YYSYMBOL_filename = 93,                  /* filename  */
-  YYSYMBOL_document = 94,                  /* document  */
-  YYSYMBOL_custom_value = 95,              /* custom_value  */
-  YYSYMBOL_custom_value_list = 96,         /* custom_value_list  */
-  YYSYMBOL_custom = 97,                    /* custom  */
-  YYSYMBOL_entry = 98,                     /* entry  */
-  YYSYMBOL_option = 99,                    /* option  */
-  YYSYMBOL_include = 100,                  /* include  */
-  YYSYMBOL_plugin = 101,                   /* plugin  */
-  YYSYMBOL_directive = 102,                /* directive  */
-  YYSYMBOL_declarations = 103,             /* declarations  */
-  YYSYMBOL_file = 104                      /* file  */
+  YYSYMBOL_PLUGIN = 40,                    /* PLUGIN  */
+  YYSYMBOL_NONE = 41,                      /* NONE  */
+  YYSYMBOL_BOOL = 42,                      /* BOOL  */
+  YYSYMBOL_DATE = 43,                      /* DATE  */
+  YYSYMBOL_ACCOUNT = 44,                   /* ACCOUNT  */
+  YYSYMBOL_CURRENCY = 45,                  /* CURRENCY  */
+  YYSYMBOL_STRING = 46,                    /* STRING  */
+  YYSYMBOL_NUMBER = 47,                    /* NUMBER  */
+  YYSYMBOL_TAG = 48,                       /* TAG  */
+  YYSYMBOL_LINK = 49,                      /* LINK  */
+  YYSYMBOL_KEY = 50,                       /* KEY  */
+  YYSYMBOL_NEGATIVE = 51,                  /* NEGATIVE  */
+  YYSYMBOL_YYACCEPT = 52,                  /* $accept  */
+  YYSYMBOL_txn = 53,                       /* txn  */
+  YYSYMBOL_eol = 54,                       /* eol  */
+  YYSYMBOL_number_expr = 55,               /* number_expr  */
+  YYSYMBOL_txn_strings = 56,               /* txn_strings  */
+  YYSYMBOL_tags_links = 57,                /* tags_links  */
+  YYSYMBOL_transaction = 58,               /* transaction  */
+  YYSYMBOL_optflag = 59,                   /* optflag  */
+  YYSYMBOL_price_annotation = 60,          /* price_annotation  */
+  YYSYMBOL_account = 61,                   /* account  */
+  YYSYMBOL_posting = 62,                   /* posting  */
+  YYSYMBOL_key_value = 63,                 /* key_value  */
+  YYSYMBOL_key_value_line = 64,            /* key_value_line  */
+  YYSYMBOL_key_value_value = 65,           /* key_value_value  */
+  YYSYMBOL_posting_or_kv_list = 66,        /* posting_or_kv_list  */
+  YYSYMBOL_key_value_list = 67,            /* key_value_list  */
+  YYSYMBOL_currency_list = 68,             /* currency_list  */
+  YYSYMBOL_pushtag = 69,                   /* pushtag  */
+  YYSYMBOL_poptag = 70,                    /* poptag  */
+  YYSYMBOL_pushmeta = 71,                  /* pushmeta  */
+  YYSYMBOL_popmeta = 72,                   /* popmeta  */
+  YYSYMBOL_open = 73,                      /* open  */
+  YYSYMBOL_opt_booking = 74,               /* opt_booking  */
+  YYSYMBOL_close = 75,                     /* close  */
+  YYSYMBOL_commodity = 76,                 /* commodity  */
+  YYSYMBOL_pad = 77,                       /* pad  */
+  YYSYMBOL_balance = 78,                   /* balance  */
+  YYSYMBOL_amount = 79,                    /* amount  */
+  YYSYMBOL_amount_tolerance = 80,          /* amount_tolerance  */
+  YYSYMBOL_maybe_number = 81,              /* maybe_number  */
+  YYSYMBOL_maybe_currency = 82,            /* maybe_currency  */
+  YYSYMBOL_compound_amount = 83,           /* compound_amount  */
+  YYSYMBOL_incomplete_amount = 84,         /* incomplete_amount  */
+  YYSYMBOL_cost_spec = 85,                 /* cost_spec  */
+  YYSYMBOL_cost_comp_list = 86,            /* cost_comp_list  */
+  YYSYMBOL_cost_comp = 87,                 /* cost_comp  */
+  YYSYMBOL_price = 88,                     /* price  */
+  YYSYMBOL_event = 89,                     /* event  */
+  YYSYMBOL_query = 90,                     /* query  */
+  YYSYMBOL_note = 91,                      /* note  */
+  YYSYMBOL_filename = 92,                  /* filename  */
+  YYSYMBOL_document = 93,                  /* document  */
+  YYSYMBOL_custom_value = 94,              /* custom_value  */
+  YYSYMBOL_custom_value_list = 95,         /* custom_value_list  */
+  YYSYMBOL_custom = 96,                    /* custom  */
+  YYSYMBOL_entry = 97,                     /* entry  */
+  YYSYMBOL_option = 98,                    /* option  */
+  YYSYMBOL_plugin = 99,                    /* plugin  */
+  YYSYMBOL_directive = 100,                /* directive  */
+  YYSYMBOL_declarations = 101,             /* declarations  */
+  YYSYMBOL_file = 102                      /* file  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -601,21 +599,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  35
+#define YYFINAL  33
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   269
+#define YYLAST   285
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  53
+#define YYNTOKENS  52
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  52
+#define YYNNTS  51
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  131
+#define YYNRULES  129
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  224
+#define YYNSTATES  220
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   307
+#define YYMAXUTOK   306
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -659,27 +657,26 @@ static const yytype_int8 yytranslate[] =
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51,    52
+      45,    46,    47,    48,    49,    50,    51
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   287,   287,   291,   295,   299,   304,   304,   311,   312,
-     317,   322,   327,   332,   337,   341,   347,   352,   357,   365,
-     370,   375,   382,   389,   393,   397,   401,   404,   407,   414,
-     419,   424,   429,   436,   443,   449,   450,   451,   452,   453,
-     454,   455,   456,   457,   458,   465,   470,   474,   479,   484,
-     491,   496,   500,   507,   512,   517,   524,   531,   538,   548,
-     555,   562,   563,   570,   577,   584,   591,   598,   605,   612,
-     620,   621,   628,   629,   636,   641,   646,   654,   661,   666,
-     671,   678,   683,   688,   695,   696,   697,   698,   705,   712,
-     719,   726,   732,   735,   742,   747,   752,   757,   762,   767,
-     778,   783,   790,   797,   798,   799,   800,   801,   802,   803,
-     804,   805,   806,   807,   808,   811,   818,   825,   830,   837,
-     838,   839,   840,   841,   842,   843,   846,   847,   848,   853,
-     871,   879
+       0,   285,   285,   289,   293,   297,   302,   302,   309,   310,
+     315,   320,   325,   330,   335,   339,   345,   350,   355,   363,
+     368,   373,   380,   387,   391,   395,   399,   402,   405,   412,
+     417,   422,   427,   434,   441,   447,   448,   449,   450,   451,
+     452,   453,   454,   455,   456,   463,   468,   472,   477,   482,
+     489,   494,   498,   505,   510,   515,   522,   529,   536,   546,
+     553,   560,   561,   568,   575,   582,   589,   596,   603,   610,
+     618,   619,   626,   627,   634,   639,   644,   652,   659,   664,
+     669,   676,   681,   686,   693,   694,   695,   696,   703,   710,
+     717,   724,   730,   733,   740,   745,   750,   755,   760,   765,
+     776,   781,   788,   795,   796,   797,   798,   799,   800,   801,
+     802,   803,   804,   805,   806,   809,   816,   821,   828,   829,
+     830,   831,   832,   833,   836,   837,   838,   843,   861,   869
 };
 #endif
 
@@ -700,19 +697,19 @@ static const char *const yytname[] =
   "COMMA", "TILDE", "HASH", "ASTERISK", "SLASH", "COLON", "PLUS", "MINUS",
   "LPAREN", "RPAREN", "FLAG", "TXN", "BALANCE", "OPEN", "CLOSE",
   "COMMODITY", "PAD", "EVENT", "PRICE", "NOTE", "DOCUMENT", "QUERY",
-  "CUSTOM", "PUSHTAG", "POPTAG", "PUSHMETA", "POPMETA", "OPTION",
-  "INCLUDE", "PLUGIN", "NONE", "BOOL", "DATE", "ACCOUNT", "CURRENCY",
-  "STRING", "NUMBER", "TAG", "LINK", "KEY", "NEGATIVE", "$accept", "txn",
-  "eol", "number_expr", "txn_strings", "tags_links", "transaction",
-  "optflag", "price_annotation", "account", "posting", "key_value",
-  "key_value_line", "key_value_value", "posting_or_kv_list",
-  "key_value_list", "currency_list", "pushtag", "poptag", "pushmeta",
-  "popmeta", "open", "opt_booking", "close", "commodity", "pad", "balance",
-  "amount", "amount_tolerance", "maybe_number", "maybe_currency",
-  "compound_amount", "incomplete_amount", "cost_spec", "cost_comp_list",
-  "cost_comp", "price", "event", "query", "note", "filename", "document",
-  "custom_value", "custom_value_list", "custom", "entry", "option",
-  "include", "plugin", "directive", "declarations", "file", YY_NULLPTR
+  "CUSTOM", "PUSHTAG", "POPTAG", "PUSHMETA", "POPMETA", "OPTION", "PLUGIN",
+  "NONE", "BOOL", "DATE", "ACCOUNT", "CURRENCY", "STRING", "NUMBER", "TAG",
+  "LINK", "KEY", "NEGATIVE", "$accept", "txn", "eol", "number_expr",
+  "txn_strings", "tags_links", "transaction", "optflag",
+  "price_annotation", "account", "posting", "key_value", "key_value_line",
+  "key_value_value", "posting_or_kv_list", "key_value_list",
+  "currency_list", "pushtag", "poptag", "pushmeta", "popmeta", "open",
+  "opt_booking", "close", "commodity", "pad", "balance", "amount",
+  "amount_tolerance", "maybe_number", "maybe_currency", "compound_amount",
+  "incomplete_amount", "cost_spec", "cost_comp_list", "cost_comp", "price",
+  "event", "query", "note", "filename", "document", "custom_value",
+  "custom_value_list", "custom", "entry", "option", "plugin", "directive",
+  "declarations", "file", YY_NULLPTR
 };
 
 static const char *
@@ -732,11 +729,11 @@ static const yytype_int16 yytoknum[] =
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307
+     305,   306
 };
 #endif
 
-#define YYPACT_NINF (-104)
+#define YYPACT_NINF (-107)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -750,29 +747,28 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-    -104,   126,    48,  -104,  -104,  -104,   -28,     9,    16,    18,
-      25,    28,    37,   235,  -104,  -104,  -104,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,  -104,    85,    85,    70,    85,
-      74,    47,    85,    43,  -104,  -104,  -104,  -104,    53,    53,
-      53,    54,    53,    69,    79,    53,    53,    86,    91,  -104,
-    -104,  -104,  -104,  -104,   196,  -104,    85,    85,  -104,    85,
-    -104,  -104,   206,    93,    85,    85,    53,    98,   206,   102,
-     109,   122,  -104,    21,   206,   206,   206,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,   113,  -104,  -104,  -104,  -104,  -104,
-    -104,   189,    85,  -104,   -11,  -104,  -104,    85,    85,   113,
-      85,  -104,  -104,  -104,    85,    99,  -104,  -104,    55,  -104,
-    -104,   212,   206,   206,   206,   206,  -104,   206,  -104,  -104,
-     106,  -104,    85,   172,   172,  -104,  -104,  -104,    55,    55,
-    -104,  -104,  -104,  -104,  -104,   113,  -104,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,   105,   105,   202,   172,  -104,
-    -104,    42,  -104,   172,   172,   172,  -104,  -104,   172,   172,
-     173,  -104,   172,  -104,    85,   172,   172,    35,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,    55,    53,  -104,    88,  -104,
-     139,   132,    -1,  -104,  -104,   165,   175,    27,  -104,  -104,
-    -104,    95,    -2,  -104,     6,  -104,   111,   206,   206,  -104,
-    -104,   206,  -104,  -104,   153,  -104,    85,  -104,    85,   136,
-    -104,  -104,  -104,  -104
+    -107,   147,    20,  -107,  -107,  -107,   -23,   -16,    -1,    14,
+      24,    51,   244,  -107,  -107,  -107,  -107,  -107,  -107,  -107,
+    -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,
+    -107,  -107,  -107,  -107,    19,    19,    84,    19,    88,    60,
+      42,  -107,  -107,  -107,  -107,    68,    68,    68,    71,    68,
+      73,    75,    68,    68,    77,    78,  -107,  -107,  -107,  -107,
+    -107,   209,  -107,    19,    19,    19,  -107,  -107,    40,    81,
+      19,    19,    68,    96,    40,   104,   106,   107,  -107,     1,
+      40,    40,    40,  -107,  -107,  -107,  -107,  -107,  -107,  -107,
+     201,  -107,  -107,  -107,  -107,  -107,  -107,    35,    19,  -107,
+       6,  -107,  -107,    19,    19,   201,    19,  -107,  -107,  -107,
+      19,   121,  -107,  -107,    17,  -107,  -107,   264,    40,    40,
+      40,    40,  -107,    40,  -107,  -107,    91,  -107,    19,   127,
+     127,  -107,  -107,  -107,    17,    17,  -107,  -107,  -107,  -107,
+    -107,   201,  -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,
+    -107,    23,    23,   215,   127,  -107,  -107,    11,  -107,   127,
+     127,   127,  -107,  -107,   127,   127,   142,  -107,   127,  -107,
+      19,   127,   127,    12,  -107,  -107,  -107,  -107,  -107,  -107,
+    -107,    17,    68,  -107,    90,  -107,   113,   111,    47,  -107,
+    -107,   179,   189,    85,  -107,  -107,  -107,    99,    -5,  -107,
+      86,  -107,    66,    40,    40,  -107,  -107,    40,  -107,  -107,
+     195,  -107,    19,  -107,    19,   112,  -107,  -107,  -107,  -107
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -780,51 +776,50 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-     130,     0,     0,   131,   129,   126,     0,     0,     0,     0,
-       0,     0,     0,     0,   103,   119,   120,   121,   122,   105,
-     106,   112,   107,   104,   111,   110,   113,   109,   108,   114,
-     128,   123,   124,   125,   127,     1,     0,     0,     0,     0,
-       0,     0,     0,     0,     5,     4,     3,     2,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    16,
-       7,     6,    56,    57,    44,    58,     0,     0,   116,     0,
-     117,    28,     0,    53,     0,     0,     0,     0,     0,     0,
-       0,     0,   100,    19,     0,     0,     0,    41,    40,    37,
-      38,    35,     8,    39,    42,    36,    33,    43,    59,   115,
-     118,     0,     0,    54,    62,    50,    50,     0,     0,     0,
-       0,    19,    92,    19,     0,     0,    18,    17,     0,    14,
-      13,     0,     0,     0,     0,     0,    67,     0,    68,    50,
-       0,    61,     0,    63,    64,    50,    50,    50,     0,     0,
-      50,    96,    95,    94,    50,    98,    99,    97,   101,    21,
-      20,    45,    15,    11,    12,     9,    10,     0,    66,    55,
-      50,     0,    52,    65,    89,    88,    50,    50,    90,   102,
-      22,    69,    60,    51,     0,    91,    93,    19,    49,    48,
-      34,    25,    24,    26,    46,     0,     0,    47,    71,    32,
-      70,    73,    80,    72,    77,    71,    71,     0,    87,    85,
-      86,    73,     0,    84,     0,    82,     0,    71,    71,    29,
-      75,    71,    74,    79,    71,    78,     0,    27,     0,     0,
-      83,    31,    30,    76
+     128,     0,     0,   129,   127,   124,     0,     0,     0,     0,
+       0,     0,     0,   103,   118,   119,   120,   121,   105,   106,
+     112,   107,   104,   111,   110,   113,   109,   108,   114,   126,
+     122,   123,   125,     1,     0,     0,     0,     0,     0,     0,
+       0,     5,     4,     3,     2,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    16,     7,     6,    56,
+      57,    44,    58,     0,     0,     0,   116,    28,     0,    53,
+       0,     0,     0,     0,     0,     0,     0,     0,   100,    19,
+       0,     0,     0,    41,    40,    37,    38,    35,     8,    39,
+      42,    36,    33,    43,    59,   115,   117,     0,     0,    54,
+      62,    50,    50,     0,     0,     0,     0,    19,    92,    19,
+       0,     0,    18,    17,     0,    14,    13,     0,     0,     0,
+       0,     0,    67,     0,    68,    50,     0,    61,     0,    63,
+      64,    50,    50,    50,     0,     0,    50,    96,    95,    94,
+      50,    98,    99,    97,   101,    21,    20,    45,    15,    11,
+      12,     9,    10,     0,    66,    55,    50,     0,    52,    65,
+      89,    88,    50,    50,    90,   102,    22,    69,    60,    51,
+       0,    91,    93,    19,    49,    48,    34,    25,    24,    26,
+      46,     0,     0,    47,    71,    32,    70,    73,    80,    72,
+      77,    71,    71,     0,    87,    85,    86,    73,     0,    84,
+       0,    82,     0,    71,    71,    29,    75,    71,    74,    79,
+      71,    78,     0,    27,     0,     0,    83,    31,    30,    76
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -104,  -104,   -37,   -61,  -104,  -103,  -104,  -104,   -20,   -36,
-    -104,   181,    22,  -104,  -104,   -84,  -104,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,  -104,  -104,   -74,  -104,   -99,
-     -10,  -104,     8,  -104,     2,   -15,  -104,  -104,  -104,  -104,
-    -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,  -104,
-    -104,  -104
+    -107,  -107,   -35,   -37,  -107,  -106,  -107,  -107,   -43,   -39,
+    -107,   154,     0,  -107,  -107,   -29,  -107,  -107,  -107,  -107,
+    -107,  -107,  -107,  -107,  -107,  -107,  -107,   -70,  -107,   -32,
+     -28,  -107,   -14,  -107,   -21,   -38,  -107,  -107,  -107,  -107,
+    -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,  -107,
+    -107
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_uint8 yydefgoto[] =
 {
-       0,    59,    62,   190,    83,   118,    14,   186,   216,    72,
-     178,   174,   162,    96,   170,   133,   104,    15,    16,    17,
-      18,    19,   132,    20,    21,    22,    23,    97,   102,   191,
-     194,   203,   217,   197,   204,   205,    24,    25,    26,    27,
-     113,    28,   148,   115,    29,    30,    31,    32,    33,    34,
-       1,     2
+       0,    56,    59,   186,    79,   114,    13,   182,   212,    68,
+     174,   170,   158,    92,   166,   129,   100,    14,    15,    16,
+      17,    18,   128,    19,    20,    21,    22,    93,    98,   187,
+     190,   199,   213,   193,   200,   201,    23,    24,    25,    26,
+     109,    27,   144,   111,    28,    29,    30,    31,    32,     1,
+       2
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -832,112 +827,114 @@ static const yytype_uint8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      63,   130,    65,    94,   110,    68,    70,   195,   138,   196,
-     139,   101,   211,    73,    74,   213,    76,   109,   214,    79,
-      80,    36,   134,   119,   120,   121,   116,    60,    95,    98,
-      99,    61,   100,   207,   208,    60,   131,   105,   106,    61,
-     107,   147,    60,    60,   212,   158,    61,    61,    35,   181,
-     182,   163,   164,   165,   145,    60,   168,   183,    37,    61,
-     169,   153,   154,   155,   156,   129,   157,    38,   117,    40,
-     135,   136,    41,   137,   185,    42,   172,   140,   144,   146,
-     -23,   151,   175,   176,    43,    60,    38,    64,    60,    61,
-      69,    66,    61,    38,    67,   160,   202,   202,    71,    60,
-      75,   166,   167,    61,   149,   150,    84,    85,    86,   -70,
-     122,   123,   219,   124,   125,   202,    77,    84,    85,    86,
-     122,   123,   215,   214,   173,    78,     3,     4,   122,   123,
-       5,   124,   125,    81,   201,   201,    92,   180,    82,   103,
-     184,   193,   141,   142,    71,   108,   143,    92,   187,   111,
-     188,   189,   159,   201,   122,   123,   112,   124,   125,   126,
-     209,     6,     7,     8,     9,    10,    11,    12,   198,   114,
-      13,    84,    85,    86,   -81,   161,   177,   -81,   193,   221,
-     198,   222,   223,    84,    85,    86,   -81,   -81,   218,    39,
-     198,   210,   179,    84,    85,    86,   192,   199,   206,   220,
-     200,    92,   127,     0,   122,   123,     0,   124,   125,   199,
-       0,     0,   200,    92,    84,    85,    86,   122,   123,   199,
-     124,   125,   200,    92,    84,    85,    86,   122,   123,     0,
-     124,   125,     0,   152,     0,   128,     0,     0,    87,    88,
-      89,    71,    90,    91,    92,    93,     0,     0,   171,    44,
-      45,     0,     0,     0,    92,     0,     0,    46,    47,    48,
-      49,    50,    51,    52,    53,    54,    55,    56,    57,    58
+      60,   134,    62,   135,   106,    66,   112,    69,    70,   207,
+      72,    57,    57,    75,    76,    58,    58,    57,   126,    57,
+      33,    58,    91,    58,    90,    34,   177,   178,    94,    95,
+      96,    97,    35,   103,   179,   101,   102,   105,   118,   119,
+     208,   143,    57,   115,   116,   117,    58,   113,   123,    36,
+     118,   119,   127,   120,   121,   191,   -23,   192,    80,    81,
+      82,    36,    36,   125,    38,   145,   146,   181,   131,   132,
+      39,   133,   142,   130,   141,   136,   140,   211,   210,   147,
+     124,   149,   150,   151,   152,    57,   153,    88,    65,    58,
+      57,   203,   204,   156,    58,   209,   154,    40,   210,   162,
+     163,    61,   159,   160,   161,    63,    64,   164,    80,    81,
+      82,   165,    67,   -70,   118,   119,    71,   120,   121,    73,
+      74,    57,   169,    77,    78,    58,    99,   168,   118,   119,
+     157,   120,   121,   171,   172,   176,   155,    88,   180,    80,
+      81,    82,   104,   184,   189,   173,   183,     3,     4,   185,
+     107,     5,   108,   110,   197,   197,   189,   219,   205,   198,
+     198,   214,    37,   137,   138,    67,   175,   139,    88,   206,
+     188,   202,   216,   197,     0,   215,     0,   217,   198,   218,
+       0,     0,     6,     7,     8,     9,    10,    11,   -81,     0,
+      12,   -81,     0,     0,   194,     0,     0,    80,    81,    82,
+     -81,   -81,     0,     0,   194,     0,     0,    80,    81,    82,
+     194,     0,     0,    80,    81,    82,   118,   119,     0,   120,
+     121,     0,   195,     0,     0,   196,    88,    80,    81,    82,
+     118,   119,   195,   120,   121,   196,    88,     0,   195,     0,
+       0,   196,    88,     0,     0,     0,   122,     0,     0,     0,
+      83,    84,    85,    67,    86,    87,    88,    89,    41,    42,
+     167,     0,     0,     0,     0,     0,    43,    44,    45,    46,
+      47,    48,    49,    50,    51,    52,    53,    54,    55,   118,
+     119,     0,   120,   121,     0,   148
 };
 
 static const yytype_int16 yycheck[] =
 {
-      37,    12,    39,    64,    78,    42,    43,     8,   111,    10,
-     113,    72,    14,    49,    50,     9,    52,    78,    12,    55,
-      56,    49,   106,    84,    85,    86,     5,     0,    64,    66,
-      67,     4,    69,     6,     7,     0,    47,    74,    75,     4,
-      76,   115,     0,     0,    46,   129,     4,     4,     0,    14,
-      15,   135,   136,   137,   115,     0,   140,    22,    49,     4,
-     144,   122,   123,   124,   125,   102,   127,    51,    47,    51,
-     107,   108,    47,   110,   177,    47,   160,   114,   115,   115,
-      45,   118,   166,   167,    47,     0,    51,    17,     0,     4,
-      47,    17,     4,    51,    47,   132,   195,   196,    45,     0,
-      46,   138,   139,     4,    49,    50,    18,    19,    20,    14,
-      15,    16,   211,    18,    19,   214,    47,    18,    19,    20,
-      15,    16,    11,    12,   161,    46,     0,     1,    15,    16,
-       4,    18,    19,    47,   195,   196,    48,   174,    47,    46,
-     177,    46,    43,    44,    45,    47,    47,    48,   185,    47,
-     186,   188,    46,   214,    15,    16,    47,    18,    19,    46,
-     197,    35,    36,    37,    38,    39,    40,    41,    15,    47,
-      44,    18,    19,    20,     9,     3,     3,    12,    46,   216,
-      15,   218,    46,    18,    19,    20,    11,    12,   208,     8,
-      15,   201,   170,    18,    19,    20,   188,    44,   196,   214,
-      47,    48,    13,    -1,    15,    16,    -1,    18,    19,    44,
-      -1,    -1,    47,    48,    18,    19,    20,    15,    16,    44,
-      18,    19,    47,    48,    18,    19,    20,    15,    16,    -1,
-      18,    19,    -1,    21,    -1,    46,    -1,    -1,    42,    43,
-      44,    45,    46,    47,    48,    49,    -1,    -1,    46,    14,
-      15,    -1,    -1,    -1,    48,    -1,    -1,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34
+      35,   107,    37,   109,    74,    40,     5,    46,    47,    14,
+      49,     0,     0,    52,    53,     4,     4,     0,    12,     0,
+       0,     4,    61,     4,    61,    48,    14,    15,    63,    64,
+      65,    68,    48,    72,    22,    70,    71,    74,    15,    16,
+      45,   111,     0,    80,    81,    82,     4,    46,    13,    50,
+      15,    16,    46,    18,    19,     8,    44,    10,    18,    19,
+      20,    50,    50,    98,    50,    48,    49,   173,   103,   104,
+      46,   106,   111,   102,   111,   110,   111,    11,    12,   114,
+      45,   118,   119,   120,   121,     0,   123,    47,    46,     4,
+       0,     6,     7,   128,     4,     9,   125,    46,    12,   134,
+     135,    17,   131,   132,   133,    17,    46,   136,    18,    19,
+      20,   140,    44,    14,    15,    16,    45,    18,    19,    46,
+      45,     0,   157,    46,    46,     4,    45,   156,    15,    16,
+       3,    18,    19,   162,   163,   170,    45,    47,   173,    18,
+      19,    20,    46,   182,    45,     3,   181,     0,     1,   184,
+      46,     4,    46,    46,   191,   192,    45,    45,   193,   191,
+     192,   204,     8,    42,    43,    44,   166,    46,    47,   197,
+     184,   192,   210,   210,    -1,   207,    -1,   212,   210,   214,
+      -1,    -1,    35,    36,    37,    38,    39,    40,     9,    -1,
+      43,    12,    -1,    -1,    15,    -1,    -1,    18,    19,    20,
+      11,    12,    -1,    -1,    15,    -1,    -1,    18,    19,    20,
+      15,    -1,    -1,    18,    19,    20,    15,    16,    -1,    18,
+      19,    -1,    43,    -1,    -1,    46,    47,    18,    19,    20,
+      15,    16,    43,    18,    19,    46,    47,    -1,    43,    -1,
+      -1,    46,    47,    -1,    -1,    -1,    45,    -1,    -1,    -1,
+      41,    42,    43,    44,    45,    46,    47,    48,    14,    15,
+      45,    -1,    -1,    -1,    -1,    -1,    22,    23,    24,    25,
+      26,    27,    28,    29,    30,    31,    32,    33,    34,    15,
+      16,    -1,    18,    19,    -1,    21
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,   103,   104,     0,     1,     4,    35,    36,    37,    38,
-      39,    40,    41,    44,    59,    70,    71,    72,    73,    74,
-      76,    77,    78,    79,    89,    90,    91,    92,    94,    97,
-      98,    99,   100,   101,   102,     0,    49,    49,    51,    64,
-      51,    47,    47,    47,    14,    15,    22,    23,    24,    25,
-      26,    27,    28,    29,    30,    31,    32,    33,    34,    54,
-       0,     4,    55,    55,    17,    55,    17,    47,    55,    47,
-      55,    45,    62,    62,    62,    46,    62,    47,    46,    62,
-      62,    47,    47,    57,    18,    19,    20,    42,    43,    44,
-      46,    47,    48,    49,    56,    62,    66,    80,    55,    55,
-      55,    56,    81,    46,    69,    55,    55,    62,    47,    56,
-      80,    47,    47,    93,    47,    96,     5,    47,    58,    56,
-      56,    56,    15,    16,    18,    19,    46,    13,    46,    55,
-      12,    47,    75,    68,    68,    55,    55,    55,    58,    58,
-      55,    43,    44,    47,    55,    56,    62,    80,    95,    49,
-      50,    55,    21,    56,    56,    56,    56,    56,    68,    46,
-      55,     3,    65,    68,    68,    68,    55,    55,    68,    68,
-      67,    46,    68,    55,    64,    68,    68,     3,    63,    65,
-      55,    14,    15,    22,    55,    58,    60,    55,    62,    55,
-      56,    82,    85,    46,    83,     8,    10,    86,    15,    44,
-      47,    56,    82,    84,    87,    88,    87,     6,     7,    55,
-      83,    14,    46,     9,    12,    11,    61,    85,    61,    82,
-      88,    55,    55,    46
+       0,   101,   102,     0,     1,     4,    35,    36,    37,    38,
+      39,    40,    43,    58,    69,    70,    71,    72,    73,    75,
+      76,    77,    78,    88,    89,    90,    91,    93,    96,    97,
+      98,    99,   100,     0,    48,    48,    50,    63,    50,    46,
+      46,    14,    15,    22,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    33,    34,    53,     0,     4,    54,
+      54,    17,    54,    17,    46,    46,    54,    44,    61,    61,
+      61,    45,    61,    46,    45,    61,    61,    46,    46,    56,
+      18,    19,    20,    41,    42,    43,    45,    46,    47,    48,
+      55,    61,    65,    79,    54,    54,    54,    55,    80,    45,
+      68,    54,    54,    61,    46,    55,    79,    46,    46,    92,
+      46,    95,     5,    46,    57,    55,    55,    55,    15,    16,
+      18,    19,    45,    13,    45,    54,    12,    46,    74,    67,
+      67,    54,    54,    54,    57,    57,    54,    42,    43,    46,
+      54,    55,    61,    79,    94,    48,    49,    54,    21,    55,
+      55,    55,    55,    55,    67,    45,    54,     3,    64,    67,
+      67,    67,    54,    54,    67,    67,    66,    45,    67,    54,
+      63,    67,    67,     3,    62,    64,    54,    14,    15,    22,
+      54,    57,    59,    54,    61,    54,    55,    81,    84,    45,
+      82,     8,    10,    85,    15,    43,    46,    55,    81,    83,
+      86,    87,    86,     6,     7,    54,    82,    14,    45,     9,
+      12,    11,    60,    84,    60,    81,    87,    54,    54,    45
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    53,    54,    54,    54,    54,    55,    55,    56,    56,
-      56,    56,    56,    56,    56,    56,    57,    57,    57,    58,
-      58,    58,    59,    60,    60,    60,    60,    61,    62,    63,
-      63,    63,    63,    64,    65,    66,    66,    66,    66,    66,
-      66,    66,    66,    66,    66,    67,    67,    67,    67,    67,
-      68,    68,    68,    69,    69,    69,    70,    71,    72,    73,
-      74,    75,    75,    76,    77,    78,    79,    80,    81,    81,
-      82,    82,    83,    83,    84,    84,    84,    85,    86,    86,
-      86,    87,    87,    87,    88,    88,    88,    88,    89,    90,
-      91,    92,    93,    94,    95,    95,    95,    95,    95,    95,
-      96,    96,    97,    98,    98,    98,    98,    98,    98,    98,
-      98,    98,    98,    98,    98,    99,   100,   101,   101,   102,
-     102,   102,   102,   102,   102,   102,   103,   103,   103,   103,
-     103,   104
+       0,    52,    53,    53,    53,    53,    54,    54,    55,    55,
+      55,    55,    55,    55,    55,    55,    56,    56,    56,    57,
+      57,    57,    58,    59,    59,    59,    59,    60,    61,    62,
+      62,    62,    62,    63,    64,    65,    65,    65,    65,    65,
+      65,    65,    65,    65,    65,    66,    66,    66,    66,    66,
+      67,    67,    67,    68,    68,    68,    69,    70,    71,    72,
+      73,    74,    74,    75,    76,    77,    78,    79,    80,    80,
+      81,    81,    82,    82,    83,    83,    83,    84,    85,    85,
+      85,    86,    86,    86,    87,    87,    87,    87,    88,    89,
+      90,    91,    92,    93,    94,    94,    94,    94,    94,    94,
+      95,    95,    96,    97,    97,    97,    97,    97,    97,    97,
+      97,    97,    97,    97,    97,    98,    99,    99,   100,   100,
+     100,   100,   100,   100,   101,   101,   101,   101,   101,   102
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -954,9 +951,8 @@ static const yytype_int8 yyr2[] =
        0,     0,     1,     3,     1,     1,     1,     1,     6,     6,
        6,     7,     1,     7,     1,     1,     1,     1,     1,     1,
        0,     2,     6,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     4,     3,     3,     4,     1,
-       1,     1,     1,     1,     1,     1,     2,     2,     2,     2,
-       0,     2
+       1,     1,     1,     1,     1,     4,     3,     4,     1,     1,
+       1,     1,     1,     1,     2,     2,     2,     2,     0,     2
 };
 
 
@@ -1802,374 +1798,374 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* txn: TXN  */
-#line 288 "beancount/parser/grammar.y"
+#line 286 "beancount/parser/grammar.y"
     {
       (yyval.character) = '*';
     }
-#line 1810 "beancount/parser/grammar.c"
+#line 1806 "beancount/parser/grammar.c"
     break;
 
   case 3: /* txn: FLAG  */
-#line 292 "beancount/parser/grammar.y"
+#line 290 "beancount/parser/grammar.y"
     {
         (yyval.character) = (yyvsp[0].character);
     }
-#line 1818 "beancount/parser/grammar.c"
+#line 1814 "beancount/parser/grammar.c"
     break;
 
   case 4: /* txn: ASTERISK  */
-#line 296 "beancount/parser/grammar.y"
+#line 294 "beancount/parser/grammar.y"
     {
         (yyval.character) = '*';
     }
-#line 1826 "beancount/parser/grammar.c"
+#line 1822 "beancount/parser/grammar.c"
     break;
 
   case 5: /* txn: HASH  */
-#line 300 "beancount/parser/grammar.y"
+#line 298 "beancount/parser/grammar.y"
     {
         (yyval.character) = '#';
     }
-#line 1834 "beancount/parser/grammar.c"
+#line 1830 "beancount/parser/grammar.c"
     break;
 
   case 9: /* number_expr: number_expr PLUS number_expr  */
-#line 313 "beancount/parser/grammar.y"
+#line 311 "beancount/parser/grammar.y"
     {
       (yyval.pyobj) = PyNumber_Add((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1843 "beancount/parser/grammar.c"
+#line 1839 "beancount/parser/grammar.c"
     break;
 
   case 10: /* number_expr: number_expr MINUS number_expr  */
-#line 318 "beancount/parser/grammar.y"
+#line 316 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = PyNumber_Subtract((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
         DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1852 "beancount/parser/grammar.c"
+#line 1848 "beancount/parser/grammar.c"
     break;
 
   case 11: /* number_expr: number_expr ASTERISK number_expr  */
-#line 323 "beancount/parser/grammar.y"
+#line 321 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = PyNumber_Multiply((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
         DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1861 "beancount/parser/grammar.c"
+#line 1857 "beancount/parser/grammar.c"
     break;
 
   case 12: /* number_expr: number_expr SLASH number_expr  */
-#line 328 "beancount/parser/grammar.y"
+#line 326 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = PyNumber_TrueDivide((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
         DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1870 "beancount/parser/grammar.c"
+#line 1866 "beancount/parser/grammar.c"
     break;
 
   case 13: /* number_expr: MINUS number_expr  */
-#line 333 "beancount/parser/grammar.y"
+#line 331 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = PyNumber_Negative((yyvsp[0].pyobj));
         DECREF((yyvsp[0].pyobj));
     }
-#line 1879 "beancount/parser/grammar.c"
+#line 1875 "beancount/parser/grammar.c"
     break;
 
   case 14: /* number_expr: PLUS number_expr  */
-#line 338 "beancount/parser/grammar.y"
+#line 336 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = (yyvsp[0].pyobj);
     }
-#line 1887 "beancount/parser/grammar.c"
+#line 1883 "beancount/parser/grammar.c"
     break;
 
   case 15: /* number_expr: LPAREN number_expr RPAREN  */
-#line 342 "beancount/parser/grammar.y"
+#line 340 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = (yyvsp[-1].pyobj);
     }
-#line 1895 "beancount/parser/grammar.c"
+#line 1891 "beancount/parser/grammar.c"
     break;
 
   case 16: /* txn_strings: %empty  */
-#line 348 "beancount/parser/grammar.y"
+#line 346 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 1904 "beancount/parser/grammar.c"
+#line 1900 "beancount/parser/grammar.c"
     break;
 
   case 17: /* txn_strings: txn_strings STRING  */
-#line 353 "beancount/parser/grammar.y"
+#line 351 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 1913 "beancount/parser/grammar.c"
+#line 1909 "beancount/parser/grammar.c"
     break;
 
   case 18: /* txn_strings: txn_strings PIPE  */
-#line 358 "beancount/parser/grammar.y"
+#line 356 "beancount/parser/grammar.y"
     {
         BUILDY(,
                (yyval.pyobj), "pipe_deprecated_error", "");
         (yyval.pyobj) = (yyvsp[-1].pyobj);
     }
-#line 1923 "beancount/parser/grammar.c"
+#line 1919 "beancount/parser/grammar.c"
     break;
 
   case 19: /* tags_links: %empty  */
-#line 366 "beancount/parser/grammar.y"
+#line 364 "beancount/parser/grammar.y"
     {
         BUILDY(,
                (yyval.pyobj), "tag_link_new", "");
     }
-#line 1932 "beancount/parser/grammar.c"
+#line 1928 "beancount/parser/grammar.c"
     break;
 
   case 20: /* tags_links: tags_links LINK  */
-#line 371 "beancount/parser/grammar.y"
+#line 369 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "tag_link_LINK", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 1941 "beancount/parser/grammar.c"
+#line 1937 "beancount/parser/grammar.c"
     break;
 
   case 21: /* tags_links: tags_links TAG  */
-#line 376 "beancount/parser/grammar.y"
+#line 374 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "tag_link_TAG", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 1950 "beancount/parser/grammar.c"
+#line 1946 "beancount/parser/grammar.c"
     break;
 
   case 22: /* transaction: DATE txn txn_strings tags_links eol posting_or_kv_list  */
-#line 383 "beancount/parser/grammar.y"
+#line 381 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "transaction", "ObOOO", (yyvsp[-5].pyobj), (yyvsp[-4].character), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1959 "beancount/parser/grammar.c"
+#line 1955 "beancount/parser/grammar.c"
     break;
 
   case 23: /* optflag: %empty  */
-#line 390 "beancount/parser/grammar.y"
+#line 388 "beancount/parser/grammar.y"
     {
         (yyval.character) = '\0';
     }
-#line 1967 "beancount/parser/grammar.c"
+#line 1963 "beancount/parser/grammar.c"
     break;
 
   case 24: /* optflag: ASTERISK  */
-#line 394 "beancount/parser/grammar.y"
+#line 392 "beancount/parser/grammar.y"
     {
         (yyval.character) = '*';
     }
-#line 1975 "beancount/parser/grammar.c"
+#line 1971 "beancount/parser/grammar.c"
     break;
 
   case 25: /* optflag: HASH  */
-#line 398 "beancount/parser/grammar.y"
+#line 396 "beancount/parser/grammar.y"
     {
         (yyval.character) = '#';
     }
-#line 1983 "beancount/parser/grammar.c"
+#line 1979 "beancount/parser/grammar.c"
     break;
 
   case 28: /* account: ACCOUNT  */
-#line 408 "beancount/parser/grammar.y"
+#line 406 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "account", "O", (yyvsp[0].pyobj));
     }
-#line 1992 "beancount/parser/grammar.c"
+#line 1988 "beancount/parser/grammar.c"
     break;
 
   case 29: /* posting: INDENT optflag account incomplete_amount cost_spec eol  */
-#line 415 "beancount/parser/grammar.y"
+#line 413 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj), Py_None, Py_False, (yyvsp[-4].character));
     }
-#line 2001 "beancount/parser/grammar.c"
+#line 1997 "beancount/parser/grammar.c"
     break;
 
   case 30: /* posting: INDENT optflag account incomplete_amount cost_spec AT price_annotation eol  */
-#line 420 "beancount/parser/grammar.y"
+#line 418 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_False, (yyvsp[-6].character));
     }
-#line 2010 "beancount/parser/grammar.c"
+#line 2006 "beancount/parser/grammar.c"
     break;
 
   case 31: /* posting: INDENT optflag account incomplete_amount cost_spec ATAT price_annotation eol  */
-#line 425 "beancount/parser/grammar.y"
+#line 423 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-5].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_True, (yyvsp[-6].character));
     }
-#line 2019 "beancount/parser/grammar.c"
+#line 2015 "beancount/parser/grammar.c"
     break;
 
   case 32: /* posting: INDENT optflag account eol  */
-#line 430 "beancount/parser/grammar.y"
+#line 428 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "posting", "OOOOOb", (yyvsp[-1].pyobj), MISSING_OBJ, Py_None, Py_None, Py_False, (yyvsp[-2].character));
     }
-#line 2028 "beancount/parser/grammar.c"
+#line 2024 "beancount/parser/grammar.c"
     break;
 
   case 33: /* key_value: KEY COLON key_value_value  */
-#line 437 "beancount/parser/grammar.y"
+#line 435 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "key_value", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2037 "beancount/parser/grammar.c"
+#line 2033 "beancount/parser/grammar.c"
     break;
 
   case 34: /* key_value_line: INDENT key_value eol  */
-#line 444 "beancount/parser/grammar.y"
+#line 442 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = (yyvsp[-1].pyobj);
     }
-#line 2045 "beancount/parser/grammar.c"
+#line 2041 "beancount/parser/grammar.c"
     break;
 
   case 44: /* key_value_value: %empty  */
-#line 459 "beancount/parser/grammar.y"
+#line 457 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2054 "beancount/parser/grammar.c"
+#line 2050 "beancount/parser/grammar.c"
     break;
 
   case 45: /* posting_or_kv_list: %empty  */
-#line 466 "beancount/parser/grammar.y"
+#line 464 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2063 "beancount/parser/grammar.c"
+#line 2059 "beancount/parser/grammar.c"
     break;
 
   case 46: /* posting_or_kv_list: posting_or_kv_list INDENT eol  */
-#line 471 "beancount/parser/grammar.y"
+#line 469 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = (yyvsp[-2].pyobj);
     }
-#line 2071 "beancount/parser/grammar.c"
+#line 2067 "beancount/parser/grammar.c"
     break;
 
   case 47: /* posting_or_kv_list: posting_or_kv_list INDENT tags_links eol  */
-#line 475 "beancount/parser/grammar.y"
+#line 473 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj));
     }
-#line 2080 "beancount/parser/grammar.c"
+#line 2076 "beancount/parser/grammar.c"
     break;
 
   case 48: /* posting_or_kv_list: posting_or_kv_list key_value_line  */
-#line 480 "beancount/parser/grammar.y"
+#line 478 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2089 "beancount/parser/grammar.c"
+#line 2085 "beancount/parser/grammar.c"
     break;
 
   case 49: /* posting_or_kv_list: posting_or_kv_list posting  */
-#line 485 "beancount/parser/grammar.y"
+#line 483 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2098 "beancount/parser/grammar.c"
+#line 2094 "beancount/parser/grammar.c"
     break;
 
   case 50: /* key_value_list: %empty  */
-#line 492 "beancount/parser/grammar.y"
+#line 490 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2107 "beancount/parser/grammar.c"
+#line 2103 "beancount/parser/grammar.c"
     break;
 
   case 51: /* key_value_list: key_value_list INDENT eol  */
-#line 497 "beancount/parser/grammar.y"
+#line 495 "beancount/parser/grammar.y"
     {
         (yyval.pyobj) = (yyvsp[-2].pyobj);
     }
-#line 2115 "beancount/parser/grammar.c"
+#line 2111 "beancount/parser/grammar.c"
     break;
 
   case 52: /* key_value_list: key_value_list key_value_line  */
-#line 501 "beancount/parser/grammar.y"
+#line 499 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2124 "beancount/parser/grammar.c"
+#line 2120 "beancount/parser/grammar.c"
     break;
 
   case 53: /* currency_list: %empty  */
-#line 508 "beancount/parser/grammar.y"
+#line 506 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2133 "beancount/parser/grammar.c"
+#line 2129 "beancount/parser/grammar.c"
     break;
 
   case 54: /* currency_list: CURRENCY  */
-#line 513 "beancount/parser/grammar.y"
+#line 511 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
     }
-#line 2142 "beancount/parser/grammar.c"
+#line 2138 "beancount/parser/grammar.c"
     break;
 
   case 55: /* currency_list: currency_list COMMA CURRENCY  */
-#line 518 "beancount/parser/grammar.y"
+#line 516 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2151 "beancount/parser/grammar.c"
+#line 2147 "beancount/parser/grammar.c"
     break;
 
   case 56: /* pushtag: PUSHTAG TAG eol  */
-#line 525 "beancount/parser/grammar.y"
+#line 523 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "pushtag", "O", (yyvsp[-1].pyobj));
     }
-#line 2160 "beancount/parser/grammar.c"
+#line 2156 "beancount/parser/grammar.c"
     break;
 
   case 57: /* poptag: POPTAG TAG eol  */
-#line 532 "beancount/parser/grammar.y"
+#line 530 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "poptag", "O", (yyvsp[-1].pyobj));
     }
-#line 2169 "beancount/parser/grammar.c"
+#line 2165 "beancount/parser/grammar.c"
     break;
 
   case 58: /* pushmeta: PUSHMETA key_value eol  */
-#line 539 "beancount/parser/grammar.y"
+#line 537 "beancount/parser/grammar.y"
     {
         /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
          * within a tuple, so expand in the method (it receives two
@@ -2177,312 +2173,312 @@ yyreduce:
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "pushmeta", "O", (yyvsp[-1].pyobj));
     }
-#line 2181 "beancount/parser/grammar.c"
+#line 2177 "beancount/parser/grammar.c"
     break;
 
   case 59: /* popmeta: POPMETA KEY COLON eol  */
-#line 549 "beancount/parser/grammar.y"
+#line 547 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj)),
                (yyval.pyobj), "popmeta", "O", (yyvsp[-2].pyobj));
     }
-#line 2190 "beancount/parser/grammar.c"
+#line 2186 "beancount/parser/grammar.c"
     break;
 
   case 60: /* open: DATE OPEN account currency_list opt_booking eol key_value_list  */
-#line 556 "beancount/parser/grammar.y"
+#line 554 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "open", "OOOOO", (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2199 "beancount/parser/grammar.c"
+#line 2195 "beancount/parser/grammar.c"
     break;
 
   case 62: /* opt_booking: %empty  */
-#line 564 "beancount/parser/grammar.y"
+#line 562 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2208 "beancount/parser/grammar.c"
+#line 2204 "beancount/parser/grammar.c"
     break;
 
   case 63: /* close: DATE CLOSE account eol key_value_list  */
-#line 571 "beancount/parser/grammar.y"
+#line 569 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "close", "OOO", (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2217 "beancount/parser/grammar.c"
+#line 2213 "beancount/parser/grammar.c"
     break;
 
   case 64: /* commodity: DATE COMMODITY CURRENCY eol key_value_list  */
-#line 578 "beancount/parser/grammar.y"
+#line 576 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "commodity", "OOO", (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2226 "beancount/parser/grammar.c"
+#line 2222 "beancount/parser/grammar.c"
     break;
 
   case 65: /* pad: DATE PAD account account eol key_value_list  */
-#line 585 "beancount/parser/grammar.y"
+#line 583 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "pad", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2235 "beancount/parser/grammar.c"
+#line 2231 "beancount/parser/grammar.c"
     break;
 
   case 66: /* balance: DATE BALANCE account amount_tolerance eol key_value_list  */
-#line 592 "beancount/parser/grammar.y"
+#line 590 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[0].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2),
                (yyval.pyobj), "balance", "OOOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2, (yyvsp[0].pyobj));
     }
-#line 2244 "beancount/parser/grammar.c"
+#line 2240 "beancount/parser/grammar.c"
     break;
 
   case 67: /* amount: number_expr CURRENCY  */
-#line 599 "beancount/parser/grammar.y"
+#line 597 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2253 "beancount/parser/grammar.c"
+#line 2249 "beancount/parser/grammar.c"
     break;
 
   case 68: /* amount_tolerance: number_expr CURRENCY  */
-#line 606 "beancount/parser/grammar.y"
+#line 604 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
         (yyval.pairobj).pyobj2 = Py_None;
         Py_INCREF(Py_None);
     }
-#line 2264 "beancount/parser/grammar.c"
+#line 2260 "beancount/parser/grammar.c"
     break;
 
   case 69: /* amount_tolerance: number_expr TILDE number_expr CURRENCY  */
-#line 613 "beancount/parser/grammar.y"
+#line 611 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[0].pyobj)),
                (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-3].pyobj), (yyvsp[0].pyobj));
         (yyval.pairobj).pyobj2 = (yyvsp[-1].pyobj);
     }
-#line 2274 "beancount/parser/grammar.c"
+#line 2270 "beancount/parser/grammar.c"
     break;
 
   case 71: /* maybe_number: %empty  */
-#line 622 "beancount/parser/grammar.y"
+#line 620 "beancount/parser/grammar.y"
     {
         Py_INCREF(MISSING_OBJ);
         (yyval.pyobj) = MISSING_OBJ;
     }
-#line 2283 "beancount/parser/grammar.c"
+#line 2279 "beancount/parser/grammar.c"
     break;
 
   case 73: /* maybe_currency: %empty  */
-#line 630 "beancount/parser/grammar.y"
+#line 628 "beancount/parser/grammar.y"
     {
         Py_INCREF(MISSING_OBJ);
         (yyval.pyobj) = MISSING_OBJ;
     }
-#line 2292 "beancount/parser/grammar.c"
+#line 2288 "beancount/parser/grammar.c"
     break;
 
   case 74: /* compound_amount: maybe_number CURRENCY  */
-#line 637 "beancount/parser/grammar.y"
+#line 635 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-1].pyobj), Py_None, (yyvsp[0].pyobj));
     }
-#line 2301 "beancount/parser/grammar.c"
+#line 2297 "beancount/parser/grammar.c"
     break;
 
   case 75: /* compound_amount: number_expr maybe_currency  */
-#line 642 "beancount/parser/grammar.y"
+#line 640 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-1].pyobj), Py_None, (yyvsp[0].pyobj));
     }
-#line 2310 "beancount/parser/grammar.c"
+#line 2306 "beancount/parser/grammar.c"
     break;
 
   case 76: /* compound_amount: maybe_number HASH maybe_number CURRENCY  */
-#line 647 "beancount/parser/grammar.y"
+#line 645 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-3].pyobj), (yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "compound_amount", "OOO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
         ;
     }
-#line 2320 "beancount/parser/grammar.c"
+#line 2316 "beancount/parser/grammar.c"
     break;
 
   case 77: /* incomplete_amount: maybe_number maybe_currency  */
-#line 655 "beancount/parser/grammar.y"
+#line 653 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2329 "beancount/parser/grammar.c"
+#line 2325 "beancount/parser/grammar.c"
     break;
 
   case 78: /* cost_spec: LCURL cost_comp_list RCURL  */
-#line 662 "beancount/parser/grammar.y"
+#line 660 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "cost_spec", "OO", (yyvsp[-1].pyobj), Py_False);
     }
-#line 2338 "beancount/parser/grammar.c"
+#line 2334 "beancount/parser/grammar.c"
     break;
 
   case 79: /* cost_spec: LCURLCURL cost_comp_list RCURLCURL  */
-#line 667 "beancount/parser/grammar.y"
+#line 665 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "cost_spec", "OO", (yyvsp[-1].pyobj), Py_True);
     }
-#line 2347 "beancount/parser/grammar.c"
+#line 2343 "beancount/parser/grammar.c"
     break;
 
   case 80: /* cost_spec: %empty  */
-#line 672 "beancount/parser/grammar.y"
+#line 670 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2356 "beancount/parser/grammar.c"
+#line 2352 "beancount/parser/grammar.c"
     break;
 
   case 81: /* cost_comp_list: %empty  */
-#line 679 "beancount/parser/grammar.y"
+#line 677 "beancount/parser/grammar.y"
     {
         /* We indicate that there was a cost if there */
         (yyval.pyobj) = PyList_New(0);
     }
-#line 2365 "beancount/parser/grammar.c"
+#line 2361 "beancount/parser/grammar.c"
     break;
 
   case 82: /* cost_comp_list: cost_comp  */
-#line 684 "beancount/parser/grammar.y"
+#line 682 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
     }
-#line 2374 "beancount/parser/grammar.c"
+#line 2370 "beancount/parser/grammar.c"
     break;
 
   case 83: /* cost_comp_list: cost_comp_list COMMA cost_comp  */
-#line 689 "beancount/parser/grammar.y"
+#line 687 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2383 "beancount/parser/grammar.c"
+#line 2379 "beancount/parser/grammar.c"
     break;
 
   case 87: /* cost_comp: ASTERISK  */
-#line 699 "beancount/parser/grammar.y"
+#line 697 "beancount/parser/grammar.y"
     {
         BUILDY(,
                (yyval.pyobj), "cost_merge", "O", Py_None);
     }
-#line 2392 "beancount/parser/grammar.c"
+#line 2388 "beancount/parser/grammar.c"
     break;
 
   case 88: /* price: DATE PRICE CURRENCY amount eol key_value_list  */
-#line 706 "beancount/parser/grammar.y"
+#line 704 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "price", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2401 "beancount/parser/grammar.c"
+#line 2397 "beancount/parser/grammar.c"
     break;
 
   case 89: /* event: DATE EVENT STRING STRING eol key_value_list  */
-#line 713 "beancount/parser/grammar.y"
+#line 711 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "event", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2410 "beancount/parser/grammar.c"
+#line 2406 "beancount/parser/grammar.c"
     break;
 
   case 90: /* query: DATE QUERY STRING STRING eol key_value_list  */
-#line 720 "beancount/parser/grammar.y"
+#line 718 "beancount/parser/grammar.y"
        {
            BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                   (yyval.pyobj), "query", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
        }
-#line 2419 "beancount/parser/grammar.c"
+#line 2415 "beancount/parser/grammar.c"
     break;
 
   case 91: /* note: DATE NOTE account STRING tags_links eol key_value_list  */
-#line 727 "beancount/parser/grammar.y"
+#line 725 "beancount/parser/grammar.y"
     {
       BUILDY(DECREF((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "note", "OOOOO", (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2428 "beancount/parser/grammar.c"
+#line 2424 "beancount/parser/grammar.c"
     break;
 
   case 93: /* document: DATE DOCUMENT account filename tags_links eol key_value_list  */
-#line 736 "beancount/parser/grammar.y"
+#line 734 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "document", "OOOOO", (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 2437 "beancount/parser/grammar.c"
+#line 2433 "beancount/parser/grammar.c"
     break;
 
   case 94: /* custom_value: STRING  */
-#line 743 "beancount/parser/grammar.y"
+#line 741 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
     }
-#line 2446 "beancount/parser/grammar.c"
+#line 2442 "beancount/parser/grammar.c"
     break;
 
   case 95: /* custom_value: DATE  */
-#line 748 "beancount/parser/grammar.y"
+#line 746 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
     }
-#line 2455 "beancount/parser/grammar.c"
+#line 2451 "beancount/parser/grammar.c"
     break;
 
   case 96: /* custom_value: BOOL  */
-#line 753 "beancount/parser/grammar.y"
+#line 751 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
     }
-#line 2464 "beancount/parser/grammar.c"
+#line 2460 "beancount/parser/grammar.c"
     break;
 
   case 97: /* custom_value: amount  */
-#line 758 "beancount/parser/grammar.y"
+#line 756 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
     }
-#line 2473 "beancount/parser/grammar.c"
+#line 2469 "beancount/parser/grammar.c"
     break;
 
   case 98: /* custom_value: number_expr  */
-#line 763 "beancount/parser/grammar.y"
+#line 761 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[0].pyobj)),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), Py_None);
     }
-#line 2482 "beancount/parser/grammar.c"
+#line 2478 "beancount/parser/grammar.c"
     break;
 
   case 99: /* custom_value: account  */
-#line 768 "beancount/parser/grammar.y"
+#line 766 "beancount/parser/grammar.y"
     {
         /* Obtain beancount.core.account.TYPE */
         PyObject* module = PyImport_ImportModule("beancount.core.account");
@@ -2491,83 +2487,74 @@ yyreduce:
         BUILDY(DECREF((yyvsp[0].pyobj), dtype),
                (yyval.pyobj), "custom_value", "OO", (yyvsp[0].pyobj), dtype);
     }
-#line 2495 "beancount/parser/grammar.c"
+#line 2491 "beancount/parser/grammar.c"
     break;
 
   case 100: /* custom_value_list: %empty  */
-#line 779 "beancount/parser/grammar.y"
+#line 777 "beancount/parser/grammar.y"
     {
         Py_INCREF(Py_None);
         (yyval.pyobj) = Py_None;
     }
-#line 2504 "beancount/parser/grammar.c"
+#line 2500 "beancount/parser/grammar.c"
     break;
 
   case 101: /* custom_value_list: custom_value_list custom_value  */
-#line 784 "beancount/parser/grammar.y"
+#line 782 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2513 "beancount/parser/grammar.c"
+#line 2509 "beancount/parser/grammar.c"
     break;
 
   case 102: /* custom: DATE CUSTOM STRING custom_value_list eol key_value_list  */
-#line 791 "beancount/parser/grammar.y"
+#line 789 "beancount/parser/grammar.y"
    {
        BUILDY(DECREF((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
               (yyval.pyobj), "custom", "OOOO", (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
    }
-#line 2522 "beancount/parser/grammar.c"
+#line 2518 "beancount/parser/grammar.c"
     break;
 
   case 115: /* option: OPTION STRING STRING eol  */
-#line 812 "beancount/parser/grammar.y"
+#line 810 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "option", "OO", (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
     }
-#line 2531 "beancount/parser/grammar.c"
+#line 2527 "beancount/parser/grammar.c"
     break;
 
-  case 116: /* include: INCLUDE STRING eol  */
-#line 819 "beancount/parser/grammar.y"
-    {
-        BUILDY(DECREF((yyvsp[-1].pyobj)),
-               (yyval.pyobj), "include", "O", (yyvsp[-1].pyobj));
-    }
-#line 2540 "beancount/parser/grammar.c"
-    break;
-
-  case 117: /* plugin: PLUGIN STRING eol  */
-#line 826 "beancount/parser/grammar.y"
+  case 116: /* plugin: PLUGIN STRING eol  */
+#line 817 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "plugin", "OO", (yyvsp[-1].pyobj), Py_None);
     }
-#line 2549 "beancount/parser/grammar.c"
+#line 2536 "beancount/parser/grammar.c"
     break;
 
-  case 118: /* plugin: PLUGIN STRING STRING eol  */
-#line 831 "beancount/parser/grammar.y"
+  case 117: /* plugin: PLUGIN STRING STRING eol  */
+#line 822 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                (yyval.pyobj), "plugin", "OO", (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
     }
-#line 2558 "beancount/parser/grammar.c"
+#line 2545 "beancount/parser/grammar.c"
     break;
 
-  case 128: /* declarations: declarations entry  */
-#line 849 "beancount/parser/grammar.y"
+  case 126: /* declarations: declarations entry  */
+#line 839 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
     }
-#line 2567 "beancount/parser/grammar.c"
+#line 2554 "beancount/parser/grammar.c"
     break;
 
-  case 129: /* declarations: declarations error  */
-#line 854 "beancount/parser/grammar.y"
+  case 127: /* declarations: declarations error  */
+#line 844 "beancount/parser/grammar.y"
     {
         /*
          * Ignore the error and continue reducing ({3d95e55b654e}).
@@ -2585,29 +2572,29 @@ yyreduce:
          */
         (yyval.pyobj) = (yyvsp[-1].pyobj);
     }
-#line 2589 "beancount/parser/grammar.c"
+#line 2576 "beancount/parser/grammar.c"
     break;
 
-  case 130: /* declarations: %empty  */
-#line 872 "beancount/parser/grammar.y"
+  case 128: /* declarations: %empty  */
+#line 862 "beancount/parser/grammar.y"
     {
          Py_INCREF(Py_None);
          (yyval.pyobj) = Py_None;
     }
-#line 2598 "beancount/parser/grammar.c"
+#line 2585 "beancount/parser/grammar.c"
     break;
 
-  case 131: /* file: declarations $end  */
-#line 880 "beancount/parser/grammar.y"
+  case 129: /* file: declarations $end  */
+#line 870 "beancount/parser/grammar.y"
     {
         BUILDY(DECREF((yyvsp[-1].pyobj)),
                (yyval.pyobj), "store_result", "O", (yyvsp[-1].pyobj));
     }
-#line 2607 "beancount/parser/grammar.c"
+#line 2594 "beancount/parser/grammar.c"
     break;
 
 
-#line 2611 "beancount/parser/grammar.c"
+#line 2598 "beancount/parser/grammar.c"
 
       default: break;
     }
@@ -2837,7 +2824,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 888 "beancount/parser/grammar.y"
+#line 878 "beancount/parser/grammar.y"
 
 
 /* Get a printable version of a token name. */

@@ -213,7 +213,7 @@ class TestLoadIncludes(unittest.TestCase):
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'does not (match any|exist)')
+            self.assertRegex(errors[0].message, 'No such file or directory')
         self.assertEqual(['root.beancount'],
                          list(map(path.basename, options_map['include'])))
 
@@ -272,11 +272,15 @@ class TestLoadIncludes(unittest.TestCase):
                 """})
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'apples.beancount'))
+        filenames = [
+            'apples.beancount',
+            'oranges.beancount',
+            'patates.beancount',
+            'tomates.beancount',
+        ]
         self.assertFalse(errors)
         self.assertEqual(4, len(entries))
-        self.assertEqual(['apples.beancount', 'oranges.beancount',
-                          'patates.beancount', 'tomates.beancount'],
-                         list(map(path.basename, options_map['include'])))
+        self.assertCountEqual(map(path.basename, options_map['include']), filenames)
 
     def test_load_string_with_relative_include(self):
         with test_utils.tempdir() as tmp:
@@ -317,12 +321,15 @@ class TestLoadIncludes(unittest.TestCase):
                 """})
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'apples.beancount'))
+        filenames = [
+            'apples.beancount',
+            'bananas.beancount',
+            'oranges.beancount',
+        ]
         self.assertFalse(errors)
         self.assertEqual(3, len(entries))
-        self.assertTrue(all(path.isabs(filename)
-                            for filename in options_map['include']))
-        self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
-                         list(map(path.basename, options_map['include'])))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map['include']))
+        self.assertCountEqual(map(path.basename, options_map['include']), filenames)
 
 
 class TestLoadIncludesEncrypted(encryption_test.TestEncryptedBase):
