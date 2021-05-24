@@ -397,9 +397,19 @@ class Builder(lexer.LexBuilder):
         Args:
           filename: current filename.
           lineno: current line number.
-          include_name: A string, the name of the file to include.
+          include_filename: A string, the name of the file to include.
         """
         self.options['include'].append(include_filename)
+
+    def included(self, filename, lineno, filepath):
+        """Add file to the list of included files.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          filepath: Filesystem path of the included file.
+        """
+        self.options['depends'].append(filepath)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.

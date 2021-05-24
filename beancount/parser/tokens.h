@@ -33,6 +33,7 @@ extern "C" {
 #define build_TAG build_STR
 #define build_LINK build_STR
 #define build_CURRENCY build_STR
+#define build_HINCLUDE(_obj) ( Py_INCREF(_obj), _obj )
 #define build_BOOL(_value) PyBool_FromLong(_value)
 #define build_NONE() ( Py_INCREF(Py_None), Py_None )
 #define build_NUMBER(_str) pydecimal_from_cstring(_str)

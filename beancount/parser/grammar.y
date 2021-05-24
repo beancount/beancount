@@ -211,6 +211,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
 %token <pyobj> LINK        /* A link that can be associated with a transaction */
 %token <pyobj> KEY         /* A key in a key-value pair */
+%token <pyobj> HINCLUDE    /* '#include' keyword */
 
 /* Types for non-terminal symbols. */
 %type <character> txn
@@ -257,6 +258,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %type <pyobj> pushmeta
 %type <pyobj> popmeta
 %type <pyobj> include
+%type <pyobj> hinclude
 %type <pyobj> plugin
 %type <pyobj> file
 %type <pyobj> custom
@@ -814,6 +816,13 @@ option:
                $$, "option", "OO", $2, $3);
     }
 
+hinclude:
+  HINCLUDE
+    {
+        BUILDY(DECREF($1),
+               $$, "included", "O", $1);
+    }
+
 include:
   INCLUDE STRING eol
     {
@@ -840,6 +849,7 @@ directive:
   | popmeta
   | option
   | include
+  | hinclude
   | plugin
 
 declarations:

@@ -219,6 +219,7 @@ static PyObject* parser_iternext(Parser* self)
     case TAG:
     case LINK:
     case KEY:
+    case HINCLUDE:
         obj = yylval.pyobj;
         break;
     default:
