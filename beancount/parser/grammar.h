@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.7.5.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -152,7 +152,8 @@ const char* token_to_string(int token);
     TAG = 304,                     /* TAG  */
     LINK = 305,                    /* LINK  */
     KEY = 306,                     /* KEY  */
-    NEGATIVE = 307                 /* NEGATIVE  */
+    HINCLUDE = 307,                /* HINCLUDE  */
+    NEGATIVE = 308                 /* NEGATIVE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -171,7 +172,7 @@ union YYSTYPE
       PyObject* pyobj2;
   } pairobj;
 
-#line 175 "beancount/parser/grammar.h"
+#line 176 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

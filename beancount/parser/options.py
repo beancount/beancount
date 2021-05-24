@@ -195,6 +195,9 @@ OUTPUT_OPTION_GROUPS = [
     """, [Opt("include", [], "some-other-file.beancount")]),
 
     OptGroup("""
+    """, [Opt("depends", [])]),
+
+    OptGroup("""
       A hash of some of the input data. This is used to supplement the
       timestamps of the input files for the purpose of load caching. We
       typically hash the sizes of the files or perhaps even some of the

@@ -22,17 +22,22 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#define MAX_INCLUDE_DEPTH 128
+
 typedef struct _yyextra_t yyextra_t;
 
 struct _yyextra_t {
-  /* The filename being tokenized. */
-  PyObject* filename;
+    /* Include stack current depth. */
+    int depth;
 
-  /* The encoding to use for converting strings. */
-  const char* encoding;
+    /* The filename being tokenized. */
+    PyObject* names[MAX_INCLUDE_DEPTH];
 
-  /* A reference to the beancount.core.number.MISSING object */
-  PyObject* missing_obj;
+    /* The encoding to use for converting strings. */
+    const char* encoding;
+
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
 };
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -103,14 +108,14 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
 #define YY_INPUT(buf, result, max_size)                         \
     result = pyfile_read_into((PyObject *)yyin, buf, max_size);
 
-#define YY_USER_ACTION                                        \
-    {                                                         \
-        yylloc->first_line = yylineno;                        \
-        yylloc->last_line = yylloc->first_line;               \
-        yylloc->first_column = yycolumn;                      \
-        yylloc->last_column = yycolumn + yyleng - 1;          \
-        yylloc->file_name = yyget_extra(yyscanner)->filename; \
-        yycolumn += yyleng;                                   \
+#define YY_USER_ACTION                                                  \
+    {                                                                   \
+        yylloc->first_line = yylineno;                                  \
+        yylloc->last_line = yylloc->first_line;                         \
+        yylloc->first_column = yycolumn;                                \
+        yylloc->last_column = yycolumn + yyleng - 1;                    \
+        yylloc->file_name = yyget_extra(yyscanner)->names[yyget_extra(yyscanner)->depth]; \
+        yycolumn += yyleng;                                             \
     }
 
 %}
@@ -205,6 +210,96 @@ NULL {
 }
 \/[A-Z0-9\'\.\_\-]*[A-Z]([A-Z0-9\'\.\_\-]*[A-Z0-9])? {
     return TOKEN(CURRENCY, yytext, yyleng);
+}
+
+ /* Literal includes.
+  *
+  * This is an addtion to the syntax in v3.0. Lines starting with the hash
+  * character # have been ignored so far thus this addition is backward
+  * compatible. The syntax has been choosen for this reason and because it
+  * resambles the familiar C preprocessor syntax. Includes can be handled
+  * directly in the lexer or in the parser. We choose the first option.
+  */
+^\#include[ \t]+\".*?\" {
+    yyextra_t *extra = yyget_extra(yyscanner);
+    const char *ptr = strchr(yytext, '"') + 1;
+    const size_t len = yyleng - (ptr - yytext) - 1;
+    PyObject *abs = NULL, *dirname = NULL, *ospath = NULL, *io = NULL, *name = NULL, *path = NULL, *input = NULL;
+    int r;
+
+    if (extra->depth == MAX_INCLUDE_DEPTH - 1) {
+	PyErr_Format(PyExc_ValueError, "#include cannot be nested more than %d levels deep.", MAX_INCLUDE_DEPTH);
+	goto out;
+    }
+
+    name = PyUnicode_FromStringAndSize(ptr, len);
+    if (!name)
+	goto out;
+
+    ospath = PyImport_ImportModule("os.path");
+    if (!ospath)
+	goto out;
+
+    abs = PyObject_CallMethod(ospath, "isabs", "O", name);
+    if (!abs)
+	goto out;
+
+    r = PyObject_IsTrue(abs);
+    if (r < 0)
+	goto out;
+
+    if (r) {
+	Py_INCREF(name);
+	path = name;
+
+    } else {
+	/* If the filesystem path of the included file is not absolute, it
+	 * must be resolved relative to the path of the file including it. */
+	dirname = PyObject_CallMethod(ospath, "basename", "O", extra->names[extra->depth]);
+	if (!dirname)
+	    goto out;
+
+	path = PyObject_CallMethod(ospath, "join", "OO", dirname, name);
+	if (!path)
+	    goto out;
+    }
+
+    io = PyImport_ImportModule("io");
+    if (!io)
+	goto out;
+
+    input = PyObject_CallMethod(io, "open", "Os", path, "rb");
+    if (!input)
+	goto out;
+
+    YY_BUFFER_STATE buf = yy_create_buffer((void *)input, YY_BUF_SIZE, yyscanner);
+    yypush_buffer_state(buf, yyscanner);
+    extra->depth += 1;
+    extra->names[extra->depth] = path;
+
+    /* After switching input buffer yytext is invalid. */
+    yyleng = 0;
+
+out:
+    Py_XDECREF(abs);
+    Py_XDECREF(dirname);
+    Py_XDECREF(dirname);
+    Py_XDECREF(name);
+    Py_XDECREF(io);
+    Py_XDECREF(ospath);
+
+    if (!PyErr_Occurred())
+	/* Emit a token with the filesystem path of the included file. This
+	 * allows keep track of the included files and perform the correct
+	 * cache invalidation. */
+	return TOKEN(HINCLUDE, path);
+
+    Py_XDECREF(input);
+    Py_XDECREF(path);
+
+    build_lexer_error_from_exception(yylloc, builder);
+
+    return YYerror;
 }
 
  /* Characters with special meanings. */
@@ -304,9 +399,17 @@ include		{ return INCLUDE; }
 }
 
 <<EOF>> {
-    /* Ensure location data is populated. */
-    YY_USER_ACTION;
-    return YYEOF;
+    yyextra_t *extra = yyget_extra(yyscanner);
+
+    if (extra->depth == 0) {
+	/* Ensure location data is populated. */
+	YY_USER_ACTION;
+	return YYEOF;
+    }
+
+    Py_XDECREF(yyget_in(yyscanner));
+    Py_XDECREF(extra->names[extra->depth--]);
+    yypop_buffer_state(yyscanner);
 }
 
  /* Ivalid input: skip over to to the next whitespace character. */
@@ -332,7 +435,8 @@ yyscan_t yylex_new(void)
     if (!extra)
         return NULL;
 
-    extra->filename = NULL;
+    extra->depth = 0;
+    extra->names[extra->depth] = NULL;
 
     yylex_init_extra(extra, &scanner);
     if (!scanner) {
@@ -347,10 +451,13 @@ yyscan_t yylex_free(yyscan_t scanner)
 {
     yyextra_t* extra = yyget_extra(scanner);
 
-    Py_XDECREF(extra->filename);
+    while (extra->depth >= 0) {
+	Py_XDECREF(extra->names[extra->depth--]);
+	Py_XDECREF(yyget_in(scanner));
+	yypop_buffer_state(scanner);
+    }
     free(extra);
 
-    Py_XDECREF(yyget_in(scanner));
     yylex_destroy(scanner);
 
     return NULL;
@@ -370,6 +477,12 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
 {
     yyextra_t* extra = yyget_extra(scanner);
 
+    while (extra->depth >= 0) {
+	Py_XDECREF(extra->names[extra->depth--]);
+	Py_XDECREF(yyget_in(scanner));
+	yypop_buffer_state(scanner);
+    }
+
     if (!filename || filename == Py_None) {
         /* If a filename has not been specified, get it from the 'name'
 	 * attribute of the input file object. */
@@ -384,14 +497,13 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
         Py_INCREF(filename);
     }
 
-    Py_XDECREF(extra->filename);
-    extra->filename = filename;
+    extra->depth = 0;
+    extra->names[extra->depth] = filename;
 
     extra->encoding = encoding ? encoding : "utf-8";
 
     extra->missing_obj = missing_obj;
 
-    Py_XDECREF(yyget_in(scanner));
     Py_INCREF(file);
     yyrestart((void *)file, scanner);
     yybegin(scanner);
