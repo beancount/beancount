@@ -136,7 +136,7 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
     return dst - buffer;
 }
 
-PyObject* pyunicode_from_cquotedstring(const char* string, size_t len, const char* encoding) {
+PyObject* pyunicode_from_cquotedstring(const char* string, size_t len) {
     char* unescaped = NULL;
     ssize_t r;
     int lines;
@@ -154,7 +154,7 @@ PyObject* pyunicode_from_cquotedstring(const char* string, size_t len, const cha
         return NULL;
     }
 
-    PyObject* rv = PyUnicode_Decode(unescaped, r, encoding, "ignore");
+    PyObject* rv = PyUnicode_FromStringAndSize(unescaped, r);
     free(unescaped);
 
     return rv;

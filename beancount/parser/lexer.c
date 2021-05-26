@@ -1,4 +1,4 @@
-#line 2 "beancount/parser/lexer.c"
+#line 1 "beancount/parser/lexer.c"
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -6,14 +6,11 @@
 typedef struct _yyextra_t yyextra_t;
 
 struct _yyextra_t {
-  /* The filename being tokenized. */
-  PyObject* filename;
+    /* The filename being tokenized. */
+    PyObject* filename;
 
-  /* The encoding to use for converting strings. */
-  const char* encoding;
-
-  /* A reference to the beancount.core.number.MISSING object */
-  PyObject* missing_obj;
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
 };
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -43,18 +40,16 @@ yyscan_t yylex_free(yyscan_t scanner);
 /**
  * Initialize scanner private data.
  *
- * Setup @scanner to read from the Python file-like object @file. Set
- * the reported file name to @filename, if not NULL and not None.
- * Otherwise try to obtain the file name from the @name attribute of
- * the @file object. If this fails, use the empty string. @encoding is
- * used to decode strings read from the input file, if not NULL,
- * otherwise the default UTF-8 encoding is used. Python objects
- * references are incremented. It is safe to call this multiple times.
+ * Setup @scanner to read from the Python file-like object @file. Set the
+ * reported file name to @filename, if not NULL and not None. Otherwise try to
+ * obtain the file name from the @name attribute of the @file object. If this
+ * fails, use the empty string. Python objects references are incremented. It
+ * is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      const char* encoding, PyObject* missing_obj, yyscan_t scanner);
+                      PyObject* missing_obj, yyscan_t scanner);
 
-#line 58 "beancount/parser/lexer.c"
+#line 52 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -825,7 +820,7 @@ static const flex_int32_t yy_rule_can_match_eol[61] =
 /* Top code. This is included in the generated header file. */
 
 /* Definitions. */
-#line 80 "beancount/parser/lexer.l"
+#line 75 "beancount/parser/lexer.l"
 
 #include <math.h>
 #include <stdlib.h>
@@ -862,12 +857,12 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yycolumn += yyleng;                                   \
     }
 
-#line 866 "beancount/parser/lexer.c"
+#line 860 "beancount/parser/lexer.c"
 
-#line 133 "beancount/parser/lexer.l"
+#line 128 "beancount/parser/lexer.l"
  /* Characters that may be used as flags. Single-character letters may also be
   * used as flags, but must be prefixed by a quote, as in "'P' for "P". */
-#line 871 "beancount/parser/lexer.c"
+#line 865 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1154,11 +1149,11 @@ YY_DECL
 		}
 
 	{
-#line 137 "beancount/parser/lexer.l"
+#line 132 "beancount/parser/lexer.l"
 
 
  /* Newlines matter. */
-#line 1162 "beancount/parser/lexer.c"
+#line 1156 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1227,7 +1222,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 140 "beancount/parser/lexer.l"
+#line 135 "beancount/parser/lexer.l"
 {
     yycolumn = 1;
     return EOL;
@@ -1241,38 +1236,38 @@ case 2:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 148 "beancount/parser/lexer.l"
+#line 143 "beancount/parser/lexer.l"
 { return INDENT; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 149 "beancount/parser/lexer.l"
+#line 144 "beancount/parser/lexer.l"
 { }
 	YY_BREAK
 /* Comments. */
 case 4:
 YY_RULE_SETUP
-#line 152 "beancount/parser/lexer.l"
+#line 147 "beancount/parser/lexer.l"
 { }
 	YY_BREAK
 /* Boolean values. Must be before currencies. */
 case 5:
 YY_RULE_SETUP
-#line 155 "beancount/parser/lexer.l"
+#line 150 "beancount/parser/lexer.l"
 {
     return TOKEN(BOOL, true);
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 159 "beancount/parser/lexer.l"
+#line 154 "beancount/parser/lexer.l"
 {
     return TOKEN(BOOL, false);
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 163 "beancount/parser/lexer.l"
+#line 158 "beancount/parser/lexer.l"
 {
     return TOKEN(NONE);
 }
@@ -1316,14 +1311,14 @@ YY_RULE_SETUP
   */
 case 8:
 YY_RULE_SETUP
-#line 204 "beancount/parser/lexer.l"
+#line 199 "beancount/parser/lexer.l"
 {
     return TOKEN(CURRENCY, yytext, yyleng);
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 207 "beancount/parser/lexer.l"
+#line 202 "beancount/parser/lexer.l"
 {
     return TOKEN(CURRENCY, yytext, yyleng);
 }
@@ -1331,92 +1326,92 @@ YY_RULE_SETUP
 /* Characters with special meanings. */
 case 10:
 YY_RULE_SETUP
-#line 212 "beancount/parser/lexer.l"
+#line 207 "beancount/parser/lexer.l"
 { return PIPE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 213 "beancount/parser/lexer.l"
+#line 208 "beancount/parser/lexer.l"
 { return ATAT; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 214 "beancount/parser/lexer.l"
+#line 209 "beancount/parser/lexer.l"
 { return AT; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 215 "beancount/parser/lexer.l"
+#line 210 "beancount/parser/lexer.l"
 { return LCURLCURL; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 216 "beancount/parser/lexer.l"
+#line 211 "beancount/parser/lexer.l"
 { return RCURLCURL; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 217 "beancount/parser/lexer.l"
+#line 212 "beancount/parser/lexer.l"
 { return LCURL; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 218 "beancount/parser/lexer.l"
+#line 213 "beancount/parser/lexer.l"
 { return RCURL; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 219 "beancount/parser/lexer.l"
+#line 214 "beancount/parser/lexer.l"
 { return COMMA; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 220 "beancount/parser/lexer.l"
+#line 215 "beancount/parser/lexer.l"
 { return TILDE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 221 "beancount/parser/lexer.l"
+#line 216 "beancount/parser/lexer.l"
 { return PLUS; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 222 "beancount/parser/lexer.l"
+#line 217 "beancount/parser/lexer.l"
 { return MINUS; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 223 "beancount/parser/lexer.l"
+#line 218 "beancount/parser/lexer.l"
 { return SLASH; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 224 "beancount/parser/lexer.l"
+#line 219 "beancount/parser/lexer.l"
 { return LPAREN; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 225 "beancount/parser/lexer.l"
+#line 220 "beancount/parser/lexer.l"
 { return RPAREN; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 226 "beancount/parser/lexer.l"
+#line 221 "beancount/parser/lexer.l"
 { return HASH; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 227 "beancount/parser/lexer.l"
+#line 222 "beancount/parser/lexer.l"
 { return ASTERISK; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 228 "beancount/parser/lexer.l"
+#line 223 "beancount/parser/lexer.l"
 { return COLON; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 230 "beancount/parser/lexer.l"
+#line 225 "beancount/parser/lexer.l"
 {
     yylval->character = yytext[0];
     return FLAG;
@@ -1424,7 +1419,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 234 "beancount/parser/lexer.l"
+#line 229 "beancount/parser/lexer.l"
 {
     yylval->character = yytext[1];
     return FLAG;
@@ -1433,103 +1428,103 @@ YY_RULE_SETUP
 /* Keywords. */
 case 29:
 YY_RULE_SETUP
-#line 240 "beancount/parser/lexer.l"
+#line 235 "beancount/parser/lexer.l"
 { return TXN; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 241 "beancount/parser/lexer.l"
+#line 236 "beancount/parser/lexer.l"
 { return BALANCE; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 242 "beancount/parser/lexer.l"
+#line 237 "beancount/parser/lexer.l"
 { return OPEN; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 243 "beancount/parser/lexer.l"
+#line 238 "beancount/parser/lexer.l"
 { return CLOSE; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 244 "beancount/parser/lexer.l"
+#line 239 "beancount/parser/lexer.l"
 { return COMMODITY; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 245 "beancount/parser/lexer.l"
+#line 240 "beancount/parser/lexer.l"
 { return PAD; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 246 "beancount/parser/lexer.l"
+#line 241 "beancount/parser/lexer.l"
 { return EVENT; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 247 "beancount/parser/lexer.l"
+#line 242 "beancount/parser/lexer.l"
 { return QUERY; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 248 "beancount/parser/lexer.l"
+#line 243 "beancount/parser/lexer.l"
 { return CUSTOM; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 249 "beancount/parser/lexer.l"
+#line 244 "beancount/parser/lexer.l"
 { return PRICE; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 250 "beancount/parser/lexer.l"
+#line 245 "beancount/parser/lexer.l"
 { return NOTE; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 251 "beancount/parser/lexer.l"
+#line 246 "beancount/parser/lexer.l"
 { return DOCUMENT; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 252 "beancount/parser/lexer.l"
+#line 247 "beancount/parser/lexer.l"
 { return PUSHTAG; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 253 "beancount/parser/lexer.l"
+#line 248 "beancount/parser/lexer.l"
 { return POPTAG; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 254 "beancount/parser/lexer.l"
+#line 249 "beancount/parser/lexer.l"
 { return PUSHMETA; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 255 "beancount/parser/lexer.l"
+#line 250 "beancount/parser/lexer.l"
 { return POPMETA; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 256 "beancount/parser/lexer.l"
+#line 251 "beancount/parser/lexer.l"
 { return OPTION; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 257 "beancount/parser/lexer.l"
+#line 252 "beancount/parser/lexer.l"
 { return PLUGIN; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 258 "beancount/parser/lexer.l"
+#line 253 "beancount/parser/lexer.l"
 { return INCLUDE; }
 	YY_BREAK
 /* Dates. */
 case 48:
 YY_RULE_SETUP
-#line 261 "beancount/parser/lexer.l"
+#line 256 "beancount/parser/lexer.l"
 {
     return TOKEN(DATE, yytext);
 }
@@ -1537,7 +1532,7 @@ YY_RULE_SETUP
 /* Account names. */
 case 49:
 YY_RULE_SETUP
-#line 266 "beancount/parser/lexer.l"
+#line 261 "beancount/parser/lexer.l"
 {
     return TOKEN(ACCOUNT, yytext);
 }
@@ -1546,15 +1541,15 @@ YY_RULE_SETUP
 case 50:
 /* rule 50 can match eol */
 YY_RULE_SETUP
-#line 271 "beancount/parser/lexer.l"
+#line 266 "beancount/parser/lexer.l"
 {
-    return TOKEN(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
+    return TOKEN(STRING, yytext + 1, yyleng - 2);
 }
 	YY_BREAK
 /* Numbers. */
 case 51:
 YY_RULE_SETUP
-#line 276 "beancount/parser/lexer.l"
+#line 271 "beancount/parser/lexer.l"
 {
     return TOKEN(NUMBER, yytext);
 }
@@ -1562,7 +1557,7 @@ YY_RULE_SETUP
 /* Tags. */
 case 52:
 YY_RULE_SETUP
-#line 281 "beancount/parser/lexer.l"
+#line 276 "beancount/parser/lexer.l"
 {
     return TOKEN(TAG, yytext + 1, yyleng - 1);
 }
@@ -1570,7 +1565,7 @@ YY_RULE_SETUP
 /* Links. */
 case 53:
 YY_RULE_SETUP
-#line 286 "beancount/parser/lexer.l"
+#line 281 "beancount/parser/lexer.l"
 {
     return TOKEN(LINK, yytext + 1, yyleng - 1);
 }
@@ -1581,7 +1576,7 @@ case 54:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 291 "beancount/parser/lexer.l"
+#line 286 "beancount/parser/lexer.l"
 {
     return TOKEN(KEY, yytext, yyleng);
 }
@@ -1594,7 +1589,7 @@ case 55:
 yyg->yy_c_buf_p = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 298 "beancount/parser/lexer.l"
+#line 293 "beancount/parser/lexer.l"
 { BEGIN(IGNORE); }
 	YY_BREAK
 case 56:
@@ -1602,13 +1597,13 @@ case 56:
 yyg->yy_c_buf_p = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 299 "beancount/parser/lexer.l"
+#line 294 "beancount/parser/lexer.l"
 { BEGIN(IGNORE); }
 	YY_BREAK
 /* Default rule. {bf253a29a820} */
 case 57:
 YY_RULE_SETUP
-#line 302 "beancount/parser/lexer.l"
+#line 297 "beancount/parser/lexer.l"
 {
     unput(*yytext);
     BEGIN(INVALID);
@@ -1617,7 +1612,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
 case YY_STATE_EOF(IGNORE):
-#line 307 "beancount/parser/lexer.l"
+#line 302 "beancount/parser/lexer.l"
 {
     /* Ensure location data is populated. */
     YY_USER_ACTION;
@@ -1627,7 +1622,7 @@ case YY_STATE_EOF(IGNORE):
 /* Ivalid input: skip over to to the next whitespace character. */
 case 58:
 YY_RULE_SETUP
-#line 314 "beancount/parser/lexer.l"
+#line 309 "beancount/parser/lexer.l"
 {
     PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
     build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
@@ -1638,17 +1633,17 @@ YY_RULE_SETUP
 /* Ignore input till the newline. */
 case 59:
 YY_RULE_SETUP
-#line 321 "beancount/parser/lexer.l"
+#line 316 "beancount/parser/lexer.l"
 {
     BEGIN(INITIAL);
 }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 325 "beancount/parser/lexer.l"
+#line 320 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1652 "beancount/parser/lexer.c"
+#line 1646 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2853,7 +2848,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 325 "beancount/parser/lexer.l"
+#line 320 "beancount/parser/lexer.l"
 
 
 yyscan_t yylex_new(void)
@@ -2899,7 +2894,7 @@ static void yybegin(yyscan_t scanner)
 }
 
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      const char* encoding, PyObject* missing_obj, yyscan_t scanner)
+                      PyObject* missing_obj, yyscan_t scanner)
 {
     yyextra_t* extra = yyget_extra(scanner);
 
@@ -2919,8 +2914,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
 
     Py_XDECREF(extra->filename);
     extra->filename = filename;
-
-    extra->encoding = encoding ? encoding : "utf-8";
 
     extra->missing_obj = missing_obj;
 

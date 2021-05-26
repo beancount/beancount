@@ -148,29 +148,10 @@ class TestUnicodeErrors(unittest.TestCase):
     def test_bytes_encoded_incorrect(self):
         latin1_bytes = self.test_utf8_string.encode('latin1')
         entries, errors, _ = parser.parse_string(latin1_bytes)
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer failed to convert the string but did not cause
-        # other errors.
-        self.assertNotEqual(self.expected_utf8_string, entries[0].comment)
-
-    # Test providing latin1 bytes to the lexer with an encoding.
-    def test_bytes_encoded_latin1(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='latin1')
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer correctly parsed the latin1 string.
-        self.assertEqual(self.expected_latin1_string, entries[0].comment)
-
-    # Test using a garbage invalid encoding.
-    def test_bytes_encoded_invalid(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
+        # Check that the lexer failed to convert the string and reported an error.
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "unknown encoding")
+        self.assertRegex(errors[0].message, "^UnicodeDecodeError: 'utf-8' codec ")
         self.assertFalse(entries)
-
 
 class TestTestUtils(unittest.TestCase):
 

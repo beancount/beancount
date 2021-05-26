@@ -112,32 +112,30 @@ static void parser_dealloc(Parser* self)
 }
 
 PyDoc_STRVAR(parser_parse_doc,
-             "parse(file, filename=None, lineno=1, encoding='utf8')\n"
+             "parse(file, filename=None, lineno=1)\n"
              "\n"
              "Parse input from file object. The filename and lineno keyword\n"
              "arguments allow to specify the file name and start line number to be\n"
              "used in error reporting and in the returned metadata objects. If\n"
              "filename is not specified or None, the name attribute of the file\n"
-             "object is used, if present. The encoding parameter allows to specify\n"
-             "the file encoding. Parsing results are retrieved from the Builder\n"
-             "object specified when the Parser object was instantiated.");
+             "object is used, if present. Parsing results are retrieved from the \n"
+             "Builder object specified when the Parser object was instantiated.");
 
 static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
-    const char* encoding = NULL;
+    static char* kwlist[] = {"file", "filename", "lineno", NULL};
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oi", kwlist,
+                                     &file, &filename, &lineno)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, missing_obj, self->scanner);
+    yylex_initialize(file, filename, lineno, missing_obj, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -161,30 +159,28 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(parser_lex_doc,
-             "lex(file, filename=None, lineno=1, encoding='utf8')\n"
+             "lex(file, filename=None, lineno=1)\n"
              "\n"
              "Run the input file object trough the Beancount tokenizer. filename and\n"
              "lineno keyword arguments allow to specify the file name and start line\n"
              "number to be used in error reporting. If filename is not specified or\n"
-             "None, the name attribute of the file object is used, if present.\n"
-             "The encoding parameter allows to specify the file encoding. Return an\n"
-             "iterable yielding (token name, string value, sematical value) tuples.");
+             "None, the name attribute of the file object is used, if present. Return \n"
+             "an iterable yielding (token name, string value, sematical value) tuples.");
 
 static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
-    const char* encoding = NULL;
+    static char* kwlist[] = {"file", "filename", "lineno", NULL};
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oi", kwlist,
+                                     &file, &filename, &lineno)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, missing_obj, self->scanner);
+    yylex_initialize(file, filename, lineno, missing_obj, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;
