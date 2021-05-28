@@ -377,7 +377,7 @@ class TestLoadCache(unittest.TestCase):
 
     def _load_file(self, filename, *args, **kw):
         self.num_calls += 1
-        return loader._load([(filename, True)], *args, **kw)
+        return loader._load(filename, *args, **kw)
 
     def test_load_cache(self):
         # Create an initial set of files and load file, thus creating a cache.
