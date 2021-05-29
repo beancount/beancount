@@ -84,19 +84,16 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
-            filename,
-            log_timings, log_errors,
-            extra_validations, False, encoding)
+            filename, log_timings, log_errors, extra_validations)
     else:
         entries, errors, options_map = _load_file(
-            filename, log_timings,
-            extra_validations, encoding)
+            filename, log_timings, extra_validations, encoding)
         _log_errors(errors, log_errors)
     return entries, errors, options_map
 
 
 def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-                        dedent=False, encoding=None):
+                        dedent=False):
     """Load an encrypted Beancount input file.
 
     Args:
@@ -105,7 +102,6 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       log_errors: See load_string().
       extra_validations: See load_string().
       dedent: See load_string().
-      encoding: See load_string().
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
@@ -116,8 +112,7 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
     return load_string(contents,
                        log_timings=log_timings,
                        log_errors=log_errors,
-                       extra_validations=extra_validations,
-                       encoding=encoding)
+                       extra_validations=extra_validations)
 
 
 def _log_errors(errors, log_errors):
@@ -289,7 +284,7 @@ def compute_input_hash(filenames):
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
-                dedent=False, encoding=None):
+                dedent=False):
 
     """Open a Beancount input string, parse it, run transformations and validate.
 
@@ -302,7 +297,6 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
-      encoding: A string or None, the encoding to decode the input string with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the string, "errors" a list of error objects
@@ -312,7 +306,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     if dedent:
         string = textwrap.dedent(string)
     entries, errors, options_map = _load([(string, False)], log_timings,
-                                         extra_validations, encoding)
+                                         extra_validations)
     _log_errors(errors, log_errors)
     return entries, errors, options_map
 
