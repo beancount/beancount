@@ -66,7 +66,6 @@ class TestContext(test_utils.TestCase):
         str_context = context.render_file_context(entries, options_map,
                                                   search_filename, search_lineno)
 
-        print(str_context)
         self.assertLines(textwrap.dedent("""
 
         ** Transaction Id --------------------------------
