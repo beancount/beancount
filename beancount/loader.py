@@ -92,8 +92,7 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     return entries, errors, options_map
 
 
-def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-                        dedent=False):
+def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None):
     """Load an encrypted Beancount input file.
 
     Args:
@@ -101,7 +100,6 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       log_timings: See load_string().
       log_errors: See load_string().
       extra_validations: See load_string().
-      dedent: See load_string().
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
