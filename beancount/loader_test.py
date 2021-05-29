@@ -290,31 +290,6 @@ class TestLoadIncludes(unittest.TestCase):
                           'patates.beancount', 'tomates.beancount'],
                          list(map(path.basename, options_map['include'])))
 
-    def test_load_file_with_duplicate_includes(self):
-        with test_utils.tempdir() as tmp:
-            test_utils.create_temporary_files(tmp, {
-                'apples.beancount': """
-                  include "fruits/oranges.beancount"
-                  include "{root}/legumes/tomates.beancount"
-                  2014-01-01 open Assets:Apples
-                """,
-                'fruits/oranges.beancount': """
-                  include "../legumes/tomates.beancount"
-                  2014-01-02 open Assets:Oranges
-                """,
-                'legumes/tomates.beancount': """
-                  2014-01-03 open Assets:Tomates
-                """,
-                'legumes/patates.beancount': """
-                  2014-01-04 open Assets:Patates
-                """})
-            entries, errors, options_map = loader.load_file(
-                path.join(tmp, 'apples.beancount'))
-        self.assertTrue(errors)
-        self.assertEqual(3, len(entries))
-        self.assertEqual(['apples.beancount', 'oranges.beancount', 'tomates.beancount'],
-                         list(map(path.basename, options_map['include'])))
-
     def test_load_string_with_relative_include(self):
         with test_utils.tempdir() as tmp:
             test_utils.create_temporary_files(tmp, {
