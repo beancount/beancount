@@ -127,12 +127,6 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
 
-    def test_load_nonexist(self):
-        entries, errors, options_map = loader.load_file('/some/bullshit/filename.beancount')
-        self.assertEqual([], entries)
-        self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'does not exist')
-
     @mock.patch.dict(loader.RENAMED_MODULES,
                      {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
                      clear=True)
@@ -209,12 +203,6 @@ class TestLoadIncludes(unittest.TestCase):
             self.assertEqual(0, len(errors))
             self.assertEqual(['apples.beancount'],
                              list(map(path.basename, options_map['include'])))
-
-    def test_load_file_nonexist(self):
-        entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'does not exist')
-        self.assertEqual([], list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_nonexist_include(self):
         with test_utils.tempdir() as tmp:
@@ -427,40 +415,6 @@ class TestLoadCache(unittest.TestCase):
                 file.write('\n')
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
-
-    def test_load_cache_moved_file(self):
-        # Create an initial set of files and load file, thus creating a cache.
-        with test_utils.tempdir() as tmp:
-            test_utils.create_temporary_files(tmp, {
-                'apples.beancount': """
-                  include "oranges.beancount"
-                  2014-01-01 open Assets:Apples
-                """,
-                'oranges.beancount': """
-                  2014-01-02 open Assets:Oranges
-                """})
-            top_filename = path.join(tmp, 'apples.beancount')
-            entries, errors, options_map = loader.load_file(top_filename)
-            self.assertFalse(errors)
-            self.assertEqual(2, len(entries))
-            self.assertEqual(1, self.num_calls)
-
-            # Make sure the cache was created.
-            self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
-
-            # Check that it doesn't need refresh
-            self.assertFalse(loader.needs_refresh(options_map))
-
-            # Move the input file.
-            new_top_filename = path.join(tmp, 'bigapples.beancount')
-            os.rename(top_filename, new_top_filename)
-
-            # Check that it needs refresh.
-            self.assertTrue(loader.needs_refresh(options_map))
-
-            # Load the root file again, make sure the cache is being hit.
-            entries, errors, options_map = loader.load_file(top_filename)
-            self.assertEqual(2, self.num_calls)
 
     @mock.patch('os.remove', side_effect=OSError)
     @mock.patch('logging.warning')
