@@ -135,7 +135,7 @@ class TestEncryptedFiles(TestEncryptedBase):
         self.encrypt_as_file(INPUT, encrypted_file)
 
         with test_utils.environ('GNUPGHOME', self.ringdir):
-            plaintext = encryption.read_encrypted_file(encrypted_file)
+            plaintext = encryption.read_encrypted_file(encrypted_file).decode('utf8')
             self.assertEqual(INPUT, plaintext)
 
 

@@ -45,17 +45,14 @@ def read_encrypted_file(filename):
     Args:
       filename: A string, the path to the encrypted file.
     Returns:
-      A string, the contents of the file.
+      The contents of the file as bytes.
     Raises:
-      OSError: If we could not properly decrypt the file.
+      OSError: If we could not decrypt the file.
     """
     command = ['gpg', '--batch', '--decrypt', path.realpath(filename)]
-    pipe = subprocess.Popen(command,
-                            shell=False,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     contents, errors = pipe.communicate()
     if pipe.returncode != 0:
         raise OSError("Could not decrypt file ({}): {}".format(pipe.returncode,
                                                                errors.decode('utf8')))
-    return contents.decode('utf-8')
+    return contents

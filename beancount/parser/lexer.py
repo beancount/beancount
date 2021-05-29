@@ -46,15 +46,12 @@ class LexBuilder:
             filename = os.path.join(os.path.dirname(parent), filename)
 
         if encryption.is_encrypted_file(filename):
-            # read_encrypted_file() decodes the GPG output and we
-            # encode it again here. This could be easily avoided. We
-            # could even avoid loading all the plain text in memory
-            # returning directly the GPG stdout file descriptor
-            # here. To check for errors we would need to wrap it
-            # similarly to what os.popen() does. Leave this
-            # optimizations for later.
-            content = encryption.read_encrypted_file(filename).encode('utf8')
-            fd = io.BytesIO(content)
+            # Loading all the plain text in memory could be avoided by
+            # returning directly the GPG stdout file descriptor here.
+            # To check for errors we would need to wrap it similarly
+            # to what os.popen() does. This would require calling
+            # close() explicitly in the parser.
+            fd = io.BytesIO(encryption.read_encrypted_file(filename))
         else:
             fd = open(filename, 'rb')
 

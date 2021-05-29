@@ -104,8 +104,7 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None,
       while parsing and validating the file, and "options_map", a dict of the
       options parsed from the file.
     """
-    contents = encryption.read_encrypted_file(filename)
-    file = io.BytesIO(contents.encode('utf8'))
+    file = io.BytesIO(encryption.read_encrypted_file(filename))
     file.name = filename
     entries, errors, options = _load(file, log_timings, extra_validations, 'utf8')
     _log_errors(errors, log_errors)
