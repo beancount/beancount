@@ -1131,10 +1131,8 @@ def validate_output(contents, positive_accounts, currency):
     Raises:
       AssertionError: If the output does not validate.
     """
-    entries, errors, options = loader.load_string(
-        contents,
-        extra_validations=validation.HARDCORE_VALIDATIONS)
-
+    entries, errors, options = loader.load_string(contents)
+    errors += validation.validate(entries, options)
     printer.print_errors(errors, file=sys.stderr)
     assert not errors
 

@@ -7,7 +7,6 @@ import sys
 import click
 
 from beancount import loader
-from beancount.ops import validation
 from beancount.utils import misc_utils
 from beancount.parser import printer
 from beancount.parser.version import VERSION
@@ -34,13 +33,7 @@ def main(filename, verbose, no_cache, cache_filename):
         loader.initialize(use_cache, cache_filename)
 
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        # Load up the file, print errors, checking and validation are invoked
-        # automatically.
-        entries, errors, _ = loader.load_file(
-            filename,
-            log_timings=logging.info,
-            # Force slow and hardcore validations, just for check.
-            extra_validations=validation.HARDCORE_VALIDATIONS)
+        entries, errors, options = loader.load_file(filename,log_timings=logging.info)
         printer.print_errors(errors, file=sys.stderr)
 
     # Exit with an error code if there were any errors.
