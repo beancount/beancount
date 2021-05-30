@@ -1131,14 +1131,14 @@ def validate_output(contents, positive_accounts, currency):
     Raises:
       AssertionError: If the output does not validate.
     """
-    loaded_entries, _, _ = loader.load_string(
-        contents,
-        log_errors=sys.stderr,
-        extra_validations=validation.HARDCORE_VALIDATIONS)
+    entries, errors, options = loader.load_string(contents)
+    errors += validation.validate(entries, options)
+    printer.print_errors(errors, file=sys.stderr)
+    assert not errors
 
     # Sanity checks: Check that the checking balance never goes below zero.
     for account in positive_accounts:
-        check_non_negative(loaded_entries, account, currency)
+        check_non_negative(entries, account, currency)
 
 
 def generate_banking_expenses(date_begin, date_end, account, rent_amount):

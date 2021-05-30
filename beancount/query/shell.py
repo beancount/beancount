@@ -795,11 +795,11 @@ def main(filename, query, numberify, format, output, no_errors):
     """
     # Parse the input file.
     def load():
-        errors_file = None if no_errors else sys.stderr
         with misc_utils.log_time('beancount.loader (total)', logging.info):
-            return loader.load_file(filename,
-                                    log_timings=logging.info,
-                                    log_errors=errors_file)
+            entries, errors, options = loader.load_file(filename, log_timings=logging.info)
+        if not no_errors:
+            printer.print_errors(errors, file=sys.stderr)
+        return entries, errors, options
 
     # Create the shell.
     is_interactive = sys.stdin.isatty() and not query

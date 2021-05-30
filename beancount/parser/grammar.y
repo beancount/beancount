@@ -199,7 +199,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %token PUSHMETA            /* 'pushmeta' keyword */
 %token POPMETA             /* 'popmeta' keyword */
 %token OPTION              /* 'option' keyword */
-%token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
 %token <pyobj> NONE        /* A None value (parsed as NULL) */
 %token <pyobj> BOOL        /* A boolean, true or false */
@@ -256,7 +255,6 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %type <pyobj> poptag
 %type <pyobj> pushmeta
 %type <pyobj> popmeta
-%type <pyobj> include
 %type <pyobj> plugin
 %type <pyobj> file
 %type <pyobj> custom
@@ -814,13 +812,6 @@ option:
                $$, "option", "OO", $2, $3);
     }
 
-include:
-  INCLUDE STRING eol
-    {
-        BUILDY(DECREF($2),
-               $$, "include", "O", $2);
-    }
-
 plugin:
   PLUGIN STRING eol
     {
@@ -839,7 +830,6 @@ directive:
   | pushmeta
   | popmeta
   | option
-  | include
   | plugin
 
 declarations:

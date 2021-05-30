@@ -6,9 +6,11 @@ __license__ = "GNU GPLv2"
 import collections
 import contextlib
 import io
+import os
 
 from beancount.core.data import new_metadata
 from beancount.parser import _parser
+from beancount.utils import encryption
 
 
 LexerError = collections.namedtuple('LexerError', 'source message entry')
@@ -20,6 +22,8 @@ class LexBuilder:
     def __init__(self):
         # Errors that occurred during lexing and parsing.
         self.errors = []
+        # Included file paths.
+        self.includes = []
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
@@ -31,6 +35,33 @@ class LexBuilder:
         """
         self.errors.append(
             LexerError(new_metadata(filename, lineno), str(message), None))
+
+    def include(self, filename, parent=None):
+        if not os.path.isabs(filename):
+            # If the filesystem path of the included file is not
+            # absolute, it must be resolved relative to the path of
+            # the file including it.
+            if not parent or parent == "<string>":
+                parent = os.getcwd()
+            filename = os.path.join(os.path.dirname(parent), filename)
+
+        if encryption.is_encrypted_file(filename):
+            # Loading all the plain text in memory could be avoided by
+            # returning directly the GPG stdout file descriptor here.
+            # To check for errors we would need to wrap it similarly
+            # to what os.popen() does. This would require calling
+            # close() explicitly in the parser.
+            fd = io.BytesIO(encryption.read_encrypted_file(filename))
+        else:
+            fd = open(filename, 'rb')
+
+        # Keep track of the included files and perform the correct
+        # cache invalidation when the ledger is reloaded. This adds
+        # the included file path to the list even if opening it will
+        # result in an error later. Maybe this needs to be revisited.
+        self.includes.append(filename)
+
+        return filename, fd
 
 
 def lex_iter(file, builder=None, encoding=None):

@@ -6,7 +6,6 @@ __license__ = "GNU GPLv2"
 from os import path
 import collections
 import functools
-import glob
 import hashlib
 import importlib
 import io
@@ -25,11 +24,9 @@ from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import booking
-from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.utils import encryption
-from beancount.utils import file_utils
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -57,8 +54,7 @@ PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
-def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-              encoding=None):
+def load_file(filename, log_timings=None, encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -66,10 +62,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet. (Note that this is intended to use
         the logging methods and does not insert a newline.)
-      log_errors: A file object or function to write errors to,
-        or None, if it should remain quiet.
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
@@ -84,56 +76,29 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
-            filename,
-            log_timings, log_errors,
-            extra_validations, False, encoding)
+            filename, log_timings)
     else:
         entries, errors, options_map = _load_file(
-            filename, log_timings,
-            extra_validations, encoding)
-        _log_errors(errors, log_errors)
+            filename, log_timings, encoding)
     return entries, errors, options_map
 
 
-def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-                        dedent=False, encoding=None):
+def load_encrypted_file(filename, log_timings=None):
     """Load an encrypted Beancount input file.
 
     Args:
       filename: The name of an encrypted file to be parsed.
       log_timings: See load_string().
-      log_errors: See load_string().
-      extra_validations: See load_string().
-      dedent: See load_string().
-      encoding: See load_string().
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
       while parsing and validating the file, and "options_map", a dict of the
       options parsed from the file.
     """
-    contents = encryption.read_encrypted_file(filename)
-    return load_string(contents,
-                       log_timings=log_timings,
-                       log_errors=log_errors,
-                       extra_validations=extra_validations,
-                       encoding=encoding)
-
-
-def _log_errors(errors, log_errors):
-    """Log errors, if 'log_errors' is set.
-
-    Args:
-      log_errors: A file object or function to write errors to,
-        or None, if it should remain quiet.
-    """
-    if log_errors and errors:
-        if hasattr(log_errors, 'write'):
-            printer.print_errors(errors, file=log_errors)
-        else:
-            error_io = io.StringIO()
-            printer.print_errors(errors, file=error_io)
-            log_errors(error_io.getvalue())
+    file = io.BytesIO(encryption.read_encrypted_file(filename))
+    file.name = filename
+    entries, errors, options = _load(file, log_timings, 'utf8')
+    return entries, errors, options
 
 
 def get_cache_filename(pattern: str, filename: str) -> str:
@@ -252,11 +217,6 @@ def delete_cache_function(cache_getter, function):
     return wrapped
 
 
-def _uncached_load_file(filename, *args, **kw):
-    """Delegate to _load. Note: This gets conditionally advised by caching below."""
-    return _load([(filename, True)], *args, **kw)
-
-
 def needs_refresh(options_map):
     """Predicate that returns true if at least one of the input files may have changed.
 
@@ -288,8 +248,7 @@ def compute_input_hash(filenames):
     return md5.hexdigest()
 
 
-def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
-                dedent=False, encoding=None):
+def load_string(string, log_timings=None, dedent=False):
 
     """Open a Beancount input string, parse it, run transformations and validate.
 
@@ -297,12 +256,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       string: A Beancount input string.
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.
-      log_errors: A file object or function to write errors to,
-        or None, if it should remain quiet.
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
-      encoding: A string or None, the encoding to decode the input string with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the string, "errors" a list of error objects
@@ -311,163 +265,13 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    entries, errors, options_map = _load([(string, False)], log_timings,
-                                         extra_validations, encoding)
-    _log_errors(errors, log_errors)
-    return entries, errors, options_map
+    file = io.BytesIO(string.encode('utf8'))
+    file.name = "<string>"
+    entries, errors, options = _load(file, log_timings, 'utf8')
+    return entries, errors, options
 
 
-def _parse_recursive(sources, log_timings, encoding=None):
-    """Parse Beancount input, run its transformations and validate it.
-
-    Recursively parse a list of files or strings and their include files and
-    return an aggregate of parsed directives, errors, and the top-level
-    options-map. If the same file is being parsed twice, ignore it and issue an
-    error.
-
-    Args:
-      sources: A list of (filename-or-string, is-filename) where the first
-        element is a string, with either a filename or a string to be parsed directly,
-        and the second argument is a boolean that is true if the first is a filename.
-        You may provide a list of such arguments to be parsed. Filenames must be absolute
-        paths.
-      log_timings: A function to write timings to, or None, if it should remain quiet.
-      encoding: A string or None, the encoding to decode the input filename with.
-    Returns:
-      A tuple of (entries, parse_errors, options_map).
-    """
-    assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
-
-    # Current parse state.
-    entries, parse_errors = [], []
-    options_map = None
-
-    # A stack of sources to be parsed.
-    source_stack = list(sources)
-
-    # A list of absolute filenames that have been parsed in the past, used to
-    # detect and avoid duplicates (cycles).
-    filenames_seen = set()
-
-    with misc_utils.log_time('beancount.parser.parser', log_timings, indent=1):
-        while source_stack:
-            source, is_file = source_stack.pop(0)
-            is_top_level = options_map is None
-
-            # If the file is encrypted, read it in and process it as a string.
-            if is_file:
-                cwd = path.dirname(source)
-                source_filename = source
-                if encryption.is_encrypted_file(source):
-                    source = encryption.read_encrypted_file(source)
-                    is_file = False
-            else:
-                # If we're parsing a string, the CWD is the current process
-                # working directory.
-                cwd = os.getcwd()
-                source_filename = None
-
-            if is_file:
-                # All filenames here must be absolute.
-                assert path.isabs(source)
-                filename = path.normpath(source)
-
-                # Check for file previously parsed... detect duplicates.
-                if filename in filenames_seen:
-                    parse_errors.append(
-                        LoadError(data.new_metadata("<load>", 0),
-                                  'Duplicate filename parsed: "{}"'.format(filename),
-                                  None))
-                    continue
-
-                # Check for a file that does not exist.
-                if not path.exists(filename):
-                    parse_errors.append(
-                        LoadError(data.new_metadata("<load>", 0),
-                                  'File "{}" does not exist'.format(filename), None))
-                    continue
-
-                # Parse a file from disk directly.
-                filenames_seen.add(filename)
-                with misc_utils.log_time('beancount.parser.parser.parse_file',
-                                         log_timings, indent=2):
-                    (src_entries,
-                     src_errors,
-                     src_options_map) = parser.parse_file(filename, encoding=encoding)
-
-                cwd = path.dirname(filename)
-            else:
-                # Encode the contents if necessary.
-                if encoding:
-                    if isinstance(source, bytes):
-                        source = source.decode(encoding)
-                    source = source.encode('ascii', 'replace')
-
-                # Parse a string buffer from memory.
-                with misc_utils.log_time('beancount.parser.parser.parse_string',
-                                         log_timings, indent=2):
-                    (src_entries,
-                     src_errors,
-                     src_options_map) = parser.parse_string(source, source_filename)
-
-            # Merge the entries resulting from the parsed file.
-            entries.extend(src_entries)
-            parse_errors.extend(src_errors)
-
-            # We need the options from the very top file only (the very
-            # first file being processed). No merging of options should
-            # occur.
-            if is_top_level:
-                options_map = src_options_map
-            else:
-                aggregate_options_map(options_map, src_options_map)
-
-            # Add includes to the list of sources to process. chdir() for glob,
-            # which uses it indirectly.
-            include_expanded = []
-            with file_utils.chdir(cwd):
-                for include_filename in src_options_map['include']:
-                    matched_filenames = glob.glob(include_filename, recursive=True)
-                    if matched_filenames:
-                        include_expanded.extend(matched_filenames)
-                    else:
-                        parse_errors.append(
-                            LoadError(data.new_metadata("<load>", 0),
-                                      'File glob "{}" does not match any files'.format(
-                                          include_filename), None))
-            for include_filename in include_expanded:
-                if not path.isabs(include_filename):
-                    include_filename = path.join(cwd, include_filename)
-                include_filename = path.normpath(include_filename)
-
-                # Add the include filenames to be processed later.
-                source_stack.append((include_filename, True))
-
-    # Make sure we have at least a dict of valid options.
-    if options_map is None:
-        options_map = options.OPTIONS_DEFAULTS.copy()
-
-    # Save the set of parsed filenames in options_map.
-    options_map['include'] = sorted(filenames_seen)
-
-    return entries, parse_errors, options_map
-
-
-def aggregate_options_map(options_map, src_options_map):
-    """Aggregate some of the attributes of options map.
-
-    Args:
-      options_map: The target map in which we want to aggregate attributes.
-        Note: This value is mutated in-place.
-      src_options_map: A source map whose values we'd like to see aggregated.
-    """
-    op_currencies = options_map["operating_currency"]
-    for currency in src_options_map["operating_currency"]:
-        if currency not in op_currencies:
-            op_currencies.append(currency)
-
-
-def _load(sources, log_timings, extra_validations, encoding):
+def _load(file, log_timings, encoding):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -477,20 +281,13 @@ def _load(sources, log_timings, extra_validations, encoding):
     ready for reporting, a list of errors, and parser's options dict.
 
     Args:
-      sources: A list of (filename-or-string, is-filename) where the first
-        element is a string, with either a filename or a string to be parsed directly,
-        and the second argument is a boolean that is true if the first is a filename.
-        You may provide a list of such arguments to be parsed. Filenames must be absolute
-        paths.
+      file: file object
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       See load() or load_string().
     """
-    assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
 
     if hasattr(log_timings, 'write'):
         log_timings = log_timings.write
@@ -498,8 +295,7 @@ def _load(sources, log_timings, extra_validations, encoding):
     # Parse all the files recursively. Ensure that the entries are sorted before
     # running any processes on them.
     with misc_utils.log_time('parse', log_timings, indent=1):
-        entries, parse_errors, options_map = _parse_recursive(
-            sources, log_timings, encoding)
+        entries, parse_errors, options_map = parser.parse_file(file, encoding=encoding)
         entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
@@ -514,13 +310,17 @@ def _load(sources, log_timings, extra_validations, encoding):
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
-        valid_errors = validation.validate(entries, options_map, log_timings,
-                                           extra_validations)
-        errors.extend(valid_errors)
+        errors += validation.validate(entries, options_map, log_timings)
 
         # Note: We could go hardcore here and further verify that the entries
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
+
+    # Add the main filename to the list of includes.
+    if isinstance(file, os.PathLike):
+        file = str(file)
+    if isinstance(file, str):
+        options_map['include'].insert(0, file)
 
     # Compute the input hash.
     options_map['input_hash'] = compute_input_hash(options_map['include'])
@@ -702,14 +502,14 @@ def initialize(use_cache: bool, cache_filename: Optional[str] = None):
 
     if use_cache:
         _load_file = pickle_cache_function(cache_getter, PICKLE_CACHE_THRESHOLD,
-                                           _uncached_load_file)
+                                           _load)
     else:
         if cache_filename is not None:
             logging.warning("Cache disabled; "
                             "Explicitly overridden cache filename %s will be ignored.",
                             cache_filename)
         _load_file = delete_cache_function(cache_getter,
-                                           _uncached_load_file)
+                                           _load)
 
 
 # Default is to use the cache every time.

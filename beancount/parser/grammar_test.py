@@ -23,7 +23,6 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
-from beancount.utils import test_utils
 from beancount.parser import cmptest
 
 
@@ -627,40 +626,6 @@ class TestParserOptions(unittest.TestCase):
         """
         check_list(self, errors, [parser.ParserError])
         self.assertNotEqual("filename", "gniagniagniagniagnia")
-
-
-class TestParserInclude(unittest.TestCase):
-
-    def test_parse_nonexist(self):
-        with self.assertRaises(OSError):
-            parser.parse_file('/some/bullshit/filename.beancount')
-
-    @test_utils.docfile
-    def test_include_absolute(self, filename):
-        """
-          include "/some/absolute/filename.beancount"
-        """
-        entries, errors, options_map = parser.parse_file(filename)
-        self.assertFalse(errors)
-        self.assertEqual(['/some/absolute/filename.beancount'],
-                         options_map['include'])
-
-    @test_utils.docfile
-    def test_include_relative(self, filename):
-        """
-          include "some/relative/filename.beancount"
-        """
-        entries, errors, options_map = parser.parse_file(filename)
-        self.assertFalse(errors)
-        self.assertEqual(['some/relative/filename.beancount'],
-                         options_map['include'])
-
-    def test_include_relative_from_string(self):
-        input_string = 'include "some/relative/filename.beancount"'
-        entries, errors, options_map = parser.parse_string(input_string)
-        self.assertFalse(errors)
-        self.assertEqual(['some/relative/filename.beancount'],
-                         options_map['include'])
 
 
 class TestParserPlugin(unittest.TestCase):
@@ -1974,16 +1939,6 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.include', raise_exception)
-    @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__include(self, entries, errors, _):
-        """
-          2000-01-01 open Assets:Before
-          include "answer.beancount"
-          2010-01-01 close Assets:Before
-        """
-        self.check_entries_errors(entries, errors)
-
     @mock.patch('beancount.parser.grammar.Builder.plugin', raise_exception)
     @parser.parse_doc(expect_errors=True)
     def test_grammar_exceptions__plugin(self, entries, errors, _):
@@ -2557,7 +2512,7 @@ class TestMethodsSignature(unittest.TestCase):
             if (name.isupper() or
                 name.startswith('_') or
                 name.startswith('get_') or
-                name == 'finalize'):
+                name in ('finalize', 'include')):
                 continue
             parameters = inspect.signature(func).parameters.keys()
             self.assertEqual(list(parameters)[:3], ['self', 'filename', 'lineno'])

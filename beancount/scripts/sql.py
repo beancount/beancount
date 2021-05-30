@@ -15,6 +15,7 @@ import click
 from beancount import loader
 from beancount.core import data
 from beancount.utils import misc_utils
+from beancount.parser import printer
 from beancount.parser.version import VERSION
 
 
@@ -346,8 +347,8 @@ def main(filename, database):
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
     entries, errors, options_map = loader.load_file(filename,
-                                                    log_timings=logging.info,
-                                                    log_errors=sys.stderr)
+                                                    log_timings=logging.info)
+    printer.print_errors(errors, file=sys.stderr)
 
     # Delete previous database if it already exists.
     if path.exists(database):

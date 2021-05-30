@@ -190,6 +190,9 @@ class Builder(lexer.LexBuilder):
         # Build and store the inferred DisplayContext instance.
         self.options['dcontext'] = self.dcontext
 
+        # Store the included file paths.
+        self.options['include'] = self.includes
+
         return self.options
 
     def get_long_string_maxlines(self):
@@ -390,16 +393,6 @@ class Builder(lexer.LexBuilder):
                 # Insert the PYTHONPATH to this file when and only if you
                 # encounter this option.
                 sys.path.insert(0, path.dirname(filename))
-
-    def include(self, filename, lineno, include_filename):
-        """Process an include directive.
-
-        Args:
-          filename: current filename.
-          lineno: current line number.
-          include_name: A string, the name of the file to include.
-        """
-        self.options['include'].append(include_filename)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.

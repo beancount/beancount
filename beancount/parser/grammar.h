@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.7.5.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -140,19 +140,18 @@ const char* token_to_string(int token);
     PUSHMETA = 292,                /* PUSHMETA  */
     POPMETA = 293,                 /* POPMETA  */
     OPTION = 294,                  /* OPTION  */
-    INCLUDE = 295,                 /* INCLUDE  */
-    PLUGIN = 296,                  /* PLUGIN  */
-    NONE = 297,                    /* NONE  */
-    BOOL = 298,                    /* BOOL  */
-    DATE = 299,                    /* DATE  */
-    ACCOUNT = 300,                 /* ACCOUNT  */
-    CURRENCY = 301,                /* CURRENCY  */
-    STRING = 302,                  /* STRING  */
-    NUMBER = 303,                  /* NUMBER  */
-    TAG = 304,                     /* TAG  */
-    LINK = 305,                    /* LINK  */
-    KEY = 306,                     /* KEY  */
-    NEGATIVE = 307                 /* NEGATIVE  */
+    PLUGIN = 295,                  /* PLUGIN  */
+    NONE = 296,                    /* NONE  */
+    BOOL = 297,                    /* BOOL  */
+    DATE = 298,                    /* DATE  */
+    ACCOUNT = 299,                 /* ACCOUNT  */
+    CURRENCY = 300,                /* CURRENCY  */
+    STRING = 301,                  /* STRING  */
+    NUMBER = 302,                  /* NUMBER  */
+    TAG = 303,                     /* TAG  */
+    LINK = 304,                    /* LINK  */
+    KEY = 305,                     /* KEY  */
+    NEGATIVE = 306                 /* NEGATIVE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -171,7 +170,7 @@ union YYSTYPE
       PyObject* pyobj2;
   } pairobj;
 
-#line 175 "beancount/parser/grammar.h"
+#line 174 "beancount/parser/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
