@@ -54,7 +54,7 @@ PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
-def load_file(filename, log_timings=None, extra_validations=None, encoding=None):
+def load_file(filename, log_timings=None, encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -62,8 +62,6 @@ def load_file(filename, log_timings=None, extra_validations=None, encoding=None)
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet. (Note that this is intended to use
         the logging methods and does not insert a newline.)
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
@@ -78,20 +76,19 @@ def load_file(filename, log_timings=None, extra_validations=None, encoding=None)
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
-            filename, log_timings, extra_validations)
+            filename, log_timings)
     else:
         entries, errors, options_map = _load_file(
-            filename, log_timings, extra_validations, encoding)
+            filename, log_timings, encoding)
     return entries, errors, options_map
 
 
-def load_encrypted_file(filename, log_timings=None, extra_validations=None):
+def load_encrypted_file(filename, log_timings=None):
     """Load an encrypted Beancount input file.
 
     Args:
       filename: The name of an encrypted file to be parsed.
       log_timings: See load_string().
-      extra_validations: See load_string().
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
@@ -100,7 +97,7 @@ def load_encrypted_file(filename, log_timings=None, extra_validations=None):
     """
     file = io.BytesIO(encryption.read_encrypted_file(filename))
     file.name = filename
-    entries, errors, options = _load(file, log_timings, extra_validations, 'utf8')
+    entries, errors, options = _load(file, log_timings, 'utf8')
     return entries, errors, options
 
 
@@ -251,7 +248,7 @@ def compute_input_hash(filenames):
     return md5.hexdigest()
 
 
-def load_string(string, log_timings=None, extra_validations=None, dedent=False):
+def load_string(string, log_timings=None, dedent=False):
 
     """Open a Beancount input string, parse it, run transformations and validate.
 
@@ -259,8 +256,6 @@ def load_string(string, log_timings=None, extra_validations=None, dedent=False):
       string: A Beancount input string.
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
@@ -272,11 +267,11 @@ def load_string(string, log_timings=None, extra_validations=None, dedent=False):
         string = textwrap.dedent(string)
     file = io.BytesIO(string.encode('utf8'))
     file.name = "<string>"
-    entries, errors, options = _load(file, log_timings, extra_validations, 'utf8')
+    entries, errors, options = _load(file, log_timings, 'utf8')
     return entries, errors, options
 
 
-def _load(file, log_timings, extra_validations, encoding):
+def _load(file, log_timings, encoding):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -289,8 +284,6 @@ def _load(file, log_timings, extra_validations, encoding):
       file: file object
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.
-      extra_validations: A list of extra validation functions to run after loading
-        this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       See load() or load_string().
@@ -317,9 +310,7 @@ def _load(file, log_timings, extra_validations, encoding):
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
-        valid_errors = validation.validate(entries, options_map, log_timings,
-                                           extra_validations)
-        errors.extend(valid_errors)
+        errors += validation.validate(entries, options_map, log_timings)
 
         # Note: We could go hardcore here and further verify that the entries
         # haven't been modified by user-provided validation routines, by

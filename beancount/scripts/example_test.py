@@ -17,8 +17,8 @@ class TestScriptExample(test_utils.ClickTestCase):
         rv = self.run_with_args(example.main)
         self.assertTrue(rv.stdout)
 
-        loaded_entries, errors, _ = loader.load_string(rv.stdout,
-            extra_validations=validation.HARDCORE_VALIDATIONS)
+        entries, errors, options = loader.load_string(rv.stdout)
+        errors += validation.validate_data_types(entries, options)
         self.assertFalse(errors)
 
 
