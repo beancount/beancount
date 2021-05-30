@@ -54,8 +54,7 @@ PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
-def load_file(filename, log_timings=None, log_errors=None,
-              extra_validations=None, encoding=None):
+def load_file(filename, log_timings=None, extra_validations=None, encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -63,8 +62,6 @@ def load_file(filename, log_timings=None, log_errors=None,
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet. (Note that this is intended to use
         the logging methods and does not insert a newline.)
-      log_errors: A file object or function to write errors to,
-        or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
@@ -81,22 +78,19 @@ def load_file(filename, log_timings=None, log_errors=None,
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
-            filename, log_timings, log_errors, extra_validations)
+            filename, log_timings, extra_validations)
     else:
         entries, errors, options_map = _load_file(
             filename, log_timings, extra_validations, encoding)
-        _log_errors(errors, log_errors)
     return entries, errors, options_map
 
 
-def load_encrypted_file(filename, log_timings=None, log_errors=None,
-                        extra_validations=None):
+def load_encrypted_file(filename, log_timings=None, extra_validations=None):
     """Load an encrypted Beancount input file.
 
     Args:
       filename: The name of an encrypted file to be parsed.
       log_timings: See load_string().
-      log_errors: See load_string().
       extra_validations: See load_string().
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
@@ -107,24 +101,7 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None,
     file = io.BytesIO(encryption.read_encrypted_file(filename))
     file.name = filename
     entries, errors, options = _load(file, log_timings, extra_validations, 'utf8')
-    _log_errors(errors, log_errors)
     return entries, errors, options
-
-
-def _log_errors(errors, log_errors):
-    """Log errors, if 'log_errors' is set.
-
-    Args:
-      log_errors: A file object or function to write errors to,
-        or None, if it should remain quiet.
-    """
-    if log_errors and errors:
-        if hasattr(log_errors, 'write'):
-            printer.print_errors(errors, file=log_errors)
-        else:
-            error_io = io.StringIO()
-            printer.print_errors(errors, file=error_io)
-            log_errors(error_io.getvalue())
 
 
 def get_cache_filename(pattern: str, filename: str) -> str:
@@ -274,16 +251,13 @@ def compute_input_hash(filenames):
     return md5.hexdigest()
 
 
-def load_string(string, log_timings=None, log_errors=None,
-                extra_validations=None, dedent=False):
+def load_string(string, log_timings=None, extra_validations=None, dedent=False):
 
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
       string: A Beancount input string.
       log_timings: A file object or function to write timings to,
-        or None, if it should remain quiet.
-      log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
@@ -299,7 +273,6 @@ def load_string(string, log_timings=None, log_errors=None,
     file = io.BytesIO(string.encode('utf8'))
     file.name = "<string>"
     entries, errors, options = _load(file, log_timings, extra_validations, 'utf8')
-    _log_errors(errors, log_errors)
     return entries, errors, options
 
 
