@@ -2,7 +2,7 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "beancount/parser/lexer.h"
+#line 5 "beancount/parser/lexer.h"
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -10,14 +10,11 @@
 typedef struct _yyextra_t yyextra_t;
 
 struct _yyextra_t {
-  /* The filename being tokenized. */
-  PyObject* filename;
+    /* The filename being tokenized. */
+    PyObject* filename;
 
-  /* The encoding to use for converting strings. */
-  const char* encoding;
-
-  /* A reference to the beancount.core.number.MISSING object */
-  PyObject* missing_obj;
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
 };
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -47,18 +44,16 @@ yyscan_t yylex_free(yyscan_t scanner);
 /**
  * Initialize scanner private data.
  *
- * Setup @scanner to read from the Python file-like object @file. Set
- * the reported file name to @filename, if not NULL and not None.
- * Otherwise try to obtain the file name from the @name attribute of
- * the @file object. If this fails, use the empty string. @encoding is
- * used to decode strings read from the input file, if not NULL,
- * otherwise the default UTF-8 encoding is used. Python objects
- * references are incremented. It is safe to call this multiple times.
+ * Setup @scanner to read from the Python file-like object @file. Set the
+ * reported file name to @filename, if not NULL and not None. Otherwise try to
+ * obtain the file name from the @name attribute of the @file object. If this
+ * fails, use the empty string. Python objects references are incremented. It
+ * is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      const char* encoding, PyObject* missing_obj, yyscan_t scanner);
+                      PyObject* missing_obj, yyscan_t scanner);
 
-#line 62 "beancount/parser/lexer.h"
+#line 56 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -572,9 +567,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 325 "beancount/parser/lexer.l"
+#line 320 "beancount/parser/lexer.l"
 
 
-#line 579 "beancount/parser/lexer.h"
+#line 573 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

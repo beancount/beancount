@@ -388,8 +388,8 @@ class TestLoadIncludesEncrypted(encryption_test.TestEncryptedBase):
 
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-        self.assertRegex(entries[0].meta['filename'], 'apples.beancount')
-        self.assertRegex(entries[1].meta['filename'], 'oranges.+count.asc')
+        self.assertTrue(entries[0].meta['filename'].endswith('/apples.beancount'))
+        self.assertTrue(entries[1].meta['filename'].endswith('/oranges.beancount.asc'))
 
 
 class TestLoadCache(unittest.TestCase):
@@ -547,25 +547,6 @@ class TestLoadCache(unittest.TestCase):
                 filename = path.join(tmp, 'apples.beancount')
                 entries, errors, options_map = loader.load_file(filename)
                 self.assertEqual({'apples.beancount'}, set(os.listdir(tmp)))
-
-
-class TestEncoding(unittest.TestCase):
-
-    def test_string_unicode(self):
-        utf8_bytes = textwrap.dedent("""
-          2015-01-01 open Assets:Something
-          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-        """).encode('utf-8')
-        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='utf8')
-        self.assertFalse(errors)
-
-    def test_string_latin1(self):
-        utf8_bytes = textwrap.dedent("""
-          2015-01-01 open Assets:Something
-          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-        """).encode('latin1')
-        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='latin1')
-        self.assertFalse(errors)
 
 
 class TestOptionsAggregation(unittest.TestCase):

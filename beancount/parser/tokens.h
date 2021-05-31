@@ -37,7 +37,7 @@ extern "C" {
 #define build_NONE() ( Py_INCREF(Py_None), Py_None )
 #define build_NUMBER(_str) pydecimal_from_cstring(_str)
 #define build_DATE(_str) pydate_from_cstring(_str)
-#define build_STRING(_str, _len, _enc) pyunicode_from_cquotedstring(_str, _len, _enc)
+#define build_STRING(_str, _len) pyunicode_from_cquotedstring(_str, _len)
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
 #define build_EXCEPTION(_loc, _builder) ( build_lexer_error_from_exception(_loc, _builder), YYerror )
 
@@ -80,13 +80,13 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
 
 
 /**
- * Convert a string to a PyUnicode object using the specified @encoding.
+ * Convert an UTF-8 encoded string to a PyUnicode object.
  *
  * C-style escape codes contained in the string are unescaped. An
  * exception is raised if the string contains invalid escape sequences
  * or if the string contains more than 64 lines.
  */
-PyObject* pyunicode_from_cquotedstring(const char* string, size_t len, const char* encoding);
+PyObject* pyunicode_from_cquotedstring(const char* string, size_t len);
 
 
 /**

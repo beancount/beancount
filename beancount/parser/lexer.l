@@ -25,14 +25,11 @@
 typedef struct _yyextra_t yyextra_t;
 
 struct _yyextra_t {
-  /* The filename being tokenized. */
-  PyObject* filename;
+    /* The filename being tokenized. */
+    PyObject* filename;
 
-  /* The encoding to use for converting strings. */
-  const char* encoding;
-
-  /* A reference to the beancount.core.number.MISSING object */
-  PyObject* missing_obj;
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
 };
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -62,16 +59,14 @@ yyscan_t yylex_free(yyscan_t scanner);
 /**
  * Initialize scanner private data.
  *
- * Setup @scanner to read from the Python file-like object @file. Set
- * the reported file name to @filename, if not NULL and not None.
- * Otherwise try to obtain the file name from the @name attribute of
- * the @file object. If this fails, use the empty string. @encoding is
- * used to decode strings read from the input file, if not NULL,
- * otherwise the default UTF-8 encoding is used. Python objects
- * references are incremented. It is safe to call this multiple times.
+ * Setup @scanner to read from the Python file-like object @file. Set the
+ * reported file name to @filename, if not NULL and not None. Otherwise try to
+ * obtain the file name from the @name attribute of the @file object. If this
+ * fails, use the empty string. Python objects references are incremented. It
+ * is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      const char* encoding, PyObject* missing_obj, yyscan_t scanner);
+                      PyObject* missing_obj, yyscan_t scanner);
 
 }
 
@@ -268,7 +263,7 @@ include		{ return INCLUDE; }
 
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
-    return TOKEN(STRING, yytext + 1, yyleng - 2, yyget_extra(yyscanner)->encoding);
+    return TOKEN(STRING, yytext + 1, yyleng - 2);
 }
 
  /* Numbers. */
@@ -366,7 +361,7 @@ static void yybegin(yyscan_t scanner)
 }
 
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      const char* encoding, PyObject* missing_obj, yyscan_t scanner)
+                      PyObject* missing_obj, yyscan_t scanner)
 {
     yyextra_t* extra = yyget_extra(scanner);
 
@@ -386,8 +381,6 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
 
     Py_XDECREF(extra->filename);
     extra->filename = filename;
-
-    extra->encoding = encoding ? encoding : "utf-8";
 
     extra->missing_obj = missing_obj;
 

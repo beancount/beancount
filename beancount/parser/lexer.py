@@ -33,14 +33,13 @@ class LexBuilder:
             LexerError(new_metadata(filename, lineno), str(message), None))
 
 
-def lex_iter(file, builder=None, encoding=None):
+def lex_iter(file, builder=None):
     """An iterator that yields all the tokens in the given file.
 
     Args:
       file: A string, the filename to run the lexer on, or a file object.
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
-      encoding: A string (or None), the default encoding to use for strings.
     Yields:
       All the tokens in the input file as ``(token, lineno, text,
       value)`` tuples where ``token`` is a string representing the
@@ -58,7 +57,7 @@ def lex_iter(file, builder=None, encoding=None):
         if builder is None:
             builder = LexBuilder()
         parser = _parser.Parser(builder)
-        yield from parser.lex(file, encoding=encoding)
+        yield from parser.lex(file)
 
 
 def lex_iter_string(string, builder=None, **kwargs):
