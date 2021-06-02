@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 from beancount.core.amount import Amount
+from beancount.core.amount import NULL_AMOUNT
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
@@ -483,7 +484,7 @@ def create_simple_posting(entry, account, number, currency):
     if isinstance(account, str):
         pass
     if number is None:
-        units = None
+        units = NULL_AMOUNT
     else:
         if not isinstance(number, Decimal):
             number = D(number)
