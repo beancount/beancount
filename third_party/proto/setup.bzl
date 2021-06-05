@@ -7,34 +7,23 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def setup_proto():
     # Protobuf
     if not native.existing_rule("com_google_protobuf"):
-        use_unreleased_version = False
-        use_local_copy = False
-        if use_unreleased_version:
-            if use_local_copy:
-                native.local_repository(
-                    name = "com_google_protobuf",
-                    path = "/home/blais/src/google/third_party/protobuf/testing/opensource",
-                )
-            else:
-                http_archive(
-                    name = "com_google_protobuf",
-                    urls = ["file:///home/blais/src/google/third_party.tar.gz"],
-                    sha256 = "cd26c9011e065b4eb95c79a74bb4f882f3b0beb6629a9c50312e387775c681c9",
-                    strip_prefix = "third_party/protobuf/testing/opensource",
-                    patches = [
-                        ":protobuf_message_module_override.patch",
-                        ":protobuf_pyext_target.patch",
-                        ":protobuf_tp_print_to_vectorcall_offset.patch",
-                        ":protobuf_remove_unused_constants_in_arena.patch"
-                    ],
-                )
-        else:
-            http_archive(
-                name = "com_google_protobuf",
-                urls = ["https://github.com/protocolbuffers/protobuf/archive/ee5887daf18581d9b28b8f8c5c92d6d5fa7be182.tar.gz"],
-                sha256 = "c469ab656c9529472f6012a9e2ca3a016df42e00be5db846cec5848eb986ef56",
-                strip_prefix = "protobuf-ee5887daf18581d9b28b8f8c5c92d6d5fa7be182",
-            )
+        # 2021-06-05.
+        #
+        # Note: This unreleased version on github has the bleeding edge changes
+        # we need in order to use fast proto casters and the native library
+        # bindings.
+        http_archive(
+            name = "com_google_protobuf",
+            urls = ["https://github.com/protocolbuffers/protobuf/archive/a1d8f8f96900468f09ced2ce9d23dea5a1bc070c.tar.gz"],
+            sha256 = "a21eec7f54ca8f7579ba57ec980ee152bc00fcafb101430090b73b7adfe5aecc",
+            strip_prefix = "protobuf-a1d8f8f96900468f09ced2ce9d23dea5a1bc070c",
+            patches = [
+                # Add a publicly visible static library target so that we can
+                # link the protobuf module itself into our library.
+                "//third_party/proto:protobuf_pyext_target.patch",
+            ],
+            patch_args = ["-p1"],
+        )
 
     # Rules for building protos.
     if not native.existing_rule("rules_proto"):

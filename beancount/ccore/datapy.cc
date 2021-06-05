@@ -117,8 +117,11 @@ void ExportDataTypesToPython(py::module& mod) {
 
   py::class_<Location>(mod, "Location")
     .def("__str__", &Directive::DebugString)
-    .def_property("filename", &Location::filename,
-                  resolve<const std::string&>(&Location::set_filename))
+    // TODO(blais): Fix the resolve issue, it fails again with clang11 on newer
+    // PopOS! box & setup.
+    //
+    // .def_property("filename", &Location::filename,
+    //               resolve<const std::string&>(&Location::set_filename))
     .def_property("lineno", &Location::lineno, &Location::set_lineno)
     .def_property("lineno_end", &Location::lineno_end, &Location::set_lineno_end)
     ;

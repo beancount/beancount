@@ -1,11 +1,21 @@
 diff --git a/BUILD b/BUILD
-index 1124321..9095459 100644
+index a0c93676a..48647cf64 100644
 --- a/BUILD
 +++ b/BUILD
-@@ -814,6 +814,40 @@ cc_binary(
+@@ -561,7 +561,7 @@ GENERIC_TEST_PROTOS = ["src/" + s for s in GENERIC_RELATIVE_TEST_PROTOS]
+ 
+ proto_library(
+     name = "generic_test_protos",
+-    visibility = ["//:__subpackages__"], 
++    visibility = ["//:__subpackages__"],
+     strip_import_prefix = "src",
+     srcs = LITE_TEST_PROTOS + GENERIC_TEST_PROTOS,
+     deps = [
+@@ -858,6 +858,42 @@ cc_binary(
      }),
  )
  
++# Add a public library target to build everything in a single client-side SO.
 +cc_library(
 +    name = "pyext",
 +    visibility = ["//visibility:public"],
@@ -40,6 +50,16 @@ index 1124321..9095459 100644
 +    }),
 +)
 +
++
  config_setting(
      name = "use_fast_cpp_protos",
      values = {
+@@ -1193,7 +1229,7 @@ java_proto_library(
+     name = "test_messages_proto3_java_proto",
+     visibility = [
+         "//java:__subpackages__",
+-    ], 
++    ],
+     deps = [":test_messages_proto3_proto"],
+ )
+ 

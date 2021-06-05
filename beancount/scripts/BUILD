@@ -146,14 +146,6 @@ py_test(
     ],
 )
 
-py_test(
-    name = "setup_test",
-    srcs = ["setup_test.py"],
-    deps = [
-        "//beancount/utils:test_utils",
-    ],
-)
-
 py_library(
     name = "sql",
     srcs = ["sql.py"],

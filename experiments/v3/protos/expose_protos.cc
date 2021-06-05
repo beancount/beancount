@@ -17,7 +17,8 @@
 // one in _message.so.
 //
 // The second approach attempts to link pyext/_message.so in this extension
-// module, so that there is a single generated pool.
+// module, so that there is a single generated pool. This is why we include a
+// patch to the library that adds a static cc_library() target.
 //
 // Defining the following enables the second approach (+ BUILD changes).
 #define LINK_STATIC_PYEXT
@@ -31,7 +32,7 @@ using google::protobuf::python::PyProto_API;
 using google::protobuf::python::PyProtoAPICapsuleName;
 
 std::unique_ptr<Ledger> Parse(const string& filename, int lineno, const string& encoding) {
-  // TODO(blais): lineno? Encoding?
+  // TODO(blais): The free() error is located within the parser.
   return parser::ParseFile(filename);
 }
 
@@ -85,8 +86,7 @@ const PyProto_API& GetPyProtoApi() {
     }
     Py_DECREF(message_module);
 
-    return (PyProto_API*)PyCapsule_GetPointer(
-        capsule, google::protobuf::python::PyProtoAPICapsuleName());
+    return (PyProto_API*)PyCapsule_GetPointer(capsule, PyProtoAPICapsuleName());
   } ();
   return *result;
 }
@@ -101,7 +101,8 @@ py::list TestProtoConversion(const Ledger& ledger) {
   const auto& py_proto_api = GetPyProtoApi();
   absl::Time t1 = absl::Now();
   for (auto* directive : ledger.directives) {
-    dirlist.append(py_proto_api.NewMessageOwnedExternally(directive, nullptr));
+    auto msg = py_proto_api.NewMessageOwnedExternally(directive, nullptr);
+    dirlist.append(msg);
   }
   absl::Time t2 = absl::Now(); // ~20-25ms
   std::cerr << "TestProtoConversion time=" << t2 - t1 << std::endl;
