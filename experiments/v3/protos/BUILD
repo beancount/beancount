@@ -53,6 +53,7 @@ py_extension(
 py_test(
     name = "expose_protos_test",
     srcs = ["expose_protos_test.py"],
+    data = ["//examples:example"],
     deps = [
         # TODO(blais): Review whether linking these is desirable or not.
         #"//beancount/ccore:data_py_proto",

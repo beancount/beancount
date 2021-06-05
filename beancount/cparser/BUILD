@@ -222,6 +222,7 @@ py_extension(
 py_test(
     name = "extmodule_test",
     srcs = ["extmodule_test.py"],
+    data = ["//examples:example"],
     deps = [
         ":extmodule",
         "//beancount/parser:printer",

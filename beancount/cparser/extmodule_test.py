@@ -1,3 +1,4 @@
+from os import path
 import os
 import pprint
 import itertools
@@ -15,17 +16,17 @@ from beancount.parser import printer
 
 class CppParserModuleTests(unittest.TestCase):
 
+  # Get example file from resources.
+  filename = path.join(os.getenv('TEST_SRCDIR'), "beancount/examples/example.beancount")
+
   def _test_simple(self):
     print(extmodule.__doc__)
     print(extmodule.parse.__doc__)
 
   @unittest.skipIf(extmodule is None, "Old pytest tests only.")
   def test_parse(self):
-    # TODO(blais): Remove, this is temporary, for testing locally.
-    filename = os.getenv("L")
-    assert filename
     t1 = time.time()
-    ledger = extmodule.parse(filename)
+    ledger = extmodule.parse(self.filename)
     t2 = time.time()
     print((t2 - t1) * 1000)
 
