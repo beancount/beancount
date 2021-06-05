@@ -98,8 +98,11 @@ public:
   // Convert a decimal number to a proto.
   inline void DecimalProto(const decimal::Decimal& dec, Number* proto) {
     // Note you could configure conversion options here.
-    DecimalToProto(dec, true, proto);
+    DecimalToProto(dec, kUseText, proto);
   }
+  // TODO(blais): Fix bug in number.cc (see {2c710184c52f}).
+  // Use triple_t for serialization instead.
+  static constexpr bool kUseText = true;
 
   // Check collisions on merging two components of a cost list and log errors
   // appropriately. Mutates the

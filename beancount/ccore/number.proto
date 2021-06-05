@@ -20,6 +20,8 @@ message Number {
   optional MpDecimal mpd = 2;
 }
 
+// TODO(blais): Use triple_t for serialization instead. That is well-defined.
+//
 // Decomposed representation of mpd_t. See mpdecimal for details.
 message MpDecimal {
   optional int32 flags = 1;
