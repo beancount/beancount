@@ -12,20 +12,27 @@ import tempfile
 import time
 import unittest
 
-from experiments.v3.protos import expose_protos as ep
+try:
+  from experiments.v3.protos import expose_protos as ep
+except ImportError:
+  ep = None
 
 
 class ExportProtosTests(unittest.TestCase):
 
-  # Get example file from resources.
-  filename = path.join(os.getenv('TEST_SRCDIR'), "beancount/examples/example.beancount")
+  def setUp(self):
+    """Get example file from resources."""
+    self.filename = path.join(os.getenv('TEST_SRCDIR'),
+                              "beancount/examples/example.beancount")
 
+  @unittest.skipIf('TEST_SRCDIR' not in os.environ, "No src dir")
   def test_time_parsing(self):
     t1 = time.time()
     ledger = ep.parse(self.filename)
     t2 = time.time()
     print((t2 - t1) * 1000)
 
+  @unittest.skipIf('TEST_SRCDIR' not in os.environ, "No src dir")
   def test_parse_and_convert(self):
     ledger = ep.parse(self.filename)
     directives = ledger.TestProtoConversion()

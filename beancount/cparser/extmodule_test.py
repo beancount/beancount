@@ -16,13 +16,16 @@ from beancount.parser import printer
 
 class CppParserModuleTests(unittest.TestCase):
 
-  # Get example file from resources.
-  filename = path.join(os.getenv('TEST_SRCDIR'), "beancount/examples/example.beancount")
+  def setUp(self):
+    """Get example file from resources."""
+    self.filename = path.join(os.getenv('TEST_SRCDIR'),
+                              "beancount/examples/example.beancount")
 
   def _test_simple(self):
     print(extmodule.__doc__)
     print(extmodule.parse.__doc__)
 
+  @unittest.skipIf('TEST_SRCDIR' not in os.environ, "No src dir")
   @unittest.skipIf(extmodule is None, "Old pytest tests only.")
   def test_parse(self):
     t1 = time.time()
