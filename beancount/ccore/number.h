@@ -18,17 +18,13 @@ namespace std {
 // Note: This is not provided by the mpdecimal library, but has an
 // implementation in Python's _decimal.c wrappers.
 template<>
-struct hash<beancount::MpDecimal> {
-  size_t operator()(const beancount::MpDecimal& mpd) const {
-    uint64_t h = 0;
-    for (uint64_t datum : mpd.data()) {
-      h ^= hash<uint64_t>{}(datum);
-    }
-    return (hash<int32_t>{}(mpd.flags()) ^
-            hash<int64_t>{}(mpd.exp()) ^
-            hash<int64_t>{}(mpd.digits()) ^
-            hash<int64_t>{}(mpd.len()) ^
-            h);
+struct hash<beancount::MpdTriple> {
+  size_t operator()(const beancount::MpdTriple& tp) const {
+    return (hash<uint32_t>{}(tp.tag()) ^
+            hash<uint32_t>{}(tp.sign()) ^
+            hash<uint64_t>{}(tp.hi()) ^
+            hash<uint64_t>{}(tp.lo()) ^
+            hash<int64_t>{}(tp.exp()));
   }
 };
 
@@ -37,7 +33,7 @@ struct hash<beancount::Number> {
   size_t operator()(const beancount::Number& number) const {
     return (number.has_exact() ?
             hash<std::string>{}(number.exact()) :
-            hash<beancount::MpDecimal>{}(number.mpd()));
+            hash<beancount::MpdTriple>{}(number.triple()));
   }
 };
 
@@ -49,8 +45,8 @@ namespace beancount {
 decimal::Decimal ProtoToDecimal(const Number& proto);
 
 // Serialize a mpdecimal number to a Number proto.
-Number DecimalToProto(const decimal::Decimal& dec, bool text);
-void DecimalToProto(const decimal::Decimal& dec, bool text, Number* proto);
+Number DecimalToProto(const decimal::Decimal& dec, bool use_triple);
+void DecimalToProto(const decimal::Decimal& dec, bool use_triple, Number* proto);
 
 // Comparison operators for decimal protos.
 bool operator==(const Number& proto1, const Number& proto2);

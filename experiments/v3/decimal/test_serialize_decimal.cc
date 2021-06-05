@@ -10,6 +10,7 @@
 #include "mpdecimal.h"
 
 #include "beancount/ccore/number.pb.h"
+#include "beancount/ccore/number.h"
 
 namespace {
 using std::cout;
@@ -52,39 +53,15 @@ TEST(SerializationTest, RoundTripMpd) {
   decimal::Decimal a("42e8");
   cout << "A = " << a << endl;
 
-  // Serialize.
-  beancount::Number number;
-  {
-    auto* mpd = number.mutable_mpd();
-    const mpd_t* value = a.getconst();
-    mpd->set_flags(value->flags & ~MPD_DATAFLAGS);
-    mpd->set_exp(value->exp);
-    mpd->set_digits(value->digits);
-    mpd->set_len(value->len);
-    for (int ii = 0; ii < value->alloc; ++ii) {
-      mpd->add_data(value->data[ii]);
-    }
-  }
-
-  // Deserialize.
-  decimal::Decimal b;
-  {
-    mpd_t* value = b.get();
-    const auto& mpd = number.mpd();
-    value->flags = mpd.flags() & ~MPD_DATAFLAGS;
-    value->exp = mpd.exp();
-    value->digits = mpd.digits();
-    value->len = mpd.len();
-    value->alloc = mpd.data().size();
-    ///assert(value->data == nullptr);
-    // We have no access
-    value->data = static_cast<mpd_uint_t*>(
-      mpd_alloc(value->alloc, sizeof(*value->data)));
-    for (int ii = 0; ii < value->alloc; ++ii) {
-      value->data[ii] = mpd.data(ii);
-    }
-  }
+  // Serialize & deserialize via text.
+  beancount::Number pb = beancount::DecimalToProto(a, true);
+  decimal::Decimal b = beancount::ProtoToDecimal(pb);;
   cout << "B = " << b << endl;
+
+  // Serialize & deserialize via triplet.
+  beancount::Number pc = beancount::DecimalToProto(a, false);
+  decimal::Decimal c = beancount::ProtoToDecimal(pc);;
+  cout << "C = " << c << endl;
 
   EXPECT_EQ(b, a);
 }

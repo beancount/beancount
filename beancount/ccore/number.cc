@@ -12,64 +12,45 @@ using google::protobuf::util::MessageDifferencer;
 decimal::Decimal ProtoToDecimal(const Number& proto) {
   decimal::Decimal dec;
   if (proto.has_exact()) {
+    // Use text serialization.
     dec = decimal::Decimal(proto.exact());
   } else {
-    assert("Do not use direct conversion {2c710184c52f}.");
-    // TODO(blais): Figure out how to do this properly. See triplet_t.
-#if 0
-  optional int32 flags = 1;
-  optional int64 exp = 2;
-  optional int64 digits = 3;
-  optional int64 len = 4;
-  repeated uint64 data = 6;
-
-    mpd_t* value = dec.get();
-    const auto& mpd = proto.mpd();
-    value->flags = mpd.flags() & ~MPD_DATAFLAGS;
-    value->exp = mpd.exp();
-    value->digits = mpd.digits();
-    value->len = mpd.len();
-    value->alloc = mpd.data().size();
-    ///assert(value->data == nullptr);
-    value->data = static_cast<mpd_uint_t*>(
-      mpd_alloc(value->alloc, sizeof(*value->data)));
-    for (int ii = 0; ii < value->alloc; ++ii) {
-      value->data[ii] = mpd.data(ii);
-    }
-#endif
+    // Use triple serialization.
+    const auto& tp = proto.triple();
+    mpd_uint128_triple_t triple;
+    triple.tag = static_cast<mpd_triple_class>(tp.tag());
+    triple.sign = tp.sign();
+    triple.hi = tp.hi();
+    triple.lo = tp.lo();
+    triple.exp = tp.exp();
+    dec = decimal::Decimal(triple);
   }
   return dec;
 }
 
 // Convert a mpdecimal number to a Number proto.
-Number DecimalToProto(const decimal::Decimal& dec, bool text) {
+Number DecimalToProto(const decimal::Decimal& dec, bool use_triple) {
   // Serialize.
   Number proto;
-  DecimalToProto(dec, text, &proto);
+  DecimalToProto(dec, use_triple, &proto);
   return proto;
 }
 
 // Convert a mpdecimal number to a Number proto.
-void DecimalToProto(const decimal::Decimal& dec, bool text, Number* proto) {
+void DecimalToProto(const decimal::Decimal& dec, bool use_triple, Number* proto) {
   // Serialize.
-  if (text) {
-    proto->set_exact(dec.to_sci());
+  if (use_triple) {
+    // Use triple serialization.
+    mpd_uint128_triple_t triple = dec.as_uint128_triple();
+    auto* tp = proto->mutable_triple();
+    tp->set_tag(triple.tag);
+    tp->set_sign(triple.sign);
+    tp->set_hi(triple.hi);
+    tp->set_lo(triple.lo);
+    tp->set_exp(triple.exp);
   } else {
-    assert("Do not use direct conversion {2c710184c52f}.");
-    // TODO(blais): Figure out how to do this properly. See triplet_t.
-#if 0
-    // TODO(blais): add unit test to figure out why the number of data includes
-    // extra zeros beyond the length.
-    auto* mpd = proto->mutable_mpd();
-    const mpd_t* value = dec.getconst();
-    mpd->set_flags(value->flags & ~MPD_DATAFLAGS);
-    mpd->set_exp(value->exp);
-    mpd->set_digits(value->digits);
-    mpd->set_len(value->len);
-    for (int ii = 0; ii < value->alloc; ++ii) {
-      mpd->add_data(value->data[ii]);
-    }
-#endif
+    // Use text serialization.
+    proto->set_exact(dec.to_sci());
   }
 }
 

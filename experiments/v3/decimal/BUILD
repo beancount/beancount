@@ -17,6 +17,7 @@ cc_test(
     srcs = ["test_serialize_decimal.cc"],
     deps = [
         "//beancount/ccore:number_cc_proto",
+        "//beancount/ccore:number",
         "@mpdecimal//:mpdecimal",
         "@com_google_googletest//:gtest_main",
     ],

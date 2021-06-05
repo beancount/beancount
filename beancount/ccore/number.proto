@@ -17,16 +17,15 @@ message Number {
 
   // Decomposed representation; harder to read for humans, directly instantiable
   // for computers.
-  optional MpDecimal mpd = 2;
+  optional MpdTriple triple = 2;
 }
 
-// TODO(blais): Use triple_t for serialization instead. That is well-defined.
-//
 // Decomposed representation of mpd_t. See mpdecimal for details.
-message MpDecimal {
-  optional int32 flags = 1;
-  optional int64 exp = 2;
-  optional int64 digits = 3;
-  optional int64 len = 4;
-  repeated uint64 data = 6;
+message MpdTriple {
+  // Se triple_t in mpdecimal-2.5.1.
+  optional uint32 tag = 1;
+  optional uint32 sign = 2;
+  optional uint64 hi = 3;
+  optional uint64 lo = 4;
+  optional int64 exp = 5;
 }

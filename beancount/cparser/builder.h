@@ -43,6 +43,12 @@ public:
     return active_meta_;
   }
 
+  // Set whether to use triples for decimal serialization or text. It's unclear
+  // which one is more efficient.
+  void SetDecimalUseTriple(bool decimal_use_triple) {
+    decimal_use_triple_ = decimal_use_triple;
+  }
+
   // Initialize the global context.
   void Initialize();
 
@@ -98,10 +104,9 @@ public:
   // Convert a decimal number to a proto.
   inline void DecimalProto(const decimal::Decimal& dec, Number* proto) {
     // Note you could configure conversion options here.
-    DecimalToProto(dec, kUseText, proto);
+    DecimalToProto(dec, decimal_use_triple_, proto);
   }
-  // TODO(blais): Fix bug in number.cc (see {2c710184c52f}).
-  // Use triple_t for serialization instead.
+  // Decide whether to use text serialization for numbers or triples.
   static constexpr bool kUseText = true;
 
   // Check collisions on merging two components of a cost list and log errors
@@ -153,6 +158,9 @@ private:
 
   // Decimal context.
   decimal::Context context_;
+
+  // A flag, true if we use triple for serialization by default.
+  bool decimal_use_triple_ = false;
 
   // Scanner (in order to get the last location).
   scanner::Scanner& scanner_;
