@@ -2156,7 +2156,6 @@ TEST(TestParseLots, CostRepeatedMerge) {
       message: "Duplicate `merge_cost` cost spec field."
     }
   )");
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
 TEST(TestParseLots, CostBothCosts) {
@@ -2185,14 +2184,7 @@ TEST(TestParseLots, CostBothCosts) {
       }
     }
   )");
-  // posting = entries[0].postings[0]
-  // self.assertEqual(CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
-  // posting.cost)
 }
-
-#if 0
-
-// Try adding {, 100.00 USD, , } as cost, see what happens.
 
 TEST(TestParseLots, CostTotalCostOnly) {
   ExpectParse(R"(
@@ -2208,10 +2200,9 @@ TEST(TestParseLots, CostTotalCostOnly) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "10" } currency: "AAPL" }
                  cost {
-
-# How to represent MISSING vs. absent here?
-
-number_total { exact: "9.95" } currency: "USD" } }
+            number_total { exact: "9.95" }
+            currency: "USD"
+          } }
         }
         postings {
           account: "Assets:Invest:Cash"
@@ -2220,10 +2211,18 @@ number_total { exact: "9.95" } currency: "USD" } }
       }
     }
   )");
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // posting = entries[0].postings[0]
-  // self.assertEqual(CostSpec(MISSING, D('9.95'), 'USD', None, None, False),
-  // posting.cost)
+}
+
+TEST(TestParseLots, CostEmptyComponents) {
+  ExpectParse(R"(
+    2014-01-01 *
+      Assets:Invest:AAPL      10 AAPL {, 100.0 USD, , }
+      Assets:Invest:Cash  -19.90 USD
+  )", R"(
+    errors {
+      message: "Syntax error, unexpected COMMA, expecting HASH or CURRENCY"
+    }
+  )");
 }
 
 TEST(TestParseLots, CostTotalEmptyTotal) {
@@ -2239,30 +2238,23 @@ TEST(TestParseLots, CostTotalEmptyTotal) {
         postings {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "20" } currency: "AAPL" }
-                 cost { number_per { exact: "45.23" }
-
-# TODO(blais):  How to represent MISSING vs. absent here?
-currency: "USD" } }
-
+                 cost {
+            number_per { exact: "45.23" }
+            currency: "USD"
+          } }
         }
         postings {
           account: "Assets:Invest:Cash"
-          spec { units { }
+          spec { units {
             number {
               exact: "-45.23"
             }
             currency: "USD"
-          }
+          } }
         }
       }
     }
   )");
-  // self.assertEqual(0, len(errors))
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
-  // posting.cost)
 }
 
 TEST(TestParseLots, CostTotalJustCurrency) {
@@ -2272,8 +2264,33 @@ TEST(TestParseLots, CostTotalJustCurrency) {
       Assets:Invest:AAPL   20 AAPL { # USD}
       Assets:Invest:Cash    0 USD
   )", R"(
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Invest:AAPL"
+          spec {
+            units { number { exact: "20" } currency: "AAPL" }
+            cost { currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Invest:AAPL"
+          spec {
+            units { number { exact: "20" } currency: "AAPL" }
+            cost { currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Invest:Cash"
+          spec {
+            units { number { exact: "0" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
 TEST(TestParseLots, CostWithSlashes) {
@@ -2282,11 +2299,27 @@ TEST(TestParseLots, CostWithSlashes) {
       Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
       Assets:Invest:Cash   -45.23 USD
   )", R"(
+    errors {
+      message: "Syntax error, unexpected SLASH, expecting RCURL or COMMA"
+    }
   )");
-  // self.assertEqual(1, len(errors))
-  // self.assertRegex(errors[0].message, "unexpected SLASH")
-  // self.assertEqual(0, len(entries))
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 
 //------------------------------------------------------------------------------
 // TestCurrencies
