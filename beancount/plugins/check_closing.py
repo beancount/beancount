@@ -55,12 +55,13 @@ def check_closing(entries, options_map):
     new_entries = []
     for entry in entries:
         if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
+            for i, posting in enumerate(entry.postings):
                 if posting.meta and posting.meta.get('closing', False):
                     # Remove the metadata.
                     meta = posting.meta.copy()
                     del meta['closing']
-                    entry = entry._replace(meta=meta)
+                    posting = posting._replace(meta=meta)
+                    entry.postings[i] = posting
 
                     # Insert a balance.
                     date = entry.date + datetime.timedelta(days=1)
