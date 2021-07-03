@@ -194,7 +194,7 @@ class EntryPrinter:
             width_account = self.min_width_account
 
         non_trivial_balance = (any(map(interpolate.has_nontrivial_balance, entry.postings))
-                               if self.render_weight
+                               if self.render_weight and width_weight > 0
                                else False)
         if non_trivial_balance:
             fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
