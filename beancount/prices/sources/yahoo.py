@@ -114,7 +114,7 @@ class Source(source.Source):
             'interval': '1d',
         }
         payload.update(_DEFAULT_PARAMS)
-        response = requests.get(url, params=payload)
+        response = requests.get(url, params=payload, headers={'User-Agent': None})
         result = parse_response(response)
 
         meta = result['meta']
