@@ -120,8 +120,11 @@ class Source(source.Source):
         meta = result['meta']
         timezone = datetime.timezone(datetime.timedelta(hours=meta['gmtoffset'] / 3600),
                                      meta['exchangeTimezoneName'])
-
+        
+        if 'timestamp' not in result:
+            raise YahooError('Could not find price on {} for {}'.format(time, ticker))
         timestamp_array = result['timestamp']
+        
         close_array = result['indicators']['quote'][0]['close']
         series = [(datetime.datetime.fromtimestamp(timestamp, tz=timezone), D(price))
                   for timestamp, price in zip(timestamp_array, close_array)]
