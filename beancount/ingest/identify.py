@@ -63,6 +63,8 @@ def find_imports(importer_config, files_or_directories, logfile=None):
                 matched = importer.identify(file)
                 if matched:
                     matching_importers.append(importer)
+            except UnicodeDecodeError:
+                pass
             except Exception as exc:
                 logging.exception("Importer %s.identify() raised an unexpected error: %s",
                                   importer.name(), exc)
