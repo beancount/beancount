@@ -57,7 +57,7 @@ class NegInventory(_Neg):
 
 
 class AbsDecimal(query_compile.EvalFunction):
-    "Compute the length of the argument. This works on sequences."
+    "Absolute value."
     __intypes__ = [Decimal]
 
     def __init__(self, operands):
@@ -68,7 +68,7 @@ class AbsDecimal(query_compile.EvalFunction):
         return abs(args[0])
 
 class AbsPosition(query_compile.EvalFunction):
-    "Compute the length of the argument. This works on sequences."
+    "Absolute value."
     __intypes__ = [position.Position]
 
     def __init__(self, operands):
@@ -79,7 +79,7 @@ class AbsPosition(query_compile.EvalFunction):
         return abs(args[0])
 
 class AbsInventory(query_compile.EvalFunction):
-    "Compute the length of the argument. This works on sequences."
+    "Absolute value."
     __intypes__ = [inventory.Inventory]
 
     def __init__(self, operands):
