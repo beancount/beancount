@@ -25,22 +25,28 @@ using std::cout;
 using std::endl;
 using std::string_view;
 
+struct CompareOptions {
+  bool partial = false;
+  bool no_dedent = false;
+  bool leave_lineno = false;
+  bool print_input = false;
+  bool debug = false;
+};
+
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     const std::string& expected_string,
-                                    bool no_dedent=false,
-                                    bool leave_lineno=false,
-                                    bool print_input=false,
-                                    bool debug=false) {
-  string clean_string = no_dedent ? input_string : StripAndDedent(input_string);
-  if (print_input) {
+                                    const CompareOptions& options = {}) {
+  string clean_string = options.no_dedent ? input_string : StripAndDedent(input_string);
+  if (options.print_input) {
     std::cout << "clean_string = >>>>>" << clean_string << "<<<<<" << std::endl;
   }
-  auto ledger = parser::ParseString(clean_string, "<string>", 0, debug);
-  ClearLineNumbers(ledger.get(), leave_lineno);
+  auto ledger = parser::ParseString(clean_string, "<string>", 0, options.debug);
+  ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
-  EXPECT_TRUE(EqualsMessages(*ledger_proto, expected_string));
+  EXPECT_TRUE(EqualsMessages(*ledger_proto, expected_string, options.partial));
   return ledger;
 }
+
 
 TEST(ParserTest, TestBasicTesting) {
   auto ledger = ExpectParse(R"(
@@ -430,7 +436,7 @@ TEST(TestWhitespace, IndentError0) {
       message: "Syntax error, unexpected DEDENT"
       location { lineno: 3 }
     }
-  )", false, true);
+  )", { .leave_lineno = true });
 }
 
 TEST(TestWhitespace, IndentError1) {
@@ -460,7 +466,7 @@ TEST(TestWhitespace, IndentError1) {
       message: "Syntax error, unexpected DEDENT"
       location { lineno: 4 }
     }
-  )", false, true);
+  )", { .leave_lineno = true });
 }
 
 //------------------------------------------------------------------------------
@@ -562,7 +568,7 @@ TEST(TestParserComplete, ExtraWhitespaceTransaction) {
         }
       }
     }
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestParserComplete, ExtraWhitespaceComment) {
@@ -585,7 +591,7 @@ TEST(TestParserComplete, ExtraWhitespaceComment) {
         }
       }
     }
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestParserComplete, ExtraWhitespaceCommentIndented) {
@@ -608,17 +614,17 @@ TEST(TestParserComplete, ExtraWhitespaceCommentIndented) {
         }
       }
     }
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestParserComplete, IndentEOF) {
   ExpectParse("\t", R"(
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestParserComplete, CommentEOF) {
   ExpectParse("; comment", R"(
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestParserComplete, NoEmptyLines) {
@@ -1060,7 +1066,7 @@ TEST(TestSyntaxErrors, ErrorInTransactionLine) {
        message: "Syntax error, unexpected CURRENCY, expecting EOL or TAG or LINK"
        location { lineno: 3 }
      }
-  )", false, true);
+  )", { .leave_lineno = true });
 }
 
 TEST(TestSyntaxErrors, ErrorInPosting) {
@@ -1088,7 +1094,7 @@ TEST(TestSyntaxErrors, ErrorInPosting) {
        message: "Syntax error, unexpected invalid token, expecting PLUS or MINUS or LPAREN or NUMBER"
        location { lineno: 4 }
      }
-  )", false, true);
+  )", { .leave_lineno = true });
 }
 
 TEST(TestSyntaxErrors, NoFinalNewline) {
@@ -1103,7 +1109,7 @@ TEST(TestSyntaxErrors, NoFinalNewline) {
     errors {
       message: "Syntax error, unexpected DEDENT, expecting EOL or ATAT or AT"
     }
-  )", true);
+  )", { .no_dedent = true });
 }
 
 // TODO(blais): Test all the other error cases.
@@ -1168,7 +1174,7 @@ TEST(TestParserInclude, ParseNonExisting) {
     errors {
       message: "An IO error has occurred."
     }
-  )"));
+  )", false));
 }
 
 TEST(TestParserInclude, IncludeAbsolute) {
@@ -1734,7 +1740,7 @@ TEST(TestTransactions, BlankLineWithSpacesNotAllowed) {
         }
       }
     }
-  )", true);
+  )", { .no_dedent = true });
 }
 
 TEST(TestTransactions, TagsAfterFirstLine) {
@@ -2305,22 +2311,6 @@ TEST(TestParseLots, CostWithSlashes) {
   )");
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
 //------------------------------------------------------------------------------
 // TestCurrencies
 
@@ -2330,9 +2320,19 @@ TEST(TestCurrencies, ParseCurrencies) {
     2014-01-19 open Assets:Period        DJ.EURO
     2014-01-19 open Assets:Apostrophe    DJ'EURO
     2014-01-19 open Assets:Numbers       EURO123
+    2014-01-19 open Assets:Futures       /LOX21_211204_P100.25
   )", R"(
+    directives { date { year: 2014 month: 1 day: 19 }
+      open { account: "Assets:Underscore" currencies: "DJ_EURO" } }
+    directives { date { year: 2014 month: 1 day: 19 }
+      open { account: "Assets:Period" currencies: "DJ.EURO" } }
+    directives { date { year: 2014 month: 1 day: 19 }
+      open { account: "Assets:Apostrophe" currencies: "DJ\'EURO" } }
+    directives { date { year: 2014 month: 1 day: 19 }
+      open { account: "Assets:Numbers" currencies: "EURO123" } }
+    directives { date { year: 2014 month: 1 day: 19 }
+      open { account: "Assets:Futures" currencies: "/LOX21_211204_P100.25" } }
   )");
-        // self.assertFalse(errors)
 }
 
 TEST(TestCurrencies, DifferentCostAndPriceCurrency) {
@@ -2341,6 +2341,28 @@ TEST(TestCurrencies, DifferentCostAndPriceCurrency) {
       Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
       Assets:Krisflyer            100 KRISFLYER
   )", R"(
+    directives {
+      date { year: 2018 month: 3 day: 21 }
+      transaction {
+        flag: "*"
+        narration: "Convert MR to KrisFlyer"
+        postings {
+          account: "Assets:Test"
+          spec {
+            units { number { exact: "-100" } currency: "MR" }
+            cost { number_per { exact: "0.0075" } currency: "USD" }
+            price { number { exact: "1" } currency: "KRISFLYER" }
+          }
+        }
+        postings {
+          account: "Assets:Krisflyer"
+          spec { units { number { exact: "100" } currency: "KRISFLYER" } }
+        }
+      }
+    }
+    errors {
+      message: "Cost and price currencies must match: USD != KRISFLYER"
+    }
   )");
 }
 
@@ -2353,8 +2375,27 @@ TEST(TestTotalsAndSigns, ZeroAmount) {
       Assets:Investments:MSFT      0 MSFT {200.00 USD}
       Assets:Investments:Cash      0 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "0" } currency: "MSFT" }
+            cost { number_per { exact: "200.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "0" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // pass # Should produce no errors.
+  // Should produce no errors.
 }
 
 TEST(TestTotalsAndSigns, ZeroCost) {
@@ -2363,8 +2404,27 @@ TEST(TestTotalsAndSigns, ZeroCost) {
       Assets:Investments:MSFT      -10 MSFT {0.00 USD}
       Assets:Investments:Cash     0.00 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            cost { number_per { exact: "0.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "0.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // pass # Should produce no errors.
+  // Should produce no errors.
 }
 
 TEST(TestTotalsAndSigns, CostNegative) {
@@ -2373,10 +2433,28 @@ TEST(TestTotalsAndSigns, CostNegative) {
       Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
       Assets:Investments:Cash  2000.00 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            cost { number_per { exact: "-200.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "2000.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        # Should produce no errors.
-        # Note: This error is caught only at booking time.
-        // pass
+  // # Should produce no errors.
+  // Note: This error is caught only at booking time.
 }
 
 TEST(TestTotalsAndSigns, TotalCost) {
@@ -2393,14 +2471,65 @@ TEST(TestTotalsAndSigns, TotalCost) {
       Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
       Assets:Investments:Cash    20000 USD
   )", R"(
-  )");
-        for entry in entries:
-            posting = entry.postings[0]
-            self.assertEqual(ZERO, posting.cost.number_per)
-            self.assertEqual(D('2000'), posting.cost.number_total)
-            self.assertEqual('USD', posting.cost.currency)
-            // self.assertEqual(None, posting.price)
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            cost { number_total { exact: "2000" } currency: "USD" }
+          }
+        }
+        postings {
+          spec { units { number { exact: "-20000" } currency: "USD" } }
+        }
+      }
+    }
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            cost {
+              number_total { exact: "2000" } currency: "USD"
+              date { year: 2014 month: 2 day: 25 }
+            }
+          }
+        }
+        postings {
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            cost { number_total { exact: "2000" } currency: "USD" }
+          }
+        }
+        postings {
+          spec {
+            units { number { exact: "20000" } currency: "USD" }
+          }
+        }
+      }
+    }
+  )", { .partial = true });
 }
+
+
+
+
+
+
+
+
+
+
+#if 0
 
 TEST(TestTotalsAndSigns, TotalCostInvalid) {
   ExpectParse(R"(
@@ -2931,9 +3060,9 @@ TEST(TestLexerAndParserErrors, lexer_invalid_token__recovery) {
     2000-01-02 open Assets:Something
   )", R"(
   )");
-        self.assertEqualEntries("""
-          2000-01-02 open Assets:Something
-        """, entries)
+        // self.assertEqualEntries("""
+        //   2000-01-02 open Assets:Something
+        // """, entries)
         self.assertEqual(1, len(errors))
         // self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 }
@@ -2954,9 +3083,9 @@ TEST(TestLexerAndParserErrors, lexer_exception__recovery) {
     2000-01-02 open Assets:Working
   )", R"(
   )");
-        self.assertEqualEntries("""
-          2000-01-02 open Assets:Working
-        """, entries)
+        // self.assertEqualEntries("""
+        //   2000-01-02 open Assets:Working
+        // """, entries)
         self.assertEqual(1, len(entries))
         self.assertEqual(1, len(errors))
         // self.assertRegex(errors[0].message, 'month must be in 1..12')
@@ -2999,15 +3128,15 @@ TEST(TestLexerAndParserErrors, lexer_errors_in_postings) {
   )");
         self.assertEqual(6, len(txn_strings))
         for txn_string in txn_strings:
-            input_string = txn_string + textwrap.dedent("""
-              2000-01-02 open Assets:Working
-            """)
+            // input_string = txn_string + textwrap.dedent("""
+            //   2000-01-02 open Assets:Working
+            // """)
             entries, errors, _ = parser.parse_string(input_string)
 
             # Check that the transaction is not produced.
-            self.assertEqualEntries("""
-              2000-01-02 open Assets:Working
-            """, entries)
+            // self.assertEqualEntries("""
+            //   2000-01-02 open Assets:Working
+            // """, entries)
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message,
@@ -3033,9 +3162,9 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery) {
   )");
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, r"syntax error")
-        self.assertEqualEntries("""
-          2000-01-01 open Assets:Before
-          2000-01-03 open Assets:After
+        // self.assertEqualEntries("""
+        //   2000-01-01 open Assets:Before
+        //   2000-01-03 open Assets:After
         // """, entries)
 }
 
@@ -3048,8 +3177,8 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery2) {
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, r"syntax error")
         self.assertEqual(1, len(entries))
-        self.assertEqualEntries("""
-          2000-01-02 open Assets:Something
+        // self.assertEqualEntries("""
+        //   2000-01-02 open Assets:Something
         // """, entries)
 }
 
@@ -3066,10 +3195,10 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__multiple) {
         for error in errors:
             self.assertRegex(error.message, r"syntax error")
         self.assertEqual(3, len(entries))
-        self.assertEqualEntries("""
-          2000-01-01 open Assets:Before
-          2000-01-03 open Assets:After
-          2000-01-05 close Assets:After
+        // self.assertEqualEntries("""
+        //   2000-01-01 open Assets:Before
+        //   2000-01-03 open Assets:After
+        //   2000-01-05 close Assets:After
         // """, entries)
 }
 

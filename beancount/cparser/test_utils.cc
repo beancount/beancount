@@ -71,8 +71,13 @@ string StripAndDedent(std::string_view input_string) {
 }
 
 bool EqualsMessages(const google::protobuf::Message& expected,
-                    const google::protobuf::Message& actual) {
-  bool succ = MessageDifferencer::Equals(expected, actual);
+                    const google::protobuf::Message& actual,
+                    bool partial) {
+  auto differencer = MessageDifferencer();
+  if (partial) {
+    differencer.set_scope(MessageDifferencer::Scope::PARTIAL);
+  }
+  bool succ = differencer.Compare(expected, actual);
   if (!succ) {
     // Print actual output.
     cerr << ",--------------------------- Actual" << endl;

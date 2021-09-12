@@ -23,12 +23,13 @@ std::string StripAndDedent(std::string_view input_string);
 
 // Compare two parsed messages.
 bool EqualsMessages(const google::protobuf::Message& expected,
-                    const google::protobuf::Message& actual);
+                    const google::protobuf::Message& actual,
+                    bool partial);
 
 // Compare the given message with the parsed text proto version.
 // Returns true on success.
 template <typename T>
-bool EqualsMessages(const T& actual, std::string_view expected_proto_string) {
+bool EqualsMessages(const T& actual, std::string_view expected_proto_string, bool partial) {
   // TODO(blais): Remove string() when protobuf is upgraded.
   T expected;
   if (!google::protobuf::TextFormat::ParseFromString(
@@ -36,7 +37,7 @@ bool EqualsMessages(const T& actual, std::string_view expected_proto_string) {
           &expected)) {
     throw std::domain_error("Could not parse expected proto.");
   }
-  return EqualsMessages(expected, actual);
+  return EqualsMessages(expected, actual, partial);
 }
 
 // Clear all the line number fields in the parsed leder. Mutates the protos in
