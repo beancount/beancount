@@ -3200,7 +3200,6 @@ TEST(TestMetaData, MetadataKeySyntax) {
   )");
 }
 
-#if 0
 //------------------------------------------------------------------------------
 // TestArithmetic
 
@@ -3211,9 +3210,9 @@ TEST(TestArithmetic, number_expr__add) {
       Assets:Something   7.5 + 3.1 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('15'), postings[0].units.number)
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
+        // self.assertEqual(D('15'), postings[0].units.number)
         // self.assertEqual(D('10.6'), postings[1].units.number)
 }
 
@@ -3224,9 +3223,9 @@ TEST(TestArithmetic, number_expr__subtract) {
       Assets:Something   7.5 - 3.1 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('9'), postings[0].units.number)
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
+        // self.assertEqual(D('9'), postings[0].units.number)
         // self.assertEqual(D('4.4'), postings[1].units.number)
 }
 
@@ -3237,9 +3236,9 @@ TEST(TestArithmetic, number_expr__multiply) {
       Assets:Something   7.5 * 3.1 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('36'), postings[0].units.number)
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
+        // self.assertEqual(D('36'), postings[0].units.number)
         // self.assertEqual(D('23.25'), postings[1].units.number)
 }
 
@@ -3250,9 +3249,9 @@ TEST(TestArithmetic, number_expr__divide) {
       Assets:Something   7.5 / 3 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('4'), postings[0].units.number)
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
+        // self.assertEqual(D('4'), postings[0].units.number)
         // self.assertEqual(D('2.5'), postings[1].units.number)
 }
 
@@ -3264,10 +3263,10 @@ TEST(TestArithmetic, number_expr__negative) {
       Assets:Something   - 7.5 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('-12'), postings[0].units.number)
-        self.assertEqual(D('-7.5'), postings[1].units.number)
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
+        // self.assertEqual(D('-12'), postings[0].units.number)
+        // self.assertEqual(D('-7.5'), postings[1].units.number)
         // self.assertEqual(D('-7.5'), postings[2].units.number)
 }
 
@@ -3278,8 +3277,8 @@ TEST(TestArithmetic, number_expr__positive) {
       Assets:Something   -7.5 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
+        // self.assertEqual(1, len(entries))
+        // postings = entries[0].postings
         // self.assertEqual(D('12'), postings[0].units.number)
 }
 
@@ -3292,10 +3291,10 @@ TEST(TestArithmetic, number_expr__precedence) {
       Assets:Something   (2 + -3) * 4 USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        self.assertListEqual(
-            [D('10'), D('14'), D('-10'), D('-4')],
-            // [posting.units.number for posting in entries[0].postings])
+        // self.assertEqual(1, len(entries))
+        // self.assertListEqual(
+        //     [D('10'), D('14'), D('-10'), D('-4')],
+        //     [posting.units.number for posting in entries[0].postings])
 }
 
 TEST(TestArithmetic, number_expr__groups) {
@@ -3305,11 +3304,11 @@ TEST(TestArithmetic, number_expr__groups) {
       Assets:Something   2 * (2 + -3) USD
   )", R"(
   )");
-        self.assertEqual(1, len(entries))
-        self.assertListEqual(
-            [D('-4'), D('-2')],
-            [posting.units.number
-             // for posting in entries[0].postings])
+        // self.assertEqual(1, len(entries))
+        // self.assertListEqual(
+        //     [D('-4'), D('-2')],
+        //     [posting.units.number
+        //      for posting in entries[0].postings])
 }
 
 TEST(TestArithmetic, number_expr__different_places) {
@@ -3321,17 +3320,19 @@ TEST(TestArithmetic, number_expr__different_places) {
       number: -(5662.23 + 22.3)
   )", R"(
   )");
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entries))
-        self.assertEqual(D('-12'), entries[0].postings[0].units.number)
-        self.assertEqual(D('252.021'),
-                         entries[0].postings[0].cost.number_per)
-        self.assertEqual(None,
-                         entries[0].postings[0].cost.number_total)
-        self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
-        self.assertEqual(D('3024.252'), entries[1].amount.number)
+        // self.assertFalse(errors)
+        // self.assertEqual(2, len(entries))
+        // self.assertEqual(D('-12'), entries[0].postings[0].units.number)
+        // self.assertEqual(D('252.021'),
+        //                  entries[0].postings[0].cost.number_per)
+        // self.assertEqual(None,
+        //                  entries[0].postings[0].cost.number_total)
+        // self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
+        // self.assertEqual(D('3024.252'), entries[1].amount.number)
         // self.assertEqual(D('-5684.53'), entries[1].meta['number'])
 }
+
+#if 0
 
 //------------------------------------------------------------------------------
 // TestLexerAndParserErrors
