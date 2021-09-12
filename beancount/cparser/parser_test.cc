@@ -43,7 +43,27 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   auto ledger = parser::ParseString(clean_string, "<string>", 0, options.debug);
   ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
-  EXPECT_TRUE(EqualsMessages(*ledger_proto, expected_string, options.partial));
+
+  // Compare the whole protos.
+  inter::Ledger expected_proto;
+  if (!google::protobuf::TextFormat::ParseFromString(
+          expected_string,
+          &expected_proto)) {
+    throw std::domain_error("Could not parse expected proto.");
+  }
+  EXPECT_TRUE(EqualsMessages(expected_proto, *ledger_proto, options.partial));
+
+  // If comparing partial, ensure that we compare the errors non-partial.
+  if (options.partial) {
+    expected_proto.clear_directives();
+    expected_proto.clear_options();
+    expected_proto.clear_info();
+    ledger_proto->clear_directives();
+    ledger_proto->clear_options();
+    ledger_proto->clear_info();
+    EXPECT_TRUE(EqualsMessages(expected_proto, *ledger_proto, {}));
+  }
+
   return ledger;
 }
 
@@ -2342,28 +2362,12 @@ TEST(TestCurrencies, DifferentCostAndPriceCurrency) {
       Assets:Krisflyer            100 KRISFLYER
   )", R"(
     directives {
-      date { year: 2018 month: 3 day: 21 }
-      transaction {
-        flag: "*"
-        narration: "Convert MR to KrisFlyer"
-        postings {
-          account: "Assets:Test"
-          spec {
-            units { number { exact: "-100" } currency: "MR" }
-            cost { number_per { exact: "0.0075" } currency: "USD" }
-            price { number { exact: "1" } currency: "KRISFLYER" }
-          }
-        }
-        postings {
-          account: "Assets:Krisflyer"
-          spec { units { number { exact: "100" } currency: "KRISFLYER" } }
-        }
-      }
+      # ..
     }
     errors {
       message: "Cost and price currencies must match: USD != KRISFLYER"
     }
-  )");
+  )", { .partial = true });
 }
 
 //------------------------------------------------------------------------------
@@ -2520,32 +2524,30 @@ TEST(TestTotalsAndSigns, TotalCost) {
   )", { .partial = true });
 }
 
-
-
-
-
-
-
-
-
-
-#if 0
-
 TEST(TestTotalsAndSigns, TotalCostInvalid) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT {{100 # 2,000 USD}}
       Assets:Investments:Cash  -20000 USD
   )", R"(
-  )");
-        posting = entries[0].postings[0]
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message,
-                         'Per-unit cost may not be specified using total cost syntax')
-        self.assertEqual(ZERO, posting.cost.number_per) # Note how this gets canceled.
-        self.assertEqual(D('2000'), posting.cost.number_total)
-        self.assertEqual('USD', posting.cost.currency)
-        // self.assertEqual(None, posting.price)
+    directives {
+      # ...
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            cost { number_total { exact: "2000" } currency: "USD" }
+          }
+        }
+        postings {
+          spec { units { number { exact: "-20000" } currency: "USD" } }
+        }
+      }
+    }
+    errors {
+      message: "Per-unit cost may not be specified using total cost syntax: \'number_per {\n  exact: \"100\"\n}\nnumber_total {\n  exact: \"2000\"\n}\ncurrency: \"USD\"\n\'; ignoring per-unit cost"
+    }
+  )", { .partial = true });
 }
 
 TEST(TestTotalsAndSigns, TotalCostNegative) {
@@ -2554,10 +2556,22 @@ TEST(TestTotalsAndSigns, TotalCostNegative) {
       Assets:Investments:MSFT      -10 MSFT {{-200.00 USD}}
       Assets:Investments:Cash   200.00 USD
   )", R"(
-  )");
-        # Should produce no errors.
-        # Note: This error is caught only at booking time.
-        // pass
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            cost { number_total { exact: "-200.00" } currency: "USD" }
+          }
+        }
+        postings {
+          # ...
+        }
+      }
+    }
+  )", { .partial = true });
+  // Should produce no errors.
+  // Note: This error is caught only at booking time.
 }
 
 TEST(TestTotalsAndSigns, PriceNegative) {
@@ -2566,8 +2580,26 @@ TEST(TestTotalsAndSigns, PriceNegative) {
       Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
       Assets:Investments:Cash  2000.00 USD
   )", R"(
-  )");
-        // self.assertRegex(errors[0].message, 'Negative.*allowed')
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            price { number { exact: "200.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "2000.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    errors {
+      message: 'Negative prices are not allowed (see http://furius.ca/beancount/doc/bug-negative-prices for workaround)'
+    }
+  )", { .partial = true });
 }
 
 TEST(TestTotalsAndSigns, TotalPricePositive) {
@@ -2576,10 +2608,20 @@ TEST(TestTotalsAndSigns, TotalPricePositive) {
       Assets:Investments:MSFT        10 MSFT @@ 2000.00 USD
       Assets:Investments:Cash  -2000.00 USD
   )", R"(
-  )");
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
-        // self.assertEqual(None, posting.cost)
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200.00" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          # ...
+        }
+      }
+    }
+  )", { .partial = true });
 }
 
 TEST(TestTotalsAndSigns, TotalPriceNegative) {
@@ -2588,10 +2630,20 @@ TEST(TestTotalsAndSigns, TotalPriceNegative) {
       Assets:Investments:MSFT       -10 MSFT @@ 2000.00 USD
       Assets:Investments:Cash  20000.00 USD
   )", R"(
-  )");
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
-        // self.assertEqual(None, posting.cost)
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "-10" } currency: "MSFT" }
+            price { number { exact: "200.00" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          # ...
+        }
+      }
+    }
+  )", { .partial = true });
 }
 
 TEST(TestTotalsAndSigns, TotalPriceInverted) {
@@ -2600,8 +2652,23 @@ TEST(TestTotalsAndSigns, TotalPriceInverted) {
       Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
       Assets:Investments:Cash   20000.00 USD
   )", R"(
-  )");
-        // self.assertRegex(errors[0].message, 'Negative.*allowed')
+    directives {
+      transaction {
+        postings {
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200.00" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          # ...
+        }
+      }
+    }
+    errors {
+      message: 'Negative prices are not allowed (see http://furius.ca/beancount/doc/bug-negative-prices for workaround)'
+    }
+  )", { .partial = true });
 }
 
 TEST(TestTotalsAndSigns, TotalPriceWithMissing) {
@@ -2610,8 +2677,24 @@ TEST(TestTotalsAndSigns, TotalPriceWithMissing) {
       Assets:Investments:MSFT            MSFT @@ 2000.00 USD
       Assets:Investments:Cash   20000.00 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec { units { currency: "MSFT" } }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec { units { number { exact: "20000.00" } currency: "USD" } }
+        }
+      }
+    }
+    errors {
+      message: "Total price on a posting without units: number {\n  exact: \"2000.00\"\n}\ncurrency: \"USD\"\nis_total: true\n."
+    }
   )");
-        // self.assertRegex(errors[0].message, 'Total price on a posting')
 }
 
 //------------------------------------------------------------------------------
@@ -2623,10 +2706,24 @@ TEST(TestBalance, TotalPrice) {
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
       Assets:Investments:Cash  -20000 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec { units { number { exact: "-20000" } currency: "USD" } }
+        }
+      }
+    }
   )");
-        posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
-        // self.assertEqual(None, posting.cost)
 }
 
 TEST(TestBalance, TotalCost) {
@@ -2639,13 +2736,47 @@ TEST(TestBalance, TotalCost) {
       Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
       Assets:Investments:Cash  -20000 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            cost { number_total { exact: "2000" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            cost {
+              number_total { exact: "2000" }
+              currency: "USD"
+              date { year: 2014 month: 2 day: 25 }
+            }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec { units { number { exact: "-20000" } currency: "USD" } }
+        }
+      }
+    }
   )");
-        for entry in entries:
-            posting = entry.postings[0]
-            self.assertEqual(ZERO, posting.cost.number_per)
-            self.assertEqual(D('2000'), posting.cost.number_total)
-            self.assertEqual('USD', posting.cost.currency)
-            // self.assertEqual(None, posting.price)
 }
 
 //------------------------------------------------------------------------------
@@ -2658,22 +2789,61 @@ TEST(TestMetaData, MetadataTransactionBegin) {
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
       Assets:Investments:Cash  -20000 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "test" value { text: "Something" } }
+      }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        // self.assertEqual('Something', entries[0].meta['test'])
 }
 
 TEST(TestMetaData, MetadataTransactionMiddle) {
   ExpectParse(R"(
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
-      test: "Something"
+        test: "Something"
       Assets:Investments:Cash  -20000 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          meta {
+            kv { key: "test" value { text: "Something" } }
+          }
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertEqual({'test': 'Something'},
-                         // self.strip_meta(entries[0].postings[0].meta))
 }
 
 TEST(TestMetaData, MetadataTransactionEnd) {
@@ -2681,12 +2851,31 @@ TEST(TestMetaData, MetadataTransactionEnd) {
     2013-05-18 * ""
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
       Assets:Investments:Cash  -20000 USD
-      test: "Something"
+        test: "Something"
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200" } currency: "USD" is_total: true }
+          }
+        }
+        postings {
+          meta {
+            kv { key: "test" value { text: "Something" } }
+          }
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertEqual({'test': 'Something'},
-                         // self.strip_meta(entries[0].postings[1].meta))
 }
 
 TEST(TestMetaData, MetadataTransactionMany) {
@@ -2694,20 +2883,44 @@ TEST(TestMetaData, MetadataTransactionMany) {
     2013-05-18 * ""
       test1: "Something"
       Assets:Investments:MSFT      10 MSFT @@ 2000 USD
-      test2: "has"
-      test3: "to"
+        test2: "has"
+        test3: "to"
       Assets:Investments:Cash  -20000 USD
-      test4: "come"
-      test5: "from"
-      test6: "this"
+        test4: "come"
+        test5: "from"
+        test6: "this"
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      transaction {
+        flag: "*"
+        postings {
+          meta {
+            kv { key: "test2" value { text: "has" } }
+            kv { key: "test3" value { text: "to" } }
+          }
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { number { exact: "10" } currency: "MSFT" }
+            price { number { exact: "200" } currency: "USD" is_total: true } }
+        }
+        postings {
+          meta {
+            kv { key: "test4" value { text: "come" } }
+            kv { key: "test5" value { text: "from" } }
+            kv { key: "test6" value { text: "this" } }
+          }
+          account: "Assets:Investments:Cash"
+          spec {
+            units { number { exact: "-20000" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertEqual('Something', entries[0].meta['test1'])
-        self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         self.strip_meta(entries[0].postings[0].meta))
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         // self.strip_meta(entries[0].postings[1].meta))
 }
 
 TEST(TestMetaData, MetadataTransactionIndented) {
@@ -2722,13 +2935,21 @@ TEST(TestMetaData, MetadataTransactionIndented) {
         test5: "from"
         test6: "this"
   )", R"(
-  )");
-        self.assertEqual(1, len(entries))
-        self.assertEqual('Something', entries[0].meta['test1'])
-        self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         self.strip_meta(entries[0].postings[0].meta))
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         // self.strip_meta(entries[0].postings[1].meta))
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      transaction {
+        flag: "*"
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected ACCOUNT"
+    }
+)");
+  // This is a difference with the Python version; indentation is more strict in
+  // the RE-Flex/C++ version and this generates an error.
 }
 
 TEST(TestMetaData, MetadataTransactionRepeated) {
@@ -2742,14 +2963,36 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
         test: "Apples"
       Income:Investments  -100 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "test" value { text: "Bananas" } }
+        kv { key: "test" value { text: "Apples" } }
+        kv { key: "test" value { text: "Oranges" } }
+      }
+      transaction {
+        flag: "*"
+        postings {
+          meta {
+            kv { key: "test" value { text: "Bananas" } }
+            kv { key: "test" value { text: "Apples" } }
+          }
+          account: "Assets:Investments"
+          spec {
+            units { number { exact: "100" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Income:Investments"
+          spec {
+            units { number { exact: "-100" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertEqual('Bananas', entries[0].meta['test'])
-        self.assertEqual({'test': 'Bananas'},
-                         self.strip_meta(entries[0].postings[0].meta))
-        self.assertEqual(3, len(errors))
-        self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
-                            // for error in errors))
+  // The C++ version tolerates multiple identical keys.
+  // This is a harmless difference with the Python version.
 }
 
 TEST(TestMetaData, MetadataEmpty) {
@@ -2761,14 +3004,27 @@ TEST(TestMetaData, MetadataEmpty) {
     2013-05-19 open Assets:Something
       apples:
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "oranges" value {} }
+        kv { key: "bananas" value {} }
+      }
+      transaction {
+        flag: "*"
+        narration: "blabla"
+      }
+    }
+    directives {
+      date { year: 2013 month: 5 day: 19 }
+      meta {
+        kv { key: "apples" value {} }
+      }
+      open {
+        account: "Assets:Something"
+      }
+    }
   )");
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entries))
-        self.assertEqual({'oranges', 'bananas', 'filename', 'lineno'},
-                         entries[0].meta.keys())
-        self.assertEqual(None, entries[0].meta['oranges'])
-        self.assertEqual(None, entries[0].meta['bananas'])
-        // self.assertEqual(entries[1].meta['apples'], None)
 }
 
 TEST(TestMetaData, MetadataOther) {
@@ -2800,8 +3056,92 @@ TEST(TestMetaData, MetadataOther) {
     2013-03-01 price  HOOL  500 USD
       test1: "Something"
   )", R"(
+    directives {
+      date { year: 2013 month: 1 day: 1 }
+      open {
+        account: "Equity:Other"
+      }
+    }
+    directives {
+      date { year: 2013 month: 1 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+        kv { key: "test2" value { text: "Something" } }
+      }
+      open {
+        account: "Assets:Investments"
+      }
+    }
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      close {
+        account: "Assets:Investments"
+      }
+    }
+    directives {
+      date { year: 2013 month: 1 day: 10 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      note {
+        account: "Assets:Investments"
+        comment: "Bla"
+      }
+    }
+    directives {
+      date { year: 2013 month: 1 day: 31 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      pad {
+        account: "Assets:Investments"
+        source_account: "Equity:Other"
+      }
+    }
+    directives {
+      date { year: 2013 month: 2 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      balance {
+        account: "Assets:Investments"
+        amount { number { exact: "111.00" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2013 month: 3 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      event {
+        type: "location"
+        description: "Nowhere"
+      }
+    }
+    directives {
+      date { year: 2013 month: 3 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      document {
+        account: "Assets:Investments"
+        filename: "/path/to/something.pdf"
+      }
+    }
+    directives {
+      date { year: 2013 month: 3 day: 1 }
+      meta {
+        kv { key: "test1" value { text: "Something" } }
+      }
+      price {
+        currency: "HOOL"
+        amount { number { exact: "500" } currency: "USD" }
+      }
+    }
   )");
-        // self.assertEqual(9, len(entries))
 }
 
 TEST(TestMetaData, MetadataDataTypes) {
@@ -2817,23 +3157,24 @@ TEST(TestMetaData, MetadataDataTypes) {
       boolt: TRUE
       boolf: FALSE
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "string" value { text: "Something" } }
+        kv { key: "account" value { account: "Assets:Investments:Cash" } }
+        kv { key: "date" value { date { year: 2012 month: 1 day: 1 } } }
+        kv { key: "currency" value { currency: "HOOL" } }
+        kv { key: "tag" value { tag: "trip-florida" } }
+        kv { key: "number" value { number { exact: "345.67" } } }
+        kv { key: "amount" value { amount { number { exact: "345.67" } currency: "USD" } } }
+        kv { key: "boolt" value { boolean: true } }
+        kv { key: "boolf" value { boolean: false } }
+      }
+      transaction {
+        flag: "*"
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertTrue('filename' in entries[0].meta)
-        self.assertTrue('lineno' in entries[0].meta)
-        del entries[0].meta['filename']
-        del entries[0].meta['lineno']
-        self.assertEqual({
-            'string': 'Something',
-            'account': 'Assets:Investments:Cash',
-            'date': datetime.date(2012, 1, 1),
-            'currency': 'HOOL',
-            'tag': 'trip-florida',
-            'number': D('345.67'),
-            'amount': A('345.67 USD'),
-            'boolt': True,
-            'boolf': False,
-            // }, entries[0].meta)
 }
 
 TEST(TestMetaData, MetadataKeySyntax) {
@@ -2844,12 +3185,22 @@ TEST(TestMetaData, MetadataKeySyntax) {
       name-on-card: "Bob"
       name_on_card: "John"
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "nameoncard" value { text: "Jim" } }
+        kv { key: "nameOnCard" value { text: "Joe" } }
+        kv { key: "name-on-card" value { text: "Bob" } }
+        kv { key: "name_on_card" value { text: "John" } }
+      }
+      transaction {
+        flag: "*"
+      }
+    }
   )");
-        self.assertEqual(1, len(entries))
-        self.assertLessEqual(set('nameoncard nameOnCard name-on-card name_on_card'.split()),
-                             // set(entries[0].meta.keys()))
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // TestArithmetic
 
