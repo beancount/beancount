@@ -3497,80 +3497,78 @@ TEST(TestArithmetic, number_expr__different_places) {
   )");
 }
 
-
-#if 0
-
 //------------------------------------------------------------------------------
 // TestLexerAndParserErrors
 
-    // """There are a number of different paths where errors may occur. This test case
-    // intends to exercise them all. This docstring explains how it all works (it's
-    // a bit complicated).
-
-    // Expectations: The parser.parse_*() functions never raise exceptions, they
-    // always produce a list of error messages on the builder objects. This is by
-    // design: we have a single way to produce and report errors.
-
-    // The lexer may fail in two different ways:
-
-    // * Invalid Token: yylex() is invoked by the parser... the lexer rules are
-    //   processed and all fail and the default rule of the lexer gets called at
-    //   {bf253a29a820}. The lexer immediately switches to its INVALID subparser to
-    //   chomp the rest of the invalid token's unrecognized characters until it
-    //   hits some whitespace (see {bba169a1d35a}). A new LexerError is created and
-    //   accumulated by calling the build_lexer_error() method on the builder
-    //   object using this text (see {0e31aeca3363}). The lexer then returns a
-    //   LEX_ERROR token to the parser, which fails as below.
-
-    // * Lexer Builder Exception: The lexer recognizes a valid token and invokes a
-    //   callback on the builder using BUILD_LEX(). However, an exception is raised
-    //   in that Python code ({3cfb2739349a}). The exception's error text is saved
-    //   and this is used to build an error on the lexer builder at
-    //   build_lexer_error().
-
-    // For both the errors above, when the parser receives the LEX_ERROR token, it
-    // is an unexpected token (because none of the rules handle it), so it calls
-    // yyerror() {ca6aab8b9748}. Because the lexer has already registered an error
-    // in the error list, in yyerror() we simply ignore it and do nothing (see
-    // {ca6aab8b9748}).
-
-    // Error recovery then proceeds by successive reductions of the "error" grammar
-    // rules which discards all tokens until a valid rule can be reduced again
-    // ({3d95e55b654e}). Note that Bison issues a single call to yyerror() and
-    // keeps reducing invalid "error" rules silently until another one succeeds. We
-    // ignore the directive and restart parsing from that point on. If the error
-    // occurred on a posting in progress of being parsed, because the "error" rule
-    // is not a valid posting of a transaction, that transaction will not be
-    // produced and thus is ignore, which is what we want.
-
-    // The parser may itself also encounter two similar types of errors:
-
-    // * Syntax Error: There is an error in the grammar of the input. yyparse() is
-    //   called automatically by the generated code and we call
-    //   build_grammar_error() to register the error. Error recovery proceeds
-    //   similarly to what was described previously.
-
-    // * Grammar Builder Exception: A grammar rule is reduced successfully, a
-    //   builder method is invoked and raises a Python exception. A macro in the
-    //   code that invokes this method is used to catch this error and calls
-    //   build_grammar_error_from_exception() to register an error and makes the
-    //   parser issue an error with YYERROR (see {05bb0fb60e86}).
-
-    // We never call YYABORT anywhere so the yyparse() function should never return
-    // anything else than 0. If it does, we translate that into a Python
-    // RuntimeError exception, or a MemoryError exception (if yyparse() ran out of
-    // memory), see {459018e2905c}.
-    // """
+// There are a number of different paths where errors may occur. This test case
+// intends to exercise them all. This docstring explains how it all works (it's
+// a bit complicated).
+//
+// Expectations: The parser.parse_*() functions never raise exceptions, they
+// always produce a list of error messages on the builder objects. This is by
+// design: we have a single way to produce and report errors.
+//
+// The lexer may fail in two different ways:
+//
+// * Invalid Token: yylex() is invoked by the parser... the lexer rules are
+//   processed and all fail and the default rule of the lexer gets called at
+//   {bf253a29a820}. The lexer immediately switches to its INVALID subparser to
+//   chomp the rest of the invalid token's unrecognized characters until it
+//   hits some whitespace (see {bba169a1d35a}). A new LexerError is created and
+//   accumulated by calling the build_lexer_error() method on the builder
+//   object using this text (see {0e31aeca3363}). The lexer then returns a
+//   LEX_ERROR token to the parser, which fails as below.
+//
+// * Lexer Builder Exception: The lexer recognizes a valid token and invokes a
+//   callback on the builder using BUILD_LEX(). However, an exception is raised
+//   in that Python code ({3cfb2739349a}). The exception's error text is saved
+//   and this is used to build an error on the lexer builder at
+//   build_lexer_error().
+//
+// For both the errors above, when the parser receives the LEX_ERROR token, it
+// is an unexpected token (because none of the rules handle it), so it calls
+// yyerror() {ca6aab8b9748}. Because the lexer has already registered an error
+// in the error list, in yyerror() we simply ignore it and do nothing (see
+// {ca6aab8b9748}).
+//
+// Error recovery then proceeds by successive reductions of the "error" grammar
+// rules which discards all tokens until a valid rule can be reduced again
+// ({3d95e55b654e}). Note that Bison issues a single call to yyerror() and
+// keeps reducing invalid "error" rules silently until another one succeeds. We
+// ignore the directive and restart parsing from that point on. If the error
+// occurred on a posting in progress of being parsed, because the "error" rule
+// is not a valid posting of a transaction, that transaction will not be
+// produced and thus is ignore, which is what we want.
+//
+// The parser may itself also encounter two similar types of errors:
+//
+// * Syntax Error: There is an error in the grammar of the input. yyparse() is
+//   called automatically by the generated code and we call
+//   build_grammar_error() to register the error. Error recovery proceeds
+//   similarly to what was described previously.
+//
+// * Grammar Builder Exception: A grammar rule is reduced successfully, a
+//   builder method is invoked and raises a Python exception. A macro in the
+//   code that invokes this method is used to catch this error and calls
+//   build_grammar_error_from_exception() to register an error and makes the
+//   parser issue an error with YYERROR (see {05bb0fb60e86}).
+//
+// We never call YYABORT anywhere so the yyparse() function should never return
+// anything else than 0. If it does, we translate that into a Python
+// RuntimeError exception, or a MemoryError exception (if yyparse() ran out of
+// memory), see {459018e2905c}.
 
 TEST(TestLexerAndParserErrors, lexer_invalid_token) {
   ExpectParse(R"(
     2000-01-01 open ) USD
   )", R"(
+    errors {
+      message: "Syntax error, unexpected RPAREN, expecting ACCOUNT"
+    }
   )");
-        self.assertEqual(0, len(entries))
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 }
+
+#if 0
 
 TEST(TestLexerAndParserErrors, lexer_invalid_token__recovery) {
   ExpectParse(R"(
