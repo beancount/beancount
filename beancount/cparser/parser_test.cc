@@ -986,10 +986,6 @@ TEST(TestPushPopMeta, PushmetaOverride) {
         }
       }
     }  )");
-  // self.assertTrue('location' in entries[0].meta)
-  // self.assertEqual("Lausanne, Switzerland", entries[0].meta['location'])
-  // self.assertTrue('location' in entries[1].meta)
-  // self.assertEqual("Paris, France", entries[1].meta['location'])
 }
 
 TEST(TestPushPopMeta, PushmetaInvalidPop) {
@@ -1877,7 +1873,6 @@ TEST(TestParseLots, CostNone) {
       }
     }
   )");
-  // TODO(blais): self.assertFalse(parser.is_entry_incomplete(entries[0]))
 }
 
 TEST(TestParseLots, CostEmpty) {
@@ -1902,11 +1897,6 @@ TEST(TestParseLots, CostEmpty) {
       }
     }
   )");
-  // TODO(blais): self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // self.assertFalse(errors)
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 }
 
 TEST(TestParseLots, CostAmount) {
@@ -1931,11 +1921,6 @@ TEST(TestParseLots, CostAmount) {
       }
     }
   )");
-  // TODO(blais): self.assertFalse(parser.is_entry_incomplete(entries[0]))
-  // self.assertFalse(errors)
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestParseLots, CostDate) {
@@ -1960,13 +1945,6 @@ TEST(TestParseLots, CostDate) {
       }
     }
   )");
-  // TODO(blais): self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // self.assertFalse(errors)
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(
-  //     CostSpec(MISSING, None, MISSING, datetime.date(2014, 12, 26), None, False),
-  //     // posting.cost)
 }
 
 TEST(TestParseLots, CostLabel) {
@@ -1991,11 +1969,6 @@ TEST(TestParseLots, CostLabel) {
       }
     }
   )");
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
-  //                  // posting.cost)
 }
 
 TEST(TestParseLots, CostMerge) {
@@ -2020,10 +1993,6 @@ TEST(TestParseLots, CostMerge) {
       }
     }
   )");
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
-  // posting = entries[0].postings[0]
-  // self.assertEqual(A('20 AAPL'), posting.units)
-  // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), posting.cost)
 }
 
 TEST(TestParseLots, CostTwoComponents) {
@@ -2081,8 +2050,6 @@ TEST(TestParseLots, CostTwoComponents) {
       }
     }
   )");
-  // self.assertEqual(0, len(errors))
-  // self.assertTrue(parser.is_entry_incomplete(entries[0]))
 }
 
 TEST(TestParseLots, CostThreeComponents) {
