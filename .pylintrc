@@ -62,7 +62,8 @@ disable=locally-disabled,
   isinstance-second-argument-not-valid-type,
   bad-continuation,
   inherit-non-class,
-  consider-using-with
+  consider-using-with,
+  unspecified-encoding
 
 [BASIC]
 good-names=f,i,j,k,ex,_

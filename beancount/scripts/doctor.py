@@ -78,9 +78,9 @@ class Group(click.Group):
             return cmd
         return decorator
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx, cmd_name):
         # aliases
-        name = self.aliases.get(name, name)
+        name = self.aliases.get(cmd_name, cmd_name)
         # allow to use '_' or '-' in command names.
         name = name.replace('_', '-')
         return click.Group.get_command(self, ctx, name)

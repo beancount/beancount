@@ -78,6 +78,7 @@ def align_position_strings(strings):
     # Align the strings and return them.
     aligned_strings = []
     for index, string in string_items:
+        # pylint: disable=format-string-without-interpolation
         if index is not None:
             string = fmt(string[:index], string[index:])
         else:

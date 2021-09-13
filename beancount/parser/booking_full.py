@@ -420,9 +420,9 @@ def categorize_by_currency(entry, balances):
                                 entry))
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
-        for currency in groups.keys():
+        for currency, glist in groups.items():
             sortdict.setdefault(currency, refer.index)
-            groups[currency].append(Refer(refer.index, currency, None, None))
+            glist.append(Refer(refer.index, currency, None, None))
 
     # Issue error for all currencies which we could not resolve.
     for currency, refers in groups.items():

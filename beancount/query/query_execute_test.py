@@ -955,8 +955,8 @@ class TestExecuteFlatten(QueryBase):
 
     """
 
-    ## FIXME: Bring this back in.
-    def __test_flatten(self):
+    @unittest.skip("TODO(blais): Bring this test back online.")
+    def test_flatten(self):
         self.check_query(
             self.INPUT,
             """

@@ -74,9 +74,9 @@ class ObjectRenderer(ColumnRenderer):
         super().__init__(dcontext)
         self.maxlen = 0
 
-    def update(self, string):
-        if string is not None:
-            self.maxlen = len(str(string))
+    def update(self, value):
+        if value is not None:
+            self.maxlen = len(str(value))
 
     def prepare(self):
         pass
@@ -84,8 +84,8 @@ class ObjectRenderer(ColumnRenderer):
     def width(self):
         return self.maxlen
 
-    def format(self, string):
-        return '' if string is None else str(string)
+    def format(self, value):
+        return '' if value is None else str(value)
 
 
 class BoolRenderer(ColumnRenderer):
@@ -120,9 +120,9 @@ class StringRenderer(ColumnRenderer):
         super().__init__(dcontext)
         self.maxlen = 0
 
-    def update(self, string):
-        if string is not None:
-            self.maxlen = max(self.maxlen, len(string))
+    def update(self, value):
+        if value is not None:
+            self.maxlen = max(self.maxlen, len(value))
 
     def prepare(self):
         self.fmt = '{{:<{}.{}}}'.format(self.maxlen, self.maxlen)
@@ -130,8 +130,8 @@ class StringRenderer(ColumnRenderer):
     def width(self):
         return self.maxlen
 
-    def format(self, string):
-        return self.fmt.format('' if string is None else string)
+    def format(self, value):
+        return self.fmt.format('' if value is None else value)
 
 
 class StringSetRenderer(ColumnRenderer):
@@ -142,10 +142,10 @@ class StringSetRenderer(ColumnRenderer):
         super().__init__(dcontext)
         self.maxlen = 0
 
-    def update(self, string_set):
-        if not string_set:
+    def update(self, value):
+        if not value:
             return
-        self.maxlen = max(max(len(string) for string in string_set), self.maxlen)
+        self.maxlen = max(max(len(string) for string in value), self.maxlen)
 
     def prepare(self):
         self.fmt = '{{:<{:d}.{:d}}}'.format(self.maxlen, self.maxlen)
@@ -154,9 +154,9 @@ class StringSetRenderer(ColumnRenderer):
     def width(self):
         return self.maxlen
 
-    def format(self, string_set):
-        if string_set:
-            lines = sorted(map(self.fmt.format, string_set))
+    def format(self, value):
+        if value:
+            lines = sorted(map(self.fmt.format, value))
             return lines[0] if len(lines) == 1 else lines
         else:
             return self.empty
@@ -176,8 +176,8 @@ class DateTimeRenderer(ColumnRenderer):
     def width(self):
         return 10
 
-    def format(self, dtime):
-        return self.empty if dtime is None else dtime.strftime('%Y-%m-%d')
+    def format(self, value):
+        return self.empty if value is None else value.strftime('%Y-%m-%d')
 
 
 class IntegerRenderer(ColumnRenderer):
@@ -189,12 +189,12 @@ class IntegerRenderer(ColumnRenderer):
         self.has_negative = False
         self.max_digits = 0
 
-    def update(self, number):
-        if number is None:
+    def update(self, value):
+        if value is None:
             return
         self.max_digits = max(self.max_digits,
-                              (int(math.log10(abs(number)))+1) if number else 1)
-        if number < 0:
+                              (int(math.log10(abs(value)))+1) if value else 1)
+        if value < 0:
             self.has_negative = True
 
     def prepare(self):
@@ -205,10 +205,10 @@ class IntegerRenderer(ColumnRenderer):
     def width(self):
         return self.max_width
 
-    def format(self, number):
-        if number is None:
+    def format(self, value):
+        if value is None:
             return self.fmt.format('')
-        return self.fmt.format(number)
+        return self.fmt.format(value)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -297,11 +297,11 @@ class AmountRenderer(ColumnRenderer):
         self.rdr = DecimalRenderer(dcontext)
         self.ccylen = 0
 
-    def update(self, amount_):
-        if amount_ is None:
+    def update(self, value):
+        if value is None:
             return
-        self.rdr.update(amount_.number, amount_.currency)
-        self.ccylen = max(self.ccylen, len(amount_.currency))
+        self.rdr.update(value.number, value.currency)
+        self.ccylen = max(self.ccylen, len(value.currency))
 
     def prepare(self):
         self.rdr.prepare()
@@ -316,13 +316,13 @@ class AmountRenderer(ColumnRenderer):
     def width(self):
         return len(self.empty)
 
-    def format(self, amount_):
+    def format(self, value):
         if self.fmt is None:
             return self.empty
-        elif amount_ is None:
+        elif value is None:
             return self.fmt.format('', '')
-        return self.fmt.format(self.rdr.format(amount_.number, amount_.currency),
-                               amount_.currency)
+        return self.fmt.format(self.rdr.format(value.number, value.currency),
+                               value.currency)
 
 
 class PositionRenderer(ColumnRenderer):
@@ -336,11 +336,11 @@ class PositionRenderer(ColumnRenderer):
         self.units_rdr = AmountRenderer(dcontext)
         self.cost_rdr = AmountRenderer(dcontext)
 
-    def update(self, pos):
-        if pos is None:
+    def update(self, value):
+        if value is None:
             return
-        self.units_rdr.update(pos.units)
-        self.cost_rdr.update(pos.cost)
+        self.units_rdr.update(value.units)
+        self.cost_rdr.update(value.cost)
 
     def prepare(self):
         self.units_rdr.prepare()
@@ -368,26 +368,26 @@ class PositionRenderer(ColumnRenderer):
     def width(self):
         return self.total_width
 
-    def format(self, pos):
-        if pos is None:
+    def format(self, value):
+        if value is None:
             return self.empty
 
         strings = []
         if self.fmt_with_cost is None:
             strings.append(
                 self.fmt_without_cost.format(
-                    self.units_rdr.format(pos.units)))
+                    self.units_rdr.format(value.units)))
         else:
-            cost = pos.cost
+            cost = value.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
-                        self.units_rdr.format(pos.units),
+                        self.units_rdr.format(value.units),
                         self.cost_rdr.format(cost)))
             else:
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.units)))
+                        self.units_rdr.format(value.units)))
 
         if len(strings) == 1:
             return strings[0]
@@ -403,21 +403,21 @@ class InventoryRenderer(PositionRenderer):
     """
     dtype = inventory.Inventory
 
-    def update(self, inv):
-        if inv is None:
+    def update(self, value):
+        if value is None:
             return
-        for pos in inv.get_positions():
+        for pos in value.get_positions():
             super().update(pos)
 
-    def format(self, inv):
+    def format(self, value):
         strings = []
         if self.fmt_with_cost is None:
-            for pos in inv.get_positions():
+            for pos in value.get_positions():
                 strings.append(
                     self.fmt_without_cost.format(
                         self.units_rdr.format(pos.units)))
         else:
-            for pos in inv.get_positions():
+            for pos in value.get_positions():
                 cost = pos.cost
                 if cost:
                     strings.append(
