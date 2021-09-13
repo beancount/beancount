@@ -3209,11 +3209,28 @@ TEST(TestArithmetic, number_expr__add) {
       Assets:Something    12 + 3 USD
       Assets:Something   7.5 + 3.1 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "15" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "10.6" } currency: "USD" }
+          }
+        }
+      }
+    }
+
+
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('15'), postings[0].units.number)
-        // self.assertEqual(D('10.6'), postings[1].units.number)
 }
 
 TEST(TestArithmetic, number_expr__subtract) {
@@ -3222,11 +3239,27 @@ TEST(TestArithmetic, number_expr__subtract) {
       Assets:Something    12 - 3 USD
       Assets:Something   7.5 - 3.1 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "9" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "4.4" } currency: "USD" }
+          }
+        }
+      }
+    }
+
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('9'), postings[0].units.number)
-        // self.assertEqual(D('4.4'), postings[1].units.number)
 }
 
 TEST(TestArithmetic, number_expr__multiply) {
@@ -3235,11 +3268,26 @@ TEST(TestArithmetic, number_expr__multiply) {
       Assets:Something    12 * 3 USD
       Assets:Something   7.5 * 3.1 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "36" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "23.25" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('36'), postings[0].units.number)
-        // self.assertEqual(D('23.25'), postings[1].units.number)
 }
 
 TEST(TestArithmetic, number_expr__divide) {
@@ -3248,11 +3296,28 @@ TEST(TestArithmetic, number_expr__divide) {
       Assets:Something    12 / 3 USD
       Assets:Something   7.5 / 3 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "4" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "2.5" } currency: "USD" }
+          }
+        }
+      }
+    }
+
+
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('4'), postings[0].units.number)
-        // self.assertEqual(D('2.5'), postings[1].units.number)
 }
 
 TEST(TestArithmetic, number_expr__negative) {
@@ -3262,12 +3327,34 @@ TEST(TestArithmetic, number_expr__negative) {
       Assets:Something   -7.5 USD
       Assets:Something   - 7.5 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-12" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-7.5" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-7.5" } currency: "USD" }
+          }
+        }
+      }
+    }
+
+
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('-12'), postings[0].units.number)
-        // self.assertEqual(D('-7.5'), postings[1].units.number)
-        // self.assertEqual(D('-7.5'), postings[2].units.number)
 }
 
 TEST(TestArithmetic, number_expr__positive) {
@@ -3276,10 +3363,26 @@ TEST(TestArithmetic, number_expr__positive) {
       Assets:Something    +12 USD
       Assets:Something   -7.5 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "12" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-7.5" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(1, len(entries))
-        // postings = entries[0].postings
-        // self.assertEqual(D('12'), postings[0].units.number)
 }
 
 TEST(TestArithmetic, number_expr__precedence) {
@@ -3290,11 +3393,38 @@ TEST(TestArithmetic, number_expr__precedence) {
       Assets:Something   2 + -3 * 4 USD
       Assets:Something   (2 + -3) * 4 USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "10" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "14" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-10" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-4" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(1, len(entries))
-        // self.assertListEqual(
-        //     [D('10'), D('14'), D('-10'), D('-4')],
-        //     [posting.units.number for posting in entries[0].postings])
 }
 
 TEST(TestArithmetic, number_expr__groups) {
@@ -3303,12 +3433,26 @@ TEST(TestArithmetic, number_expr__groups) {
       Assets:Something   (2 + -3) * 4 USD
       Assets:Something   2 * (2 + -3) USD
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-4" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-2" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(1, len(entries))
-        // self.assertListEqual(
-        //     [D('-4'), D('-2')],
-        //     [posting.units.number
-        //      for posting in entries[0].postings])
 }
 
 TEST(TestArithmetic, number_expr__different_places) {
@@ -3319,18 +3463,40 @@ TEST(TestArithmetic, number_expr__different_places) {
     2014-01-01 balance Assets:Something  3 * 4 * 120.01 * 2.1  USD
       number: -(5662.23 + 22.3)
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        narration: "Test"
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "-12" } currency: "HOOL" }
+            cost { number_per { exact: "252.021" } currency: "USD" }
+            price { number { exact: "281.442" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Something"
+          spec {
+            units { number { exact: "1000000" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2014 month: 1 day: 1 }
+      meta {
+        kv { key: "number" value { number { exact: "-5684.53" } } }
+      }
+      balance {
+        account: "Assets:Something"
+        amount { number { exact: "3024.252" } currency: "USD" }
+      }
+    }
   )");
-        // self.assertFalse(errors)
-        // self.assertEqual(2, len(entries))
-        // self.assertEqual(D('-12'), entries[0].postings[0].units.number)
-        // self.assertEqual(D('252.021'),
-        //                  entries[0].postings[0].cost.number_per)
-        // self.assertEqual(None,
-        //                  entries[0].postings[0].cost.number_total)
-        // self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
-        // self.assertEqual(D('3024.252'), entries[1].amount.number)
-        // self.assertEqual(D('-5684.53'), entries[1].meta['number'])
 }
+
 
 #if 0
 
