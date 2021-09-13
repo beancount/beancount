@@ -4433,11 +4433,6 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__transaction) {
   )");
 }
 
-
-
-
-#if 0
-
 //------------------------------------------------------------------------------
 // TestIncompleteInputs
 
@@ -4447,8 +4442,25 @@ TEST(TestIncompleteInputs, units_full) {
       Assets:Account1     100.00 USD
       Assets:Account2    -100.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(A('-100 USD'), entries[-1].postings[-1].units)
 }
 
 TEST(TestIncompleteInputs, units_missing) {
@@ -4457,9 +4469,22 @@ TEST(TestIncompleteInputs, units_missing) {
       Assets:Account1     100.00 USD
       Assets:Account2
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+        }
+      }
+    }
   )");
-        self.assertEqual(MISSING, entries[-1].postings[-1].units)
-        // self.assertEqual(None, entries[-1].postings[-1].cost)
 }
 
 TEST(TestIncompleteInputs, units_missing_number) {
@@ -4468,9 +4493,25 @@ TEST(TestIncompleteInputs, units_missing_number) {
       Assets:Account1     100.00 USD
       Assets:Account2            USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        units = entries[-1].postings[-1].units
-        // self.assertEqual(Amount(MISSING, 'USD'), units)
 }
 
 TEST(TestIncompleteInputs, units_missing_currency) {
@@ -4479,9 +4520,25 @@ TEST(TestIncompleteInputs, units_missing_currency) {
       Assets:Account1     100.00 USD
       Assets:Account2    -100.00
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "-100.00" } }
+          }
+        }
+      }
+    }
   )");
-        units = entries[-1].postings[-1].units
-        // self.assertEqual(Amount(D('-100.00'), MISSING), units)
 }
 
 TEST(TestIncompleteInputs, units_missing_with_cost) {
@@ -4490,10 +4547,24 @@ TEST(TestIncompleteInputs, units_missing_with_cost) {
       Assets:Account1     {300.00 USD}
       Assets:Account2    -600.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*" postings { account: "Assets:Account1"
+          spec {
+            units {}
+            cost { number_per { exact: "300.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "-600.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, MISSING), posting.units)
-        // self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, units_missing_number_with_cost) {
@@ -4502,10 +4573,25 @@ TEST(TestIncompleteInputs, units_missing_number_with_cost) {
       Assets:Account1            HOOL {300.00 USD}
       Assets:Account2    -600.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings { account: "Assets:Account1"
+          spec {
+            units { currency: "HOOL" }
+            cost { number_per { exact: "300.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "-600.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, 'HOOL'), posting.units)
-        // self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, units_missing_currency_with_cost) {
@@ -4514,10 +4600,26 @@ TEST(TestIncompleteInputs, units_missing_currency_with_cost) {
       Assets:Account1      10        {300.00 USD}
       Assets:Account2    -600.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "10" } }
+            cost { number_per { exact: "300.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "-600.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(D('10'), MISSING), posting.units)
-        // self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, units_missing_with_price) {
@@ -4526,10 +4628,29 @@ TEST(TestIncompleteInputs, units_missing_with_price) {
       Assets:Account2                @ 1.2 USD
       Assets:Account1     100.00 USD @
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units {
+            }
+            price { number { exact: "1.2" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number {} currency: "" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, MISSING), posting.units)
-        // self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, units_missing_number_with_price) {
@@ -4538,10 +4659,28 @@ TEST(TestIncompleteInputs, units_missing_number_with_price) {
       Assets:Account2            CAD @ 1.2 USD
       Assets:Account1     100.00 USD @
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { currency: "CAD" }
+            price { number { exact: "1.2" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number {} currency: "" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, 'CAD'), posting.units)
-        // self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, units_missing_currency_with_price) {
@@ -4550,10 +4689,28 @@ TEST(TestIncompleteInputs, units_missing_currency_with_price) {
       Assets:Account2     120.00     @ 1.2 USD
       Assets:Account1     100.00 USD @
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } }
+            price { number { exact: "1.2" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number {} currency: "" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(Amount(D('120.00'), MISSING), posting.units)
-        // self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+  // TODO(blais): Fix price.
 }
 
 //
@@ -4566,10 +4723,25 @@ TEST(TestIncompleteInputs, price_none) {
       Assets:Account1     100.00 USD
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(None, posting.cost)
-        // self.assertEqual(None, posting.price)
 }
 
 TEST(TestIncompleteInputs, price_missing) {
@@ -4578,11 +4750,27 @@ TEST(TestIncompleteInputs, price_missing) {
       Assets:Account1     100.00 USD @
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number {} currency: "" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(A('100.00 USD'), posting.units)
-        self.assertIsInstance(posting.price, Amount)
-        // self.assertEqual(Amount(MISSING, MISSING), posting.price)
+  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, price_missing_number) {
@@ -4591,10 +4779,27 @@ TEST(TestIncompleteInputs, price_missing_number) {
       Assets:Account1     100.00 USD @ CAD
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number {} currency: "CAD" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertIsInstance(posting.price, Amount)
-        // self.assertEqual(Amount(MISSING, 'CAD'), posting.price)
+  // TODO(blais): Fix price number.
 }
 
 TEST(TestIncompleteInputs, price_missing_currency) {
@@ -4603,10 +4808,27 @@ TEST(TestIncompleteInputs, price_missing_currency) {
       Assets:Account1     100.00 USD @ 1.2
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+            price { number { exact: "1.2" } currency: "" }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertIsInstance(posting.price, Amount)
-        // self.assertEqual(Amount(D('1.2'), MISSING), posting.price)
+  // TODO(blais): Fix price.
 }
 
 //
@@ -4619,9 +4841,30 @@ TEST(TestIncompleteInputs, cost_full) {
       Assets:Account1     2 HOOL {150 # 5 USD}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_per { exact: "150" }
+              number_total { exact: "5" }
+              currency: "USD"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(D('150'), D('5'), 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_missing_number_per) {
@@ -4630,9 +4873,29 @@ TEST(TestIncompleteInputs, cost_missing_number_per) {
       Assets:Account1     2 HOOL {# 5 USD}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_total { exact: "5" }
+               currency: "USD"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(MISSING, D('5'), 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_missing_number_total) {
@@ -4641,10 +4904,29 @@ TEST(TestIncompleteInputs, cost_missing_number_total) {
       Assets:Account1     2 HOOL {150 # USD}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_per { exact: "150" }
+              currency: "USD"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False),
-                         // posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_no_number_total) {
@@ -4653,9 +4935,29 @@ TEST(TestIncompleteInputs, cost_no_number_total) {
       Assets:Account1     2 HOOL {150 USD}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_per { exact: "150" }
+              currency: "USD"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_missing_numbers) {
@@ -4664,9 +4966,28 @@ TEST(TestIncompleteInputs, cost_missing_numbers) {
       Assets:Account1     2 HOOL {USD}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              currency: "USD"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(MISSING, None, 'USD', None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_missing_currency) {
@@ -4675,9 +4996,28 @@ TEST(TestIncompleteInputs, cost_missing_currency) {
       Assets:Account1     2 HOOL {150}
       Assets:Account2     120.00 USD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_per { exact: "150" }
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "USD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(D('150'), None, MISSING, None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_empty) {
@@ -4686,9 +5026,26 @@ TEST(TestIncompleteInputs, cost_empty) {
       Assets:Account1     2 HOOL {}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {}
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        // self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_empty_with_other) {
@@ -4697,11 +5054,29 @@ TEST(TestIncompleteInputs, cost_empty_with_other) {
       Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              date { year: 2015 month: 9 day: 21 }
+              label: "blablabla"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", False),
-                         // posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_missing_basis) {
@@ -4710,11 +5085,29 @@ TEST(TestIncompleteInputs, cost_missing_basis) {
       Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              date { year: 2015 month: 9 day: 21 }
+              label: "blablabla"
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", False),
-                         // posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_average) {
@@ -4723,10 +5116,28 @@ TEST(TestIncompleteInputs, cost_average) {
       Assets:Account1     2 HOOL {*}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              merge_cost: true
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
-                         // posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_average_missing_basis) {
@@ -4735,11 +5146,30 @@ TEST(TestIncompleteInputs, cost_average_missing_basis) {
       Assets:Account1     2 HOOL {*, 2015-09-21, "blablabla"}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              date { year: 2015 month: 9 day: 21 }
+              label: "blablabla"
+              merge_cost: true
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", True),
-                         // posting.cost)
 }
 
 TEST(TestIncompleteInputs, cost_average_with_other) {
@@ -4748,11 +5178,32 @@ TEST(TestIncompleteInputs, cost_average_with_other) {
       Assets:Account1     2 HOOL {*, 100.00 CAD, 2015-09-21, "blablabla"}
       Assets:Account2     120.00 CAD
   )", R"(
+    directives {
+      date { year: 2010 month: 5 day: 28 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Account1"
+          spec {
+            units { number { exact: "2" } currency: "HOOL" }
+            cost {
+              number_per { exact: "100.00" }
+              currency: "CAD"
+              date { year: 2015 month: 9 day: 21 }
+              label: "blablabla"
+              merge_cost: true
+            }
+          }
+        }
+        postings {
+          account: "Assets:Account2"
+          spec {
+            units { number { exact: "120.00" } currency: "CAD" }
+          }
+        }
+      }
+    }
   )");
-        posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(D("100.00"), None, "CAD",
-                                  datetime.date(2015, 9, 21), "blablabla", True),
-                         // posting.cost)
 }
 
 //------------------------------------------------------------------------------
@@ -4765,8 +5216,26 @@ TEST(TestMisc, comment_in_postings) {
       Expenses:Crypto:NetworkFees           0.00082487 BTC
       Assets:Crypto:Bitcoin                -0.00082487 BTC
   )", R"(
+    directives {
+      date { year: 2017 month: 6 day: 27 }
+      transaction {
+        flag: "*"
+        narration: "Bitcoin network fee"
+        postings {
+          account: "Expenses:Crypto:NetworkFees"
+          spec {
+            units { number { exact: "0.00082487" } currency: "BTC" }
+          }
+        }
+        postings {
+          account: "Assets:Crypto:Bitcoin"
+          spec {
+            units { number { exact: "-0.00082487" } currency: "BTC" }
+          }
+        }
+      }
+    }
   )");
-        // self.assertEqual(0, len(errors))
 }
 
 TEST(TestMisc, comment_in_postings_invalid) {
@@ -4776,9 +5245,23 @@ TEST(TestMisc, comment_in_postings_invalid) {
     ; Account: Pocket money
       Assets:Crypto:Bitcoin                -0.00082487 BTC
   )", R"(
+    directives {
+      date { year: 2017 month: 6 day: 27 }
+      transaction {
+        flag: "*"
+        narration: "Bitcoin network fee"
+        postings {
+          account: "Expenses:Crypto:NetworkFees"
+          spec {
+            units { number { exact: "0.00082487" } currency: "BTC" }
+          }
+        }
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected INDENT"
+    }
   )");
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, "unexpected INDENT")
 }
 
 //------------------------------------------------------------------------------
@@ -4788,8 +5271,14 @@ TEST(TestDocument, document_no_tags_links) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
   )", R"(
-)",);
-        // check_list(self, entries, [data.Document])
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      document {
+        account: "Assets:US:BestBank:Checking"
+        filename: "/Accounting/statement.pdf"
+      }
+    }
+  )");
 }
 
 TEST(TestDocument, document_tags) {
@@ -4798,20 +5287,32 @@ TEST(TestDocument, document_tags) {
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf" #else
     poptag #something
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      tags: "something"
+      tags: "else"
+      document {
+        account: "Assets:US:BestBank:Checking"
+        filename: "/Accounting/statement.pdf"
+      }
+    }
   )");
-        check_list(self, entries, [data.Document])
-        // self.assertEqual({'something', 'else'}, entries[0].tags)
 }
 
 TEST(TestDocument, document_links) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/statement.pdf" ^something
   )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      links: "something"
+      document {
+        account: "Assets:US:BestBank:Checking"
+        filename: "/statement.pdf"
+      }
+    }
   )");
-        check_list(self, entries, [data.Document])
-        // self.assertEqual({'something'}, entries[0].links)
 }
-#endif
 
 // TODO(blais): Don't forget to explicitly test for each of the error conditions
 // raised in the scanner.
