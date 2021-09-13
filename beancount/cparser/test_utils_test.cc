@@ -38,7 +38,7 @@ TEST(TestUtilsTest, CompareMessages) {
   EXPECT_TRUE(EqualsMessages(amount, R"(
     number { exact: "144000" }
     currency: "USD"
-  )"));
+  )", false));
 }
 
 TEST(TestUtilsTest, ClearLineNumbers) {
@@ -85,7 +85,7 @@ TEST(TestUtilsTest, ClearLineNumbers) {
       postings {
       }
     }
-  )"));
+  )", false));
 }
 
 }  // namespace
