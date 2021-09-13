@@ -1194,6 +1194,18 @@ TEST(TestParserOptions, ReadonlyOption) {
   )");
 }
 
+TEST(TestParserOptions, UnaryOption) {
+  ExpectParse(R"(
+    option "name_assets: 'Actifs'"
+    option "inferred_tolerance_default { key: 'USD' value: '0.00001' }"
+  )", R"(
+    options {
+      name_assets: 'Actifs'
+      inferred_tolerance_default { key: 'USD' value: '0.00001' }
+    }
+  )");
+}
+
 //------------------------------------------------------------------------------
 // TestParserInclude
 

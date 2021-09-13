@@ -54,8 +54,9 @@ public:
 
   // Add a new option. This gets stored into the options proto and some of the
   // values may influence parsing.
-  void AddOption(const std::string& key, std::string&& value,
-                 const location& loc);
+  void AddOptionBinary(const std::string& key, std::string&& value,
+                       const location& loc);
+  void AddOptionUnary(const std::string& proto_str, const location& loc);
 
   // Add an include directive.
   void AddInclude(std::string&& filename);

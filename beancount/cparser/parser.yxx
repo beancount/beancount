@@ -372,9 +372,19 @@ popmeta:
 
 /* An option pragma. */
 option:
+  option_unary
+  | option_binary
+
+option_unary:
+  OPTION STRING[proto] eol
+    {
+      builder.AddOptionUnary($proto, @$);
+    }
+
+option_binary:
   OPTION STRING[key] STRING[value] eol
     {
-      builder.AddOption($key, std::move($value), @$);
+      builder.AddOptionBinary($key, std::move($value), @$);
     }
 
 /* An include pragma. */

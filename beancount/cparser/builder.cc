@@ -48,7 +48,7 @@ void Builder::Initialize() {
   context_.prec(28);
 }
 
-void Builder::AddOption(const string& key, string&& value, const location& loc) {
+void Builder::AddOptionBinary(const string& key, string&& value, const location& loc) {
   // Check the options field and get relevant descriptors.
   const auto* descriptor = options_->GetDescriptor();
   const auto* field = descriptor->FindFieldByName(key);
@@ -82,6 +82,14 @@ void Builder::AddOption(const string& key, string&& value, const location& loc) 
   if (!TextFormat::ParseFieldValueFromString(value_str, field, options_.get())) {
     AddError(StrFormat("Could not parse and set option '%s' with value '%s'; ignored.",
                        key, value_str), loc);
+    return;
+  }
+}
+
+void Builder::AddOptionUnary(const string& proto_str, const location& loc) {
+  if (!TextFormat::MergeFromString(proto_str, options_.get())) {
+    AddError(StrFormat("Could not parse and merge options proto with value '%s'; ignored.",
+                       proto_str), loc);
     return;
   }
 }
