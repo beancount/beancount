@@ -248,6 +248,7 @@ poptag		{ return Parser::make_POPTAG(DEFLOC); }
 pushmeta	{ return Parser::make_PUSHMETA(DEFLOC); }
 popmeta		{ return Parser::make_POPMETA(DEFLOC); }
 option		{ return Parser::make_OPTION(DEFLOC); }
+options		{ return Parser::make_OPTIONS(DEFLOC); }
 plugin		{ return Parser::make_PLUGIN(DEFLOC); }
 include		{ return Parser::make_INCLUDE(DEFLOC); }
 

@@ -1196,11 +1196,15 @@ TEST(TestParserOptions, ReadonlyOption) {
 
 TEST(TestParserOptions, UnaryOption) {
   ExpectParse(R"(
-    option "name_assets: 'Actifs'"
-    option "inferred_tolerance_default { key: 'USD' value: '0.00001' }"
+    options "inferred_tolerance_default { key: 'USD' value: '0.00001' }"
+    options "
+      name_assets: 'Actifs'
+      name_liabilities: 'Passifs'
+    "
   )", R"(
     options {
       name_assets: 'Actifs'
+      name_liabilities: 'Passifs'
       inferred_tolerance_default { key: 'USD' value: '0.00001' }
     }
   )");

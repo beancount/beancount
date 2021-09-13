@@ -37,8 +37,6 @@ Builder::~Builder() {
 // TODO(blais): Review and remove this, this will not be needed once we process
 // all the numbers in a second processing step.
 void Builder::Initialize() {
-  //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
-
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
   //
@@ -374,6 +372,11 @@ void Builder::AddError(std::string_view message, const location& loc) {
 void Builder::ValidateAccountNames() {
   // TODO(blais):
 
+  // accounts_
+
+
+  //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
+
   // Validate the account root names are valid in the options.
 
   //     # Refresh the list of valid account regexps as we go along.
@@ -398,7 +401,6 @@ void Builder::ValidateAccountNames() {
     // return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
     //                                            account.sep,
     //                                            account.ACC_COMP_NAME_RE))
-
 }
 
 void Builder::Finalize(const location& loc) {

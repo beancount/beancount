@@ -183,6 +183,7 @@ namespace parser {
 %token PUSHMETA            /* 'pushmeta' keyword */
 %token POPMETA             /* 'popmeta' keyword */
 %token OPTION              /* 'option' keyword */
+%token OPTIONS             /* 'options' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
 %token NONE        /* A None value (parsed as NULL) */
@@ -376,7 +377,7 @@ option:
   | option_binary
 
 option_unary:
-  OPTION STRING[proto] eol
+  OPTIONS STRING[proto] eol
     {
       builder.AddOptionUnary($proto, @$);
     }
