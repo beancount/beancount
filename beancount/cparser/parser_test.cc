@@ -3198,7 +3198,7 @@ TEST(TestMetaData, MetadataKeySyntax) {
 //------------------------------------------------------------------------------
 // TestArithmetic
 
-TEST(TestArithmetic, number_expr__add) {
+TEST(TestArithmetic, NumberExprAdd) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    12 + 3 USD
@@ -3228,7 +3228,7 @@ TEST(TestArithmetic, number_expr__add) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__subtract) {
+TEST(TestArithmetic, NumberExprSubtract) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    12 - 3 USD
@@ -3257,7 +3257,7 @@ TEST(TestArithmetic, number_expr__subtract) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__multiply) {
+TEST(TestArithmetic, NumberExprMultiply) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    12 * 3 USD
@@ -3285,7 +3285,7 @@ TEST(TestArithmetic, number_expr__multiply) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__divide) {
+TEST(TestArithmetic, NumberExprDivide) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    12 / 3 USD
@@ -3315,7 +3315,7 @@ TEST(TestArithmetic, number_expr__divide) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__negative) {
+TEST(TestArithmetic, NumberExprNegative) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    -12 USD
@@ -3352,7 +3352,7 @@ TEST(TestArithmetic, number_expr__negative) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__positive) {
+TEST(TestArithmetic, NumberExprPositive) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something    +12 USD
@@ -3380,7 +3380,7 @@ TEST(TestArithmetic, number_expr__positive) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__precedence) {
+TEST(TestArithmetic, NumberExprPrecedence) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something   2 * 3 + 4 USD
@@ -3422,7 +3422,7 @@ TEST(TestArithmetic, number_expr__precedence) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__groups) {
+TEST(TestArithmetic, NumberExprGroups) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something   (2 + -3) * 4 USD
@@ -3450,7 +3450,7 @@ TEST(TestArithmetic, number_expr__groups) {
   )");
 }
 
-TEST(TestArithmetic, number_expr__different_places) {
+TEST(TestArithmetic, NumberExprDifferentPlaces) {
   ExpectParse(R"(
     2013-05-18 * "Test"
       Assets:Something   -(3 * 4) HOOL {120.01 * 2.1 USD} @ 134.02 * 2.1 USD
@@ -3553,7 +3553,7 @@ TEST(TestArithmetic, number_expr__different_places) {
 // RuntimeError exception, or a MemoryError exception (if yyparse() ran out of
 // memory), see {459018e2905c}.
 
-TEST(TestLexerAndParserErrors, lexer_invalid_token) {
+TEST(TestLexerAndParserErrors, LexerInvalidToken) {
   ExpectParse(R"(
     2000-01-01 open ) USD
   )", R"(
@@ -3564,7 +3564,7 @@ TEST(TestLexerAndParserErrors, lexer_invalid_token) {
 }
 
 
-TEST(TestLexerAndParserErrors, lexer_invalid_token__recovery) {
+TEST(TestLexerAndParserErrors, LexerInvalidTokenRecovery) {
   ExpectParse(R"(
     2000-01-01 open ) USD
     2000-01-02 open Assets:Something
@@ -3585,7 +3585,7 @@ TEST(TestLexerAndParserErrors, lexer_invalid_token__recovery) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, lexer_exception) {
+TEST(TestLexerAndParserErrors, LexerException) {
   ExpectParse(R"(
     2000-13-32 open Assets:Something
   )", R"(
@@ -3598,7 +3598,7 @@ TEST(TestLexerAndParserErrors, lexer_exception) {
   // function. It should be 'month must be in 1..12'
 }
 
-TEST(TestLexerAndParserErrors, lexer_exception__recovery) {
+TEST(TestLexerAndParserErrors, LexerExceptionRecovery) {
   ExpectParse(R"(
     2000-13-32 open Assets:Something
     2000-01-02 open Assets:Working
@@ -3622,7 +3622,7 @@ TEST(TestLexerAndParserErrors, lexer_exception__recovery) {
   // function. It should be 'month must be in 1..12'
 }
 
-TEST(TestLexerAndParserErrors, lexer_errors_in_postings) {
+TEST(TestLexerAndParserErrors, LexerErrorsInPostings) {
   ExpectParse(R"(
 
     2000-01-02 *
@@ -3679,7 +3679,7 @@ TEST(TestLexerAndParserErrors, lexer_errors_in_postings) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_syntax_error) {
+TEST(TestLexerAndParserErrors, GrammarSyntaxError) {
   ExpectParse(R"(
     2000-01-01 open open
   )", R"(
@@ -3689,7 +3689,7 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery) {
+TEST(TestLexerAndParserErrors, GrammarSyntaxErrorRecovery) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     2000-01-02 open open
@@ -3709,7 +3709,7 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery2) {
+TEST(TestLexerAndParserErrors, GrammarSyntaxErrorRecovery2) {
   ExpectParse(R"(
     2000-01-01 open open
     2000-01-02 open Assets:Something
@@ -3724,7 +3724,7 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery2) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_syntax_error__multiple) {
+TEST(TestLexerAndParserErrors, GrammarSyntaxErrorMultiple) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     2000-01-02 open open
@@ -3753,7 +3753,7 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__multiple) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__pushtag) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPushtag) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     pushtag #sometag
@@ -3774,7 +3774,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__pushtag) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__poptag) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPoptag) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     poptag #sometag
@@ -3794,7 +3794,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__poptag) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__option) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsOption) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     option "operating_currency" "CAD"
@@ -3814,7 +3814,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__option) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__include) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsInclude) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     include "answer.beancount"
@@ -3834,7 +3834,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__include) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__plugin) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPlugin) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     plugin "answer.beancount"
@@ -3854,7 +3854,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__plugin) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__amount) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsAmount) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     2001-02-02 balance Assets:Before    23.00 USD
@@ -3878,7 +3878,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__amount) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__compound_amount) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsCompoundAmount) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     2001-02-02 *
@@ -3918,7 +3918,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__compound_amount) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__lot_cost_date) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsLotCostDate) {
   ExpectParse(R"(
     2000-01-01 open Assets:Before
     2001-02-02 *
@@ -3956,7 +3956,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__lot_cost_date) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__open) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsOpen) {
   ExpectParse(R"(
     2010-01-01 balance Assets:Before  1 USD
     2000-01-01 open Assets:Before
@@ -3980,7 +3980,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__open) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__close) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsClose) {
   ExpectParse(R"(
     2010-01-01 balance Assets:Before  1 USD
     2010-01-01 close Assets:Before
@@ -4004,7 +4004,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__close) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__commodity) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsCommodity) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 commodity USD
@@ -4025,7 +4025,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__commodity) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__pad) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPad) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 pad Assets:Before Assets:After
@@ -4049,7 +4049,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__pad) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__balance) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsBalance) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 balance Assets:Before 100 USD
@@ -4073,7 +4073,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__balance) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__event) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsEvent) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 event "location" "New York, NY"
@@ -4097,7 +4097,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__event) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__price) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPrice) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 price HOOL 20 USD
@@ -4121,7 +4121,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__price) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__note) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsNote) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 note Assets:Before "Something something"
@@ -4145,7 +4145,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__note) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__document) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsDocument) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 document Assets:Before "/path/to/document.png"
@@ -4169,7 +4169,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__document) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__key_value) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsKeyValue) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 commodity HOOL
@@ -4194,7 +4194,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__key_value) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__posting) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsPosting) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 *
@@ -4231,7 +4231,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__posting) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_new) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsTagLinkNew) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 * "Payee" "Narration"
@@ -4270,7 +4270,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_new) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_TAG) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsTagLinkTag) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 * "Payee" "Narration" #sometag
@@ -4310,7 +4310,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_TAG) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_LINK) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsTagLinkLink) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 * "Payee" "Narration" ^somelink
@@ -4350,7 +4350,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_LINK) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_PIPE) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsTagLinkPipe) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 * "Payee" "Narration"
@@ -4389,7 +4389,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_PIPE) {
   )");
 }
 
-TEST(TestLexerAndParserErrors, grammar_exceptions__transaction) {
+TEST(TestLexerAndParserErrors, GrammarExceptionsTransaction) {
   ExpectParse(R"(
     2010-01-01 close Assets:Before
     2010-01-01 * "Payee" "Narration"
@@ -4431,7 +4431,7 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__transaction) {
 //------------------------------------------------------------------------------
 // TestIncompleteInputs
 
-TEST(TestIncompleteInputs, units_full) {
+TEST(TestIncompleteInputs, UnitsFull) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD
@@ -4458,7 +4458,7 @@ TEST(TestIncompleteInputs, units_full) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing) {
+TEST(TestIncompleteInputs, UnitsMissing) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD
@@ -4482,7 +4482,7 @@ TEST(TestIncompleteInputs, units_missing) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_number) {
+TEST(TestIncompleteInputs, UnitsMissingNumber) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD
@@ -4509,7 +4509,7 @@ TEST(TestIncompleteInputs, units_missing_number) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_currency) {
+TEST(TestIncompleteInputs, UnitsMissingCurrency) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD
@@ -4536,7 +4536,7 @@ TEST(TestIncompleteInputs, units_missing_currency) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_with_cost) {
+TEST(TestIncompleteInputs, UnitsMissingWithCost) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     {300.00 USD}
@@ -4562,7 +4562,7 @@ TEST(TestIncompleteInputs, units_missing_with_cost) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_number_with_cost) {
+TEST(TestIncompleteInputs, UnitsMissingNumberWithCost) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1            HOOL {300.00 USD}
@@ -4589,7 +4589,7 @@ TEST(TestIncompleteInputs, units_missing_number_with_cost) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_currency_with_cost) {
+TEST(TestIncompleteInputs, UnitsMissingCurrencyWithCost) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1      10        {300.00 USD}
@@ -4617,7 +4617,7 @@ TEST(TestIncompleteInputs, units_missing_currency_with_cost) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_with_price) {
+TEST(TestIncompleteInputs, UnitsMissingWithPrice) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account2                @ 1.2 USD
@@ -4647,7 +4647,7 @@ TEST(TestIncompleteInputs, units_missing_with_price) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_number_with_price) {
+TEST(TestIncompleteInputs, UnitsMissingNumberWithPrice) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account2            CAD @ 1.2 USD
@@ -4676,7 +4676,7 @@ TEST(TestIncompleteInputs, units_missing_number_with_price) {
   )");
 }
 
-TEST(TestIncompleteInputs, units_missing_currency_with_price) {
+TEST(TestIncompleteInputs, UnitsMissingCurrencyWithPrice) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account2     120.00     @ 1.2 USD
@@ -4709,7 +4709,7 @@ TEST(TestIncompleteInputs, units_missing_currency_with_price) {
 // Price
 //
 
-TEST(TestIncompleteInputs, price_none) {
+TEST(TestIncompleteInputs, PriceNone) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD
@@ -4736,7 +4736,7 @@ TEST(TestIncompleteInputs, price_none) {
   )");
 }
 
-TEST(TestIncompleteInputs, price_missing) {
+TEST(TestIncompleteInputs, PriceMissing) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD @
@@ -4764,7 +4764,7 @@ TEST(TestIncompleteInputs, price_missing) {
   )");
 }
 
-TEST(TestIncompleteInputs, price_missing_number) {
+TEST(TestIncompleteInputs, PriceMissingNumber) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD @ CAD
@@ -4792,7 +4792,7 @@ TEST(TestIncompleteInputs, price_missing_number) {
   )");
 }
 
-TEST(TestIncompleteInputs, price_missing_currency) {
+TEST(TestIncompleteInputs, PriceMissingCurrency) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     100.00 USD @ 1.2
@@ -4824,7 +4824,7 @@ TEST(TestIncompleteInputs, price_missing_currency) {
 // Cost
 //
 
-TEST(TestIncompleteInputs, cost_full) {
+TEST(TestIncompleteInputs, CostFull) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {150 # 5 USD}
@@ -4856,7 +4856,7 @@ TEST(TestIncompleteInputs, cost_full) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_missing_number_per) {
+TEST(TestIncompleteInputs, CostMissingNumberPer) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {# 5 USD}
@@ -4887,7 +4887,7 @@ TEST(TestIncompleteInputs, cost_missing_number_per) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_missing_number_total) {
+TEST(TestIncompleteInputs, CostMissingNumberTotal) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {150 # USD}
@@ -4918,7 +4918,7 @@ TEST(TestIncompleteInputs, cost_missing_number_total) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_no_number_total) {
+TEST(TestIncompleteInputs, CostNoNumberTotal) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {150 USD}
@@ -4949,7 +4949,7 @@ TEST(TestIncompleteInputs, cost_no_number_total) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_missing_numbers) {
+TEST(TestIncompleteInputs, CostMissingNumbers) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {USD}
@@ -4979,7 +4979,7 @@ TEST(TestIncompleteInputs, cost_missing_numbers) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_missing_currency) {
+TEST(TestIncompleteInputs, CostMissingCurrency) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {150}
@@ -5009,7 +5009,7 @@ TEST(TestIncompleteInputs, cost_missing_currency) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_empty) {
+TEST(TestIncompleteInputs, CostEmpty) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {}
@@ -5037,7 +5037,7 @@ TEST(TestIncompleteInputs, cost_empty) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_empty_with_other) {
+TEST(TestIncompleteInputs, CostEmptyWithOther) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
@@ -5068,7 +5068,7 @@ TEST(TestIncompleteInputs, cost_empty_with_other) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_missing_basis) {
+TEST(TestIncompleteInputs, CostMissingBasis) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
@@ -5099,7 +5099,7 @@ TEST(TestIncompleteInputs, cost_missing_basis) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_average) {
+TEST(TestIncompleteInputs, CostAverage) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {*}
@@ -5129,7 +5129,7 @@ TEST(TestIncompleteInputs, cost_average) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_average_missing_basis) {
+TEST(TestIncompleteInputs, CostAverageMissingBasis) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {*, 2015-09-21, "blablabla"}
@@ -5161,7 +5161,7 @@ TEST(TestIncompleteInputs, cost_average_missing_basis) {
   )");
 }
 
-TEST(TestIncompleteInputs, cost_average_with_other) {
+TEST(TestIncompleteInputs, CostAverageWithOther) {
   ExpectParse(R"(
     2010-05-28 *
       Assets:Account1     2 HOOL {*, 100.00 CAD, 2015-09-21, "blablabla"}
@@ -5198,7 +5198,7 @@ TEST(TestIncompleteInputs, cost_average_with_other) {
 //------------------------------------------------------------------------------
 // TestMisc
 
-TEST(TestMisc, comment_in_postings) {
+TEST(TestMisc, CommentInPostings) {
   ExpectParse(R"(
     2017-06-27 * "Bitcoin network fee"
       ; Account: Pocket money
@@ -5227,7 +5227,7 @@ TEST(TestMisc, comment_in_postings) {
   )");
 }
 
-TEST(TestMisc, comment_in_postings_invalid) {
+TEST(TestMisc, CommentInPostingsInvalid) {
   ExpectParse(R"(
     2017-06-27 * "Bitcoin network fee"
       Expenses:Crypto:NetworkFees           0.00082487 BTC
@@ -5256,7 +5256,7 @@ TEST(TestMisc, comment_in_postings_invalid) {
 //------------------------------------------------------------------------------
 // TestDocument
 
-TEST(TestDocument, document_no_tags_links) {
+TEST(TestDocument, DocumentNoTagsLinks) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
   )", R"(
@@ -5270,7 +5270,7 @@ TEST(TestDocument, document_no_tags_links) {
   )");
 }
 
-TEST(TestDocument, document_tags) {
+TEST(TestDocument, DocumentTags) {
   ExpectParse(R"(
     pushtag #something
     2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf" #else
@@ -5288,7 +5288,7 @@ TEST(TestDocument, document_tags) {
   )");
 }
 
-TEST(TestDocument, document_links) {
+TEST(TestDocument, DocumentLinks) {
   ExpectParse(R"(
     2013-05-18 document Assets:US:BestBank:Checking "/statement.pdf" ^something
   )", R"(
