@@ -88,6 +88,16 @@ message ProcessingInfo {
   repeated Plugin plugin = 6;
 }
 
+// Root names for accounts.
+// TODO(blais): Join this with the AccountTypes type.
+message AccountRoots {
+  optional string assets = 1;
+  optional string liabilities = 2;
+  optional string equity = 3;
+  optional string income = 4;
+  optional string expenses = 5;
+}
+
 // Options that are visible to the user and that can be set.
 // Next token: 20
 message Options {
@@ -101,11 +111,8 @@ message Options {
   // Note: This could be turned into its own object, with suitable changes to
   // the options parser. The options parser could simply process proto syntax to
   // support hierarchical settings.
-  optional string name_assets = 1;
-  optional string name_liabilities = 2;
-  optional string name_equity = 3;
-  optional string name_income = 4;
-  optional string name_expenses = 5;
+  optional AccountRoots roots = 1;
+  reserved 2,3,4,5;
 
   //  The title of this ledger / input file. This shows up at the top of every
   //  page. e.g. "Joe Smith's Personal Ledger".

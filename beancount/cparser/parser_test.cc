@@ -1197,15 +1197,31 @@ TEST(TestParserOptions, ReadonlyOption) {
 TEST(TestParserOptions, UnaryOption) {
   ExpectParse(R"(
     options "inferred_tolerance_default { key: 'USD' value: '0.00001' }"
-    options "
-      name_assets: 'Actifs'
-      name_liabilities: 'Passifs'
-    "
+    options "roots {
+      assets: 'Actifs'
+      liabilities: 'Passifs'
+    }"
   )", R"(
     options {
-      name_assets: 'Actifs'
-      name_liabilities: 'Passifs'
+      roots {
+        assets: 'Actifs'
+        liabilities: 'Passifs'
+      }
       inferred_tolerance_default { key: 'USD' value: '0.00001' }
+    }
+  )");
+}
+
+TEST(TestParserOptions, LegacyTranslations) {
+  ExpectParse(R"(
+    option "name_assets" "Actifs"
+    option "name_liabilities" "Passifs"
+  )", R"(
+    options {
+      roots {
+        assets: 'Actifs'
+        liabilities: 'Passifs'
+      }
     }
   )");
 }

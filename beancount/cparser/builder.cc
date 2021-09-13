@@ -47,6 +47,23 @@ void Builder::Initialize() {
 }
 
 void Builder::AddOptionBinary(const string& key, string&& value, const location& loc) {
+  string value_str = std::move(value);
+
+  // Translate legacy option names to proto equivalents.
+  static std::vector<std::pair<string, string>> translations = {
+    {"name_assets",       "roots { assets: '%s' }"},
+    {"name_liabilities",  "roots { liabilities: '%s' }"},
+    {"name_income",       "roots { income: '%s' }"},
+    {"name_expenses",     "roots { expenses: '%s' }"},
+    {"name_equity",       "roots { equity: '%s' }"},
+  };
+  for (const auto& translation : translations) {
+    if (key == translation.first) {
+      value_str = absl::StrFormat(translation.second.c_str(), value_str);
+      return AddOptionUnary(value_str, loc);
+    }
+  }
+
   // Check the options field and get relevant descriptors.
   const auto* descriptor = options_->GetDescriptor();
   const auto* field = descriptor->FindFieldByName(key);
@@ -63,7 +80,6 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
 
   // Preprocess fields which are intended for mappings.
   // This is essentially for backward compatibility for "inferred_tolerance_default".
-  string value_str = std::move(value);
   if (field->is_map()) {
     std::vector<string> components = absl::StrSplit(value_str, ":");
     if (components.size() != 2) {
@@ -72,6 +88,7 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
     }
     value_str = absl::StrFormat("{ key: '%s' value: '%s' }", components[0], components[1]);
   }
+
 
   // Set the field on the options proto.
   if (field->type() == FieldDescriptor::TYPE_STRING) {
