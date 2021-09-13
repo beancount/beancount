@@ -17,7 +17,6 @@
 namespace beancount {
 namespace {
 
-// TODO(blais): When symbol_name() is made public, make a << operator on the symbol_type.
 using std::pair;
 using std::string;
 using std::vector;
@@ -1161,6 +1160,20 @@ TEST(TestParserOptions, OptionListValue) {
   )");
 }
 
+TEST(TestParserOptions, ToleranceMapValue) {
+  ExpectParse(R"(
+    option "inferred_tolerance_default" "*:0"
+    option "inferred_tolerance_default" "USD:0.05"
+    option "inferred_tolerance_default" "JPY:0.5"
+  )", R"(
+    options {
+      inferred_tolerance_default { key: "*" value: "0" }
+      inferred_tolerance_default { key: "JPY" value: "0.5" }
+      inferred_tolerance_default { key: "USD" value: "0.05" }
+    }
+  )");
+}
+
 TEST(TestParserOptions, InvalidOption) {
   ExpectParse(R"(
     option "bladibla_invalid" "Some value"
@@ -1327,23 +1340,6 @@ TEST(TestMiscOptions, PluginProcessingModeInvalid) {
   )", R"(
     errors {
       message: "Could not parse and set option 'plugin_processing_mode' with value 'INVALID'; ignored."
-    }
-  )");
-}
-
-//------------------------------------------------------------------------------
-// TestToleranceOptions
-
-TEST(TestToleranceOptions, InferredToleranceDefault) {
-  ExpectParse(R"(
-    option "inferred_tolerance_default" "*:0"
-    option "inferred_tolerance_default" "USD:0.05"
-    option "inferred_tolerance_default" "JPY:0.5"
-  )", R"(
-    options {
-      inferred_tolerance_default: "*:0"
-      inferred_tolerance_default: "USD:0.05"
-      inferred_tolerance_default: "JPY:0.5"
     }
   )");
 }

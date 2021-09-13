@@ -6,11 +6,12 @@
 
 #include <filesystem>
 
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_split.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/text_format.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_cat.h"
-#include "absl/status/status.h"
 
 namespace beancount {
 namespace parser {
@@ -62,8 +63,19 @@ void Builder::AddOption(const string& key, string&& value, const location& loc) 
     return;
   }
 
-  // Set the field on the options proto.
+  // Preprocess fields which are intended for mappings.
+  // This is essentially for backward compatibility for "inferred_tolerance_default".
   string value_str = std::move(value);
+  if (field->is_map()) {
+    std::vector<string> components = absl::StrSplit(value_str, ":");
+    if (components.size() != 2) {
+      AddError(StrFormat("Invalid format for '%s': '%s'", key, value_str), loc);
+      return;
+    }
+    value_str = absl::StrFormat("{ key: '%s' value: '%s' }", components[0], components[1]);
+  }
+
+  // Set the field on the options proto.
   if (field->type() == FieldDescriptor::TYPE_STRING) {
     value_str = absl::StrCat("\"", absl::CEscape(value_str), "\"");
   }
@@ -72,99 +84,6 @@ void Builder::AddOption(const string& key, string&& value, const location& loc) 
                        key, value_str), loc);
     return;
   }
-
-  // TODO(blais): Handle "inferred_tolerance_default" after review, it's for a
-  // map. They require special handling. This is a map.
-  //
-  //      [Opt("inferred_tolerance_default", {}, "CHF:0.01",
-  //           converter=options_validate_tolerance_map)]),
-
-  // TODO(blais): Do this.
-  // This just requires converted to a Decimal object.
-  //       Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
-  //           converter=D)]),
-  //   ParserError(meta, "Error for option '{}': {}".format(key, exc),
-
-
-    // def option(self, filename, lineno, key, value):
-    //     """Process an option directive.
-
-    //     Args:
-    //       filename: current filename.
-    //       lineno: current line number.
-    //       key: option's key (str)
-    //       value: option's value
-    //     """
-    //     if key not in self.options:
-    //         meta = new_metadata(filename, lineno)
-    //         self.errors.append(
-    //             ParserError(meta, "Invalid option: '{}'".format(key), None))
-
-    //     elif key in options.READ_ONLY_OPTIONS:
-    //         meta = new_metadata(filename, lineno)
-    //         self.errors.append(
-    //             ParserError(meta, "Option '{}' may not be set".format(key), None))
-
-    //     else:
-    //         option_descriptor = options.OPTIONS[key]
-
-    //         # Issue a warning if the option is deprecated.
-    //         if option_descriptor.deprecated:
-    //             assert isinstance(option_descriptor.deprecated, str), "Internal error."
-    //             meta = new_metadata(filename, lineno)
-    //             self.errors.append(
-    //                 DeprecatedError(meta, option_descriptor.deprecated, None))
-
-    //         # Rename the option if it has an alias.
-    //         if option_descriptor.alias:
-    //             key = option_descriptor.alias
-    //             option_descriptor = options.OPTIONS[key]
-
-    //         # Convert the value, if necessary.
-    //         if option_descriptor.converter:
-    //             try:
-    //                 value = option_descriptor.converter(value)
-    //             except ValueError as exc:
-    //                 meta = new_metadata(filename, lineno)
-    //                 self.errors.append(
-    //                     ParserError(meta,
-    //                                 "Error for option '{}': {}".format(key, exc),
-    //                                 None))
-    //                 return
-
-    //         option = self.options[key]
-    //         if isinstance(option, list):
-    //             # Append to a list of values.
-    //             option.append(value)
-
-    //         elif isinstance(option, dict):
-    //             # Set to a dict of values.
-    //             if not (isinstance(value, tuple) and len(value) == 2):
-    //                 self.errors.append(
-    //                     ParserError(
-    //                         meta, "Error for option '{}': {}".format(key, value), None))
-    //                 return
-    //             dict_key, dict_value = value
-    //             option[dict_key] = dict_value
-
-    //         elif isinstance(option, bool):
-    //             # Convert to a boolean.
-    //             if not isinstance(value, bool):
-    //                 value = (value.lower() in {'true', 'on'}) or (value == '1')
-    //             self.options[key] = value
-
-    //         else:
-    //             # Set the value.
-    //             self.options[key] = value
-
-    //         # Refresh the list of valid account regexps as we go along.
-    //         if key.startswith('name_'):
-    //             # Update the set of valid account types.
-    //             self.account_regexp = valid_account_regexp(self.options)
-    //         elif key == 'insert_pythonpath':
-    //             # Insert the PYTHONPATH to this file when and only if you
-    //             # encounter this option.
-    //             sys.path.insert(0, path.dirname(filename))
 }
 
 void Builder::AddInclude(string&& filename) {

@@ -2,6 +2,8 @@
 //
 // A schema for Beancount's options. This is produced by the parser and provided
 // for plugin writers to use.
+//
+// Note: There is no support for options names aliases here.
 
 syntax = "proto2";
 
@@ -86,56 +88,54 @@ message ProcessingInfo {
   repeated Plugin plugin = 6;
 }
 
-// Root names for accounts.
-// TODO(blais): Join this with the AccountTypes type.
-message AccountRoots {
-  optional string assets = 1;
-  optional string liabilities = 2;
-  optional string equity = 3;
-  optional string income = 4;
-  optional string expenses = 5;
-}
-
 // Options that are visible to the user and that can be set.
 // Next token: 20
 message Options {
-  //  The title of this ledger / input file. This shows up at the top of every
-  //  page. e.g. "Joe Smith's Personal Ledger".
-  optional string title = 1;
-
   // Root names of every account. This can be used to customize your category
   // names, so that if you prefer "Revenue" over "Income" or "Capital" over
   // "Equity", you can set them here. The account names in your input files
   // must match, and the parser will validate these. You should place these
   // options at the beginning of your file, because they affect how the parser
   // recognizes account names.
-  optional AccountRoots root = 2;
+  //
+  // Note: This could be turned into its own object, with suitable changes to
+  // the options parser. The options parser could simply process proto syntax to
+  // support hierarchical settings.
+  optional string name_assets = 1;
+  optional string name_liabilities = 2;
+  optional string name_equity = 3;
+  optional string name_income = 4;
+  optional string name_expenses = 5;
+
+  //  The title of this ledger / input file. This shows up at the top of every
+  //  page. e.g. "Joe Smith's Personal Ledger".
+  optional string title = 6;
 
   // Leaf name of the equity account used for summarizing previous transactions
   // into opening balances. e.g. "Opening-Balances".
-  optional string account_previous_balances = 3;
+  optional string account_previous_balances = 7;
 
   // Leaf name of the equity account used for transferring previous retained
   // earnings from income and expenses accrued before the beginning of the
   // exercise into the balance sheet. e.g., "Earnings:Previous".
-  optional string account_previous_earnings = 4;
+  optional string account_previous_earnings = 8;
 
   // Leaf name of the equity account used for inserting conversions that will
   // zero out remaining amounts due to transfers before the opening date. This
   // will essentially "fixup" the basic accounting equation due to the errors
   // that priced conversions introduce. e.g., "Conversions:Previous".
-  optional string account_previous_conversions = 5;
+  optional string account_previous_conversions = 9;
 
   // Leaf name of the equity account used for transferring current retained
   // earnings from income and expenses accrued during the current exercise into
   // the balance sheet. This is most often called "Net Income". e.g.,
   // "Earnings:Current".
-  optional string account_current_earnings = 6;
+  optional string account_current_earnings = 10;
 
   // Leaf name of the equity account used for inserting conversions that will
   // zero out remaining amounts due to transfers during the exercise period.
   // e.g., "Conversions:Current".
-  optional string account_current_conversions = 7;
+  optional string account_current_conversions = 11;
 
   // The name of an account to be used to post unrealized gains to. This is used
   // when making any kind of conversion from cost to price on a balance sheet
@@ -144,19 +144,19 @@ message Options {
   // balance on the sheet. This has no effect on behavior, other than providing
   // a configurable account name for such postings to occur. Its value should
   // not include the root account (e.g., defaults to "Unrealized").
-  optional string account_unrealized_gains = 19;
+  optional string account_unrealized_gains = 12;
 
   // The name of an account to be used to post to and accumulate rounding error.
   // This is unset and this feature is disabled by default; setting this value
   // to an account name will automatically enable the addition of postings on
   // all transactions that have a residual amount. e.g., "Rounding".
-  optional string account_rounding = 8;
+  optional string account_rounding = 13;
 
   // The imaginary currency used to convert all units for conversions at a
   // degenerate rate of zero. This can be any currency name that isn't used in
   // the rest of the ledger. Choose something unique that makes sense in your
   // language. e.g., "NOTHING".
-  optional string conversion_currency = 9;
+  optional string conversion_currency = 14;
 
   // Mappings of currency to the tolerance used when it cannot be inferred
   // automatically. The tolerance at hand is the one used for verifying (1)
@@ -178,10 +178,7 @@ message Options {
   // http://furius.ca/beancount/doc/tolerances.
   //
   // e.g., "CHF:0.01".
-
-  // TODO(blais): This needs review, and possibly merging with display context.
-  // This is actually a mapping.
-  repeated string inferred_tolerance_default = 10;
+  map<string, string> inferred_tolerance_default = 15;
 
   // A multiplier for inferred tolerance values.
   //
@@ -204,7 +201,7 @@ message Options {
   // http://furius.ca/beancount/doc/tolerances
   //
   // e.g., "0.5"
-  optional string inferred_tolerance_multiplier = 11;
+  optional string inferred_tolerance_multiplier = 16;
 
   // Enable a feature that expands the maximum tolerance inferred on
   // transactions to include values on cost currencies inferred by postings
@@ -219,13 +216,13 @@ message Options {
   // All the normally inferred tolerances (see
   // http://furius.ca/beancount/doc/tolerances) are still taken into account.
   // Enabling this flag only makes the tolerances potentially wider.
-  optional bool infer_tolerance_from_cost = 12;
+  optional bool infer_tolerance_from_cost = 17;
 
   // A list of directory roots, relative to the CWD, which should be searched
   // for document files. For the document files to be automatically found they
   // must have the following filename format: YYYY-MM-DD.(.*).
   // e.g., "/path/to/your/documents/archive"
-  repeated string documents = 13;
+  repeated string documents = 18;
 
   // A list of currencies that we single out during reporting and create
   // dedicated columns for. This is used to indicate the main currencies that
@@ -244,11 +241,11 @@ message Options {
   // each desired operating currency.
   //
   // e.g., "USD".
-  repeated string operating_currency = 14;
+  repeated string operating_currency = 19;
 
   // A boolean, true if the number formatting routines should output commas
   // as thousand separators in numbers.
-  optional bool render_commas = 15;
+  optional bool render_commas = 20;
 
   // A string that defines which set of plugins is to be run by the loader: if
   // the mode is "default", a preset list of plugins are automatically run
@@ -264,7 +261,7 @@ message Options {
     DEFAULT = 0;
     RAW = 1;
   }
-  optional ProcessingMode plugin_processing_mode = 16;
+  optional ProcessingMode plugin_processing_mode = 21;
 
   // The booking method to apply to ambiguous reductions of inventory lots.
   // When a posting is matched against the contents of an account's inventory
@@ -279,9 +276,9 @@ message Options {
   // http://furius.ca/beancount/doc/proposal-booking
   //
   // e.g., STRICT
-  optional Booking booking_method = 17;
+  optional Booking booking_method = 22;
 
   // A boolean, if true, prepend the directory name of the top-level file to
   // the PYTHONPATH.
-  optional bool insert_pythonpath = 18;
+  optional bool insert_pythonpath = 23;
 }
