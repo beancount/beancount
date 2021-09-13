@@ -3568,29 +3568,39 @@ TEST(TestLexerAndParserErrors, lexer_invalid_token) {
   )");
 }
 
-#if 0
 
 TEST(TestLexerAndParserErrors, lexer_invalid_token__recovery) {
   ExpectParse(R"(
     2000-01-01 open ) USD
     2000-01-02 open Assets:Something
   )", R"(
+    directives {
+      date {
+        year: 2000
+        month: 1
+        day: 2
+      }
+      open {
+        account: "Assets:Something"
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected RPAREN, expecting ACCOUNT"
+    }
   )");
-        // self.assertEqualEntries("""
-        //   2000-01-02 open Assets:Something
-        // """, entries)
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 }
 
 TEST(TestLexerAndParserErrors, lexer_exception) {
   ExpectParse(R"(
     2000-13-32 open Assets:Something
   )", R"(
+    errors {
+      message: "Syntax error, unexpected invalid token"
+    }
   )");
-        self.assertEqual(0, len(entries))
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, 'month must be in 1..12')
+  // TODO(blais): This does trigger a date error via YYUNDEF, but somehow I
+  // haven't been able to surface the error message through parse.rcc's logging
+  // function. It should be 'month must be in 1..12'
 }
 
 TEST(TestLexerAndParserErrors, lexer_exception__recovery) {
@@ -3598,13 +3608,23 @@ TEST(TestLexerAndParserErrors, lexer_exception__recovery) {
     2000-13-32 open Assets:Something
     2000-01-02 open Assets:Working
   )", R"(
+    directives {
+      date {
+        year: 2000
+        month: 1
+        day: 2
+      }
+      open {
+        account: "Assets:Working"
+      }
+    }
+    errors {
+      message: "Syntax error, unexpected invalid token"
+    }
   )");
-        // self.assertEqualEntries("""
-        //   2000-01-02 open Assets:Working
-        // """, entries)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(1, len(errors))
-        // self.assertRegex(errors[0].message, 'month must be in 1..12')
+  // TODO(blais): This does trigger a date error via YYUNDEF, but somehow I
+  // haven't been able to surface the error message through parse.rcc's logging
+  // function. It should be 'month must be in 1..12'
 }
 
 TEST(TestLexerAndParserErrors, lexer_errors_in_postings) {
@@ -3641,32 +3661,37 @@ TEST(TestLexerAndParserErrors, lexer_errors_in_postings) {
       Assets:Working  )
 
   )", R"(
-  )");
-        self.assertEqual(6, len(txn_strings))
-        for txn_string in txn_strings:
-            // input_string = txn_string + textwrap.dedent("""
-            //   2000-01-02 open Assets:Working
-            // """)
-            entries, errors, _ = parser.parse_string(input_string)
+    # Note: no transaction is produced.
 
-            # Check that the transaction is not produced.
-            // self.assertEqualEntries("""
-            //   2000-01-02 open Assets:Working
-            // """, entries)
-            self.assertEqual(1, len(entries))
-            self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message,
-                             // '(Invalid token|unexpected RPAREN)')
+    errors {
+      message: "Syntax error, unexpected invalid token, expecting EOL or ATAT or AT"
+    }
+    errors {
+      message: "Syntax error, unexpected invalid token, expecting EOL or ATAT or AT"
+    }
+    errors {
+      message: "Syntax error, unexpected invalid token, expecting EOL or ATAT or AT"
+    }
+    errors {
+      message: "Syntax error, unexpected RPAREN, expecting EOL or ATAT or AT"
+    }
+    errors {
+      message: "Syntax error, unexpected RPAREN, expecting EOL or ATAT or AT"
+    }
+    errors {
+      message: "Syntax error, unexpected RPAREN, expecting EOL or ATAT or AT"
+    }
+  )");
 }
 
 TEST(TestLexerAndParserErrors, grammar_syntax_error) {
   ExpectParse(R"(
     2000-01-01 open open
   )", R"(
+    errors {
+      message: "Syntax error, unexpected OPEN, expecting ACCOUNT"
+    }
   )");
-        self.assertEqual(0, len(entries))
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, r"syntax error")
 }
 
 TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery) {
@@ -3675,13 +3700,18 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery) {
     2000-01-02 open open
     2000-01-03 open Assets:After
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 3 }
+      open { account: "Assets:After" }
+    }
+    errors {
+      message: "Syntax error, unexpected OPEN, expecting ACCOUNT"
+    }
   )");
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, r"syntax error")
-        // self.assertEqualEntries("""
-        //   2000-01-01 open Assets:Before
-        //   2000-01-03 open Assets:After
-        // """, entries)
 }
 
 TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery2) {
@@ -3689,13 +3719,14 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__recovery2) {
     2000-01-01 open open
     2000-01-02 open Assets:Something
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 2 }
+      open { account: "Assets:Something" }
+    }
+    errors {
+      message: "Syntax error, unexpected OPEN, expecting ACCOUNT"
+    }
   )");
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, r"syntax error")
-        self.assertEqual(1, len(entries))
-        // self.assertEqualEntries("""
-        //   2000-01-02 open Assets:Something
-        // """, entries)
 }
 
 TEST(TestLexerAndParserErrors, grammar_syntax_error__multiple) {
@@ -3706,16 +3737,25 @@ TEST(TestLexerAndParserErrors, grammar_syntax_error__multiple) {
     2000-01-04 close close
     2000-01-05 close Assets:After
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 3 }
+      open { account: "Assets:After" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 5 }
+      close { account: "Assets:After" }
+    }
+    errors {
+      message: "Syntax error, unexpected OPEN, expecting ACCOUNT"
+    }
+    errors {
+      message: "Syntax error, unexpected CLOSE, expecting ACCOUNT"
+    }
   )");
-        self.assertEqual(2, len(errors))
-        for error in errors:
-            self.assertRegex(error.message, r"syntax error")
-        self.assertEqual(3, len(entries))
-        // self.assertEqualEntries("""
-        //   2000-01-01 open Assets:Before
-        //   2000-01-03 open Assets:After
-        //   2000-01-05 close Assets:After
-        // """, entries)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__pushtag) {
@@ -3724,8 +3764,19 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__pushtag) {
     pushtag #sometag
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      tags: "sometag"
+      close { account: "Assets:Before" }
+    }
+    errors {
+      message: "Unbalanced pushed tag: \'sometag\'"
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__poptag) {
@@ -3734,8 +3785,18 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__poptag) {
     poptag #sometag
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    errors {
+      message: "Attempting to pop absent tag: \'sometag\'"
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__option) {
@@ -3744,8 +3805,18 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__option) {
     option "operating_currency" "CAD"
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    options {
+      operating_currency: "CAD"
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__include) {
@@ -3754,8 +3825,18 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__include) {
     include "answer.beancount"
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    info {
+      include: "answer.beancount"
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__plugin) {
@@ -3764,8 +3845,18 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__plugin) {
     plugin "answer.beancount"
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    info {
+      plugin { name: "answer.beancount" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__amount) {
@@ -3774,8 +3865,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__amount) {
     2001-02-02 balance Assets:Before    23.00 USD
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2001 month: 2 day: 2 }
+      balance {
+        account: "Assets:Before"
+        amount { number { exact: "23.00" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__compound_amount) {
@@ -3786,8 +3891,36 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__compound_amount) {
       Assets:After   -100.00 USD
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2001 month: 2 day: 2 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "10.00" } currency: "HOOL" }
+            cost { number_per { exact: "100.00" }
+                   number_total { exact: "9.95" }
+                   currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__lot_cost_date) {
@@ -3798,8 +3931,34 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__lot_cost_date) {
       Assets:After   -100.00 USD
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2001 month: 2 day: 2 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "10.00" } currency: "HOOL" }
+            cost { number_per { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__open) {
@@ -3808,8 +3967,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__open) {
     2000-01-01 open Assets:Before
     2010-01-01 close Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      balance {
+        account: "Assets:Before"
+        amount { number { exact: "1" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__close) {
@@ -3818,8 +3991,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__close) {
     2010-01-01 close Assets:Before
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      balance {
+        account: "Assets:Before"
+        amount { number { exact: "1" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__commodity) {
@@ -3828,8 +4015,19 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__commodity) {
     2010-01-01 commodity USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      commodity { currency: "USD" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__pad) {
@@ -3838,8 +4036,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__pad) {
     2010-01-01 pad Assets:Before Assets:After
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      pad {
+        account: "Assets:Before"
+        source_account: "Assets:After"
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__balance) {
@@ -3848,8 +4060,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__balance) {
     2010-01-01 balance Assets:Before 100 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      balance {
+        account: "Assets:Before"
+        amount { number { exact: "100" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__event) {
@@ -3858,8 +4084,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__event) {
     2010-01-01 event "location" "New York, NY"
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      event {
+        type: "location"
+        description: "New York, NY"
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__price) {
@@ -3868,8 +4108,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__price) {
     2010-01-01 price HOOL 20 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      price {
+        currency: "HOOL"
+        amount { number { exact: "20" } currency: "USD" }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__note) {
@@ -3878,8 +4132,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__note) {
     2010-01-01 note Assets:Before "Something something"
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      note {
+        account: "Assets:Before"
+        comment: "Something something"
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__document) {
@@ -3888,8 +4156,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__document) {
     2010-01-01 document Assets:Before "/path/to/document.png"
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      document {
+        account: "Assets:Before"
+        filename: "/path/to/document.png"
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__key_value) {
@@ -3899,8 +4181,22 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__key_value) {
       key: "Value"
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      meta {
+        kv { key: "key" value { text: "Value" } }
+      }
+      commodity { currency: "HOOL" }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__posting) {
@@ -3911,8 +4207,33 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__posting) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_new) {
@@ -3923,8 +4244,35 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_new) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_TAG) {
@@ -3935,8 +4283,36 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_TAG) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      tags: "sometag"
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_LINK) {
@@ -3947,8 +4323,36 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_LINK) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      links: "somelink"
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
 
 TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_PIPE) {
@@ -3959,6 +4363,34 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__tag_link_PIPE) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
 }
 
@@ -3970,9 +4402,41 @@ TEST(TestLexerAndParserErrors, grammar_exceptions__transaction) {
       Assets:After   -100.00 USD
     2000-01-01 open Assets:Before
   )", R"(
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      close { account: "Assets:Before" }
+    }
+    directives {
+      date { year: 2010 month: 1 day: 1 }
+      transaction {
+        flag: "*"
+        payee: "Payee"
+        narration: "Narration"
+        postings {
+          account: "Assets:Before"
+          spec {
+            units { number { exact: "100.00" } currency: "USD" }
+          }
+        }
+        postings {
+          account: "Assets:After"
+          spec {
+            units { number { exact: "-100.00" } currency: "USD" }
+          }
+        }
+      }
+    }
+    directives {
+      date { year: 2000 month: 1 day: 1 }
+      open { account: "Assets:Before" }
+    }
   )");
-        // self.check_entries_errors(entries, errors)
 }
+
+
+
+
+#if 0
 
 //------------------------------------------------------------------------------
 // TestIncompleteInputs
