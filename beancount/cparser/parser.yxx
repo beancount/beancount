@@ -969,8 +969,12 @@ price_annotation:
   partial_amount
     {
       $$ = new inter::PriceSpec();
-      $$->mutable_number()->CopyFrom($partial_amount->number());
-      $$->set_currency($partial_amount->currency());
+      if ($partial_amount->has_number()) {
+        $$->mutable_number()->CopyFrom($partial_amount->number());
+      }
+      if ($partial_amount->has_currency()) {
+        $$->set_currency($partial_amount->currency());
+      }
 
       // Prices may not be negative. Check and issue an error if found; fix up
       // the price to its absolute value and continue.

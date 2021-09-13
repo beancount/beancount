@@ -4639,13 +4639,12 @@ TEST(TestIncompleteInputs, units_missing_with_price) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number {} currency: "" }
+            price {}
           }
         }
       }
     }
   )");
-  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, units_missing_number_with_price) {
@@ -4669,13 +4668,12 @@ TEST(TestIncompleteInputs, units_missing_number_with_price) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number {} currency: "" }
+            price {}
           }
         }
       }
     }
   )");
-  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, units_missing_currency_with_price) {
@@ -4699,13 +4697,12 @@ TEST(TestIncompleteInputs, units_missing_currency_with_price) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number {} currency: "" }
+            price {}
           }
         }
       }
     }
   )");
-  // TODO(blais): Fix price.
 }
 
 //
@@ -4753,7 +4750,7 @@ TEST(TestIncompleteInputs, price_missing) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number {} currency: "" }
+            price {}
           }
         }
         postings {
@@ -4765,7 +4762,6 @@ TEST(TestIncompleteInputs, price_missing) {
       }
     }
   )");
-  // TODO(blais): Fix price.
 }
 
 TEST(TestIncompleteInputs, price_missing_number) {
@@ -4782,7 +4778,7 @@ TEST(TestIncompleteInputs, price_missing_number) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number {} currency: "CAD" }
+            price { currency: "CAD" }
           }
         }
         postings {
@@ -4794,7 +4790,6 @@ TEST(TestIncompleteInputs, price_missing_number) {
       }
     }
   )");
-  // TODO(blais): Fix price number.
 }
 
 TEST(TestIncompleteInputs, price_missing_currency) {
@@ -4811,7 +4806,7 @@ TEST(TestIncompleteInputs, price_missing_currency) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "100.00" } currency: "USD" }
-            price { number { exact: "1.2" } currency: "" }
+            price { number { exact: "1.2" } }
           }
         }
         postings {
@@ -4823,7 +4818,6 @@ TEST(TestIncompleteInputs, price_missing_currency) {
       }
     }
   )");
-  // TODO(blais): Fix price.
 }
 
 //
