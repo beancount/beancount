@@ -105,7 +105,9 @@ py::list TestProtoConversion(const Ledger& ledger) {
     dirlist.append(msg);
   }
   absl::Time t2 = absl::Now(); // ~20-25ms
-  std::cerr << "TestProtoConversion time=" << t2 - t1 << std::endl;
+  (void)t1;
+  (void)t2;
+  ///std::cerr << "TestProtoConversion time=" << t2 - t1 << std::endl;
   return dirlist;
 }
 
