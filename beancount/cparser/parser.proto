@@ -16,6 +16,24 @@ package beancount.inter;
 import 'beancount/ccore/number.proto';
 import 'beancount/ccore/date.proto';
 
+// Arithmetic expressions to be evaluated later with Decimal context.
+message Expr {
+  optional Op op = 1;
+  optional Expr arg1 = 2;
+  optional Expr arg2 = 3;
+}
+
+// Operators of expressions.
+enum Op {
+  NOOP = 0;
+  ADD = 1;
+  SUB = 2;
+  MUL = 3;
+  DIV = 4;
+  NEG = 5;
+  PLUS = 6;
+}
+
 // A container for all the parser specs produced on a posting.
 // These are the objects that directly represent the parsed input yet to be
 // interpolated and booked.
@@ -33,13 +51,11 @@ message Spec {
   optional PriceSpec price = 10;
 }
 
-// TODO(blais): Add ArithExpr to replace beancount.Number.
-
 // A unit specification. This is like `Amount`, except that either the number or
 // currency can be missing.
 message UnitSpec {
   // TODO(blais): Convert to ArithExpr.
-  optional beancount.Number number = 1;
+  optional Expr expr = 1;
   optional string currency = 2;
 }
 
@@ -47,7 +63,7 @@ message UnitSpec {
 // number or currency can be missing.
 message PriceSpec {
   // TODO(blais): Convert to ArithExpr.
-  optional beancount.Number number = 1;
+  optional Expr expr = 1;
   optional string currency = 2;
 
   // A flag that determines whether the expression above refers to a per-unit
@@ -61,10 +77,10 @@ message PriceSpec {
 message CostSpec {
   // A decimal number, exclusive the per-unit cost.
   // TODO(blais): Rename this to number_per_unit; it's been annoying.
-  optional beancount.Number number_per = 1;
+  optional Expr expr_per = 1;
 
   // A decimal number, the total cost/price.
-  optional beancount.Number number_total = 2;
+  optional Expr expr_total = 2;
 
   // A string, the commodity of the cost.
   optional string currency = 3;
