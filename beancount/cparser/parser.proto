@@ -19,19 +19,20 @@ import 'beancount/ccore/date.proto';
 // Arithmetic expressions to be evaluated later with Decimal context.
 message Expr {
   optional Op op = 1;
-  optional Expr arg1 = 2;
-  optional Expr arg2 = 3;
+  optional beancount.Number number = 2;
+  optional Expr arg1 = 3;
+  optional Expr arg2 = 4;
 }
 
 // Operators of expressions.
 enum Op {
-  NOOP = 0;
+  SELF = 0;
   ADD = 1;
   SUB = 2;
   MUL = 3;
   DIV = 4;
-  NEG = 5;
-  PLUS = 6;
+  NEG = 5; // Unary
+  PLUS = 6; // Unary
 }
 
 // A container for all the parser specs produced on a posting.
