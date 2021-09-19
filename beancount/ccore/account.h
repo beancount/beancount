@@ -22,7 +22,7 @@ extern const char* kSep;
 
 // Regular expression string that matches a valid account.
 // TODO(blais): Can I bury this?
-extern RE2 kAccountRE;
+extern re2::RE2 kAccountRE;
 
 // Return true if the given string is a valid account name.
 // This does not check for the root account types, just the general syntax.

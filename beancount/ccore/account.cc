@@ -30,8 +30,8 @@ const char* kAccountCompTypeRe = "[\\p{Lu}][\\p{L}\\p{Nd}\\-]*";
 const char* kAccountCompNameRe = "[\\p{Lu}\\p{Nd}][\\p{L}\\p{Nd}\\-]*";
 
 // Regular expression string that matches a valid account.
-RE2 kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
-                               kAccountCompTypeRe, kSep, kAccountCompNameRe));
+re2::RE2 kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
+                                    kAccountCompTypeRe, kSep, kAccountCompNameRe));
 
 // TODO(blais): Remove this.
 // A dummy object which stands for the account type. Values in custom directives
@@ -39,7 +39,7 @@ RE2 kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
 // TYPE = '<AccountDummy>'
 
 bool IsAccountValid(string_view account) {
-  return RE2::FullMatch(account, kAccountRE);
+  return re2::RE2::FullMatch(account, kAccountRE);
 }
 
 string JoinAccount(const vector<string_view>& il) {
@@ -91,7 +91,7 @@ string_view AccountRoot(string_view account, int num_components) {
 }
 
 bool HasAccountComponent(string_view account, string_view component) {
-  return RE2::PartialMatch(account, absl::StrCat("(^|:)", component, "(:|$)"));
+  return re2::RE2::PartialMatch(account, absl::StrCat("(^|:)", component, "(:|$)"));
 }
 
 string CommonPrefix(const vector<string_view>& accounts) {

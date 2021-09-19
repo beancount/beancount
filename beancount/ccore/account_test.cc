@@ -20,8 +20,8 @@ using std::vector;
 
 TEST(TestAccount, AccountRegexp) {
   EXPECT_TRUE(beancount::kAccountRE.ok());
-  EXPECT_TRUE(RE2::FullMatch("Assets:Something", kAccountRE));
-  EXPECT_FALSE(RE2::FullMatch("assets:Something", kAccountRE));
+  EXPECT_TRUE(re2::RE2::FullMatch("Assets:Something", kAccountRE));
+  EXPECT_FALSE(re2::RE2::FullMatch("assets:Something", kAccountRE));
 }
 
 TEST(TestAccount, IsAccountValid) {
