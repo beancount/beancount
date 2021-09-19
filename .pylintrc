@@ -63,6 +63,7 @@ disable=locally-disabled,
   bad-continuation,
   inherit-non-class,
   consider-using-with,
+  consider-using-f-string,
   unspecified-encoding
 
 [BASIC]
