@@ -58,6 +58,8 @@ cc_library(
         ":options_cc_proto",
         ":ledger",
         "//beancount/ccore:std_utils",
+        "//beancount/ccore:account_types",
+        "//beancount/ccore:account",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@mpdecimal//:mpdecimal",

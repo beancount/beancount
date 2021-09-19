@@ -10,6 +10,8 @@
 #ifndef BEANCOUNT_CCORE_ACCOUNT_H_
 #define BEANCOUNT_CCORE_ACCOUNT_H_
 
+#include "beancount/cparser/options.pb.h"
+
 #include "re2/re2.h"
 
 #include <vector>
@@ -23,6 +25,10 @@ extern const char* kSep;
 // Regular expression string that matches a valid account.
 // TODO(blais): Can I bury this?
 extern re2::RE2 kAccountRE;
+
+// Build a regular expression string that matches a valid account, taking into
+// account the account types.
+re2::RE2 BuildAccountRegexp(const options::AccountTypes& acctypes);
 
 // Return true if the given string is a valid account name.
 // This does not check for the root account types, just the general syntax.

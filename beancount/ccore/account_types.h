@@ -21,7 +21,7 @@
 namespace beancount {
 
 // Default values for root accounts.
-extern AccountTypes kDefaultAccountTypes;
+extern options::AccountTypes kDefaultAccountTypes;
 
 // Return the type of this account's name.
 //
@@ -30,7 +30,7 @@ extern AccountTypes kDefaultAccountTypes;
 std::string_view GetAccountType(std::string_view account_name);
 
 // Return a tuple that can be used to order/sort account names.
-std::pair<int, std::string_view> GetAccountSortKey(const AccountTypes& account_types,
+std::pair<int, std::string_view> GetAccountSortKey(const options::AccountTypes& account_types,
                                                    std::string_view account_name);
 
 // Return the type of this account's name.
@@ -47,24 +47,27 @@ bool IsRootAccount(std::string_view account_name);
 
 // Return true if the given account is a balance sheet account.
 // Assets, liabilities and equity accounts are balance sheet accounts.
-bool IsBalanceSheetAccount(std::string_view account_name, const AccountTypes& account_types);
+bool IsBalanceSheetAccount(std::string_view account_name, const options::AccountTypes& account_types);
 
 
 // Return true if the given account is an income statement account.
 // Income and expense accounts are income statement accounts.
-bool IsIncomeStatementAccount(std::string_view account_name, const AccountTypes& account_types);
+bool IsIncomeStatementAccount(std::string_view account_name, const options::AccountTypes& account_types);
 
 // Return true if the given account is an equity account.
-bool IsEquityAccount(std::string_view account_name, const AccountTypes& account_types);
+bool IsEquityAccount(std::string_view account_name, const options::AccountTypes& account_types);
 
 // Return true if the given account has inverted signs. An inverted sign is the
 // inverse as you'd expect in an external report, i.e., with all positive signs
 // expected.
-bool IsInvertedAccount(std::string_view account_name, const AccountTypes& account_types);
+bool IsInvertedAccount(std::string_view account_name, const options::AccountTypes& account_types);
 
 // Return the sign of the normal balance of a particular account. +1 or -1,
 // depending on the account's type.
-int GetAccountSign(std::string_view account_name, const AccountTypes& account_types);
+int GetAccountSign(std::string_view account_name, const options::AccountTypes& account_types);
+
+// Set the default account types on the given object if missing.
+void SetDefaultAccountTypes(options::AccountTypes* acctypes);
 
 }  // namespace beancount
 

@@ -1,4 +1,7 @@
 #include "beancount/cparser/builder.h"
+
+#include "beancount/ccore/account.h"
+#include "beancount/ccore/account_types.h"
 #include "beancount/ccore/std_utils.h"
 
 #include <filesystem>
@@ -50,11 +53,11 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
 
   // Translate legacy option names to proto equivalents.
   static std::vector<std::pair<string, string>> translations = {
-    {"name_assets",       "roots { assets: '%s' }"},
-    {"name_liabilities",  "roots { liabilities: '%s' }"},
-    {"name_income",       "roots { income: '%s' }"},
-    {"name_expenses",     "roots { expenses: '%s' }"},
-    {"name_equity",       "roots { equity: '%s' }"},
+    {"name_assets",       "account_types { assets: '%s' }"},
+    {"name_liabilities",  "account_types { liabilities: '%s' }"},
+    {"name_income",       "account_types { income: '%s' }"},
+    {"name_expenses",     "account_types { expenses: '%s' }"},
+    {"name_equity",       "account_types { equity: '%s' }"},
   };
   for (const auto& translation : translations) {
     if (key == translation.first) {
@@ -400,32 +403,10 @@ void Builder::AddError(std::string_view message, const location& loc) {
   SetLocationFromLocation(loc, error->mutable_location());
 }
 
-static const char* kAccCompNameRE = "[A-Z][A-Za-z0-9-]*"; // "[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*";
-
-// Set default values for account roots.
-void SetAccountRootsDefaults(options::AccountRoots* roots) {
-  if (roots->assets().empty()) roots->set_assets("Assets");
-  if (roots->liabilities().empty()) roots->set_liabilities("Liabilities");
-  if (roots->equity().empty()) roots->set_equity("Equity");
-  if (roots->income().empty()) roots->set_income("Income");
-  if (roots->expenses().empty()) roots->set_expenses("Expenses");
-}
-
-// Build up an account regular expression.
-re2::RE2 BuildAccountRE(const options::AccountRoots& roots) {
-  const string root_names_re = absl::StrJoin({
-      roots.assets(),
-      roots.liabilities(),
-      roots.equity(),
-      roots.income(),
-      roots.expenses()}, "|");
-  return re2::RE2(StrFormat("(%s)(:%s)+", root_names_re, kAccCompNameRE));
-}
-
 void Builder::ValidateAccountNames() {
-  auto roots = options_->roots();
-  SetAccountRootsDefaults(&roots);
-  re2::RE2 account_re = BuildAccountRE(roots);
+  auto acctypes = options_->account_types();
+  SetDefaultAccountTypes(&acctypes);
+  re2::RE2 account_re = BuildAccountRegexp(acctypes);
   for (const auto& item : accounts_) {
     if (!re2::RE2::FullMatch(item.first, account_re)) {
       AddError(StrFormat("Invalid account name: '%s'", item.first), item.second);

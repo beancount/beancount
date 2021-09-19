@@ -1193,13 +1193,13 @@ TEST(TestParserOptions, ReadonlyOption) {
 TEST(TestParserOptions, UnaryOption) {
   ExpectParse(R"(
     options "inferred_tolerance_default { key: 'USD' value: '0.00001' }"
-    options "roots {
+    options "account_types {
       assets: 'Actifs'
       liabilities: 'Passifs'
     }"
   )", R"(
     options {
-      roots {
+      account_types {
         assets: 'Actifs'
         liabilities: 'Passifs'
       }
@@ -1214,7 +1214,7 @@ TEST(TestParserOptions, LegacyTranslations) {
     option "name_liabilities" "Passifs"
   )", R"(
     options {
-      roots {
+      account_types {
         assets: 'Actifs'
         liabilities: 'Passifs'
       }
@@ -1236,7 +1236,7 @@ TEST(TestParserOptions, InvalidAccountNames) {
       message: "Invalid account name: \'Assets:US:Checking\'"
     }
     options {
-      roots {
+      account_types {
         assets: 'Actifs'
         liabilities: 'Passifs'
       }

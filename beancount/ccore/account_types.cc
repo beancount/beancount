@@ -12,6 +12,7 @@ namespace beancount {
 using std::string_view;
 using std::string;
 using std::pair;
+using options::AccountTypes;
 
 // Default values for root accounts.
 const char* kAssets = "Assets";
@@ -31,6 +32,14 @@ AccountTypes GetDefaultAccountTypes() {
 };
 
 AccountTypes kDefaultAccountTypes = GetDefaultAccountTypes();
+
+void SetDefaultAccountTypes(AccountTypes* acctypes) {
+  if (acctypes->assets().empty())       acctypes->set_assets(kAssets);
+  if (acctypes->liabilities().empty())  acctypes->set_liabilities(kLiabilities);
+  if (acctypes->equity().empty())       acctypes->set_equity(kEquity);
+  if (acctypes->income().empty())       acctypes->set_income(kIncome);
+  if (acctypes->expenses().empty())     acctypes->set_expenses(kExpenses);
+}
 
 string_view GetAccountType(string_view account) {
   return *absl::StrSplit(account, kSep).begin();

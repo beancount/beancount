@@ -29,7 +29,8 @@ const char* kSep = ":";
 const char* kAccountCompTypeRe = "[\\p{Lu}][\\p{L}\\p{Nd}\\-]*";
 const char* kAccountCompNameRe = "[\\p{Lu}\\p{Nd}][\\p{L}\\p{Nd}\\-]*";
 
-// Regular expression string that matches a valid account.
+// Regular expression string that matches a valid account, not taking into
+// account the account types.
 re2::RE2 kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
                                     kAccountCompTypeRe, kSep, kAccountCompNameRe));
 
@@ -37,6 +38,17 @@ re2::RE2 kAccountRE(absl::StrFormat("(?:%s)(?:%s%s)+",
 // A dummy object which stands for the account type. Values in custom directives
 // use this to disambiguate between string objects and account names.
 // TYPE = '<AccountDummy>'
+
+re2::RE2 BuildAccountRegexp(const options::AccountTypes& acctypes) {
+  const string names_re = absl::StrJoin({
+      acctypes.assets(),
+      acctypes.liabilities(),
+      acctypes.equity(),
+      acctypes.income(),
+      acctypes.expenses()}, "|");
+  return re2::RE2(absl::StrFormat("(?:%s)(?:%s%s)+",
+                                  names_re, kSep, kAccountCompNameRe));
+}
 
 bool IsAccountValid(string_view account) {
   return re2::RE2::FullMatch(account, kAccountRE);

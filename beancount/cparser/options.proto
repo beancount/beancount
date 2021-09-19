@@ -88,9 +88,8 @@ message ProcessingInfo {
   repeated Plugin plugin = 6;
 }
 
-// Root names for accounts.
-// TODO(blais): Join this with the AccountTypes type.
-message AccountRoots {
+// Container for account types.
+message AccountTypes {
   optional string assets = 1;
   optional string liabilities = 2;
   optional string equity = 3;
@@ -107,11 +106,7 @@ message Options {
   // must match, and the parser will validate these. You should place these
   // options at the beginning of your file, because they affect how the parser
   // recognizes account names.
-  //
-  // Note: This could be turned into its own object, with suitable changes to
-  // the options parser. The options parser could simply process proto syntax to
-  // support hierarchical settings.
-  optional AccountRoots roots = 1;
+  optional AccountTypes account_types = 1;
   reserved 2,3,4,5;
 
   //  The title of this ledger / input file. This shows up at the top of every
@@ -225,10 +220,10 @@ message Options {
   // Enabling this flag only makes the tolerances potentially wider.
   optional bool infer_tolerance_from_cost = 17;
 
-  // A list of directory roots, relative to the CWD, which should be searched
-  // for document files. For the document files to be automatically found they
-  // must have the following filename format: YYYY-MM-DD.(.*).
-  // e.g., "/path/to/your/documents/archive"
+  // A list of directory, relative to the CWD, which should be searched
+  // recursively for document files. For the document files to be automatically
+  // found they must have the following filename format: YYYY-MM-DD.(.*). e.g.,
+  // "/path/to/your/documents/archive"
   repeated string documents = 18;
 
   // A list of currencies that we single out during reporting and create
