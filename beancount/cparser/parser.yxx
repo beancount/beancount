@@ -246,7 +246,7 @@ namespace parser {
 %type <beancount::parser::TagsLinks*> tags_links
 %type <std::string> filename
 %type <options::Booking> booking
-%type <decimal::Decimal> number_expr
+%type <decimal::Decimal> expr
 
 %type option
 %type include
@@ -707,7 +707,7 @@ meta_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  | number_expr
+  | expr
     {
       $$ = new beancount::MetaValue();
       builder.DecimalProto($1, $$->mutable_number());
@@ -802,34 +802,34 @@ currency_list:
 
 /* Arithmetic expression, reduced to a number. The reduction is carried out in
    the parser. */
-number_expr:
+expr:
   NUMBER
-  | number_expr PLUS number_expr
+  | expr PLUS expr
     {
       $$ = $1.add($3, builder.context());
     }
-  | number_expr MINUS number_expr
+  | expr MINUS expr
     {
       $$ = $1.sub($3, builder.context());
     }
-  | number_expr ASTERISK number_expr
+  | expr ASTERISK expr
     {
       $$ = $1.mul($3, builder.context());
     }
-  | number_expr SLASH number_expr
+  | expr SLASH expr
     {
       $$ = $1.div($3, builder.context());
     }
-  | MINUS number_expr %prec NEGATIVE
+  | MINUS expr %prec NEGATIVE
     {
       $$ = $2.minus(builder.context());
     }
-  | PLUS number_expr %prec NEGATIVE
+  | PLUS expr %prec NEGATIVE
     {
       // Note: Not entirely sure we shouldn't just copy.
       $$ = $2.plus(builder.context());
     }
-  | LPAREN number_expr RPAREN
+  | LPAREN expr RPAREN
     {
       $$ = $2;
     }
@@ -999,7 +999,7 @@ price_annotation:
 
 /* An Amount, which is a decimal number and a currency. */
 amount:
-  number_expr CURRENCY
+  expr CURRENCY
     {
       builder.WitnessDecimal($1, $2);
 
@@ -1015,7 +1015,7 @@ amount_tolerance:
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | number_expr TILDE number_expr[tolerance] CURRENCY
+  | expr TILDE expr[tolerance] CURRENCY
     {
       builder.WitnessDecimal($1, $4);
       builder.WitnessDecimal($tolerance, $4);
@@ -1028,7 +1028,7 @@ amount_tolerance:
 
 /* An optional number. */
 maybe_number:
-  number_expr
+  expr
     {
       $$ = {$1};
     }
@@ -1074,7 +1074,7 @@ compound_amount:
       }
       $$->set_currency(std::move($2));
     }
-  | number_expr maybe_currency
+  | expr maybe_currency
     {
       $$ = new inter::CostSpec();
       builder.DecimalProto($1, $$->mutable_number_per());
