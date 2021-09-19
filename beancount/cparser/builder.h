@@ -99,6 +99,10 @@ public:
   // to be added, the directive is unmodified.
   void AddActiveMetadata(Meta* meta, Directive* dir) const;
 
+  // Check metadata for duplicate keys (e.g. a multi-dict, which we don't yet
+  // support).
+  void ValidateMetadata(const Meta* meta, const location& loc);
+
   //---------------------------------------------------------------------------
   // Numbers & precision
 

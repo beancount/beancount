@@ -2954,8 +2954,8 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
       test: "Apples"
       test: "Oranges"
       Assets:Investments   100 USD
-        test: "Bananas"
-        test: "Apples"
+        test: "Mangos"
+        test: "Pineapple"
       Income:Investments  -100 USD
   )", R"(
     directives {
@@ -2969,8 +2969,8 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
         flag: "*"
         postings {
           meta {
-            kv { key: "test" value { text: "Bananas" } }
-            kv { key: "test" value { text: "Apples" } }
+            kv { key: "test" value { text: "Mangos" } }
+            kv { key: "test" value { text: "Pineapple" } }
           }
           account: "Assets:Investments"
           spec {
@@ -2984,6 +2984,15 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
           }
         }
       }
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Pineapple\"\n\'"
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Apples\"\n\'"
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Oranges\"\n\'"
     }
   )");
   // The C++ version tolerates multiple identical keys.
