@@ -775,7 +775,7 @@ payee_narration:
 account:
   ACCOUNT
     {
-      $$ = builder.Account(std::move($1));
+      $$ = builder.InternAccount(std::move($1), @$);
     }
 
 /* A filename. Consider specializing this. */

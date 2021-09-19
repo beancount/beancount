@@ -6,9 +6,11 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/text_format.h"
+#include "re2/re2.h"
 
 namespace beancount {
 namespace parser {
@@ -118,9 +120,9 @@ void Builder::AddPlugin(string&& name, const std::optional<string>& config) {
   }
 }
 
-const string& Builder::Account(string&& account) {
-  auto iter = accounts_.insert(account);
-  return *iter.first;
+const string& Builder::InternAccount(string&& account, const location& loc) {
+  auto iter = accounts_.insert(std::make_pair(account, loc));
+  return (*iter.first).first;
 }
 
 string Builder::MakeAbsolutePath(const string& filename) {
@@ -326,30 +328,15 @@ void Builder::PreparePosting(Posting* posting,
     auto& spec = posting->spec();
     const auto& price = spec.price();
 
-    // TODO(blais): Do not make the computation here! Keep it as total and
-    // resolve the final amount on interpolation.
-
     // If the price is specified for the entire amount, compute the effective
     // price here and forget about that detail of the input syntax.
-    if (is_total_price) {
-      if (!spec.has_units() || !spec.units().has_number()){
-        // units.number is MISSING.
-        // Note: we could potentially do a better job and attempt to f
-        // this up after interpolation, but this syntax is pretty rare
-        // anyway.
-        AddError(StrFormat("Total price on a posting without units: %s.",
-                           price.DebugString()), loc);
-        posting->mutable_spec()->clear_price();
-      } else if (price.has_number()) {
-        decimal::Decimal dunits = ProtoToDecimal(spec.units().number());
-        decimal::Decimal dprice;
-        if (dunits.iszero()) {
-          dprice = dunits;
-        } else {
-          dprice = ProtoToDecimal(price.number()).div(dunits.abs(), context());
-        }
-        DecimalProto(dprice, posting->mutable_spec()->mutable_price()->mutable_number());
-      }
+    if (is_total_price && (!spec.has_units() || !spec.units().has_number())) {
+      // units.number is MISSING.
+      // Note: we could potentially do a better job and attempt to f
+      // this up after interpolation, but this syntax is pretty rare
+      // anyway.
+      AddError(StrFormat("Total price on a posting without units: %s.",
+                         price.DebugString()), loc);
     }
 
     // Note: Allow zero prices because we need them for round-trips for
@@ -371,6 +358,33 @@ void Builder::PreparePosting(Posting* posting,
   }
 }
 
+void Builder::FactorTotalPrice(inter::Spec* spec) {
+  // If the price is specified for the entire amount, compute the effective
+  // price here and forget about that detail of the input syntax.
+  if (!spec->has_price()) {
+    return;
+  }
+  auto* price = spec->mutable_price();
+  bool is_total_price = price->is_total();
+  price->clear_is_total();
+
+  if (is_total_price) {
+    if (!spec->has_units() || !spec->units().has_number()){
+      // This is the error case; clear the price if it happens.
+      spec->clear_price();
+    }
+  } else if (price->has_number()) {
+    decimal::Decimal dunits = ProtoToDecimal(spec->units().number());
+    decimal::Decimal dprice;
+    if (dunits.iszero()) {
+      dprice = dunits;
+    } else {
+      dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context());
+    }
+    DecimalProto(dprice, price->mutable_number());
+  }
+}
+
 void SetLocationFromLocation(const location& loc, Location* output) {
   if (loc.begin.filename) {
     output->set_filename(*loc.begin.filename);
@@ -385,43 +399,42 @@ void Builder::AddError(std::string_view message, const location& loc) {
   error->set_message(Capitalize(message));
   SetLocationFromLocation(loc, error->mutable_location());
 }
-// TODO(blais): Can we turn this error logging into a stream instead?
+
+static const char* kAccCompNameRE = "[A-Z][A-Za-z0-9-]*"; // "[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*";
+
+// Set default values for account roots.
+void SetAccountRootsDefaults(options::AccountRoots* roots) {
+  if (roots->assets().empty()) roots->set_assets("Assets");
+  if (roots->liabilities().empty()) roots->set_liabilities("Liabilities");
+  if (roots->equity().empty()) roots->set_equity("Equity");
+  if (roots->income().empty()) roots->set_income("Income");
+  if (roots->expenses().empty()) roots->set_expenses("Expenses");
+}
+
+// Build up an account regular expression.
+re2::RE2 BuildAccountRE(const options::AccountRoots& roots) {
+  const string root_names_re = absl::StrJoin({
+      roots.assets(),
+      roots.liabilities(),
+      roots.equity(),
+      roots.income(),
+      roots.expenses()}, "|");
+  return re2::RE2(StrFormat("(%s)(:%s)+", root_names_re, kAccCompNameRE));
+}
 
 void Builder::ValidateAccountNames() {
-  // TODO(blais):
-
-  // accounts_
-
-
-  //// kAccountRE(StrFormat("(?:%s)(?:%s%s)+",
-
-  // Validate the account root names are valid in the options.
-
-  //     # Refresh the list of valid account regexps as we go along.
-  //     if key.startswith('name_'):
-  //         # Update the set of valid account types.
-  //         self.account_regexp = valid_account_regexp(self.options)
-
-  // if not self.account_regexp.match(account):
-  //     meta = new_metadata(filename, lineno)
-  //     self.errors.append(
-  //         ParserError(meta, "Invalid account name: {}".format(account), None))
-
-    // names = map(options.__getitem__, ('name_assets',
-    //                                   'name_liabilities',
-    //                                   'name_equity',
-    //                                   'name_income',
-    //                                   'name_expenses'))
-
-    // # Replace the first term of the account regular expression with the specific
-    // # names allowed under the options configuration. This code is kept in sync
-    // # with {5672c7270e1e}.
-    // return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
-    //                                            account.sep,
-    //                                            account.ACC_COMP_NAME_RE))
+  auto roots = options_->roots();
+  SetAccountRootsDefaults(&roots);
+  re2::RE2 account_re = BuildAccountRE(roots);
+  for (const auto& item : accounts_) {
+    if (!re2::RE2::FullMatch(item.first, account_re)) {
+      AddError(StrFormat("Invalid account name: '%s'", item.first), item.second);
+    }
+  }
 }
 
 void Builder::Finalize(const location& loc) {
+  // Validate the account names, issuing errors as a side-effect.
   ValidateAccountNames();
 
   // If the user left some tags unbalanced, issue an error.

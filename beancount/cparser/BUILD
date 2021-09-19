@@ -62,6 +62,7 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@mpdecimal//:mpdecimal",
         "@com_google_protobuf//:protobuf",
+        "@com_google_re2//:re2",
     ]
 )
 

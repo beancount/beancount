@@ -65,7 +65,7 @@ public:
   void AddPlugin(std::string&& name, const std::optional<std::string>& config);
 
   // Intern account and add to the global list of accounts seen.
-  const std::string& Account(std::string&& account);
+  const std::string& InternAccount(std::string&& account, const location& loc);
 
   // Given a filename, if it is relative, return an absolute filename, based on
   // the filename being parsed.
@@ -139,6 +139,9 @@ public:
                       bool is_total,
                       const location& loc);
 
+  // Factor the total price of a spec into per-unit price.
+  void FactorTotalPrice(inter::Spec* spec);
+
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
   void AddError(std::string_view message, const location& loc);
@@ -171,7 +174,7 @@ private:
   scanner::Scanner& scanner_;
 
   // A set of all unique account names seen in the file.
-  absl::flat_hash_set<std::string> accounts_;
+  absl::flat_hash_map<std::string, location> accounts_;
 
   // A set of active tags.
   absl::flat_hash_set<std::string> active_tags_;

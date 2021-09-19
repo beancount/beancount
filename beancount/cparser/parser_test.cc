@@ -1222,6 +1222,28 @@ TEST(TestParserOptions, LegacyTranslations) {
   )");
 }
 
+TEST(TestParserOptions, InvalidAccountNames) {
+  ExpectParse(R"(
+    option "name_assets" "Actifs"
+    option "name_liabilities" "Passifs"
+    2021-09-19 open Assets:US:Checking
+  )", R"(
+    directives {
+      date { year: 2021 month: 9 day: 19 }
+      open { account: "Assets:US:Checking" }
+    }
+    errors {
+      message: "Invalid account name: \'Assets:US:Checking\'"
+    }
+    options {
+      roots {
+        assets: 'Actifs'
+        liabilities: 'Passifs'
+      }
+    }
+  )");
+}
+
 //------------------------------------------------------------------------------
 // TestParserInclude
 
@@ -2608,7 +2630,7 @@ TEST(TestTotalsAndSigns, TotalPricePositive) {
         postings {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200.00" } currency: "USD" is_total: true }
+            price { number { exact: "2000.00" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2630,7 +2652,7 @@ TEST(TestTotalsAndSigns, TotalPriceNegative) {
         postings {
           spec {
             units { number { exact: "-10" } currency: "MSFT" }
-            price { number { exact: "200.00" } currency: "USD" is_total: true }
+            price { number { exact: "2000.00" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2652,7 +2674,7 @@ TEST(TestTotalsAndSigns, TotalPriceInverted) {
         postings {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200.00" } currency: "USD" is_total: true }
+            price { number { exact: "2000.00" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2678,7 +2700,10 @@ TEST(TestTotalsAndSigns, TotalPriceWithMissing) {
         flag: "*"
         postings {
           account: "Assets:Investments:MSFT"
-          spec { units { currency: "MSFT" } }
+          spec {
+            units { currency: "MSFT" }
+            price { number { exact: "2000.00" } currency: "USD" is_total: true }
+          }
         }
         postings {
           account: "Assets:Investments:Cash"
@@ -2709,7 +2734,7 @@ TEST(TestBalance, TotalPrice) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200" } currency: "USD" is_total: true }
+            price { number { exact: "2000" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2795,7 +2820,7 @@ TEST(TestMetaData, MetadataTransactionBegin) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200" } currency: "USD" is_total: true }
+            price { number { exact: "2000" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2827,7 +2852,7 @@ TEST(TestMetaData, MetadataTransactionMiddle) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200" } currency: "USD" is_total: true }
+            price { number { exact: "2000" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2856,7 +2881,7 @@ TEST(TestMetaData, MetadataTransactionEnd) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200" } currency: "USD" is_total: true }
+            price { number { exact: "2000" } currency: "USD" is_total: true }
           }
         }
         postings {
@@ -2900,7 +2925,7 @@ TEST(TestMetaData, MetadataTransactionMany) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            price { number { exact: "200" } currency: "USD" is_total: true } }
+            price { number { exact: "2000" } currency: "USD" is_total: true } }
         }
         postings {
           meta {
