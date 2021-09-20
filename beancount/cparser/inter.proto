@@ -55,21 +55,21 @@ message Spec {
 // A unit specification. This is like `Amount`, except that either the number or
 // currency can be missing.
 message UnitSpec {
-  // TODO(blais): Convert to ArithExpr.
-  optional Expr expr = 1;
+  optional beancount.Number number = 1;
   optional string currency = 2;
 }
 
 // A price specification. This is similar to `Amount`, except that either the
 // number or currency can be missing.
 message PriceSpec {
-  // TODO(blais): Convert to ArithExpr.
-  optional Expr expr = 1;
-  optional string currency = 2;
+  optional beancount.Number number = 1;
+  optional Expr expr = 2;
+
+  optional string currency = 3;
 
   // A flag that determines whether the expression above refers to a per-unit
   // price or a total price, yet to be calculated.
-  optional bool is_total = 3;
+  optional bool is_total = 4;
 }
 
 // A cost specification, which still requires to be filled in, and the final
@@ -78,10 +78,10 @@ message PriceSpec {
 message CostSpec {
   // A decimal number, exclusive the per-unit cost.
   // TODO(blais): Rename this to number_per_unit; it's been annoying.
-  optional Expr expr_per = 1;
+  optional beancount.Number number_per = 1;
 
   // A decimal number, the total cost/price.
-  optional Expr expr_total = 2;
+  optional beancount.Number number_total = 2;
 
   // A string, the commodity of the cost.
   optional string currency = 3;
