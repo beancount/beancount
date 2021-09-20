@@ -128,7 +128,7 @@ cc_test(
 
 proto_library(
     name = "parser_proto",
-    srcs = ["parser.proto"],
+    srcs = ["inter.proto"],
     deps = [
         "//beancount/ccore:number_proto",
         "//beancount/ccore:date_proto",
@@ -142,7 +142,7 @@ cc_proto_library(
 
 py_proto_library(
     name = "parser_py_proto",
-    srcs = ["parser.proto"],
+    srcs = ["inter.proto"],
     deps = [
         "//beancount/ccore:number_py_proto",
         "//beancount/ccore:date_py_proto",
