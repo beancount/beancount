@@ -13,7 +13,7 @@ package beancount;
 
 import 'beancount/ccore/number.proto';
 import 'beancount/ccore/date.proto';
-import 'beancount/cparser/parser.proto';
+import 'beancount/cparser/inter.proto';
 import 'beancount/cparser/options.proto';
 
 // A metadata value. This is a simple general variant type intended to keep the

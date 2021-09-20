@@ -26,7 +26,7 @@
 // Inserted in header, before anything else
 %code requires {
 
-#include "beancount/cparser/parser.pb.h"
+#include "beancount/cparser/inter.pb.h"
 #include "beancount/cparser/options.pb.h"
 #include "beancount/cparser/ledger.h"
 #include "beancount/ccore/data.pb.h"
