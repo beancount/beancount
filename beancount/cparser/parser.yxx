@@ -221,6 +221,8 @@ namespace parser {
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> partial_amount
 %type <std::optional<decimal::Decimal>> maybe_number
+%type <beancount::inter::Expr*> expr
+%type <std::optional<beancount::inter::Expr*>> maybe_expr
 %type <std::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
 %type <beancount::inter::CostSpec*> compound_amount
@@ -246,7 +248,6 @@ namespace parser {
 %type <beancount::parser::TagsLinks*> tags_links
 %type <std::string> filename
 %type <options::Booking> booking
-%type <decimal::Decimal> expr
 
 %type option
 %type include
@@ -273,7 +274,7 @@ namespace parser {
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
 /* TODO(blais): Have another go at taking that to zero. */
-%expect 18
+%expect 13
 
 /* TODO(blais): We still have specify %destructor code in order to free up
  * memory for discarded tokens in case of shifting during error recovery. */
@@ -707,7 +708,8 @@ meta_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  | expr
+  | NUMBER
+    /* TODO(blais): Support `expr` eventually as well. */
     {
       $$ = new beancount::MetaValue();
       builder.DecimalProto($1, $$->mutable_number());
@@ -804,34 +806,46 @@ currency_list:
    the parser. */
 expr:
   NUMBER
+    {
+      $$ = new inter::Expr();
+      $$->set_op(inter::ExprOp::NUM);
+      builder.DecimalProto($1, $$->mutable_number());
+    }
   | expr PLUS expr
     {
-      $$ = $1.add($3, builder.context());
+      $$ = $1;
+      // $$ = $1.add($3, builder.context());
     }
   | expr MINUS expr
     {
-      $$ = $1.sub($3, builder.context());
+      $$ = $1;
+      // $$ = $1.sub($3, builder.context());
     }
   | expr ASTERISK expr
     {
-      $$ = $1.mul($3, builder.context());
+      $$ = $1;
+      // $$ = $1.mul($3, builder.context());
     }
   | expr SLASH expr
     {
-      $$ = $1.div($3, builder.context());
+      $$ = $1;
+      // $$ = $1.div($3, builder.context());
     }
   | MINUS expr %prec NEGATIVE
     {
-      $$ = $2.minus(builder.context());
+      $$ = $2;
+      // $$ = $2.minus(builder.context());
     }
   | PLUS expr %prec NEGATIVE
     {
+      $$ = $2;
       // Note: Not entirely sure we shouldn't just copy.
-      $$ = $2.plus(builder.context());
+      // $$ = $2.plus(builder.context());
     }
   | LPAREN expr RPAREN
     {
       $$ = $2;
+      // $$ = $2;
     }
 
 /*- Single-character flags & other constants --------------------------------*/
@@ -970,18 +984,41 @@ posting:
 
 /* A price annotation on a posting. */
 price_annotation:
-  partial_amount
+  maybe_expr maybe_currency
+
+// /* A version of `Amount` that includes an optional expression. */
+// expr_amount:
+//   maybe_expr maybe_currency
+//     {
+//       $$ = new inter::ExprAmount();
+//       if ($1.has_value()) {
+//         $$->mutable_expr()->CopyFrom($1.value());
+//         delete $1.value();
+//       }
+//       if ($2.has_value()) {
+//         $$->set_currency($2.value());
+//       }
+//     }
+
     {
       $$ = new inter::PriceSpec();
-      if ($partial_amount->has_number()) {
-        $$->mutable_number()->CopyFrom($partial_amount->number());
+      if ($maybe_expr.has_value()) {
+        // TODO(blais): Reduce to number on PriceSpec if trivial.
+        // Create a function for it.
+        const auto* expr = $maybe_expr.value();
+        $$->mutable_expr()->CopyFrom(*expr);
+        delete expr;
       }
-      if ($partial_amount->has_currency()) {
-        $$->set_currency($partial_amount->currency());
+      // TODO(blais): Handle expr.
+      if ($maybe_currency.has_value()) {
+        $$->set_currency($maybe_currency.value());
       }
 
       // Prices may not be negative. Check and issue an error if found; fix up
       // the price to its absolute value and continue.
+      //
+      // TODO(blais): Delay this to post-parsing. Expressions may reduce to a
+      // negative number and that would be an error too.
       if ($$->has_number()) {
         decimal::Decimal dec = ProtoToDecimal($$->number());
         if (dec.sign() == -1) {
@@ -999,7 +1036,8 @@ price_annotation:
 
 /* An Amount, which is a decimal number and a currency. */
 amount:
-  expr CURRENCY
+  NUMBER CURRENCY
+    /* TODO(blais): support expr. */
     {
       builder.WitnessDecimal($1, $2);
 
@@ -1015,7 +1053,8 @@ amount_tolerance:
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | expr TILDE expr[tolerance] CURRENCY
+  | NUMBER TILDE NUMBER[tolerance] CURRENCY
+    /* TODO(blais): support expr. */
     {
       builder.WitnessDecimal($1, $4);
       builder.WitnessDecimal($tolerance, $4);
@@ -1028,6 +1067,17 @@ amount_tolerance:
 
 /* An optional number. */
 maybe_number:
+  NUMBER
+    {
+      $$ = {$1};
+    }
+  | %empty
+    {
+      $$ = {};
+    }
+
+/* An optional expression. */
+maybe_expr:
   expr
     {
       $$ = {$1};
@@ -1074,7 +1124,8 @@ compound_amount:
       }
       $$->set_currency(std::move($2));
     }
-  | expr maybe_currency
+  | NUMBER maybe_currency
+    /* TODO(blais): support expr. */
     {
       $$ = new inter::CostSpec();
       builder.DecimalProto($1, $$->mutable_number_per());

@@ -18,15 +18,20 @@ import 'beancount/ccore/date.proto';
 
 // Arithmetic expressions to be evaluated later with Decimal context.
 message Expr {
-  optional Op op = 1;
+  // Which operator this represents in the tree.
+  optional ExprOp op = 1;
+
+  // Terminal value for 'NUM'.
   optional beancount.Number number = 2;
+
+  // Binary arguments.
   optional Expr arg1 = 3;
   optional Expr arg2 = 4;
 }
 
 // Operators of expressions.
-enum Op {
-  SELF = 0;
+enum ExprOp {
+  NUM = 0;
   ADD = 1;
   SUB = 2;
   MUL = 3;
@@ -62,9 +67,11 @@ message UnitSpec {
 // A price specification. This is similar to `Amount`, except that either the
 // number or currency can be missing.
 message PriceSpec {
+  // Finalized value in 'number' and original expression in 'expr'.
   optional beancount.Number number = 1;
   optional Expr expr = 2;
 
+  // The quote currency for the posting.
   optional string currency = 3;
 
   // A flag that determines whether the expression above refers to a per-unit
