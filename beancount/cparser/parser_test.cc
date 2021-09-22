@@ -422,7 +422,10 @@ TEST(TestParserEntryTypes, Custom) {
           boolean: true
         }
         values {
-          amount { number { exact: "43.03" } currency: "USD" }
+          number { exact: "43.03" }
+        }
+        values {
+          currency: "USD"
         }
         values {
           number { exact: "23" }
