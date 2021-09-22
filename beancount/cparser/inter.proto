@@ -88,8 +88,7 @@ message PriceSpec {
 // and interpolation.
 message CostSpec {
   // A decimal number, exclusive the per-unit cost.
-  // TODO(blais): Rename this to number_per_unit; it's been annoying.
-  optional beancount.Number number_per = 1;
+  optional beancount.Number number_per_unit = 1;
 
   // A decimal number, the total cost/price.
   optional beancount.Number number_total = 2;

@@ -1153,7 +1153,7 @@ compound_amount:
     {
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
-        builder.DecimalProto($1.value(), $$->mutable_number_per());
+        builder.DecimalProto($1.value(), $$->mutable_number_per_unit());
         builder.WitnessDecimal($1.value(), $2);
       }
       $$->set_currency(std::move($2));
@@ -1161,7 +1161,7 @@ compound_amount:
   | expr maybe_currency
     {
       $$ = new inter::CostSpec();
-      builder.DecimalProto($1, $$->mutable_number_per());
+      builder.DecimalProto($1, $$->mutable_number_per_unit());
       if ($2.has_value()) {
         $$->set_currency($2.value());
         builder.WitnessDecimal($1, $2.value());
@@ -1171,7 +1171,7 @@ compound_amount:
     {
       $$ = new inter::CostSpec();
       if ($1.has_value()) {
-        builder.DecimalProto($1.value(), $$->mutable_number_per());
+        builder.DecimalProto($1.value(), $$->mutable_number_per_unit());
         builder.WitnessDecimal($1.value(), $4);
       }
       if ($3.has_value()) {
@@ -1198,9 +1198,9 @@ cost_spec:
                 "Per-unit cost may not be specified using total cost "
                 "syntax: '%s'; ignoring per-unit cost", $2->DebugString()), @$);
       } else {
-        $2->mutable_number_total()->CopyFrom($2->number_per());
+        $2->mutable_number_total()->CopyFrom($2->number_per_unit());
       }
-      $2->clear_number_per();
+      $2->clear_number_per_unit();
       $$ = $2;
     }
   | %empty
