@@ -212,6 +212,7 @@ namespace parser {
 %type <beancount::Meta*> indented_metadata
 %type <beancount::Meta*> metadata
 %type <beancount::Meta::KV*> metadata_line
+%type <beancount::MetaValue*> simple_value
 %type <beancount::MetaValue*> meta_value
 %type <std::vector<beancount::MetaValue*>> meta_value_list
 
@@ -668,7 +669,7 @@ metadata_line:
 
 /* A general variant that can contain basic types, used as the value in
    key-value pairs of metadata and in Custom directives. */
-meta_value:
+simple_value:
   STRING
     {
       $$ = new beancount::MetaValue();
@@ -709,22 +710,25 @@ meta_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-/* TODO(blais): Restore using `expr` here. */
+  /* TODO(blais): Restore using `expr` here. */
   | signed_number
     {
       $$ = new beancount::MetaValue();
       builder.DecimalProto($1, $$->mutable_number());
     }
-/* TODO(blais): Resolve this, in the meta_value_list this generates reduce/reduce conflicts.
+  | %empty
+    {
+      $$ = new beancount::MetaValue();
+    }
+
+
+/* Metadata value, with added possibility of amount. */
+meta_value:
+  simple_value
   | amount
     {
       $$ = new beancount::MetaValue();
       $$->set_allocated_amount($1);
-    }
-*/
-  | %empty
-    {
-      $$ = new beancount::MetaValue();
     }
 
 /* A list of variant values. */
@@ -733,7 +737,7 @@ meta_value_list:
     {
       $$ = {};
     }
-  | meta_value_list meta_value
+  | meta_value_list simple_value
     {
       $$ = $1;
       $$.push_back($2);
