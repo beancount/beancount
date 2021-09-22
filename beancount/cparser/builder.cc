@@ -329,7 +329,7 @@ void Builder::AppendDirective(Directive* directive) {
 }
 
 void Builder::PreparePosting(Posting* posting,
-                             const std::optional<inter::Expr*>& maybe_expr,
+                             const inter::Expr* maybe_expr,
                              const std::optional<string>& maybe_currency,
                              const char flag,
                              const string& account,
@@ -339,9 +339,9 @@ void Builder::PreparePosting(Posting* posting,
 
   // Set the expression and immediately reduce to a number if trivial.
 
-  if (maybe_expr.has_value()) {
+  if (maybe_expr) {
     auto* units = posting->mutable_spec()->mutable_units();
-    SetExprOrNumber(units, *maybe_expr.value());
+    SetExprOrNumber(units, *maybe_expr);
 
     // TODO(blais): Delay the evaluation of the expression.
     ReduceExpression(units);

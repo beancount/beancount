@@ -134,7 +134,7 @@ public:
 
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
-                      const std::optional<inter::Expr*>& opt_expr,
+                      const inter::Expr* opt_expr,
                       const std::optional<std::string>& opt_currency,
                       const char flag,
                       const std::string& account,

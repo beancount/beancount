@@ -222,7 +222,7 @@ namespace parser {
 %type <beancount::Amount*> amount
 %type <decimal::Decimal> expr
 %type <beancount::inter::Expr*> delayed_expr
-%type <std::optional<beancount::inter::Expr*>> maybe_expr // TODO(blais): Remove std::optional, use nullptr instead.
+%type <beancount::inter::Expr*> maybe_expr
 %type <std::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
 %type <beancount::inter::CostSpec*> compound_expr
@@ -1010,7 +1010,7 @@ posting:
         $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
       builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, false, @$);
-      if ($maybe_expr.has_value()) delete $maybe_expr.value();
+      delete $maybe_expr;
     }
   /* Variation with price. */
   | optflag account maybe_expr maybe_currency cost_spec AT price_annotation eol
@@ -1021,7 +1021,7 @@ posting:
       }
       $$->mutable_spec()->mutable_price()->CopyFrom(*$price_annotation);
       builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, false, @$);
-      if ($maybe_expr.has_value()) delete $maybe_expr.value();
+      delete $maybe_expr;
       delete $price_annotation;
     }
   /* Variation with complete price. */
@@ -1035,7 +1035,7 @@ posting:
       price_spec->CopyFrom(*$price_annotation);
       price_spec->set_is_total(true);
       builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, true, @$);
-      if ($maybe_expr.has_value()) delete $maybe_expr.value();
+      delete $maybe_expr;
       delete $price_annotation;
     }
   /* Variation with just an account name. */
@@ -1050,9 +1050,9 @@ price_annotation:
   maybe_expr maybe_currency
     {
       auto* spec = $$ = new inter::PriceSpec();
-      if ($maybe_expr.has_value()) {
-        SetExprOrNumber(spec, *$maybe_expr.value());
-        delete $maybe_expr.value();
+      if ($maybe_expr) {
+        SetExprOrNumber(spec, *$maybe_expr);
+        delete $maybe_expr;
 
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
@@ -1113,15 +1113,11 @@ amount_tolerance:
     }
 
 /* An optional expression. */
-/* TODO(blais): Convert to use nullptr instead of optional. */
 maybe_expr:
   delayed_expr
-    {
-      $$ = {$1};
-    }
   | %empty
     {
-      $$ = {};
+      $$ = nullptr;
     }
 
 /* An optional currency. */
@@ -1170,21 +1166,21 @@ compound_expr:
     {
       $$ = new inter::CostSpec();
 
-      if ($per_unit.has_value()) {
+      if ($per_unit) {
         // Set per-unit field.
         auto* spec = $$->mutable_per_unit();
-        SetExprOrNumber(spec, *$per_unit.value());
-        delete $per_unit.value();
+        SetExprOrNumber(spec, *$per_unit);
+        delete $per_unit;
 
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
       }
 
-      if ($total.has_value()) {
+      if ($total) {
         // Set total field.
         auto* spec = $$->mutable_total();
-        SetExprOrNumber(spec, *$total.value());
-        delete $total.value();
+        SetExprOrNumber(spec, *$total);
+        delete $total;
 
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
