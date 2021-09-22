@@ -1051,7 +1051,7 @@ price_annotation:
       auto* spec = $$ = new inter::PriceSpec();
       if ($maybe_expr.has_value()) {
         const auto* expr = $maybe_expr.value();
-        SetExprReduceNumber(spec, *expr);
+        SetExprOrNumber(spec, *expr);
         delete expr;
 
         // Reduce the expression immediately.

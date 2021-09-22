@@ -25,7 +25,7 @@ using google::protobuf::TextFormat;
 using std::string;
 
 template <typename T>
-void SetExprReduceNumber(T* parent, const inter::Expr& expr) {
+void SetExprOrNumber(T* parent, const inter::Expr& expr) {
   // Set the value immediately if possible.
   assert(parent != nullptr);
   if (expr.op() == inter::ExprOp::NUM) {
@@ -41,7 +41,7 @@ void SetExprReduceNumber(T* parent, const inter::Expr& expr) {
   }
 }
 
-template void SetExprReduceNumber(inter::PriceSpec* parent, const inter::Expr& expr);
+template void SetExprOrNumber(inter::PriceSpec* parent, const inter::Expr& expr);
 
 Builder::Builder(scanner::Scanner& scanner) :
   scanner_(scanner)
@@ -335,7 +335,7 @@ void Builder::PreparePosting(Posting* posting,
     auto* expr = opt_expr.value();
     auto* units = posting->mutable_spec()->mutable_units();
     units->mutable_expr()->CopyFrom(*expr);
-    SetExprReduceNumber(units, *expr);
+    SetExprOrNumber(units, *expr);
 
     // TODO(blais): Delay the evaluation of the expression.
     if (units->has_expr()) {
