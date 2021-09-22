@@ -220,7 +220,6 @@ namespace parser {
 %type <std::vector<std::string>> currency_list
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
-%type <beancount::Amount*> partial_amount
 %type <std::optional<decimal::Decimal>> maybe_number
 %type <decimal::Decimal> expr
 %type <beancount::inter::Expr*> delayed_expr
@@ -1003,29 +1002,29 @@ posting_and_metadata:
 /* A posting line, without any of its metadata. */
 posting:
   /* Variation with no price. */
-  optflag account partial_amount cost_spec eol
+  optflag account maybe_expr maybe_currency cost_spec eol
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
         $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
-      builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
-      delete $partial_amount;
+      builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, false, @$);
+      if ($maybe_expr.has_value()) delete $maybe_expr.value();
     }
   /* Variation with price. */
-  | optflag account partial_amount cost_spec AT price_annotation eol
+  | optflag account maybe_expr maybe_currency cost_spec AT price_annotation eol
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
         $$->mutable_spec()->mutable_cost()->CopyFrom(*$cost_spec);
       }
       $$->mutable_spec()->mutable_price()->CopyFrom(*$price_annotation);
-      builder.PreparePosting($$, $partial_amount, $optflag, $account, false, @$);
-      delete $partial_amount;
+      builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, false, @$);
+      if ($maybe_expr.has_value()) delete $maybe_expr.value();
       delete $price_annotation;
     }
   /* Variation with complete price. */
-  | optflag account partial_amount cost_spec ATAT price_annotation eol
+  | optflag account maybe_expr maybe_currency cost_spec ATAT price_annotation eol
     {
       $$ = new Posting();
       if ($cost_spec != nullptr) {
@@ -1034,15 +1033,15 @@ posting:
       auto* price_spec = $$->mutable_spec()->mutable_price();
       price_spec->CopyFrom(*$price_annotation);
       price_spec->set_is_total(true);
-      builder.PreparePosting($$, $partial_amount, $optflag, $account, true, @$);
-      delete $partial_amount;
+      builder.PreparePosting($$, $maybe_expr, $maybe_currency, $optflag, $account, true, @$);
+      if ($maybe_expr.has_value()) delete $maybe_expr.value();
       delete $price_annotation;
     }
   /* Variation with just an account name. */
   | optflag account eol
     {
       $$ = new Posting();
-      builder.PreparePosting($$, nullptr, $optflag, $account, false, @$);
+      builder.PreparePosting($$, {}, {}, $optflag, $account, false, @$);
     }
 
 /* A price annotation on a posting. */
@@ -1146,21 +1145,6 @@ maybe_currency:
   | %empty
     {
       $$ = {};
-    }
-
-/* An amount with possibly missing values for number and/or currency. This is
-   used in postings to allow users to let Beancount interpolate the missing
-   values. */
-partial_amount:
-  maybe_number maybe_currency
-    {
-      $$ = new Amount();
-      if ($1.has_value()) {
-        builder.DecimalProto($1.value(), $$->mutable_number());
-      }
-      if ($2.has_value()) {
-        $$->set_currency($2.value());
-      }
     }
 
 /* A per-unit/total amount specification, to be used in cost specification. */

@@ -5,6 +5,7 @@
 #include "beancount/ccore/std_utils.h"
 
 #include <filesystem>
+#include <optional>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -321,22 +322,26 @@ void Builder::AppendDirective(Directive* directive) {
 }
 
 void Builder::PreparePosting(Posting* posting,
-                             const Amount* units_spec,
+                             const std::optional<inter::Expr*>& opt_expr,
+                             const std::optional<string>& opt_currency,
                              const char flag,
                              const string& account,
                              bool is_total_price,
                              const location& loc) {
   assert(posting != nullptr);
 
-  // Set the units spec on the posting, if present.
-  if (units_spec != nullptr) {
-    auto* spec = posting->mutable_spec()->mutable_units();
-    if (units_spec->has_number()) {
-      spec->mutable_number()->CopyFrom(units_spec->number());
-    }
-    if (units_spec->has_currency()) {
-      spec->set_currency(units_spec->currency());
-    }
+  // Evaluate the expression and set the resulting number on the posting.
+  // TODO(blais): Delay the evaluation of the expression.
+  if (opt_expr.has_value()) {
+    decimal::Decimal number = EvaluateExpression(*opt_expr.value());
+    auto* units = posting->mutable_spec()->mutable_units();
+    DecimalProto(number, units->mutable_number());
+  }
+
+  // Set the currency on the posting if present.
+  if (opt_currency.has_value()) {
+    auto* units = posting->mutable_spec()->mutable_units();
+    units->set_currency(opt_currency.value());
   }
 
   // Store flag and account name.

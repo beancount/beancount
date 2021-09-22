@@ -2283,20 +2283,16 @@ TEST(TestParseLots, CostTotalEmptyTotal) {
         flag: "*"
         postings {
           account: "Assets:Invest:AAPL"
-          spec { units { number { exact: "20" } currency: "AAPL" }
-                 cost {
-            number_per { exact: "45.23" }
-            currency: "USD"
-          } }
+          spec {
+            units { number { exact: "20" } currency: "AAPL" }
+            cost { number_per { exact: "45.23" } currency: "USD" }
+          }
         }
         postings {
           account: "Assets:Invest:Cash"
-          spec { units {
-            number {
-              exact: "-45.23"
-            }
-            currency: "USD"
-          } }
+          spec {
+            units { number { exact: "-45.23" } currency: "USD" }
+          }
         }
       }
     }
@@ -4584,7 +4580,6 @@ TEST(TestIncompleteInputs, UnitsMissingWithCost) {
       transaction {
         flag: "*" postings { account: "Assets:Account1"
           spec {
-            units {}
             cost { number_per { exact: "300.00" } currency: "USD" }
           }
         }
@@ -4667,8 +4662,6 @@ TEST(TestIncompleteInputs, UnitsMissingWithPrice) {
         postings {
           account: "Assets:Account2"
           spec {
-            units {
-            }
             price { number { exact: "1.2" } currency: "USD" }
           }
         }

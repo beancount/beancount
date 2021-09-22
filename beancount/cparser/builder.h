@@ -133,7 +133,8 @@ public:
 
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
-                      const Amount* units_spec,
+                      const std::optional<inter::Expr*>& opt_expr,
+                      const std::optional<std::string>& opt_currency,
                       const char flag,
                       const std::string& account,
                       bool is_total,
