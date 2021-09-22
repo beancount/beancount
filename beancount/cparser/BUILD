@@ -26,6 +26,8 @@ genreflex(
 genyacc(
     name = "parser_generated",
     src = "parser.yxx",
+    # Uncomment this to debug reduce/reduce conflicts.
+    #extra_options = ["-Wcounterexamples"],
     location_out = "location.h",
     header_out = "parser.h",
     source_out = "parser.cc",

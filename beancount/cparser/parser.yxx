@@ -220,6 +220,7 @@ namespace parser {
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> partial_amount
+%type <decimal::Decimal> signed_number
 %type <std::optional<decimal::Decimal>> maybe_number
 %type <beancount::inter::Expr*> expr
 %type <std::optional<beancount::inter::Expr*>> maybe_expr
@@ -708,17 +709,19 @@ meta_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  | NUMBER
-    /* TODO(blais): Support `expr` eventually as well. */
+/* TODO(blais): Restore using `expr` here. */
+  | signed_number
     {
       $$ = new beancount::MetaValue();
       builder.DecimalProto($1, $$->mutable_number());
     }
+/* TODO(blais): Resolve this, in the meta_value_list this generates reduce/reduce conflicts.
   | amount
     {
       $$ = new beancount::MetaValue();
       $$->set_allocated_amount($1);
     }
+*/
   | %empty
     {
       $$ = new beancount::MetaValue();
@@ -1036,7 +1039,7 @@ price_annotation:
 
 /* An Amount, which is a decimal number and a currency. */
 amount:
-  NUMBER CURRENCY
+  signed_number CURRENCY
     /* TODO(blais): support expr. */
     {
       builder.WitnessDecimal($1, $2);
@@ -1053,7 +1056,7 @@ amount_tolerance:
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | NUMBER TILDE NUMBER[tolerance] CURRENCY
+  | signed_number TILDE signed_number[tolerance] CURRENCY
     /* TODO(blais): support expr. */
     {
       builder.WitnessDecimal($1, $4);
@@ -1065,9 +1068,9 @@ amount_tolerance:
       $$ = std::make_pair(amount, $tolerance);
     }
 
-/* An optional number. */
-maybe_number:
-  NUMBER
+/* An optional expression. */
+maybe_expr:
+  expr
     {
       $$ = {$1};
     }
@@ -1076,9 +1079,21 @@ maybe_number:
       $$ = {};
     }
 
-/* An optional expression. */
-maybe_expr:
-  expr
+/* A signed number, not a full arithmetic expression. */
+/* TODO(blais): This is temporary until we replace all the instances of numbers by `expr`. */
+signed_number:
+  MINUS NUMBER %prec NEGATIVE
+    {
+      $$ = $2.minus(builder.context());
+    }
+  | NUMBER
+    {
+      $$ = $1;
+    }
+
+/* An optional number. */
+maybe_number:
+  signed_number
     {
       $$ = {$1};
     }
@@ -1124,7 +1139,7 @@ compound_amount:
       }
       $$->set_currency(std::move($2));
     }
-  | NUMBER maybe_currency
+  | signed_number maybe_currency
     /* TODO(blais): support expr. */
     {
       $$ = new inter::CostSpec();
