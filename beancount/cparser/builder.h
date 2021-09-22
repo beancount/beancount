@@ -184,6 +184,10 @@ private:
   absl::flat_hash_map<std::string, std::vector<MetaValue*>> active_meta_;
 };
 
+// Reduce an expression immediately (in the parser) if trivial.
+// This keeps tests simple and makes the transition to `Expr` easy.
+template <typename T> void SetExprReduceNumber(T* parent, const inter::Expr& expr);
+
 }  // namespace parser
 }  // namespace beancount
 

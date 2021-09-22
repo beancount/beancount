@@ -23,6 +23,25 @@ using google::protobuf::FieldDescriptor;
 using google::protobuf::TextFormat;
 using std::string;
 
+template <typename T>
+void SetExprReduceNumber(T* parent, const inter::Expr& expr) {
+  assert(parent != nullptr);
+  if (expr.op() == inter::ExprOp::NUM) {
+    assert(!expr.has_arg1());
+    assert(!expr.has_arg2());
+    assert(expr.has_number());
+    parent->mutable_number()->CopyFrom(expr.number());
+    parent->clear_expr();
+  } else {
+    assert(expr.has_arg1());
+    assert(!expr.has_number());
+    parent->mutable_expr()->CopyFrom(expr);
+  }
+}
+
+template void SetExprReduceNumber(inter::PriceSpec* parent, const inter::Expr& expr);
+
+
 Builder::Builder(scanner::Scanner& scanner) :
   scanner_(scanner)
 {

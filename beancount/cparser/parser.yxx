@@ -221,9 +221,9 @@ namespace parser {
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> partial_amount
-%type <decimal::Decimal> signed_number
 %type <std::optional<decimal::Decimal>> maybe_number
-%type <beancount::inter::Expr*> expr
+%type <decimal::Decimal> expr
+%type <beancount::inter::Expr*> delayed_expr
 %type <std::optional<beancount::inter::Expr*>> maybe_expr
 %type <std::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
@@ -276,7 +276,7 @@ namespace parser {
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
 /* TODO(blais): Have another go at taking that to zero. */
-%expect 13
+%expect 17
 
 /* TODO(blais): We still have specify %destructor code in order to free up
  * memory for discarded tokens in case of shifting during error recovery. */
@@ -710,8 +710,7 @@ simple_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  /* TODO(blais): Restore using `expr` here. */
-  | signed_number
+  | expr
     {
       $$ = new beancount::MetaValue();
       builder.DecimalProto($1, $$->mutable_number());
@@ -720,7 +719,6 @@ simple_value:
     {
       $$ = new beancount::MetaValue();
     }
-
 
 /* Metadata value, with added possibility of amount. */
 meta_value:
@@ -811,49 +809,85 @@ currency_list:
 
 /* Arithmetic expression, reduced to a number. The reduction is carried out in
    the parser. */
+/* TODO(blais): Get rid of this in favor of delayed evaluation. */
 expr:
+  NUMBER
+  | expr PLUS expr
+    {
+      $$ = $1.add($3, builder.context());
+    }
+  | expr MINUS expr
+    {
+      $$ = $1.sub($3, builder.context());
+    }
+  | expr ASTERISK expr
+    {
+      $$ = $1.mul($3, builder.context());
+    }
+  | expr SLASH expr
+    {
+      $$ = $1.div($3, builder.context());
+    }
+  | MINUS expr %prec NEGATIVE
+    {
+      $$ = $2.minus(builder.context());
+    }
+  | PLUS expr %prec NEGATIVE
+    {
+      // Note: Not entirely sure we shouldn't just copy.
+      $$ = $2.plus(builder.context());
+    }
+  | LPAREN expr RPAREN
+    {
+      $$ = $2;
+    }
+
+/* Arithmetic expression, delayed for later evaluation. */
+delayed_expr:
   NUMBER
     {
       $$ = new inter::Expr();
       $$->set_op(inter::ExprOp::NUM);
       builder.DecimalProto($1, $$->mutable_number());
     }
-  | expr PLUS expr
+  | delayed_expr PLUS delayed_expr
     {
       $$ = $1;
       // $$ = $1.add($3, builder.context());
     }
-  | expr MINUS expr
+  | delayed_expr MINUS delayed_expr
     {
       $$ = $1;
       // $$ = $1.sub($3, builder.context());
     }
-  | expr ASTERISK expr
+  | delayed_expr ASTERISK delayed_expr
     {
       $$ = $1;
       // $$ = $1.mul($3, builder.context());
     }
-  | expr SLASH expr
+  | delayed_expr SLASH delayed_expr
     {
       $$ = $1;
       // $$ = $1.div($3, builder.context());
     }
-  | MINUS expr %prec NEGATIVE
+  | MINUS delayed_expr %prec NEGATIVE
     {
       $$ = $2;
       // $$ = $2.minus(builder.context());
     }
-  | PLUS expr %prec NEGATIVE
+  | PLUS delayed_expr %prec NEGATIVE
     {
       $$ = $2;
       // Note: Not entirely sure we shouldn't just copy.
       // $$ = $2.plus(builder.context());
     }
-  | LPAREN expr RPAREN
+  | LPAREN delayed_expr RPAREN
     {
       $$ = $2;
       // $$ = $2;
     }
+
+/* Expression with immediate evaluation. */
 
 /*- Single-character flags & other constants --------------------------------*/
 
@@ -992,31 +1026,13 @@ posting:
 /* A price annotation on a posting. */
 price_annotation:
   maybe_expr maybe_currency
-
-// /* A version of `Amount` that includes an optional expression. */
-// expr_amount:
-//   maybe_expr maybe_currency
-//     {
-//       $$ = new inter::ExprAmount();
-//       if ($1.has_value()) {
-//         $$->mutable_expr()->CopyFrom($1.value());
-//         delete $1.value();
-//       }
-//       if ($2.has_value()) {
-//         $$->set_currency($2.value());
-//       }
-//     }
-
     {
       $$ = new inter::PriceSpec();
       if ($maybe_expr.has_value()) {
-        // TODO(blais): Reduce to number on PriceSpec if trivial.
-        // Create a function for it.
         const auto* expr = $maybe_expr.value();
-        $$->mutable_expr()->CopyFrom(*expr);
+        SetExprReduceNumber($$, *expr);
         delete expr;
       }
-      // TODO(blais): Handle expr.
       if ($maybe_currency.has_value()) {
         $$->set_currency($maybe_currency.value());
       }
@@ -1043,8 +1059,7 @@ price_annotation:
 
 /* An Amount, which is a decimal number and a currency. */
 amount:
-  signed_number CURRENCY
-    /* TODO(blais): support expr. */
+  expr CURRENCY
     {
       builder.WitnessDecimal($1, $2);
 
@@ -1060,7 +1075,7 @@ amount_tolerance:
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | signed_number TILDE signed_number[tolerance] CURRENCY
+  | expr TILDE expr[tolerance] CURRENCY
     /* TODO(blais): support expr. */
     {
       builder.WitnessDecimal($1, $4);
@@ -1074,7 +1089,7 @@ amount_tolerance:
 
 /* An optional expression. */
 maybe_expr:
-  expr
+  delayed_expr
     {
       $$ = {$1};
     }
@@ -1083,21 +1098,9 @@ maybe_expr:
       $$ = {};
     }
 
-/* A signed number, not a full arithmetic expression. */
-/* TODO(blais): This is temporary until we replace all the instances of numbers by `expr`. */
-signed_number:
-  MINUS NUMBER %prec NEGATIVE
-    {
-      $$ = $2.minus(builder.context());
-    }
-  | NUMBER
-    {
-      $$ = $1;
-    }
-
 /* An optional number. */
 maybe_number:
-  signed_number
+  expr
     {
       $$ = {$1};
     }
@@ -1143,8 +1146,7 @@ compound_amount:
       }
       $$->set_currency(std::move($2));
     }
-  | signed_number maybe_currency
-    /* TODO(blais): support expr. */
+  | expr maybe_currency
     {
       $$ = new inter::CostSpec();
       builder.DecimalProto($1, $$->mutable_number_per());
