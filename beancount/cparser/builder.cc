@@ -25,6 +25,7 @@ using std::string;
 
 template <typename T>
 void SetExprReduceNumber(T* parent, const inter::Expr& expr) {
+  // Set the value immediately if possible.
   assert(parent != nullptr);
   if (expr.op() == inter::ExprOp::NUM) {
     assert(!expr.has_arg1());
@@ -40,7 +41,6 @@ void SetExprReduceNumber(T* parent, const inter::Expr& expr) {
 }
 
 template void SetExprReduceNumber(inter::PriceSpec* parent, const inter::Expr& expr);
-
 
 Builder::Builder(scanner::Scanner& scanner) :
   scanner_(scanner)
@@ -414,6 +414,56 @@ void SetLocationFromLocation(const location& loc, Location* output) {
   output->set_lineno(loc.begin.line);
   output->set_lineno_end(loc.end.line);
 }
+
+decimal::Decimal Builder::EvaluateExpression(const inter::Expr& expr) {
+  switch (expr.op()) {
+    case inter::ExprOp::NUM: {
+      return ProtoToDecimal(expr.number());
+    }
+    case inter::ExprOp::ADD: {
+      auto num1 = EvaluateExpression(expr.arg1());
+      auto num2 = EvaluateExpression(expr.arg2());
+      return num1.add(num2, context());
+    }
+    case inter::ExprOp::SUB: {
+      auto num1 = EvaluateExpression(expr.arg1());
+      auto num2 = EvaluateExpression(expr.arg2());
+      return num1.sub(num2, context());
+    }
+    case inter::ExprOp::MUL: {
+      auto num1 = EvaluateExpression(expr.arg1());
+      auto num2 = EvaluateExpression(expr.arg2());
+      return num1.mul(num2, context());
+    }
+    case inter::ExprOp::DIV: {
+      auto num1 = EvaluateExpression(expr.arg1());
+      auto num2 = EvaluateExpression(expr.arg2());
+      return num1.div(num2, context());
+    }
+    case inter::ExprOp::NEG: {
+      auto num1 = EvaluateExpression(expr.arg1());
+      return num1.minus(context());
+    }
+    case inter::ExprOp::PLUS: {
+      return EvaluateExpression(expr.arg1());
+    }
+    default:
+      // Invalid value.
+      // TODO(blais): Setup ASSERT() as a stream.
+      assert(false);
+  }
+}
+
+template <typename T>
+void Builder::ReduceExpression(T* parent) {
+  assert(parent->has_expr());
+  assert(!parent->has_number());
+  decimal::Decimal number = EvaluateExpression(parent->expr());
+  DecimalProto(number, parent->mutable_number());
+  parent->clear_expr();
+}
+
+template void Builder::ReduceExpression(inter::PriceSpec* parent);
 
 void Builder::AddError(std::string_view message, const location& loc) {
   auto* error = new Error();

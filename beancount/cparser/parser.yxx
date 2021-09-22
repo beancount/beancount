@@ -846,45 +846,67 @@ expr:
 delayed_expr:
   NUMBER
     {
-      $$ = new inter::Expr();
-      $$->set_op(inter::ExprOp::NUM);
-      builder.DecimalProto($1, $$->mutable_number());
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::NUM);
+      builder.DecimalProto($1, expr->mutable_number());
     }
   | delayed_expr PLUS delayed_expr
     {
-      $$ = $1;
-      // $$ = $1.add($3, builder.context());
+      /* TODO(blais): You could avoid one allocation here. */
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::ADD);
+      expr->mutable_arg1()->CopyFrom(*$1);
+      expr->mutable_arg2()->CopyFrom(*$3);
+      delete $1;
+      delete $3;
     }
   | delayed_expr MINUS delayed_expr
     {
-      $$ = $1;
-      // $$ = $1.sub($3, builder.context());
+      /* TODO(blais): You could avoid one allocation here. */
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::SUB);
+      expr->mutable_arg1()->CopyFrom(*$1);
+      expr->mutable_arg2()->CopyFrom(*$3);
+      delete $1;
+      delete $3;
     }
   | delayed_expr ASTERISK delayed_expr
     {
-      $$ = $1;
-      // $$ = $1.mul($3, builder.context());
+      /* TODO(blais): You could avoid one allocation here. */
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::MUL);
+      expr->mutable_arg1()->CopyFrom(*$1);
+      expr->mutable_arg2()->CopyFrom(*$3);
+      delete $1;
+      delete $3;
     }
   | delayed_expr SLASH delayed_expr
     {
-      $$ = $1;
-      // $$ = $1.div($3, builder.context());
+      /* TODO(blais): You could avoid one allocation here. */
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::DIV);
+      expr->mutable_arg1()->CopyFrom(*$1);
+      expr->mutable_arg2()->CopyFrom(*$3);
+      delete $1;
+      delete $3;
     }
   | MINUS delayed_expr %prec NEGATIVE
     {
-      $$ = $2;
-      // $$ = $2.minus(builder.context());
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::NEG);
+      expr->mutable_arg1()->CopyFrom(*$2);
+      delete $2;
     }
   | PLUS delayed_expr %prec NEGATIVE
     {
-      $$ = $2;
-      // Note: Not entirely sure we shouldn't just copy.
-      // $$ = $2.plus(builder.context());
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::PLUS);
+      expr->mutable_arg1()->CopyFrom(*$2);
+      delete $2;
     }
   | LPAREN delayed_expr RPAREN
     {
       $$ = $2;
-      // $$ = $2;
     }
 
 /* Expression with immediate evaluation. */
@@ -1027,14 +1049,20 @@ posting:
 price_annotation:
   maybe_expr maybe_currency
     {
-      $$ = new inter::PriceSpec();
+      auto* spec = $$ = new inter::PriceSpec();
       if ($maybe_expr.has_value()) {
         const auto* expr = $maybe_expr.value();
-        SetExprReduceNumber($$, *expr);
+        SetExprReduceNumber(spec, *expr);
         delete expr;
+
+        // Reduce the expression immediately.
+        // TODO(blais): Delay this.
+        if (spec->has_expr()) {
+          builder.ReduceExpression(spec);
+        }
       }
       if ($maybe_currency.has_value()) {
-        $$->set_currency($maybe_currency.value());
+        spec->set_currency($maybe_currency.value());
       }
 
       // Prices may not be negative. Check and issue an error if found; fix up
@@ -1042,15 +1070,15 @@ price_annotation:
       //
       // TODO(blais): Delay this to post-parsing. Expressions may reduce to a
       // negative number and that would be an error too.
-      if ($$->has_number()) {
-        decimal::Decimal dec = ProtoToDecimal($$->number());
+      if (spec->has_number()) {
+        decimal::Decimal dec = ProtoToDecimal(spec->number());
         if (dec.sign() == -1) {
           // TODO(blais): Move all the number processing to post-parsing.
           builder.AddError("Negative prices are not allowed "
                            "(see http://furius.ca/beancount/doc/bug-negative-prices "
                            "for workaround)", @$);
           // Invert and continue.
-          builder.DecimalProto(-dec, $$->mutable_number());
+          builder.DecimalProto(-dec, spec->mutable_number());
         }
       }
     }
