@@ -60,8 +60,12 @@ message Spec {
 // A unit specification. This is like `Amount`, except that either the number or
 // currency can be missing.
 message UnitSpec {
+  // Finalized value in 'number' and original expression in 'expr'.
   optional beancount.Number number = 1;
-  optional string currency = 2;
+  optional Expr expr = 2;
+
+  // The unit currency for the enclosing posting.
+  optional string currency = 3;
 }
 
 // A price specification. This is similar to `Amount`, except that either the
@@ -71,7 +75,7 @@ message PriceSpec {
   optional beancount.Number number = 1;
   optional Expr expr = 2;
 
-  // The quote currency for the posting.
+  // The quote currency for the enclosing posting.
   optional string currency = 3;
 
   // A flag that determines whether the expression above refers to a per-unit

@@ -330,12 +330,17 @@ void Builder::PreparePosting(Posting* posting,
                              const location& loc) {
   assert(posting != nullptr);
 
-  // Evaluate the expression and set the resulting number on the posting.
-  // TODO(blais): Delay the evaluation of the expression.
+  // Set the expression and immediately reduce to a number if trivial.
   if (opt_expr.has_value()) {
-    decimal::Decimal number = EvaluateExpression(*opt_expr.value());
+    auto* expr = opt_expr.value();
     auto* units = posting->mutable_spec()->mutable_units();
-    DecimalProto(number, units->mutable_number());
+    units->mutable_expr()->CopyFrom(*expr);
+    SetExprReduceNumber(units, *expr);
+
+    // TODO(blais): Delay the evaluation of the expression.
+    if (units->has_expr()) {
+      ReduceExpression(units);
+    }
   }
 
   // Set the currency on the posting if present.
