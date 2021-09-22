@@ -2268,7 +2268,7 @@ TEST(TestParseLots, CostEmptyComponents) {
       Assets:Invest:Cash  -19.90 USD
   )", R"(
     errors {
-      message: "Syntax error, unexpected COMMA, expecting HASH or CURRENCY"
+      message: "Syntax error, unexpected COMMA, expecting HASH"
     }
   )");
 }

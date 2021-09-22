@@ -220,12 +220,12 @@ namespace parser {
 %type <std::vector<std::string>> currency_list
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
-%type <std::optional<decimal::Decimal>> maybe_number
 %type <decimal::Decimal> expr
 %type <beancount::inter::Expr*> delayed_expr
-%type <std::optional<beancount::inter::Expr*>> maybe_expr
+%type <std::optional<beancount::inter::Expr*>> maybe_expr // TODO(blais): Remove std::optional, use nullptr instead.
 %type <std::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
+%type <beancount::inter::CostSpec*> compound_expr
 %type <beancount::inter::CostSpec*> compound_amount
 %type <beancount::inter::CostSpec*> cost_comp
 %type <beancount::inter::CostSpec*> cost_comp_list
@@ -275,7 +275,7 @@ namespace parser {
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
 /* TODO(blais): Have another go at taking that to zero. */
-%expect 17
+%expect 16
 
 /* TODO(blais): We still have specify %destructor code in order to free up
  * memory for discarded tokens in case of shifting during error recovery. */
@@ -905,6 +905,7 @@ delayed_expr:
     }
   | LPAREN delayed_expr RPAREN
     {
+      // TODO(blais): Explicitly mark with a PAREN type, so you can re-render it.
       $$ = $2;
     }
 
@@ -1053,7 +1054,7 @@ price_annotation:
         SetExprOrNumber(spec, *$maybe_expr.value());
         delete $maybe_expr.value();
 
-        // TODO(blais): Delay this evalutaion.
+        // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
       }
 
@@ -1112,19 +1113,9 @@ amount_tolerance:
     }
 
 /* An optional expression. */
+/* TODO(blais): Convert to use nullptr instead of optional. */
 maybe_expr:
   delayed_expr
-    {
-      $$ = {$1};
-    }
-  | %empty
-    {
-      $$ = {};
-    }
-
-/* An optional number. */
-maybe_number:
-  expr
     {
       $$ = {$1};
     }
@@ -1146,36 +1137,58 @@ maybe_currency:
 
 /* A per-unit/total amount specification, to be used in cost specification. */
 compound_amount:
-  maybe_number CURRENCY
+  CURRENCY
     {
       $$ = new inter::CostSpec();
-      if ($1.has_value()) {
-        builder.DecimalProto($1.value(), $$->mutable_per_unit()->mutable_number());
-        builder.WitnessDecimal($1.value(), $2);
-      }
+      $$->set_currency(std::move($1));
+    }
+  | compound_expr
+    {
+      $$ = $1;
+    }
+  | compound_expr CURRENCY
+    {
+      $$ = $1;
       $$->set_currency(std::move($2));
     }
-  | expr maybe_currency
+
+/* An expression or an optioanl pair of them separated by a #. */
+compound_expr:
+  delayed_expr[per_unit]
     {
       $$ = new inter::CostSpec();
-      builder.DecimalProto($1, $$->mutable_per_unit()->mutable_number());
-      if ($2.has_value()) {
-        $$->set_currency($2.value());
-        builder.WitnessDecimal($1, $2.value());
-      }
+
+      // Set per-unit field.
+      auto* spec = $$->mutable_per_unit();
+      SetExprOrNumber(spec, *$per_unit);
+      delete $per_unit;
+
+      // TODO(blais): Delay this evaluation.
+      builder.ReduceExpression(spec);
     }
-  | maybe_number HASH maybe_number CURRENCY
+  | maybe_expr[per_unit] HASH maybe_expr[total]
     {
       $$ = new inter::CostSpec();
-      if ($1.has_value()) {
-        builder.DecimalProto($1.value(), $$->mutable_per_unit()->mutable_number());
-        builder.WitnessDecimal($1.value(), $4);
+
+      if ($per_unit.has_value()) {
+        // Set per-unit field.
+        auto* spec = $$->mutable_per_unit();
+        SetExprOrNumber(spec, *$per_unit.value());
+        delete $per_unit.value();
+
+        // TODO(blais): Delay this evaluation.
+        builder.ReduceExpression(spec);
       }
-      if ($3.has_value()) {
-        builder.DecimalProto($3.value(), $$->mutable_total()->mutable_number());
-        builder.WitnessDecimal($3.value(), $4);
+
+      if ($total.has_value()) {
+        // Set total field.
+        auto* spec = $$->mutable_total();
+        SetExprOrNumber(spec, *$total.value());
+        delete $total.value();
+
+        // TODO(blais): Delay this evaluation.
+        builder.ReduceExpression(spec);
       }
-      $$->set_currency(std::move($4));
     }
 
 /* A cost specification. */
