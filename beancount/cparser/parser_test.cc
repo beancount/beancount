@@ -1686,7 +1686,7 @@ TEST(TestTransactions, ZeroUnits) {
         postings {
           account: "Assets:Investment"
           spec { units { number { exact: "0" } currency: "HOOL" }
-                 cost { number_per_unit { exact: "500.00" } currency: "USD" } }
+                 cost { per_unit { number { exact: "500.00" } } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
@@ -1711,7 +1711,7 @@ TEST(TestTransactions, ZeroCosts) {
         postings {
           account: "Assets:Investment"
           spec { units { number { exact: "10" } currency: "HOOL" }
-                 cost { number_per_unit { exact: "0" } currency: "USD" } }
+                 cost { per_unit { number { exact: "0" } } currency: "USD" } }
         }
         postings {
           account: "Assets:Cash"
@@ -1937,7 +1937,7 @@ TEST(TestParseLots, CostAmount) {
         postings {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "20" } currency: "AAPL" }
-                 cost { number_per_unit { exact: "45.23" } currency: "USD" } }
+                 cost { per_unit { number { exact: "45.23" } } currency: "USD" } }
         }
         postings {
           account: "Assets:Invest:Cash"
@@ -2038,7 +2038,7 @@ TEST(TestParseLots, CostTwoComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
           } }
@@ -2047,7 +2047,7 @@ TEST(TestParseLots, CostTwoComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
           } }
@@ -2055,12 +2055,14 @@ TEST(TestParseLots, CostTwoComponents) {
         postings {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
-                 cost { number_per_unit { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" } }
+                 cost { per_unit { number { exact: "45.23" } } currency: "USD"
+                        label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
-                 cost { number_per_unit { exact: "45.23" } currency: "USD" label: "d82d55a0dbe8" } }
+                 cost { per_unit { number { exact: "45.23" } } currency: "USD"
+                        label: "d82d55a0dbe8" } }
         }
         postings {
           account: "Assets:Invest:AAPL"
@@ -2095,7 +2097,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2105,7 +2107,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2115,7 +2117,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2125,7 +2127,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2135,7 +2137,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2145,7 +2147,7 @@ TEST(TestParseLots, CostThreeComponents) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "1" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
+            per_unit { number { exact: "45.23" } }
             currency: "USD"
             date { year: 2014 month: 12 day: 26 }
             label: "d82d55a0dbe8"
@@ -2163,7 +2165,7 @@ TEST(TestParseLots, CostRepeated) {
       Assets:Invest:Cash  -45.23 USD
   )", R"(
     errors {
-      message: "Duplicate `number_per_unit` cost spec field."
+      message: "Duplicate `per_unit` cost spec field."
     }
   )");
 }
@@ -2218,8 +2220,8 @@ TEST(TestParseLots, CostBothCosts) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "10" } currency: "AAPL" }
                  cost {
-            number_per_unit { exact: "45.23" }
-            number_total { exact: "9.95" }
+            per_unit { number { exact: "45.23" } }
+            total { number { exact: "9.95" } }
             currency: "USD"
           } }
         }
@@ -2246,7 +2248,7 @@ TEST(TestParseLots, CostTotalCostOnly) {
           account: "Assets:Invest:AAPL"
           spec { units { number { exact: "10" } currency: "AAPL" }
                  cost {
-            number_total { exact: "9.95" }
+            total { number { exact: "9.95" } }
             currency: "USD"
           } }
         }
@@ -2285,7 +2287,7 @@ TEST(TestParseLots, CostTotalEmptyTotal) {
           account: "Assets:Invest:AAPL"
           spec {
             units { number { exact: "20" } currency: "AAPL" }
-            cost { number_per_unit { exact: "45.23" } currency: "USD" }
+            cost { per_unit { number { exact: "45.23" } } currency: "USD" }
           }
         }
         postings {
@@ -2403,7 +2405,7 @@ TEST(TestTotalsAndSigns, ZeroAmount) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "0" } currency: "MSFT" }
-            cost { number_per_unit { exact: "200.00" } currency: "USD" }
+            cost { per_unit { number { exact: "200.00" } } currency: "USD" }
           }
         }
         postings {
@@ -2432,7 +2434,7 @@ TEST(TestTotalsAndSigns, ZeroCost) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "-10" } currency: "MSFT" }
-            cost { number_per_unit { exact: "0.00" } currency: "USD" }
+            cost { per_unit { number { exact: "0.00" } } currency: "USD" }
           }
         }
         postings {
@@ -2461,7 +2463,7 @@ TEST(TestTotalsAndSigns, CostNegative) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "-10" } currency: "MSFT" }
-            cost { number_per_unit { exact: "-200.00" } currency: "USD" }
+            cost { per_unit { number { exact: "-200.00" } } currency: "USD" }
           }
         }
         postings {
@@ -2496,7 +2498,7 @@ TEST(TestTotalsAndSigns, TotalCost) {
         postings {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            cost { number_total { exact: "2000" } currency: "USD" }
+            cost { total { number { exact: "2000" } } currency: "USD" }
           }
         }
         postings {
@@ -2510,7 +2512,7 @@ TEST(TestTotalsAndSigns, TotalCost) {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
             cost {
-              number_total { exact: "2000" } currency: "USD"
+              total { number { exact: "2000" } } currency: "USD"
               date { year: 2014 month: 2 day: 25 }
             }
           }
@@ -2527,7 +2529,7 @@ TEST(TestTotalsAndSigns, TotalCost) {
         postings {
           spec {
             units { number { exact: "-10" } currency: "MSFT" }
-            cost { number_total { exact: "2000" } currency: "USD" }
+            cost { total { number { exact: "2000" } } currency: "USD" }
           }
         }
         postings {
@@ -2552,7 +2554,7 @@ TEST(TestTotalsAndSigns, TotalCostInvalid) {
         postings {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            cost { number_total { exact: "2000" } currency: "USD" }
+            cost { total { number { exact: "2000" } } currency: "USD" }
           }
         }
         postings {
@@ -2561,7 +2563,7 @@ TEST(TestTotalsAndSigns, TotalCostInvalid) {
       }
     }
     errors {
-      message: "Per-unit cost may not be specified using total cost syntax: \'number_per_unit {\n  exact: \"100\"\n}\nnumber_total {\n  exact: \"2000\"\n}\ncurrency: \"USD\"\n\'; ignoring per-unit cost"
+      message: "Per-unit cost may not be specified using total cost syntax: \'per_unit {\n  number {\n    exact: \"100\"\n  }\n}\ntotal {\n  number {\n    exact: \"2000\"\n  }\n}\ncurrency: \"USD\"\n\'; ignoring per-unit cost"
     }
   )", { .partial = true });
 }
@@ -2577,7 +2579,7 @@ TEST(TestTotalsAndSigns, TotalCostNegative) {
         postings {
           spec {
             units { number { exact: "-10" } currency: "MSFT" }
-            cost { number_total { exact: "-200.00" } currency: "USD" }
+            cost { total { number { exact: "-200.00" } } currency: "USD" }
           }
         }
         postings {
@@ -2763,7 +2765,7 @@ TEST(TestBalance, TotalCost) {
           account: "Assets:Investments:MSFT"
           spec {
             units { number { exact: "10" } currency: "MSFT" }
-            cost { number_total { exact: "2000" } currency: "USD" }
+            cost { total { number { exact: "2000" } } currency: "USD" }
           }
         }
         postings {
@@ -2783,7 +2785,7 @@ TEST(TestBalance, TotalCost) {
           spec {
             units { number { exact: "10" } currency: "MSFT" }
             cost {
-              number_total { exact: "2000" }
+              total { number { exact: "2000" } }
               currency: "USD"
               date { year: 2014 month: 2 day: 25 }
             }
@@ -3500,7 +3502,7 @@ TEST(TestArithmetic, NumberExprDifferentPlaces) {
           account: "Assets:Something"
           spec {
             units { number { exact: "-12" } currency: "HOOL" }
-            cost { number_per_unit { exact: "252.021" } currency: "USD" }
+            cost { per_unit { number { exact: "252.021" } } currency: "USD" }
             price { number { exact: "281.442" } currency: "USD" }
           }
         }
@@ -3931,8 +3933,8 @@ TEST(TestLexerAndParserErrors, GrammarExceptionsCompoundAmount) {
           account: "Assets:Before"
           spec {
             units { number { exact: "10.00" } currency: "HOOL" }
-            cost { number_per_unit { exact: "100.00" }
-                   number_total { exact: "9.95" }
+            cost { per_unit { number { exact: "100.00" } }
+                   total { number { exact: "9.95" } }
                    currency: "USD" }
           }
         }
@@ -3971,7 +3973,7 @@ TEST(TestLexerAndParserErrors, GrammarExceptionsLotCostDate) {
           account: "Assets:Before"
           spec {
             units { number { exact: "10.00" } currency: "HOOL" }
-            cost { number_per_unit { exact: "100.00" } currency: "USD" }
+            cost { per_unit { number { exact: "100.00" } } currency: "USD" }
           }
         }
         postings {
@@ -4580,7 +4582,7 @@ TEST(TestIncompleteInputs, UnitsMissingWithCost) {
       transaction {
         flag: "*" postings { account: "Assets:Account1"
           spec {
-            cost { number_per_unit { exact: "300.00" } currency: "USD" }
+            cost { per_unit { number { exact: "300.00" } } currency: "USD" }
           }
         }
         postings {
@@ -4607,7 +4609,7 @@ TEST(TestIncompleteInputs, UnitsMissingNumberWithCost) {
         postings { account: "Assets:Account1"
           spec {
             units { currency: "HOOL" }
-            cost { number_per_unit { exact: "300.00" } currency: "USD" }
+            cost { per_unit { number { exact: "300.00" } } currency: "USD" }
           }
         }
         postings {
@@ -4635,7 +4637,7 @@ TEST(TestIncompleteInputs, UnitsMissingCurrencyWithCost) {
           account: "Assets:Account1"
           spec {
             units { number { exact: "10" } }
-            cost { number_per_unit { exact: "300.00" } currency: "USD" }
+            cost { per_unit { number { exact: "300.00" } } currency: "USD" }
           }
         }
         postings {
@@ -4869,8 +4871,8 @@ TEST(TestIncompleteInputs, CostFull) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_per_unit { exact: "150" }
-              number_total { exact: "5" }
+              per_unit { number { exact: "150" } }
+              total { number { exact: "5" } }
               currency: "USD"
             }
           }
@@ -4901,7 +4903,7 @@ TEST(TestIncompleteInputs, CostMissingNumberPer) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_total { exact: "5" }
+              total { number { exact: "5" } }
                currency: "USD"
             }
           }
@@ -4932,7 +4934,7 @@ TEST(TestIncompleteInputs, CostMissingNumberTotal) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_per_unit { exact: "150" }
+              per_unit { number { exact: "150" } }
               currency: "USD"
             }
           }
@@ -4963,7 +4965,7 @@ TEST(TestIncompleteInputs, CostNoNumberTotal) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_per_unit { exact: "150" }
+              per_unit { number { exact: "150" } }
               currency: "USD"
             }
           }
@@ -5024,7 +5026,7 @@ TEST(TestIncompleteInputs, CostMissingCurrency) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_per_unit { exact: "150" }
+              per_unit { number { exact: "150" } }
             }
           }
         }
@@ -5206,7 +5208,7 @@ TEST(TestIncompleteInputs, CostAverageWithOther) {
           spec {
             units { number { exact: "2" } currency: "HOOL" }
             cost {
-              number_per_unit { exact: "100.00" }
+              per_unit { number { exact: "100.00" } }
               currency: "CAD"
               date { year: 2015 month: 9 day: 21 }
               label: "blablabla"

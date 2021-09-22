@@ -40,6 +40,12 @@ enum ExprOp {
   PLUS = 6; // Unary
 }
 
+// A pair of a number or expression.
+message ExprNumber {
+  optional beancount.Number number = 1;
+  optional Expr expr = 2;
+}
+
 // A container for all the parser specs produced on a posting.
 // These are the objects that directly represent the parsed input yet to be
 // interpolated and booked.
@@ -88,10 +94,10 @@ message PriceSpec {
 // and interpolation.
 message CostSpec {
   // A decimal number, exclusive the per-unit cost.
-  optional beancount.Number number_per_unit = 1;
+  optional ExprNumber per_unit = 1;
 
   // A decimal number, the total cost/price.
-  optional beancount.Number number_total = 2;
+  optional ExprNumber total = 2;
 
   // A string, the commodity of the cost.
   optional string currency = 3;

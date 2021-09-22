@@ -260,11 +260,11 @@ void Builder::ValidateMetadata(const Meta* meta, const location& loc) {
 }
 
 absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator) {
-  if (new_cost_spec.has_number_per_unit() && accumulator->has_number_per_unit()) {
-    return absl::InvalidArgumentError("Duplicate `number_per_unit` cost spec field.");
+  if (new_cost_spec.has_per_unit() && accumulator->has_per_unit()) {
+    return absl::InvalidArgumentError("Duplicate `per_unit` cost spec field.");
   }
-  if (new_cost_spec.has_number_total() && accumulator->has_number_total()) {
-    return absl::InvalidArgumentError("Duplicate `number_total` cost spec field.");
+  if (new_cost_spec.has_total() && accumulator->has_total()) {
+    return absl::InvalidArgumentError("Duplicate `total` cost spec field.");
   }
   if (new_cost_spec.has_currency() && accumulator->has_currency()) {
     return absl::InvalidArgumentError("Duplicate `currency` cost spec field.");
