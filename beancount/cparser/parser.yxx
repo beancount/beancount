@@ -1050,16 +1050,13 @@ price_annotation:
     {
       auto* spec = $$ = new inter::PriceSpec();
       if ($maybe_expr.has_value()) {
-        const auto* expr = $maybe_expr.value();
-        SetExprOrNumber(spec, *expr);
-        delete expr;
+        SetExprOrNumber(spec, *$maybe_expr.value());
+        delete $maybe_expr.value();
 
-        // Reduce the expression immediately.
-        // TODO(blais): Delay this.
-        if (spec->has_expr()) {
-          builder.ReduceExpression(spec);
-        }
+        // TODO(blais): Delay this evalutaion.
+        builder.ReduceExpression(spec);
       }
+
       if ($maybe_currency.has_value()) {
         spec->set_currency($maybe_currency.value());
       }

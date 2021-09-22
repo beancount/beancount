@@ -25,23 +25,28 @@ using google::protobuf::TextFormat;
 using std::string;
 
 template <typename T>
-void SetExprOrNumber(T* parent, const inter::Expr& expr) {
+void SetExprOrNumber(T* parent,
+                     const inter::Expr& expr) {
   // Set the value immediately if possible.
   assert(parent != nullptr);
+
+  // If set and reducible trivially to a number, reduce now.
   if (expr.op() == inter::ExprOp::NUM) {
+    assert(expr.has_number());
     assert(!expr.has_arg1());
     assert(!expr.has_arg2());
-    assert(expr.has_number());
     parent->mutable_number()->CopyFrom(expr.number());
-    parent->clear_expr();
   } else {
+    // Otherwise, copy as expression.
     assert(expr.has_arg1());
     assert(!expr.has_number());
     parent->mutable_expr()->CopyFrom(expr);
   }
 }
 
+template void SetExprOrNumber(inter::UnitSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::PriceSpec* parent, const inter::Expr& expr);
+template void SetExprOrNumber(inter::ExprNumber* parent, const inter::Expr& expr);
 
 Builder::Builder(scanner::Scanner& scanner) :
   scanner_(scanner)
@@ -286,6 +291,7 @@ absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::Cos
 
 void Builder::WitnessDecimal(const decimal::Decimal& dec, const string& currency) {
   // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
+  // TODO(blais): We need the particular context as well (e.g. cost, price, units).
 }
 
 Directive* Builder::MakeDirective(const absl::CivilDay& date,
@@ -322,8 +328,8 @@ void Builder::AppendDirective(Directive* directive) {
 }
 
 void Builder::PreparePosting(Posting* posting,
-                             const std::optional<inter::Expr*>& opt_expr,
-                             const std::optional<string>& opt_currency,
+                             const std::optional<inter::Expr*>& maybe_expr,
+                             const std::optional<string>& maybe_currency,
                              const char flag,
                              const string& account,
                              bool is_total_price,
@@ -331,22 +337,19 @@ void Builder::PreparePosting(Posting* posting,
   assert(posting != nullptr);
 
   // Set the expression and immediately reduce to a number if trivial.
-  if (opt_expr.has_value()) {
-    auto* expr = opt_expr.value();
+
+  if (maybe_expr.has_value()) {
     auto* units = posting->mutable_spec()->mutable_units();
-    units->mutable_expr()->CopyFrom(*expr);
-    SetExprOrNumber(units, *expr);
+    SetExprOrNumber(units, *maybe_expr.value());
 
     // TODO(blais): Delay the evaluation of the expression.
-    if (units->has_expr()) {
-      ReduceExpression(units);
-    }
+    ReduceExpression(units);
   }
 
   // Set the currency on the posting if present.
-  if (opt_currency.has_value()) {
+  if (maybe_currency.has_value()) {
     auto* units = posting->mutable_spec()->mutable_units();
-    units->set_currency(opt_currency.value());
+    units->set_currency(maybe_currency.value());
   }
 
   // Store flag and account name.
@@ -466,14 +469,16 @@ decimal::Decimal Builder::EvaluateExpression(const inter::Expr& expr) {
 
 template <typename T>
 void Builder::ReduceExpression(T* parent) {
-  assert(parent->has_expr());
-  assert(!parent->has_number());
+  if (!parent->has_expr())
+    return;
   decimal::Decimal number = EvaluateExpression(parent->expr());
   DecimalProto(number, parent->mutable_number());
   parent->clear_expr();
 }
 
 template void Builder::ReduceExpression(inter::PriceSpec* parent);
+template void Builder::ReduceExpression(inter::UnitSpec* parent);
+template void Builder::ReduceExpression(inter::ExprNumber* parent);
 
 void Builder::AddError(std::string_view message, const location& loc) {
   auto* error = new Error();

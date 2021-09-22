@@ -13,6 +13,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <optional>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -193,7 +194,7 @@ private:
 
 // Reduce an expression immediately (in the parser) if trivial.
 // This keeps tests simple and makes the transition to `Expr` easy.
-template <typename T> void SetExprOrNumber(T* parent, const inter::Expr& expr);
+template <typename T> void SetExprOrNumber(T* parent, const inter::Expr& maybe_expr);
 
 }  // namespace parser
 }  // namespace beancount
