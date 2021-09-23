@@ -43,30 +43,31 @@ void ReduceExpressions(Ledger* ledger,
     return;
   for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
     if (posting.has_spec()) {
+      // Evaluate units.
       auto* spec = posting.mutable_spec();
       if (spec->has_units()) {
         parser::ReduceExpression(spec->mutable_units(), context, false);
       }
 
       if (spec->has_cost()) {
+        // Evaluate per-unit cost.
         auto* cost = spec->mutable_cost();
         if (cost->has_per_unit()) {
           parser::ReduceExpression(cost->mutable_per_unit(), context, false);
         }
+        // Evaluate total cost.
         if (cost->has_total()) {
           parser::ReduceExpression(cost->mutable_total(), context, false);
         }
       }
 
+      // Evaluate price annotation.
       if (spec->has_price()) {
         auto* price = spec->mutable_price();
         parser::ReduceExpression(price, context, false);
 
         // Prices may not be negative. Check and issue an error if found; fix up
         // the price to its absolute value and continue.
-        //
-        // TODO(blais): Delay this to post-parsing. Expressions may reduce to a
-        // negative number and that would be an error too.
         if (price->has_number()) {
           decimal::Decimal dec = ProtoToDecimal(price->number());
           if (dec.sign() == -1) {
