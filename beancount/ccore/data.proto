@@ -138,42 +138,42 @@ message Transaction {
   // various purposes. Otherwise common, pre-defined flags are defined under
   // beancount.core.flags, to flags transactions that are automatically
   // generated.
-  optional bytes flag = 3;
+  optional bytes flag = 1;
 
   // A free-form string that identifies the payee, or None, if absent.
-  optional string payee = 4;
+  optional string payee = 2;
 
   // A free-form string that provides a description for the transaction. All
   // transactions have at least a narration string, this is never None.
-  optional string narration = 5;
+  optional string narration = 3;
 
   // A list of Posting instances, the legs of this transaction. See the
   // doc under Posting above.
-  repeated Posting postings = 8;
+  repeated Posting postings = 4;
 }
 
 // An "open account" directive.
 message Open {
   // A string, the name of the account that is being opened.
-  optional string account = 3;
+  optional string account = 1;
 
   // A list of strings, currencies that are allowed in this account. May be
   // None, in which case it means that there are no restrictions on which
   // currencies may be stored in this account.
-  repeated string currencies = 4;
+  repeated string currencies = 2;
 
   // A Booking enum, the booking method to use to disambiguate postings to this
   // account (when zero or more than one postings match the specification), or
   // None if not specified. In practice, this attribute will be should be left
   // unspecified (None) in the vast majority of cases. See Booking below for a
   // selection of valid methods.
-  optional options.Booking booking = 5;
+  optional options.Booking booking = 3;
 }
 
 // A "close account" directive.
 message Close {
   // A string, the name of the account that is being closed.
-  optional string account = 3;
+  optional string account = 1;
 }
 
 // An optional commodity declaration directive. Commodities generally do not
@@ -186,7 +186,7 @@ message Close {
 // let us know).
 message Commodity {
   // A string, the commodity under consideration.
-  optional string currency = 3;
+  optional string currency = 1;
 }
 
 // A "pad this account with this other account" directive. This directive
@@ -196,11 +196,11 @@ message Commodity {
 // in case you need it, while you're entering past history into your Ledger.
 message Pad {
   // A string, the name of the account which needs to be filled.
-  optional string account = 3;
+  optional string account = 1;
 
   // A string, the name of the account which is used to debit from in order to
   // fill 'account'.
-  optional string source_account = 4;
+  optional string source_account = 2;
 }
 
 // A "check the balance of this account" directive. This directive asserts that
@@ -211,18 +211,18 @@ message Pad {
 // transactions correctly.
 message Balance {
   // A string, the account whose balance to check at the given date.
-  optional string account = 3;
+  optional string account = 1;
 
   // An Amount, the number of units of the given currency you're expecting
   // 'account' to have at this date.
-  optional Amount amount = 4;
+  optional Amount amount = 2;
 
   // A Decimal object, the amount of tolerance to use in the verification.
-  optional Number tolerance = 5;
+  optional Number tolerance = 3;
 
   // None if the balance check succeeds. This value is set to the difference if
   // the balance fails.
-  optional Number difference = 6;
+  optional Number difference = 4;
 }
 
 // A note directive, a general note that is attached to an account. These are
@@ -234,11 +234,11 @@ message Balance {
 message Note {
   // A string, the account which the note is to be attached to. This is never
   // None, notes always have an account they correspond to.
-  optional string account = 3;
+  optional string account = 1;
 
   // A free-form string, the text of the note. This can be long if you want it
   // to.
-  optional string comment = 4;
+  optional string comment = 2;
 }
 
 // An "event value change" directive. These directives are used as string
@@ -263,11 +263,11 @@ message Note {
 message Event {
   // A short string, typically a single lowercase word, that defines a unique
   // variable whose value changes over time. For example, 'location'.
-  optional string type = 3;
+  optional string type = 1;
 
   // A free-form string, the value of the variable as of the date of the
   // transaction.
-  optional string description = 4;
+  optional string description = 2;
 }
 
 // A named query declaration. This directive is used to create pre-canned
@@ -281,10 +281,10 @@ message Event {
 // equivalent to the CLOSE modifier in the shell syntax.
 message Query {
   // A string, the unique identifier for the query.
-  optional string name = 3;
+  optional string name = 1;
 
   // The SQL query string to be run or made available.
-  optional string query_string = 4;
+  optional string query_string = 2;
 }
 
 // A price declaration directive. This establishes the price of a currency in
@@ -297,11 +297,11 @@ message Query {
 // trading system, you should probably use something else).
 message Price {
   // A string, the currency that is being priced, e.g. HOOL.
-  optional string currency = 3;
+  optional string currency = 1;
 
   // An instance of Amount, the number of units and currency that 'currency' is
   // worth, for instance 1200.12 USD.
-  optional Amount amount = 4;
+  optional Amount amount = 2;
 }
 
 // A document file declaration directive. This directive is used to attach a
@@ -315,10 +315,10 @@ message Price {
 // on the file hierarchy, and you can get them by parsing the list of entries.
 message Document {
   // A string, the account which the statement or document is associated with.
-  optional string account = 3;
+  optional string account = 1;
 
   // The absolute filename of the document file.
-  optional string filename = 4;
+  optional string filename = 2;
 }
 
 // A custom directive. This directive can be used to implement new experimental
@@ -422,5 +422,3 @@ message LedgerProto {
   optional options.Options options = 3;
   optional options.ProcessingInfo info = 4;
 }
-
-// TODO(blais): Renumber all proto fields before publishing final version.
