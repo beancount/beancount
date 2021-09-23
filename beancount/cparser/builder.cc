@@ -48,6 +48,27 @@ template void SetExprOrNumber(inter::UnitSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::PriceSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::ExprNumber* parent, const inter::Expr& expr);
 
+template <typename T>
+void ReduceExpression(T* parent,
+                      decimal::Context& context,
+                      bool decimal_use_triple) {
+  if (!parent->has_expr())
+    return;
+  decimal::Decimal number = Builder::EvaluateExpression(parent->expr(), context);
+  DecimalToProto(number, decimal_use_triple, parent->mutable_number());
+  parent->clear_expr();
+}
+
+template void ReduceExpression(inter::PriceSpec* parent,
+                               decimal::Context& context,
+                               bool decimal_use_triple);
+template void ReduceExpression(inter::UnitSpec* parent,
+                               decimal::Context& context,
+                               bool decimal_use_triple);
+template void ReduceExpression(inter::ExprNumber* parent,
+                               decimal::Context& context,
+                               bool decimal_use_triple);
+
 Builder::Builder(scanner::Scanner& scanner) :
   scanner_(scanner)
 {
@@ -343,8 +364,10 @@ void Builder::PreparePosting(Posting* posting,
     auto* units = posting->mutable_spec()->mutable_units();
     SetExprOrNumber(units, *maybe_expr);
 
+#if 0
     // TODO(blais): Delay the evaluation of the expression.
     ReduceExpression(units);
+#endif
   }
 
   // Set the currency on the posting if present.
@@ -429,37 +452,38 @@ void SetLocationFromLocation(const location& loc, Location* output) {
   output->set_lineno_end(loc.end.line);
 }
 
-decimal::Decimal Builder::EvaluateExpression(const inter::Expr& expr) {
+decimal::Decimal Builder::EvaluateExpression(const inter::Expr& expr,
+                                             decimal::Context& context) {
   switch (expr.op()) {
     case inter::ExprOp::NUM: {
       return ProtoToDecimal(expr.number());
     }
     case inter::ExprOp::ADD: {
-      auto num1 = EvaluateExpression(expr.arg1());
-      auto num2 = EvaluateExpression(expr.arg2());
-      return num1.add(num2, context());
+      auto num1 = EvaluateExpression(expr.arg1(), context);
+      auto num2 = EvaluateExpression(expr.arg2(), context);
+      return num1.add(num2, context);
     }
     case inter::ExprOp::SUB: {
-      auto num1 = EvaluateExpression(expr.arg1());
-      auto num2 = EvaluateExpression(expr.arg2());
-      return num1.sub(num2, context());
+      auto num1 = EvaluateExpression(expr.arg1(), context);
+      auto num2 = EvaluateExpression(expr.arg2(), context);
+      return num1.sub(num2, context);
     }
     case inter::ExprOp::MUL: {
-      auto num1 = EvaluateExpression(expr.arg1());
-      auto num2 = EvaluateExpression(expr.arg2());
-      return num1.mul(num2, context());
+      auto num1 = EvaluateExpression(expr.arg1(), context);
+      auto num2 = EvaluateExpression(expr.arg2(), context);
+      return num1.mul(num2, context);
     }
     case inter::ExprOp::DIV: {
-      auto num1 = EvaluateExpression(expr.arg1());
-      auto num2 = EvaluateExpression(expr.arg2());
-      return num1.div(num2, context());
+      auto num1 = EvaluateExpression(expr.arg1(), context);
+      auto num2 = EvaluateExpression(expr.arg2(), context);
+      return num1.div(num2, context);
     }
     case inter::ExprOp::NEG: {
-      auto num1 = EvaluateExpression(expr.arg1());
-      return num1.minus(context());
+      auto num1 = EvaluateExpression(expr.arg1(), context);
+      return num1.minus(context);
     }
     case inter::ExprOp::PLUS: {
-      return EvaluateExpression(expr.arg1());
+      return EvaluateExpression(expr.arg1(), context);
     }
     default:
       // Invalid value.
@@ -467,19 +491,6 @@ decimal::Decimal Builder::EvaluateExpression(const inter::Expr& expr) {
       assert(false);
   }
 }
-
-template <typename T>
-void Builder::ReduceExpression(T* parent) {
-  if (!parent->has_expr())
-    return;
-  decimal::Decimal number = EvaluateExpression(parent->expr());
-  DecimalProto(number, parent->mutable_number());
-  parent->clear_expr();
-}
-
-template void Builder::ReduceExpression(inter::PriceSpec* parent);
-template void Builder::ReduceExpression(inter::UnitSpec* parent);
-template void Builder::ReduceExpression(inter::ExprNumber* parent);
 
 void Builder::AddError(std::string_view message, const location& loc) {
   auto* error = new Error();

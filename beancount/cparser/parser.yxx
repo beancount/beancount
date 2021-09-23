@@ -1054,8 +1054,10 @@ price_annotation:
         SetExprOrNumber(spec, *$maybe_expr);
         delete $maybe_expr;
 
+#if 0
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
+#endif
       }
 
       if ($maybe_currency.has_value()) {
@@ -1159,8 +1161,10 @@ compound_expr:
       SetExprOrNumber(spec, *$per_unit);
       delete $per_unit;
 
+#if 0
       // TODO(blais): Delay this evaluation.
       builder.ReduceExpression(spec);
+#endif
     }
   | maybe_expr[per_unit] HASH maybe_expr[total]
     {
@@ -1172,8 +1176,10 @@ compound_expr:
         SetExprOrNumber(spec, *$per_unit);
         delete $per_unit;
 
+#if 0
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
+#endif
       }
 
       if ($total) {
@@ -1182,8 +1188,10 @@ compound_expr:
         SetExprOrNumber(spec, *$total);
         delete $total;
 
+#if 0
         // TODO(blais): Delay this evaluation.
         builder.ReduceExpression(spec);
+#endif
       }
     }
 

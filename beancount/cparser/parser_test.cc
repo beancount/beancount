@@ -1,5 +1,6 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/scanner.h"
+#include "beancount/cparser/builder.h"
 #include "beancount/cparser/test_utils.h"
 
 #include <algorithm>
@@ -32,6 +33,17 @@ struct CompareOptions {
   bool debug = false;
 };
 
+
+// Evaluate all the expressions in a single directive.
+void ReduceExpressions(decimal::Context& context, beancount::Directive* directive) {
+  if (!directive->has_transaction())
+    return;
+  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
+    auto* spec = posting.mutable_spec()->mutable_units();
+    parser::ReduceExpression(spec, context, false);
+  }
+}
+
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     const std::string& expected_string,
                                     const CompareOptions& options = {}) {
@@ -40,8 +52,19 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
     std::cout << "clean_string = >>>>>" << clean_string << "<<<<<" << std::endl;
   }
   auto ledger = parser::ParseString(clean_string, "<string>", 0, options.debug);
+
+  // Reduce all expressions in a given contxt.
+  decimal::Context context = decimal::context;
+  context.prec(28);
+  using namespace std::placeholders;
+  std::for_each(ledger->directives.begin(), ledger->directives.end(),
+                std::bind(&ReduceExpressions, context, _1));
+
+
   ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
+
+
 
   // Compare the whole protos.
   inter::Ledger expected_proto;

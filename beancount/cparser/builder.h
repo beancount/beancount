@@ -145,10 +145,8 @@ public:
   void FactorTotalPrice(inter::Spec* spec);
 
   // Evaluate an expression without modifying the proto.
-  decimal::Decimal EvaluateExpression(const inter::Expr& expr);
-
-  // Reduce an expression to its corresponding number, mutating the input proto.
-  template <typename T> void ReduceExpression(T* parent);
+  static decimal::Decimal EvaluateExpression(const inter::Expr& expr,
+                                             decimal::Context& context);
 
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
@@ -194,7 +192,13 @@ private:
 
 // Reduce an expression immediately (in the parser) if trivial.
 // This keeps tests simple and makes the transition to `Expr` easy.
-template <typename T> void SetExprOrNumber(T* parent, const inter::Expr& maybe_expr);
+template <typename T> void SetExprOrNumber(T* parent,
+                                           const inter::Expr& maybe_expr);
+
+// Reduce an expression to its corresponding number, mutating the input proto.
+template <typename T> void ReduceExpression(T* parent,
+                                            decimal::Context& context,
+                                            bool decimal_use_triple);
 
 }  // namespace parser
 }  // namespace beancount
