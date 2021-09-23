@@ -1066,8 +1066,6 @@ price_annotation:
 amount:
   expr CURRENCY
     {
-      builder.WitnessDecimal($1, $2);
-
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency(std::move($2));
@@ -1083,9 +1081,6 @@ amount_tolerance:
   | expr TILDE expr[tolerance] CURRENCY
     /* TODO(blais): support expr. */
     {
-      builder.WitnessDecimal($1, $4);
-      builder.WitnessDecimal($tolerance, $4);
-
       auto* amount = new Amount();
       builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency(std::move($4));
