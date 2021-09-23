@@ -111,6 +111,8 @@ message Posting {
   // in the prices database at the date of the transaction.
   optional Amount price = 7;
 
+  // Intermediate parsed expressions before resolution.
+  //
   // WARNING: The following fields is only used in the production of the
   // intermediate representation produced by the parser and never set in the
   // final processed output from Beancount. This is never set in the finalized
@@ -223,6 +225,16 @@ message Balance {
   // None if the balance check succeeds. This value is set to the difference if
   // the balance fails.
   optional Number difference = 4;
+
+  // Intermediate parsed expressions before resolution. Note that this contains
+  // the amount only; the `tolerance` field does not support expression
+  // evaluation, and `difference` is a derived value.
+  //
+  // WARNING: The following fields is only used in the production of the
+  // intermediate representation produced by the parser and never set in the
+  // final processed output from Beancount. This is never set in the finalized
+  // interpolated and booked data.
+  optional inter.AmountSpec spec = 5;
 }
 
 // A note directive, a general note that is attached to an account. These are
@@ -302,6 +314,14 @@ message Price {
   // An instance of Amount, the number of units and currency that 'currency' is
   // worth, for instance 1200.12 USD.
   optional Amount amount = 2;
+
+  // Intermediate parsed expressions before resolution.
+  //
+  // WARNING: The following fields is only used in the production of the
+  // intermediate representation produced by the parser and never set in the
+  // final processed output from Beancount. This is never set in the finalized
+  // interpolated and booked data.
+  optional inter.AmountSpec spec = 3;
 }
 
 // A document file declaration directive. This directive is used to attach a
