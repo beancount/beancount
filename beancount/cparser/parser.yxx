@@ -218,7 +218,7 @@ namespace parser {
 
 /* Note: You could add constness aggressively. This wouldn't make much difference. */
 %type <std::vector<std::string>> currency_list
-%type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
+%type <std::pair<beancount::Amount*, std::optional<decimal::Decimal>>> amount_with_tolerance
 %type <beancount::Amount*> amount
 %type <beancount::Amount*> amount_expr
 %type <decimal::Decimal> expr
@@ -490,15 +490,12 @@ price:
 
 /* A Balance directive. */
 balance:
-  DATE BALANCE account amount_tolerance[atol] tags_links eol indented_metadata
+  DATE BALANCE account amount_with_tolerance[atol] tags_links eol indented_metadata
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* balance = $$->mutable_balance();
       balance->set_account($account);
-
-      balance->mutable_amount()->CopyFrom(*$atol.first);
-      delete $atol.first;
-
+      balance->set_allocated_amount($atol.first);
       if ($atol.second.has_value()) {
         builder.DecimalProto($atol.second.value(), balance->mutable_tolerance());
       }
@@ -1083,16 +1080,19 @@ amount_expr:
     }
 
 /* An amount, with an optional associated tolerance. */
-amount_tolerance:
-  amount
+amount_with_tolerance:
+  amount_expr
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | expr TILDE expr[tolerance] CURRENCY
-    /* TODO(blais): support expr. */
+  | delayed_expr TILDE NUMBER[tolerance] CURRENCY
     {
+      // Note: We do not support an expression for the tolerance value anymore.
+      // This would likely unnecesasry anyway and keeps the definitions upstream
+      // simpler.
       auto* amount = new Amount();
-      builder.DecimalProto($1, amount->mutable_number());
+      SetExprOrNumber(amount, *$delayed_expr);
+      delete $delayed_expr;
       amount->set_currency(std::move($4));
       $$ = std::make_pair(amount, $tolerance);
     }

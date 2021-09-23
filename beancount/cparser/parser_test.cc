@@ -91,6 +91,11 @@ void ReduceExpressions(Ledger* ledger,
     if (price->has_amount()) {
       parser::ReduceExpression(price->mutable_amount(), context, false);
     }
+  } else if (directive->has_balance()) {
+    auto* balance = directive->mutable_balance();
+    if (balance->has_amount()) {
+      parser::ReduceExpression(balance->mutable_amount(), context, false);
+    }
   }
 }
 
