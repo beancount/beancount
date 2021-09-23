@@ -46,14 +46,6 @@ message ExprNumber {
   optional Expr expr = 2;
 }
 
-// An amount with an optional expression.
-// This is used in preparing instances of the regular `Amount`.
-message AmountSpec {
-  optional beancount.Number number = 1;
-  optional Expr expr = 2;
-  optional string currency = 3;
-}
-
 // A container for all the parser specs produced on a posting.
 // These are the objects that directly represent the parsed input yet to be
 // interpolated and booked.

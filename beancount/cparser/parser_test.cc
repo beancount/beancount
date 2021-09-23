@@ -88,17 +88,8 @@ void ReduceExpressions(Ledger* ledger,
     }
   } else if (directive->has_price()) {
     auto* price = directive->mutable_price();
-    if (price->has_spec()) {
-      parser::ReduceExpression(price->mutable_spec(), context, false);
-
-      // Move spec to price.
-      //
-      // TODO(blais): Move the intermediate definitions to Amount itself to
-      // simplify and avoid this.
-      auto* amount = price->mutable_amount();
-      amount->mutable_number()->CopyFrom(price->spec().number());
-      amount->set_currency(price->spec().currency());
-      price->clear_spec();
+    if (price->has_amount()) {
+      parser::ReduceExpression(price->mutable_amount(), context, false);
     }
   }
 }

@@ -49,7 +49,7 @@ void SetExprOrNumber(T* parent,
 template void SetExprOrNumber(inter::UnitSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::PriceSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::ExprNumber* parent, const inter::Expr& expr);
-template void SetExprOrNumber(inter::AmountSpec* parent, const inter::Expr& expr);
+template void SetExprOrNumber(Amount* parent, const inter::Expr& expr);
 
 template <typename T>
 void ReduceExpression(T* parent,
@@ -71,7 +71,7 @@ template void ReduceExpression(inter::UnitSpec* parent,
 template void ReduceExpression(inter::ExprNumber* parent,
                                decimal::Context& context,
                                bool decimal_use_triple);
-template void ReduceExpression(inter::AmountSpec* parent,
+template void ReduceExpression(Amount* parent,
                                decimal::Context& context,
                                bool decimal_use_triple);
 
