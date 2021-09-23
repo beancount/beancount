@@ -220,6 +220,7 @@ namespace parser {
 %type <std::vector<std::string>> currency_list
 %type <std::pair<const beancount::Amount*, std::optional<decimal::Decimal>>> amount_tolerance
 %type <beancount::Amount*> amount
+%type <beancount::inter::AmountSpec*> amount_expr
 %type <decimal::Decimal> expr
 %type <beancount::inter::Expr*> delayed_expr
 %type <beancount::inter::Expr*> maybe_expr
@@ -479,12 +480,12 @@ transaction_line:
 
 /* A Price directive. */
 price:
-  DATE PRICE CURRENCY amount tags_links eol indented_metadata
+  DATE PRICE CURRENCY amount_expr tags_links eol indented_metadata
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* price = $$->mutable_price();
       price->set_currency(std::move($3));
-      price->mutable_amount()->CopyFrom(*$amount);
+      price->set_allocated_spec($amount_expr);
     }
 
 /* A Balance directive. */
@@ -1070,6 +1071,15 @@ amount:
       builder.DecimalProto($1, amount->mutable_number());
       amount->set_currency(std::move($2));
       $$ = amount;
+    }
+
+amount_expr:
+  delayed_expr CURRENCY
+    {
+      auto* amount = $$ = new inter::AmountSpec();
+      SetExprOrNumber(amount, *$delayed_expr);
+      delete $delayed_expr;
+      amount->set_currency(std::move($2));
     }
 
 /* An amount, with an optional associated tolerance. */

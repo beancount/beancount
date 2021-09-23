@@ -24,6 +24,8 @@ using google::protobuf::FieldDescriptor;
 using google::protobuf::TextFormat;
 using std::string;
 
+// NOTE(blais): You could set_allocate_expr() in this function and avoid a copy
+// and allocation/delete in the caller.
 template <typename T>
 void SetExprOrNumber(T* parent,
                      const inter::Expr& expr) {
@@ -47,6 +49,7 @@ void SetExprOrNumber(T* parent,
 template void SetExprOrNumber(inter::UnitSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::PriceSpec* parent, const inter::Expr& expr);
 template void SetExprOrNumber(inter::ExprNumber* parent, const inter::Expr& expr);
+template void SetExprOrNumber(inter::AmountSpec* parent, const inter::Expr& expr);
 
 template <typename T>
 void ReduceExpression(T* parent,
@@ -66,6 +69,9 @@ template void ReduceExpression(inter::UnitSpec* parent,
                                decimal::Context& context,
                                bool decimal_use_triple);
 template void ReduceExpression(inter::ExprNumber* parent,
+                               decimal::Context& context,
+                               bool decimal_use_triple);
+template void ReduceExpression(inter::AmountSpec* parent,
                                decimal::Context& context,
                                bool decimal_use_triple);
 

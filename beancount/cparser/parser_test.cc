@@ -38,52 +38,67 @@ struct CompareOptions {
 // TODO(blais): Move this to the parser?
 //
 
-// Evaluate all the expressions in a single directive.
+// Evaluate all the expressions to their numbers in a directive.
+// This essentially performs all the supported arithmetic evaluation.
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
                        beancount::Directive* directive) {
-  if (!directive->has_transaction())
-    return;
-  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
-    if (posting.has_spec()) {
-      // Evaluate units.
-      auto* spec = posting.mutable_spec();
-      if (spec->has_units()) {
-        parser::ReduceExpression(spec->mutable_units(), context, false);
-      }
-
-      if (spec->has_cost()) {
-        // Evaluate per-unit cost.
-        auto* cost = spec->mutable_cost();
-        if (cost->has_per_unit()) {
-          parser::ReduceExpression(cost->mutable_per_unit(), context, false);
+  if (directive->has_transaction()) {
+    for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
+      if (posting.has_spec()) {
+        // Evaluate units.
+        auto* spec = posting.mutable_spec();
+        if (spec->has_units()) {
+          parser::ReduceExpression(spec->mutable_units(), context, false);
         }
-        // Evaluate total cost.
-        if (cost->has_total()) {
-          parser::ReduceExpression(cost->mutable_total(), context, false);
+
+        if (spec->has_cost()) {
+          // Evaluate per-unit cost.
+          auto* cost = spec->mutable_cost();
+          if (cost->has_per_unit()) {
+            parser::ReduceExpression(cost->mutable_per_unit(), context, false);
+          }
+          // Evaluate total cost.
+          if (cost->has_total()) {
+            parser::ReduceExpression(cost->mutable_total(), context, false);
+          }
         }
-      }
 
-      // Evaluate price annotation.
-      if (spec->has_price()) {
-        auto* price = spec->mutable_price();
-        parser::ReduceExpression(price, context, false);
+        // Evaluate price annotation.
+        if (spec->has_price()) {
+          auto* price = spec->mutable_price();
+          parser::ReduceExpression(price, context, false);
 
-        // Prices may not be negative. Check and issue an error if found; fix up
-        // the price to its absolute value and continue.
-        if (price->has_number()) {
-          decimal::Decimal dec = ProtoToDecimal(price->number());
-          if (dec.sign() == -1) {
-            // TODO(blais): Move all the number processing to post-parsing.
-            AddError(ledger,
-                     "Negative prices are not allowed "
-                     "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                     "for workaround)", directive->location());
-            // Invert and continue.
-            DecimalToProto(-dec, false, price->mutable_number());
+          // Prices may not be negative. Check and issue an error if found; fix up
+          // the price to its absolute value and continue.
+          if (price->has_number()) {
+            decimal::Decimal dec = ProtoToDecimal(price->number());
+            if (dec.sign() == -1) {
+              // TODO(blais): Move all the number processing to post-parsing.
+              AddError(ledger,
+                       "Negative prices are not allowed "
+                       "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                       "for workaround)", directive->location());
+              // Invert and continue.
+              DecimalToProto(-dec, false, price->mutable_number());
+            }
           }
         }
       }
+    }
+  } else if (directive->has_price()) {
+    auto* price = directive->mutable_price();
+    if (price->has_spec()) {
+      parser::ReduceExpression(price->mutable_spec(), context, false);
+
+      // Move spec to price.
+      //
+      // TODO(blais): Move the intermediate definitions to Amount itself to
+      // simplify and avoid this.
+      auto* amount = price->mutable_amount();
+      amount->mutable_number()->CopyFrom(price->spec().number());
+      amount->set_currency(price->spec().currency());
+      price->clear_spec();
     }
   }
 }
