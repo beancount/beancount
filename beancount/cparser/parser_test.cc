@@ -1,6 +1,7 @@
 #include "beancount/cparser/parser.h"
 #include "beancount/cparser/scanner.h"
 #include "beancount/cparser/builder.h"
+#include "beancount/cparser/ledger.h"
 #include "beancount/cparser/test_utils.h"
 
 #include <algorithm>
@@ -35,12 +36,51 @@ struct CompareOptions {
 
 
 // Evaluate all the expressions in a single directive.
-void ReduceExpressions(decimal::Context& context, beancount::Directive* directive) {
+void ReduceExpressions(Ledger* ledger,
+                       decimal::Context& context,
+                       beancount::Directive* directive) {
   if (!directive->has_transaction())
     return;
   for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
-    auto* spec = posting.mutable_spec()->mutable_units();
-    parser::ReduceExpression(spec, context, false);
+    if (posting.has_spec()) {
+      auto* spec = posting.mutable_spec();
+      if (spec->has_units()) {
+        parser::ReduceExpression(spec->mutable_units(), context, false);
+      }
+
+      if (spec->has_cost()) {
+        auto* cost = spec->mutable_cost();
+        if (cost->has_per_unit()) {
+          parser::ReduceExpression(cost->mutable_per_unit(), context, false);
+        }
+        if (cost->has_total()) {
+          parser::ReduceExpression(cost->mutable_total(), context, false);
+        }
+      }
+
+      if (spec->has_price()) {
+        auto* price = spec->mutable_price();
+        parser::ReduceExpression(price, context, false);
+
+        // Prices may not be negative. Check and issue an error if found; fix up
+        // the price to its absolute value and continue.
+        //
+        // TODO(blais): Delay this to post-parsing. Expressions may reduce to a
+        // negative number and that would be an error too.
+        if (price->has_number()) {
+          decimal::Decimal dec = ProtoToDecimal(price->number());
+          if (dec.sign() == -1) {
+            // TODO(blais): Move all the number processing to post-parsing.
+            AddError(ledger,
+                     "Negative prices are not allowed "
+                     "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                     "for workaround)", directive->location());
+            // Invert and continue.
+            DecimalToProto(-dec, false, price->mutable_number());
+          }
+        }
+      }
+    }
   }
 }
 
@@ -58,13 +98,10 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   context.prec(28);
   using namespace std::placeholders;
   std::for_each(ledger->directives.begin(), ledger->directives.end(),
-                std::bind(&ReduceExpressions, context, _1));
-
+                std::bind(&ReduceExpressions, ledger.get(), context, _1));
 
   ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
-
-
 
   // Compare the whole protos.
   inter::Ledger expected_proto;

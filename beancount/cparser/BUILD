@@ -120,6 +120,7 @@ cc_test(
         ":test_utils",
         ":parser",
         ":builder",
+        ":ledger",
         "@com_google_googletest//:gtest_main",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
@@ -195,6 +196,7 @@ cc_library(
         "//beancount/cparser:ledger_cc_proto",
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
+        "//beancount/ccore:std_utils",
         "@com_google_protobuf//:protobuf",
     ]
 )

@@ -48,6 +48,9 @@ int WriteToText(const Ledger& ledger, const std::string& filename);
 // Convert the class above to a proto version.
 std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger);
 
+// Add an error to the ledger.
+void AddError(Ledger* ledger, std::string_view message, const Location& location);
+
 }  // namespace beancount
 
 #endif // BEANCOUNT_CPARSER_LEDGER_H_

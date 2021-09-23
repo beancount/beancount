@@ -1053,32 +1053,10 @@ price_annotation:
       if ($maybe_expr) {
         SetExprOrNumber(spec, *$maybe_expr);
         delete $maybe_expr;
-
-#if 0
-        // TODO(blais): Delay this evaluation.
-        builder.ReduceExpression(spec);
-#endif
       }
 
       if ($maybe_currency.has_value()) {
         spec->set_currency($maybe_currency.value());
-      }
-
-      // Prices may not be negative. Check and issue an error if found; fix up
-      // the price to its absolute value and continue.
-      //
-      // TODO(blais): Delay this to post-parsing. Expressions may reduce to a
-      // negative number and that would be an error too.
-      if (spec->has_number()) {
-        decimal::Decimal dec = ProtoToDecimal(spec->number());
-        if (dec.sign() == -1) {
-          // TODO(blais): Move all the number processing to post-parsing.
-          builder.AddError("Negative prices are not allowed "
-                           "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                           "for workaround)", @$);
-          // Invert and continue.
-          builder.DecimalProto(-dec, spec->mutable_number());
-        }
       }
     }
 
@@ -1160,11 +1138,6 @@ compound_expr:
       auto* spec = $$->mutable_per_unit();
       SetExprOrNumber(spec, *$per_unit);
       delete $per_unit;
-
-#if 0
-      // TODO(blais): Delay this evaluation.
-      builder.ReduceExpression(spec);
-#endif
     }
   | maybe_expr[per_unit] HASH maybe_expr[total]
     {
@@ -1175,11 +1148,6 @@ compound_expr:
         auto* spec = $$->mutable_per_unit();
         SetExprOrNumber(spec, *$per_unit);
         delete $per_unit;
-
-#if 0
-        // TODO(blais): Delay this evaluation.
-        builder.ReduceExpression(spec);
-#endif
       }
 
       if ($total) {
@@ -1187,11 +1155,6 @@ compound_expr:
         auto* spec = $$->mutable_total();
         SetExprOrNumber(spec, *$total);
         delete $total;
-
-#if 0
-        // TODO(blais): Delay this evaluation.
-        builder.ReduceExpression(spec);
-#endif
       }
     }
 

@@ -363,11 +363,6 @@ void Builder::PreparePosting(Posting* posting,
   if (maybe_expr) {
     auto* units = posting->mutable_spec()->mutable_units();
     SetExprOrNumber(units, *maybe_expr);
-
-#if 0
-    // TODO(blais): Delay the evaluation of the expression.
-    ReduceExpression(units);
-#endif
   }
 
   // Set the currency on the posting if present.
@@ -389,7 +384,9 @@ void Builder::PreparePosting(Posting* posting,
 
     // If the price is specified for the entire amount, compute the effective
     // price here and forget about that detail of the input syntax.
-    if (is_total_price && (!spec.has_units() || !spec.units().has_number())) {
+    if (is_total_price && (!spec.has_units() ||
+                           (!spec.units().has_number() &&
+                            !spec.units().has_expr()))) {
       // units.number is MISSING.
       // Note: we could potentially do a better job and attempt to f
       // this up after interpolation, but this syntax is pretty rare

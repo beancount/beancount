@@ -1,5 +1,7 @@
 #include "beancount/cparser/ledger.h"
 
+#include "beancount/ccore/std_utils.h"
+
 #include "google/protobuf/text_format.h"
 #include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
@@ -81,6 +83,13 @@ std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger) {
     output->mutable_info()->CopyFrom(*ledger.info);
   }
   return output;
+}
+
+void AddError(Ledger* ledger, std::string_view message, const Location& location) {
+  auto* error = new Error();
+  ledger->errors.push_back(error);
+  error->set_message(Capitalize(message));
+  error->mutable_location()->CopyFrom(location);
 }
 
 }  // namespace beancount
