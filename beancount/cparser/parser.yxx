@@ -501,7 +501,7 @@ balance:
       if ($atol.second.has_value()) {
         builder.DecimalProto($atol.second.value(), balance->mutable_tolerance());
       }
-      // Note: We leave `diff_amount` unset.
+      // Note: We leave `difference` unset.
     }
 
 /* An Open directive. */

@@ -220,9 +220,9 @@ message Balance {
   // A Decimal object, the amount of tolerance to use in the verification.
   optional Number tolerance = 5;
 
-  // None if the balance check succeeds. This value is set to an Amount instance
-  // if the balance fails, the amount of the difference.
-  optional Amount diff_amount = 6;
+  // None if the balance check succeeds. This value is set to the difference if
+  // the balance fails.
+  optional Number difference = 6;
 }
 
 // A note directive, a general note that is attached to an account. These are
