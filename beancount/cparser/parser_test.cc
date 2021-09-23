@@ -35,6 +35,9 @@ struct CompareOptions {
 };
 
 
+// TODO(blais): Move this to the parser?
+//
+
 // Evaluate all the expressions in a single directive.
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
@@ -618,7 +621,7 @@ TEST(TestParserComplete, Comment) {
 }
 
 TEST(TestParserComplete, ExtraWhitespaceNote) {
-  // TODO(blais): We could do better here, in the original, the directive is produced.
+  // Note: We could do better here, in the original, the directive is produced.
   ExpectParse(R"(
     2013-07-11 note Assets:Cash "test"
       ;;
@@ -630,7 +633,6 @@ TEST(TestParserComplete, ExtraWhitespaceNote) {
 }
 
 TEST(TestParserComplete, ExtraWhitespaceTransaction) {
-  // TODO(blais): Fix this, in the original, there's no error.
   ExpectParse(absl::StrCat(
     "2013-05-18 * \"Nice dinner at Mermaid Inn\"\n",
     "  Expenses:Restaurant         100 USD\n",
