@@ -9,12 +9,17 @@
 
 #include "beancount/cparser/ledger.pb.h"
 
-#include <memory>
-#include <vector>
 #include <list>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "beancount/cparser/options.pb.h"
+#include "beancount/cparser/inter.pb.h"
 #include "beancount/ccore/data.pb.h"
+
+#include "decimal.hh"
 
 namespace beancount {
 
@@ -50,6 +55,25 @@ std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger);
 
 // Add an error to the ledger.
 void AddError(Ledger* ledger, std::string_view message, const Location& location);
+
+// Evaluate an expression without modifying the proto.
+decimal::Decimal EvaluateExpression(const inter::Expr& expr,
+                                    decimal::Context& context);
+
+// Evaluate all the expressions to their numbers in a directive.
+// This essentially performs all the supported arithmetic evaluation.
+void ReduceExpressions(Ledger* ledger,
+                       decimal::Context& context,
+                       beancount::Directive* directive);
+
+// Reduce the total price of a posting with price to per-unit price.
+void NormalizeTotalPrices(Ledger* ledger,
+                          decimal::Context& context,
+                          beancount::Directive* directive);
+
+// If both cost and price are specified, check that the currencies must match.
+void CheckCoherentCurrencies(Ledger* ledger,
+                             beancount::Directive* directive);
 
 }  // namespace beancount
 

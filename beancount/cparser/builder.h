@@ -135,10 +135,6 @@ public:
                       bool is_total,
                       const location& loc);
 
-  // Evaluate an expression without modifying the proto.
-  static decimal::Decimal EvaluateExpression(const inter::Expr& expr,
-                                             decimal::Context& context);
-
   // Insert an error in the error log. These will be returned along with the
   // ledger as output of the parsing phase.
   void AddError(std::string_view message, const location& loc);
@@ -182,11 +178,6 @@ private:
 // This keeps tests simple and makes the transition to `Expr` easy.
 template <typename T> void SetExprOrNumber(T* parent,
                                            const inter::Expr& maybe_expr);
-
-// Reduce an expression to its corresponding number, mutating the input proto.
-template <typename T> void ReduceExpression(T* parent,
-                                            decimal::Context& context,
-                                            bool decimal_use_triple);
 
 }  // namespace parser
 }  // namespace beancount

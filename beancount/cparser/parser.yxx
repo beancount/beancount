@@ -715,7 +715,7 @@ simple_value:
       // by some users. For now we keep things simple by evaluating here and
       // now.
       $$ = new beancount::MetaValue();
-      auto num = builder.EvaluateExpression(*$expr, decimal::context);
+      auto num = EvaluateExpression(*$expr, decimal::context);
       builder.DecimalProto(num, $$->mutable_number());
       delete $expr;
     }

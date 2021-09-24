@@ -194,10 +194,14 @@ cc_library(
     hdrs = ["ledger.h"],
     deps = [
         "//beancount/cparser:ledger_cc_proto",
+        "//beancount/cparser:parser_cc_proto",
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
+        "//beancount/ccore:number",
         "//beancount/ccore:std_utils",
         "@com_google_protobuf//:protobuf",
+        "@com_google_absl//absl/strings:str_format",
+        "@mpdecimal//:mpdecimal",
     ]
 )
 

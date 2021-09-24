@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -20,7 +19,6 @@
 namespace beancount {
 namespace {
 
-using absl::StrFormat;
 using std::pair;
 using std::string;
 using std::vector;
@@ -36,154 +34,6 @@ struct CompareOptions {
   bool debug = false;
   bool normalize_totals = false;
 };
-
-
-
-
-//------------------------------------------------------------------------------------------------------------------------
-// TODO(blais): Move this to the parser?
-
-// Evaluate all the expressions to their numbers in a directive.
-// This essentially performs all the supported arithmetic evaluation.
-void ReduceExpressions(Ledger* ledger,
-                       decimal::Context& context,
-                       beancount::Directive* directive) {
-  if (directive->has_transaction()) {
-    for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
-      if (posting.has_spec()) {
-        // Evaluate units.
-        auto* spec = posting.mutable_spec();
-        if (spec->has_units()) {
-          parser::ReduceExpression(spec->mutable_units(), context, false);
-        }
-
-        if (spec->has_cost()) {
-          // Evaluate per-unit cost.
-          auto* cost = spec->mutable_cost();
-          if (cost->has_per_unit()) {
-            parser::ReduceExpression(cost->mutable_per_unit(), context, false);
-          }
-          // Evaluate total cost.
-          if (cost->has_total()) {
-            parser::ReduceExpression(cost->mutable_total(), context, false);
-          }
-        }
-
-        // Evaluate price annotation.
-        if (spec->has_price()) {
-          auto* price = spec->mutable_price();
-          parser::ReduceExpression(price, context, false);
-
-          // Prices may not be negative. Check and issue an error if found; fix up
-          // the price to its absolute value and continue.
-          if (price->has_number()) {
-            decimal::Decimal dec = ProtoToDecimal(price->number());
-            if (dec.sign() == -1) {
-              // TODO(blais): Move all the number processing to post-parsing.
-              AddError(ledger,
-                       "Negative prices are not allowed "
-                       "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                       "for workaround)", directive->location());
-              // Invert and continue.
-              DecimalToProto(-dec, false, price->mutable_number());
-            }
-          }
-        }
-      }
-    }
-  } else if (directive->has_price()) {
-    auto* price = directive->mutable_price();
-    if (price->has_amount()) {
-      parser::ReduceExpression(price->mutable_amount(), context, false);
-    }
-  } else if (directive->has_balance()) {
-    auto* balance = directive->mutable_balance();
-    if (balance->has_amount()) {
-      parser::ReduceExpression(balance->mutable_amount(), context, false);
-    }
-  }
-}
-
-// Reduce the total price of a posting with price to per-unit price.
-//
-void NormalizeTotalPrices(Ledger* ledger,
-                          decimal::Context& context,
-                          beancount::Directive* directive) {
-  if (!directive->has_transaction())
-    return;
-
-  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
-    if (posting.has_spec() && posting.spec().has_price()) {
-      auto* spec = posting.mutable_spec();
-      auto* price = spec->mutable_price();
-
-      // Expressions should have already been evaluated.
-      assert(!price->has_expr());
-
-      // If the price is specified for the entire amount, we process it.
-      bool is_total_price = price->is_total();
-      price->clear_is_total();
-      if (is_total_price) {
-        if (spec->has_units() && spec->units().has_number()) {
-          // Expressions should have already been evaluated.
-          assert(!spec->units().has_expr());
-
-          // We compute the effective price here and forget about that detail of
-          // the input syntax.
-          decimal::Decimal dunits = ProtoToDecimal(spec->units().number());
-          decimal::Decimal dprice;
-          if (dunits.iszero()) {
-            dprice = dunits;
-          } else {
-            dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context);
-          }
-          DecimalToProto(dprice, false, price->mutable_number());
-
-        } else {
-          // units.number is MISSING, issue and error and clear the price.
-          //
-          // Note that we could potentially do a better job and attempt to
-          // perform the normalization after an attempt at interpolation, but
-          // this situation is pretty rare anyway.
-          AddError(ledger,
-                   StrFormat("Total price on a posting without units: %s.",
-                             price->DebugString()), posting.location());
-          spec->clear_price();
-        }
-      }
-    }
-  }
-}
-
-// If both cost and price are specified, check that the currencies must match.
-void CheckCoherentCurrencies(Ledger* ledger,
-                             beancount::Directive* directive) {
-  if (!directive->has_transaction())
-    return;
-
-  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
-    const auto& spec = posting.spec();
-    if (spec.has_cost() && spec.has_price()) {
-      const auto& cost = spec.cost();
-      const auto& price = spec.price();
-      if (cost.has_currency() &&
-          price.has_currency() &&
-          spec.cost().currency() != price.currency()) {
-        AddError(ledger, StrFormat("Cost and price currencies must match: %s != %s",
-                                   cost.currency(), price.currency()), posting.location());
-      }
-    }
-    // Note: We allow zero prices because we need them for round-trips for
-    // conversion entries.
-  }
-}
-
-//------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
 
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     const std::string& expected_string,

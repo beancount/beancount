@@ -1,5 +1,10 @@
 -*- mode: org -*-
 beancount: TODO
+* V3
+
+- Replace absl/strings/string_view.h to <string_view>
+
+
 * Priorities
 
 - Fix #145
