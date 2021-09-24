@@ -219,8 +219,8 @@ namespace parser {
 /* Note: You could add constness aggressively. This wouldn't make much difference. */
 %type <std::vector<std::string>> currency_list
 %type <std::pair<beancount::Amount*, std::optional<decimal::Decimal>>> amount_with_tolerance
-%type <beancount::Amount*> amount_expr
-%type <beancount::inter::Expr*> delayed_expr
+%type <beancount::Amount*> amount
+%type <beancount::inter::Expr*> expr
 %type <beancount::inter::Expr*> maybe_expr
 %type <std::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
@@ -478,12 +478,12 @@ transaction_line:
 
 /* A Price directive. */
 price:
-  DATE PRICE CURRENCY amount_expr tags_links eol indented_metadata
+  DATE PRICE CURRENCY amount tags_links eol indented_metadata
     {
       $$ = builder.MakeDirective($1, &$indented_metadata, &$tags_links);
       auto* price = $$->mutable_price();
       price->set_currency(std::move($3));
-      price->set_allocated_amount($amount_expr);
+      price->set_allocated_amount($amount);
     }
 
 /* A Balance directive. */
@@ -705,7 +705,7 @@ simple_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  | delayed_expr
+  | expr
     {
       // Evaluate the expression here and now. Note that this is an exception to
       // the rest of the evaluations and is performed in the parser using the
@@ -715,9 +715,9 @@ simple_value:
       // by some users. For now we keep things simple by evaluating here and
       // now.
       $$ = new beancount::MetaValue();
-      auto num = builder.EvaluateExpression(*$1delayed_expr, decimal::context);
+      auto num = builder.EvaluateExpression(*$expr, decimal::context);
       builder.DecimalProto(num, $$->mutable_number());
-      delete $delayed_expr;
+      delete $expr;
     }
   | %empty
     {
@@ -727,7 +727,7 @@ simple_value:
 /* Metadata value, with added possibility of amount. */
 meta_value:
   simple_value
-  | amount_expr
+  | amount
     {
       $$ = new beancount::MetaValue();
       $$->set_allocated_amount($1);
@@ -812,14 +812,14 @@ currency_list:
 /*- Arithmetic expressions --------------------------------------------------*/
 
 /* Arithmetic expression, delayed for later evaluation. */
-delayed_expr:
+expr:
   NUMBER
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::NUM);
       builder.DecimalProto($1, expr->mutable_number());
     }
-  | delayed_expr PLUS delayed_expr
+  | expr PLUS expr
     {
       /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
@@ -829,7 +829,7 @@ delayed_expr:
       delete $1;
       delete $3;
     }
-  | delayed_expr MINUS delayed_expr
+  | expr MINUS expr
     {
       /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
@@ -839,7 +839,7 @@ delayed_expr:
       delete $1;
       delete $3;
     }
-  | delayed_expr ASTERISK delayed_expr
+  | expr ASTERISK expr
     {
       /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
@@ -849,7 +849,7 @@ delayed_expr:
       delete $1;
       delete $3;
     }
-  | delayed_expr SLASH delayed_expr
+  | expr SLASH expr
     {
       /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
@@ -859,21 +859,21 @@ delayed_expr:
       delete $1;
       delete $3;
     }
-  | MINUS delayed_expr %prec NEGATIVE
+  | MINUS expr %prec NEGATIVE
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::NEG);
       expr->mutable_arg1()->CopyFrom(*$2);
       delete $2;
     }
-  | PLUS delayed_expr %prec NEGATIVE
+  | PLUS expr %prec NEGATIVE
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::PLUS);
       expr->mutable_arg1()->CopyFrom(*$2);
       delete $2;
     }
-  | LPAREN delayed_expr RPAREN
+  | LPAREN expr RPAREN
     {
       // TODO(blais): Explicitly mark with a PAREN type, so you can re-render it.
       $$ = $2;
@@ -1033,36 +1033,36 @@ price_annotation:
 /*- Amounts & Costs ---------------------------------------------------------*/
 
 /* An Amount, which is a decimal number and a currency. */
-amount_expr:
-  delayed_expr CURRENCY
+amount:
+  expr CURRENCY
     {
       auto* amount = $$ = new Amount();
-      SetExprOrNumber(amount, *$delayed_expr);
-      delete $delayed_expr;
+      SetExprOrNumber(amount, *$expr);
+      delete $expr;
       amount->set_currency(std::move($2));
     }
 
 /* An amount, with an optional associated tolerance. */
 amount_with_tolerance:
-  amount_expr
+  amount
     {
       $$ = make_pair($1, std::optional<decimal::Decimal>{});
     }
-  | delayed_expr TILDE NUMBER[tolerance] CURRENCY
+  | expr TILDE NUMBER[tolerance] CURRENCY
     {
       // Note: We do not support an expression for the tolerance value anymore.
       // This would likely unnecesasry anyway and keeps the definitions upstream
       // simpler.
       auto* amount = new Amount();
-      SetExprOrNumber(amount, *$delayed_expr);
-      delete $delayed_expr;
+      SetExprOrNumber(amount, *$expr);
+      delete $expr;
       amount->set_currency(std::move($4));
       $$ = std::make_pair(amount, $tolerance);
     }
 
 /* An optional expression. */
 maybe_expr:
-  delayed_expr
+  expr
   | %empty
     {
       $$ = nullptr;
@@ -1098,7 +1098,7 @@ compound_amount:
 
 /* An expression or an optioanl pair of them separated by a #. */
 compound_expr:
-  delayed_expr[per_unit]
+  expr[per_unit]
     {
       $$ = new inter::CostSpec();
 
