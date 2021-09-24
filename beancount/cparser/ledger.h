@@ -64,11 +64,13 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr,
 // This essentially performs all the supported arithmetic evaluation.
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
+                       bool decimal_use_triple,
                        beancount::Directive* directive);
 
 // Reduce the total price of a posting with price to per-unit price.
 void NormalizeTotalPrices(Ledger* ledger,
                           decimal::Context& context,
+                          bool decimal_use_triple,
                           beancount::Directive* directive);
 
 // If both cost and price are specified, check that the currencies must match.

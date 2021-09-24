@@ -32,6 +32,7 @@ struct CompareOptions {
   bool leave_lineno = false;
   bool print_input = false;
   bool debug = false;
+  bool decimal_use_triple = false;
   bool normalize_totals = false;
 };
 
@@ -42,7 +43,9 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   if (options.print_input) {
     std::cout << "clean_string = >>>>>" << clean_string << "<<<<<" << std::endl;
   }
-  auto ledger = parser::ParseString(clean_string, "<string>", 0, options.debug);
+  auto ledger = parser::ParseString(clean_string, "<string>", 0,
+                                    options.debug,
+                                    options.decimal_use_triple);
 
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
@@ -54,13 +57,11 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   using namespace std::placeholders;
   for (auto* directive : ledger->directives) {
     // Reduce all expressions in a given context.
-    //
-    // TODO(blais): move parser::ReduceExpression to a module.
-    ReduceExpressions(ledger.get(), context, directive);
+    ReduceExpressions(ledger.get(), context, options.decimal_use_triple, directive);
 
     // Normalize total price to unit price.
     if (options.normalize_totals) {
-      NormalizeTotalPrices(ledger.get(), context, directive);
+      NormalizeTotalPrices(ledger.get(), context, options.decimal_use_triple, directive);
     }
 
     // Run checks on currencies between cost and prices.
