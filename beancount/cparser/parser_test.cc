@@ -108,9 +108,13 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   }
   auto ledger = parser::ParseString(clean_string, "<string>", 0, options.debug);
 
-  // Reduce all expressions in a given contxt.
+  // Set Decimal context before processing, update the desired precision for
+  // arithmetic operations.
   decimal::Context context = decimal::context;
   context.prec(28);
+  //TODO(blais): Set actual precision from the value given in the options.
+
+  // Reduce all expressions in a given context.
   using namespace std::placeholders;
   std::for_each(ledger->directives.begin(), ledger->directives.end(),
                 std::bind(&ReduceExpressions, ledger.get(), context, _1));

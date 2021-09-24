@@ -33,9 +33,6 @@ public:
   Builder(scanner::Scanner& scanner);
   virtual ~Builder();
 
-  // Return the decimal context in effect during parsing this file.
-  inline decimal::Context& context() { return context_; }
-
   // Return the list of active tags or metadata.
   inline const absl::flat_hash_set<std::string>& active_tags() const {
     return active_tags_;
@@ -49,9 +46,6 @@ public:
   void SetDecimalUseTriple(bool decimal_use_triple) {
     decimal_use_triple_ = decimal_use_triple;
   }
-
-  // Initialize the global context.
-  void Initialize();
 
   // Add a new option. This gets stored into the options proto and some of the
   // values may influence parsing.
@@ -169,9 +163,6 @@ private:
   std::vector<Error*> errors_;
   std::shared_ptr<options::Options> options_;
   std::shared_ptr<options::ProcessingInfo> info_;
-
-  // Decimal context.
-  decimal::Context context_;
 
   // A flag, true if we use triple for serialization by default.
   bool decimal_use_triple_ = false;

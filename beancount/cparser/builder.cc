@@ -80,24 +80,11 @@ Builder::Builder(scanner::Scanner& scanner) :
 {
   info_.reset(new options::ProcessingInfo());
   options_.reset(new options::Options());
-  Initialize();
 }
 
 Builder::~Builder() {
   for (auto* directive : directives_) delete directive;
   for (auto* error : errors_) delete error;
-}
-
-// TODO(blais): Review and remove this, this will not be needed once we process
-// all the numbers in a second processing step.
-void Builder::Initialize() {
-  // Set Decimal context before processing, update the desired precision for
-  // arithmetic operations.
-  //
-  // Note: Review this, perhaps allow the user to override it (would require
-  // post-poning the computation of arithmetic expressions).
-  context_ = decimal::context;
-  context_.prec(28);
 }
 
 void Builder::AddOptionBinary(const string& key, string&& value, const location& loc) {
@@ -441,7 +428,8 @@ void Builder::FactorTotalPrice(inter::Spec* spec) {
     if (dunits.iszero()) {
       dprice = dunits;
     } else {
-      dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context());
+      // TODO(blais): Evaluate using the user context.
+      dprice = ProtoToDecimal(price->number()).div(dunits.abs(), decimal::context);
     }
     DecimalProto(dprice, price->mutable_number());
   }
