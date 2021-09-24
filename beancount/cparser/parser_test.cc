@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -19,6 +20,7 @@
 namespace beancount {
 namespace {
 
+using absl::StrFormat;
 using std::pair;
 using std::string;
 using std::vector;
@@ -32,11 +34,14 @@ struct CompareOptions {
   bool leave_lineno = false;
   bool print_input = false;
   bool debug = false;
+  bool normalize_totals = false;
 };
 
 
+
+
+//------------------------------------------------------------------------------------------------------------------------
 // TODO(blais): Move this to the parser?
-//
 
 // Evaluate all the expressions to their numbers in a directive.
 // This essentially performs all the supported arithmetic evaluation.
@@ -99,6 +104,87 @@ void ReduceExpressions(Ledger* ledger,
   }
 }
 
+// Reduce the total price of a posting with price to per-unit price.
+//
+void NormalizeTotalPrices(Ledger* ledger,
+                          decimal::Context& context,
+                          beancount::Directive* directive) {
+  if (!directive->has_transaction())
+    return;
+
+  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
+    if (posting.has_spec() && posting.spec().has_price()) {
+      auto* spec = posting.mutable_spec();
+      auto* price = spec->mutable_price();
+
+      // Expressions should have already been evaluated.
+      assert(!price->has_expr());
+
+      // If the price is specified for the entire amount, we process it.
+      bool is_total_price = price->is_total();
+      price->clear_is_total();
+      if (is_total_price) {
+        if (spec->has_units() && spec->units().has_number()) {
+          // Expressions should have already been evaluated.
+          assert(!spec->units().has_expr());
+
+          // We compute the effective price here and forget about that detail of
+          // the input syntax.
+          decimal::Decimal dunits = ProtoToDecimal(spec->units().number());
+          decimal::Decimal dprice;
+          if (dunits.iszero()) {
+            dprice = dunits;
+          } else {
+            dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context);
+          }
+          DecimalToProto(dprice, false, price->mutable_number());
+
+        } else {
+          // units.number is MISSING, issue and error and clear the price.
+          //
+          // Note that we could potentially do a better job and attempt to
+          // perform the normalization after an attempt at interpolation, but
+          // this situation is pretty rare anyway.
+          AddError(ledger,
+                   StrFormat("Total price on a posting without units: %s.",
+                             price->DebugString()), posting.location());
+          spec->clear_price();
+        }
+      }
+    }
+  }
+}
+
+// If both cost and price are specified, check that the currencies must match.
+void CheckCoherentCurrencies(Ledger* ledger,
+                             beancount::Directive* directive) {
+  if (!directive->has_transaction())
+    return;
+
+  for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
+    const auto& spec = posting.spec();
+    if (spec.has_cost() && spec.has_price()) {
+      const auto& cost = spec.cost();
+      const auto& price = spec.price();
+      if (cost.has_currency() &&
+          price.has_currency() &&
+          spec.cost().currency() != price.currency()) {
+        AddError(ledger, StrFormat("Cost and price currencies must match: %s != %s",
+                                   cost.currency(), price.currency()), posting.location());
+      }
+    }
+    // Note: We allow zero prices because we need them for round-trips for
+    // conversion entries.
+  }
+}
+
+//------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     const std::string& expected_string,
                                     const CompareOptions& options = {}) {
@@ -114,10 +200,22 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   context.prec(28);
   //TODO(blais): Set actual precision from the value given in the options.
 
-  // Reduce all expressions in a given context.
+  // Process all the directives.
   using namespace std::placeholders;
-  std::for_each(ledger->directives.begin(), ledger->directives.end(),
-                std::bind(&ReduceExpressions, ledger.get(), context, _1));
+  for (auto* directive : ledger->directives) {
+    // Reduce all expressions in a given context.
+    //
+    // TODO(blais): move parser::ReduceExpression to a module.
+    ReduceExpressions(ledger.get(), context, directive);
+
+    // Normalize total price to unit price.
+    if (options.normalize_totals) {
+      NormalizeTotalPrices(ledger.get(), context, directive);
+    }
+
+    // Run checks on currencies between cost and prices.
+    CheckCoherentCurrencies(ledger.get(), directive);
+  }
 
   ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
@@ -2790,10 +2888,33 @@ TEST(TestTotalsAndSigns, TotalPriceWithMissing) {
         }
       }
     }
-    errors {
-      message: "Total price on a posting without units: number {\n  exact: \"2000.00\"\n}\ncurrency: \"USD\"\nis_total: true\n."
-    }
   )");
+
+  ExpectParse(R"(
+    2013-05-18 * ""
+      Assets:Investments:MSFT            MSFT @@ 2000.00 USD
+      Assets:Investments:Cash   20000.00 USD
+  )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      transaction {
+        flag: "*"
+        postings {
+          account: "Assets:Investments:MSFT"
+          spec {
+            units { currency: "MSFT" }
+          }
+        }
+        postings {
+          account: "Assets:Investments:Cash"
+          spec { units { number { exact: "20000.00" } currency: "USD" } }
+        }
+      }
+    }
+    errors {
+      message: "Total price on a posting without units: number {\n  exact: \"2000.00\"\n}\ncurrency: \"USD\"\n."
+    }
+  )", { .normalize_totals = true });
 }
 
 //------------------------------------------------------------------------------

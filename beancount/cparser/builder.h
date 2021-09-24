@@ -135,9 +135,6 @@ public:
                       bool is_total,
                       const location& loc);
 
-  // Factor the total price of a spec into per-unit price.
-  void FactorTotalPrice(inter::Spec* spec);
-
   // Evaluate an expression without modifying the proto.
   static decimal::Decimal EvaluateExpression(const inter::Expr& expr,
                                              decimal::Context& context);
