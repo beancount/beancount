@@ -46,6 +46,7 @@ public:
   void SetDecimalUseTriple(bool decimal_use_triple) {
     decimal_use_triple_ = decimal_use_triple;
   }
+  bool decimal_use_triple() const { return decimal_use_triple_; }
 
   // Add a new option. This gets stored into the options proto and some of the
   // values may influence parsing.
@@ -101,11 +102,6 @@ public:
   //---------------------------------------------------------------------------
   // Numbers & precision
 
-  // Convert a decimal number to a proto.
-  inline void DecimalProto(const decimal::Decimal& dec, Number* proto) {
-    // Note you could configure conversion options here.
-    DecimalToProto(dec, decimal_use_triple_, proto);
-  }
   // Decide whether to use text serialization for numbers or triples.
   static constexpr bool kUseText = true;
 

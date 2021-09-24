@@ -495,7 +495,9 @@ balance:
       balance->set_account($account);
       balance->set_allocated_amount($atol.first);
       if ($atol.second.has_value()) {
-        builder.DecimalProto($atol.second.value(), balance->mutable_tolerance());
+        DecimalToProto($atol.second.value(),
+                       builder.decimal_use_triple(),
+                       balance->mutable_tolerance());
       }
       // Note: We leave `difference` unset.
     }
@@ -716,7 +718,7 @@ simple_value:
       // now.
       $$ = new beancount::MetaValue();
       auto num = EvaluateExpression(*$expr, decimal::context);
-      builder.DecimalProto(num, $$->mutable_number());
+      DecimalToProto(num, builder.decimal_use_triple(), $$->mutable_number());
       delete $expr;
     }
   | %empty
@@ -817,7 +819,7 @@ expr:
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::NUM);
-      builder.DecimalProto($1, expr->mutable_number());
+      DecimalToProto($1, builder.decimal_use_triple(), expr->mutable_number());
     }
   | expr PLUS expr
     {
