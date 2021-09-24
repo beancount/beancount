@@ -219,9 +219,7 @@ namespace parser {
 /* Note: You could add constness aggressively. This wouldn't make much difference. */
 %type <std::vector<std::string>> currency_list
 %type <std::pair<beancount::Amount*, std::optional<decimal::Decimal>>> amount_with_tolerance
-%type <beancount::Amount*> amount
 %type <beancount::Amount*> amount_expr
-%type <decimal::Decimal> expr
 %type <beancount::inter::Expr*> delayed_expr
 %type <beancount::inter::Expr*> maybe_expr
 %type <std::optional<std::string>> maybe_currency
@@ -707,10 +705,19 @@ simple_value:
       $$ = new beancount::MetaValue();
       /* NULL is a proto not set */
     }
-  | expr
+  | delayed_expr
     {
+      // Evaluate the expression here and now. Note that this is an exception to
+      // the rest of the evaluations and is performed in the parser using the
+      // default context, as it would be awkward to define a temporary holding
+      // Expr in the one-of field for metavalues. This is going to be rare, and
+      // the effect subtle, we could eventually delay this evaluation if desired
+      // by some users. For now we keep things simple by evaluating here and
+      // now.
       $$ = new beancount::MetaValue();
-      builder.DecimalProto($1, $$->mutable_number());
+      auto num = builder.EvaluateExpression(*$1delayed_expr, decimal::context);
+      builder.DecimalProto(num, $$->mutable_number());
+      delete $delayed_expr;
     }
   | %empty
     {
@@ -720,7 +727,7 @@ simple_value:
 /* Metadata value, with added possibility of amount. */
 meta_value:
   simple_value
-  | amount
+  | amount_expr
     {
       $$ = new beancount::MetaValue();
       $$->set_allocated_amount($1);
@@ -803,41 +810,6 @@ currency_list:
     }
 
 /*- Arithmetic expressions --------------------------------------------------*/
-
-/* Arithmetic expression, reduced to a number. The reduction is carried out in
-   the parser. */
-/* TODO(blais): Get rid of this in favor of delayed evaluation. */
-expr:
-  NUMBER
-  | expr PLUS expr
-    {
-      $$ = $1.add($3, builder.context());
-    }
-  | expr MINUS expr
-    {
-      $$ = $1.sub($3, builder.context());
-    }
-  | expr ASTERISK expr
-    {
-      $$ = $1.mul($3, builder.context());
-    }
-  | expr SLASH expr
-    {
-      $$ = $1.div($3, builder.context());
-    }
-  | MINUS expr %prec NEGATIVE
-    {
-      $$ = $2.minus(builder.context());
-    }
-  | PLUS expr %prec NEGATIVE
-    {
-      // Note: Not entirely sure we shouldn't just copy.
-      $$ = $2.plus(builder.context());
-    }
-  | LPAREN expr RPAREN
-    {
-      $$ = $2;
-    }
 
 /* Arithmetic expression, delayed for later evaluation. */
 delayed_expr:
@@ -1061,15 +1033,6 @@ price_annotation:
 /*- Amounts & Costs ---------------------------------------------------------*/
 
 /* An Amount, which is a decimal number and a currency. */
-amount:
-  expr CURRENCY
-    {
-      auto* amount = new Amount();
-      builder.DecimalProto($1, amount->mutable_number());
-      amount->set_currency(std::move($2));
-      $$ = amount;
-    }
-
 amount_expr:
   delayed_expr CURRENCY
     {
