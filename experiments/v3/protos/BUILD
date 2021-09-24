@@ -33,7 +33,7 @@ py_extension(
         "//beancount/ccore:data_cc_proto",
         "//beancount/ccore:date_cc_proto",
         "//beancount/ccore:number_cc_proto",
-        "//beancount/cparser:parser_cc_proto",
+        "//beancount/cparser:inter_cc_proto",
         "//beancount/cparser:options_cc_proto",
         #
         "//beancount/cparser:parser",

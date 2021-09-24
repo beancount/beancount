@@ -56,7 +56,7 @@ cc_library(
     hdrs = ["builder.h"],
     deps = [
         ":parser_headers",
-        ":parser_cc_proto",
+        ":inter_cc_proto",
         ":options_cc_proto",
         ":ledger",
         "//beancount/ccore:std_utils",
@@ -85,7 +85,7 @@ cc_library(
     tags = ["nofixdeps"],
     deps = [
         ":builder",
-        ":parser_cc_proto",
+        ":inter_cc_proto",
         ":options_cc_proto",
         "//beancount/ccore:date",
         "//beancount/ccore:number",
@@ -140,7 +140,7 @@ proto_library(
 )
 
 cc_proto_library(
-    name = "parser_cc_proto",
+    name = "inter_cc_proto",
     deps = [":parser_proto"],
 )
 
@@ -194,7 +194,7 @@ cc_library(
     hdrs = ["ledger.h"],
     deps = [
         "//beancount/cparser:ledger_cc_proto",
-        "//beancount/cparser:parser_cc_proto",
+        "//beancount/cparser:inter_cc_proto",
         "//beancount/cparser:options_cc_proto",
         "//beancount/ccore:data_cc_proto",
         "//beancount/ccore:number",
