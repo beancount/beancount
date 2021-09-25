@@ -38,6 +38,7 @@ enum ExprOp {
   DIV = 4;
   NEG = 5; // Unary
   PLUS = 6; // Unary
+  PAREN = 7;
 }
 
 // A pair of a number or expression.

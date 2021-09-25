@@ -124,7 +124,8 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr, decimal::Context& c
       auto num1 = EvaluateExpression(expr.arg1(), context);
       return num1.minus(context);
     }
-    case inter::ExprOp::PLUS: {
+    case inter::ExprOp::PLUS:
+    case inter::ExprOp::PAREN: {
       return EvaluateExpression(expr.arg1(), context);
     }
     default:

@@ -878,8 +878,10 @@ expr:
     }
   | LPAREN expr RPAREN
     {
-      // TODO(blais): Explicitly mark with a PAREN type, so you can re-render it.
-      $$ = $2;
+      auto* expr = $$ = new inter::Expr();
+      expr->set_op(inter::ExprOp::PAREN);
+      expr->mutable_arg1()->CopyFrom(*$2);
+      delete $2;
     }
 
 /* Expression with immediate evaluation. */
