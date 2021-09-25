@@ -824,64 +824,49 @@ expr:
     }
   | expr PLUS expr
     {
-      /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::ADD);
-      expr->mutable_arg1()->CopyFrom(*$1);
-      expr->mutable_arg2()->CopyFrom(*$3);
-      delete $1;
-      delete $3;
+      expr->set_allocated_arg1($1);
+      expr->set_allocated_arg2($3);
     }
   | expr MINUS expr
     {
-      /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::SUB);
-      expr->mutable_arg1()->CopyFrom(*$1);
-      expr->mutable_arg2()->CopyFrom(*$3);
-      delete $1;
-      delete $3;
+      expr->set_allocated_arg1($1);
+      expr->set_allocated_arg2($3);
     }
   | expr ASTERISK expr
     {
-      /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::MUL);
-      expr->mutable_arg1()->CopyFrom(*$1);
-      expr->mutable_arg2()->CopyFrom(*$3);
-      delete $1;
-      delete $3;
+      expr->set_allocated_arg1($1);
+      expr->set_allocated_arg2($3);
     }
   | expr SLASH expr
     {
-      /* TODO(blais): You could avoid one allocation here. */
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::DIV);
-      expr->mutable_arg1()->CopyFrom(*$1);
-      expr->mutable_arg2()->CopyFrom(*$3);
-      delete $1;
-      delete $3;
+      expr->set_allocated_arg1($1);
+      expr->set_allocated_arg2($3);
     }
   | MINUS expr %prec NEGATIVE
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::NEG);
-      expr->mutable_arg1()->CopyFrom(*$2);
-      delete $2;
+      expr->set_allocated_arg1($2);
     }
   | PLUS expr %prec NEGATIVE
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::PLUS);
-      expr->mutable_arg1()->CopyFrom(*$2);
-      delete $2;
+      expr->set_allocated_arg1($2);
     }
   | LPAREN expr RPAREN
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::PAREN);
-      expr->mutable_arg1()->CopyFrom(*$2);
-      delete $2;
+      expr->set_allocated_arg1($2);
     }
 
 /* Expression with immediate evaluation. */
