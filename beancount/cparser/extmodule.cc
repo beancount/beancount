@@ -108,11 +108,6 @@ PYBIND11_MODULE(extmodule, mod) {
   py::module_ number = py::module_::import("beancount.core.number");
   missing_obj = ((py::object) number.attr("MISSING")).inc_ref().ptr();
 
-  // Note: We never need a PARSER_SOURCE_HASH bound to "SOURCE_HASH" in the
-  // Bazel build.
-  // TODO(blais): Remove this?
-  mod.attr("SOURCE_HASH") = Py_None;
-
   // TODO(blais): Set the version properly. There's an example in TF (?) on how
   // to do this properly in Bazel.
   mod.attr("__version__") = "3.0.0-dev";

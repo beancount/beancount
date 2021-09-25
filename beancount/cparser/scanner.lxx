@@ -19,8 +19,6 @@
 #include "absl/time/civil_time.h"
 #include "absl/status/statusor.h"
 
-// TODO(blais): Add state to the scanner to support other encodings.
-
 namespace beancount {
 namespace scanner {
 
@@ -96,7 +94,7 @@ static beancount::parser::location kLocation;
 //   where needed.
 // - Accounts and currencies are also very expensive to compute.
 //
-// TODO(blais): Turn this in to a Bazel config setting.
+// NOTE(blais): You should turn this in to a Bazel config setting.
 // %option perf-report
 
 // States.

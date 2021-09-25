@@ -109,9 +109,6 @@ public:
   // appropriately. Mutates the
   absl::Status MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator);
 
-  // Update statistics on on precision.
-  void WitnessDecimal(const decimal::Decimal& dec, const std::string& currency);
-
   // Create a new directive. Return value ownership is given. If `meta` is
   // non-null, it will be reset and ownership will be taken (and it will be
   // deleted).

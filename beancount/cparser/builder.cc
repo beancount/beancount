@@ -278,13 +278,6 @@ absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::Cos
   return absl::OkStatus();
 }
 
-
-void Builder::WitnessDecimal(const decimal::Decimal& dec, const string& currency) {
-  // TODO(blais): Run this as a post-process, picking up the numbers.
-  // TODO(blais): Update display context stats. See grammar.Builder.dcupdate().
-  // TODO(blais): We need the particular context as well (e.g. cost, price, units).
-}
-
 Directive* Builder::MakeDirective(const absl::CivilDay& date,
                                   Meta** meta,
                                   TagsLinks** tags_links) const {
