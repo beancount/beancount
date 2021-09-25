@@ -2,11 +2,14 @@
 
 #include "beancount/ccore/std_utils.h"
 #include "beancount/ccore/number.h"
+#include "beancount/utils/errors.h"
 
-#include "google/protobuf/text_format.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_cat.h"
 #include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
-#include "absl/strings/str_format.h"
+#include "google/protobuf/text_format.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,14 +28,11 @@ Ledger::~Ledger() {
   for (auto* error : errors) delete error;
 }
 
-// TODO(blais): Pull error code.
-int WriteToText(const Ledger& ledger, const std::string& filename) {
+absl::Status WriteToText(const Ledger& ledger, const std::string& filename) {
   // Open output file.
   int outfd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR);
   if (outfd == -1) {
-    // TODO(blais): handle this properly, with Status<>.
-    std::cerr << "Error opening file '" << filename << "': " << strerror(errno) << std::endl;
-    return -1;
+    return SystemError(absl::StrCat("Error opening file '", filename, "'"));
   }
   ZeroCopyOutputStream* output = new FileOutputStream(outfd);
 
@@ -41,9 +41,7 @@ int WriteToText(const Ledger& ledger, const std::string& filename) {
     LedgerProto ledger_proto;
     ledger_proto.add_directives()->CopyFrom(*dir);
     if (!TextFormat::Print(ledger_proto, output)) {
-      // TODO(blais): handle this properly.
-      std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
-      return -1;
+      return SystemError(absl::StrCat("Error writing out message to '", filename, "'"));
     }
   }
 
@@ -56,19 +54,16 @@ int WriteToText(const Ledger& ledger, const std::string& filename) {
   ledger_proto.mutable_info()->CopyFrom(*ledger.info);
 
   if (!TextFormat::Print(ledger_proto, output)) {
-    // TODO(blais): handle this properly.
-    std::cerr << "Error writing out message to '" << filename << "'" << std::endl;
-    return -1;
+    return SystemError(absl::StrCat("Error writing out message to '", filename, "'"));
   }
 
   // Close output.
   delete output;
   if (close(outfd) == -1) {
-    // TODO(blais): handle this properly.
-    std::cerr << "Error closing file '" << filename << "'" << std::endl;
-    return -1;
+    return SystemError(absl::StrCat("Error closing file '", filename, "'"));
   }
-  return 0;
+
+  return absl::OkStatus();
 }
 
 std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger) {

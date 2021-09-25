@@ -181,3 +181,22 @@ py_test(
         ":table",
     ],
 )
+
+cc_library(
+    name = "errors",
+    hdrs = ["errors.h"],
+    srcs = ["errors.cc"],
+    deps = [
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "errors_test",
+    srcs = ["errors_test.cc"],
+    deps = [
+        ":errors",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

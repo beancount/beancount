@@ -20,6 +20,7 @@
 #include "beancount/ccore/data.pb.h"
 
 #include "decimal.hh"
+#include "absl/status/status.h"
 
 namespace beancount {
 
@@ -48,7 +49,7 @@ struct Ledger final {
 };
 
 // Write ledger content to a text-formatted file.
-int WriteToText(const Ledger& ledger, const std::string& filename);
+absl::Status WriteToText(const Ledger& ledger, const std::string& filename);
 
 // Convert the class above to a proto version.
 std::unique_ptr<inter::Ledger> LedgerToProto(const Ledger& ledger);

@@ -200,6 +200,7 @@ cc_library(
         "//beancount/ccore:data_cc_proto",
         "//beancount/ccore:number",
         "//beancount/ccore:std_utils",
+        "//beancount/utils:errors",
         "@com_google_protobuf//:protobuf",
         "@com_google_absl//absl/strings:str_format",
         "@mpdecimal//:mpdecimal",
