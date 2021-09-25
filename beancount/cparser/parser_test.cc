@@ -48,6 +48,8 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     options.debug,
                                     options.decimal_use_triple);
 
+  // TODO(blais): Move this post-processing elsewhere. ledger.cc?
+
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
   decimal::Context context = decimal::context;
@@ -63,7 +65,6 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
 
     // Update the precision statistics accumulator.
     UpdateStatistics(*directive, &stats);
-    // TODO(blais): Do something with the statistics.
 
     // Normalize total price to unit price.
     if (options.normalize_totals) {
@@ -471,8 +472,10 @@ TEST(TestParserEntryTypes, Custom) {
 //------------------------------------------------------------------------------
 // TestWhitespace
 
+// NOTE(blais): In the tests below, can we somehow change the scanner with
+// recovery to turn these two errors to a single one?
+
 TEST(TestWhitespace, IndentError0) {
-  // TODO(blais): Figure out if we can turn these two errors to single one.
   ExpectParse(R"(
     2020-07-28 open Assets:Foo
       2020-07-28 open Assets:Bar
@@ -495,7 +498,6 @@ TEST(TestWhitespace, IndentError0) {
 }
 
 TEST(TestWhitespace, IndentError1) {
-  // TODO(blais): Figure out if we can turn these two errors to single one.
   ExpectParse(R"(
     2020-07-28 open Assets:Foo
 
@@ -528,7 +530,6 @@ TEST(TestWhitespace, IndentError1) {
 // TestParserComplete
 
 TEST(TestParserComplete, TransactionSinglePostingAtZero) {
-  // TODO(blais): Figure out if we can turn these two errors to single one.
   ExpectParse(R"(
     2013-05-18 * "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         0 USD
@@ -548,7 +549,6 @@ TEST(TestParserComplete, TransactionSinglePostingAtZero) {
 }
 
 TEST(TestParserComplete, TransactionImbalanceFromSinglePosting) {
-  // TODO(blais): Figure out if we can turn these two errors to single one.
   ExpectParse(R"(
     2013-05-18 * "Nice dinner at Mermaid Inn"
       Expenses:Restaurant         100 USD
@@ -934,7 +934,8 @@ TEST(TestPushPopMeta, PushmetaNormal) {
 }
 
 // TODO(blais): In v2, the list of metavalues is a map and Paris overshadows
-// Lausanne, they aren't both present.
+// Lausanne, they aren't both present. Do something similar here? Or perhaps
+// require a type definition for converting to Python with multi-maps?
 TEST(TestPushPopMeta, PushmetaShadow) {
   ExpectParse(R"(
     pushmeta location: "Lausanne, Switzerland"

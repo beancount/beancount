@@ -10,8 +10,8 @@ syntax = "proto2";
 package beancount.options;
 
 
-// TODO(blais): Reimplement the display context on currency pairs and encode as
-// a proto here.
+// TODO(blais): Implement explicit precision setting to be integrated into the
+// display context PrecisionStats.
 message DisplayContext {
 }
 

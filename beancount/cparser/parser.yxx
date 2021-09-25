@@ -274,7 +274,7 @@ namespace parser {
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-/* TODO(blais): Have another go at taking that to zero. */
+/* NOTE(blais): We should have another go at taking that to zero. */
 %expect 16
 
 /* TODO(blais): We still have specify %destructor code in order to free up

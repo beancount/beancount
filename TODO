@@ -1,7 +1,8 @@
 -*- mode: org -*-
 beancount: TODO
-* V3
+* V3 / C++
 
+- TODO(blais): Setup ASSERT() as a stream.
 - Replace absl/strings/string_view.h to <string_view>
 
 

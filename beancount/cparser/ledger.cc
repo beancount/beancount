@@ -125,7 +125,6 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr, decimal::Context& c
     }
     default:
       // Invalid value.
-      // TODO(blais): Setup ASSERT() as a stream.
       assert(false);
   }
 }
