@@ -4,7 +4,7 @@
 
 syntax = "proto2";
 
-package beancount;
+package beancount.precision;
 
 // Summarized precision statistics data.
 // This can be used to format numbers.
@@ -20,4 +20,5 @@ message Pair {
   optional int32 max_integer_digits = 4;
   optional int32 exponent_mode = 5;
   optional int32 exponent_max = 6;
+  map<int32, int32> exponents = 7;
 }

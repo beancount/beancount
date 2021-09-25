@@ -30,16 +30,6 @@
 
 namespace beancount {
 
-// A distribution of digits to frequency.
-typedef std::unordered_map<int, int> Distribution;
-
-// Statistics about a particular quote/base pair.
-struct PairStats {
-  bool has_sign = false;
-  int max_integer_digits = 0;
-  Distribution exponents;
-};
-
 // A statistics accumulator.
 class PrecisionStatsAccum final {
 public:
@@ -50,14 +40,14 @@ public:
               std::string_view quote, std::string_view base);
 
   // Write out the summarized data to a proto object.
-  void Serialize(PrecisionStats* proto) const;
+  void Serialize(precision::PrecisionStats* proto) const;
 
 private:
   // A mapping of (quote, base) currencies (for example {"USD", "HOOL"}) to a
   // distribution of {precision, counts}. The key is the context; this is used
   // to tally up the number of times we've seen a precision used from a file.
   typedef std::pair<std::string, std::string> QuoteBase;
-  typedef std::unordered_map<QuoteBase, PairStats, absl::Hash<QuoteBase>> Stats;
+  typedef std::unordered_map<QuoteBase, precision::Pair, absl::Hash<QuoteBase>> Stats;
   Stats stats_;
 };
 

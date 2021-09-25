@@ -9,33 +9,59 @@
 #include <string_view>
 
 namespace beancount {
+using precision::Pair;
+using precision::PrecisionStats;
 
-void UpdatePair(const decimal::Decimal& number, PairStats* pair_stats) {
+void UpdatePair(const decimal::Decimal& number, Pair* pair_stats) {
   // Update the signs.
   if (number.sign() == -1) {
-    pair_stats->has_sign = true;
+    pair_stats->set_has_sign(true);
+  } else if (!pair_stats->has_has_sign()) {
+    pair_stats->set_has_sign(false);
   }
 
   // Update the precision.
   int64_t exponent = number.exponent();
-  pair_stats->exponents[-exponent]++;
+  (*pair_stats->mutable_exponents())[-exponent]++;
 
   // Update the maximum number of integral digits.
   int integer_digits = number.getconst()->digits + exponent;
-  if (integer_digits > pair_stats->max_integer_digits) {
-    pair_stats->max_integer_digits = integer_digits;
+  if (integer_digits > pair_stats->max_integer_digits()) {
+    pair_stats->set_max_integer_digits(integer_digits);
   }
+}
+
+// Update the exponents fields.
+void Summarize(Pair* pair) {
+  int exponent_mode = 0;
+  int exponent_freq = 0;
+  int exponent_max = 0;
+  for (const auto& item : pair->exponents()) {
+    if (item.second > exponent_freq) {
+      exponent_freq = item.second;
+      exponent_mode = item.first;
+    }
+    if (item.first > exponent_max) {
+      exponent_max = item.first;
+    }
+  }
+  pair->set_exponent_mode(exponent_mode);
+  pair->set_exponent_max(exponent_max);
+  pair->clear_exponents();
 }
 
 void PrecisionStatsAccum::Update(const decimal::Decimal& number,
                                  std::string_view currency) {
   auto& pair_stats = stats_[QuoteBase(currency, "")];
+  pair_stats.set_quote(std::string(currency));
   UpdatePair(number, &pair_stats);
 }
 
 void PrecisionStatsAccum::Update(const decimal::Decimal& number,
                                  std::string_view quote, std::string_view base) {
   auto& pair_stats = stats_[QuoteBase(quote, base)];
+  pair_stats.set_quote(std::string(quote));
+  pair_stats.set_base(std::string(base));
   UpdatePair(number, &pair_stats);
 }
 
@@ -44,28 +70,8 @@ void PrecisionStatsAccum::Serialize(PrecisionStats* proto) const {
   std::vector<Pair*> pairs;
   for (const auto& item : stats_) {
     auto* pair = new Pair();
-    pair->set_quote(item.first.first);
-    if (!item.first.second.empty()) {
-      pair->set_base(item.first.second);
-    }
-    pair->set_has_sign(item.second.has_sign);
-    pair->set_max_integer_digits(item.second.max_integer_digits);
-
-    int exponent_mode = 0;
-    int exponent_freq = 0;
-    int exponent_max = 0;
-    for (const auto& eitem : item.second.exponents) {
-      if (eitem.second > exponent_freq) {
-        exponent_freq = eitem.second;
-        exponent_mode = eitem.first;
-      }
-      if (eitem.first > exponent_max) {
-        exponent_max = eitem.first;
-      }
-    }
-    pair->set_exponent_mode(exponent_mode);
-    pair->set_exponent_max(exponent_max);
-
+    pair->CopyFrom(item.second);
+    Summarize(pair);
     pairs.push_back(pair);
   }
 

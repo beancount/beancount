@@ -15,6 +15,7 @@
 
 namespace beancount {
 namespace {
+using precision::PrecisionStats;
 
 void ParseDirective(const std::string& value, Directive* proto){
   if (!google::protobuf::TextFormat::ParseFromString(value, proto)) {
