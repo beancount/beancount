@@ -778,8 +778,6 @@ TEST(LexerErrorsTest, ErrorSubstringWithQuotes) {
 }
 
 // Unicode tests.
-// TODO(blais): Also test with Latin1 and UTF16 inputs.
-
 TEST(LexerUnicodeTest, EncodedUTF8) {
   const char* test = u8R"(
     2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"

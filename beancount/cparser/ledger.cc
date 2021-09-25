@@ -196,7 +196,6 @@ void ReduceExpressions(Ledger* ledger,
           if (price->has_number()) {
             decimal::Decimal dec = ProtoToDecimal(price->number());
             if (dec.sign() == -1) {
-              // TODO(blais): Move all the number processing to post-parsing.
               AddError(ledger,
                        "Negative prices are not allowed "
                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
