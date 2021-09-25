@@ -117,6 +117,7 @@ cc_test(
     srcs = ["parser_test.cc"],
     deps = [
         "//beancount/ccore:data_cc_proto",
+        "//beancount/ccore:precision",
         ":test_utils",
         ":parser",
         ":builder",

@@ -12,6 +12,14 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "explain_decimal",
+    srcs = ["explain_decimal.cc"],
+    deps = [
+        "@mpdecimal//:mpdecimal"
+    ],
+)
+
 cc_test(
     name = "test_serialize_decimal",
     srcs = ["test_serialize_decimal.cc"],

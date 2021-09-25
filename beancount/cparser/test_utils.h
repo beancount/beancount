@@ -29,7 +29,8 @@ bool EqualsMessages(const google::protobuf::Message& expected,
 // Compare the given message with the parsed text proto version.
 // Returns true on success.
 template <typename T>
-bool EqualsMessages(const T& actual, std::string_view expected_proto_string, bool partial) {
+bool EqualsMessages(const T& actual, std::string_view expected_proto_string,
+                    bool partial = false) {
   // TODO(blais): Remove string() when protobuf is upgraded.
   T expected;
   if (!google::protobuf::TextFormat::ParseFromString(

@@ -244,6 +244,44 @@ py_test(
 
 #----------------------------------------
 
+proto_library(
+    name = "precision_proto",
+    srcs = ["precision.proto"],
+    features = ["proto3_optional"],
+)
+
+cc_proto_library(
+    name = "precision_cc_proto",
+    deps = [":precision_proto"],
+)
+
+cc_library(
+    name = "precision",
+    hdrs = ["precision.h"],
+    srcs = ["precision.cc"],
+    deps = [
+        ":precision_cc_proto",
+        "//beancount/ccore:data_cc_proto",
+        "//beancount/ccore:number",
+        "@com_google_absl//absl/hash",
+        "@mpdecimal//:mpdecimal",
+    ],
+)
+
+cc_test(
+    name = "precision_test",
+    srcs = ["precision_test.cc"],
+    deps = [
+        ":precision",
+        ":precision_cc_proto",
+        "//beancount/cparser:test_utils",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+#----------------------------------------
+
 py_extension(
     name = "_core",
     srcs = ["_core.cc"],

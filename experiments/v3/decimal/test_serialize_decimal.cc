@@ -30,6 +30,7 @@ TEST(SerializationTest, PrintComponents) {
   cout << "digits " << value->digits << endl;
   cout << "len " << value->len << endl;
   cout << "alloc " << value->alloc << endl;
+  cout << "exponent " << a.exponent() << endl;
   for (int ii = 0; ii < value->alloc; ++ii) {
     cout << "data[" << ii << "] " << value->data[ii] << endl;
   }
@@ -62,6 +63,7 @@ TEST(SerializationTest, RoundTripMpd) {
   beancount::Number pc = beancount::DecimalToProto(a, false);
   decimal::Decimal c = beancount::ProtoToDecimal(pc);;
   cout << "C = " << c << endl;
+
 
   EXPECT_EQ(b, a);
 }

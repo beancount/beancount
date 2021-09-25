@@ -3,6 +3,7 @@
 #include "beancount/cparser/builder.h"
 #include "beancount/cparser/ledger.h"
 #include "beancount/cparser/test_utils.h"
+#include "beancount/ccore/precision.h"
 
 #include <algorithm>
 #include <cassert>
@@ -54,10 +55,15 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   //TODO(blais): Set actual precision from the value given in the options.
 
   // Process all the directives.
+  PrecisionStatsAccum stats;
   using namespace std::placeholders;
   for (auto* directive : ledger->directives) {
     // Reduce all expressions in a given context.
     ReduceExpressions(ledger.get(), context, options.decimal_use_triple, directive);
+
+    // Update the precision statistics accumulator.
+    UpdateStatistics(*directive, &stats);
+    // TODO(blais): Do something with the statistics.
 
     // Normalize total price to unit price.
     if (options.normalize_totals) {
@@ -93,7 +99,6 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
 
   return ledger;
 }
-
 
 TEST(ParserTest, TestBasicTesting) {
   auto ledger = ExpectParse(R"(
