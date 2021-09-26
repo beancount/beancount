@@ -5394,8 +5394,40 @@ TEST(TestDocument, DocumentLinks) {
   )");
 }
 
-// TODO(blais): Don't forget to explicitly test for each of the error conditions
-// raised in the scanner.
+//------------------------------------------------------------------------------
+// TestExpressions
+
+TEST(TestExpressions, ExplicitPrecision) {
+  ExpectParse(R"(
+    2021-09-19 balance Assets:US:Checking   (1 + 5) / 2.1 USD
+  )", R"(
+    directives {
+      date { year: 2021 month: 9 day: 19 }
+      balance {
+        account: "Assets:US:Checking"
+        amount { number { exact: "2.857142857142857142857142857" } currency: "USD" }
+      }
+    }
+  )");
+
+  ExpectParse(R"(
+    2021-09-19 balance Assets:US:Checking   (1 + 5) / 2.1 USD
+    option "decimal_precision" "5"
+  )", R"(
+    options {
+      decimal_precision: 5
+    }
+    directives {
+      date { year: 2021 month: 9 day: 19 }
+      balance {
+        account: "Assets:US:Checking"
+        amount { number { exact: "2.8571" } currency: "USD" }
+      }
+    }
+  )");
+}
+
+// TODO(blais): Don't forget to explicitly test for each of the error conditions raised in the scanner. @dnicolodi?
 
 }  // namespace
 }  // namespace beancount

@@ -1122,10 +1122,11 @@ cost_spec:
     }
   | LCURLCURL cost_comp_list RCURLCURL
     {
+      // TODO(blais): Remove old total cost syntax.
+      //
       // Note: This is using the total syntax; it is an error to set
       // `number_total` to a value in the input when using `{{...}}`.
       if ($2->has_total()) {
-        // TODO(blais): Move number processing to post-parsing.
         builder.AddError(
             absl::StrFormat(
                 "Per-unit cost may not be specified using total cost "

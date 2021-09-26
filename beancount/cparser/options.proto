@@ -10,9 +10,10 @@ syntax = "proto2";
 package beancount.options;
 
 
-// TODO(blais): Implement explicit precision setting to be integrated into the
-// display context PrecisionStats.
-message DisplayContext {
+// Explicit precision settings. These override the automatically inferred
+// precisions per currency.
+message PrecisionOptions {
+  // TODO(blais): Implement PrecisionOptions inputs.
 }
 
 // A set of valid booking method names for positions on accounts.
@@ -56,10 +57,10 @@ message ProcessingInfo {
   // (Internal use only; do not rely on this.)
   optional string input_hash = 3;
 
-  // An instance of DisplayContext, which is used to format numbers for output
+  // An instance of PrecisionOptions, which is used to format numbers for output
   // with precision inferred from that in the input file. This is created
   // automatically by the parser.
-  optional DisplayContext dcontext = 4;
+  optional PrecisionOptions precision = 4;
 
   // A set of all the commodities that we have seen in the file. This is mainly
   // used for efficiency, best computed once at parse time.
@@ -159,6 +160,10 @@ message Options {
   // the rest of the ledger. Choose something unique that makes sense in your
   // language. e.g., "NOTHING".
   optional string conversion_currency = 14;
+
+  // Precision for evaluating arithmetic computations and reducing them to
+  // decimal numbers.
+  optional int32 decimal_precision = 24;
 
   // Mappings of currency to the tolerance used when it cannot be inferred
   // automatically. The tolerance at hand is the one used for verifying (1)

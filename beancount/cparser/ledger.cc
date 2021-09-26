@@ -25,6 +25,8 @@ using google::protobuf::io::ZeroCopyOutputStream;
 using google::protobuf::io::FileOutputStream;
 using google::protobuf::TextFormat;
 
+static int kDefaultDecimalPrecision = 28;
+
 Ledger::~Ledger() {
   for (auto* directive : directives) delete directive;
   for (auto* error : errors) delete error;
@@ -324,8 +326,8 @@ void PostProcessParsed(Ledger* ledger,
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
   decimal::Context context = decimal::context;
-  context.prec(28);
-  //TODO(blais): Set actual precision from the value given in the options.
+  context.prec(ledger->options->has_decimal_precision() ?
+               ledger->options->decimal_precision() : kDefaultDecimalPrecision);
 
   // Process all the directives.
   PrecisionStatsAccum stats;
