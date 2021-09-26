@@ -29,9 +29,6 @@ namespace beancount {
 //
 // Note that this a C++ container; we also have a separate proto container used
 // for tests.
-//
-// TODO(blais): Measure performance and use cases and eliminate one or the
-// other.
 struct Ledger final {
   ~Ledger();
 

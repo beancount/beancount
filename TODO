@@ -5,6 +5,10 @@ beancount: TODO
 - TODO(blais): Setup ASSERT() as a stream.
 - Replace absl/strings/string_view.h to <string_view>
 
+- Contemplate removing Ledger and the beancount::Ledger proto. Do we really need
+  both? Measure performance and use cases and eliminate one or the other.
+
+
 
 * Priorities
 
