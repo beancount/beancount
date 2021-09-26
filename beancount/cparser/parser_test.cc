@@ -3,7 +3,6 @@
 #include "beancount/cparser/builder.h"
 #include "beancount/cparser/ledger.h"
 #include "beancount/cparser/test_utils.h"
-#include "beancount/ccore/precision.h"
 
 #include <algorithm>
 #include <cassert>
@@ -48,33 +47,10 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     options.debug,
                                     options.decimal_use_triple);
 
-  // TODO(blais): Move this post-processing elsewhere. ledger.cc?
+  // Process parsed ledger.
+  PostProcessParsed(ledger.get(), options.decimal_use_triple, options.normalize_totals);
 
-  // Set Decimal context before processing, update the desired precision for
-  // arithmetic operations.
-  decimal::Context context = decimal::context;
-  context.prec(28);
-  //TODO(blais): Set actual precision from the value given in the options.
-
-  // Process all the directives.
-  PrecisionStatsAccum stats;
-  using namespace std::placeholders;
-  for (auto* directive : ledger->directives) {
-    // Reduce all expressions in a given context.
-    ReduceExpressions(ledger.get(), context, options.decimal_use_triple, directive);
-
-    // Update the precision statistics accumulator.
-    UpdateStatistics(*directive, &stats);
-
-    // Normalize total price to unit price.
-    if (options.normalize_totals) {
-      NormalizeTotalPrices(ledger.get(), context, options.decimal_use_triple, directive);
-    }
-
-    // Run checks on currencies between cost and prices.
-    CheckCoherentCurrencies(ledger.get(), directive);
-  }
-
+  // Clear up data that we don't need to check.
   ClearLineNumbers(ledger.get(), options.leave_lineno);
   auto ledger_proto = LedgerToProto(*ledger);
 

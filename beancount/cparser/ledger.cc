@@ -3,6 +3,7 @@
 #include "beancount/ccore/std_utils.h"
 #include "beancount/ccore/number.h"
 #include "beancount/utils/errors.h"
+#include "beancount/ccore/precision.h"
 
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
@@ -11,6 +12,7 @@
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
 
+#include <functional>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -285,6 +287,33 @@ void CheckCoherentCurrencies(Ledger* ledger,
     }
     // Note: We allow zero prices because we need them for round-trips for
     // conversion entries.
+  }
+}
+
+void PostProcessParsed(Ledger* ledger, bool decimal_use_triple, bool normalize_totals) {
+  // Set Decimal context before processing, update the desired precision for
+  // arithmetic operations.
+  decimal::Context context = decimal::context;
+  context.prec(28);
+  //TODO(blais): Set actual precision from the value given in the options.
+
+  // Process all the directives.
+  PrecisionStatsAccum stats;
+  using namespace std::placeholders;
+  for (auto* directive : ledger->directives) {
+    // Reduce all expressions in a given context.
+    ReduceExpressions(ledger, context, decimal_use_triple, directive);
+
+    // Update the precision statistics accumulator.
+    UpdateStatistics(*directive, &stats);
+
+    // Normalize total price to unit price.
+    if (normalize_totals) {
+      NormalizeTotalPrices(ledger, context, decimal_use_triple, directive);
+    }
+
+    // Run checks on currencies between cost and prices.
+    CheckCoherentCurrencies(ledger, directive);
   }
 }
 

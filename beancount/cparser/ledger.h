@@ -78,6 +78,9 @@ void NormalizeTotalPrices(Ledger* ledger,
 void CheckCoherentCurrencies(Ledger* ledger,
                              beancount::Directive* directive);
 
+// Process the parsed contents of a ledger.
+void PostProcessParsed(Ledger* ledger, bool decimal_use_triple, bool normalize_totals);
+
 }  // namespace beancount
 
 #endif // BEANCOUNT_CPARSER_LEDGER_H_
