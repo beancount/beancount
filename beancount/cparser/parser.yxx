@@ -277,8 +277,13 @@ namespace parser {
 /* NOTE(blais): We should have another go at taking that to zero. */
 %expect 16
 
-/* TODO(blais): We still have specify %destructor code in order to free up
- * memory for discarded tokens in case of shifting during error recovery. */
+/* We don't free up memory for discarded tokens using %destructor (see
+ * https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html for
+ * examples) in case of shifting during error recovery. The reason for this is
+ * that in the parser below we carefully and explicitly deallocated temporaries
+ * and sometimes use protocol buffer's ability to be set submessages that are
+ * already allocated. See set_allocated_XXX() methods and AddAllocated() for
+ * examples. */
 
 
 /*- Grammar rules -----------------------------------------------------------*/
