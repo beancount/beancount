@@ -290,7 +290,37 @@ void CheckCoherentCurrencies(Ledger* ledger,
   }
 }
 
-void PostProcessParsed(Ledger* ledger, bool decimal_use_triple, bool normalize_totals) {
+void RemoveDuplicateMetaKeys(Ledger* ledger, Meta* meta, const Location& location) {
+  std::set<std::string> keys;
+  auto* kvs = meta->mutable_kv();
+  for (auto iter = kvs->begin(); iter != kvs->end(); ) {
+    if (!iter->key().empty() && !keys.insert(iter->key()).second) {
+      AddError(ledger, StrFormat("Duplicate metadata key: '%s' with value '%s'",
+                                 iter->key(), iter->value().DebugString()), location);
+      iter = kvs->erase(iter);
+    } else {
+      ++iter;
+    }
+  }
+}
+
+void RemoveDuplicateMetaKeys(Ledger* ledger, Directive* directive) {
+  if (directive->has_meta()) {
+    RemoveDuplicateMetaKeys(ledger, directive->mutable_meta(), directive->location());
+  }
+  if (directive->has_transaction()) {
+    for (auto& posting : *directive->mutable_transaction()->mutable_postings()) {
+      if (posting.has_meta() ) {
+        RemoveDuplicateMetaKeys(ledger, posting.mutable_meta(), posting.location());
+      }
+    }
+  }
+}
+
+void PostProcessParsed(Ledger* ledger,
+                       bool decimal_use_triple,
+                       bool normalize_totals,
+                       bool allow_multi_meta) {
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
   decimal::Context context = decimal::context;
@@ -314,6 +344,11 @@ void PostProcessParsed(Ledger* ledger, bool decimal_use_triple, bool normalize_t
 
     // Run checks on currencies between cost and prices.
     CheckCoherentCurrencies(ledger, directive);
+
+    // Remove duplicate keys in meta-data.
+    if (!allow_multi_meta) {
+      RemoveDuplicateMetaKeys(ledger, directive);
+    }
   }
 }
 

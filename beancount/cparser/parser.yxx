@@ -440,7 +440,6 @@ transaction:
       // Insert the local metadata on top of that from the directive.
       // {99ef4ca51cd5}
       if ($metadata != nullptr) {
-        builder.ValidateMetadata($metadata, @$);
         $$->mutable_meta()->MergeFrom(*$metadata);
         delete $metadata;
       }
@@ -620,7 +619,6 @@ indented_metadata:
     {
       $$ = $2;
       if ($$ != nullptr) {
-        builder.ValidateMetadata($$, @$);
       }
     }
 

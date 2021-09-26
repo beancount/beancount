@@ -36,10 +36,10 @@ struct Ledger final {
   ~Ledger();
 
   // A list of directives, with ownership.
-  std::list<beancount::Directive*> directives;
+  std::list<Directive*> directives;
 
   // A list of errors encountered during parsing and processing.
-  std::vector<beancount::Error*> errors;
+  std::vector<Error*> errors;
 
   // Parsed options.
   std::shared_ptr<options::Options> options;
@@ -66,20 +66,26 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr,
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
                        bool decimal_use_triple,
-                       beancount::Directive* directive);
+                       Directive* directive);
 
 // Reduce the total price of a posting with price to per-unit price.
 void NormalizeTotalPrices(Ledger* ledger,
                           decimal::Context& context,
                           bool decimal_use_triple,
-                          beancount::Directive* directive);
+                          Directive* directive);
 
 // If both cost and price are specified, check that the currencies must match.
 void CheckCoherentCurrencies(Ledger* ledger,
-                             beancount::Directive* directive);
+                             Directive* directive);
+
+// Remove convert duplicate metadata keys to errors.
+void RemoveDuplicateMetaKeys(Ledger* ledger, Directive* directive);
 
 // Process the parsed contents of a ledger.
-void PostProcessParsed(Ledger* ledger, bool decimal_use_triple, bool normalize_totals);
+void PostProcessParsed(Ledger* ledger,
+                       bool decimal_use_triple,
+                       bool normalize_totals,
+                       bool allow_multi_meta);
 
 }  // namespace beancount
 

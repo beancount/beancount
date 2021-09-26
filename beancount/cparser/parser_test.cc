@@ -34,6 +34,7 @@ struct CompareOptions {
   bool debug = false;
   bool decimal_use_triple = false;
   bool normalize_totals = false;
+  bool allow_multi_meta = false;
 };
 
 std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
@@ -48,7 +49,10 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
                                     options.decimal_use_triple);
 
   // Process parsed ledger.
-  PostProcessParsed(ledger.get(), options.decimal_use_triple, options.normalize_totals);
+  PostProcessParsed(ledger.get(),
+                    options.decimal_use_triple,
+                    options.normalize_totals,
+                    options.allow_multi_meta);
 
   // Clear up data that we don't need to check.
   ClearLineNumbers(ledger.get(), options.leave_lineno);
@@ -909,9 +913,6 @@ TEST(TestPushPopMeta, PushmetaNormal) {
   )");
 }
 
-// TODO(blais): In v2, the list of metavalues is a map and Paris overshadows
-// Lausanne, they aren't both present. Do something similar here? Or perhaps
-// require a type definition for converting to Python with multi-maps?
 TEST(TestPushPopMeta, PushmetaShadow) {
   ExpectParse(R"(
     pushmeta location: "Lausanne, Switzerland"
@@ -942,7 +943,7 @@ TEST(TestPushPopMeta, PushmetaShadow) {
         }
       }
     }
-  )");
+  )", { .allow_multi_meta = true });
 }
 
 TEST(TestPushPopMeta, PushmetaOverride) {
@@ -3020,6 +3021,47 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
       date { year: 2013 month: 5 day: 18 }
       meta {
         kv { key: "test" value { text: "Bananas" } }
+      }
+      transaction {
+        flag: "*"
+        postings {
+          meta {
+            kv { key: "test" value { text: "Mangos" } }
+          }
+          account: "Assets:Investments"
+          spec { units { number { exact: "100" } currency: "USD" } }
+        }
+        postings {
+          account: "Income:Investments"
+          spec { units { number { exact: "-100" } currency: "USD" } }
+        }
+      }
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Apples\"\n\'"
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Oranges\"\n\'"
+    }
+    errors {
+      message: "Duplicate metadata key: \'test\' with value \'text: \"Pineapple\"\n\'"
+    }
+  )");
+
+  ExpectParse(R"(
+    2013-05-18 * ""
+      test: "Bananas"
+      test: "Apples"
+      test: "Oranges"
+      Assets:Investments   100 USD
+        test: "Mangos"
+        test: "Pineapple"
+      Income:Investments  -100 USD
+  )", R"(
+    directives {
+      date { year: 2013 month: 5 day: 18 }
+      meta {
+        kv { key: "test" value { text: "Bananas" } }
         kv { key: "test" value { text: "Apples" } }
         kv { key: "test" value { text: "Oranges" } }
       }
@@ -3031,30 +3073,15 @@ TEST(TestMetaData, MetadataTransactionRepeated) {
             kv { key: "test" value { text: "Pineapple" } }
           }
           account: "Assets:Investments"
-          spec {
-            units { number { exact: "100" } currency: "USD" }
-          }
+          spec { units { number { exact: "100" } currency: "USD" } }
         }
         postings {
           account: "Income:Investments"
-          spec {
-            units { number { exact: "-100" } currency: "USD" }
-          }
+          spec { units { number { exact: "-100" } currency: "USD" } }
         }
       }
     }
-    errors {
-      message: "Duplicate metadata key: \'test\' with value \'text: \"Pineapple\"\n\'"
-    }
-    errors {
-      message: "Duplicate metadata key: \'test\' with value \'text: \"Apples\"\n\'"
-    }
-    errors {
-      message: "Duplicate metadata key: \'test\' with value \'text: \"Oranges\"\n\'"
-    }
-  )");
-  // The C++ version tolerates multiple identical keys.
-  // This is a harmless difference with the Python version.
+  )", { .allow_multi_meta = true } );
 }
 
 TEST(TestMetaData, MetadataEmpty) {

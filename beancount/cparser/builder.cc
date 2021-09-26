@@ -239,21 +239,6 @@ void Builder::AddActiveMetadata(Meta* meta, Directive* dir) const {
   }
 }
 
-void Builder::ValidateMetadata(const Meta* meta, const location& loc) {
-  // Check for the presence of duplicate keys and log an error if found. (Note:
-  // In order to support multi-dicts, we need for some way to be able to declare
-  // the keys as such in order to create consistent data tyeps for them across
-  // transactions.)
-  std::set<string> keys;
-  for (const auto& kv : meta->kv()) {
-    const auto& key = kv.key();
-    if (!key.empty() && !keys.insert(key).second) {
-      AddError(StrFormat("Duplicate metadata key: '%s' with value '%s'",
-                         key, kv.value().DebugString()), loc);
-    }
-  }
-}
-
 absl::Status Builder::MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator) {
   if (new_cost_spec.has_per_unit() && accumulator->has_per_unit()) {
     return absl::InvalidArgumentError("Duplicate `per_unit` cost spec field.");
