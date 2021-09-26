@@ -329,6 +329,8 @@ declarations:
       // can apply. Note that discarded symbols are possible sources of memory
       // leaks, see Freeing Discarded Symbols, for a means to reclaim this
       // memory."
+      //
+      // Also, this could be a place to log an error in the builder's output.
     }
   | %empty
 
@@ -1229,13 +1231,27 @@ std::unique_ptr<Ledger> Parse(
     scanner.set_debug(1);
   }
   int result;
+  string error_message;
   try {
     result = parser.parse();
-    (void)result; // TODO(blais): Handle the result and corresponding error.
-
   } catch (const std::runtime_error& exc) {
-    // TODO(blais): Implement this as well, properly.
-    std::cerr << "EXC " << exc.what() << std::endl;
+    result = -1000;
+    error_message = exc.what();
+  }
+
+  // Handle error case.
+  auto ledger = builder.MakeLedger();
+  if (result != 0) {
+    std::ostringstream oss;
+    oss << "Error parsing ledger with result: " << result;
+    if (result == -1000) {
+      oss << " (" << error_message << ")";
+    }
+    Location location;
+    if (filename.has_value()) {
+      location.set_filename(string(filename.value()));
+    }
+    AddError(ledger.get(), oss.str(), location);
   }
 
   if (debug) {
@@ -1243,7 +1259,7 @@ std::unique_ptr<Ledger> Parse(
     scanner.perf_report();
   }
 
-  return builder.MakeLedger();
+  return ledger;
 }
 
 std::unique_ptr<Ledger> ParseFile(string_view filename) {

@@ -731,6 +731,20 @@ TEST(IgnoredLinesTest, NonCommentOrgModeDrawer) {
 
 // Test lexer error handling.
 
+TEST(LexerErrorsTest, InvalidText) {
+  const char* test = R"(
+    Not a Beancount file.
+  )";
+  const auto symbols = Tokenize(test);
+  EXPECT_EQ(symbols, symbol_tuples({
+        {symbol::S_YYUNDEF, 1, "Not"},
+        {symbol::S_YYUNDEF, 1, "a"},
+        {symbol::S_YYUNDEF, 1, "Beancount"},
+        {symbol::S_YYUNDEF, 1, "file."},
+        {symbol::S_EOL, 1, "\n"},
+      }));
+}
+
 TEST(LexerErrorsTest, InvalidToken) {
   const char* test = R"(
     2000-01-01 open ` USD

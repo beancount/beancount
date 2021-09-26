@@ -1140,8 +1140,6 @@ TEST(TestSyntaxErrors, NoFinalNewline) {
   )", { .no_dedent = true });
 }
 
-// TODO(blais): Test all the other error cases.
-
 //------------------------------------------------------------------------------
 // TestParserOptions
 
@@ -4522,6 +4520,22 @@ TEST(TestLexerAndParserErrors, GrammarExceptionsTransaction) {
   )");
 }
 
+TEST(TestLexerAndParserErrors, ParsingErrorAtRoot) {
+  // A file that's not a Beancount file will not return a
+  //
+  // TODO(blais): This does trigger a date error via YYUNDEF, but somehow I
+  // haven't been able to surface a more specifi error message through
+  // parse.rcc's logging function.
+  ExpectParse(R"(
+    Not a Beancount input file.
+  )", R"(
+    errors {
+      message: "Syntax error, unexpected invalid token"
+    }
+  )");
+
+}
+
 //------------------------------------------------------------------------------
 // TestIncompleteInputs
 
@@ -5426,8 +5440,6 @@ TEST(TestExpressions, ExplicitPrecision) {
     }
   )");
 }
-
-// TODO(blais): Don't forget to explicitly test for each of the error conditions raised in the scanner. @dnicolodi?
 
 }  // namespace
 }  // namespace beancount
