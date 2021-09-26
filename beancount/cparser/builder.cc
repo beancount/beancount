@@ -106,8 +106,9 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
     value_str = absl::StrFormat("{ key: '%s' value: '%s' }", components[0], components[1]);
   }
 
-
-  // Set the field on the options proto.
+  // Set the field on the options proto. Note that if the field is a repeated
+  // field, the ParseFieldValueFromString() method correctly appends to the list
+  // of existing values.
   if (field->type() == FieldDescriptor::TYPE_STRING) {
     value_str = absl::StrCat("\"", absl::CEscape(value_str), "\"");
   }

@@ -10,12 +10,6 @@ syntax = "proto2";
 package beancount.options;
 
 
-// Explicit precision settings. These override the automatically inferred
-// precisions per currency.
-message PrecisionOptions {
-  // TODO(blais): Implement PrecisionOptions inputs.
-}
-
 // A set of valid booking method names for positions on accounts.
 // See http://furius.ca/beancount/doc/inventories for a full explanation.
 enum Booking {
@@ -57,10 +51,11 @@ message ProcessingInfo {
   // (Internal use only; do not rely on this.)
   optional string input_hash = 3;
 
-  // An instance of PrecisionOptions, which is used to format numbers for output
-  // with precision inferred from that in the input file. This is created
-  // automatically by the parser.
-  optional PrecisionOptions precision = 4;
+  // Explicit precision settings. These override the automatically inferred
+  // precisions per currency. The expected format for the key is either a single
+  // currency ("USD") or a pair of currencies with a separating slash
+  // ("USD/HOOL"), and the value a valid decimal number (e.g. "0.01").
+  map<string, string> precision = 4;
 
   // A set of all the commodities that we have seen in the file. This is mainly
   // used for efficiency, best computed once at parse time.
