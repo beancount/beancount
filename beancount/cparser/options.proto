@@ -257,13 +257,9 @@ message Options {
   // A string that defines which set of plugins is to be run by the loader: if
   // the mode is "default", a preset list of plugins are automatically run
   // before any user plugin. If the mode is "raw", no preset plugins are run at
-  // all, only user plugins are run (the user should explicitly load the
-  // desired list of plugins by using the 'plugin' option. This is useful in case the
+  // all, only user plugins are run (the user should explicitly load the desired
+  // list of plugins by using the 'plugin' option. This is useful in case the
   // user wants full control over the ordering in which the plugins are run).
-  //
-  // TODO(blais): Make the default include all the core plugins, as PEDANTIC.
-  // Let that be the default. Make DEFAULT some other name. V3 should include
-  // all the pedantry by default.
   enum ProcessingMode {
     DEFAULT = 0;
     RAW = 1;

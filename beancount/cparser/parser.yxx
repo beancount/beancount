@@ -1281,15 +1281,3 @@ std::unique_ptr<Ledger> ParseString(string_view input_string,
 
 }  // namespace parser
 }  // namespace beancount
-
-//-------------------------------------------------------------------------------
-// To Do items - temporary:
-
-// TODO(blais): Implement string parser and stdin parser functions.
-
-// TODO(blais): Establish a distinction between strings and currencies in data type;
-// this allows us to process metadata correctly. See
-// beancount.plugins.check_commodity for a use case.
-
-// TODO(blais): Review and test pointer ownership and leakage. This parser does
-// not currently apply much rigor on reclaimining memory.
