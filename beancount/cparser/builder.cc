@@ -379,12 +379,6 @@ void Builder::Finalize(const location& loc) {
 
 }
 
-// TODO(blais): Process this with code in the plugins loading loop.
-//     elif key == 'insert_pythonpath':
-//         # Insert the PYTHONPATH to this file when and only if you
-//         # encounter this option.
-//         sys.path.insert(0, path.dirname(filename))
-
 std::unique_ptr<Ledger> Builder::MakeLedger() {
   auto ledger = std::make_unique<Ledger>();
   ledger->directives = std::move(directives_);

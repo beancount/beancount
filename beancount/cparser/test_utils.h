@@ -33,7 +33,6 @@ bool EqualsMessages(const T& actual, std::string_view expected_proto_string,
                     bool partial = false) {
   T expected;
   if (!google::protobuf::TextFormat::ParseFromString(
-          // TODO(blais): Remove string() when protobuf is upgraded.
           std::string(expected_proto_string),
           &expected)) {
     throw std::domain_error("Could not parse expected proto.");

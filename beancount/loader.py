@@ -4,7 +4,9 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+from typing import Any, Optional, Set
 import collections
+import copy
 import functools
 import glob
 import hashlib
@@ -15,11 +17,11 @@ import logging
 import os
 import pickle
 import struct
-import traceback
+import sys
 import textwrap
 import time
+import traceback
 import warnings
-from typing import Optional
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -341,6 +343,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
     # Current parse state.
     entries, parse_errors = [], []
     options_map = None
+    other_options_map = []
 
     # A stack of sources to be parsed.
     source_stack = list(sources)
@@ -420,7 +423,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
             if is_top_level:
                 options_map = src_options_map
             else:
-                aggregate_options_map(options_map, src_options_map)
+                other_options_map.append(src_options_map)
 
             # Add includes to the list of sources to process. chdir() for glob,
             # which uses it indirectly.
@@ -450,21 +453,35 @@ def _parse_recursive(sources, log_timings, encoding=None):
     # Save the set of parsed filenames in options_map.
     options_map['include'] = sorted(filenames_seen)
 
+    options_map = aggregate_options_map(options_map, other_options_map)
+
     return entries, parse_errors, options_map
 
 
-def aggregate_options_map(options_map, src_options_map):
+def aggregate_options_map(options_map, other_options_map):
     """Aggregate some of the attributes of options map.
 
     Args:
       options_map: The target map in which we want to aggregate attributes.
         Note: This value is mutated in-place.
-      src_options_map: A source map whose values we'd like to see aggregated.
+      other_options_map: A list of other options maps, some of whose values
+        we'd like to see aggregated.
     """
-    op_currencies = options_map["operating_currency"]
-    for currency in src_options_map["operating_currency"]:
-        if currency not in op_currencies:
-            op_currencies.append(currency)
+    options_map = copy.copy(options_map)
+
+    currencies = list(options_map["operating_currency"])
+    for omap in other_options_map:
+        currencies.extend(omap["operating_currency"])
+    options_map["operating_currency"] = list(misc_utils.uniquify(currencies))
+
+    # Produce a 'pythonpath' value for transformers.
+    pythonpath = set()
+    for omap in itertools.chain((options_map,), other_options_map):
+        if omap.get("insert_pythonpath", False):
+            pythonpath.add(path.dirname(omap["filename"]))
+    options_map["pythonpath"] = sorted(pythonpath)
+
+    return options_map
 
 
 def _load(sources, log_timings, extra_validations, encoding):
@@ -509,8 +526,16 @@ def _load(sources, log_timings, extra_validations, encoding):
 
     # Transform the entries.
     with misc_utils.log_time('run_transformations', log_timings, indent=1):
-        entries, errors = run_transformations(entries, parse_errors, options_map,
-                                              log_timings)
+
+        # Insert the user PYTHONPATH entries before processing the plugins.
+        saved_pythonpath = list(sys.path)
+        try:
+            if "pythonpath" in options_map:
+                sys.path[0:0] = options_map["pythonpath"]
+            entries, errors = run_transformations(entries, parse_errors, options_map,
+                                                  log_timings)
+        finally:
+            sys.path[:] = saved_pythonpath
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):

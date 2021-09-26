@@ -458,7 +458,8 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       A boolean, if true, prepend the directory name of the top-level file to
       the PYTHONPATH.
-    """, [Opt("insert_pythonpath", False, "TRUE")]),
+    """, [Opt("insert_pythonpath", False, "TRUE",
+              converter=options_validate_boolean)]),
     ]
 
 
