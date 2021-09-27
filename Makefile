@@ -256,6 +256,7 @@ pytype:
 pytype1:
 	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
 
-bazel-link:
+links bazel-link:
 	rm -f beancount/parser/_parser.so
-	ln -s ../../bazel-bin/beancount/parser/_parser.so beancount/parser/_parser.so
+	ln -s -f ../../bazel-bin/beancount/parser/_parser.so beancount/parser/_parser.so
+	ln -s -f ../../bazel-bin/beancount/cparser/extmodule.so beancount/cparser/extmodule.so

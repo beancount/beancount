@@ -1,6 +1,6 @@
 """Beancount, a double-entry bookkeeping software.
 """
-__copyright__ = "Copyright (C) 2013-2014, 2016-2018  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2018,2021  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
@@ -34,3 +34,19 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     'ignore', module='bottle', category=DeprecationWarning,
     message='invalid escape sequence')
+
+
+# V3 public definitions.
+#
+# The future of Beancount (v3) will bind the majority of public symbols on the
+# root package, so that one can seamlessly use it like e.g., numpy, with
+#
+#    import beancount as bn
+#
+#    bn.load_file(...)
+
+try:
+    from beancount.cparser import extmodule
+    parse = extmodule.parse
+except ImportError:
+    warnings.warn("Unable to import v3 extension module.")

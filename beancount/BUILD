@@ -12,6 +12,9 @@ py_library(
     name = "__init__",
     srcs = ["__init__.py"],
     data = ["VERSION"],
+    deps = [
+        "//beancount/cparser:extmodule",
+    ],
 )
 
 # Note: We don't include the required plugins in order to be conservative on
