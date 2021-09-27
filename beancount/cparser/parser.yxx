@@ -44,6 +44,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_join.h"
 #include "absl/time/civil_time.h"
+#include "absl/types/optional.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/text_format.h"
 #include "decimal.hh"
@@ -219,11 +220,11 @@ namespace parser {
 
 /* Note: You could add constness aggressively. This wouldn't make much difference. */
 %type <std::vector<std::string>> currency_list
-%type <std::pair<beancount::Amount*, std::optional<decimal::Decimal>>> amount_with_tolerance
+%type <std::pair<beancount::Amount*, absl::optional<decimal::Decimal>>> amount_with_tolerance
 %type <beancount::Amount*> amount
 %type <beancount::inter::Expr*> expr
 %type <beancount::inter::Expr*> maybe_expr
-%type <std::optional<std::string>> maybe_currency
+%type <absl::optional<std::string>> maybe_currency
 %type <beancount::inter::PriceSpec*> price_annotation
 %type <beancount::inter::CostSpec*> compound_expr
 %type <beancount::inter::CostSpec*> compound_amount
@@ -1041,7 +1042,7 @@ amount:
 amount_with_tolerance:
   amount
     {
-      $$ = make_pair($1, std::optional<decimal::Decimal>{});
+      $$ = make_pair($1, absl::optional<decimal::Decimal>{});
     }
   | expr TILDE NUMBER[tolerance] CURRENCY
     {
@@ -1207,7 +1208,7 @@ using std::string_view;
 
 std::unique_ptr<Ledger> Parse(
     const reflex::Input& input,
-    const std::optional<string_view>& filename = {},
+    const absl::optional<string_view>& filename = {},
     int line_offset = 0,
     bool debug = false,
     bool decimal_use_triple = false) {

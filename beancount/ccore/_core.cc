@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+#include "absl/types/optional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/functional.h"
@@ -15,7 +16,6 @@ namespace py = pybind11;
 using std::string;
 using std::string_view;
 using std::vector;
-using std::optional;
 using options::AccountTypes;
 
 namespace {
@@ -35,18 +35,18 @@ string_view AccountRoot_(int num_components, string_view account) {
   return AccountRoot(account, num_components);
 }
 
-optional<string> LeafAccount_(string_view account) {
+absl::optional<string> LeafAccount_(string_view account) {
   string result = LeafAccount(account);
   if (result.empty())
     return std::nullopt;
-  return optional<string>{result};
+  return absl::optional<string>{result};
 }
 
-optional<string> ParentAccount_(string_view account) {
+absl::optional<string> ParentAccount_(string_view account) {
   if (account.empty())
     return std::nullopt;
   string result = ParentAccount(account);
-  return optional<string>{result};
+  return absl::optional<string>{result};
 }
 
 }  // namespace

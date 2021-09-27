@@ -325,5 +325,6 @@ py_extension(
         "@local_config_python//:python_headers",
         "@pybind11",
         "@mpdecimal//:mpdecimal",
+        "@com_google_absl//absl/types:optional",
     ],
 )

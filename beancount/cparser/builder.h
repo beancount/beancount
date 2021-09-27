@@ -17,6 +17,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/types/optional.h"
 #include "decimal.hh"
 
 namespace beancount {
@@ -58,7 +59,7 @@ public:
   void AddInclude(std::string&& filename);
 
   // Add a plugin to be run.
-  void AddPlugin(std::string&& name, const std::optional<std::string>& config);
+  void AddPlugin(std::string&& name, const absl::optional<std::string>& config);
 
   // Intern account and add to the global list of accounts seen.
   const std::string& InternAccount(std::string&& account, const location& loc);
@@ -122,7 +123,7 @@ public:
   // Common posting preparation actions.
   void PreparePosting(Posting* posting,
                       const inter::Expr* opt_expr,
-                      const std::optional<std::string>& opt_currency,
+                      const absl::optional<std::string>& opt_currency,
                       const char flag,
                       const std::string& account,
                       bool is_total,

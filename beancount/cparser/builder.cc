@@ -131,7 +131,7 @@ void Builder::AddInclude(string&& filename) {
   info_->add_include(filename);
 }
 
-void Builder::AddPlugin(string&& name, const std::optional<string>& config) {
+void Builder::AddPlugin(string&& name, const absl::optional<string>& config) {
   auto* plugin = info_->add_plugin();
   plugin->set_name(name);
   if (config.has_value()) {
@@ -299,7 +299,7 @@ void Builder::AppendDirective(Directive* directive) {
 
 void Builder::PreparePosting(Posting* posting,
                              const inter::Expr* maybe_expr,
-                             const std::optional<string>& maybe_currency,
+                             const absl::optional<string>& maybe_currency,
                              const char flag,
                              const string& account,
                              bool is_total_price,
