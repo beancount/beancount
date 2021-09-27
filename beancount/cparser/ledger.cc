@@ -326,8 +326,9 @@ void PostProcessParsed(Ledger* ledger,
   // Set Decimal context before processing, update the desired precision for
   // arithmetic operations.
   decimal::Context context = decimal::context;
-  context.prec(ledger->options->has_decimal_precision() ?
-               ledger->options->decimal_precision() : kDefaultDecimalPrecision);
+  context.prec(ledger->options->has_decimal_evaluation_precision() ?
+               ledger->options->decimal_evaluation_precision() :
+               kDefaultDecimalPrecision);
 
   // Process all the directives.
   PrecisionStatsAccum stats;

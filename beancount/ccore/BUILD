@@ -129,7 +129,7 @@ py_proto_library(
     deps = [
         "//beancount/ccore:number_py_proto",
         "//beancount/ccore:date_py_proto",
-        "//beancount/cparser:parser_py_proto",
+        "//beancount/cparser:inter_py_proto",
         "//beancount/cparser:options_py_proto",
     ],
 )
@@ -159,6 +159,29 @@ cc_library(
         "@pybind11",
     ],
 )
+
+#----------------------------------------
+
+cc_library(
+    name = "currency",
+    hdrs = ["currency.h"],
+    srcs = ["currency.cc"],
+    deps = [
+        "@com_google_absl//absl/strings",
+        "@com_google_re2//:re2",
+    ],
+)
+
+# TODO(blais):
+# cc_test(
+#     name = "currency_cc_test",
+#     srcs = ["currency_test.cc"],
+#     deps = [
+#         ":currency",
+#         "@com_google_googletest//:gtest_main",
+#     ],
+# )
+
 
 #----------------------------------------
 
@@ -255,15 +278,22 @@ cc_proto_library(
     deps = [":precision_proto"],
 )
 
+py_proto_library(
+    name = "precision_py_proto",
+    srcs = ["precision.proto"],
+)
+
 cc_library(
     name = "precision",
     hdrs = ["precision.h"],
     srcs = ["precision.cc"],
     deps = [
         ":precision_cc_proto",
-        "//beancount/ccore:data_cc_proto",
-        "//beancount/ccore:number",
+        ":data_cc_proto",
+        ":number",
+        ":currency",
         "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/strings",
         "@mpdecimal//:mpdecimal",
     ],
 )
@@ -277,6 +307,7 @@ cc_test(
         "//beancount/cparser:test_utils",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
+        "@com_google_re2//:re2",
     ],
 )
 

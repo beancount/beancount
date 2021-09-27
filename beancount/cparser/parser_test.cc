@@ -5426,10 +5426,10 @@ TEST(TestExpressions, ExplicitPrecision) {
 
   ExpectParse(R"(
     2021-09-19 balance Assets:US:Checking   (1 + 5) / 2.1 USD
-    option "decimal_precision" "5"
+    option "decimal_evaluation_precision" "5"
   )", R"(
     options {
-      decimal_precision: 5
+      decimal_evaluation_precision: 5
     }
     directives {
       date { year: 2021 month: 9 day: 19 }

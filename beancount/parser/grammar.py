@@ -6,7 +6,6 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import re
-import sys
 import traceback
 from os import path
 from datetime import date

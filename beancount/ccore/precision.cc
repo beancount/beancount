@@ -3,10 +3,14 @@
 
 #include "beancount/ccore/precision.h"
 #include "beancount/ccore/number.h"
+#include "beancount/ccore/currency.h"
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <string_view>
+
+#include "absl/strings/str_cat.h"
 
 namespace beancount {
 using precision::Pair;
@@ -65,6 +69,18 @@ void PrecisionStatsAccum::Update(const decimal::Decimal& number,
   UpdatePair(number, &pair_stats);
 }
 
+void PrecisionStatsAccum::Update(const Number& number,
+                                 std::string_view currency) {
+  decimal::Decimal decimal = ProtoToDecimal(number);
+  Update(decimal, currency);
+}
+
+void PrecisionStatsAccum::Update(const Number& number,
+                                 std::string_view quote, std::string_view base) {
+  decimal::Decimal decimal = ProtoToDecimal(number);
+  Update(decimal, quote, base);
+}
+
 void PrecisionStatsAccum::Serialize(PrecisionStats* proto) const {
   assert(proto != nullptr);
   std::vector<Pair*> pairs;
@@ -99,8 +115,7 @@ void UpdateStatistics(const Directive& directive, PrecisionStatsAccum* stats) {
         const auto& units = spec.units();
         if (units.has_currency()) {
           if (units.has_number()) {
-            decimal::Decimal number = ProtoToDecimal(units.number());
-            stats->Update(number, units.currency());
+            stats->Update(units.number(), units.currency());
           }
 
           // Witness cost.
@@ -109,13 +124,11 @@ void UpdateStatistics(const Directive& directive, PrecisionStatsAccum* stats) {
             if (cost.has_currency()) {
               const auto& per_unit = cost.per_unit();
               if (per_unit.has_number()) {
-                decimal::Decimal number = ProtoToDecimal(per_unit.number());
-                stats->Update(number, cost.currency(), units.currency());
+                stats->Update(per_unit.number(), cost.currency(), units.currency());
               }
               const auto& total = cost.total();
               if (total.has_number()) {
-                decimal::Decimal number = ProtoToDecimal(total.number());
-                stats->Update(number, cost.currency(), units.currency());
+                stats->Update(total.number(), cost.currency(), units.currency());
               }
             }
           }
@@ -124,15 +137,88 @@ void UpdateStatistics(const Directive& directive, PrecisionStatsAccum* stats) {
           if (spec.has_price()) {
             const auto& price = spec.price();
             if (price.has_number() && price.has_currency()) {
-              decimal::Decimal number = ProtoToDecimal(price.number());
-              stats->Update(number, price.currency(), units.currency());
+              stats->Update(price.number(), price.currency(), units.currency());
             }
           }
         }
       }
     }
+  } else if (directive.has_price()) {
+    const auto& price = directive.price();
+    if (price.has_currency() &&
+        price.has_amount() &&
+        price.amount().has_number() &&
+        price.amount().has_currency()) {
+      stats->Update(directive.price().amount().number(),
+                    price.amount().currency(), price.currency());
+    }
+  } else if (directive.has_balance()) {
+    const auto& balance = directive.balance();
+    if (balance.has_amount() &&
+        balance.amount().has_number() &&
+        balance.amount().has_currency()) {
+      stats->Update(directive.balance().amount().number(),
+                    balance.amount().currency());
+    }
   }
-  // TODO(blais): Add occurrences of other types here, Price, Balance.
+}
+
+precision::Pair* FindPair(precision::PrecisionStats* stats,
+                          const std::string& quote, const std::string& base) {
+  // Find an existing match.
+  for (auto& pair : *stats->mutable_pairs()) {
+    if (pair.quote() == quote && pair.base() == base) {
+      return &pair;
+    }
+  }
+
+  // Not found; create one.
+  precision::Pair* pair = stats->add_pairs();
+  pair->set_quote(quote);
+  if (!base.empty()) {
+    pair->set_base(base);
+  }
+  return pair;
+}
+
+void OverridePrecisionOptions(const options::Options& options,
+                              precision::PrecisionStats* stats,
+                              std::vector<std::string>* errors) {
+  // We're going to update the mode here.
+
+  /// TODO(blais): Remove
+  /// std::cout << "options = " << options.DebugString() << std::endl;
+  for (const auto& setting : options.precision()) {
+    // Split up the currency pair.
+    std::string quote;
+    std::string base;
+    if (!re2::RE2::FullMatch(setting.first, kCurrencyPairRE, &quote, &base)) {
+      if (re2::RE2::FullMatch(setting.first, kCurrencyRE)) {
+        quote = setting.first;
+      } else {
+        if (errors != nullptr) {
+          errors->push_back(absl::StrCat("Invalid pattern for precision: '",
+                                         setting.first, "'"));
+        }
+        continue;
+      }
+    }
+
+    // Update the mode of the pair.
+    precision::Pair* pair = FindPair(stats, quote, base);
+    try {
+      decimal::Decimal number(setting.second);
+      pair->set_exponent_mode(-number.exponent());
+      if (!pair->has_exponent_max()) {
+        pair->set_exponent_max(pair->exponent_mode());
+      }
+    }
+    catch (const decimal::IEEEInvalidOperation&) {
+      errors->push_back(absl::StrCat("Invalid number in precision for '",
+                                     setting.first, "': '", setting.second, "'"));
+      continue;
+    }
+  }
 }
 
 }  // namespace beancount

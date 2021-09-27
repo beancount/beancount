@@ -22,8 +22,9 @@
 
 #include <list>
 #include <string>
-#include <utility>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "absl/hash/hash.h"
 #include "decimal.hh"
@@ -37,6 +38,10 @@ public:
   void Update(const decimal::Decimal& number,
               std::string_view currency);
   void Update(const decimal::Decimal& number,
+              std::string_view quote, std::string_view base);
+  void Update(const Number& number,
+              std::string_view currency);
+  void Update(const Number& number,
               std::string_view quote, std::string_view base);
 
   // Write out the summarized data to a proto object.
@@ -54,6 +59,12 @@ private:
 // Pull out explicit numbers from a series of directives and accumulate
 // statistics on them.
 void UpdateStatistics(const Directive& directive, PrecisionStatsAccum* stats);
+
+// Override computed values by defaults from the options. This essentially sets
+// the modes of the stats to the values given explicitly by users.
+void OverridePrecisionOptions(const options::Options& options,
+                              precision::PrecisionStats* stats,
+                              std::vector<std::string>* errors);
 
 }  // namespace beancount
 

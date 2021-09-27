@@ -145,7 +145,7 @@ cc_proto_library(
 )
 
 py_proto_library(
-    name = "parser_py_proto",
+    name = "inter_py_proto",
     srcs = ["inter.proto"],
     deps = [
         "//beancount/ccore:number_py_proto",
@@ -159,6 +159,9 @@ py_proto_library(
 proto_library(
     name = "options_proto",
     srcs = ["options.proto"],
+    deps = [
+        "//beancount/ccore:precision_proto",
+    ],
 )
 
 cc_proto_library(
@@ -169,6 +172,9 @@ cc_proto_library(
 py_proto_library(
     name = "options_py_proto",
     srcs = ["options.proto"],
+    deps = [
+        "//beancount/ccore:precision_py_proto",
+    ],
 )
 
 #-------------------------------------------------------------------------------

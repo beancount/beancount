@@ -10,7 +10,7 @@ py_binary(
         "//beancount/ccore:data_py_proto",
         "//beancount/ccore:date_py_proto",
         "//beancount/ccore:number_py_proto",
-        "//beancount/cparser:parser_py_proto",
+        "//beancount/cparser:inter_py_proto",
         "//beancount/cparser:options_py_proto",
         #
         "//beancount/core:amount",
