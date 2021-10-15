@@ -9,6 +9,10 @@
 #include "beancount/parser/decimal.h"
 #include "beancount/parser/macros.h"
 
+#ifdef _MSC_VER
+#include <basetsd.h>
+typedef SSIZE_T ssize_t;
+#endif
 
 /**
  * Dispatch to token values build functions.
