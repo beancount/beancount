@@ -67,7 +67,7 @@ class TestToDecimal(unittest.TestCase):
 class TestInferQuantization(unittest.TestCase):
 
     def setUp(self):
-        rn = [random.random() * 10000 for _ in range(100)]
+        rn = [random.uniform(1, 10000) for _ in range(100)]
         self.ir = list(map(int, rn))
         self.fr = [(x - ix - 0.5) for (x, ix) in zip(rn, self.ir)]
 
