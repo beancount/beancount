@@ -554,8 +554,10 @@ def book_reductions(entry, group_postings, balances,
         # Also note that if there is no existing balance, then won't be any lot
         # reduction because none of the postings will be able to match against
         # any currencies of the balance.
-        previous_balance = balances.get(account, empty)
-        balance = local_balances.setdefault(account, copy.copy(previous_balance))
+        if account not in local_balances:
+            previous_balance = balances.get(account, empty)
+            local_balances[account] = copy.copy(previous_balance)
+        balance = local_balances[account]
 
         # Check if this is a lot held at cost.
         if costspec is None or units.number is MISSING:
