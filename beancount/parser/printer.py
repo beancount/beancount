@@ -197,7 +197,7 @@ class EntryPrinter:
                                if self.render_weight and width_weight > 0
                                else False)
         if non_trivial_balance:
-            fmt = "{0}{{:{1}}}  {{:{2}}}  ; {{:{3}}}\n".format(
+            fmt = "{0}{{:<{1}}}  {{:<{2}}}  ; {{:<{3}}}\n".format(
                 self.prefix, width_account, width_position, width_weight).format
             for posting, account, position_str, weight_str in zip(entry.postings,
                                                                   strs_account,
