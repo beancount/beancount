@@ -36,7 +36,6 @@ from beancount.core.data import EMPTY_SET
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
-from beancount.core import data
 
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
@@ -176,9 +175,9 @@ class Builder(lexer.LexBuilder):
         """Return the accumulated entries.
 
         Returns:
-          A list of sorted directives.
+          A list of directives.
         """
-        return sorted(self.entries, key=data.entry_sortkey)
+        return list(self.entries)
 
     def get_options(self):
         """Return the final options map.
