@@ -45,7 +45,6 @@ def check_dependencies():
         # Modules we really do need installed.
         check_import('dateutil'),
         check_import('ply', module_name='ply.yacc', min_version='3.4'),
-        check_import('lxml', module_name='lxml.etree', min_version='3'),
 
         # Optionally required to upload data to Google Drive.
         check_import('googleapiclient'),
@@ -57,7 +56,6 @@ def check_dependencies():
 
         # Optionally required to support imports (identify, extract, file) code.
         check_python_magic(),
-        check_import('beautifulsoup4', module_name='bs4', min_version='4'),
         ]
 
 

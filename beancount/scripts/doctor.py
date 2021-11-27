@@ -510,22 +510,6 @@ def display_context(filename):
     sys.stdout.write(str(dcontext))
 
 
-@doctor.command()
-@click.argument('directory',
-                type=click.Path(resolve_path=True, file_okay=False, exists=True))
-def validate_html(directory, args):
-    """Validate all the HTML files in a directory."""
-    # pylint: disable=import-outside-toplevel
-    from beancount.utils import scrape  # To avoid lxml dependency.
-
-    files, missing, empty = scrape.validate_local_links_in_dir(directory)
-    logging.info('%d files processed', len(files))
-    for target in missing:
-        logging.error('Missing %s', target)
-    for target in empty:
-        logging.error('Empty %s', target)
-
-
 main = doctor
 
 if __name__ == '__main__':
