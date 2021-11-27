@@ -446,8 +446,26 @@ Directive = Union[
     Custom
 ]
 
+class dtypes:
+    "Types of directives."
+    Open = Open
+    Close = Close
+    Commodity = Commodity
+    Pad = Pad
+    Balance = Balance
+    Transaction = Transaction
+    Note = Note
+    Event = Event
+    Query = Query
+    Price = Price
+    Document = Document
+    Custom = Custom
+
+
 # Type for the list of entries and options map.
+# Note: In v3, make the terminology 'Entries' obsolete.
 Entries = List[Directive]
+Directives = List[Directive]
 Options = Dict[str, Any]
 
 
