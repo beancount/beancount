@@ -2,7 +2,7 @@
 #package(default_visibility = ["//visibility:public"])
 
 filegroup(
-    name = "htaccess",
-    srcs = [".htaccess"],
+    name = "nginx.conf",
+    srcs = [".nginx.conf"],
     visibility = ["//tools:__subpackages__"],
 )

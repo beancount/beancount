@@ -46,11 +46,12 @@ def get_options_docid():
     Returns:
       The id of the doc to fix up.
     """
-    htaccess = path.join(test_utils.find_repository_root(__file__), '.htaccess')
+    htaccess = path.join(test_utils.find_repository_root(__file__), '.nginx.conf')
     with open(htaccess) as inht:
         lines = list(filter(
-            None, map(re.compile(r'RedirectMatch +/doc/options\$[\t ]+(.*)').match,
-                      inht.readlines())))
+            None, map(
+                re.compile(r'.*/doc/options.*(https?://docs.google.com/.*);').match,
+                inht.readlines())))
     assert len(lines) == 1
     return list(filter(None, lines[0].group(1).split('/')))[-1]
 
