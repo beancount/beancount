@@ -67,7 +67,7 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
   string value_str = std::move(value);
 
   // Translate legacy option names to proto equivalents.
-  static std::vector<std::pair<string, string>> translations = {
+  static std::vector<std::pair<const char*, const char*>> translations = {
     {"name_assets",       "account_types { assets: '%s' }"},
     {"name_liabilities",  "account_types { liabilities: '%s' }"},
     {"name_income",       "account_types { income: '%s' }"},
@@ -76,8 +76,12 @@ void Builder::AddOptionBinary(const string& key, string&& value, const location&
   };
   for (const auto& translation : translations) {
     if (key == translation.first) {
-      value_str = absl::StrFormat(translation.second.c_str(), value_str);
-      return AddOptionUnary(value_str, loc);
+      char buffer[1024];
+      if (std::snprintf(buffer, 1024, translation.second, value_str.c_str()) >= 1024) {
+        AddError(StrFormat("String too large for options: '%s'", value_str), loc);
+        return;
+      }
+      return AddOptionUnary(buffer, loc);
     }
   }
 
