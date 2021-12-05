@@ -16,14 +16,21 @@ from beancount.parser.version import VERSION
 @click.option('--verbose', '-v', is_flag=True, help='Print timings.')
 @click.option('--no-cache', '-C', is_flag=True, help='Disable the cache.')
 @click.option('--cache-filename', type=click.Path(), help='Override the cache filename.')
+@click.option('--auto', '-a', is_flag=True, help='Implicitly enable auto-plugins.')
 @click.version_option(message=VERSION)
-def main(filename, verbose, no_cache, cache_filename):
+def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto: bool):
     """Parse, check and realize a beancount ledger.
 
     This also measures the time it takes to run all these steps.
 
     """
     use_cache = not no_cache
+
+    # Insert auto plugins. This is convenient for importers because when
+    # generating a subset of transactions oftentimes we don't have the
+    # contextual account and commodity creation routines. See {4ec6a3205b6c}.
+    if auto:
+        loader.PLUGINS_AUTO.extend(loader.DEFAULT_PLUGINS_AUTO)
 
     if verbose:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
