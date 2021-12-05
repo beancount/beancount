@@ -205,7 +205,7 @@ class EntryPrinter:
                                                                   strs_weight):
                 oss.write(fmt(account,
                               position_str,
-                              weight_str if non_trivial_balance else ''))
+                              weight_str or ''))
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
