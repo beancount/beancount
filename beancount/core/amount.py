@@ -42,6 +42,20 @@ class Amount(_Amount):
     valid_types_number = (Decimal, type, type(None))
     valid_types_currency = (str, type, type(None))
 
+    def __add__(self, other):
+        return add(self, other)
+
+    def __sub__(self, other):
+        return sub(self, other)
+
+    def __mul__(self, other):
+        return mul(self, other)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other):
+        return div(self, other)
+
     def __new__(cls, number, currency):
         """Constructor from a number and currency.
 
@@ -163,8 +177,8 @@ def mul(amount, number):
     """
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number))
-    assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(number))
+    assert isinstance(number,(int, Decimal)), (
+        "Number is not an int or Decimal instance: {}".format(number))
     return Amount(amount.number * number, amount.currency)
 
 def div(amount, number):
@@ -178,8 +192,8 @@ def div(amount, number):
     """
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number))
-    assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(number))
+    assert isinstance(number, (int, Decimal)), (
+        "Number is not an int or Decimal instance: {}".format(number))
     return Amount(amount.number / number, amount.currency)
 
 def add(amount1, amount2):

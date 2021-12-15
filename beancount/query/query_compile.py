@@ -15,6 +15,7 @@ import operator
 from decimal import Decimal
 
 from beancount.core import inventory
+from beancount.core.amount import Amount
 from beancount.query import query_parser
 
 
@@ -192,26 +193,39 @@ class EvalContains(EvalBinaryOp):
 class EvalMul(EvalBinaryOp):
 
     def __init__(self, left, right):
-        f = lambda x, y: Decimal(x * y)
-        super().__init__(f, left, right, Decimal)
+        if left.dtype == Amount and right.dtype in [int, Decimal]:
+            super().__init__(operator.mul, left, right, Amount)
+        elif left.dtype in [int, Decimal] and right.dtype == Amount:
+            super().__init__(operator.mul, left, right, Amount)
+        elif left.dtype == int and right.dtype == int:
+            super().__init__(operator.mul, left, right, int)
+        elif left.dtype in [int, Decimal] and right.dtype in [int, Decimal]:
+            super().__init__(operator.mul, left, right, Decimal)
+        else:
+            raise TypeError("Multiply of {} with {} not supported".format(
+                left.dtype,right.dtype))
 
 class EvalDiv(EvalBinaryOp):
 
     def __init__(self, left, right):
-        f = lambda x, y: Decimal(x / y)
-        super().__init__(f, left, right, Decimal)
+        if left.dtype == Amount and right.dtype in [int, Decimal]:
+            super().__init__(operator.truediv, left, right, Amount)
+        elif left.dtype in [int, Decimal] and right.dtype in [int, Decimal]:
+            f = lambda x, y: Decimal(x) / Decimal(y)
+            super().__init__(f, left, right, Decimal)
+        else:
+            raise TypeError("Division of {} with {} not supported".format(
+                left.dtype,right.dtype))
 
 class EvalAdd(EvalBinaryOp):
 
     def __init__(self, left, right):
-        f = lambda x, y: Decimal(x + y)
-        super().__init__(f, left, right, Decimal)
+        super().__init__(operator.add, left, right, right.dtype)
 
 class EvalSub(EvalBinaryOp):
 
     def __init__(self, left, right):
-        f = lambda x, y: Decimal(x - y)
-        super().__init__(f, left, right, Decimal)
+        super().__init__(operator.sub, left, right, right.dtype)
 
 
 # Interpreter nodes.

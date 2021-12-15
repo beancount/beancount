@@ -6,10 +6,12 @@ import unittest
 from decimal import Decimal
 
 from beancount.core.number import D
+from beancount.core.amount import A
+
 from beancount.query import query_parser as qp
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
-
+from beancount.core import amount
 
 class TestCompileExpression(unittest.TestCase):
 
@@ -171,20 +173,39 @@ class TestCompileDataTypes(unittest.TestCase):
         self.assertEqual(bool, c_or.dtype)
 
     def test_compile_EvalMul(self):
-        c_plus = qc.EvalMul(qc.EvalConstant(17), qc.EvalConstant(18))
+        c_plus = qc.EvalMul(qc.EvalConstant(D(17)), qc.EvalConstant(D(18)))
         self.assertEqual(Decimal, c_plus.dtype)
 
     def test_compile_EvalDiv(self):
-        c_plus = qc.EvalDiv(qc.EvalConstant(17), qc.EvalConstant(18))
+        c_plus = qc.EvalDiv(qc.EvalConstant(D(17)), qc.EvalConstant(D(18)))
         self.assertEqual(Decimal, c_plus.dtype)
 
     def test_compile_EvalAdd(self):
-        c_plus = qc.EvalAdd(qc.EvalConstant(17), qc.EvalConstant(18))
+        c_plus = qc.EvalAdd(qc.EvalConstant(D(17)), qc.EvalConstant(D(18)))
         self.assertEqual(Decimal, c_plus.dtype)
 
     def test_compile_EvalSub(self):
-        c_plus = qc.EvalSub(qc.EvalConstant(17), qc.EvalConstant(18))
+        c_plus = qc.EvalSub(qc.EvalConstant(D(17)), qc.EvalConstant(D(18)))
         self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalAddAmount(self):
+        c_plus = qc.EvalAdd(qc.EvalConstant(A('1.11 USD')), qc.EvalConstant(A('3.55 USD')))
+        self.assertEqual(amount.Amount, c_plus.dtype)
+
+    def test_compile_EvalSubAmount(self):
+        c_plus = qc.EvalSub(qc.EvalConstant(A('1.11 USD')), qc.EvalConstant(A('3.55 USD')))
+        self.assertEqual(amount.Amount, c_plus.dtype)
+
+    def test_compile_EvalMultAmount(self):
+        c_plus = qc.EvalMul(qc.EvalConstant(A('1.11 USD')), qc.EvalConstant(D('2.31')))
+        self.assertEqual(amount.Amount, c_plus.dtype)
+        c_plus = qc.EvalMul(qc.EvalConstant(D('2.31')), qc.EvalConstant(A('1.11 USD')))
+        self.assertEqual(amount.Amount, c_plus.dtype)
+
+    def test_compile_EvalDivAmount(self):
+        c_plus = qc.EvalDiv(qc.EvalConstant(A('1.11 USD')), qc.EvalConstant(D('2.31')))
+        self.assertEqual(amount.Amount, c_plus.dtype)
+
 
 
 class TestCompileMisc(unittest.TestCase):
