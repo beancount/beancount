@@ -358,5 +358,31 @@ class TestEnv(unittest.TestCase):
         self.assertEqual([(D('0.00'),)], rrows)
 
 
+    @parser.parse_doc()
+    def test_Round(self, entries, _, options_map):
+        """
+        2016-11-20 * "ok"
+          Assets:Banking          0.9561234567 INDX { 5 USD, 2016-10-30 }
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT round(number(units(position)), 0)')
+        self.assertEqual([(D('1'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT round(number(units(position)), 1)')
+        self.assertEqual([(D('1'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT round(number(units(position)), 2)')
+        self.assertEqual([(D('0.96'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT round(number(units(position)), 3)')
+        self.assertEqual([(D('0.956'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT round(number(units(position)), 4)')
+        self.assertEqual([(D('0.9561'),)], rrows)
+
 if __name__ == '__main__':
     unittest.main()
