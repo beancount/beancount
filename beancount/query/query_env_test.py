@@ -295,6 +295,68 @@ class TestEnv(unittest.TestCase):
                                         'SELECT date_add(date, -1) as m')
         self.assertEqual([(datetime.date(2016, 11, 19),)], rrows)
 
+    @parser.parse_doc()
+    def test_ToDecimal(self, entries, _, options_map):
+        """
+        2016-11-19 commodity INDX
+          pcnt_stocks_us: 0.60
+          pcnt_stocks_int: 0.40
+
+        2016-11-20 * "ok"
+          Assets:Banking          -1 INDX { 5 USD, 2016-10-30 }
+
+        2016-11-21 price INDX 20 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal("foo") as m')
+        self.assertEqual([(None,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal("foo", 1.0) as m')
+        self.assertEqual([(D('1.0'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal("2.0") as m')
+        self.assertEqual([(D('2.0'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal("2.0", 1.0) as m')
+        self.assertEqual([(D('2.0'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal(getitem(commodity_meta(commodity('
+                                        + 'units(position))), "pcnt_stocks_us")) as m')
+        self.assertEqual([(D('0.6'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal(getitem(commodity_meta(commodity('
+                                        + 'units(position))), "pcnt_bonds_us")) as m')
+        self.assertEqual([(None,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal(getitem(commodity_meta(commodity('
+                                        + 'units(position))), "pcnt_bonds_us"), 0.0) as m')
+        self.assertEqual([(D('0.0'),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal(getitem(commodity_meta('
+                                        + 'commodity(units(position))), "pcnt_stocks_us"))'
+                                        + '* number(convert(units(position), "USD")) as m')
+        self.assertEqual([(D('-12.00'),)], rrows)
+
+        # cannot multiply None (default ToDecimal behavior) by a decimal
+        with self.assertRaises(TypeError):
+            rtypes, rrows = query.run_query(entries, options_map,
+                                          'SELECT decimal(getitem(commodity_meta('
+                                          + 'commodity(units(position))), "pcnt_bonds_us"))'
+                                          + '* number(convert(units(position), "USD"))')
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT decimal(getitem(commodity_meta(commodity'
+                                        + '(units(position))), "pcnt_bonds_us"), 0.0)'
+                                        + '* number(convert(units(position), "USD"))')
+        self.assertEqual([(D('0.00'),)], rrows)
+
 
 if __name__ == '__main__':
     unittest.main()

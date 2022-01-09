@@ -14,7 +14,7 @@ import re
 import textwrap
 from decimal import Decimal
 
-from beancount.core.number import ZERO
+from beancount.core.number import ZERO, D
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import amount
@@ -55,6 +55,31 @@ class NegPosition(_Neg):
 class NegInventory(_Neg):
     __intypes__ = [inventory.Inventory]
 
+class ToDecimal(query_compile.EvalFunction):
+    """Converts a string into a Decimal type.
+    Defaults to no value for non-decimal values."""
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+
+        # ToDecimal has no default value
+        # ToDecimalDefault will pass a default value as the second arg
+        value = args[1] if len(args) > 1 else None
+        try:
+            if args[0] != '': # '' parses to D('0')
+                value = D(args[0])
+        except ValueError as ex:
+            pass # default is used instead
+        return value
+
+class ToDecimalDefault(ToDecimal):
+    """Converts a string into a Decimal type.
+    Defaults to second argument for non-decimal values."""
+    __intypes__ = [str, Decimal]
 
 class AbsDecimal(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -888,6 +913,8 @@ SIMPLE_FUNCTIONS = {
     ('safediv', Decimal, int)                            : SafeDivInt,
     'length'                                             : Length,
     'str'                                                : Str,
+    ('decimal', str)                                     : ToDecimal,
+    ('decimal', str, Decimal)                            : ToDecimalDefault,
     'maxwidth'                                           : MaxWidth,
     'root'                                               : Root,
     'parent'                                             : Parent,
