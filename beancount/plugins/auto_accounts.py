@@ -13,17 +13,16 @@ __plugins__ = ('auto_insert_open',)
 
 
 def auto_insert_open(entries, unused_options_map):
-    """Insert implicitly defined prices from Transactions.
+    """Insert Open directives for accounts not opened.
 
-    Explicit price entries are simply maintained in the output list. Prices from
-    postings with costs or with prices from Transaction entries are synthesized
-    as new Price entries in the list of entries output.
+    Open directives are inserted at the date of the first entry. Open directives
+    for unused accounts are removed.
 
     Args:
-      entries: A list of directives. We're interested only in the Transaction instances.
+      entries: A list of directives.
       unused_options_map: A parser options dict.
     Returns:
-      A list of entries, possibly with more Price entries than before, and a
+      A list of entries, possibly with more Open entries than before, and a
       list of errors.
     """
     opened_accounts = {entry.account
