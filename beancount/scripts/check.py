@@ -26,28 +26,38 @@ def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto
     """
     use_cache = not no_cache
 
-    # Insert auto plugins. This is convenient for importers because when
-    # generating a subset of transactions oftentimes we don't have the
-    # contextual account and commodity creation routines. See {4ec6a3205b6c}.
-    if auto:
-        loader.PLUGINS_AUTO.extend(loader.DEFAULT_PLUGINS_AUTO)
+    try:
+        if auto:
+            # Insert auto plugins. This is convenient for importers
+            # because when generating a subset of transactions
+            # oftentimes we don't have the contextual account and
+            # commodity creation routines. See {4ec6a3205b6c}.
+            old_plugins_auto = loader.PLUGINS_AUTO[:]
+            loader.PLUGINS_AUTO.extend(loader.DEFAULT_PLUGINS_AUTO)
 
-    if verbose:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+        if verbose:
+            logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
-    # Override loader caching setup.
-    if not use_cache or cache_filename:
-        loader.initialize(use_cache, cache_filename)
+        # Override loader caching setup.
+        if not use_cache or cache_filename:
+            loader.initialize(use_cache, cache_filename)
 
-    with misc_utils.log_time('beancount.loader (total)', logging.info):
-        # Load up the file, print errors, checking and validation are invoked
-        # automatically.
-        entries, errors, _ = loader.load_file(
-            filename,
-            log_timings=logging.info,
-            log_errors=sys.stderr,
-            # Force slow and hardcore validations, just for check.
-            extra_validations=validation.HARDCORE_VALIDATIONS)
+        with misc_utils.log_time('beancount.loader (total)', logging.info):
+            # Load up the file, print errors, checking and validation
+            # are invoked automatically.
+            entries, errors, _ = loader.load_file(
+                filename,
+                log_timings=logging.info,
+                log_errors=sys.stderr,
+                # Force slow and hardcore validations, just for check.
+                extra_validations=validation.HARDCORE_VALIDATIONS)
+    finally:
+        if auto:
+            # Remove auto plugins. This is not necessary when this
+            # code is run as script but it is needed when run as part
+            # of the test suite (which does not span a new Python
+            # interpreter for each script invocation test).
+            loader.PLUGINS_AUTO[:] = old_plugins_auto
 
     # Exit with an error code if there were any errors.
     sys.exit(1 if errors else 0)
