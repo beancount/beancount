@@ -156,7 +156,6 @@ setup(name="beancount",
               'bean-example = beancount.scripts.example:main',
               'bean-format = beancount.scripts.format:main',
               'bean-query = beancount.query.shell:main',
-              'bean-sql = beancount.scripts.sql:main',
               'treeify = beancount.tools.treeify:main',
           ]
       },

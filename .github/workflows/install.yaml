@@ -18,7 +18,6 @@ jobs:
           bean-example --help
           bean-format --help
           bean-query --help
-          bean-sql --help
   install-from-sdist:
     runs-on: ubuntu-latest
     steps:
@@ -35,4 +34,3 @@ jobs:
           bean-example --help
           bean-format --help
           bean-query --help
-          bean-sql --help
