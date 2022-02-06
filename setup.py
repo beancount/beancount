@@ -91,9 +91,6 @@ install_requires = [
     # I would switch to that.)
     'python-dateutil',
 
-    # The SQL parser uses PLY in order to parse the input syntax.
-    'ply',
-
     # Command line parsing.
     'click',
 ]
@@ -155,7 +152,6 @@ setup(name="beancount",
               'bean-doctor = beancount.scripts.doctor:main',
               'bean-example = beancount.scripts.example:main',
               'bean-format = beancount.scripts.format:main',
-              'bean-query = beancount.query.shell:main',
               'bean-sql = beancount.scripts.sql:main',
               'treeify = beancount.tools.treeify:main',
           ]

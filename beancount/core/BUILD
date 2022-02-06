@@ -7,7 +7,6 @@ package(default_visibility = [
     "//beancount/plugins:__pkg__",
     "//beancount/prices:__subpackages__",
     "//beancount/projects:__pkg__",
-    "//beancount/query:__pkg__",
     "//beancount/scripts:__pkg__",
     "//examples:__subpackages__",
     "//experiments/plugins:__pkg__",
