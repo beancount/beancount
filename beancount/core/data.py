@@ -560,8 +560,6 @@ def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
     assert isinstance(entry.meta, dict), "Invalid type for meta"
-    assert 'filename' in entry.meta, "Missing filename in metadata"
-    assert 'lineno' in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
@@ -655,7 +653,7 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.get("lineno", -1))
 
 
 def sorted(entries):
