@@ -27,12 +27,16 @@ sep = ':'
 # Regular expression string that matches valid account name components.
 # Categories are:
 #   Lu: Uppercase letters.
+#   Lu1: Uppercase letters And CJK letters 只有大写字母和中文汉字， 无数字和减号
 #   L: All letters.
 #   Nd: Decimal numbers.
 #   T： 五种账户类型中英文
-ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
-# ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"(\p{T})")
+ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*") # 采用原始，需要大写字母开头
+# ACC_COMP_TYPE_RE_V1 = regexp_utils.re_replace_unicode(r"(\p{T})") #如果将根账户开头包含中文字符，会检索出大量错误的账户名，故此正则式不用
+
+# ACC_COMP_NAME_RE_OLD = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*") # 原始非根账户也要大写字母或者数字开头，修改为下面一句任意字符开头
 ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu1}\p{Nd}][\p{L}\p{Nd}\-]*")
+
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)

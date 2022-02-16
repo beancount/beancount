@@ -847,15 +847,34 @@ UNICODE_RANGES_OLD = {
            r'\uff10-\uff19'),
 }
 
+""" UNICODE_RANGES_1 = {
+  'T' : r'(资产)|(负债)|(权益)|(收入)|(支出)|(Assets)|(Liabilities)|(Equity)|(Income)|(Expense)',
+  # L代表 大写字母A-Z 小写字母a-z CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
+  'L': (r'A-Za-z一-鿼㐀-䶿' ),
+  # Lu 代表 大写字母A-Z  CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
+  'Lu' : (r'A-Z一-鿼㐀-䶿'),
+  'Nd' : ( r'\d'), #阿拉伯数字[0-9]
+}   #此版本根账户名需要有一个字母开头才能被完美识别 想测试其他正则式方案 此方案不用
+ """
+ 
+UNICODE_RANGES_2 = {
+  # L代表 大写字母A-Z 小写字母a-z CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
+  'L': (r'A-Za-z一-鿼㐀-䶿' ),
+  # Lu 仅仅代表26个大写字母A-Z
+  'Lu' : (r'A-Z'),
+  'Nd' : ( r'\d'), #阿拉伯数字[0-9]
+}
+
 UNICODE_RANGES = {
   # L代表 大写字母A-Z 小写字母a-z CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
   'L': (r'A-Za-z一-鿼㐀-䶿' ),
-  # Lu 代表 大写字母A-Z
+  # Lu 仅仅代表26个大写字母A-Z
   'Lu' : (r'A-Z'),
-  # Lu1 代表 大写字母A-Z  CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
   'Lu1' : (r'A-Z一-鿼㐀-䶿'),  
   'Nd' : ( r'\d'), #阿拉伯数字[0-9]
 }
+
+
 
 def re_replace_unicode(regexp):
     """Substitute Unicode Properties in regular expressions with their

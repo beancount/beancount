@@ -180,6 +180,7 @@ def get_account_sign(account_name: Account, account_types: AccountTypes=None) ->
         account_types = DEFAULT_ACCOUNT_TYPES
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     account_type = get_account_type(account_name)
+    return (+1
             if account_type in (account_types.assets,
                                 account_types.expenses)
             else -1)
