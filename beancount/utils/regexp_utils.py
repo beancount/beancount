@@ -848,11 +848,12 @@ UNICODE_RANGES_OLD = {
 }
 
 UNICODE_RANGES = {
-  'T' : r'(资产)|(负债)|(权益)|(收入)|(支出)|(Assets)|(Liabilities)|(Equity)|(Income)|(Expense)',
   # L代表 大写字母A-Z 小写字母a-z CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
   'L': (r'A-Za-z一-鿼㐀-䶿' ),
-  # Lu 代表 大写字母A-Z  CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
-  'Lu' : (r'A-Z一-鿼㐀-䶿'),
+  # Lu 代表 大写字母A-Z
+  'Lu' : (r'A-Z'),
+  # Lu1 代表 大写字母A-Z  CJK统一象形文字 \u4E00–\u9FFC CJK统一象形文字扩展A  \u3400–\u4DBF
+  'Lu1' : (r'A-Z一-鿼㐀-䶿'),  
   'Nd' : ( r'\d'), #阿拉伯数字[0-9]
 }
 
