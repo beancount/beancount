@@ -29,7 +29,9 @@ sep = ':'
 #   Lu: Uppercase letters.
 #   L: All letters.
 #   Nd: Decimal numbers.
-ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
+#   T： 五种账户类型中英文
+# ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
+ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"(\p{T})")
 ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
 
 # Regular expression string that matches a valid account. {5672c7270e1e}

@@ -250,11 +250,11 @@ PUBLIC_OPTION_GROUPS = [
       options at the beginning of your file, because they affect how the parser
       recognizes account names.
     """, [
-        Opt("name_assets", _TYPES.assets),
-        Opt("name_liabilities", _TYPES.liabilities),
-        Opt("name_equity", _TYPES.equity),
-        Opt("name_income", _TYPES.income),
-        Opt("name_expenses", _TYPES.expenses),
+        Opt("name_assets", _TYPES.资产),
+        Opt("name_liabilities", _TYPES.负债),
+        Opt("name_equity", _TYPES.权益),
+        Opt("name_income", _TYPES.收入),
+        Opt("name_expenses", _TYPES.支出),
     ]),
 
     OptGroup("""

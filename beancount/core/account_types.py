@@ -25,15 +25,20 @@ from beancount.core.account import Account
 #   equity: a str, the name of the prefix for the Equity subaccounts.
 #   income: a str, the name of the prefix for the Income subaccounts.
 #   expenses: a str, the name of the prefix for the Expenses subaccounts.
-AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
+# AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
+AccountTypes = namedtuple('AccountTypes', "资产 负债 权益 收入 支出")
 
 # Default values for root accounts.
-DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
-                                     "Liabilities",
-                                     "Equity",
-                                     "Income",
-                                     "Expenses")
-
+# DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
+#                                      "Liabilities",
+#                                      "Equity",
+#                                      "Income",
+#                                      "Expenses")
+DEFAULT_ACCOUNT_TYPES = AccountTypes("资产",
+                                     "负债",
+                                     "权益",
+                                     "收入",
+                                     "支出")
 
 def get_account_type(account_name: Account):
     """Return the type of this account's name.
@@ -90,8 +95,10 @@ def is_root_account(account_name: Account) -> bool:
       A boolean, true if the account is root account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
+    # return (account_name and
+    #         bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
     return (account_name and
-            bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
+            bool(re.match(r'((资产)|(负债)|(权益)|(收入)|(支出)|(Assets)|(Liabilities)|(Equity)|(Income)|(Expense))$', account_name)))
 
 
 def is_balance_sheet_account(account_name: Account, account_types: AccountTypes) -> bool:
@@ -108,9 +115,12 @@ def is_balance_sheet_account(account_name: Account, account_types: AccountTypes)
     assert isinstance(account_types, AccountTypes), (
         "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
-    return account_type in (account_types.assets,
-                            account_types.liabilities,
-                            account_types.equity)
+    # return account_type in (account_types.assets,
+    #                         account_types.liabilities,
+    #                         account_types.equity)
+    return account_type in (account_types.资产,
+                            account_types.负债,
+                            account_types.权益)
 
 
 def is_income_statement_account(account_name: Account, account_types: AccountTypes) -> bool:
@@ -127,8 +137,10 @@ def is_income_statement_account(account_name: Account, account_types: AccountTyp
     assert isinstance(account_types, AccountTypes), (
         "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
-    return account_type in (account_types.income,
-                            account_types.expenses)
+    # return account_type in (account_types.income,
+    #                         account_types.expenses)
+    return account_type in (account_types.收入,
+                            account_types.支出)
 
 
 def is_equity_account(account_name: Account, account_types: AccountTypes) -> bool:
@@ -144,8 +156,8 @@ def is_equity_account(account_name: Account, account_types: AccountTypes) -> boo
     assert isinstance(account_types, AccountTypes), (
         "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
-    return account_type == account_types.equity
-
+    # return account_type == account_types.equity
+    return account_type == account_types.权益
 
 def is_inverted_account(account_name: Account, account_types: AccountTypes) -> bool:
     """Return true if the given account has inverted signs.
@@ -163,10 +175,12 @@ def is_inverted_account(account_name: Account, account_types: AccountTypes) -> b
     assert isinstance(account_types, AccountTypes), (
         "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
-    return account_type in (account_types.liabilities,
-                            account_types.income,
-                            account_types.equity)
-
+    # return account_type in (account_types.liabilities,
+    #                         account_types.income,
+    #                         account_types.equity)
+    return account_type in (account_types.负债,
+                            account_types.收入,
+                            account_types.权益)
 
 def get_account_sign(account_name: Account, account_types: AccountTypes=None) -> int:
     """Return the sign of the normal balance of a particular account.
@@ -181,7 +195,11 @@ def get_account_sign(account_name: Account, account_types: AccountTypes=None) ->
         account_types = DEFAULT_ACCOUNT_TYPES
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     account_type = get_account_type(account_name)
+    # return (+1
+    #         if account_type in (account_types.assets,
+    #                             account_types.expenses)
+    #         else -1)
     return (+1
-            if account_type in (account_types.assets,
-                                account_types.expenses)
+            if account_type in (account_types.资产,
+                                account_types.支出)
             else -1)
