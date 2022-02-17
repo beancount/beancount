@@ -22,10 +22,11 @@ sep = ':'
 # Regular expression string that matches valid account name components.
 # Categories are:
 #   Lu: Uppercase letters.
+#   Lu_and_CJK: Uppercase letters And CJK letters
 #   L: All letters.
 #   Nd: Decimal numbers.
 ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
-ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu_and_CJK}\p{Nd}][\p{L}\p{Nd}\-]*")
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
