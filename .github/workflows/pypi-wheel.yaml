@@ -2,11 +2,12 @@ name: upload-wheel
 on:
   push:
     tags:
-      - "2.*"
+      - '2.[0-9]+.[0-9]+'
   workflow_dispatch:
     inputs:
-      tags:
-        description: 'Tag for wheel'
+      tag:
+        required: true
+        description: 'Release tag'
 jobs:
   build-and-upload:
     runs-on: ${{ matrix.os }}-latest
@@ -15,16 +16,20 @@ jobs:
       matrix:
         python: ['3.6', '3.7', '3.8', '3.9', '3.10']
         os: [windows, macos]
+      env:
+        # The newly pushed tag or the tag specified in the workflow dispatch.
+        TAG: ${{ github.event.push.tag || github.event.inputs.tag }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.TAG }}
+      - run: test "$TAG" = "$(cat beancount/VERSION)"
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
       - run: python -m pip install wheel twine
       - run: python setup.py bdist_wheel
-      - run: twine upload dist/*.whl
+      - run: twine upload dist/beancount-$TAG-*.whl
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
