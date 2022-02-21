@@ -23,7 +23,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.TAG }}
-      - run: test "$TAG" = "$(cat beancount/VERSION)"
+      - run: git describe --tags
+      - run: |
+          # Check that release tag and package version agree.
+          import os, sys
+          tag = os.getenv('TAG')
+          print(f'git tag: {tag}')
+          version = open('beancount/VERSION').read().strip()
+          print(f'package version: {version}')
+          if tag != version:
+              sys.exit(1)
+        shell: python
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
