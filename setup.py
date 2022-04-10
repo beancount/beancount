@@ -152,7 +152,6 @@ setup(name="beancount",
               'bean-doctor = beancount.scripts.doctor:main',
               'bean-example = beancount.scripts.example:main',
               'bean-format = beancount.scripts.format:main',
-              'bean-sql = beancount.scripts.sql:main',
               'treeify = beancount.tools.treeify:main',
           ]
       },

@@ -17,7 +17,6 @@ jobs:
           bean-doctor --help
           bean-example --help
           bean-format --help
-          bean-sql --help
   install-from-sdist:
     runs-on: ubuntu-latest
     steps:
@@ -33,4 +32,3 @@ jobs:
           bean-doctor --help
           bean-example --help
           bean-format --help
-          bean-sql --help

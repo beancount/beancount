@@ -83,22 +83,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_sql_py",
-    srcs = ["bean-sql"],
-    outs = ["bean_sql.py"],
-    cmd = "cat $(locations :bean-sql) > $@",
-)
-
-py_binary(
-    name = "bean_sql",
-    srcs = ["bean_sql.py"],
-    deps = [
-        "//beancount/scripts:sql",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "treeify_py",
     srcs = ["treeify"],
     outs = ["bean_treeify.py"],
