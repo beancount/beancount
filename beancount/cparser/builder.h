@@ -98,6 +98,7 @@ public:
 
   // Check metadata for duplicate keys (e.g. a multi-dict, which we don't yet
   // support).
+  // TODO(blais): Implement this!
   void ValidateMetadata(const Meta* meta, const location& loc);
 
   //---------------------------------------------------------------------------
