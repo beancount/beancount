@@ -236,4 +236,3 @@ def abs(amount):
 
 
 A = from_string = Amount.from_string
-NULL_AMOUNT = Amount(ZERO, '')
