@@ -67,22 +67,6 @@ py_binary(
 )
 
 genrule(
-    name = "bean_query_py",
-    srcs = ["bean-query"],
-    outs = ["bean_query.py"],
-    cmd = "cat $(locations :bean-query) > $@",
-)
-
-py_binary(
-    name = "bean_query",
-    srcs = ["bean_query.py"],
-    deps = [
-        "//beancount/query:shell",
-        "//beancount:loader_with_plugins",
-    ],
-)
-
-genrule(
     name = "treeify_py",
     srcs = ["treeify"],
     outs = ["bean_treeify.py"],
