@@ -244,6 +244,44 @@ class TestScriptFormat(test_utils.ClickTestCase):
 
         """), result.stdout)
 
+    @test_utils.docfile
+    def test_parenthesized_binary_expressions(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test     10.0 USD
+          Expenses:Test (10.0/2) USD
+          Expenses:Test (10.0+2) USD
+          Expenses:Test (10.0-2) USD
+          Expenses:Test (10.0*2) USD
+          Expenses:Test (-10.0*+2) USD
+          Expenses:Test (-1,000.0*+2.0) USD
+          Assets:Test
+
+        2016-08-03 balance Assets:Test 12.27 USD
+        2016-08-03 balance Assets:Test (12.27 + 1.00) USD
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertEqual(textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test                            10.0 USD
+          Expenses:Test                        (10.0/2) USD
+          Expenses:Test                        (10.0+2) USD
+          Expenses:Test                        (10.0-2) USD
+          Expenses:Test                        (10.0*2) USD
+          Expenses:Test                      (-10.0*+2) USD
+          Expenses:Test                 (-1,000.0*+2.0) USD
+          Assets:Test
+
+        2016-08-03 balance Assets:Test            12.27 USD
+        2016-08-03 balance Assets:Test   (12.27 + 1.00) USD
+        """), result.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()
