@@ -11,6 +11,7 @@ from beancount.core import amount
 from beancount.core import account
 from beancount.parser.version import VERSION
 
+NUMBER_RE = r'[-+]?\s*[\d,]+(?:\.\d*)?'
 
 def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):
     """Reformat Beancount input to align all the numbers at the same column.
@@ -36,8 +37,9 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     match_pairs = []
     for line in contents.splitlines():
         match = re.match(
-            r'(^\d[^";]*?|\s+{})\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+((?:{})\b.*)'.format(
-                account.ACCOUNT_RE, amount.CURRENCY_RE), line)
+            rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+({NUMBER_RE})\s+((?:{amount.CURRENCY_RE})\b.*)',
+            line,
+        )
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
