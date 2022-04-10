@@ -26,13 +26,13 @@ def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto
     """
     use_cache = not no_cache
 
+    old_plugins_auto = loader.PLUGINS_AUTO[:]
     try:
         if auto:
             # Insert auto plugins. This is convenient for importers
             # because when generating a subset of transactions
             # oftentimes we don't have the contextual account and
             # commodity creation routines. See {4ec6a3205b6c}.
-            old_plugins_auto = loader.PLUGINS_AUTO[:]
             loader.PLUGINS_AUTO.extend(loader.DEFAULT_PLUGINS_AUTO)
 
         if verbose:
