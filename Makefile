@@ -107,8 +107,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
-	beancount/query/.*_test\.py	 	query/tests		\
-	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
