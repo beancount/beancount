@@ -481,6 +481,8 @@ def aggregate_options_map(options_map, other_options_map):
         currencies.extend(omap["operating_currency"])
     options_map["operating_currency"] = list(misc_utils.uniquify(currencies))
 
+    options_map["dcontext"].update_from(other_options_map["dcontext"])
+
     # Produce a 'pythonpath' value for transformers.
     pythonpath = set()
     for omap in itertools.chain((options_map,), other_options_map):

@@ -18,7 +18,6 @@ typedef SSIZE_T ssize_t;
 extern "C" {
 #endif
 
-
 /**
  * Dispatch to token values build functions.
  *
