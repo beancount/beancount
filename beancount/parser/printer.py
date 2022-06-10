@@ -239,7 +239,10 @@ class EntryPrinter:
         # Render a string with the amount and cost and optional price, if
         # present. Also render a string with the weight.
         weight_str = ''
-        if isinstance(posting.units, amount.Amount):
+        if posting.meta and interpolate.AUTOMATIC_META in posting.meta
+            # Position was interpolated, leave it blank when printing.
+            position_str = ''
+        elif isinstance(posting.units, amount.Amount):
             position_str = position.to_string(posting, self.dformat)
             # Note: we render weights at maximum precision, for debugging.
             if posting.cost is None or (isinstance(posting.cost, position.Cost) and
