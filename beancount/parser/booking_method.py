@@ -152,6 +152,39 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
     return booked_reductions, booked_matches, errors, insufficient
 
 
+def booking_method_HIFO(entry, posting, matches):
+    """HIFO booking method implementations"""
+    booked_reductions = []
+    booked_matches = []
+    errors = []
+    insufficient = False
+
+    # Each up the positions.
+    sign = -1 if posting.units.number < ZERO else 1
+    remaining = abs(posting.units.number)
+    for match in sorted(matches, key=lambda p: p.cost and p.cost.number, reverse=True):
+        print(match.cost)
+        if remaining <= ZERO:
+            break
+
+        # If the inventory somehow ended up with mixed lots, skip this one.
+        if match.units.number * sign > ZERO:
+            continue
+
+        # Compute the amount of units we can reduce from this leg.
+        size = min(abs(match.units.number), remaining)
+        booked_reductions.append(
+            posting._replace(units=Amount(size * sign, match.units.currency),
+                             cost=match.cost))
+        booked_matches.append(match)
+        remaining -= size
+
+    # If we couldn't eat up all the requested reduction, return an error.
+    insufficient = (remaining > ZERO)
+
+    return booked_reductions, booked_matches, errors, insufficient
+
+
 def booking_method_NONE(entry, posting, matches):
     """NONE booking method implementation."""
 
@@ -247,6 +280,7 @@ _BOOKING_METHODS = {
     Booking.STRICT : booking_method_STRICT,
     Booking.FIFO   : booking_method_FIFO,
     Booking.LIFO   : booking_method_LIFO,
+    Booking.HIFO   : booking_method_HIFO,
     Booking.NONE   : booking_method_NONE,
     Booking.AVERAGE: booking_method_AVERAGE,
 }

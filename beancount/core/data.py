@@ -52,6 +52,8 @@ class Booking(enum.Enum):
     # Last-in first-out in the case of ambiguity.
     LIFO = 'LIFO'
 
+    # Highest-in first-out in the case of ambiguity.
+    HIFO = 'HIFO'
 
 def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
     """Create a directive class. Do not include default fields.
