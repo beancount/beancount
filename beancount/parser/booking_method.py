@@ -111,15 +111,20 @@ def booking_method_STRICT(entry, posting, matches):
 
 def booking_method_FIFO(entry, posting, matches):
     """FIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, False)
+    return _booking_method_xifo(entry, posting, matches, "date", False)
 
 
 def booking_method_LIFO(entry, posting, matches):
     """LIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, True)
+    return _booking_method_xifo(entry, posting, matches, "date", True)
 
 
-def _booking_method_xifo(entry, posting, matches, reverse_order):
+def booking_method_HIFO(entry, posting, matches):
+    """HIFO booking method implementation."""
+    return _booking_method_xifo(entry, posting, matches, "number", True)
+
+
+def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     """FIFO and LIFO booking method implementations."""
     booked_reductions = []
     booked_matches = []
@@ -129,41 +134,8 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
+    for match in sorted(matches, key=lambda p: p.cost and getattr(p.cost, sortattr),
                         reverse=reverse_order):
-        if remaining <= ZERO:
-            break
-
-        # If the inventory somehow ended up with mixed lots, skip this one.
-        if match.units.number * sign > ZERO:
-            continue
-
-        # Compute the amount of units we can reduce from this leg.
-        size = min(abs(match.units.number), remaining)
-        booked_reductions.append(
-            posting._replace(units=Amount(size * sign, match.units.currency),
-                             cost=match.cost))
-        booked_matches.append(match)
-        remaining -= size
-
-    # If we couldn't eat up all the requested reduction, return an error.
-    insufficient = (remaining > ZERO)
-
-    return booked_reductions, booked_matches, errors, insufficient
-
-
-def booking_method_HIFO(entry, posting, matches):
-    """HIFO booking method implementations"""
-    booked_reductions = []
-    booked_matches = []
-    errors = []
-    insufficient = False
-
-    # Each up the positions.
-    sign = -1 if posting.units.number < ZERO else 1
-    remaining = abs(posting.units.number)
-    for match in sorted(matches, key=lambda p: p.cost and p.cost.number, reverse=True):
-        print(match.cost)
         if remaining <= ZERO:
             break
 
