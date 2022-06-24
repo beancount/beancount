@@ -325,8 +325,8 @@ class TestLoadIncludes(unittest.TestCase):
                 'fruits/oranges.beancount': """
                   2014-01-02 open Assets:Oranges
                 """})
+            cwd = os.getcwd()
             try:
-                cwd = os.getcwd()
                 os.chdir(tmp)
                 entries, errors, options_map = loader.load_file(
                     path.join(tmp, 'apples.beancount'))
