@@ -665,7 +665,7 @@ def compile_group_by(group_by, c_targets, environ):
             # If the query is an aggregate query, check that all the targets are
             # aggregates.
             if all(aggregate_bools):
-                assert group_indexes == []
+                assert not group_indexes
             else:
                 # If some of the targets aren't aggregates, automatically infer
                 # that they are to be implicit group by targets. This makes for
