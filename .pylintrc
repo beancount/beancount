@@ -132,8 +132,7 @@ disable=locally-disabled,
   unused-private-member,
   use-maxsplit-arg,
   format-string-without-interpolation,
-  use-implicit-booleaness-not-comparison,
-  unused-private-member
+  use-implicit-booleaness-not-comparison
 
 
 # Notes:
