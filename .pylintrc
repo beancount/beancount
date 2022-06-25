@@ -84,10 +84,7 @@ disable=locally-disabled,
   global-variable-not-assigned,
   useless-suppression,
   unused-private-member,
-  use-maxsplit-arg,
-  format-string-without-interpolation,
-  use-implicit-booleaness-not-comparison,
-  unused-private-member
+  use-maxsplit-arg
 
 
 # Notes:

@@ -76,6 +76,7 @@ def align_position_strings(strings):
     fmt_unknown = "{{:<{0}}}".format(max_total).format
 
     # Align the strings and return them.
+    # pylint: disable=format-string-without-interpolation
     aligned_strings = []
     for index, string in string_items:
         # pylint: disable=format-string-without-interpolation
