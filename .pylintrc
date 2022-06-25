@@ -133,8 +133,7 @@ disable=locally-disabled,
   use-maxsplit-arg,
   format-string-without-interpolation,
   use-implicit-booleaness-not-comparison,
-  unused-private-member,
-  use-a-generator
+  unused-private-member
 
 
 # Notes:
