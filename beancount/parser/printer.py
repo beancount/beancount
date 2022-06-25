@@ -74,6 +74,7 @@ def align_position_strings(strings):
     fmt_unknown = "{{:<{0}}}".format(max_total).format
 
     # Align the strings and return them.
+    # pylint: disable=format-string-without-interpolation
     aligned_strings = []
     for index, string in string_items:
         if index is not None:
@@ -203,6 +204,7 @@ class EntryPrinter:
                                                                   strs_account,
                                                                   strs_position,
                                                                   strs_weight):
+                # pylint: disable=format-string-without-interpolation
                 oss.write(fmt(account,
                               position_str,
                               weight_str or ''))
@@ -215,6 +217,7 @@ class EntryPrinter:
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
                                                       strs_position):
+                # pylint: disable=format-string-without-interpolation
                 print(fmt(account, position_str).rstrip(), file=oss)
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
