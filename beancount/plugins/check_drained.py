@@ -79,9 +79,11 @@ def check_drained(entries, options_map):
                         continue
 
                     # Insert a balance directive.
-                    meta = data.new_metadata("<check_drained>", 0)
                     balance_entry = data.Balance(
-                        meta,
+                        # Note: We use the close directive's meta so that
+                        # balance errors direct the user to the corresponding
+                        # close directive.
+                        entry.meta,
                         entry.date + ONE_DAY,
                         entry.account,
                         amount.Amount(ZERO, currency),
