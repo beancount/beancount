@@ -16,6 +16,8 @@ from beancount.plugins import sellgains
 from beancount.plugins import unique_prices
 from beancount import loader
 
+# TODO(blais): The default pedantic set of plugins should include
+# 'check_drained'. In v3 it will.
 __plugins__ = loader.combine_plugins(
     check_commodity,
     coherent_cost,
