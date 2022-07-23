@@ -144,6 +144,27 @@ class TestCheckCloseEmpty(cmptest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "Balance failed for .*: expected 0 USD")
 
+    @loader.load_doc(expect_errors=True)
+    def test_check_drained__not_balance_sheet(self, entries, errors, options_map):
+        """
+        plugin "beancount.plugins.check_drained"
+
+        2018-01-01 open Liabilities:Credit
+        2018-01-01 open Income:Donations
+        2018-01-01 open Expenses:Splurge
+
+        2018-02-16 * "Do something"
+          Income:Donations               -2.00 USD
+          Liabilities:Credit              1.00 USD
+          Expenses:Splurge                1.00 USD
+
+        2018-03-01 close Liabilities:Credit
+        2018-03-01 close Income:Donations
+        2018-03-01 close Expenses:Splurge
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "Balance failed for .*Liabilities:Credit")
+
 
 if __name__ == "__main__":
     unittest.main()
