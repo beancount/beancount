@@ -38,7 +38,9 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     match_pairs = []
     for line in contents.splitlines():
         match = re.match(
-            rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+((?:{amount.CURRENCY_RE})\b.*)',
+            rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
+            rf'({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+'
+            rf'((?:{amount.CURRENCY_RE})\b.*)',
             line,
         )
         if match:
