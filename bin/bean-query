@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
-__license__ = "GNU GPLv2"
-from beancount.query.shell import main; main()

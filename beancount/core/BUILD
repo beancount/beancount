@@ -7,12 +7,12 @@ package(default_visibility = [
     "//beancount/plugins:__pkg__",
     "//beancount/prices:__subpackages__",
     "//beancount/projects:__pkg__",
-    "//beancount/query:__pkg__",
     "//beancount/scripts:__pkg__",
     "//examples:__subpackages__",
     "//experiments/plugins:__pkg__",
     "//experiments/sharing:__pkg__",
     "//experiments/v3/protos:__pkg__",
+    "//experiments/sql:__pkg__",
 
     # Temporary access from C core and parser.
     "//beancount/ccore:__pkg__",

@@ -29,6 +29,15 @@ class Distribution:
         """
         self.hist[value] += 1
 
+    def update_from(self, other):
+        """Add samples from the other distribution to this one.
+
+        Args:
+          other: Another distribution.
+        """
+        for value, count in other.hist.items():
+            self.hist[value] += count
+
     def min(self):
         """Return the minimum value seen in the distribution.
 

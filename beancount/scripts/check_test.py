@@ -44,6 +44,21 @@ class TestScriptCheck(test_utils.ClickTestCase):
         self.assertRegex(result.output, "Balance failed")
         self.assertRegex(result.output, "Assets:Cash")
 
+    @test_utils.docfile
+    def test_auto_plugins(self, filename):
+        """
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        # We should use mix_stderr=False and we check for the error
+        # message on result.stderr, but it does not work. See
+        # https://github.com/pallets/click/issues/1761
+        runner = click.testing.CliRunner()
+        result = runner.invoke(check.main, ['--auto', filename])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual("", result.output.strip())
+
 
 if __name__ == '__main__':
     unittest.main()

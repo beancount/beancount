@@ -5,7 +5,8 @@
 
 #include <assert.h>
 
-#define LONG_STRING_LINES_MAX 64
+/* The maximum number of lines in a string token. */
+#define LONG_STRING_LINES_MAX 256
 
 
 ssize_t validate_decimal_number(const char* str, char* buffer, size_t len) {

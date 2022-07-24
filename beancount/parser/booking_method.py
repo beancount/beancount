@@ -130,15 +130,20 @@ def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
 
 def booking_method_FIFO(entry, posting, matches):
     """FIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, False)
+    return _booking_method_xifo(entry, posting, matches, "date", False)
 
 
 def booking_method_LIFO(entry, posting, matches):
     """LIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, True)
+    return _booking_method_xifo(entry, posting, matches, "date", True)
 
 
-def _booking_method_xifo(entry, posting, matches, reverse_order):
+def booking_method_HIFO(entry, posting, matches):
+    """HIFO booking method implementation."""
+    return _booking_method_xifo(entry, posting, matches, "number", True)
+
+
+def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     """FIFO and LIFO booking method implementations."""
     booked_reductions = []
     booked_matches = []
@@ -148,7 +153,7 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
+    for match in sorted(matches, key=lambda p: p.cost and getattr(p.cost, sortattr),
                         reverse=reverse_order):
         if remaining <= ZERO:
             break
@@ -267,6 +272,7 @@ _BOOKING_METHODS = {
     Booking.STRICT_WITH_SIZE : booking_method_STRICT_WITH_SIZE,
     Booking.FIFO             : booking_method_FIFO,
     Booking.LIFO             : booking_method_LIFO,
+    Booking.HIFO             : booking_method_HIFO,
     Booking.NONE             : booking_method_NONE,
     Booking.AVERAGE          : booking_method_AVERAGE,
 }

@@ -18,7 +18,7 @@ py_test(
     name = "update_options_test",
     srcs = ["update_options_test.py"],
     data = [
-        "//:htaccess",
+        "//:nginx.conf",
     ],
     deps = [
         ":update_options",

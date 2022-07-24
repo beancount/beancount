@@ -50,11 +50,11 @@ def validate_open_close(entries, unused_options_map):
     1. An open or a close directive may only show up once for each account. If a
        duplicate is detected, an error is generated.
 
-    2. Close directives may only appears if an open directive has been seen
-       previous (chronologically).
+    2. Close directives may only appear if an open directive has been seen
+       previously (chronologically).
 
     3. The date of close directives must be strictly greater than their
-      corresponding open directive.
+       corresponding open directive.
 
     Args:
       entries: A list of directives.

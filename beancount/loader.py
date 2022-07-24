@@ -38,12 +38,19 @@ LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 
 # List of default plugins to run.
-DEFAULT_PLUGINS_PRE = [
+PLUGINS_PRE = [
     ("beancount.ops.pad", None),
     ("beancount.ops.documents", None),
     ]
 
-DEFAULT_PLUGINS_POST = [
+# List of plugins that get enabled by --auto, and list of plugins actually
+# inserted in the list. See {4ec6a3205b6c}.
+DEFAULT_PLUGINS_AUTO = [
+    ("beancount.plugins.auto", None),
+    ]
+PLUGINS_AUTO = []
+
+PLUGINS_POST = [
     ("beancount.ops.balance", None),
     ]
 
@@ -472,7 +479,9 @@ def aggregate_options_map(options_map, other_options_map):
     currencies = list(options_map["operating_currency"])
     for omap in other_options_map:
         currencies.extend(omap["operating_currency"])
+        options_map["dcontext"].update_from(omap["dcontext"])
     options_map["operating_currency"] = list(misc_utils.uniquify(currencies))
+
 
     # Produce a 'pythonpath' value for transformers.
     pythonpath = set()
@@ -574,9 +583,10 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     if options_map['plugin_processing_mode'] == 'raw':
         plugins_iter = options_map["plugin"]
     elif options_map['plugin_processing_mode'] == 'default':
-        plugins_iter = itertools.chain(DEFAULT_PLUGINS_PRE,
+        plugins_iter = itertools.chain(PLUGINS_PRE,
                                        options_map["plugin"],
-                                       DEFAULT_PLUGINS_POST)
+                                       PLUGINS_AUTO,
+                                       PLUGINS_POST)
     else:
         assert "Invalid value for plugin_processing_mode: {}".format(
             options_map['plugin_processing_mode'])

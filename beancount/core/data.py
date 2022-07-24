@@ -57,6 +57,8 @@ class Booking(enum.Enum):
     # Last-in first-out in the case of ambiguity.
     LIFO = 'LIFO'
 
+    # Highest-in first-out in the case of ambiguity.
+    HIFO = 'HIFO'
 
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.

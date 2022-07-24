@@ -76,6 +76,7 @@ def align_position_strings(strings):
     fmt_unknown = "{{:<{0}}}".format(max_total).format
 
     # Align the strings and return them.
+    # pylint: disable=format-string-without-interpolation
     aligned_strings = []
     for index, string in string_items:
         # pylint: disable=format-string-without-interpolation
@@ -198,7 +199,7 @@ class EntryPrinter:
             width_account = self.min_width_account
 
         non_trivial_balance = (any(map(interpolate.has_nontrivial_balance, entry.postings))
-                               if self.render_weight
+                               if self.render_weight and width_weight > 0
                                else False)
         if non_trivial_balance:
             for posting, account, position, weight in zip(entry.postings,

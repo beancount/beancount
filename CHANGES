@@ -5,6 +5,11 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2022-02-15
+
+ - Released 2.3.5 with only a few minor bugfixes. Mainly released for 3.10.
+
+
 2021-03-20
 
  - Fixed #639: Released 2.3.4.

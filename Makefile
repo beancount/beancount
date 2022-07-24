@@ -107,8 +107,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
-	beancount/query/.*_test\.py	 	query/tests		\
-	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -140,8 +138,11 @@ debug:
 
 # Bake a release, upload the source.
 release:
+	rm -rf dist
 	python3 setup.py sdist bdist_wheel
-	twine upload dist/*.tar.gz
+	python3.10 setup.py bdist_egg
+	python3.9 setup.py bdist_egg
+	twine upload dist/*.tar.gz dist/*.egg
 
 vtest vtests verbose-test verbose-tests:
 	$(PYTHON) -m pytest -v -s beancount examples

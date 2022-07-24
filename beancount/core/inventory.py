@@ -314,6 +314,8 @@ class Inventory(dict):
             per_currency_dict[position.units.currency].add_position(position)
         return dict(per_currency_dict)
 
+    # TODO(blais): We could use a new method that computes the aggregated units
+    # and cost for each currency.
 
     #
     # Methods to convert an Inventory into another.
@@ -324,6 +326,9 @@ class Inventory(dict):
     # get inserted elsewhere on the balance sheet (e.g. to an unrealized gains
     # account). This should be a natural by-product of conversions and operators
     # should be modified to make this obvious or even difficult to ignore.
+    #
+    # TODO(blais): This returns another Inventory instance; rename this function
+    # to "map()" and create a proper "reduce()" in the new API.
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 
