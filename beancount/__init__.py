@@ -27,6 +27,5 @@ except ImportError:
 # Expose the public API.
 del path
 del sys
-del extmodule
 del warnings
 from .api import *  # pylint: disable=wildcard-import
