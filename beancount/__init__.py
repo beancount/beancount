@@ -31,6 +31,8 @@ with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
 # release. Principle: Not all symbols are intended to be present here, only the
 # most commonly used ones.
 
+# TODO(blais): Move this to an api.py module and import that.
+
 from .core.number import D
 
 from .core.flags import *
