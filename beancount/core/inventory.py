@@ -326,6 +326,9 @@ class Inventory(dict):
     # get inserted elsewhere on the balance sheet (e.g. to an unrealized gains
     # account). This should be a natural by-product of conversions and operators
     # should be modified to make this obvious or even difficult to ignore.
+    #
+    # TODO(blais): This returns another Inventory instance; rename this function
+    # to "map()" and create a proper "reduce()" in the new API.
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 
