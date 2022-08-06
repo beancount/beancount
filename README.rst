@@ -7,9 +7,12 @@
     1  Description
     2  Documentation
     3  Download & Installation
-    4  Filing Bugs
-    5  Copyright and License
-    6  Author
+    4  Versions
+    5  Filing Bugs
+    6  Copyright and License
+    7  Donations
+    8  Sincerely, thank you.
+    9  Author
 
 
 Description
@@ -86,10 +89,39 @@ Tickets can be filed at on the Github project page:
 Copyright and License
 =====================
 
-Copyright (C) 2007-2020  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2022  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the terms of the "GNU GPLv2 only".
 See COPYING file for details.
+
+
+Donations
+=========
+
+Beancount has found itself being useful to many users, companies, and
+foundations since I started it around 2007. I never ask for money, as my intent
+with this project is to build something that is useful to me first, as well as
+for others, in the simplest, most durable manner, and I believe in the genuinely
+free and open stance of Open Source software. Though its ends are utilitarian -
+it is about doing my own accounting in the first order - it is also a labor of
+love and I take great pride in it, pride which has pushed me to add the polish
+so that it would be usable and understandable by others. This is one of the rare
+areas of my software practice where I can let my desire for perfection and
+minimalism run untamed from the demands of time and external constraints.
+
+Many people have asked where they can donate for the project. If you would like
+to give back, you can send a donation via PayPal at:
+
+    https://www.paypal.com/paypalme/misislavski
+
+Your donation is always appreciated in any amount, and while the countless hours
+spent on building this project are impossible to match, the impact of each
+donation is much larger than its financial import. I truly appreciate every
+person who offers one; software can be a lonely endeavour, and those donations
+as well as words of appreciation keep reminding me of the positive impact my
+side projects can have on others. I feel gratitude for all users of Beancount.
+
+Thank you!
 
 
 Author
