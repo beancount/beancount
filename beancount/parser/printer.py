@@ -137,7 +137,7 @@ class EntryPrinter:
             return
         if prefix is None:
             prefix = self.prefix
-        for key, value in sorted(meta.items()):
+        for key, value in meta.items():
             if key not in self.META_IGNORE:
                 value_str = None
                 if isinstance(value, str):
