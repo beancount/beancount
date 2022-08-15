@@ -130,7 +130,8 @@ disable=locally-disabled,
   global-variable-not-assigned,
   useless-suppression,
   unused-private-member,
-  use-maxsplit-arg
+  use-maxsplit-arg,
+  unnecessary-lambda-assignment
 
 
 # Notes:
