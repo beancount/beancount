@@ -71,6 +71,7 @@ enable=all
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 
+# I like most of these... reenable one by one.
 disable=locally-disabled,
   suppressed-message,
   missing-docstring,
@@ -120,7 +121,17 @@ disable=locally-disabled,
   c-extension-no-member,
   cyclic-import,
   isinstance-second-argument-not-valid-type,
-  bad-continuation
+  bad-continuation,
+  consider-using-f-string,
+  consider-using-with,
+  unspecified-encoding,
+  arguments-renamed,
+  consider-using-dict-items,
+  global-variable-not-assigned,
+  useless-suppression,
+  unused-private-member,
+  use-maxsplit-arg
+
 
 # Notes:
 #   bad-continuation: Is buggy, see https://github.com/PyCQA/pylint/issues/3512

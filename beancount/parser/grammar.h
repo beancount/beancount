@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.7.6.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -195,6 +195,8 @@ struct YYLTYPE
 
 
 
+
 int yyparse (yyscan_t scanner, PyObject* builder);
+
 
 #endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */

@@ -3222,25 +3222,6 @@ http://furius.ca/beancount/doc/proposal-query
       history that way. But that would be segregated to a plugin so I'm comfortable
       with it, do whatever you like in plugins, they're perfect for experimentation."
 
-** Plugin: close_empty
-
-  - Create a plugin that automatically inserts a zero balance check right before
-    a Close directive, for all currencies that appeared in that account. This is
-    a pretty basic but important constraint I'd enable at all times on my
-    accounts.
-
-  - Closing an account with a non-zero balance should trigger an error! Right
-    now it does not. This is important.
-
-  - Add a validation check that, when closing an account, its balance is
-    empty/zero. If should automatically insert a zero balance check in all of
-    the currencies this account has seen.
-
-  - This should be a part of the list of pedantic plugins.
-
-  - You must issue an error if you close an account that's got a non-zero
-    balance!
-
 ** Plugin: unverified
 
   - Idea! Allow the selection or reporting of all the postings since their
@@ -5502,14 +5483,6 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
-  - Complete OANDA importer - deal with timezone
-    https://groups.google.com/d/msg/beancount/_9hzfHfEEh0/XHLFQJEmBQAJ
-
-      "Turns out I need to deal with timezone and I ran out of time for today.
-      It's mainly working - albeit could give you the wrong rate depending in
-      which time zone you're calling - if you want to test it out, try the
-      "price_source_oanda" branch. I'll try to finish this soon."
-
   - Make the balance sheet and income statement reports support conversion to a
     single currency
     https://bitbucket.org/blais/beancount/issues/103/make-the-balance-sheet-and-income
@@ -5517,8 +5490,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Create a balance assertion that applies only to tagged or linked transactions.
     https://bitbucket.org/blais/beancount/issues/102/create-a-balance-assertion-that-applies
-
-  - Make stockstatement parser shareable with others. See thread.
 
 
   - Integrate aumayr's beancount-docs into beancount/doc
