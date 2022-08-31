@@ -22,7 +22,7 @@ from beancount.ingest import identify
 from beancount.ingest import cache
 
 
-def file_one_file(filename, importers, destination, idify=False, logfile=None):
+def file_one_file(filename, importers, destination, idify=False, logfile=None, append_dates=True):
     """Move a single filename using its matched importers.
 
     Args:
@@ -35,6 +35,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         filename.
       logfile: A file object to write log entries to, or None, in which case no log is
         written out.
+      append_dates: Prepend date to new file name.
     Returns:
       The full new destination filename on success, and None if there was an error.
     """
@@ -123,7 +124,10 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         clean_basename = misc_utils.idify(clean_basename)
 
     # Prepend the date prefix.
-    new_filename = '{0:%Y-%m-%d}.{1}'.format(date, clean_basename)
+    if append_dates:
+        new_filename = '{0:%Y-%m-%d}.{1}'.format(date, clean_basename)
+    else:
+        new_filename = clean_basename
 
     # Prepend destination directory.
     new_fullname = path.normpath(path.join(destination,
@@ -148,7 +152,8 @@ def file(importer_config,
          mkdirs=False,
          overwrite=False,
          idify=False,
-         logfile=None):
+         logfile=None,
+         append_dates=True):
     """File importable files under a destination directory.
 
     Given an importer configuration object, search for files that can be
@@ -175,6 +180,7 @@ def file(importer_config,
         filename.
       logfile: A file object to write log entries to, or None, in which case no log is
         written out.
+      append_dates: Prepend date to new file names.
     """
     jobs = []
     has_errors = False
@@ -188,7 +194,7 @@ def file(importer_config,
             continue
 
         # Process a single file.
-        new_fullname = file_one_file(filename, importers, destination, idify, logfile)
+        new_fullname = file_one_file(filename, importers, destination, idify, logfile, append_dates)
         if new_fullname is None:
             continue
 
@@ -276,6 +282,10 @@ def add_arguments(parser):
                         action='store_false', default=True,
                         help="Don't overwrite destination files with the same name.")
 
+    parser.add_argument('-d', '--no-date', dest='append_date',
+                        action='store_false', default=True,
+                        help="Don't append date to filenames.")
+
 
 def run(args, parser, importers_list, files_or_directories, hooks=None):
     """Run the subcommand."""
@@ -299,5 +309,6 @@ def run(args, parser, importers_list, files_or_directories, hooks=None):
          mkdirs=True,
          overwrite=args.overwrite,
          idify=True,
-         logfile=sys.stdout)
+         logfile=sys.stdout,
+         append_dates=args.append_date)
     return 0
