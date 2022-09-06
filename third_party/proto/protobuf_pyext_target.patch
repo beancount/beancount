@@ -1,21 +1,10 @@
-diff --git a/BUILD b/BUILD
-index a0c93676a..48647cf64 100644
---- a/BUILD
-+++ b/BUILD
-@@ -561,7 +561,7 @@ GENERIC_TEST_PROTOS = ["src/" + s for s in GENERIC_RELATIVE_TEST_PROTOS]
- 
- proto_library(
-     name = "generic_test_protos",
--    visibility = ["//:__subpackages__"], 
-+    visibility = ["//:__subpackages__"],
-     strip_import_prefix = "src",
-     srcs = LITE_TEST_PROTOS + GENERIC_TEST_PROTOS,
-     deps = [
-@@ -858,6 +858,42 @@ cc_binary(
+diff -Naur a/BUILD.bazel b/BUILD.bazel
+--- a/BUILD.bazel	2022-08-09 13:12:44.000000000 -0400
++++ b/BUILD.bazel	2022-09-06 00:26:04.407595668 -0400
+@@ -877,6 +877,40 @@
      }),
  )
  
-+# Add a public library target to build everything in a single client-side SO.
 +cc_library(
 +    name = "pyext",
 +    visibility = ["//visibility:public"],
@@ -33,6 +22,7 @@ index a0c93676a..48647cf64 100644
 +        "python/",
 +        "src/",
 +    ],
++    linkstatic = 1,
 +    tags = [
 +        # Exclude this target from wildcard expansion (//...) because it may
 +        # not even be buildable. It will be built if it is needed according
@@ -40,7 +30,6 @@ index a0c93676a..48647cf64 100644
 +        # https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes
 +        "manual",
 +    ],
-+    linkstatic = 1,
 +    deps = [
 +        ":protobuf",
 +        ":proto_api",
@@ -50,16 +39,6 @@ index a0c93676a..48647cf64 100644
 +    }),
 +)
 +
-+
  config_setting(
      name = "use_fast_cpp_protos",
      values = {
-@@ -1193,7 +1229,7 @@ java_proto_library(
-     name = "test_messages_proto3_java_proto",
-     visibility = [
-         "//java:__subpackages__",
--    ], 
-+    ],
-     deps = [":test_messages_proto3_proto"],
- )
- 

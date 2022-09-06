@@ -1,22 +1,25 @@
 """Protocol buffer support."""
 
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
+def _github_archive(repo, commit, **kwargs):
+    repo_name = repo.split("/")[-1]
+    http_archive(
+        urls = [repo + "/archive/" + commit + ".zip"],
+        strip_prefix = repo_name + "-" + commit,
+        **kwargs
+    )
+
+
 def setup_proto():
-    # Protobuf
     if not native.existing_rule("com_google_protobuf"):
-        # 2021-06-05.
-        #
-        # Note: This unreleased version on github has the bleeding edge changes
-        # we need in order to use fast proto casters and the native library
-        # bindings.
+        # v21.5
         http_archive(
             name = "com_google_protobuf",
-            urls = ["https://github.com/protocolbuffers/protobuf/archive/a1d8f8f96900468f09ced2ce9d23dea5a1bc070c.tar.gz"],
-            sha256 = "a21eec7f54ca8f7579ba57ec980ee152bc00fcafb101430090b73b7adfe5aecc",
-            strip_prefix = "protobuf-a1d8f8f96900468f09ced2ce9d23dea5a1bc070c",
+            urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip"],
+            #sha256 = "a21eec7f54ca8f7579ba57ec980ee152bc00fcafb101430090b73b7adfe5aecc",
+            strip_prefix = "protobuf-21.5",
             patches = [
                 # Add a publicly visible static library target so that we can
                 # link the protobuf module itself into our library.
@@ -25,45 +28,62 @@ def setup_proto():
             patch_args = ["-p1"],
         )
 
-    # Rules for building protos.
-    if not native.existing_rule("rules_proto"):
-        http_archive(
-            name = "rules_proto",
-            sha256 = "3bce0e2fcf502619119c7cac03613fb52ce3034b2159dd3ae9d35f7339558aa3",
-            strip_prefix = "rules_proto-84ba6ec814eebbf5312b2cc029256097ae0042c3",
-            urls = [
-                "https://github.com/bazelbuild/rules_proto/archive/84ba6ec814eebbf5312b2cc029256097ae0042c3.tar.gz",
-            ],
-            repo_mapping = {"@com_github_protocolbuffers_protobuf": "@com_google_protobuf",
-                            "@com_google_protobuf_protoc_linux_x86_64": "@com_google_protobuf"}
-        )
+    # The following is copied from file '@protobuf//:protobuf_deps.bzl' for
+    # v21.5. I removed targets we don't need.
+    #
+    # if not native.existing_rule("bazel_skylib"):
+    # if not native.existing_rule("com_google_absl"):
+    # if not native.existing_rule("zlib"):
+    # if not native.existing_rule("rules_java"):
+    # if not native.existing_rule("rules_jvm_external"):
+    # if not native.existing_rule("io_bazel_rules_kotlin"):
 
-    # cc_proto_library
     if not native.existing_rule("rules_cc"):
-        http_archive(
+        _github_archive(
             name = "rules_cc",
-            sha256 = "29daf0159f0cf552fcff60b49d8bcd4f08f08506d2da6e41b07058ec50cfeaec",
-            strip_prefix = "rules_cc-b7fe9697c0c76ab2fd431a891dbb9a6a32ed7c3e",
-            urls = ["https://github.com/bazelbuild/rules_cc/archive/b7fe9697c0c76ab2fd431a891dbb9a6a32ed7c3e.tar.gz"],
+            repo = "https://github.com/bazelbuild/rules_cc",
+            commit = "818289e5613731ae410efb54218a4077fb9dbb03",
+            sha256 = "0adbd6f567291ad526e82c765e15aed33cea5e256eeba129f1501142c2c56610",
         )
 
 
-def setup_upb():
-    # upb, a smaller alternative to protobuf.
-    if not native.existing_rule("upb"):
-        if False:
-            native.local_repository(
-                name = "upb",
-                path = "/home/blais/src/github/protocolbuffers/upb",
-            )
-        else:
-            http_archive(
-                name = "upb",
-                sha256 = "602e7530c975d6a5731fff06132ae615100a28058044dd508746f1b63c0a0eae",
-                strip_prefix = "upb-b10b02f66f0dfa055b676770ff394bad9f4d9df0",
-                urls = ["https://github.com/protocolbuffers/upb/archive/b10b02f66f0dfa055b676770ff394bad9f4d9df0.tar.gz"],
-            )
+    if not native.existing_rule("rules_proto"):
+        _github_archive(
+            name = "rules_proto",
+            repo = "https://github.com/bazelbuild/rules_proto",
+            commit = "f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
+            sha256 = "a4382f78723af788f0bc19fd4c8411f44ffe0a72723670a34692ffad56ada3ac",
+        )
 
+    if not native.existing_rule("rules_python"):
+        http_archive(
+            name = "rules_python",
+            sha256 = "9fcf91dbcc31fde6d1edb15f117246d912c33c36f44cf681976bd886538deba6",
+            strip_prefix = "rules_python-0.8.0",
+            url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.8.0.tar.gz",
+        )
+
+
+    if not native.existing_rule("rules_pkg"):
+        http_archive(
+            name = "rules_pkg",
+            urls = [
+                "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+                "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+            ],
+            sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
+        )
+
+    if not native.existing_rule("upb"):
+        _github_archive(
+            name = "upb",
+            repo = "https://github.com/protocolbuffers/upb",
+            commit = "333722e94b35c26b9eb48bd7e471235374ab3737",
+            sha256 = "f973aefa29d4191aad76cd1ba74ee3be4d2161b6c95d73c137f82560983912c6",
+        )
+
+
+def setup_upb_extras():
     if not native.existing_rule("upb_extras"):
         native.local_repository(
             name = "upb_extras",
@@ -72,12 +92,19 @@ def setup_upb():
 
 
 def setup_riegeli():
-    # 2020-12-08
+    ## # 2020-12-08
+    ## http_archive(
+    ##     name = "com_google_riegeli",
+    ##     sha256 = "b7ba2d3426c9dec898e39c6b79dbd4730a907f0e0978582b63f7caa560def7f0",
+    ##     strip_prefix = "riegeli-7f8553a806ed374a6d192b5a25a5f69e46f90108",
+    ##     urls = ["https://github.com/google/riegeli/archive/7f8553a806ed374a6d192b5a25a5f69e46f90108.zip"],
+    ## )
+    # 2022-09-06
     http_archive(
         name = "com_google_riegeli",
-        sha256 = "b7ba2d3426c9dec898e39c6b79dbd4730a907f0e0978582b63f7caa560def7f0",
-        strip_prefix = "riegeli-7f8553a806ed374a6d192b5a25a5f69e46f90108",
-        urls = ["https://github.com/google/riegeli/archive/7f8553a806ed374a6d192b5a25a5f69e46f90108.zip"],
+        urls = ["https://github.com/google/riegeli/archive/107fbb47e28a9e82830ab20a1fb90b7f1b92dfb5.zip"],
+        strip_prefix = "riegeli-107fbb47e28a9e82830ab20a1fb90b7f1b92dfb5",
+        sha256 = "e0dbd8e77c4ecd438e98736f00c48cbe5f62742e29576f0fd4c329eaa85eefaf",
     )
 
     # 2019-02-22

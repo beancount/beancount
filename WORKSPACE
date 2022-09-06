@@ -12,7 +12,10 @@ setup_python()
 
 load("//third_party/proto:setup.bzl", "setup_proto", "setup_riegeli")
 setup_proto()
-setup_riegeli()
+
+# Broken by changes in riegeli which require a patch to protobuf's own rules. {cc05788f14ff}
+#setup_riegeli()
+
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 rules_proto_dependencies()
 rules_proto_toolchains()
