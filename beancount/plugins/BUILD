@@ -126,6 +126,26 @@ py_test(
 )
 
 py_library(
+    name = "check_drained",
+    srcs = ["check_drained.py"],
+    deps = [
+        "//beancount/core:data",
+        "//beancount/core:getters",
+    ],
+)
+
+py_test(
+    name = "check_drained_test",
+    srcs = ["check_drained_test.py"],
+    deps = [
+        "//beancount:loader",
+        "//beancount/parser:cmptest",
+        ":check_drained",
+        "//beancount:plugins_for_tests",
+    ],
+)
+
+py_library(
     name = "coherent_cost",
     srcs = ["coherent_cost.py"],
     deps = [
@@ -292,6 +312,7 @@ py_library(
     deps = [
         "//beancount:loader",
         "//beancount/plugins:check_commodity",
+        "//beancount/plugins:check_drained",
         "//beancount/plugins:coherent_cost",
         "//beancount/plugins:leafonly",
         "//beancount/plugins:noduplicates",

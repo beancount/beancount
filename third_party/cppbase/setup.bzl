@@ -40,7 +40,7 @@ def setup_absl():
         http_archive(
             name = "com_google_absl",
             url = "https://github.com/abseil/abseil-cpp/archive/refs/heads/lts_2021_11_02.tar.gz",
-            #sha256 = "",
+            sha256 = "140924c72546b7cda82cd7f19a6a1980d65c8285882eda4782f57e11fbfc5618",
             strip_prefix = "abseil-cpp-lts_2021_11_02",
         )
 

@@ -25,10 +25,6 @@ rules_proto_toolchains()
 ## load("@upb//bazel:workspace_deps.bzl", "upb_deps")
 ## upb_deps()
 
-load("//third_party/proto:setup.bzl", "setup_flatbuffers", "setup_arrow")
-setup_flatbuffers()
-setup_arrow()
-
 load("//third_party/parser:setup.bzl", "setup_parser")
 setup_parser()
 load("//third_party/parser:repositories.bzl", "parser_toolchains")

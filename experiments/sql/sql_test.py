@@ -6,7 +6,7 @@ from os import path
 import unittest
 
 from beancount.utils import test_utils
-from beancount.scripts import sql
+from experiments.sql import sql
 
 
 ONE_OF_EACH_TYPE = """

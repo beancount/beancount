@@ -27,6 +27,7 @@ py_test(
         "//beancount/scripts:check",
         "//beancount/utils:test_utils",
         "//beancount:plugins_for_tests",
+        "//beancount/plugins:auto",
     ],
 )
 
