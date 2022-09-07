@@ -1,5 +1,14 @@
-"""Bazel workspace for the Beancount."""
+"""Bazel workspace for the Beancount.
+
+Note that:
+
+- This is using a local Python runtime, which must be 3.10
+- The pip package for 'protobuf' version *must* match that which is in use in this build (v21.5)
+- Your version of Bazel installed must match that which is used in the github actions (5.3).
+
+"""
 workspace(name="beancount")
+
 
 load("//third_party/foreign:setup.bzl", "setup_rules_foreign")
 setup_rules_foreign()

@@ -18,7 +18,7 @@ def setup_proto():
         http_archive(
             name = "com_google_protobuf",
             urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip"],
-            #sha256 = "a21eec7f54ca8f7579ba57ec980ee152bc00fcafb101430090b73b7adfe5aecc",
+            sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
             strip_prefix = "protobuf-21.5",
             patches = [
                 # Add a publicly visible static library target so that we can
