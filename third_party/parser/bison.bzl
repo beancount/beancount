@@ -20,8 +20,6 @@ failing when the parser is extended further.
 
 """
 
-load("@rules_m4//m4:m4.bzl", "M4_TOOLCHAIN_TYPE", "m4_toolchain")
-
 def _genyacc_impl(ctx):
     """Implementation for genyacc rule."""
 
@@ -45,15 +43,15 @@ def _genyacc_impl(ctx):
     if ctx.outputs.location_out:
         outputs.append(ctx.outputs.location_out)
 
-    m4 = m4_toolchain(ctx)
     ctx.actions.run(
         executable = ctx.executable._bison,
         env = {
-            "M4": m4.m4_tool.executable.path,
+            "M4": ctx.executable._m4.path,
+            "BISON_PKGDATADIR": ctx.files._bison_data[0].dirname,
         },
         arguments = [args],
-        inputs = ctx.files.src,
-        tools = [m4.m4_tool.executable],
+        inputs = ctx.files._bison_data + ctx.files.src,
+        tools = [ctx.executable._m4],
         outputs = outputs,
         mnemonic = "Yacc",
         progress_message = "Generating %s and %s from %s" %
@@ -93,12 +91,17 @@ genyacc = rule(
             doc = "A list of extra options to pass to Bison.  These are " +
                   "subject to $(location ...) expansion.",
         ),
+        "_bison_data": attr.label(default = "@bison//:bison_runtime_data"),
         "_bison": attr.label(
             default = Label("//third_party/parser:bison_bin"),
             executable = True,
             cfg = "host",
         ),
+        "_m4": attr.label(
+            default = Label("//third_party/parser:m4_bin"),
+            executable = True,
+            cfg = "host",
+        ),
     },
     output_to_genfiles = True,
-    toolchains = [M4_TOOLCHAIN_TYPE],
 )

@@ -2,8 +2,7 @@
 Rules for adding './configure && make' style dependencies.
 """
 
-load("@rules_foreign_cc//tools/build_defs:configure.bzl", "configure_make")
-load("//third_party/foreign:ar_wrapper.bzl", "ar_wrapper")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
 licenses(["notice"])  # Apache v2.0
 
@@ -13,27 +12,52 @@ package(
 
 exports_files([
     "bison.bzl",
-    "flex.bzl",
+    "reflex.bzl",
 ])
 
-ar_wrapper(
-    name = "ar_wrapper",
-    visibility = ["//visibility:public"],
+#------------------------------------------------------------------------------
+# M4
+
+configure_make(
+    name = "m4",
+    env = select({
+        "@platforms//os:macos": {"AR": ""},
+        "//conditions:default": {},
+    }),
+    lib_source = "@m4//:all",
+    out_binaries = [
+        "m4",
+    ],
 )
+
+filegroup(
+    name = "m4_bin",
+    srcs = [":m4"],
+    output_group = "m4",
+)
+
+#------------------------------------------------------------------------------
+# Bison
 
 configure_make(
     name = "bison",
-    binaries = [
+    build_data = [":m4_bin"],
+    # Without specifying m4 directly, cc_rules_foreign may fallback
+    # on the system m4, which might be too old.
+    env = select({
+        "@platforms//os:macos": {
+            "AR": "",
+            "M4": "$(execpath :m4_bin)",
+        },
+        "//conditions:default": {
+            "M4": "$(execpath :m4_bin)"
+        },
+    }),
+    lib_source = "@bison//:all",
+    out_binaries = [
         "bison",
         "yacc",
     ],
-    configure_env_vars = {
-        "CC_FOR_BUILD": "$$CC$$",
-        "AR": "ar_wrapper",
-    },
-    lib_source = "@bison//:all",
-    static_libraries = ["liby.a"],
-    tools_deps = [":ar_wrapper"],
 )
 
 filegroup(
@@ -42,13 +66,16 @@ filegroup(
     output_group = "bison",
 )
 
+#------------------------------------------------------------------------------
+# ReFlex
+
 configure_make(
     name = "reflex",
-    binaries = [
+    out_binaries = [
         "reflex",
     ],
-    static_libraries = ["libreflex.a"],
-    configure_env_vars = {
+    out_static_libs = ["libreflex.a"],
+    env = {
         # Use PIC so we can link Python extension modules to this.
         "CXXFLAGS": "-fPIC",
     },
@@ -65,26 +92,3 @@ cc_library(
     name = "reflex_headers",
     hdrs = ["@reflex//:headers"],
 )
-
-# configure_make(
-#     name = "flex",
-#     binaries = [
-#         "flex",
-#     ],
-#     # This seems to be necessary (using tools_dep and weird path) because unlike
-#     # bison, flex needs to invoke m4 during build (whereas bison needs it only
-#     # during `configure`).
-#     configure_env_vars = {
-#         "M4": "$$EXT_BUILD_DEPS$$/m4/bin/m4",
-#         "AR": "ar_wrapper",
-#     },
-#     lib_source = "@flex//:all",
-#     tools_deps = [":ar_wrapper"],
-#     deps = [":m4"],
-# )
-
-# filegroup(
-#     name = "flex_bin",
-#     srcs = [":flex"],
-#     output_group = "flex",
-# )

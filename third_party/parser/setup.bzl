@@ -1,54 +1,92 @@
-"""Lex, flex, reflex, yacc, Bison, scanners & parser generators."""
+"""Lex, flex, reflex, yacc, Bison, scanners & parser generators.
+
+Note that we specifically avoid rules_m4 and rules_bison and instead build our
+own local versions of these binaries, for isolation. See the
+`google/zetasql/bazel` configuration for an example.
+"""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
 def setup_parser():
+    setup_m4()
+    setup_bison()
+    setup_reflex()
+
+
+all_content = """
+filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])
+"""
+
+
+def setup_m4():
     if not native.existing_rule("m4"):
         http_archive(
-            name = "rules_m4",
-            sha256 = "b0309baacfd1b736ed82dc2bb27b0ec38455a31a3d5d20f8d05e831ebeef1a8e",
-            urls = ["https://github.com/jmillikin/rules_m4/releases/download/v0.2.2/rules_m4-v0.2.2.tar.xz"],
+            name = "m4",
+            build_file_content = all_content,
+            # 2022-09-08
+            strip_prefix = "m4-1.4.19",
+            sha256 = "3be4a26d825ffdfda52a56fc43246456989a3630093cced3fbddf4771ee58a70",
+            urls = [
+                "https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.gz",
+                "https://mirrors.kernel.org/gnu/m4/m4-1.4.19.tar.gz",
+            ],
         )
 
-    # http_archive(
-    #     name = "flex",
-    #     build_file_content = all_content,
-    #     strip_prefix = "flex-2.6.4",
-    #     sha256 = "e87aae032bf07c26f85ac0ed3250998c37621d95f8bd748b31f15b33c45ee995",
-    #     urls = ["https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz"],
-    # )
 
-    # Reflex.
-    # Create a target of the headers, because generated code needs to include
-    # and links against a reflex library.
-    all_content = """
+bison_build_file_content = all_content + """
 filegroup(
-  name = "all",
-  srcs = glob(["**"]),
-  visibility = ["//visibility:public"]
+    name = "bison_runtime_data",
+    srcs = glob(["data/**/*"]),
+    output_licenses = ["unencumbered"],
+    path = "data",
+    visibility = ["//visibility:public"],
+
 )
-    """
-    headers_content = """
+exports_files(["data"])
+"""
+
+
+def setup_bison():
+    if not native.existing_rule("bison"):
+        http_archive(
+            name = "bison",
+            build_file_content = bison_build_file_content,
+            # 2022-09-08
+            strip_prefix = "bison-3.8.2",
+            sha256 = "06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb",
+            urls = ["https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.gz"],
+        )
+
+
+reflex_build_file_content = all_content + """
 filegroup(
   name = "headers",
   srcs = glob(["include/reflex/*.h"]),
   visibility = ["//visibility:public"]
 )
-    """
-    http_archive(
-        name = "reflex",
-        build_file_content = all_content + headers_content,
-        strip_prefix = "RE-flex-3.0.1",
-        sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
-        urls = ["https://github.com/Genivia/RE-flex/archive/v3.0.1.zip"],
-    )
+"""
 
-    # 2020-11-21
-    http_archive(
-        name = "bison",
-        build_file_content = all_content,
-        strip_prefix = "bison-3.7.3",
-        sha256 = "104fe912f2212ab4e4a59df888a93b719a046ffc38d178e943f6c54b1f27b3c7",
-        urls = ["https://ftp.gnu.org/gnu/bison/bison-3.7.3.tar.gz"],
-    )
+
+def setup_reflex():
+    if not native.existing_rule("reflex"):
+        # Reflex.
+        # Create a target of the headers, because generated code needs to include
+        # and links against a reflex library.
+        http_archive(
+            name = "reflex",
+            build_file_content = reflex_build_file_content,
+            strip_prefix = "RE-flex-3.0.1",
+            sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
+            urls = ["https://github.com/Genivia/RE-flex/archive/v3.0.1.zip"],
+        )
+        # This newer version currently fails the syntax, we have to fix it.
+        # TODO(blais): Fix the scanner error and upgrade.
+        # http_archive(
+        #     name = "reflex",
+        #     build_file_content = all_content + headers_content,
+        #     # 2022-09-08
+        #     strip_prefix = "RE-flex-3.2.11",
+        #     sha256 = "2d61eaefec94836d4807aa61df5f946b183699db77c4c384db9843a83c33c63b",
+        #     urls = ["https://github.com/Genivia/RE-flex/archive/v3.2.11.zip"],
+        # )
