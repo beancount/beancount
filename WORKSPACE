@@ -9,17 +9,26 @@ Note that:
 """
 workspace(name="beancount")
 
-
+# Setup for building third-party deps using configure/make/make-install.
 load("//third_party/foreign:setup.bzl", "setup_rules_foreign")
 setup_rules_foreign()
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()
 
+# Basic C++ libraries.
 load("//third_party/cppbase:setup.bzl", "setup_cppbase")
 setup_cppbase()
 
+# RE-flex/bison code generators.
+load("//third_party/parser:setup.bzl", "setup_parser")
+setup_parser()
+
+# Basic Python support.
 load("//third_party/python:setup.bzl", "setup_python")
 setup_python()
 
-load("//third_party/proto:setup.bzl", "setup_proto", "setup_riegeli")
+# Protos.
+load("//third_party/proto:setup.bzl", "setup_proto")
 setup_proto()
 
 # Broken by changes in riegeli which require a patch to protobuf's own rules. {cc05788f14ff}
@@ -36,9 +45,6 @@ rules_proto_toolchains()
 ## setup_upb()
 ## load("@upb//bazel:workspace_deps.bzl", "upb_deps")
 ## upb_deps()
-
-load("//third_party/parser:setup.bzl", "setup_parser")
-setup_parser()
 
 # # Setup for packaging rules.
 # load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
