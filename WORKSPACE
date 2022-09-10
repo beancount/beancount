@@ -37,3 +37,5 @@ rules_proto_toolchains()
 # TODO(blais): Update RE-flex version and code.
 # TODO(blais): Update proto version & move out rules_* dependencies of it.
 # TODO(blais): Define maybe_http_archive() in a file and reuse everywhere.
+# TODO(blais): Move rules_cc to cppbase.
+# TODO(blais): Move rules_python to Python.
