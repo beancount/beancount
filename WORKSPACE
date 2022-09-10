@@ -9,10 +9,11 @@ Note that:
 """
 workspace(name="beancount")
 
+#------------------------------------------------------------------------------
+# Beancount direct dependencies.
+
 # Bazel general rules packages
-load("//third_party/bazel:repositories.bzl", "setup_bazel_repositories")
-setup_bazel_repositories()
-load("//third_party/bazel:deps.bzl", "setup_bazel_dependencies")
+load("//third_party/bazel:setup.bzl", "setup_bazel_dependencies")
 setup_bazel_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
@@ -30,12 +31,26 @@ setup_python_dependencies()
 # Support for protocol buffers in all languages.
 load("//third_party/proto:setup.bzl", "setup_proto_dependencies")
 setup_proto_dependencies()
+
+#------------------------------------------------------------------------------
+# Indirect dependencies from packages.
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+bazel_skylib_workspace()
+
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()
+
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+rules_pkg_dependencies()
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
+rules_cc_dependencies()
+
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 rules_proto_dependencies()
 rules_proto_toolchains()
 
 # TODO(blais): Update RE-flex version and code.
-# TODO(blais): Update proto version & move out rules_* dependencies of it.
-# TODO(blais): Define maybe_http_archive() in a file and reuse everywhere.
-# TODO(blais): Move rules_cc to cppbase.
-# TODO(blais): Move rules_python to Python.
+# TODO(blais): Reorder too name/urls (url), strip_prefix, sha256.
+# TODO(blais): Join files... there isn't much left. Maybe a single bit fat directory is best?

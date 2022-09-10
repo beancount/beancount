@@ -10,20 +10,27 @@ def setup_python_dependencies():
     # Rules for building python.
     maybe_http_archive(
         name = "rules_python",
-        url = "https://github.com/bazelbuild/rules_python/archive/708ed8679d7510a331ce9a7b910a2a056d24f7b1.tar.gz",
-        strip_prefix = "rules_python-708ed8679d7510a331ce9a7b910a2a056d24f7b1",
-        sha256 = "f352c434f9a81c655375deb071b25e26757b7e95f25d50c4833da4e5f9f00840",
+        # 2022-09-10
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.12.0.tar.gz",
+        strip_prefix = "rules_python-0.12.0",
+        sha256 = "b593d13bb43c94ce94b483c2858e53a9b811f6f10e1e0eedc61073bd90e58d9c",
     )
 
-    # Support building par files (Python archives).
-    maybe_http_archive(
-        name = "subpar",
-        strip_prefix = "subpar-2.0.0",
-        urls = [
-            "https://github.com/google/subpar/archive/2.0.0.tar.gz",
-        ],
-        sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
-    )
+    # Historically, subpar was the only way to produce a deployable Python
+    # artifact in Bazel. This is no longer quite true; --build_python_zip allows
+    # you to create executable Python zip artifacts with the standard py_binary
+    # rule. Subpar still supports some use cases --build_python_zip doesn't: In
+    # particular, it allows you to build archives of specific targets without
+    # using a global command-line flag, and in some cases the archives can run
+    # in-place without extraction.
+    #
+    # # Support building par files (Python archives).
+    # maybe_http_archive(
+    #     name = "subpar",
+    #     strip_prefix = "subpar-2.0.0",
+    #     urls = ["https://github.com/google/subpar/archive/2.0.0.tar.gz"],
+    #     sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
+    # )
 
     # Rules for easy extension modules.
     # 2020-11-25
@@ -92,14 +99,6 @@ def setup_python_dependencies():
         actual = "@local_config_python//:python_headers",
     )
     native.register_toolchains("@local_config_python//:toolchain")
-
-    # Add some of these later if you need pip repos to build an hermetic version.
-    #
-    # load("@rules_python//python:repositories.bzl", "py_repositories")
-    # py_repositories()
-    # # Only needed if using the packaging rules.
-    # load("@rules_python//python:pip.bzl", "pip_repositories")
-    # pip_repositories()
 
     maybe_http_archive(
         name = "python_magic",

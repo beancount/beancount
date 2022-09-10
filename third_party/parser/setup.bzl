@@ -9,20 +9,9 @@ load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 
 
 def setup_parser_dependencies():
-    setup_m4()
-    setup_bison()
-    setup_reflex()
-
-
-all_content = """
-filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])
-"""
-
-
-def setup_m4():
     maybe_http_archive(
         name = "m4",
-        build_file_content = all_content,
+        build_file = "//third_party/parser:m4.BUILD",
         # 2022-09-08
         strip_prefix = "m4-1.4.19",
         sha256 = "3be4a26d825ffdfda52a56fc43246456989a3630093cced3fbddf4771ee58a70",
@@ -32,47 +21,21 @@ def setup_m4():
         ],
     )
 
-
-bison_build_file_content = all_content + """
-filegroup(
-    name = "bison_runtime_data",
-    srcs = glob(["data/**/*"]),
-    output_licenses = ["unencumbered"],
-    path = "data",
-    visibility = ["//visibility:public"],
-
-)
-exports_files(["data"])
-"""
-
-
-def setup_bison():
     maybe_http_archive(
         name = "bison",
-        build_file_content = bison_build_file_content,
+        build_file = "//third_party/parser:bison.BUILD",
         # 2022-09-08
         strip_prefix = "bison-3.8.2",
         sha256 = "06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb",
         urls = ["https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.gz"],
     )
 
-
-reflex_build_file_content = all_content + """
-filegroup(
-  name = "headers",
-  srcs = glob(["include/reflex/*.h"]),
-  visibility = ["//visibility:public"]
-)
-"""
-
-
-def setup_reflex():
     # Reflex.
     # Create a target of the headers, because generated code needs to include
     # and links against a reflex library.
     maybe_http_archive(
         name = "reflex",
-        build_file_content = reflex_build_file_content,
+        build_file = "//third_party/parser:reflex.BUILD",
         strip_prefix = "RE-flex-3.0.1",
         sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
         urls = ["https://github.com/Genivia/RE-flex/archive/v3.0.1.zip"],
