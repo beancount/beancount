@@ -3,15 +3,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
-def _github_archive(repo, commit, **kwargs):
-    repo_name = repo.split("/")[-1]
-    http_archive(
-        urls = [repo + "/archive/" + commit + ".zip"],
-        strip_prefix = repo_name + "-" + commit,
-        **kwargs
-    )
-
-
 def setup_proto_dependencies():
     if not native.existing_rule("com_google_protobuf"):
         # v21.5
@@ -37,20 +28,21 @@ def setup_proto_dependencies():
     # if not native.existing_rule("rules_java"):
     # if not native.existing_rule("rules_jvm_external"):
     # if not native.existing_rule("io_bazel_rules_kotlin"):
+    # if not native.existing_rule("rules_pkg"):
 
     if not native.existing_rule("rules_cc"):
-        _github_archive(
+        http_archive(
             name = "rules_cc",
-            repo = "https://github.com/bazelbuild/rules_cc",
-            commit = "818289e5613731ae410efb54218a4077fb9dbb03",
+            urls = ["https://github.com/bazelbuild/rules_cc/archive/818289e5613731ae410efb54218a4077fb9dbb03.zip"],
+            strip_prefix = "rules_cc-818289e5613731ae410efb54218a4077fb9dbb03",
             sha256 = "0adbd6f567291ad526e82c765e15aed33cea5e256eeba129f1501142c2c56610",
         )
 
     if not native.existing_rule("rules_proto"):
-        _github_archive(
+        http_archive(
             name = "rules_proto",
-            repo = "https://github.com/bazelbuild/rules_proto",
-            commit = "f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
+            urls = ["https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip"],
+            strip_prefix = "rules_proto-f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
             sha256 = "a4382f78723af788f0bc19fd4c8411f44ffe0a72723670a34692ffad56ada3ac",
         )
 
@@ -62,21 +54,11 @@ def setup_proto_dependencies():
             url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.8.0.tar.gz",
         )
 
-    if not native.existing_rule("rules_pkg"):
-        http_archive(
-            name = "rules_pkg",
-            urls = [
-                "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-                "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-            ],
-            sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
-        )
-
     if not native.existing_rule("upb"):
-        _github_archive(
+        http_archive(
             name = "upb",
-            repo = "https://github.com/protocolbuffers/upb",
-            commit = "333722e94b35c26b9eb48bd7e471235374ab3737",
+            urls = ["https://github.com/protocolbuffers/upb/archive/333722e94b35c26b9eb48bd7e471235374ab3737.zip"],
+            strip_prefix = "upb-333722e94b35c26b9eb48bd7e471235374ab3737",
             sha256 = "f973aefa29d4191aad76cd1ba74ee3be4d2161b6c95d73c137f82560983912c6",
         )
 

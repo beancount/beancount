@@ -3,7 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
-def setup_repositories():
+def setup_bazel_repositories():
     # Setup for building third-party deps using configure/make/make-install.
     http_archive(
         name = "bazel_skylib",

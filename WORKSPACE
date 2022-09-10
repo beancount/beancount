@@ -10,10 +10,10 @@ Note that:
 workspace(name="beancount")
 
 # Bazel general rules packages
-load("//third_party/bazel:repositories.bzl", "setup_repositories")
-setup_repositories()
-load("//third_party/bazel:deps.bzl", "setup_rules_dependencies")
-setup_rules_dependencies()
+load("//third_party/bazel:repositories.bzl", "setup_bazel_repositories")
+setup_bazel_repositories()
+load("//third_party/bazel:deps.bzl", "setup_bazel_dependencies")
+setup_bazel_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
 load("//third_party/cppbase:setup.bzl", "setup_cppbase_dependencies")
@@ -34,6 +34,6 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 rules_proto_toolchains()
 
-# TODO(blais): Add _github_archive() utility to all, including conditional.
 # TODO(blais): Update RE-flex version and code.
 # TODO(blais): Update proto version & move out rules_* dependencies of it.
+# TODO(blais): Define maybe_http_archive() in a file and reuse everywhere.
