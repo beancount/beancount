@@ -3,7 +3,7 @@
 load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 
 
-def setup_cppbase_dependencies():
+def beancount_cppbase_dependencies():
     maybe_http_archive(
         name = "rules_cc",
         # 2022-09-10

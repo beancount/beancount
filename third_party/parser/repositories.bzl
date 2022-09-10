@@ -8,7 +8,7 @@ own local versions of these binaries, for isolation. See the
 load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 
 
-def setup_parser_dependencies():
+def beancount_parser_dependencies():
     maybe_http_archive(
         name = "m4",
         build_file = "//third_party/parser:m4.BUILD",

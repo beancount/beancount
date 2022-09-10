@@ -6,7 +6,7 @@ load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 load("//third_party/python:python_configure.bzl", "python_configure")
 
 
-def setup_python_dependencies():
+def beancount_python_dependencies():
     # Rules for building python.
     maybe_http_archive(
         name = "rules_python",

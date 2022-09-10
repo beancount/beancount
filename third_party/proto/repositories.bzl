@@ -3,7 +3,7 @@
 load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 
 
-def setup_proto_dependencies():
+def beancount_proto_dependencies():
     maybe_http_archive(
         name = "rules_proto",
         urls = ["https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip"],

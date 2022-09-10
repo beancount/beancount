@@ -1,4 +1,4 @@
-def setup_riegeli():
+def beancount_riegeli():
     ## # 2020-12-08
     ## http_archive(
     ##     name = "com_google_riegeli",

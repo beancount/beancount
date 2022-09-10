@@ -10,30 +10,39 @@ Note that:
 workspace(name="beancount")
 
 #------------------------------------------------------------------------------
-# Beancount direct dependencies.
+# Direct dependencies of Beancount.
+#
+# Each of the following files defines `http_archive` repositories. We group them
+# into various subgroups of related features. This could theoretically be
+# serialized to a single file, but we keep them to subdirectories to organize
+# all the related files. We use maybe_http_archive() throughout.
 
 # Bazel general rules packages
-load("//third_party/bazel:repositories.bzl", "setup_bazel_dependencies")
-setup_bazel_dependencies()
+load("//third_party/bazel:repositories.bzl", "beancount_bazel_dependencies")
+beancount_bazel_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
-load("//third_party/cppbase:repositories.bzl", "setup_cppbase_dependencies")
-setup_cppbase_dependencies()
+load("//third_party/cppbase:repositories.bzl", "beancount_cppbase_dependencies")
+beancount_cppbase_dependencies()
 
 # Support for scanners & parser generators.
-load("//third_party/parser:repositories.bzl", "setup_parser_dependencies")
-setup_parser_dependencies()
+load("//third_party/parser:repositories.bzl", "beancount_parser_dependencies")
+beancount_parser_dependencies()
 
 # Support for Python, building Python, Python/C++ bindings.
-load("//third_party/python:repositories.bzl", "setup_python_dependencies")
-setup_python_dependencies()
+load("//third_party/python:repositories.bzl", "beancount_python_dependencies")
+beancount_python_dependencies()
 
 # Support for protocol buffers in all languages.
-load("//third_party/proto:repositories.bzl", "setup_proto_dependencies")
-setup_proto_dependencies()
+load("//third_party/proto:repositories.bzl", "beancount_proto_dependencies")
+beancount_proto_dependencies()
 
 #------------------------------------------------------------------------------
-# Indirect dependencies from packages.
+# Indirect dependencies from packages we depend on.
+#
+# Calling these functions will define more repositories, and if there are
+# collisions the ones we depend on above will prevail; hopefully the ones we
+# define above are compatible with those required by the packages themselves.
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
@@ -53,4 +62,3 @@ rules_proto_toolchains()
 
 # TODO(blais): Update RE-flex version and code.
 # TODO(blais): Reorder too name/urls (url), strip_prefix, sha256.
-# TODO(blais): Join files... there isn't much left. Maybe a single bit fat directory is best?
