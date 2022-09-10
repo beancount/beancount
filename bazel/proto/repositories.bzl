@@ -1,6 +1,6 @@
 """Protocol buffer support."""
 
-load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
+load("//bazel/build:maybe_archive.bzl", "maybe_http_archive")
 
 
 def beancount_proto_dependencies():
@@ -20,7 +20,7 @@ def beancount_proto_dependencies():
         patches = [
             # Add a publicly visible static library target so that we can
             # link the protobuf module itself into our library.
-            "//third_party/proto:protobuf_pyext_target.patch",
+            "//bazel/proto:protobuf_pyext_target.patch",
         ],
         patch_args = ["-p1"],
     )

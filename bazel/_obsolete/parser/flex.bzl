@@ -100,12 +100,12 @@ genlex = rule(
             doc = "A list of options to be added to the flex command line.",
         ),
         "_flex": attr.label(
-            default = Label("//third_party/parser:flex_bin"),
+            default = Label("//bazel/parser:flex_bin"),
             executable = True,
             cfg = "host",
         ),
         "_m4": attr.label(
-            default = Label("//third_party/parser:m4_bin"),
+            default = Label("//bazel/parser:m4_bin"),
             executable = True,
             cfg = "host",
         ),

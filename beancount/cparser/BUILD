@@ -1,10 +1,10 @@
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
-load("//third_party/python:py_extension.bzl", "py_extension")
+load("//bazel/python:py_extension.bzl", "py_extension")
 #load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
-load("//third_party/parser:bison.bzl", "genyacc")
-load("//third_party/parser:reflex.bzl", "genreflex")
+load("//bazel/parser:bison.bzl", "genyacc")
+load("//bazel/parser:reflex.bzl", "genreflex")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -43,7 +43,7 @@ cc_library(
     deps = [
         "//beancount/ccore:number",
         "//beancount/ccore:date",
-        "//third_party/parser:reflex",
+        "//bazel/parser:reflex",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/status:statusor",
@@ -91,7 +91,7 @@ cc_library(
         "//beancount/ccore:date",
         "//beancount/ccore:number",
         "//beancount/ccore:data_cc_proto",
-        "//third_party/parser:reflex",
+        "//bazel/parser:reflex",
         ":parser_headers",
         ":ledger",
         "@com_google_absl//absl/container:flat_hash_map",

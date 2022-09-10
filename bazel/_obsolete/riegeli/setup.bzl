@@ -17,7 +17,7 @@ def beancount_riegeli():
     # 2019-02-22
     http_archive(
         name = "highwayhash",
-        build_file = "@com_google_riegeli//third_party:highwayhash.BUILD",
+        build_file = "@com_google_riegeli//bazel:highwayhash.BUILD",
         sha256 = "cf891e024699c82aabce528a024adbe16e529f2b4e57f954455e0bf53efae585",
         strip_prefix = "highwayhash-276dd7b4b6d330e4734b756e97ccfb1b69cc2e12",
         urls = ["https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip"],
@@ -34,7 +34,7 @@ def beancount_riegeli():
 
     http_archive(
         name = "net_zstd",
-        build_file = "@com_google_riegeli//third_party:net_zstd.BUILD",
+        build_file = "@com_google_riegeli//bazel:net_zstd.BUILD",
         sha256 = "b6c537b53356a3af3ca3e621457751fa9a6ba96daf3aebb3526ae0f610863532",
         strip_prefix = "zstd-1.4.5/lib",
         urls = [
@@ -44,7 +44,7 @@ def beancount_riegeli():
 
     http_archive(
         name = "snappy",
-        build_file = "@com_google_riegeli//third_party:snappy.BUILD",
+        build_file = "@com_google_riegeli//bazel:snappy.BUILD",
         sha256 = "38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303",
         strip_prefix = "snappy-1.1.8",
         urls = [
@@ -54,7 +54,7 @@ def beancount_riegeli():
 
     http_archive(
         name = "crc32c",
-        build_file = "//third_party:crc32.BUILD",
+        build_file = "//bazel:crc32.BUILD",
         sha256 = "338f1d9d95753dc3cdd882dfb6e176bbb4b18353c29c411ebcb7b890f361722e",
         strip_prefix = "crc32c-1.1.0",
         urls = [
@@ -64,7 +64,7 @@ def beancount_riegeli():
 
     # http_archive(
     #     name = "zlib",
-    #     build_file = "//third_party:zlib.BUILD",
+    #     build_file = "//bazel:zlib.BUILD",
     #     sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
     #     strip_prefix = "zlib-1.2.11",
     #     urls = [

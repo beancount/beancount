@@ -18,23 +18,23 @@ workspace(name="beancount")
 # all the related files. We use maybe_http_archive() throughout.
 
 # Bazel general rules packages
-load("//third_party/build:repositories.bzl", "beancount_build_dependencies")
+load("//bazel/build:repositories.bzl", "beancount_build_dependencies")
 beancount_build_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
-load("//third_party/cppbase:repositories.bzl", "beancount_cppbase_dependencies")
+load("//bazel/cppbase:repositories.bzl", "beancount_cppbase_dependencies")
 beancount_cppbase_dependencies()
 
 # Support for scanners & parser generators.
-load("//third_party/parser:repositories.bzl", "beancount_parser_dependencies")
+load("//bazel/parser:repositories.bzl", "beancount_parser_dependencies")
 beancount_parser_dependencies()
 
 # Support for Python, building Python, Python/C++ bindings.
-load("//third_party/python:repositories.bzl", "beancount_python_dependencies")
+load("//bazel/python:repositories.bzl", "beancount_python_dependencies")
 beancount_python_dependencies()
 
 # Support for protocol buffers in all languages.
-load("//third_party/proto:repositories.bzl", "beancount_proto_dependencies")
+load("//bazel/proto:repositories.bzl", "beancount_proto_dependencies")
 beancount_proto_dependencies()
 
 #------------------------------------------------------------------------------
@@ -62,4 +62,3 @@ rules_proto_toolchains()
 
 # TODO(blais): Update RE-flex version and code.
 # TODO(blais): Upgrade the pybind11 deps.
-# TODO(blais): Rename 'third_party' to 'bazel'.

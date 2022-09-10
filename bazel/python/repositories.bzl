@@ -1,9 +1,9 @@
 """Setup for Python targets."""
 
-load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
+load("//bazel/build:maybe_archive.bzl", "maybe_http_archive")
 
 # TODO(blais): It would be real nice if this was available externally.
-load("//third_party/python:python_configure.bzl", "python_configure")
+load("//bazel/python:python_configure.bzl", "python_configure")
 
 
 def beancount_python_dependencies():
@@ -79,7 +79,7 @@ def beancount_python_dependencies():
         name = "six",
         url = "https://pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",
         sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
-        build_file = "@com_google_protobuf//third_party:six.BUILD",
+        build_file = "@com_google_protobuf//bazel:six.BUILD",
     )
     # TODO(blais): With the latest version of protobuf, bind() does not appear
     # to solve the problem of protobuf depending on this package. Define the
@@ -105,5 +105,5 @@ def beancount_python_dependencies():
         url = "https://github.com/ahupp/python-magic/archive/0.4.18.zip",
         strip_prefix = "python-magic-0.4.18",
         sha256 = "ed8b7ae88548bb1bfec5be448d4a515f7fe267bc50d184aa9f1da1734d70aee9",
-        build_file = "//third_party/python:python_magic.BUILD",
+        build_file = "//bazel/python:python_magic.BUILD",
     )

@@ -1,6 +1,6 @@
 """Base C++ environment with Abseil or Boost and unit testing library."""
 
-load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
+load("//bazel/build:maybe_archive.bzl", "maybe_http_archive")
 
 
 def beancount_cppbase_dependencies():
@@ -42,7 +42,7 @@ def beancount_cppbase_dependencies():
         url = "http://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz",
         strip_prefix = "mpdecimal-2.5.1",
         sha256 = "9f9cd4c041f99b5c49ffb7b59d9f12d95b683d88585608aa56a6307667b2b21f",
-        build_file = "//third_party/cppbase:mpdecimal.BUILD",
+        build_file = "//bazel/cppbase:mpdecimal.BUILD",
     )
 
     # How to update:
