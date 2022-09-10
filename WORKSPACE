@@ -13,23 +13,23 @@ workspace(name="beancount")
 # Beancount direct dependencies.
 
 # Bazel general rules packages
-load("//third_party/bazel:setup.bzl", "setup_bazel_dependencies")
+load("//third_party/bazel:repositories.bzl", "setup_bazel_dependencies")
 setup_bazel_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
-load("//third_party/cppbase:setup.bzl", "setup_cppbase_dependencies")
+load("//third_party/cppbase:repositories.bzl", "setup_cppbase_dependencies")
 setup_cppbase_dependencies()
 
 # Support for scanners & parser generators.
-load("//third_party/parser:setup.bzl", "setup_parser_dependencies")
+load("//third_party/parser:repositories.bzl", "setup_parser_dependencies")
 setup_parser_dependencies()
 
 # Support for Python, building Python, Python/C++ bindings.
-load("//third_party/python:setup.bzl", "setup_python_dependencies")
+load("//third_party/python:repositories.bzl", "setup_python_dependencies")
 setup_python_dependencies()
 
 # Support for protocol buffers in all languages.
-load("//third_party/proto:setup.bzl", "setup_proto_dependencies")
+load("//third_party/proto:repositories.bzl", "setup_proto_dependencies")
 setup_proto_dependencies()
 
 #------------------------------------------------------------------------------
