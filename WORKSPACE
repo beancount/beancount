@@ -61,4 +61,5 @@ rules_proto_dependencies()
 rules_proto_toolchains()
 
 # TODO(blais): Update RE-flex version and code.
-# TODO(blais): Reorder too name/urls (url), strip_prefix, sha256.
+# TODO(blais): Upgrade the pybind11 deps.
+# TODO(blais): Rename 'third_party' to 'bazel'.

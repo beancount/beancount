@@ -6,7 +6,7 @@ load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
 def beancount_proto_dependencies():
     maybe_http_archive(
         name = "rules_proto",
-        urls = ["https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip"],
+        url = "https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip",
         strip_prefix = "rules_proto-f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
         sha256 = "a4382f78723af788f0bc19fd4c8411f44ffe0a72723670a34692ffad56ada3ac",
     )
@@ -14,9 +14,9 @@ def beancount_proto_dependencies():
     maybe_http_archive(
         name = "com_google_protobuf",
         # v21.5
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip"],
-        sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
+        url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip",
         strip_prefix = "protobuf-21.5",
+        sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
         patches = [
             # Add a publicly visible static library target so that we can
             # link the protobuf module itself into our library.

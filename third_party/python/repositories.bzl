@@ -27,8 +27,8 @@ def beancount_python_dependencies():
     # # Support building par files (Python archives).
     # maybe_http_archive(
     #     name = "subpar",
+    #     url = "https://github.com/google/subpar/archive/2.0.0.tar.gz",
     #     strip_prefix = "subpar-2.0.0",
-    #     urls = ["https://github.com/google/subpar/archive/2.0.0.tar.gz"],
     #     sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
     # )
 
@@ -36,25 +36,25 @@ def beancount_python_dependencies():
     # 2020-11-25
     maybe_http_archive(
         name = "pybind11_bazel",
+        url = "https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.zip",
         strip_prefix = "pybind11_bazel-26973c0ff320cb4b39e45bc3e4297b82bc3a6c09",
         sha256 = "a5666d950c3344a8b0d3892a88dc6b55c8e0c78764f9294e806d69213c03f19d",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.zip"],
     )
     maybe_http_archive(
         name = "pybind11",
-        build_file = "@pybind11_bazel//:pybind11.BUILD",
-        sha256 = "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a",
+        url = "https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz",
         strip_prefix = "pybind11-2.6.1",
-        urls = ["https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz"],
+        sha256 = "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a",
+        build_file = "@pybind11_bazel//:pybind11.BUILD",
     )
 
     # NOTE: We've had to fork and patch up the given repository in order for it
     # to work, this is too recent.
     maybe_http_archive(
         name = "pybind11_protobuf",
+        url = "https://github.com/blais/pybind11_protobuf/archive/experimental.zip",
         strip_prefix = "pybind11_protobuf-experimental",
         sha256 = "970bb8bee40bd8bf1f2ed5a671142c78518e610256a676598244348e3316a8d8",
-        urls = ["https://github.com/blais/pybind11_protobuf/archive/experimental.zip"],
     )
     # native.local_repository(
     #     name = "pybind11_protobuf",
@@ -68,18 +68,18 @@ def beancount_python_dependencies():
     # 2020-05-11
     maybe_http_archive(
         name = "com_google_absl_py",
-        urls = ["https://github.com/abseil/abseil-py/archive/pypi-v0.9.0.tar.gz"],
-        sha256 = "e7f5624c861c51901d9d40ebb09490cf728e3bd6133c9ce26059cdc548fc201e",
+        url = "https://github.com/abseil/abseil-py/archive/pypi-v0.9.0.tar.gz",
         strip_prefix = "abseil-py-pypi-v0.9.0",
+        sha256 = "e7f5624c861c51901d9d40ebb09490cf728e3bd6133c9ce26059cdc548fc201e",
     )
 
     # Required by protobuf_python
     # Release 1.12.0 -- Used by protobuf itself. See six.BUILD
     maybe_http_archive(
         name = "six",
-        build_file = "@com_google_protobuf//third_party:six.BUILD",
         url = "https://pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",
         sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
+        build_file = "@com_google_protobuf//third_party:six.BUILD",
     )
     # TODO(blais): With the latest version of protobuf, bind() does not appear
     # to solve the problem of protobuf depending on this package. Define the
@@ -103,7 +103,7 @@ def beancount_python_dependencies():
     maybe_http_archive(
         name = "python_magic",
         url = "https://github.com/ahupp/python-magic/archive/0.4.18.zip",
+        strip_prefix = "python-magic-0.4.18",
         sha256 = "ed8b7ae88548bb1bfec5be448d4a515f7fe267bc50d184aa9f1da1734d70aee9",
         build_file = "//third_party/python:python_magic.BUILD",
-        strip_prefix = "python-magic-0.4.18",
     )

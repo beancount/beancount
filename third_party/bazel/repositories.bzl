@@ -17,9 +17,9 @@ def beancount_bazel_dependencies():
     maybe_http_archive(
         name = "rules_foreign_cc",
         # 2022-09-10
-        urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz"],
-        sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
         strip_prefix = "rules_foreign_cc-0.9.0",
+        sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
     )
 
     # Setup for packaging rules.
