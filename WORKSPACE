@@ -10,51 +10,46 @@ Note that:
 workspace(name="beancount")
 
 # Setup for building third-party deps using configure/make/make-install.
-load("//third_party/foreign:setup.bzl", "setup_rules_foreign")
-setup_rules_foreign()
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "rules_foreign_cc",
+    # 2022-09-10
+    urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz"],
+    sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+    strip_prefix = "rules_foreign_cc-0.9.0",
+)
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 rules_foreign_cc_dependencies()
 
-# Basic C++ libraries.
-load("//third_party/cppbase:setup.bzl", "setup_cppbase")
-setup_cppbase()
+# Setup for packaging rules.
+http_archive(
+    name = "rules_pkg",
+    urls = ["https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.0.tar.gz",
+            "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.1.tar.gz"],
+    sha256 = "451e08a4d78988c06fa3f9306ec813b836b1d076d0f055595444ba4ff22b867f",
+)
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+rules_pkg_dependencies()
 
-# RE-flex/bison code generators.
-load("//third_party/parser:setup.bzl", "setup_parser")
-setup_parser()
+# Basic C++ environment with Abseil and/oor Boost, unit testing library.
+load("//third_party/cppbase:setup.bzl", "setup_cppbase_dependencies")
+setup_cppbase_dependencies()
 
-# Basic Python support.
-load("//third_party/python:setup.bzl", "setup_python")
-setup_python()
+# Support for scanners & parser generators.
+load("//third_party/parser:setup.bzl", "setup_parser_dependencies")
+setup_parser_dependencies()
 
-# Protos.
-load("//third_party/proto:setup.bzl", "setup_proto")
-setup_proto()
+# Support for Python, building Python, Python/C++ bindings.
+load("//third_party/python:setup.bzl", "setup_python_dependencies")
+setup_python_dependencies()
 
-# Broken by changes in riegeli which require a patch to protobuf's own rules. {cc05788f14ff}
-#setup_riegeli()
-
+# Support for protocol buffers in all languages.
+load("//third_party/proto:setup.bzl", "setup_proto_dependencies")
+setup_proto_dependencies()
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 rules_proto_dependencies()
 rules_proto_toolchains()
 
-# We managed to get protobuf working in a single module with the fast cpp proto casters.
-# Disable upb experiments for now. See {1fdb0ce4215b}
-#
-## load("//third_party/proto:setup.bzl", "setup_upb")
-## setup_upb()
-## load("@upb//bazel:workspace_deps.bzl", "upb_deps")
-## upb_deps()
-
-# # Setup for packaging rules.
-# load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-# http_archive(
-#     name = "rules_pkg",
-#     url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
-#     sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
-# )
-# load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-# rules_pkg_dependencies()
-
-# TODO(blais): Convert all checks to use maybe(). See upb for an example.
-# load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+# TODO(blais): Add _github_archive() utility to all, including conditional.
+# TODO(blais): Update RE-flex version and code.
+# TODO(blais): Update proto version & move out rules_* dependencies of it.

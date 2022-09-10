@@ -8,7 +8,7 @@ own local versions of these binaries, for isolation. See the
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
-def setup_parser():
+def setup_parser_dependencies():
     setup_m4()
     setup_bison()
     setup_reflex()

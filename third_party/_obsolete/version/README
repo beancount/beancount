@@ -1,0 +1,2 @@
+This was originally required for building grpc.
+I don't need this anymore (we're not using it in this project).

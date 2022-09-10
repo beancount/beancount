@@ -3,7 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
-def setup_cppbase():
+def setup_cppbase_dependencies():
     setup_absl()
     setup_regexp()
     setup_googletest()
