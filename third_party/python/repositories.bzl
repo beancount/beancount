@@ -1,6 +1,6 @@
 """Setup for Python targets."""
 
-load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
+load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
 
 # TODO(blais): It would be real nice if this was available externally.
 load("//third_party/python:python_configure.bzl", "python_configure")

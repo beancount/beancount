@@ -1,10 +1,10 @@
 """Bazel support for general build rules."""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
+load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
 
 
-def beancount_bazel_dependencies():
+def beancount_build_dependencies():
     # Setup for building third-party deps using configure/make/make-install.
     maybe_http_archive(
         name = "bazel_skylib",

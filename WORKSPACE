@@ -18,8 +18,8 @@ workspace(name="beancount")
 # all the related files. We use maybe_http_archive() throughout.
 
 # Bazel general rules packages
-load("//third_party/bazel:repositories.bzl", "beancount_bazel_dependencies")
-beancount_bazel_dependencies()
+load("//third_party/build:repositories.bzl", "beancount_build_dependencies")
+beancount_build_dependencies()
 
 # Basic C++ environment with Abseil and/oor Boost, unit testing library.
 load("//third_party/cppbase:repositories.bzl", "beancount_cppbase_dependencies")

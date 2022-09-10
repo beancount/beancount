@@ -5,7 +5,7 @@ own local versions of these binaries, for isolation. See the
 `google/zetasql/bazel` configuration for an example.
 """
 
-load("//third_party/bazel:maybe_archive.bzl", "maybe_http_archive")
+load("//third_party/build:maybe_archive.bzl", "maybe_http_archive")
 
 
 def beancount_parser_dependencies():
