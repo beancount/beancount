@@ -146,15 +146,15 @@ TIME		\d{1,2}:\d{2}(:\d{2})?
 ;.*                       /* Eat up Comments, anywhere. */
 
 /* Boolean values. Must be before currencies. */
-TRUE(?=\b) {
+TRUE\b {
   return Parser::make_BOOL(true, DEFLOC);
 }
 
-FALSE(?=\b) {
+FALSE\b {
   return Parser::make_BOOL(false, DEFLOC);
 }
 
-NULL(?=\b) {
+NULL\b {
   return Parser::make_NONE(DEFLOC);
 }
 
@@ -195,7 +195,7 @@ NULL(?=\b) {
   *
   * Keep in sync with {edefe3fbe907}.
   */
-[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?(?=\b) {
+[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b {
   return Parser::make_CURRENCY(str(), location());
 }
 \/[A-Z0-9\'\.\_\-]*[A-Z]([A-Z0-9\'\.\_\-]*[A-Z0-9])? {

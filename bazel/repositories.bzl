@@ -133,26 +133,16 @@ def _parser_dependencies():
         updated = "2022-09-08",
     )
 
-    # Reflex.
-    # Create a target of the headers, because generated code needs to include
+    # Note: Create a target of the headers, because generated code needs to include
     # and links against a reflex library.
     maybe_http_archive(
         name = "reflex",
-        url = "https://github.com/Genivia/RE-flex/archive/v3.0.1.zip",
-        strip_prefix = "RE-flex-3.0.1",
-        sha256 = "f07188377bb8dfde54c6b19f219c1c60d43d501f5458936c686bd29d684cce19",
+        url = "https://github.com/Genivia/RE-flex/archive/v3.2.11.zip",
+        strip_prefix = "RE-flex-3.2.11",
+        sha256 = "2d61eaefec94836d4807aa61df5f946b183699db77c4c384db9843a83c33c63b",
         build_file = "//bazel/parser:reflex.BUILD",
+        updated = "2022-09-08",
     )
-    # This newer version currently fails the syntax, we have to fix it.
-    # TODO(blais): Fix the scanner error and upgrade.
-    # http_archive(
-    #     name = "reflex",
-    #     build_file_content = all_content + headers_content,
-    #     # 2022-09-08
-    #     strip_prefix = "RE-flex-3.2.11",
-    #     sha256 = "2d61eaefec94836d4807aa61df5f946b183699db77c4c384db9843a83c33c63b",
-    #     urls = ["https://github.com/Genivia/RE-flex/archive/v3.2.11.zip"],
-    # )
 
 
 def _proto_dependencies():
