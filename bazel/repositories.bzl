@@ -1,5 +1,3 @@
-"""Bazel support for general build rules."""
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 # TODO(blais): It would be real nice if this was available externally.
@@ -7,6 +5,7 @@ load("//bazel/python:python_configure.bzl", "python_configure")
 
 
 def maybe_http_archive(**kwargs):
+    kwargs.pop("updated", None)
     maybe(http_archive, **kwargs)
 
 
@@ -25,23 +24,25 @@ def _build_dependencies():
         urls = ["https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
                 "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz"],
         sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+        updated = "2022-09-10",
     )
 
     # Setup for building third-party deps using configure/make/make-install.
     maybe_http_archive(
         name = "rules_foreign_cc",
-        # 2022-09-10
         url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
         strip_prefix = "rules_foreign_cc-0.9.0",
         sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+        updated = "2022-09-10",
     )
 
     # Setup for packaging rules.
     maybe_http_archive(
         name = "rules_pkg",
-        urls = ["https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.0.tar.gz",
+        urls = ["https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.1.tar.gz",
                 "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.1.tar.gz"],
         sha256 = "451e08a4d78988c06fa3f9306ec813b836b1d076d0f055595444ba4ff22b867f",
+        updated = "2022-09-10",
     )
 
 
@@ -50,10 +51,10 @@ def _cppbase_dependencies():
 
     maybe_http_archive(
         name = "rules_cc",
-        # 2022-09-10
         urls = ["https://github.com/bazelbuild/rules_cc/archive/807a87190a117d5798f9f2c69427e9037e9891d3.zip"],
         strip_prefix = "rules_cc-807a87190a117d5798f9f2c69427e9037e9891d3",
         sha256 = "1b481c4cba4837117778f6296d33e2f14952bb356568cc8b526b91d75cbaec87",
+        updated = "2022-09-10",
     )
 
     # How to update:
@@ -66,27 +67,27 @@ def _cppbase_dependencies():
     #
     maybe_http_archive(
         name = "com_google_absl",
-        # 2022-09-06
         url = "https://github.com/abseil/abseil-cpp/archive/refs/heads/lts_2022_06_23.tar.gz",
         strip_prefix = "abseil-cpp-lts_2022_06_23",
         sha256 = "5acf752f4c9a6b4d935e73581ebc86c21722d72bc054b1cc8949a55ae179bc59",
+        updated = "2022-09-06",
     )
 
     maybe_http_archive(
         name = "com_google_re2",
-        # 2022-09-06
         url = "https://github.com/google/re2/archive/d61aa2ebbd25704fa3f9431369e9ebed091e46e3.tar.gz",
         strip_prefix = "re2-d61aa2ebbd25704fa3f9431369e9ebed091e46e3",
         sha256 = "2cebce88d2a026dc153e58429f0a24ca91f7099a5bde6b9712a64f5f96b5228d",
+        updated = "2022-09-06",
     )
 
     maybe_http_archive(
         name = "mpdecimal",
-        # 2022-09-06
         url = "http://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz",
         strip_prefix = "mpdecimal-2.5.1",
         sha256 = "9f9cd4c041f99b5c49ffb7b59d9f12d95b683d88585608aa56a6307667b2b21f",
         build_file = "//bazel/cppbase:mpdecimal.BUILD",
+        updated = "2022-09-06",
     )
 
     # How to update:
@@ -98,10 +99,10 @@ def _cppbase_dependencies():
     #  Hit the 'clipboard with a left arrow' icon to copy the commit hex
     maybe_http_archive(
         name = "com_google_googletest",
-        # 2022-09-06
         url = "https://github.com/google/googletest/archive/0e0d9feefab1b51aaab9dfd70132e93c0b6964e5.tar.gz",
         strip_prefix = "googletest-0e0d9feefab1b51aaab9dfd70132e93c0b6964e5",
         sha256 = "b65f43a9e1fc0bc937bb2b25f985bf54de7a60d7a5558b56f9627a9e3b08528f",
+        updated = "2022-09-06",
     )
 
 
@@ -115,21 +116,21 @@ def _parser_dependencies():
 
     maybe_http_archive(
         name = "m4",
-        # 2022-09-08
         urls = ["https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.gz",
                 "https://mirrors.kernel.org/gnu/m4/m4-1.4.19.tar.gz"],
         strip_prefix = "m4-1.4.19",
         sha256 = "3be4a26d825ffdfda52a56fc43246456989a3630093cced3fbddf4771ee58a70",
         build_file = "//bazel/parser:m4.BUILD",
+        updated = "2022-09-08",
     )
 
     maybe_http_archive(
         name = "bison",
-        # 2022-09-08
         url = "https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.gz",
         strip_prefix = "bison-3.8.2",
         sha256 = "06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb",
         build_file = "//bazel/parser:bison.BUILD",
+        updated = "2022-09-08",
     )
 
     # Reflex.
@@ -159,14 +160,14 @@ def _proto_dependencies():
 
     maybe_http_archive(
         name = "rules_proto",
-        url = "https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip",
-        strip_prefix = "rules_proto-f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
-        sha256 = "a4382f78723af788f0bc19fd4c8411f44ffe0a72723670a34692ffad56ada3ac",
+        url = "https://github.com/bazelbuild/rules_proto/archive/ea52a32ecd862c5317572cadecaa525c52124f9d.zip",
+        strip_prefix = "rules_proto-ea52a32ecd862c5317572cadecaa525c52124f9d",
+        sha256 = "7da9c0f681d74aeb501db7dc9f7eb8f6e55fdbcced57cb00d4444300149ea161",
+        updated = "2022-09-10",
     )
 
     maybe_http_archive(
         name = "com_google_protobuf",
-        # v21.5
         url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip",
         strip_prefix = "protobuf-21.5",
         sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
@@ -176,6 +177,7 @@ def _proto_dependencies():
             "//bazel/proto:protobuf_pyext_target.patch",
         ],
         patch_args = ["-p1"],
+        updated = "2022-09-10",
     )
 
     # We managed to get protobuf working in a single module with the fast cpp proto casters.
@@ -201,10 +203,10 @@ def _python_dependencies():
     # Rules for building python.
     maybe_http_archive(
         name = "rules_python",
-        # 2022-09-10
         url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.12.0.tar.gz",
         strip_prefix = "rules_python-0.12.0",
         sha256 = "b593d13bb43c94ce94b483c2858e53a9b811f6f10e1e0eedc61073bd90e58d9c",
+        updated = "2022-09-10",
     )
 
     # Historically, subpar was the only way to produce a deployable Python
@@ -224,28 +226,29 @@ def _python_dependencies():
     # )
 
     # Rules for easy extension modules.
-    # 2020-11-25
-    maybe_http_archive(
-        name = "pybind11_bazel",
-        url = "https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.zip",
-        strip_prefix = "pybind11_bazel-26973c0ff320cb4b39e45bc3e4297b82bc3a6c09",
-        sha256 = "a5666d950c3344a8b0d3892a88dc6b55c8e0c78764f9294e806d69213c03f19d",
-    )
     maybe_http_archive(
         name = "pybind11",
-        url = "https://github.com/pybind/pybind11/archive/v2.6.1.tar.gz",
-        strip_prefix = "pybind11-2.6.1",
-        sha256 = "cdbe326d357f18b83d10322ba202d69f11b2f49e2d87ade0dc2be0c5c34f8e2a",
+        url = "https://github.com/pybind/pybind11/archive/aa8f8baa4e402885e5c89f5dc42a579932c33790.tar.gz",
+        strip_prefix = "pybind11-aa8f8baa4e402885e5c89f5dc42a579932c33790",
+        sha256 = "9768120d8ca16ce602ca35eb56afe114a75b87c18dd92e80f5a81e0079a7a3cf",
         build_file = "@pybind11_bazel//:pybind11.BUILD",
+        updated = "2022-09-10",
     )
 
-    # NOTE: We've had to fork and patch up the given repository in order for it
-    # to work, this is too recent.
+    maybe_http_archive(
+        name = "pybind11_bazel",
+        url = "https://github.com/pybind/pybind11_bazel/archive/c3ba38c05bd2ea859abc4b58f19c1a02268d71b5.zip",
+        strip_prefix = "pybind11_bazel-c3ba38c05bd2ea859abc4b58f19c1a02268d71b5",
+        sha256 = "04d4ede4dd2c2f5829f2cc8687c4c9c45fd5cf9c2fbbce8f08b1559671348523",
+        updated = "2022-09-10",
+    )
+
     maybe_http_archive(
         name = "pybind11_protobuf",
-        url = "https://github.com/blais/pybind11_protobuf/archive/experimental.zip",
-        strip_prefix = "pybind11_protobuf-experimental",
-        sha256 = "970bb8bee40bd8bf1f2ed5a671142c78518e610256a676598244348e3316a8d8",
+        url = "https://github.com/blais/pybind11_protobuf/archive/158cc03371a5bee6e771715167a1b02776b993a7.zip",
+        strip_prefix = "pybind11_protobuf-158cc03371a5bee6e771715167a1b02776b993a7",
+        sha256 = "c26c671493ae32706f7c86b9130646584ff52d2cbfa7a26d86076d5804c870e4",
+        updated = "2022-09-10",
     )
     # native.local_repository(
     #     name = "pybind11_protobuf",
@@ -256,31 +259,32 @@ def _python_dependencies():
     # which implement C++ proto casters. We will use this eventually to expose protobufs.
 
     # abseil (Python)
-    # 2020-05-11
     maybe_http_archive(
         name = "com_google_absl_py",
-        url = "https://github.com/abseil/abseil-py/archive/pypi-v0.9.0.tar.gz",
-        strip_prefix = "abseil-py-pypi-v0.9.0",
-        sha256 = "e7f5624c861c51901d9d40ebb09490cf728e3bd6133c9ce26059cdc548fc201e",
+        url = "https://github.com/abseil/abseil-py/archive/a0ae31683e6cf3667886c500327f292c893a1740.tar.gz",
+        strip_prefix = "abseil-py-a0ae31683e6cf3667886c500327f292c893a1740",
+        sha256 = "371a9aa7f5cb3630b5f165484da6e38548a22f86e1c7440f278fa47d8c719a9c",
+        updated = "2022-09-10",
     )
 
-    # Required by protobuf_python
-    # Release 1.12.0 -- Used by protobuf itself. See six.BUILD
-    maybe_http_archive(
-        name = "six",
-        url = "https://pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",
-        sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
-        build_file = "@com_google_protobuf//bazel:six.BUILD",
-    )
-    # TODO(blais): With the latest version of protobuf, bind() does not appear
-    # to solve the problem of protobuf depending on this package. Define the
-    # archive directly above as 'six' instead of 'six_archive', seems to make
-    # py_proto_library() work.
-    #
-    # native.bind(
+    # Note: This appears unused anymore.
+    # # Required by protobuf_python
+    # # Release 1.12.0 -- Used by protobuf itself. See six.BUILD
+    # maybe_http_archive(
     #     name = "six",
-    #     actual = "@six_archive//:six",
+    #     url = "https://pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",
+    #     sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
+    #     build_file = "@com_google_protobuf//bazel:six.BUILD",
     # )
+    # # TODO(blais): With the latest version of protobuf, bind() does not appear
+    # # to solve the problem of protobuf depending on this package. Define the
+    # # archive directly above as 'six' instead of 'six_archive', seems to make
+    # # py_proto_library() work.
+    # #
+    # # native.bind(
+    # #     name = "six",
+    # #     actual = "@six_archive//:six",
+    # # )
 
     # Local Python installation
     # TODO(blais): There's a better version of this in https://github.com/pybind/pybind11_bazel.
