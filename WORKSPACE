@@ -3,8 +3,10 @@
 Note that:
 
 - This is using a local Python runtime, which must be 3.10
-- The pip package for 'protobuf' version *must* match that which is in use in this build (v21.5)
-- Your version of Bazel installed must match that which is used in the github actions (5.3).
+- The pip package for 'protobuf' version *must* match that which is in use in
+  this build.
+- Your version of Bazel installed must match that which is used in the github
+  actions (see beancount/.bazelversion).
 
 """
 workspace(name="beancount")
@@ -18,24 +20,8 @@ workspace(name="beancount")
 # all the related files. We use maybe_http_archive() throughout.
 
 # Bazel general rules packages
-load("//bazel/build:repositories.bzl", "beancount_build_dependencies")
-beancount_build_dependencies()
-
-# Basic C++ environment with Abseil and/oor Boost, unit testing library.
-load("//bazel/cppbase:repositories.bzl", "beancount_cppbase_dependencies")
-beancount_cppbase_dependencies()
-
-# Support for scanners & parser generators.
-load("//bazel/parser:repositories.bzl", "beancount_parser_dependencies")
-beancount_parser_dependencies()
-
-# Support for Python, building Python, Python/C++ bindings.
-load("//bazel/python:repositories.bzl", "beancount_python_dependencies")
-beancount_python_dependencies()
-
-# Support for protocol buffers in all languages.
-load("//bazel/proto:repositories.bzl", "beancount_proto_dependencies")
-beancount_proto_dependencies()
+load("//bazel:repositories.bzl", "beancount_dependencies")
+beancount_dependencies()
 
 #------------------------------------------------------------------------------
 # Indirect dependencies from packages we depend on.
