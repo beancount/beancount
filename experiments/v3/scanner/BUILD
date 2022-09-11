@@ -21,7 +21,7 @@ cc_binary(
     srcs = ["indents.cc"],
     deps = [
         ":indents_hdrs",
-        "//bazel/parser:reflex",
+        "@reflex//:reflex",
     ],
 )
 
@@ -29,6 +29,6 @@ cc_binary(
     name = "matcher",
     srcs = ["matcher.cc",],
     deps = [
-        "//bazel/parser:reflex",
+        "@reflex//:reflex",
     ],
 )

@@ -43,7 +43,7 @@ cc_library(
     deps = [
         "//beancount/ccore:number",
         "//beancount/ccore:date",
-        "//bazel/parser:reflex",
+        "@reflex//:reflex",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/status:statusor",
@@ -91,7 +91,7 @@ cc_library(
         "//beancount/ccore:date",
         "//beancount/ccore:number",
         "//beancount/ccore:data_cc_proto",
-        "//bazel/parser:reflex",
+        "@reflex//:reflex",
         ":parser_headers",
         ":ledger",
         "@com_google_absl//absl/container:flat_hash_map",

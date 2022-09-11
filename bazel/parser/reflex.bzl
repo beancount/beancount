@@ -112,12 +112,12 @@ genreflex = rule(
             doc = "A list of options to be added to the flex command line.",
         ),
         "_reflex": attr.label(
-            default = Label("//bazel/parser:reflex_bin"),
+            default = Label("@reflex//:reflex_bin"),
             executable = True,
             cfg = "host",
         ),
         "_m4": attr.label(
-            default = Label("//bazel/parser:m4_bin"),
+            default = Label("@m4//:m4_bin"),
             executable = True,
             cfg = "host",
         ),

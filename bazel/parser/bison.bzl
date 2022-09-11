@@ -93,12 +93,12 @@ genyacc = rule(
         ),
         "_bison_data": attr.label(default = "@bison//:bison_runtime_data"),
         "_bison": attr.label(
-            default = Label("//bazel/parser:bison_bin"),
+            default = Label("@bison//:bison_bin"),
             executable = True,
             cfg = "host",
         ),
         "_m4": attr.label(
-            default = Label("//bazel/parser:m4_bin"),
+            default = Label("@m4//:m4_bin"),
             executable = True,
             cfg = "host",
         ),
