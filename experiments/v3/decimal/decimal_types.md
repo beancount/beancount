@@ -253,12 +253,18 @@ classes:
       }
     };
 
-*Performance Note* Note however, that this requires a copy of `mpd_t` and the
-associated data block, with potentially dynamically allocating changes. For
-methods which are likely to be called very frequently, we would do better accept
-a `PyDecObject*` and use the `mpd_*()` API directly on the object, if possible
-locally, to avoid dynamic allocation. `pybind11` should make that possible if
-not trivial.
+This allows us to expose to Python a C++ function accepting a Decimal object:
+
+    decimal::Decimal TimesTwo(const decimal::Decimal& dec) {
+      return dec * 2;
+    }
+
+    ...
+
+    PYBIND11_MODULE(..., mod) {
+      ...
+      mod.def("times_two", &TimesTwo, "Multiply by two", py::arg("dec"));
+
 
 ### Proto to/from C/C++
 
