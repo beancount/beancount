@@ -37,6 +37,12 @@ static py::object Decimal;
 
 namespace pybind11 { namespace detail {
 
+// Note: You could make a lightweight version of this which, like Decimal,
+// includes just the `mpd_t` and a small associated data block. I'm not sure how
+// much we'd save over the C++ Decimal wrapper since we're already just using
+// the embedded `mpd_t` to copy our contents into it. Reusing the
+// decimal::Decimal is likely as efficient as doing that though it requires a
+// copy.
 template <> struct type_caster<decimal::Decimal> {
 public:
   PYBIND11_TYPE_CASTER(decimal::Decimal, const_name("Decimal"));

@@ -141,7 +141,8 @@ void ReduceExpression(T* parent,
   if (!parent->has_expr())
     return;
   decimal::Decimal number = EvaluateExpression(parent->expr(), context);
-  DecimalToProto(number, decimal_use_triple, parent->mutable_number());
+  DecimalToProto(number, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                 parent->mutable_number());
   parent->clear_expr();
 }
 
@@ -199,7 +200,8 @@ void ReduceExpressions(Ledger* ledger,
                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
                        "for workaround)", directive->location());
               // Invert and continue.
-              DecimalToProto(-dec, decimal_use_triple, price->mutable_number());
+              DecimalToProto(-dec, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                             price->mutable_number());
             }
           }
         }
@@ -252,7 +254,8 @@ void NormalizeTotalPrices(Ledger* ledger,
           } else {
             dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context);
           }
-          DecimalToProto(dprice, decimal_use_triple, price->mutable_number());
+          DecimalToProto(dprice, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                         price->mutable_number());
 
         } else {
           // units.number is MISSING, issue and error and clear the price.

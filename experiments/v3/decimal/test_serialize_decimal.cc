@@ -50,20 +50,19 @@ TEST(SerializationTest, RoundTripText) {
   EXPECT_EQ(b, a);
 }
 
-TEST(SerializationTest, RoundTripMpd) {
+TEST(SerializationTest, RoundTripMpdTriple) {
   decimal::Decimal a("42e8");
   cout << "A = " << a << endl;
 
   // Serialize & deserialize via text.
-  beancount::Number pb = beancount::DecimalToProto(a, true);
+  beancount::Number pb = beancount::DecimalToProto(a, beancount::CONV_TRIPLE);
   decimal::Decimal b = beancount::ProtoToDecimal(pb);;
   cout << "B = " << b << endl;
 
-  // Serialize & deserialize via triplet.
-  beancount::Number pc = beancount::DecimalToProto(a, false);
+  // Serialize & deserialize via triple.
+  beancount::Number pc = beancount::DecimalToProto(a, beancount::CONV_STRING);
   decimal::Decimal c = beancount::ProtoToDecimal(pc);;
   cout << "C = " << c << endl;
-
 
   EXPECT_EQ(b, a);
 }

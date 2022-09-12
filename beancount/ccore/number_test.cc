@@ -34,5 +34,26 @@ TEST(TestNumber, CopySansCommas) {
   EXPECT_STREQ("123456", dst);
 }
 
+TEST(SerializationTest, RoundTripString) {
+  decimal::Decimal a("43.21e5");
+  Number pb = DecimalToProto(a, CONV_STRING);
+  decimal::Decimal b = beancount::ProtoToDecimal(pb);;
+  EXPECT_EQ(b, a);
+}
+
+TEST(SerializationTest, RoundTripMpd) {
+  decimal::Decimal a("43.21e5");
+  Number pb = DecimalToProto(a, CONV_MPD);
+  decimal::Decimal b = beancount::ProtoToDecimal(pb);;
+  EXPECT_EQ(b, a);
+}
+
+TEST(SerializationTest, RoundTripTriple) {
+  decimal::Decimal a("43.21e5");
+  Number pb = DecimalToProto(a, CONV_TRIPLE);
+  decimal::Decimal b = beancount::ProtoToDecimal(pb);;
+  EXPECT_EQ(b, a);
+}
+
 }  // namespace
 }  // namespace beancount
