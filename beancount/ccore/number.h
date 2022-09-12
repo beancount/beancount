@@ -52,6 +52,7 @@ enum DecimalConversion {
 decimal::Decimal ProtoToDecimal(const Number& proto);
 
 // Serialize a mpdecimal number to a Number proto.
+// TODO(blais): These methods are signaling; detect and report errors.
 Number DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion);
 void DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion,
                     Number* proto);

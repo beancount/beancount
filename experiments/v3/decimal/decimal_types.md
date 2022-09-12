@@ -195,27 +195,33 @@ We define one as such:
 
     message Number {
       optional string exact = 1;
-      optional MpdTriple triple = 2;
+      optional Mpd mpd = 2;
+      optional MpdTriple triple = 3;
+    }
+
+    message Mpd {
+      required int32 flags = 1;
+      required int32 exp = 2;
+      required int32 digits = 3;
+      required int32 len = 4;
+      repeated uint32 data = 5 [packed=true];
     }
 
     message MpdTriple {
-      optional uint32 tag = 1;
-      optional uint32 sign = 2;
-      optional uint64 hi = 3;
-      optional uint64 lo = 4;
-      optional int64 exp = 5;
+      required uint32 tag = 1;
+      required uint32 sign = 2;
+      required uint64 hi = 3;
+      required uint64 lo = 4;
+      required int64 exp = 5;
     }
 
-The `MpdTriple` matches the definition of the `mpd_uint128_triple_t` C type and
-can be efficiently converted to a the C equivalent. However, a further
-conversion from that to the more powerful `mpd_t` type is still required.
+The `Mpd` type serializes the main `mpd_t` C struct. The `MpdTriple` matches the
+definition of the `mpd_uint128_triple_t` C type and can be efficiently converted
+to a the C equivalent. However, a further conversion from that to the more
+powerful `mpd_t` type is still required.
 
 The `Number` class is basically a variant, which supports string versions (for
 readability) and the more efficient triple type.
-
-Note: We plan to insert a conversion to an `mpd_t` eventually, for full
-generality, and we want to benchmark it as well to see if it would be more
-efficient to convert from this directly.
 
 
 ## Conversions
