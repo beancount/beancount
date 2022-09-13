@@ -71,13 +71,13 @@ void PrecisionStatsAccum::Update(const decimal::Decimal& number,
 
 void PrecisionStatsAccum::Update(const Number& number,
                                  std::string_view currency) {
-  decimal::Decimal decimal = ProtoToDecimal(number);
+  decimal::Decimal decimal = ProtoToDecimalOrDie(number);
   Update(decimal, currency);
 }
 
 void PrecisionStatsAccum::Update(const Number& number,
                                  std::string_view quote, std::string_view base) {
-  decimal::Decimal decimal = ProtoToDecimal(number);
+  decimal::Decimal decimal = ProtoToDecimalOrDie(number);
   Update(decimal, quote, base);
 }
 

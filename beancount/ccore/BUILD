@@ -53,6 +53,8 @@ cc_library(
         "@com_google_absl//absl/hash",
         "@mpdecimal//:mpdecimal",
         "//beancount/ccore:number_cc_proto",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

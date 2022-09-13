@@ -97,7 +97,7 @@ void AddError(Ledger* ledger, std::string_view message, const Location& location
 decimal::Decimal EvaluateExpression(const inter::Expr& expr, decimal::Context& context) {
   switch (expr.op()) {
     case inter::ExprOp::NUM: {
-      return ProtoToDecimal(expr.number());
+      return ProtoToDecimalOrDie(expr.number());
     }
     case inter::ExprOp::ADD: {
       auto num1 = EvaluateExpression(expr.arg1(), context);
@@ -141,8 +141,10 @@ void ReduceExpression(T* parent,
   if (!parent->has_expr())
     return;
   decimal::Decimal number = EvaluateExpression(parent->expr(), context);
-  DecimalToProto(number, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
-                 parent->mutable_number());
+  auto status = DecimalToProto(number,
+                               decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                               parent->mutable_number());
+  assert(status.ok());
   parent->clear_expr();
 }
 
@@ -193,15 +195,16 @@ void ReduceExpressions(Ledger* ledger,
           // Prices may not be negative. Check and issue an error if found; fix up
           // the price to its absolute value and continue.
           if (price->has_number()) {
-            decimal::Decimal dec = ProtoToDecimal(price->number());
+            decimal::Decimal dec = ProtoToDecimalOrDie(price->number());
             if (dec.sign() == -1) {
               AddError(ledger,
                        "Negative prices are not allowed "
                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
                        "for workaround)", directive->location());
               // Invert and continue.
-              DecimalToProto(-dec, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
-                             price->mutable_number());
+              auto status = DecimalToProto(-dec, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                                           price->mutable_number());
+              assert(status.ok());
             }
           }
         }
@@ -247,16 +250,17 @@ void NormalizeTotalPrices(Ledger* ledger,
 
           // We compute the effective price here and forget about that detail of
           // the input syntax.
-          decimal::Decimal dunits = ProtoToDecimal(spec->units().number());
+          decimal::Decimal dunits = ProtoToDecimalOrDie(spec->units().number());
           decimal::Decimal dprice;
           if (dunits.iszero()) {
             dprice = dunits;
           } else {
-            dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context);
+            dprice = ProtoToDecimalOrDie(price->number()).div(dunits.abs(), context);
           }
-          DecimalToProto(dprice, decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
-                         price->mutable_number());
-
+          auto status = DecimalToProto(dprice,
+                                       decimal_use_triple ? CONV_TRIPLE : CONV_STRING,
+                                       price->mutable_number());
+          assert(status.ok());
         } else {
           // units.number is MISSING, issue and error and clear the price.
           //

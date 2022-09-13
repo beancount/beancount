@@ -9,7 +9,10 @@
 
 #include "beancount/ccore/number.pb.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "decimal.hh"
+
 
 namespace std {
 
@@ -49,13 +52,15 @@ enum DecimalConversion {
 };
 
 // Deserialize a Number proto to a mpdecimal number.
-decimal::Decimal ProtoToDecimal(const Number& proto);
+absl::StatusOr<decimal::Decimal> ProtoToDecimal(const Number& proto);
+decimal::Decimal ProtoToDecimalOrDie(const Number& proto);
 
 // Serialize a mpdecimal number to a Number proto.
-// TODO(blais): These methods are signaling; detect and report errors.
-Number DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion);
-void DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion,
-                    Number* proto);
+absl::StatusOr<Number> DecimalToProto(const decimal::Decimal& dec,
+                                      DecimalConversion conversion);
+absl::Status DecimalToProto(const decimal::Decimal& dec,
+                            DecimalConversion conversion,
+                            Number* proto);
 
 // Comparison operators for decimal protos.
 bool operator==(const Number& proto1, const Number& proto2);

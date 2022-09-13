@@ -4,12 +4,20 @@
 #include "beancount/ccore/number.h"
 #include "beancount/ccore/number.pb.h"
 
+#include <cassert>
+
 #include <google/protobuf/util/message_differencer.h>
 
 namespace beancount {
 using google::protobuf::util::MessageDifferencer;
 
-decimal::Decimal ProtoToDecimal(const Number& proto) {
+decimal::Decimal ProtoToDecimalOrDie(const Number& proto) {
+  absl::StatusOr<decimal::Decimal> sdec = ProtoToDecimal(proto);
+  assert(sdec.ok());
+  return *sdec;
+}
+
+absl::StatusOr<decimal::Decimal> ProtoToDecimal(const Number& proto) {
   decimal::Decimal dec;
   if (proto.has_exact()) {
     // Text deserialization.
@@ -19,8 +27,7 @@ decimal::Decimal ProtoToDecimal(const Number& proto) {
     const auto& p = proto.mpd();
     auto* mpd = dec.get();
     if (mpd_resize(mpd, p.len(), decimal::context.get()) == 0) {
-      // TODO(blais): Signal error.
-      return dec;
+      return absl::ResourceExhaustedError("Failed to resize Decimal instance.");
     }
     mpd->flags = p.flags();
     mpd->exp = p.exp();
@@ -29,7 +36,7 @@ decimal::Decimal ProtoToDecimal(const Number& proto) {
     for (int ii = 0; ii < p.len(); ++ii) {
       mpd->data[ii] = p.data(ii);
     }
-  } else {
+  } else if (proto.has_triple()) {
     // Triple deserialization.
     const auto& p = proto.triple();
     mpd_uint128_triple_t triple;
@@ -39,20 +46,27 @@ decimal::Decimal ProtoToDecimal(const Number& proto) {
     triple.lo = p.lo();
     triple.exp = p.exp();
     dec = decimal::Decimal(triple);
+  } else {
+    return absl::InvalidArgumentError("Number proto does not have any variant set.");
   }
   return dec;
 }
 
 // Convert a mpdecimal number to a Number proto.
-Number DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion) {
+absl::StatusOr<Number> DecimalToProto(const decimal::Decimal& dec,
+                                      DecimalConversion conversion) {
   Number proto;
-  DecimalToProto(dec, conversion, &proto);
+  auto status = DecimalToProto(dec, conversion, &proto);
+  if (!status.ok()) {
+    return status;
+  }
   return proto;
 }
 
 // Convert a mpdecimal number to a Number proto.
-void DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion,
-                    Number* proto) {
+absl::Status DecimalToProto(const decimal::Decimal& dec,
+                            DecimalConversion conversion,
+                            Number* proto) {
   switch (conversion) {
     case CONV_MPD: {
       // Use mpd directly.
@@ -73,10 +87,10 @@ void DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion,
     case CONV_TRIPLE: {
       // Use triple serialization.
       mpd_uint128_triple_t triple = dec.as_uint128_triple();
-      // TODO(blais): Check for error, fallback to mpd_t.
-
-
-
+      if (triple.tag == MPD_TRIPLE_ERROR) {
+        return absl::OutOfRangeError(
+            "The coefficient is too large for conversion to triple.");
+      }
       auto* p = proto->mutable_triple();
       p->set_tag(triple.tag);
       p->set_sign(triple.sign);
@@ -90,9 +104,10 @@ void DecimalToProto(const decimal::Decimal& dec, DecimalConversion conversion,
       proto->set_exact(dec.to_sci());
     } break;
   }
+  return absl::OkStatus();
 }
 
-// TODO(blais): Convert to decimals before comparing.
+// TODO(blais): Canonicalize decimal representations before comparing.
 bool operator==(const Number& proto1, const Number& proto2) {
   return MessageDifferencer::Equals(proto1, proto2);
 }
@@ -101,8 +116,13 @@ std::ostream& operator<<(std::ostream& os, const Number& proto) {
   if (proto.has_exact()) {
     os << proto.exact();
   } else {
-    decimal::Decimal dec = ProtoToDecimal(proto);
-    os << dec.to_sci(false);
+    auto sdec = ProtoToDecimal(proto);
+    if (sdec.ok()) {
+      decimal::Decimal dec = *sdec;
+      os << dec.to_sci(false);
+    } else {
+      os << "<ProtoToDecimal - Conversion Error>";
+    }
   }
   return os;
 }

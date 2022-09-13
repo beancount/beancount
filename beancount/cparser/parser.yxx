@@ -503,9 +503,11 @@ balance:
       balance->set_account($account);
       balance->set_allocated_amount($atol.first);
       if ($atol.second.has_value()) {
-        DecimalToProto($atol.second.value(),
-                       builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
-                       balance->mutable_tolerance());
+        auto status = DecimalToProto(
+            $atol.second.value(),
+            builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+            balance->mutable_tolerance());
+        assert(status.ok());
       }
       // Note: We leave `difference` unset.
     }
@@ -725,9 +727,11 @@ simple_value:
       // now.
       $$ = new beancount::MetaValue();
       auto num = EvaluateExpression(*$expr, decimal::context);
-      DecimalToProto(num,
-                     builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
-                     $$->mutable_number());
+      auto status = DecimalToProto(
+          num,
+          builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+          $$->mutable_number());
+      assert(status.ok());
       delete $expr;
     }
   | %empty
@@ -828,9 +832,11 @@ expr:
     {
       auto* expr = $$ = new inter::Expr();
       expr->set_op(inter::ExprOp::NUM);
-      DecimalToProto($1,
-                     builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
-                     expr->mutable_number());
+      auto status = DecimalToProto(
+          $1,
+          builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+          expr->mutable_number());
+      assert(status.ok());
     }
   | expr PLUS expr
     {
