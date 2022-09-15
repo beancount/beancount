@@ -16,10 +16,12 @@ py_binary(
         "//beancount/core:amount",
         "//beancount/core:data",
         "//beancount/core:position",
-        "//beancount/cparser:extmodule",
         "//beancount/parser:printer",
         "//beancount:loader",
-    ],
+        #
+        #"//beancount/cparser:extmodule",
+        ":expose_protos"
+   ],
 )
 
 py_extension(

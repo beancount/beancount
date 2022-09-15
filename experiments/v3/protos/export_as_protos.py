@@ -18,7 +18,11 @@ import logging
 import re
 from typing import Optional
 
-import riegeli
+try:
+    import riegeli
+except ImportError:
+    riegeli = None
+from google.protobuf import text_format
 
 from beancount import loader
 from beancount.parser import parser
@@ -31,15 +35,20 @@ from beancount.core.number import MISSING
 from beancount.ccore import data_pb2 as pb
 from beancount.ccore import date_pb2 as db
 from beancount.ccore import number_pb2 as nb
-from beancount.cparser import parser_pb2 as qb
+from beancount.cparser import inter_pb2 as qb
 from beancount.cparser import options_pb2 as ob
 
-from beancount.cparser import extmodule
+USE_PYEXT_API = True
+if USE_PYEXT_API:
+    from experiments.v3.protos import expose_protos as ep
+else:
+    from beancount.cparser import extmodule
 from beancount.parser import printer
 
 
 def copy_decimal(din: Decimal, dout: nb.Number):
     dout.exact = str(din)
+
 
 def copy_date(date: datetime.date, pbdate: db.Date):
     pbdate.year = date.year
@@ -66,9 +75,11 @@ def copy_meta(meta: dict, pbmeta: pb.Meta, pbloc: pb.Location):
                 item.value.date.day = value.day
             elif isinstance(value, Decimal):
                 item.value.number.exact = str(value)
+            elif isinstance(value, amount.Amount):
+                copy_amount(value, item.value.amount)
             else:
                 assert isinstance(value, str), type(value)
-                if re.match(amount.CURRENCY_RE + "$", value):
+                if re.fullmatch(amount.CURRENCY_RE, value):
                     item.value.currency = str(value)
                 else:
                     item.value.text = str(value)
@@ -96,9 +107,9 @@ def copy_cost(cost: position.Cost, pbcost: pb.Cost):
 
 def copy_cost_spec(cost: position.CostSpec, pbcost: qb.CostSpec):
     if cost.number_per not in {MISSING, None}:
-        copy_decimal(cost.number_per, pbcost.number_per)
+        copy_decimal(cost.number_per, pbcost.per_unit.number)
     if cost.number_total not in {MISSING, None}:
-        copy_decimal(cost.number_total, pbcost.number_total)
+        copy_decimal(cost.number_total, pbcost.total.number)
     if cost.currency not in {None, MISSING}:
         pbcost.currency = cost.currency
     if cost.date is not None:
@@ -110,18 +121,19 @@ def copy_cost_spec(cost: position.CostSpec, pbcost: qb.CostSpec):
 def copy_posting(posting: data.Posting, pbpost: pb.Posting):
     copy_meta(posting.meta, pbpost.meta, pbpost.location)
     if posting.flag:
-        pbpost.flag = posting.flag.encode('utf8')
+        pbpost.flag = posting.flag.encode("utf8")
     pbpost.account = posting.account
     if posting.units is not None:
-        copy_amount(posting.units, pbpost.units)
+        copy_amount(posting.units, pbpost.spec.units)
     if posting.cost is not None:
         if isinstance(posting.cost, position.CostSpec):
-            copy_cost_spec(posting.cost, pbpost.cost_spec)
+            copy_cost_spec(posting.cost, pbpost.spec.cost)
         elif isinstance(posting.cost, position.Cost):
-            copy_cost(posting.cost, pbpost.cost_spec)
+            # Not sure.
+            copy_cost(posting.cost, pbpost.cost)
 
     if posting.price is not None:
-        copy_amount(posting.price, pbpost.price)
+        copy_amount(posting.price, pbpost.spec.price)
 
 
 def convert_Transaction(entry: data.Transaction) -> pb.Directive:
@@ -135,7 +147,7 @@ def convert_Transaction(entry: data.Transaction) -> pb.Directive:
         pbdir.links.extend(sorted(entry.links))
 
     if entry.flag:
-        txn.flag = entry.flag.encode('utf8')
+        txn.flag = entry.flag.encode("utf8")
     if entry.payee:
         txn.payee = entry.payee
     if entry.narration:
@@ -245,17 +257,19 @@ def convert_Pad(entry: data.Pad) -> pb.Directive:
 
 
 def export_v2_data(filename: str, output_filename: str, num_directives: Optional[int]):
-    if output_filename.endswith(".pbtxt"):
-        output = open(output_filename, 'w')
+    if riegeli is None or output_filename.endswith(".pbtxt"):
+        output = open(output_filename, "w")
         writer = None
+
         def write(message):
             print(message, file=output)
+
     else:
-        output = open(output_filename, 'wb')
+        output = open(output_filename, "wb")
         writer = riegeli.RecordWriter(output)
         write = writer.write_message
 
-    #entries, errors, options_map = loader.load_file(filename)
+    # entries, errors, options_map = loader.load_file(filename)
     entries, errors, options_map = parser.parse_file(filename)
     entries = data.sorted(entries)
 
@@ -293,7 +307,7 @@ def export_v2_data(filename: str, output_filename: str, num_directives: Optional
             write("")
 
         if 0:
-            print('-' * 80)
+            print("-" * 80)
             printer.print_entry(entry)
             print(txn)
             print()
@@ -302,13 +316,15 @@ def export_v2_data(filename: str, output_filename: str, num_directives: Optional
         writer.close()
     output.close()
 
-
-_SORT_ORDER = {
-    extmodule.BodyCase.kOpen: -2,
-    extmodule.BodyCase.kBalance: -1,
-    extmodule.BodyCase.kDocument: 1,
-    extmodule.BodyCase.kClose: 2,
-}
+if USE_PYEXT_API:
+    pass # TODO(blais):
+else:
+    _SORT_ORDER = {
+        extmodule.BodyCase.kOpen: -2,
+        extmodule.BodyCase.kBalance: -1,
+        extmodule.BodyCase.kDocument: 1,
+        extmodule.BodyCase.kClose: 2,
+    }
 
 
 def entry_sortkey_v3(dir: pb.Directive):
@@ -320,36 +336,44 @@ def export_v3_data(filename: str, output_filename: str, num_directives: Optional
     ledger = extmodule.parse(filename)
     directives = sorted(ledger.directives, key=entry_sortkey_v3)
     with open(output_filename, "w") as outfile:
-        pr = functools.partial(print,  file=outfile)
+        pr = functools.partial(print, file=outfile)
         if num_directives:
             directives = itertools.islice(directives, num_directives)
         for directive in directives:
-            extmodule.DowngradeToV2(directive);
+            extmodule.DowngradeToV2(directive)
             pr("#---")
             pr("# {}".format(directive.location.lineno))
             pr("#")
-            pr(directive)
+            pr(text_format.MessageToString(directive, as_utf=True))
             pr()
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('filename',
-                        help="Ledger input filename.")
-    parser.add_argument('output', help=(
-        "Output filename (if .pbtxt, output as text-formatted protos. "
-        "Otherwise write to a riegeli file."))
+    parser.add_argument("filename", help="Ledger input filename.")
+    parser.add_argument(
+        "output",
+        help=(
+            "Output filename (if .pbtxt, output as text-formatted protos. "
+            "Otherwise write to a riegeli file."
+        ),
+    )
 
-    parser.add_argument('--num_directives', type=int, default=None,
-                        help="Number of entries to print")
+    parser.add_argument(
+        "--num_directives", type=int, default=None, help="Number of entries to print"
+    )
 
     args = parser.parse_args()
 
-    export_v2_data(args.filename, args.output + ".v2.pbtxt", args.num_directives)
-    export_v3_data(args.filename, args.output + ".v3.pbtxt", args.num_directives)
+    filename_v2 = args.output + "_v2.pbtxt"
+    export_v2_data(args.filename, filename_v2, args.num_directives)
+    logging.info("Wrote %s", filename_v2)
+    filename_v3 = args.output + "_v3.pbtxt"
+    export_v3_data(args.filename, filename_v3, args.num_directives)
+    logging.info("Wrote %s", filename_v3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
