@@ -62,7 +62,7 @@ std::unique_ptr<Ledger> ParseString(std::string_view input_string,
                                     std::string_view filename,
                                     int line_offset = 0,
                                     bool debug = false,
-                                    bool decimal_use_triple = false);
+                                    DecimalConversion conversion = CONV_STRING);
 
 // An intermediate data structure holding the partially parsed tags and links.
 struct TagsLinks {
@@ -505,7 +505,7 @@ balance:
       if ($atol.second.has_value()) {
         auto status = DecimalToProto(
             $atol.second.value(),
-            builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+            builder.decimal_conversion(),
             balance->mutable_tolerance());
         assert(status.ok());
       }
@@ -729,7 +729,7 @@ simple_value:
       auto num = EvaluateExpression(*$expr, decimal::context);
       auto status = DecimalToProto(
           num,
-          builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+          builder.decimal_conversion(),
           $$->mutable_number());
       assert(status.ok());
       delete $expr;
@@ -834,7 +834,7 @@ expr:
       expr->set_op(inter::ExprOp::NUM);
       auto status = DecimalToProto(
           $1,
-          builder.decimal_use_triple() ? CONV_TRIPLE : CONV_STRING,
+          builder.decimal_conversion(),
           expr->mutable_number());
       assert(status.ok());
     }
@@ -1221,7 +1221,7 @@ std::unique_ptr<Ledger> Parse(
     const absl::optional<string_view>& filename = {},
     int line_offset = 0,
     bool debug = false,
-    bool decimal_use_triple = false) {
+    DecimalConversion conversion = CONV_STRING) {
 
   // Create a scanner and builder.
   scanner::ScannerWithFile scanner(input, std::cout);
@@ -1230,7 +1230,7 @@ std::unique_ptr<Ledger> Parse(
   }
   scanner.SetLineOffset(line_offset);
   parser::Builder builder(scanner);
-  builder.SetDecimalUseTriple(decimal_use_triple);
+  builder.SetDecimalConversion(conversion);
 
   // Check for invalid input before starting.
   if (!input.eof() && !input.good()) {
@@ -1288,11 +1288,11 @@ std::unique_ptr<Ledger> ParseString(string_view input_string,
                                     string_view filename,
                                     int line_offset,
                                     bool debug,
-                                    bool decimal_use_triple) {
+                                    DecimalConversion conversion) {
   // Ensure the string is converted to UTF8 by using reflex::Input and
   // instantiate a scanner.
   reflex::Input input(input_string.data(), input_string.size());
-  return parser::Parse(input, filename, line_offset, debug, decimal_use_triple);
+  return parser::Parse(input, filename, line_offset, debug, conversion);
 }
 
 }  // namespace parser

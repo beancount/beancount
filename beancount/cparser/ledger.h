@@ -18,6 +18,7 @@
 #include "beancount/cparser/options.pb.h"
 #include "beancount/cparser/inter.pb.h"
 #include "beancount/ccore/data.pb.h"
+#include "beancount/ccore/number.h"
 
 #include "decimal.hh"
 #include "absl/status/status.h"
@@ -62,13 +63,13 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr,
 // This essentially performs all the supported arithmetic evaluation.
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
-                       bool decimal_use_triple,
+                       DecimalConversion conversion,
                        Directive* directive);
 
 // Reduce the total price of a posting with price to per-unit price.
 void NormalizeTotalPrices(Ledger* ledger,
                           decimal::Context& context,
-                          bool decimal_use_triple,
+                          DecimalConversion conversion,
                           Directive* directive);
 
 // If both cost and price are specified, check that the currencies must match.
@@ -80,7 +81,7 @@ void RemoveDuplicateMetaKeys(Ledger* ledger, Directive* directive);
 
 // Process the parsed contents of a ledger.
 void PostProcessParsed(Ledger* ledger,
-                       bool decimal_use_triple,
+                       DecimalConversion conversion,
                        bool normalize_totals,
                        bool allow_multi_meta);
 

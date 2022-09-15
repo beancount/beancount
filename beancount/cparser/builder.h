@@ -42,12 +42,11 @@ public:
     return active_meta_;
   }
 
-  // Set whether to use triples for decimal serialization or text. It's unclear
-  // which one is more efficient.
-  void SetDecimalUseTriple(bool decimal_use_triple) {
-    decimal_use_triple_ = decimal_use_triple;
+  // Set which decimal serialization format to use.
+  void SetDecimalConversion(DecimalConversion conversion) {
+    decimal_conversion_ = conversion;
   }
-  bool decimal_use_triple() const { return decimal_use_triple_; }
+  DecimalConversion decimal_conversion() const { return decimal_conversion_; }
 
   // Add a new option. This gets stored into the options proto and some of the
   // values may influence parsing.
@@ -104,9 +103,6 @@ public:
   //---------------------------------------------------------------------------
   // Numbers & precision
 
-  // Decide whether to use text serialization for numbers or triples.
-  static constexpr bool kUseText = true;
-
   // Check collisions on merging two components of a cost list and log errors
   // appropriately. Mutates the
   absl::Status MergeCost(const inter::CostSpec& new_cost_spec, inter::CostSpec* accumulator);
@@ -152,8 +148,8 @@ private:
   std::shared_ptr<options::Options> options_;
   std::shared_ptr<options::ProcessingInfo> info_;
 
-  // A flag, true if we use triple for serialization by default.
-  bool decimal_use_triple_ = false;
+  // The type of decimal conversion to use for proto serialization by default.
+  DecimalConversion decimal_conversion_ = CONV_STRING;
 
   // Scanner (in order to get the last location).
   scanner::Scanner& scanner_;
