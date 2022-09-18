@@ -97,7 +97,7 @@ void AddError(Ledger* ledger, std::string_view message, const Location& location
 decimal::Decimal EvaluateExpression(const inter::Expr& expr, decimal::Context& context) {
   switch (expr.op()) {
     case inter::ExprOp::NUM: {
-      return ProtoToDecimal(expr.number());
+      return ProtoToDecimalOrDie(expr.number());
     }
     case inter::ExprOp::ADD: {
       auto num1 = EvaluateExpression(expr.arg1(), context);
@@ -137,30 +137,33 @@ decimal::Decimal EvaluateExpression(const inter::Expr& expr, decimal::Context& c
 template <typename T>
 void ReduceExpression(T* parent,
                       decimal::Context& context,
-                      bool decimal_use_triple) {
+                      DecimalConversion conversion) {
   if (!parent->has_expr())
     return;
   decimal::Decimal number = EvaluateExpression(parent->expr(), context);
-  DecimalToProto(number, decimal_use_triple, parent->mutable_number());
+  auto status = DecimalToProto(number,
+                               conversion,
+                               parent->mutable_number());
+  assert(status.ok());
   parent->clear_expr();
 }
 
 template void ReduceExpression(inter::PriceSpec* parent,
                                decimal::Context& context,
-                               bool decimal_use_triple);
+                               DecimalConversion conversion);
 template void ReduceExpression(inter::UnitSpec* parent,
                                decimal::Context& context,
-                               bool decimal_use_triple);
+                               DecimalConversion conversion);
 template void ReduceExpression(inter::ExprNumber* parent,
                                decimal::Context& context,
-                               bool decimal_use_triple);
+                               DecimalConversion conversion);
 template void ReduceExpression(Amount* parent,
                                decimal::Context& context,
-                               bool decimal_use_triple);
+                               DecimalConversion conversion);
 
 void ReduceExpressions(Ledger* ledger,
                        decimal::Context& context,
-                       bool decimal_use_triple,
+                       DecimalConversion decimal_conversion,
                        beancount::Directive* directive) {
   if (directive->has_transaction()) {
     // Transaction directive.
@@ -169,37 +172,39 @@ void ReduceExpressions(Ledger* ledger,
         // Evaluate units.
         auto* spec = posting.mutable_spec();
         if (spec->has_units()) {
-          ReduceExpression(spec->mutable_units(), context, decimal_use_triple);
+          ReduceExpression(spec->mutable_units(), context, decimal_conversion);
         }
 
         if (spec->has_cost()) {
           // Evaluate per-unit cost.
           auto* cost = spec->mutable_cost();
           if (cost->has_per_unit()) {
-            ReduceExpression(cost->mutable_per_unit(), context, decimal_use_triple);
+            ReduceExpression(cost->mutable_per_unit(), context, decimal_conversion);
           }
           // Evaluate total cost.
           if (cost->has_total()) {
-            ReduceExpression(cost->mutable_total(), context, decimal_use_triple);
+            ReduceExpression(cost->mutable_total(), context, decimal_conversion);
           }
         }
 
         // Evaluate price annotation.
         if (spec->has_price()) {
           auto* price = spec->mutable_price();
-          ReduceExpression(price, context, decimal_use_triple);
+          ReduceExpression(price, context, decimal_conversion);
 
           // Prices may not be negative. Check and issue an error if found; fix up
           // the price to its absolute value and continue.
           if (price->has_number()) {
-            decimal::Decimal dec = ProtoToDecimal(price->number());
+            decimal::Decimal dec = ProtoToDecimalOrDie(price->number());
             if (dec.sign() == -1) {
               AddError(ledger,
                        "Negative prices are not allowed "
                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
                        "for workaround)", directive->location());
               // Invert and continue.
-              DecimalToProto(-dec, decimal_use_triple, price->mutable_number());
+              auto status = DecimalToProto(-dec, decimal_conversion,
+                                           price->mutable_number());
+              assert(status.ok());
             }
           }
         }
@@ -209,20 +214,20 @@ void ReduceExpressions(Ledger* ledger,
     // Price directive.
     auto* price = directive->mutable_price();
     if (price->has_amount()) {
-      ReduceExpression(price->mutable_amount(), context, decimal_use_triple);
+      ReduceExpression(price->mutable_amount(), context, decimal_conversion);
     }
   } else if (directive->has_balance()) {
     // Balance directive.
     auto* balance = directive->mutable_balance();
     if (balance->has_amount()) {
-      ReduceExpression(balance->mutable_amount(), context, decimal_use_triple);
+      ReduceExpression(balance->mutable_amount(), context, decimal_conversion);
     }
   }
 }
 
 void NormalizeTotalPrices(Ledger* ledger,
                           decimal::Context& context,
-                          bool decimal_use_triple,
+                          DecimalConversion decimal_conversion,
                           beancount::Directive* directive) {
   if (!directive->has_transaction())
     return;
@@ -245,15 +250,17 @@ void NormalizeTotalPrices(Ledger* ledger,
 
           // We compute the effective price here and forget about that detail of
           // the input syntax.
-          decimal::Decimal dunits = ProtoToDecimal(spec->units().number());
+          decimal::Decimal dunits = ProtoToDecimalOrDie(spec->units().number());
           decimal::Decimal dprice;
           if (dunits.iszero()) {
             dprice = dunits;
           } else {
-            dprice = ProtoToDecimal(price->number()).div(dunits.abs(), context);
+            dprice = ProtoToDecimalOrDie(price->number()).div(dunits.abs(), context);
           }
-          DecimalToProto(dprice, decimal_use_triple, price->mutable_number());
-
+          auto status = DecimalToProto(dprice,
+                                       decimal_conversion,
+                                       price->mutable_number());
+          assert(status.ok());
         } else {
           // units.number is MISSING, issue and error and clear the price.
           //
@@ -320,7 +327,7 @@ void RemoveDuplicateMetaKeys(Ledger* ledger, Directive* directive) {
 }
 
 void PostProcessParsed(Ledger* ledger,
-                       bool decimal_use_triple,
+                       DecimalConversion decimal_conversion,
                        bool normalize_totals,
                        bool allow_multi_meta) {
   // Set Decimal context before processing, update the desired precision for
@@ -335,14 +342,14 @@ void PostProcessParsed(Ledger* ledger,
   using namespace std::placeholders;
   for (auto* directive : ledger->directives) {
     // Reduce all expressions in a given context.
-    ReduceExpressions(ledger, context, decimal_use_triple, directive);
+    ReduceExpressions(ledger, context, decimal_conversion, directive);
 
     // Update the precision statistics accumulator.
     UpdateStatistics(*directive, &stats);
 
     // Normalize total price to unit price.
     if (normalize_totals) {
-      NormalizeTotalPrices(ledger, context, decimal_use_triple, directive);
+      NormalizeTotalPrices(ledger, context, decimal_conversion, directive);
     }
 
     // Run checks on currencies between cost and prices.

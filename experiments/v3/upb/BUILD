@@ -1,13 +1,13 @@
 # We managed to get protobuf working in a single module with the fast cpp proto casters.
 # Disable upb experiments for now. See {1fdb0ce4215b}
 
-## load("//third_party/python:py_extension.bzl", "py_extension")
+## load("//bazel/python:py_extension.bzl", "py_extension")
 ## load("@upb//bazel:upb_proto_library.bzl", "upb_proto_reflection_library")
 ## load("@upb_extras//upbcpp:upbcpp_proto_library.bzl", "upbcpp_proto_library")
 ##
 ## package(default_visibility=["//visibility:public"])
 ##
-## #load("//third_party/python:py_extension.bzl", "py_extension")
+## #load("//bazel/python:py_extension.bzl", "py_extension")
 ## #load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 ##
 ## upb_proto_reflection_library(

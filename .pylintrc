@@ -6,7 +6,7 @@ load-plugins=pylint_protobuf
 
 [REPORTS]
 output-format=text
-files-output=no
+#files-output=no
 reports=no
 
 [MESSAGES CONTROL]
@@ -39,8 +39,6 @@ disable=locally-disabled,
   too-many-function-args,
   unsubscriptable-object,
   too-many-nested-blocks,
-  no-self-use,
-  redefined-variable-type,
   duplicate-code,
   too-few-public-methods,
   too-many-public-methods,
@@ -74,7 +72,6 @@ disable=locally-disabled,
   c-extension-no-member,
   cyclic-import,
   isinstance-second-argument-not-valid-type,
-  bad-continuation,
   inherit-non-class,
   consider-using-f-string,
   consider-using-with,
@@ -84,7 +81,8 @@ disable=locally-disabled,
   global-variable-not-assigned,
   useless-suppression,
   unused-private-member,
-  use-maxsplit-arg
+  use-maxsplit-arg,
+  unnecessary-lambda-assignment
 
 
 # Notes:

@@ -15,17 +15,26 @@ message Number {
   // Exact string for the number, explicit and readable, requires conversion.
   optional string exact = 1;
 
-  // Decomposed representation; harder to read for humans, directly instantiable
-  // for computers.
-  optional MpdTriple triple = 2;
+  // Representation as `mpd_t`.
+  optional Mpd mpd = 2;
+
+  // Representation as `mpd_uint128_triple_t`.
+  optional MpdTriple triple = 3;
 }
 
-// Decomposed representation of mpd_t. See mpdecimal for details.
+// Representation of mpdecimal's `mpd_t` with serialized data block.
+message Mpd {
+  required int32 flags = 1;
+  required int32 exp = 2;
+  required int32 digits = 3;
+  required int32 len = 4;
+  repeated uint32 data = 5 [packed=true];
+}
+// Representation of mpdecimal's `mpd_uint128_triple_t`.
 message MpdTriple {
-  // Se triple_t in mpdecimal-2.5.1.
-  optional uint32 tag = 1;
-  optional uint32 sign = 2;
-  optional uint64 hi = 3;
-  optional uint64 lo = 4;
-  optional int64 exp = 5;
+  required uint32 tag = 1;
+  required uint32 sign = 2;
+  required uint64 hi = 3;
+  required uint64 lo = 4;
+  required int64 exp = 5;
 }

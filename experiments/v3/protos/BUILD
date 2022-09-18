@@ -1,6 +1,6 @@
 package(default_visibility=["//visibility:public"])
 
-load("//third_party/python:py_extension.bzl", "py_extension")
+load("//bazel/python:py_extension.bzl", "py_extension")
 #load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
 py_binary(
@@ -16,11 +16,12 @@ py_binary(
         "//beancount/core:amount",
         "//beancount/core:data",
         "//beancount/core:position",
-        "//beancount/cparser:extmodule",
         "//beancount/parser:printer",
         "//beancount:loader",
-        "@com_google_riegeli//python/riegeli",
-    ],
+        #
+        #"//beancount/cparser:extmodule",
+        ":expose_protos"
+   ],
 )
 
 py_extension(

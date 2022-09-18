@@ -290,9 +290,9 @@ def _main():
 
     args = parser.parse_args()
 
-    if sum([1 if expr else 0 for expr in (args.filenames,
-                                          args.loose_accounts,
-                                          args.pattern)]) > 1:
+    if sum(1 if expr else 0 for expr in (args.filenames,
+                                         args.loose_accounts,
+                                         args.pattern)) > 1:
         parser.error("Conflicted pattern options")
 
     if args.pattern is None:

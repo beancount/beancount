@@ -1,4 +1,4 @@
-load("//third_party/python:py_extension.bzl", "py_extension")
+load("//bazel/python:py_extension.bzl", "py_extension")
 
 package(default_visibility = ["//visibility:public"])
 

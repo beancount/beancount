@@ -1,6 +1,4 @@
-package(
-    default_visibility = ["//:__subpackages__"],
-)
+package(default_visibility = ["//:__subpackages__"])
 
 exports_files([
     "py_extension.bzl",

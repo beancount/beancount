@@ -1,4 +1,4 @@
-load("//third_party/parser:reflex.bzl", "genreflex")
+load("//bazel/parser:reflex.bzl", "genreflex")
 
 genreflex(
     name = "indents_gen",
@@ -21,7 +21,7 @@ cc_binary(
     srcs = ["indents.cc"],
     deps = [
         ":indents_hdrs",
-        "//third_party/parser:reflex",
+        "@reflex//:reflex",
     ],
 )
 
@@ -29,6 +29,6 @@ cc_binary(
     name = "matcher",
     srcs = ["matcher.cc",],
     deps = [
-        "//third_party/parser:reflex",
+        "@reflex//:reflex",
     ],
 )

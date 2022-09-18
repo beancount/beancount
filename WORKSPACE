@@ -1,48 +1,50 @@
-"""Bazel workspace for the Beancount."""
+"""Bazel workspace for the Beancount.
+
+Note that:
+
+- This is using a local Python runtime, which must be 3.10
+- The pip package for 'protobuf' version *must* match that which is in use in
+  this build.
+- Your version of Bazel installed must match that which is used in the github
+  actions (see beancount/.bazelversion).
+
+"""
 workspace(name="beancount")
 
-load("//third_party/foreign:setup.bzl", "setup_rules_foreign")
-setup_rules_foreign()
+#------------------------------------------------------------------------------
+# Direct dependencies of Beancount.
+#
+# Each of the following files defines `http_archive` repositories. We group them
+# into various subgroups of related features. This could theoretically be
+# serialized to a single file, but we keep them to subdirectories to organize
+# all the related files. We use maybe_http_archive() throughout.
 
-load("//third_party/cppbase:setup.bzl", "setup_cppbase")
-setup_cppbase()
+# Bazel general rules packages
+load("//bazel:repositories.bzl", "beancount_dependencies")
+beancount_dependencies()
 
-load("//third_party/python:setup.bzl", "setup_python")
-setup_python()
+#------------------------------------------------------------------------------
+# Indirect dependencies from packages we depend on.
+#
+# Calling these functions will define more repositories, and if there are
+# collisions the ones we depend on above will prevail; hopefully the ones we
+# define above are compatible with those required by the packages themselves.
 
-load("//third_party/proto:setup.bzl", "setup_proto", "setup_riegeli")
-setup_proto()
-setup_riegeli()
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+bazel_skylib_workspace()
+
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()
+
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+rules_pkg_dependencies()
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
+rules_cc_dependencies()
+
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 rules_proto_dependencies()
 rules_proto_toolchains()
 
-# We managed to get protobuf working in a single module with the fast cpp proto casters.
-# Disable upb experiments for now. See {1fdb0ce4215b}
-#
-## load("//third_party/proto:setup.bzl", "setup_upb")
-## setup_upb()
-## load("@upb//bazel:workspace_deps.bzl", "upb_deps")
-## upb_deps()
-
-load("//third_party/proto:setup.bzl", "setup_flatbuffers", "setup_arrow")
-setup_flatbuffers()
-setup_arrow()
-
-load("//third_party/parser:setup.bzl", "setup_parser")
-setup_parser()
-load("//third_party/parser:repositories.bzl", "parser_toolchains")
-parser_toolchains()
-
-# # Setup for packaging rules.
-# load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-# http_archive(
-#     name = "rules_pkg",
-#     url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
-#     sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
-# )
-# load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-# rules_pkg_dependencies()
-
-# TODO(blais): Convert all checks to use maybe(). See upb for an example.
-# load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+# TODO(blais): Update RE-flex version and code.
+# TODO(blais): Upgrade the pybind11 deps.

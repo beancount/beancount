@@ -9,16 +9,16 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements/dev.txt
       - name: bazel install
         run: |
-          wget https://github.com/bazelbuild/bazel/releases/download/3.7.0/bazel_3.7.0-linux-x86_64.deb
-          echo "2fc8dfb85328112a9d67f614e33026be74c2ac95645ed8e88896366eaa3d8fc3 bazel_3.7.0-linux-x86_64.deb" | sha256sum --check
-          sudo dpkg -i bazel_3.7.0-linux-x86_64.deb
+          wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
+          echo "df1a5a4ce3d9b8533caa2f5a4848440bbcf6161b81be8cbfceb99450f0de37dc  bazel_5.3.0-linux-x86_64.deb" | sha256sum --check
+          sudo dpkg -i bazel_5.3.0-linux-x86_64.deb
       - run: pip install numpy
       - name: bazel build
         run: /usr/bin/bazel --bazelrc=.bazelrc.travis build //...

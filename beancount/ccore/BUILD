@@ -1,4 +1,4 @@
-load("//third_party/python:py_extension.bzl", "py_extension")
+load("//bazel/python:py_extension.bzl", "py_extension")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
@@ -53,6 +53,8 @@ cc_library(
         "@com_google_absl//absl/hash",
         "@mpdecimal//:mpdecimal",
         "//beancount/ccore:number_cc_proto",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

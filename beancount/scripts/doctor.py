@@ -110,7 +110,7 @@ def parse(filename):
     Run the parser on ledger FILENAME with debug mode active.
 
     """
-    entries, errors, _ = parser.parse_file(filename, yydebug=1)
+    entries, errors, _ = parser.parse_file(filename, debug=True)
 
 
 @doctor.command()

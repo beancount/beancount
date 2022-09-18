@@ -32,7 +32,7 @@ struct CompareOptions {
   bool leave_lineno = false;
   bool print_input = false;
   bool debug = false;
-  bool decimal_use_triple = false;
+  DecimalConversion decimal_conversion = CONV_STRING;
   bool normalize_totals = false;
   bool allow_multi_meta = false;
 };
@@ -46,11 +46,11 @@ std::unique_ptr<Ledger> ExpectParse(const std::string& input_string,
   }
   auto ledger = parser::ParseString(clean_string, "<string>", 0,
                                     options.debug,
-                                    options.decimal_use_triple);
+                                    options.decimal_conversion);
 
   // Process parsed ledger.
   PostProcessParsed(ledger.get(),
-                    options.decimal_use_triple,
+                    options.decimal_conversion,
                     options.normalize_totals,
                     options.allow_multi_meta);
 

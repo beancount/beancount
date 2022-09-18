@@ -133,7 +133,17 @@ PYBIND11_MODULE(expose_protos, mod) {
   // destruction sequence).
   // See PyInit__message() in _message.so.
   PyObject* message_module = PyInit__message();
-  assert(message_module != nullptr);
+  if (message_module == nullptr) {
+    // An error occurred, this will fail the import.
+    PyErr_PrintEx(1); // Print and clear error.
+
+    // TODO(blais): if an incompatible version of protobuf is installed in the
+    // runtime, this will fail with a "TypeError: bases must be types" error.
+    // Short of creating an hermetic build with our own runtime, we need to find
+    // a way to ensure the version we import in the runtime matches that which
+    // we link against here.
+    return;
+  }
   mod.add_object("_message_module", message_module);
 #endif
 
