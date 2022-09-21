@@ -14,6 +14,27 @@ py_library(
     data = ["VERSION"],
     deps = [
         "//beancount/cparser:extmodule",
+        "//beancount:api",
+    ],
+)
+
+py_library(
+    name = "api",
+    srcs = ["api.py"],
+    deps = [
+        "//beancount/core:account",
+        "//beancount/core:account_types",
+        "//beancount/core:amount",
+        "//beancount/core:convert",
+        "//beancount/core:data",
+        "//beancount/core:flags",
+        "//beancount/core:getters",
+        "//beancount/core:inventory",
+        "//beancount/core:number",
+        "//beancount/core:position",
+        "//beancount/core:prices",
+        "//beancount/core:realization",
+        "//beancount:loader",
     ],
 )
 
