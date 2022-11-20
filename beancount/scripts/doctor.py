@@ -6,6 +6,7 @@ the name of debugging.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from typing import List, Tuple
 import collections
 import logging
 import os
@@ -339,19 +340,12 @@ def linked(filename, location_spec):
     render_mini_balances(linked_entries, options_map, None)
 
 
-@doctor.command()
-@click.argument('filename', type=ledger_path)
-@click.argument('region', type=FileRegion())
-@click.option('--conversion', type=click.Choice(['value', 'cost']),
-              help='Convert balances output to market value or cost.')
-def region(filename, region, conversion):
-    """Print out a list of transactions within REGION and compute balances.
+def resolve_region_to_entries(
+    filename: str,
+    region: Tuple[str, int, int]
+) -> Tuple[List[data.Entries], loader.OptionsMap]:
+    """Resolve a filename and region to a list of entries."""
 
-    The REGION argument is either a stard:end line numbers tuple or a
-    filename:start:end triplet to indicate a region in a ledger file
-    included from the main input file.
-
-    """
     search_filename, first_lineno, last_lineno = region
     if search_filename is None:
         search_filename = filename
@@ -366,6 +360,23 @@ def region(filename, region, conversion):
         if (entry.meta['filename'] == search_filename and
             first_lineno <= entry.meta['lineno'] <= last_lineno)]
 
+    return region_entries, options_map
+
+
+@doctor.command()
+@click.argument('filename', type=ledger_path)
+@click.argument('region', type=FileRegion())
+@click.option('--conversion', type=click.Choice(['value', 'cost']),
+              help='Convert balances output to market value or cost.')
+def region(filename, region, conversion):
+    """Print out a list of transactions within REGION and compute balances.
+
+    The REGION argument is either a stard:end line numbers tuple or a
+    filename:start:end triplet to indicate a region in a ledger file
+    included from the main input file.
+
+    """
+    region_entries, options_map = resolve_region_to_entries(filename, region)
     price_map = prices.build_price_map(entries) if conversion == 'value' else None
     render_mini_balances(region_entries, options_map, conversion, price_map)
 

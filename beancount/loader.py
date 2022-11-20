@@ -4,7 +4,7 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-from typing import Optional
+from typing import Any, Optional
 import collections
 import copy
 import functools
@@ -32,6 +32,9 @@ from beancount.parser import printer
 from beancount.ops import validation
 from beancount.utils import encryption
 from beancount.utils import file_utils
+
+
+OptionsMap = Any
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
