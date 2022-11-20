@@ -341,16 +341,15 @@ def linked(filename, location_spec):
 
 
 def resolve_region_to_entries(
+    entries: List[data.Entries],
     filename: str,
     region: Tuple[str, int, int]
-) -> Tuple[List[data.Entries], loader.OptionsMap]:
+) -> List[data.Entries]:
     """Resolve a filename and region to a list of entries."""
 
     search_filename, first_lineno, last_lineno = region
     if search_filename is None:
         search_filename = filename
-
-    entries, errors, options_map = loader.load_file(filename)
 
     # Find all the entries in the region. (To be clear, this isn't like the
     # 'linked' command, none of the links are followed.)
@@ -360,7 +359,7 @@ def resolve_region_to_entries(
         if (entry.meta['filename'] == search_filename and
             first_lineno <= entry.meta['lineno'] <= last_lineno)]
 
-    return region_entries, options_map
+    return region_entries
 
 
 @doctor.command()
@@ -376,7 +375,8 @@ def region(filename, region, conversion):
     included from the main input file.
 
     """
-    region_entries, options_map = resolve_region_to_entries(filename, region)
+    entries, errors, options_map = loader.load_file(filename)
+    region_entries = resolve_region_to_entries(entries, filename, region)
     price_map = prices.build_price_map(entries) if conversion == 'value' else None
     render_mini_balances(region_entries, options_map, conversion, price_map)
 
