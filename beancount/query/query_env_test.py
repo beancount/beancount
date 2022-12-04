@@ -261,7 +261,7 @@ class TestEnv(unittest.TestCase):
                                         'SELECT date(year, month, 1) as m')
         self.assertEqual([(datetime.date(2016, 11, 1),)], rrows)
 
-        with self.assertRaisesRegex(ValueError, "day is out of range for month"):
+        with self.assertRaisesRegex(ValueError, "day is out of range for month|day must be in"):
             rtypes, rrows = query.run_query(entries, options_map,
                                             'SELECT date(2020, 2, 32) as m')
 
