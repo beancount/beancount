@@ -404,11 +404,12 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
 {
     PyObject* dest = NULL;
     PyObject* read = NULL;
-    Py_ssize_t length;
-    char* buffer;
     int ret = 0;
 
 #ifdef PYPY_VERSION_NUM
+    Py_ssize_t length;
+    char* buffer;
+
     /* PyPy does not support readinto() a memory view. Resort to
      * read() and copy the content of the returned bytes object into
      * the lexer buffer. */
