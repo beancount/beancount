@@ -5,7 +5,12 @@
 
 #include "absl/strings/str_cat.h"
 
-#include <error.h>
+#ifndef __APPLE__
+#  include <error.h>
+#else
+#  include <errno.h>
+#endif
+
 #include <string.h>
 
 namespace beancount {
@@ -17,8 +22,14 @@ absl::StatusCode kSystemError = absl::StatusCode(kUserErrors + 1);
 
 absl::Status SystemError(absl::string_view message) {
   char buffer[2048];
-  char* description = strerror_r(errno, buffer, 2048);
-  return absl::Status(kSystemError, absl::StrCat(message, ": ", description));
+#ifndef __APPLE__
+  description = strerror_r(errno, buffer, 2048);
+#else
+  int status = strerror_r(errno, buffer, 2048);
+  assert(status == 0);
+#endif
+
+  return absl::Status(kSystemError, absl::StrCat(message, ": ", buffer));
 }
 
 }  // namespace beancount
