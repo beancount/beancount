@@ -1,0 +1,10 @@
+Switch to pybind11_protobuf because since 3.11, PyFrameObject is not exposed
+anymore, and pyext is deprecated and will not be ported to work with the missing
+type. The previous approach is doomed... no choice. Have to switch to
+pybind11_protobuf.
+
+On the positive side, I tested pybind11_protobuf with 3.12.0a3 and the tests
+run.
+
+This directory is a prototype of using the new approach.
+This has to be ported to the beancount/cparser location.

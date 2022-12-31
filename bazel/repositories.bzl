@@ -1,7 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-# TODO(blais): It would be real nice if this was available externally.
-load("//bazel/python:python_configure.bzl", "python_configure")
 
 
 def maybe_http_archive(**kwargs):
@@ -150,24 +148,24 @@ def _proto_dependencies():
 
     maybe_http_archive(
         name = "rules_proto",
-        url = "https://github.com/bazelbuild/rules_proto/archive/ea52a32ecd862c5317572cadecaa525c52124f9d.zip",
-        strip_prefix = "rules_proto-ea52a32ecd862c5317572cadecaa525c52124f9d",
-        sha256 = "7da9c0f681d74aeb501db7dc9f7eb8f6e55fdbcced57cb00d4444300149ea161",
-        updated = "2022-09-10",
+        url = "https://github.com/bazelbuild/rules_proto/archive/b5e5fc85f70cf6bbef66c69b679c86168ad1bea6.zip",
+        strip_prefix = "rules_proto-b5e5fc85f70cf6bbef66c69b679c86168ad1bea6",
+        sha256 = "ac1a4caf8d3cb7483d16f60c91dc7a76fa75962a06327f83a06e4d0a32505fc2",
+        updated = "2022-11-16",
     )
 
     maybe_http_archive(
         name = "com_google_protobuf",
-        url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.5.zip",
-        strip_prefix = "protobuf-21.5",
-        sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
-        patches = [
-            # Add a publicly visible static library target so that we can
-            # link the protobuf module itself into our library.
-            "//bazel/proto:protobuf_pyext_target.patch",
-        ],
-        patch_args = ["-p1"],
-        updated = "2022-09-10",
+        url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.12.zip",
+        strip_prefix = "protobuf-21.12",
+        sha256 = "6a31b662deaeb0ac35e6287bda2f3369b19836e6c9f8828d4da444346f420298",
+        # patches = [
+        #     # Add a publicly visible static library target so that we can
+        #     # link the protobuf module itself into our library.
+        #     "//bazel/proto:protobuf_pyext_target.patch",
+        # ],
+        # patch_args = ["-p1"],
+        updated = "2022-12-22",
     )
 
     # We managed to get protobuf working in a single module with the fast cpp proto casters.
@@ -193,10 +191,10 @@ def _python_dependencies():
     # Rules for building python.
     maybe_http_archive(
         name = "rules_python",
-        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.12.0.tar.gz",
-        strip_prefix = "rules_python-0.12.0",
-        sha256 = "b593d13bb43c94ce94b483c2858e53a9b811f6f10e1e0eedc61073bd90e58d9c",
-        updated = "2022-09-10",
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.16.1.tar.gz",
+        strip_prefix = "rules_python-0.16.1",
+        sha256 = "497ca47374f48c8b067d786b512ac10a276211810f4a580178ee9b9ad139323a",
+        updated = "2022-12-07",
     )
 
     # Historically, subpar was the only way to produce a deployable Python
@@ -215,31 +213,36 @@ def _python_dependencies():
     #     sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
     # )
 
+    # Note: "@pybind11_bazel" is declared in the top-level WORKSPACE in order to
+    # allow loading of externally defined python_configure.
+    #
+    # TODO DELETE THIS:
+    # maybe_http_archive(
+    #     name = "pybind11_bazel",
+    #     url = "https://github.com/pybind/pybind11_bazel/archive/faf56fb3df11287f26dbc66fdedf60a2fc2c6631.zip",
+    #     strip_prefix = "pybind11_bazel-faf56fb3df11287f26dbc66fdedf60a2fc2c6631",
+    #     sha256 = "a185aa68c93b9f62c80fcb3aadc3c83c763854750dc3f38be1dadcb7be223837",
+    #     updated = "2022-11-03",
+    # )
+
     # Rules for easy extension modules.
     maybe_http_archive(
         name = "pybind11",
-        url = "https://github.com/pybind/pybind11/archive/aa8f8baa4e402885e5c89f5dc42a579932c33790.tar.gz",
-        strip_prefix = "pybind11-aa8f8baa4e402885e5c89f5dc42a579932c33790",
-        sha256 = "9768120d8ca16ce602ca35eb56afe114a75b87c18dd92e80f5a81e0079a7a3cf",
+        url = "https://github.com/pybind/pybind11/archive/refs/tags/v2.10.2.tar.gz",
+        strip_prefix = "pybind11-2.10.2",
+        sha256 = "93bd1e625e43e03028a3ea7389bba5d3f9f2596abc074b068e70f4ef9b1314ae",
         build_file = "@pybind11_bazel//:pybind11.BUILD",
-        updated = "2022-09-10",
-    )
-
-    maybe_http_archive(
-        name = "pybind11_bazel",
-        url = "https://github.com/pybind/pybind11_bazel/archive/c3ba38c05bd2ea859abc4b58f19c1a02268d71b5.zip",
-        strip_prefix = "pybind11_bazel-c3ba38c05bd2ea859abc4b58f19c1a02268d71b5",
-        sha256 = "04d4ede4dd2c2f5829f2cc8687c4c9c45fd5cf9c2fbbce8f08b1559671348523",
-        updated = "2022-09-10",
+        updated = "2022-12-21",
     )
 
     maybe_http_archive(
         name = "pybind11_protobuf",
-        url = "https://github.com/blais/pybind11_protobuf/archive/158cc03371a5bee6e771715167a1b02776b993a7.zip",
-        strip_prefix = "pybind11_protobuf-158cc03371a5bee6e771715167a1b02776b993a7",
-        sha256 = "c26c671493ae32706f7c86b9130646584ff52d2cbfa7a26d86076d5804c870e4",
-        updated = "2022-09-10",
+        url = "https://github.com/blais/pybind11_protobuf/archive/505e54e81f77ae8f684630ba276af5cd029f7606.zip",
+        strip_prefix = "pybind11_protobuf-505e54e81f77ae8f684630ba276af5cd029f7606",
+        sha256 = "8a45cc912e9b8ad56f3b67424927b626315c143fe94d236059822d896eac2519",
+        updated = "2022-12-09",
     )
+
     # native.local_repository(
     #     name = "pybind11_protobuf",
     #     path = "/home/blais/src/pybind11_protobuf",
@@ -251,10 +254,10 @@ def _python_dependencies():
     # abseil (Python)
     maybe_http_archive(
         name = "com_google_absl_py",
-        url = "https://github.com/abseil/abseil-py/archive/a0ae31683e6cf3667886c500327f292c893a1740.tar.gz",
-        strip_prefix = "abseil-py-a0ae31683e6cf3667886c500327f292c893a1740",
-        sha256 = "371a9aa7f5cb3630b5f165484da6e38548a22f86e1c7440f278fa47d8c719a9c",
-        updated = "2022-09-10",
+        url = "https://github.com/abseil/abseil-py/archive/v1.3.0.tar.gz",
+        strip_prefix = "abseil-py-1.3.0",
+        sha256 = "c0bf3e839b7b1c58ac75e41f72a708597087a6c7dd0582aec4914e0d98ec8b04",
+        updated = "2022-12-22",
     )
 
     # Note: This appears unused anymore.
@@ -278,12 +281,12 @@ def _python_dependencies():
 
     # Local Python installation
     # TODO(blais): There's a better version of this in https://github.com/pybind/pybind11_bazel.
-    python_configure(name = "local_config_python")
-    native.bind(
-        name = "python_headers",
-        actual = "@local_config_python//:python_headers",
-    )
-    native.register_toolchains("@local_config_python//:toolchain")
+    ## python_configure(name = "local_config_python")
+    ## native.bind(
+    ##     name = "python_headers",
+    ##     actual = "@local_config_python//:python_headers",
+    ## )
+    ## native.register_toolchains("@local_config_python//:toolchain")
 
     maybe_http_archive(
         name = "python_magic",
