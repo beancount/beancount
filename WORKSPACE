@@ -19,6 +19,22 @@ workspace(name="beancount")
 # serialized to a single file, but we keep them to subdirectories to organize
 # all the related files. We use maybe_http_archive() throughout.
 
+# Allow an external python_configure() definition to be pulled from pybind11_bael.
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "pybind11_bazel",
+    url = "https://github.com/pybind/pybind11_bazel/archive/faf56fb3df11287f26dbc66fdedf60a2fc2c6631.zip",
+    strip_prefix = "pybind11_bazel-faf56fb3df11287f26dbc66fdedf60a2fc2c6631",
+    sha256 = "a185aa68c93b9f62c80fcb3aadc3c83c763854750dc3f38be1dadcb7be223837",
+)  # updated = "2022-11-03",
+
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")
+bind(
+    name = "python_headers",
+    actual = "@local_config_python//:python_headers",
+)
+
 # Bazel general rules packages
 load("//bazel:repositories.bzl", "beancount_dependencies")
 beancount_dependencies()
