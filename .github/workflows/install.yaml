@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           # The oldest supported python version
-          python-version: 3.6
+          python-version: 3.7
       - run: python setup.py install
       - run: |
           bean-check --help
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           # The oldest supported python version
-          python-version: 3.6
+          python-version: 3.7
       - run: python setup.py sdist --format zip
       - run: pip install dist/beancount-*.zip
       - run: |
