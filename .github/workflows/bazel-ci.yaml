@@ -10,17 +10,26 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements/dev.txt
-      - name: bazel install
+          python3 -m pip install numpy
+      - name: Install bazelisk
         run: |
-          wget https://github.com/bazelbuild/bazel/releases/download/5.3.0/bazel_5.3.0-linux-x86_64.deb
-          echo "df1a5a4ce3d9b8533caa2f5a4848440bbcf6161b81be8cbfceb99450f0de37dc  bazel_5.3.0-linux-x86_64.deb" | sha256sum --check
-          sudo dpkg -i bazel_5.3.0-linux-x86_64.deb
-      - run: pip install numpy
+          curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.15.0/bazelisk-linux-amd64"
+          echo "19fd84262d5ef0cb958bcf01ad79b528566d8fef07ca56906c5c516630a0220b  bazelisk-linux-amd64" | sha256sum --check
+          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
       - name: bazel build
-        run: /usr/bin/bazel --bazelrc=.bazelrc.travis build //...
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis build //...
       - name: bazel test
-        run: /usr/bin/bazel --bazelrc=.bazelrc.travis test --test_output=errors //...
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis test --test_output=errors //...
