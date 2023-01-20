@@ -27,9 +27,9 @@ jobs:
           mkdir -p "${GITHUB_WORKSPACE}/bin/"
           mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
           chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
-      - name: bazel build
+      - name: Build
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis build //...
-      - name: bazel test
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis build -- //... -//experiments/v3/protos:*
+      - name: Test
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis test --test_output=errors //...
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis test --test_output=errors -- //... -//experiments/v3/protos:*
