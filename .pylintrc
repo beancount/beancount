@@ -1,3 +1,9 @@
+#  module-name-hint, method-name-hint, class-name-hint, class-attribute-name-hint,
+#  inlinevar-name-hint, variable-name-hint, const-name-hint, attr-name-hint,
+#  argument-name-hint, function-name-hint, no-space-check
+
+
+
 [MASTER]
 ignore=
   BUILD
@@ -6,7 +12,8 @@ load-plugins=pylint_protobuf
 
 [REPORTS]
 output-format=text
-#files-output=no
+
+# Tells whether to display a full report or only the messages
 reports=no
 
 [MESSAGES CONTROL]
@@ -82,12 +89,8 @@ disable=locally-disabled,
   useless-suppression,
   unused-private-member,
   use-maxsplit-arg,
-  unnecessary-lambda-assignment
-
-
-# Notes:
-#   bad-continuation: Is buggy, see https://github.com/PyCQA/pylint/issues/3512
-
+  unnecessary-lambda-assignment,
+  use-dict-literal,
 
 [VARIABLES]
 

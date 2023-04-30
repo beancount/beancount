@@ -231,6 +231,9 @@ pylint-only:
 pyflakes:
 	pyflakes $(LINT_SRCS)
 
+ruff:
+	ruff beancount examples/ingest/office/importers tools
+
 
 # Check everything.
 status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
