@@ -213,6 +213,7 @@ def main(argv=None):
         return
 
     is_check = False
+    outfile = None
     if hasattr(args, 'report_class'):
         # Open output file and guess file format.
         outfile = open(args.output, 'w') if args.output else sys.stdout

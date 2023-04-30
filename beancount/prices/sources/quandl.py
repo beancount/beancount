@@ -79,7 +79,7 @@ def fetch_time_series(ticker, time=None):
         payload['api_key'] = os.environ['QUANDL_API_KEY']
 
     # Fetch and process errors.
-    response = requests.get(url, params=payload)
+    response = requests.get(url, params=payload, timeout=300)
     if response.status_code != requests.codes.ok:
         raise QuandlError("Invalid response ({}): {}".format(response.status_code,
                                                              response.text))

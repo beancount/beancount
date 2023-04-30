@@ -44,9 +44,9 @@ __license__ = "GNU GPLv2"
 from os import path
 import io
 import os
-import pytest
 import re
-import unittest
+
+import pytest
 
 from beancount.ingest import cache
 from beancount.ingest import extract

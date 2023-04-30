@@ -3,7 +3,6 @@ __license__ = "GNU GPLv2"
 
 from os import path
 from unittest import mock
-import os
 import re
 import subprocess
 import sys
