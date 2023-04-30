@@ -5,18 +5,21 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+import calendar
+import datetime
 import io
 import logging
 import re
 import sys
-import time
 import threading
-import datetime
-import calendar
+import time
+import warnings
 
-import bottle
-from bottle import response
-from bottle import request
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    import bottle
+    from bottle import response
+    from bottle import request
 
 from beancount.core import data
 from beancount.core import getters
