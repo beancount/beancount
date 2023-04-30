@@ -90,47 +90,11 @@ install_requires = [
     "pytest",
     #
     # Command line parsing.
-    'click',
+    "click",
     #
     # We use dateutil for timezone database definitions. See this
     # article for context: https://assert.cc/posts/dateutil-preferred/
     "python-dateutil",
-    # #
-    # # The SQL parser uses PLY in order to parse the input syntax.
-    # "ply",
-    # #
-    # # The bean-web web application is built on top of this web
-    # # framework.
-    # "bottle",
-    # #
-    # # This XML parsing library is mainly required to web scrape the
-    # # bean-web pages for testing.
-    # "lxml",
-    # #
-    # # This library is needed to parse XML files (for the OFX examples).
-    # "beautifulsoup4",
-    # #
-    # # This library is needed to make requests for price sources.
-    # "requests",
-    # #
-    # # This library is needed to identify the character set of a file for
-    # # import, in order to read its contents and match expressions
-    # # against it.
-    # "chardet",
-    # #
-    # # This library is used to download and convert the documentation
-    # # programmatically and to upload lists of holdings to a Google
-    # # Spreadsheet for live intra-day monitoring.
-    # "google-api-python-client",
-    # #
-    # # This library is needed to identify the type of a file for
-    # # import. It uses ctypes to wrap the libmagic library which is
-    # # not generally available on Windows nor is easily installed,
-    # # thus the conditional dependency.
-    # 'python-magic>=0.4.12; sys_platform != "win32"',
-    # #
-    # # Needed for running tests.
-    # "pdfminer2",
 ]
 
 # Create a setup.
@@ -151,50 +115,47 @@ setup(
       automate the conversion of external data into one's input file in
       Beancount syntax.
       """,
-
-      license="GNU GPLv2 only",
-      author="Martin Blais",
-      author_email="blais@furius.ca",
-      url="https://github.com/beancount/beancount",
-      download_url="https://github.com/beancount/beancount",
-      packages=find_packages(exclude=['experiments*']),
-
-      package_data = {
-          'beancount': ['VERSION'],
-          'beancount.utils.file_type_testdata': ['*'],
-      },
-
-      ext_modules = [
-          Extension("beancount.parser._parser",
-                    include_dirs=["."],
-                    sources=[
-                        "beancount/parser/decimal.c",
-                        "beancount/parser/lexer.c",
-                        "beancount/parser/grammar.c",
-                        "beancount/parser/parser.c",
-                        "beancount/parser/tokens.c",
-                    ],
-                    define_macros=[
-                        ('BEANCOUNT_VERSION', version),
-                        ('VC_CHANGESET', vc_changeset),
-                        ('VC_TIMESTAMP', int(float(vc_timestamp))),
-                        ('PARSER_SOURCE_HASH', hash_parser_source_files())],
-                extra_compile_args=get_cflags()),
-      ],
-
-      install_requires = install_requires,
-
-      entry_points = {
-          'console_scripts': [
-              'bean-check = beancount.scripts.check:main',
-              'bean-doctor = beancount.scripts.doctor:main',
-              'bean-example = beancount.scripts.example:main',
-              'bean-format = beancount.scripts.format:main',
-              'treeify = beancount.tools.treeify:main',
-          ]
-      },
-
-      python_requires='>=3.6',
+    license="GNU GPLv2 only",
+    author="Martin Blais",
+    author_email="blais@furius.ca",
+    url="https://github.com/beancount/beancount",
+    download_url="https://github.com/beancount/beancount",
+    packages=find_packages(exclude=["experiments*"]),
+    package_data={
+        "beancount": ["VERSION"],
+        "beancount.utils.file_type_testdata": ["*"],
+    },
+    ext_modules=[
+        Extension(
+            "beancount.parser._parser",
+            include_dirs=["."],
+            sources=[
+                "beancount/parser/decimal.c",
+                "beancount/parser/lexer.c",
+                "beancount/parser/grammar.c",
+                "beancount/parser/parser.c",
+                "beancount/parser/tokens.c",
+            ],
+            define_macros=[
+                ("BEANCOUNT_VERSION", version),
+                ("VC_CHANGESET", vc_changeset),
+                ("VC_TIMESTAMP", int(float(vc_timestamp))),
+                ("PARSER_SOURCE_HASH", hash_parser_source_files()),
+            ],
+            extra_compile_args=get_cflags(),
+        ),
+    ],
+    install_requires=install_requires,
+    entry_points={
+        "console_scripts": [
+            "bean-check = beancount.scripts.check:main",
+            "bean-doctor = beancount.scripts.doctor:main",
+            "bean-example = beancount.scripts.example:main",
+            "bean-format = beancount.scripts.format:main",
+            "treeify = beancount.tools.treeify:main",
+        ]
+    },
+    python_requires=">=3.6",
 )
 
 
