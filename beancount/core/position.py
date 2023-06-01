@@ -30,11 +30,11 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #   date: A datetime.date for the date that the lot was created at. There
 #      should always be a valid date.
 #   label: A string for the label of this lot, or None, if there is no label.
-Cost = NamedTuple('Cost', [
-    ('number', Decimal),
-    ('currency', str),
-    ('date', datetime.date),
-    ('label', Optional[str])])
+class Cost(NamedTuple):
+    number: Decimal
+    currency: str
+    date: datetime.date
+    label: Optional[str]
 
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
@@ -51,14 +51,13 @@ Cost = NamedTuple('Cost', [
 #   label: A string for the label of this lot, or None if unspecified.
 #   merge: A boolean, true if this specification calls for averaging the units
 #      of this lot's currency, or False if unspecified.
-CostSpec = NamedTuple('CostSpec', [
-    ('number_per', Optional[Decimal]),
-    ('number_total', Optional[Decimal]),
-    ('currency', Optional[str]),
-    ('date', Optional[datetime.date]),
-    ('label', Optional[str]),
-    ('merge', Optional[bool])])
-
+class CostSpec(NamedTuple):
+    number_per: Optional[Decimal]
+    number_total: Optional[Decimal]
+    currency: Optional[str]
+    date: Optional[datetime.date]
+    label: Optional[str]
+    merge: Optional[bool]
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -151,9 +150,10 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-_Position = NamedTuple('_Position', [
-    ('units', Amount),
-    ('cost', Cost)])
+class _Position(NamedTuple):
+    units: Amount
+    cost: Cost
+
 
 class Position(_Position):
     """A 'Position' is a pair of units and optional cost.

@@ -20,10 +20,10 @@ from typing import Optional, NamedTuple
 #     used to compute a corresponding date in the user's timezone.
 #   quote-currency: A string, the quote currency of the given price, if
 #     available.
-SourcePrice = NamedTuple('SourcePrice',
-                         [('price', Decimal),
-                          ('time', Optional[datetime.datetime]),
-                          ('quote_currency', Optional[str])])
+class SourcePrice(NamedTuple):
+    price: Decimal
+    time: Optional[datetime.datetime]
+    quote_currency: Optional[str]
 
 
 class Source:
