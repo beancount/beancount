@@ -51,16 +51,15 @@ def validate_entries(entries: data.Entries):
 Header = List[str]
 Rows = List[List[Any]]
 
-
 class Table(NamedTuple):
     header: Header
     rows: Rows
-
 
 def get_metamap_table(metamap: Dict[str, data.Directive],
                       attributes: List[str],
                       getter) -> Table:
     """Produce a Table of per-commodity attributes."""
+    header = attributes
     attrlist = attributes[1:]
     rows = []
     for key, value in metamap.items():
@@ -75,10 +74,7 @@ def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table
     """Produce a Table of per-commodity attributes."""
     commodities = getters.get_commodity_directives(entries)
     header = ['currency'] + attributes
-
-    def getter(entry, key):
-        return entry.meta.get(key, None)
-
+    getter = lambda entry, key: entry.meta.get(key, None)
     table = get_metamap_table(commodities, header, getter)
     return table
 
@@ -90,7 +86,6 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
     header = ['account'] + attributes
     defaults = {'tax': 'taxable',
                 'liquid': False}
-
     def getter(entry, key):
         """Lookup the value working up the accounts tree."""
         value = entry.meta.get(key, None)
@@ -103,7 +98,6 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
         if not parent_entry:
             return defaults.get(key, None)
         return getter(parent_entry, key)
-
     return get_metamap_table(accounts_map, header, getter), accounts_map
 
 
@@ -147,7 +141,7 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
     for acc, balance in sorted(balances.items()):
         # Keep only the balance sheet accounts.
         acctype = account_types.get_account_type(acc)
-        if acctype not in (acctypes.assets, acctypes.liabilities):
+        if not acctype in (acctypes.assets, acctypes.liabilities):
             continue
 
         # Create a posting for each of the positions.
@@ -213,7 +207,7 @@ def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Tab
     for cols, col_table in col_tables:
         indexes_main = [main_table.header.index(col) for col in cols]
         indexes_col = [col_table.header.index(col) for col in cols]
-        # indexes_notcol = sorted(set(range(len(col_table.header))) - set(indexes_col))
+        #indexes_notcol = sorted(set(range(len(col_table.header))) - set(indexes_col))
         col_map = {}
         for row in col_table.rows:
             key = tuple(row[index] for index in indexes_col)
