@@ -22,6 +22,11 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#ifdef PYPY_VERSION_NUM
+/* PyPy does not export this function. */
+#define PyExceptionClass_Name(x) (((PyTypeObject*)(x))->tp_name)
+#endif
+
 typedef struct _yyextra_t yyextra_t;
 
 struct _yyextra_t {
@@ -435,6 +440,29 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     PyObject* read = NULL;
     int ret = 0;
 
+#ifdef PYPY_VERSION_NUM
+    Py_ssize_t length;
+    char* buffer;
+
+    /* PyPy does not support readinto() a memory view. Resort to
+     * read() and copy the content of the returned bytes object into
+     * the lexer buffer. */
+
+    read = PyObject_CallMethod(file, "read", "n", (Py_ssize_t)max_size);
+    if (!read) {
+	goto error;
+    }
+
+    ret = PyBytes_AsStringAndSize(read, &buffer, &length);
+    if (ret < 0) {
+        goto error;
+    }
+
+    assert(length <= max_size);
+    memcpy(buf, buffer, length);
+    ret = length;
+
+#else
     /* This function could be optimized in two ways: avoiding to
      * allocate a new memory view object for every block read and
      * caching the lookup of the readinto method of the file
@@ -454,6 +482,7 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     if (PyErr_Occurred()) {
 	ret = 0;
     }
+#endif
 
 error:
     Py_XDECREF(dest);

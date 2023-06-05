@@ -16,7 +16,7 @@ class TestTable(unittest.TestCase):
         attributes = list(map(table.attribute_to_title, ['a', 'a_b', 'aa_bb_cc']))
         self.assertEqual(['A', 'A B', 'Aa Bb Cc'], attributes)
 
-    def test_create_table(self):
+    def _create_table(self):
         Tup = collections.namedtuple('Tup', 'country capital currency amount')
 
         tuples = [
@@ -32,6 +32,9 @@ class TestTable(unittest.TestCase):
             )
         return table_object
 
+    def test_create_table(self):
+        self._create_table()
+
     def test_create_table_with_index(self):
         tuples = [
             ('USD', '1111.00'),
@@ -46,7 +49,7 @@ class TestTable(unittest.TestCase):
                          table_object)
 
     def test_table_to_html(self):
-        table_object = self.test_create_table()
+        table_object = self._create_table()
         html = table.table_to_html(table_object, classes=['high-class'])
         expected = textwrap.dedent("""\
             <table class="high-class">
@@ -83,7 +86,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(expected, html)
 
     def test_table_to_text(self):
-        table_object = self.test_create_table()
+        table_object = self._create_table()
         text = table.table_to_text(table_object,
                                    formats={'amount': '>'})
         expected = textwrap.dedent("""\
@@ -97,7 +100,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(expected, text)
 
     def test_table_to_csv(self):
-        table_object = self.test_create_table()
+        table_object = self._create_table()
         text = table.table_to_csv(table_object, lineterminator='\n')
         expected = textwrap.dedent("""\
             Country,Capital,Currency,Amount
@@ -130,7 +133,7 @@ class TestTable(unittest.TestCase):
             ])
 
     def test_generate_table(self):
-        table_object = self.test_create_table()
+        table_object = self._create_table()
         oss = io.StringIO()
         table.render_table(table_object, oss, 'csv')
         self.assertTrue(oss.getvalue())

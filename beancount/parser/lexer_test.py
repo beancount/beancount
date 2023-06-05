@@ -242,7 +242,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, b'\n', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, '(out of range|month must be)')
+        self.assertRegex(errors[0].message, 'out of range|month must be|day must be in')
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):

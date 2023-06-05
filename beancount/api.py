@@ -20,58 +20,61 @@ from .core.number import D
 
 from .core.flags import *  # pylint: disable=wildcard-import
 
-from .loader import (load_file,
-                     load_encrypted_file,
-                     load_doc)
+from .loader import load_file, load_encrypted_file, load_doc
 
-from .core.data import (Account,
-                        Currency,
-                        Flag,
-                        Meta,
-                        Booking,
-                        Directives,
-                        Options,
-                        new_metadata,
-                        # TODO(blais): Replace this with
-                        # bn.dfilter(..., bn.dtypes.Transaction).
-                        filter_txns,
-
-                        # Directive types on its own object.
-                        # Not on the top-level.
-                        dtypes)
+from .core.data import (
+    Account,
+    Currency,
+    Flag,
+    Meta,
+    Booking,
+    Directives,
+    Options,
+    new_metadata,
+    # TODO(blais): Replace this with
+    # bn.dfilter(..., bn.dtypes.Transaction).
+    filter_txns,
+    # Directive types on its own object.
+    # Not on the top-level.
+    dtypes,
+)
 
 # For split, join, parent, leaf, root
 from .core import account
 
-from .core.getters import (get_accounts)
+from .core.getters import get_accounts, get_account_open_close
 
-from .core.account_types import (get_account_type,
-                                 is_account_type,
-                                 is_balance_sheet_account,
-                                 is_income_statement_account,
-                                 is_equity_account,
-                                 is_inverted_account,
-                                 get_account_sign)
+from .core.account_types import (
+    get_account_type,
+    is_account_type,
+    is_balance_sheet_account,
+    is_income_statement_account,
+    is_equity_account,
+    is_inverted_account,
+    get_account_sign,
+)
 
-from .core.amount import (Amount,)
+from .core.amount import (
+    Amount,
+)
 
-from .core.position import (Position,
-                            Cost,
-                            CostSpec)
+from .core.position import Position, Cost, CostSpec
 
-from .core.inventory import (Inventory,)
+from .core.inventory import (
+    Inventory,
+)
 
-from .core.convert import (get_units,
-                           get_cost,
-                           get_weight,
-                           get_value,
-                           convert_position,
-                           convert_amount)
+from .core.convert import (
+    get_units,
+    get_cost,
+    get_weight,
+    get_value,
+    convert_position,
+    convert_amount,
+)
 
-from .core.realization import (RealAccount,
-                               realize)
+from .core.realization import RealAccount, realize
 
-from .core.prices import (PriceMap,
-                          build_price_map,
-                          get_price,
-                          get_latest_price)
+from .core.prices import PriceMap, build_price_map, get_price, get_latest_price
+
+from .parser.options import get_account_types

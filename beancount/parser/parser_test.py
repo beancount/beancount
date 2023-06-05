@@ -184,6 +184,7 @@ class TestTestUtils(unittest.TestCase):
         self.assertTrue(isinstance(entry, data.Transaction))
 
 
+@unittest.skipUnless(hasattr(sys, 'getrefcount'), 'requires sys.getrefcount()')
 class TestReferenceCounting(unittest.TestCase):
 
     def test_parser_lex(self):

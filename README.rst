@@ -110,7 +110,11 @@ areas of my software practice where I can let my desire for perfection and
 minimalism run untamed from the demands of time and external constraints.
 
 Many people have asked where they can donate for the project. If you would like
-to give back, you can send a donation via PayPal at:
+to give back, you can send a donation via Wise (preferably):
+
+    https://wise.com/share/martinb4019
+
+or PayPal at:
 
     https://www.paypal.com/paypalme/misislavski
 
