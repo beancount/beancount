@@ -14,13 +14,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
+        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
         os: [windows, macos]
     env:
       # The newly pushed tag or the tag specified in the workflow dispatch.
       TAG: ${{ github.event.push.tag || github.event.inputs.tag }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ env.TAG }}
       - run: git describe --tags
@@ -34,7 +34,7 @@ jobs:
           if tag != version:
               sys.exit(1)
         shell: python
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install wheel twine
