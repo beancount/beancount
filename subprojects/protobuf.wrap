@@ -1,0 +1,9 @@
+[wrap-file]
+directory = protobuf-3.12.2
+source_url = https://github.com/protocolbuffers/protobuf/releases/download/v3.12.2/protobuf-all-3.12.2.zip
+source_filename = protobuf-all-3.12.2.zip
+source_hash = af6a9cf80a99090a38a027e4b1a0545220f368368d8b03b3309ff760cb60d92d
+patch_url = https://wrapdb.mesonbuild.com/v1/projects/protobuf/3.12.2/2/get_zip
+patch_filename = protobuf-3.12.2-2-wrap.zip
+patch_hash = 7e0e5e7eb39f30fa6399a64a1748e916b5241e2705609da0e7ae0dbccfd1ab49
+
