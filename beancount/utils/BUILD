@@ -1,3 +1,7 @@
+load(
+    "@pypi//:requirements.bzl",
+    "requirement",
+)
 package(default_visibility = ["//visibility:public"])
 
 py_library(
@@ -22,6 +26,7 @@ py_test(
     srcs = ["date_utils_test.py"],
     deps = [
         ":date_utils",
+        requirement("python-dateutil"),
     ],
 )
 
