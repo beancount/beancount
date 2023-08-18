@@ -5,12 +5,13 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from datetime import timedelta
 from decimal import Decimal
 
 from beancount.core.number import ZERO
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
-from beancount.core.position import Cost
+from beancount.core.position import Cost, Position
 from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
@@ -130,20 +131,53 @@ def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
 
 def booking_method_FIFO(entry, posting, matches):
     """FIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "date", False)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "date"),
+                                reverse_order=False)
 
 
 def booking_method_LIFO(entry, posting, matches):
     """LIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "date", True)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "date"),
+                                reverse_order=True)
 
 
 def booking_method_HIFO(entry, posting, matches):
     """HIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "number", True)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "number"),
+                                reverse_order=True)
 
 
-def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
+def booking_method_LTFO(entry, posting, matches):
+    """LTFO (least tax first out) booking method implementation.
+    
+    This will estimate the gains of each potential booking, and the tax
+    liability of each (using US short/long term capital gains rates), and
+    select the one with the lowest tax liability.  This includes prioritizing
+    booking losses over gains (i.e., tax loss harvesting)."""
+
+    # TODO: consider the ramifications of always prioritizing this, vs.
+    # a more global tax optimization analysis, since losses aren't always
+    # deductible
+
+    # TODO: provide a more configurable implementation to cover other tax
+    # regimes, as well as support customiziation based on user preferences.
+
+    def us_tax_liability(match: Position):
+        """Compute the US tax liability (per unit) of a given match."""
+        gain_per_unit = posting.price.number - match.cost.number
+        lt_threshold = (match.cost.date.replace(year=match.cost.date.year + 1)
+                        + timedelta(days=1))
+        tax_rate = Decimal("0.2") if entry.date >= lt_threshold else Decimal("0.4")
+        return gain_per_unit * tax_rate
+
+    return _booking_method_xifo(entry, posting, matches,
+                                us_tax_liability,
+                                reverse_order=False)
+
+def _booking_method_xifo(entry, posting, matches, key, reverse_order):
     """FIFO and LIFO booking method implementations."""
     booked_reductions = []
     booked_matches = []
@@ -153,8 +187,7 @@ def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(matches, key=lambda p: p.cost and getattr(p.cost, sortattr),
-                        reverse=reverse_order):
+    for match in sorted(matches, key=key, reverse=reverse_order):
         if remaining <= ZERO:
             break
 
