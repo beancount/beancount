@@ -364,6 +364,7 @@ def categorize_by_currency(entry, balances):
 
     # Finally, try to resolve all the unknown legs using the inventory contents
     # of each account.
+    unknown_leg_resolved_currencies = set()
     for refer in unknown:
         (index, units_currency, cost_currency, price_currency) = refer
         posting = entry.postings[index]
@@ -378,8 +379,14 @@ def categorize_by_currency(entry, balances):
 
         if cost_currency is MISSING or price_currency is MISSING:
             balance_cost_currencies = balance.cost_currencies()
+            balance_cost_currency = None
             if len(balance_cost_currencies) == 1:
                 balance_cost_currency = balance_cost_currencies.pop()
+            elif len(unknown_leg_resolved_currencies) == 1:
+                # TODO: we might pick up non-cost currencies in this set; should
+                # we only add currencies from costs?
+                balance_cost_currency = next(iter(unknown_leg_resolved_currencies))
+            if balance_cost_currency is not None:
                 if price_currency is MISSING:
                     price_currency = balance_cost_currency
                 if cost_currency is MISSING:
@@ -390,6 +397,7 @@ def categorize_by_currency(entry, balances):
         if currency is not None:
             sortdict.setdefault(currency, index)
             groups[currency].append(refer)
+            unknown_leg_resolved_currencies.add(currency)
         else:
             errors.append(
                 CategorizationError(posting.meta,
