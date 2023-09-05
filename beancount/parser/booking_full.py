@@ -84,7 +84,7 @@ from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
-from beancount.core.position import Position
+from beancount.core.position import Position, to_string
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.parser import booking_method
@@ -560,6 +560,15 @@ def book_reductions(entry, group_postings, balances,
 
     empty = inventory.Inventory()
     booked_postings = []
+
+    # Maintain a map of booked reduction info, so that we can later on match
+    # augmenting postings against them.  For an original reduction posting p,
+    # this maps:
+    #   p.units -> (p, List of booked reductions for p)
+    # TODO: this will break if we have multiple reductions for the same units
+    # TODO: this only works if we book reductions before augmentations
+    booked_reductions_by_units = {}
+
     for posting in group_postings:
         # Process a single posting.
         units = posting.units
@@ -638,6 +647,9 @@ def book_reductions(entry, group_postings, balances,
                 # Add the reductions to the resulting list of booked postings.
                 booked_postings.extend(reduction_postings)
 
+                # Index the booked postings 
+                booked_reductions_by_units[units] = reduction_postings
+
                 # Update the local balance in order to avoid matching against
                 # the same postings twice when processing multiple postings in
                 # the same transaction. Note that we only do this for postings
@@ -646,27 +658,39 @@ def book_reductions(entry, group_postings, balances,
                 for posting in reduction_postings:
                     balance.add_position(posting)
             else:
-                # This posting is an augmentation.
+                # This posting is an augmentation.  If it matches a booked
+                # reduction on another account, i.e., appears to be a transfer,
+                # then we copy the booked cost reductions to corresponding
+                # augmenting postings with those costs.
                 #
-                # Note that we do not convert the CostSpec instances to Cost
+                # Otherwise, we do not convert the CostSpec instances to Cost
                 # instances, because we want to let the subsequent interpolation
                 # process able to interpolate either the cost per-unit or the
                 # total cost, separately.
 
-                # Put in the date of the parent Transaction if there is no
-                # explicit date specified on the spec.
-                if costspec.date is None:
-                    dated_costspec = costspec._replace(date=entry.date)
-                    posting = posting._replace(cost=dated_costspec)
+                balancing_units = units._replace(number=-units.number)
+                if balancing_units in booked_reductions_by_units:
+                    reduction_postings = booked_reductions_by_units[balancing_units]
+                    for reduction_posting in reduction_postings:
+                        matched_augmenting_posting = reduction_posting._replace(
+                            units=-reduction_posting.units, account=account)
+                        booked_postings.append(matched_augmenting_posting)
 
-                # FIXME: Insert unique ids for trade tracking; right now this
-                # creates ambiguous matches errors (and it shouldn't).
-                # # Insert a unique label if there isn't one.
-                # if posting.cost is not None and posting.cost.label is None:
-                #     posting = posting._replace(
-                #         cost=posting.cost._replace(label=unique_label()))
+                else:
+                    # Put in the date of the parent Transaction if there is no
+                    # explicit date specified on the spec.
+                    if costspec.date is None:
+                        dated_costspec = costspec._replace(date=entry.date)
+                        posting = posting._replace(cost=dated_costspec)
 
-                booked_postings.append(posting)
+                    # FIXME: Insert unique ids for trade tracking; right now this
+                    # creates ambiguous matches errors (and it shouldn't).
+                    # # Insert a unique label if there isn't one.
+                    # if posting.cost is not None and posting.cost.label is None:
+                    #     posting = posting._replace(
+                    #         cost=posting.cost._replace(label=unique_label()))
+
+                    booked_postings.append(posting)
 
     return booked_postings, errors
 
