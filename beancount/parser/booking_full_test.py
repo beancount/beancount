@@ -1677,6 +1677,30 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           45 HOOL {114.00 USD, 2016-01-17}
         """
 
+    # @book_test(Booking.LTFO)
+    # def test_reduce__multiple_reductions_hifo(self, _, __):
+    #     """
+    #     2016-01-01 * #ante
+    #       Assets:Account           50 HOOL {100.00 USD, 2016-01-01}
+    #       Assets:Account           50 HOOL {116.00 USD, 2016-01-01}
+    #       Assets:Account           50 HOOL {114.00 USD, 2016-01-17}
+
+    #     2016-05-02 * #apply
+    #       Assets:Account          -40 HOOL {}
+    #       Assets:Account          -35 HOOL {}
+    #       Assets:Account          -30 HOOL {}
+
+    #     2016-05-02 * #booked
+    #       Assets:Account          -40 HOOL {116.00 USD, 2016-01-16}
+    #       Assets:Account          -10 HOOL {116.00 USD, 2016-01-16}
+    #       Assets:Account          -25 HOOL {115.00 USD, 2016-01-15}
+    #       Assets:Account          -25 HOOL {115.00 USD, 2016-01-15}
+    #       Assets:Account           -5 HOOL {114.00 USD, 2016-01-17}
+
+    #     2016-01-01 * #ex
+    #       Assets:Account           45 HOOL {114.00 USD, 2016-01-17}
+    #     """
+
     @book_test(Booking.STRICT)
     def test_reduce__multiple_reductions__competing__with_error(self, _, __):
         """

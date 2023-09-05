@@ -306,6 +306,7 @@ _BOOKING_METHODS = {
     Booking.FIFO             : booking_method_FIFO,
     Booking.LIFO             : booking_method_LIFO,
     Booking.HIFO             : booking_method_HIFO,
+    Booking.LTFO             : booking_method_LTFO,
     Booking.NONE             : booking_method_NONE,
     Booking.AVERAGE          : booking_method_AVERAGE,
 }

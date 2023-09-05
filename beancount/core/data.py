@@ -60,6 +60,9 @@ class Booking(enum.Enum):
     # Highest-in first-out in the case of ambiguity.
     HIFO = 'HIFO'
 
+    # Least tax first out
+    LTFO = 'LTFO'
+
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
