@@ -1,0 +1,53 @@
+name: build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  wheels:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu
+          - os: macos
+          - os: windows
+            architecture: AMD64
+          - os: windows
+            architecture: x86
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+        if: runner.os == 'Linux'
+      - uses: bus1/cabuild/action/msdevshell@v1
+        with:
+          architecture: x64
+        if: runner.os == 'Windows' && matrix.architecture == 'AMD64'
+      - uses: bus1/cabuild/action/msdevshell@v1
+        with:
+          architecture: x86
+        if: runner.os == 'Windows' && matrix.architecture == 'x86'
+      - run: pipx run cibuildwheel==2.15.0
+        env:
+          CIBW_SKIP: pp* cp36-* cp37-* *-musllinux*
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_ARCHS_LINUX: x86_64 aarch64
+          CIBW_ARCHS_WINDOWS: ${{ matrix.architecture }}
+      - uses: actions/upload-artifact@v3
+        with:
+          path: wheelhouse/*.whl
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: python -m pip install build
+      - run: python -m build --sdist
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
