@@ -1,0 +1,32 @@
+[build-system]
+build-backend = "mesonpy"
+requires = [
+    "meson-python >= 0.14.0",
+    "meson >= 1.2.1",
+]
+
+[project]
+name = "beancount"
+description = "Command-line Double-Entry Accounting"
+readme = "README.rst"
+authors = [
+    { name = "Martin Blais", email = "blais@furius.ca" },
+]
+requires-python = ">=3.7"
+classifiers = []
+# entr_points={
+#         "console_scripts": [
+#             "bean-check = beancount.scripts.check:main",
+#             "bean-doctor = beancount.scripts.doctor:main",
+#             "bean-example = beancount.scripts.example:main",
+#             "bean-format = beancount.scripts.format:main",
+#             "treeify = beancount.tools.treeify:main",
+#         ]
+#     },
+# ]
+dependencies = [
+    "click",
+    "pytest",
+    "python-dateutil",
+]
+dynamic = ["version"]
