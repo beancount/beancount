@@ -26,7 +26,6 @@ classifiers = []
 # ]
 dependencies = [
     "click",
-    "pytest",
     "python-dateutil",
 ]
 dynamic = ["version"]
