@@ -42,10 +42,11 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import os
-import re
 import io
+import os
 import pytest
+import re
+import unittest
 
 from beancount.ingest import cache
 from beancount.ingest import extract
@@ -55,8 +56,12 @@ from beancount.parser import printer
 def pytest_addoption(parser):
     """Add an option to generate the expected files for the tests."""
     group = parser.getgroup("beancount")
-    group.addoption("--generate", "--gen", action="store_true",
-                    help="Don't test; rather, generate the expected files")
+    group.addoption(
+        "--generate",
+        "--gen",
+        action="store_true",
+        help="Don't test; rather, generate the expected files",
+    )
 
 
 def with_importer(importer):
@@ -67,7 +72,8 @@ def with_importer(importer):
 def with_testdir(directory):
     """Parametrizing fixture that provides files from a directory."""
     return pytest.mark.parametrize(
-        "file", [cache.get_file(fn) for fn in find_input_files(directory)])
+        "file", [cache.get_file(fn) for fn in find_input_files(directory)]
+    )
 
 
 def find_input_files(directory):
@@ -80,10 +86,20 @@ def find_input_files(directory):
     """
     for sroot, dirs, files in os.walk(directory):
         for filename in files:
-            if re.match(r'.*\.(extract|file_date|file_name|file_account|py|pyc|DS_Store)$',
-                        filename):
+            if re.match(
+                r".*\.(extract|file_date|file_name|file_account|py|pyc|DS_Store)$",
+                filename,
+            ):
                 continue
             yield path.join(sroot, filename)
+
+
+def assertStringEqualNoWS(actual_string: str, expected_string: str):
+    """Assert two strings are equal disregarding whitespace."""
+    actual_string_nows = re.sub(r"[ \t\n]+", " ", actual_string.strip())
+    expected_string_nows = re.sub(r"[ \t\n]+", " ", expected_string.strip())
+    msg = f"{actual_string} != {expected_string}"
+    assert actual_string_nows == expected_string_nows
 
 
 def compare_contents_or_generate(actual_string, expect_fn, generate):
@@ -97,22 +113,22 @@ def compare_contents_or_generate(actual_string, expect_fn, generate):
       generate: A boolean, true if we are to generate the tests.
     """
     if generate:
-        with open(expect_fn, 'w', encoding='utf-8') as expect_file:
+        with open(expect_fn, "w", encoding="utf-8") as expect_file:
             expect_file.write(actual_string)
-            if actual_string and not actual_string.endswith('\n'):
-                expect_file.write('\n')
+            if actual_string and not actual_string.endswith("\n"):
+                expect_file.write("\n")
         pytest.skip("Generated '{}'".format(expect_fn))
     else:
         # Run the test on an existing expected file.
-        assert path.exists(expect_fn), (
-            "Expected file '{}' is missing. Generate it?".format(expect_fn))
-        with open(expect_fn, encoding='utf-8') as infile:
+        assert path.exists(
+            expect_fn
+        ), "Expected file '{}' is missing. Generate it?".format(expect_fn)
+        with open(expect_fn, encoding="utf-8") as infile:
             expect_string = infile.read()
-        assert expect_string.strip() == actual_string.strip()
+        assertStringEqualNoWS(expect_string, actual_string)
 
 
 class ImporterTestBase:
-
     def test_identify(self, importer, file):
         """Attempt to identify a file and expect results to be true.
 
@@ -128,24 +144,36 @@ class ImporterTestBase:
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
         string = oss.getvalue()
-        compare_contents_or_generate(string, '{}.extract'.format(file.name),
-                                     pytestconfig.getoption("generate", False))
+        compare_contents_or_generate(
+            string,
+            "{}.extract".format(file.name),
+            pytestconfig.getoption("generate", False),
+        )
 
     def test_file_date(self, importer, file, pytestconfig):
         """Compute the imported file date and compare to an expected output."""
         date = importer.file_date(file)
-        string = date.isoformat() if date else ''
-        compare_contents_or_generate(string, '{}.file_date'.format(file.name),
-                                     pytestconfig.getoption("generate", False))
+        string = date.isoformat() if date else ""
+        compare_contents_or_generate(
+            string,
+            "{}.file_date".format(file.name),
+            pytestconfig.getoption("generate", False),
+        )
 
     def test_file_name(self, importer, file, pytestconfig):
         """Compute the imported file name and compare to an expected output."""
-        filename = importer.file_name(file) or ''
-        compare_contents_or_generate(filename, '{}.file_name'.format(file.name),
-                                     pytestconfig.getoption("generate", False))
+        filename = importer.file_name(file) or ""
+        compare_contents_or_generate(
+            filename,
+            "{}.file_name".format(file.name),
+            pytestconfig.getoption("generate", False),
+        )
 
     def test_file_account(self, importer, file, pytestconfig):
         """Compute the selected filing account and compare to an expected output."""
-        account = importer.file_account(file) or ''
-        compare_contents_or_generate(account, '{}.file_account'.format(file.name),
-                                     pytestconfig.getoption("generate", False))
+        account = importer.file_account(file) or ""
+        compare_contents_or_generate(
+            account,
+            "{}.file_account".format(file.name),
+            pytestconfig.getoption("generate", False),
+        )

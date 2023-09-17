@@ -87,7 +87,7 @@ def validate_open_close(entries, unused_options_map):
             else:
                 try:
                     open_entry = open_map[entry.account]
-                    if entry.date <= open_entry.date:
+                    if entry.date < open_entry.date:
                         errors.append(
                             ValidationError(
                                 entry.meta,

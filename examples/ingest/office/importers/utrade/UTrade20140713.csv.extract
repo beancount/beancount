@@ -1,17 +1,17 @@
 
 2014-04-14 * "(BUY) BOUGHT +CSKO 50 @98.35" ^ut14167001
-  Assets:US:UTrade:Cash    -4925.45 USD             
-  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:Cash    -4925.45 USD
+  Expenses:Financial:Fees      7.95 USD
   Assets:US:UTrade:CSKO          50 CSKO {98.35 USD}
 
 2014-05-08 * "(BUY) BOUGHT +HOOL 121 @79.11" ^ut12040838
-  Assets:US:UTrade:Cash    -9580.26 USD             
-  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:Cash    -9580.26 USD
+  Expenses:Financial:Fees      7.95 USD
   Assets:US:UTrade:HOOL         121 HOOL {79.11 USD}
 
 2014-05-11 * "(BUY) BOUGHT +MSFX 104 @64.39" ^ut41579908
-  Assets:US:UTrade:Cash    -6704.51 USD             
-  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:Cash    -6704.51 USD
+  Expenses:Financial:Fees      7.95 USD
   Assets:US:UTrade:MSFX         104 MSFX {64.39 USD}
 
 2014-05-22 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut54857517
@@ -27,8 +27,8 @@
   Income:US:UTrade:CSKO:Dividend  -9.63 USD
 
 2014-05-28 * "(BUY) BOUGHT +HOOL 92 @52.10" ^ut83788120
-  Assets:US:UTrade:Cash    -4801.15 USD             
-  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:Cash    -4801.15 USD
+  Expenses:Financial:Fees      7.95 USD
   Assets:US:UTrade:HOOL          92 HOOL {52.10 USD}
 
 2014-05-29 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut97871874
@@ -44,8 +44,8 @@
   Income:US:UTrade:HOOL:Dividend  -15.60 USD
 
 2014-06-21 * "(BUY) BOUGHT +MSFX 101 @78.00" ^ut22346704
-  Assets:US:UTrade:Cash    -7885.95 USD             
-  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:Cash    -7885.95 USD
+  Expenses:Financial:Fees      7.95 USD
   Assets:US:UTrade:MSFX         101 MSFX {78.00 USD}
 
 2014-06-23 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut36811051

@@ -4,8 +4,12 @@ Bottle utilities, mostly helpers to do mounts on top of dynamic routes.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import bottle
-from bottle import request
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    import bottle
+    from bottle import request
 
 
 class AttrMapper:

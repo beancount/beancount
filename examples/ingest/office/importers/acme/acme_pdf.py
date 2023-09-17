@@ -26,15 +26,15 @@ def is_pdfminer_installed():
         returncode = subprocess.call(['pdf2txt.py', '-h'],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
+        return returncode == 0
     except (FileNotFoundError, PermissionError):
         try:
             returncode = subprocess.call(['pdf2txt', '-h'],
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
+            return returncode == 0
         except (FileNotFoundError, PermissionError):
             return False
-    else:
-        return returncode == 0
 
 
 def pdf_to_text(filename):

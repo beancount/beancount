@@ -71,7 +71,7 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      A triple of (entries, errors, options_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
       while parsing and validating the file, and "options_map", a dict of the
       options parsed from the file.
@@ -106,7 +106,7 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       dedent: See load_string().
       encoding: See load_string().
     Returns:
-      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      A triple of (entries, errors, options_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
       while parsing and validating the file, and "options_map", a dict of the
       options parsed from the file.
