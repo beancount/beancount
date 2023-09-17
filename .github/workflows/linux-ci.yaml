@@ -8,19 +8,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install -r requirements/dev.txt
-      - run: python setup.py build_ext -i
-      - run: make ctest
-        env:
-          LD_LIBRARY_PATH: ${{ env.pythonLocation }}/lib
-        # The Makefile does not handle older python-config versions.
-        # These tests are however about the pure C code, thus there is
-        # little value in running them for different Python version.
-        if: ${{ matrix.python == '3.9' }}
-      - run: make test
+      - run: python -m pip install pytest
+      - run: python -m pip install . -Cbuilddir=build || cat build/meson-logs/meson-log.txt
+      - run: python -m pytest beancount
