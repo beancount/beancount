@@ -97,21 +97,15 @@ class TestParserInputs(unittest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
-    @classmethod
-    def parse_stdin(cls):
-        entries, errors, _ = parser.parse_file("-")
-        assert entries, "Empty entries: {}".format(entries)
-        assert not errors, "Errors: {}".format(errors)
-
     def test_parse_stdin(self):
-        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
-        code = ('import beancount.parser.parser_test as p; '
-                'p.TestParserInputs.parse_stdin()')
-        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=env,
-                                stdin=subprocess.PIPE)
-        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
-        self.assertEqual(0, pipe.returncode)
+        try:
+            stdin = sys.stdin
+            sys.stdin = io.TextIOWrapper(io.BytesIO(self.INPUT.encode('utf-8')))
+            entries, errors, _ = parser.parse_file("-")
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+        finally:
+            sys.stdin = stdin
 
     def test_parse_None(self):
         # None is treated as the empty string...
