@@ -16,16 +16,7 @@ with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
     __version__ = version_file.read().strip()
 
 
-# Import v3 extension module.
-import warnings
-try:
-    from beancount.cparser import extmodule
-    parse = extmodule.parse
-except ImportError:
-    warnings.warn("Unable to import v3 extension module.")
-
 # Expose the public API.
 del path
 del sys
-del warnings
 from .api import *  # pylint: disable=wildcard-import
