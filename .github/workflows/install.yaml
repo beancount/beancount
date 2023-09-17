@@ -39,9 +39,9 @@ jobs:
         with:
           # The oldest supported python version
           python-version: 3.7
-      - rum: python -m pip install build
+      - run: python -m pip install build
       - run: python -m build --sdist
-      - run: python -m pip install dist/beancount-*.zip
+      - run: python -m pip install dist/beancount-*.tar.gz
       - run: |
           bean-check --help
           bean-doctor --help
