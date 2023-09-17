@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from os import path
 
+from beancount import loader
 from beancount.utils import encryption
 from beancount.utils import test_utils
 
@@ -163,6 +164,36 @@ class TestEncryptedFilesCheck(unittest.TestCase):
             file.write(b'\n\n\n')
             file.flush()
             self.assertTrue(encryption.is_encrypted_file(file.name))
+
+
+class TestLoadIncludesEncrypted(TestEncryptedBase):
+
+    def test_include_encrypted(self):
+        with test_utils.tempdir() as tmpdir:
+            test_utils.create_temporary_files(tmpdir, {
+                'apples.beancount': """
+                  include "oranges.beancount.asc"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+
+            # Encrypt the oranges file and remove the unencrypted file.
+            with open(path.join(tmpdir, 'oranges.beancount')) as infile:
+                self.encrypt_as_file(infile.read(),
+                                     path.join(tmpdir, 'oranges.beancount.asc'))
+            os.remove(path.join(tmpdir, 'oranges.beancount'))
+
+            # Load the top-level file which includes the encrypted file.
+            with test_utils.environ('GNUPGHOME', self.ringdir):
+                entries, errors, options_map = loader.load_file(
+                    path.join(tmpdir, 'apples.beancount'))
+
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertTrue(entries[0].meta['filename'].endswith('/apples.beancount'))
+        self.assertTrue(entries[1].meta['filename'].endswith('/oranges.beancount.asc'))
 
 
 if __name__ == '__main__':
