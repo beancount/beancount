@@ -1,13 +1,17 @@
-name: linux-ci
+name: tests
 on:
   - push
   - pull_request
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu
+          - windows
+          - macos
         python:
           - '3.7'
           - '3.8'
@@ -20,5 +24,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install pytest
-      - run: python -m pip install .
+      - run: python -m pip install . -Csetup-args=--vsenv
       - run: pytest --import-mode=importlib beancount
+        if: runner.os != 'Windows'
