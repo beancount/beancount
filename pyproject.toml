@@ -8,24 +8,36 @@ requires = [
 [project]
 name = "beancount"
 description = "Command-line Double-Entry Accounting"
-readme = "README.rst"
+readme = { content-type = "text/x-rst", text = """
+A double-entry accounting system that uses text files as input.
+
+Beancount defines a simple data format or "language" that lets you
+define financial transaction records in a text file, load them in
+memory and generate and export a variety of reports, such as balance
+sheets or income statements. It also provides a client with an
+SQL-like query language to filter and aggregate financial data, and a
+web interface which renders those reports to HTML. Finally, it
+provides the scaffolding required to automate the conversion of
+external data into one's input file in Beancount syntax.""" }
 authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
+license = { text = "GPL-2.0-only" }
 requires-python = ">=3.7"
-classifiers = []
-# entr_points={
-#         "console_scripts": [
-#             "bean-check = beancount.scripts.check:main",
-#             "bean-doctor = beancount.scripts.doctor:main",
-#             "bean-example = beancount.scripts.example:main",
-#             "bean-format = beancount.scripts.format:main",
-#             "treeify = beancount.tools.treeify:main",
-#         ]
-#     },
-# ]
 dependencies = [
     "click",
     "python-dateutil",
 ]
 dynamic = ["version"]
+
+[project.scripts]
+bean-check = "beancount.scripts.check:main"
+bean-doctor = "beancount.scripts.doctor:main"
+bean-example = "beancount.scripts.example:main"
+bean-format = "beancount.scripts.format:main"
+treeify = "beancount.tools.treeify:main"
+
+[project.urls]
+homepage = "https://beancount.github.io/"
+documentation = "https://beancount.github.io/docs/"
+repository = "https://github.com/beancount/beancount"
