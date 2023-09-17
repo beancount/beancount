@@ -19,7 +19,7 @@ def prevent_run_with_changes():
 
 def benchmark_revision(beancount_file: str, revision: str):
     """Run the benchmark on a particular revision."""
-    args = dict(shell=False, stdout=subprocess.PIPE)
+    args = {'shell': False, 'stdout': subprocess.PIPE}
 
     # Clean up local files. WARNING.
     subprocess.check_call(["make", "clean"], **args)

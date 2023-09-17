@@ -1,6 +1,6 @@
-"""This plugin inserts close directives for all of an account's descendants when an account is
-closed. Unopened parent accounts can also be closed. Any explicitly specified close is left
-untouched.
+"""This plugin inserts close directives for all of an account's descendants when an account
+is closed. Unopened parent accounts can also be closed. Any explicitly specified close is
+left untouched.
 
 For example, given this::
 
@@ -15,8 +15,9 @@ the plugin turns it into::
     2018-11-10 close Assets:Brokerage:AAPL
     2018-11-10 close Assets:Brokerage:ORNG
 
-Invoke this plugin _after_ any plugins that generate `open` directives for account trees that you
-want to auto close. An example is the `auto_accounts` plugin that ships with Beancount::
+Invoke this plugin _after_ any plugins that generate `open` directives for account trees
+that you want to auto close. An example is the `auto_accounts` plugin that ships with
+Beancount::
 
     plugin "beancount.plugins.auto_accounts"
     plugin "beancount.plugins.close_tree"
@@ -47,12 +48,14 @@ def close_tree(entries, unused_options_map):
 
     for entry in entries:
         if isinstance(entry,  Close):
-            subaccounts = [a for a in opens if a.startswith(entry.account + ':') and a not in closes]
+            subaccounts = [a for a in opens
+                           if a.startswith(entry.account + ':') and a not in closes]
             for subacc in subaccounts:
                 meta = data.new_metadata('<beancount.plugins.close_tree>', 0)
                 close_entry = data.Close(meta, entry.date, subacc)
                 new_entries.append(close_entry)
-                closes.add(subacc)  # So we don't attempt to re-close a grandchild that a child closed
+                # So we don't attempt to re-close a grandchild that a child closed
+                closes.add(subacc)
             if entry.account in opens:
                 new_entries.append(entry)
         else:

@@ -506,8 +506,8 @@ class TestLoadCache(unittest.TestCase):
     def test_load_cache_disable(self):
         with test_utils.tempdir() as tmp:
             cache_filename = path.join(tmp, "__{filename}__")
-            for kwargs in [dict(use_cache=False),
-                           dict(use_cache=False, cache_filename=cache_filename)]:
+            for kwargs in [{'use_cache': False},
+                           {'use_cache': False, 'cache_filename': cache_filename}]:
                 loader.initialize(**kwargs)
                 test_utils.create_temporary_files(tmp, {
                     'apples.beancount': """
