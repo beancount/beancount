@@ -3,7 +3,6 @@ __license__ = "GNU GPLv2"
 
 import unittest
 import datetime
-import dateutil
 
 from beancount.utils import date_utils
 
