@@ -25,8 +25,8 @@ authors = [
 license = { text = "GPL-2.0-only" }
 requires-python = ">=3.7"
 dependencies = [
-    "click",
-    "python-dateutil",
+    "click >=7.0",
+    "python-dateutil >=2.6.0",
 ]
 dynamic = ["version"]
 
