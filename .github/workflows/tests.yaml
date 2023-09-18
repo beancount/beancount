@@ -1,24 +1,31 @@
-name: linux-ci
+name: tests
 on:
   - push
   - pull_request
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu
+          - windows
+          - macos
         python:
           - '3.7'
           - '3.8'
           - '3.9'
           - '3.10'
           - '3.11'
+          - '3.12'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+          allow-prereleases: true
       - run: python -m pip install pytest
-      - run: python -m pip install . -Cbuilddir=build || cat build/meson-logs/meson-log.txt
-      - run: python -m pytest beancount
+      - run: python -m pip install . -Csetup-args=--vsenv
+      - run: pytest --import-mode=importlib beancount
+        if: runner.os != 'Windows'

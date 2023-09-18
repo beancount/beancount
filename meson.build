@@ -5,6 +5,7 @@ py = import('python').find_installation(pure: false)
 py.install_sources(
     '''
     beancount/__init__.py
+    beancount/VERSION
     beancount/api.py
     beancount/core/__init__.py
     beancount/core/account.py
@@ -118,6 +119,16 @@ parser_source_hash = run_command(
     check: true,
 ).stdout().strip()
 
+add_project_arguments(
+    '-DPARSER_SOURCE_HASH=@0@'.format(parser_source_hash),
+    '-DBEANCOUNT_VERSION=@0@'.format(meson.project_version()),
+    language: 'c',
+)
+
+if host_machine.system() == 'windows'
+    add_project_arguments('-DYY_NO_UNISTD_H', language: 'c')
+endif
+
 py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
@@ -125,10 +136,6 @@ py.extension_module(
     'beancount/parser/grammar.c',
     'beancount/parser/parser.c',
     'beancount/parser/tokens.c',
-    c_args: [
-        '-DPARSER_SOURCE_HASH="@0@"'.format(parser_source_hash),
-        '-DBEANCOUNT_VERSION="@0@"'.format(meson.project_version()),
-    ],
     install: true,
     subdir: 'beancount/parser',
 )

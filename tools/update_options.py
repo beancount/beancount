@@ -36,7 +36,7 @@ def replace_gdocs_document(http, docid, title, contents):
                                 resumable=True)
     return service.files().update(
         fileId=docid,
-        body=dict(name=title),
+        body={'name': title},
         media_body=media).execute()
 
 
