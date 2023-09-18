@@ -9,12 +9,12 @@ __license__ = "GNU GPLv2"
 
 import re
 import os
+import unicodedata
+
 from os import path
 from typing import Any, Callable, Iterable, Iterator, List, Tuple
 
 import regex
-
-from beancount.utils import regexp_utils
 
 
 # Public type for accounts.
@@ -180,6 +180,11 @@ def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], Lis
         files.sort()
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, sep)
+        # The regex module does not handle Unicode characters in decomposed
+        # form. Python uses the normal form for representing string. However,
+        # some filesystems use the canonical decomposition form.
+        # See https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+        account_name = unicodedata.normalize('NFKC', account_name)
         if is_valid(account_name):
             yield (root, account_name, dirs, files)
 
