@@ -139,8 +139,7 @@ setup(
     install_requires=[
         # Command line parsing.
         "click",
-        # We use dateutil for timezone database definitions. See this
-        # article for context: https://assert.cc/posts/dateutil-preferred/
+        # Used to generate recurring events in beancounr.scripts.example.
         "python-dateutil",
     ],
     entry_points={
