@@ -89,7 +89,6 @@ py.install_sources(
     beancount/utils/memo.py
     beancount/utils/misc_utils.py
     beancount/utils/pager.py
-    beancount/utils/regexp_utils.py
     beancount/utils/snoop.py
     beancount/utils/table.py
     beancount/utils/test_utils.py

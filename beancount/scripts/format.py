@@ -3,9 +3,9 @@ __license__ = "GNU GPLv2"
 
 import collections
 import io
-import re
 
 import click
+import regex
 
 from beancount.core import amount
 from beancount.core import account
@@ -37,7 +37,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # of the stripped prefix and the number.
     match_pairs = []
     for line in contents.splitlines():
-        match = re.match(
+        match = regex.match(
             rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
             rf'({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+'
             rf'((?:{amount.CURRENCY_RE})\b.*)',
@@ -101,10 +101,10 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # Ensure that the file before and after have only whitespace differences.
     # This is a sanity check, to make really sure we never change anything but whitespace,
     # so it's safe.
-    # open('/tmp/before', 'w').write(re.sub(r'[ \t]+', ' ', contents))
-    # open('/tmp/after', 'w').write(re.sub(r'[ \t]+', ' ', formatted_contents))
-    old_stripped = re.sub(r'[ \t\n]+', ' ', contents.rstrip())
-    new_stripped = re.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
+    # open('/tmp/before', 'w').write(regex.sub(r'[ \t]+', ' ', contents))
+    # open('/tmp/after', 'w').write(regex.sub(r'[ \t]+', ' ', formatted_contents))
+    old_stripped = regex.sub(r'[ \t\n]+', ' ', contents.rstrip())
+    new_stripped = regex.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
     assert (old_stripped == new_stripped), (old_stripped, new_stripped)
 
     return formatted_contents
@@ -140,7 +140,7 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
-    match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
+    match_posting = regex.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
         for match in (match_posting(prefix)

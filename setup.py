@@ -141,6 +141,8 @@ setup(
         "click",
         # Used to generate recurring events in beancounr.scripts.example.
         "python-dateutil",
+        # Unicode character class aware regular expressions.
+        "regex",
     ],
     entry_points={
         "console_scripts": [

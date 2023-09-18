@@ -12,6 +12,8 @@ import os
 from os import path
 from typing import Any, Callable, Iterable, Iterator, List, Tuple
 
+import regex
+
 from beancount.utils import regexp_utils
 
 
@@ -29,8 +31,8 @@ sep = ':'
 #   Lu: Uppercase letters.
 #   L: All letters.
 #   Nd: Decimal numbers.
-ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
-ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
+ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
@@ -51,7 +53,7 @@ def is_valid(string: Account) -> bool:
       A boolean, true if the string has the form of an account's name.
     """
     return (isinstance(string, str) and
-            bool(re.match('{}$'.format(ACCOUNT_RE), string)))
+            bool(regex.match('{}$'.format(ACCOUNT_RE), string)))
 
 
 def join(*components: Tuple[str]) -> Account:
