@@ -128,6 +128,7 @@ class TestWalk(test_utils.TmpFilesTestBase):
         'root/Assets/US/Bank/Checking/otherdir/2014-06-08.bank-statement.pdf',
         'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
         'root/Liabilities/US/Bank/',  # Empty directory.
+        'root/Assets/Cäsh/2023-08-18.test.pdf', # Unicode directory name.
     ]
 
     def test_walk(self):
@@ -136,6 +137,10 @@ class TestWalk(test_utils.TmpFilesTestBase):
             for root, account_, dirs, files in account.walk(self.root)]
 
         self.assertEqual([
+            ('/Assets/Cäsh', 'Assets:Cäsh',
+             [],
+             ['2023-08-18.test.pdf']),
+
             ('/Assets/US', 'Assets:US',
              ['Bank'],
              []),
