@@ -43,8 +43,7 @@ def find_repository_root(filename=None):
     if match:
         return match.group(1)
 
-    while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKG-INFO', 'COPYING')):
+    while not path.exists(path.join(filename, 'pyproject.toml')):
         prev_filename = filename
         filename = path.dirname(filename)
         if prev_filename == filename:

@@ -86,15 +86,6 @@ else:
 
 
 install_requires = [
-    # Testing support now uses the pytest module.
-    "pytest",
-    #
-    # Command line parsing.
-    "click",
-    #
-    # We use dateutil for timezone database definitions. See this
-    # article for context: https://assert.cc/posts/dateutil-preferred/
-    "python-dateutil",
 ]
 
 # Create a setup.
@@ -145,7 +136,14 @@ setup(
             extra_compile_args=get_cflags(),
         ),
     ],
-    install_requires=install_requires,
+    install_requires=[
+        # Command line parsing.
+        "click",
+        # Used to generate recurring events in beancounr.scripts.example.
+        "python-dateutil",
+        # Unicode character class aware regular expressions.
+        "regex",
+    ],
     entry_points={
         "console_scripts": [
             "bean-check = beancount.scripts.check:main",

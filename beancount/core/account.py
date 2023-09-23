@@ -9,10 +9,12 @@ __license__ = "GNU GPLv2"
 
 import re
 import os
+import unicodedata
+
 from os import path
 from typing import Any, Callable, Iterable, Iterator, List, Tuple
 
-from beancount.utils import regexp_utils
+import regex
 
 
 # Public type for accounts.
@@ -29,8 +31,8 @@ sep = ':'
 #   Lu: Uppercase letters.
 #   L: All letters.
 #   Nd: Decimal numbers.
-ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
-ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
+ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
@@ -51,7 +53,7 @@ def is_valid(string: Account) -> bool:
       A boolean, true if the string has the form of an account's name.
     """
     return (isinstance(string, str) and
-            bool(re.match('{}$'.format(ACCOUNT_RE), string)))
+            bool(regex.match('{}$'.format(ACCOUNT_RE), string)))
 
 
 def join(*components: Tuple[str]) -> Account:
@@ -178,6 +180,11 @@ def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], Lis
         files.sort()
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, sep)
+        # The regex module does not handle Unicode characters in decomposed
+        # form. Python uses the normal form for representing string. However,
+        # some filesystems use the canonical decomposition form.
+        # See https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+        account_name = unicodedata.normalize('NFKC', account_name)
         if is_valid(account_name):
             yield (root, account_name, dirs, files)
 

@@ -5,11 +5,12 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import re
 import traceback
 from os import path
 from datetime import date
 from decimal import Decimal
+
+import regex
 
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
@@ -91,9 +92,9 @@ def valid_account_regexp(options):
     # Replace the first term of the account regular expression with the specific
     # names allowed under the options configuration. This code is kept in sync
     # with {5672c7270e1e}.
-    return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
-                                               account.sep,
-                                               account.ACC_COMP_NAME_RE))
+    return regex.compile("(?:{})(?:{}{})+".format('|'.join(names),
+                                                  account.sep,
+                                                  account.ACC_COMP_NAME_RE))
 
 
 # A temporary data structure used during parsing to hold and accumulate the
