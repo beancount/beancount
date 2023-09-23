@@ -13,6 +13,8 @@ from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 from beancount.core.amount import Amount
 from beancount.core.number import D
+from beancount.core.number import MISSING
+from beancount.core.flags import FLAG_OKAY
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
@@ -205,11 +207,11 @@ class Posting(NamedTuple):
         of the instances will be unlikely to have metadata.
     """
     account: Account
-    units: Amount
-    cost: Optional[Union[Cost, CostSpec]]
-    price: Optional[Amount]
-    flag: Optional[Flag]
-    meta: Optional[Meta]
+    units: Amount = MISSING
+    cost: Optional[Union[Cost, CostSpec]] = None
+    price: Optional[Amount] = None
+    flag: Optional[Flag] = None
+    meta: Optional[Meta] = None
 
 
 class Transaction(NamedTuple):
@@ -236,12 +238,12 @@ class Transaction(NamedTuple):
     """
     meta: Meta
     date: datetime.date
-    flag: Flag
-    payee: Optional[str]
-    narration: str
-    tags: Set
-    links: Set
-    postings: List[Posting]
+    flag: Flag = FLAG_OKAY
+    payee: Optional[str] = None
+    narration: str = ""
+    tags: Set = frozenset()
+    links: Set = frozenset()
+    postings: List[Posting] = None
 
 
 class TxnPosting(NamedTuple):

@@ -19,6 +19,7 @@ most commonly used ones.
 from .core.number import D
 
 from .core.flags import *  # pylint: disable=wildcard-import
+from .core import flags
 
 from .loader import load_file, load_encrypted_file, load_doc
 
@@ -30,6 +31,7 @@ from .core.data import (
     Booking,
     Directives,
     Options,
+    Posting,
     new_metadata,
     # TODO(blais): Replace this with
     # bn.dfilter(..., bn.dtypes.Transaction).
@@ -37,6 +39,7 @@ from .core.data import (
     # Directive types on its own object.
     # Not on the top-level.
     dtypes,
+    ALL_DIRECTIVES
 )
 
 # For split, join, parent, leaf, root
@@ -78,3 +81,7 @@ from .core.realization import RealAccount, realize
 from .core.prices import PriceMap, build_price_map, get_price, get_latest_price
 
 from .parser.options import get_account_types
+from .parser.printer import format_entry, print_entry, print_entries
+
+for dtype in ALL_DIRECTIVES:
+    globals()[dtype.__name__] = dtype
