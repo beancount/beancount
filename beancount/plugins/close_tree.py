@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 """This plugin inserts close directives for all of an account's descendants when
 an account is closed. Unopened parent accounts can also be closed. Any
 explicitly specified close is left untouched.
-=======
-"""This plugin inserts close directives for all of an account's descendants when an account
-is closed. Unopened parent accounts can also be closed. Any explicitly specified close is
-left untouched.
->>>>>>> github/master
 
 For example, given this::
 
