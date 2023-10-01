@@ -136,12 +136,12 @@ def pad(entries, options_map):
                         new_entry.postings.append(
                             data.Posting(active_pad.account,
                                          diff_position.units, diff_position.cost,
-                                         None, None, None))
+                                         None, None, {}))
                         neg_diff_position = -diff_position
                         new_entry.postings.append(
                             data.Posting(active_pad.source_account,
                                          neg_diff_position.units, neg_diff_position.cost,
-                                         None, None, None))
+                                         None, None, {}))
 
                         # Save it for later insertion after the active pad.
                         new_entries[id(active_pad)].append(new_entry)

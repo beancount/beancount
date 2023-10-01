@@ -46,6 +46,8 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
+        self.assertTrue(all(isinstance(p.meta, dict) for p in entries[3].postings))
+
     @loader.load_doc()
     def test_pad_to_zero(self, entries, errors, __):
         """

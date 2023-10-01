@@ -105,16 +105,16 @@ install_requires = [
     "lxml",
     #
     # This library is needed to parse XML files (for the OFX examples).
-    "beautifulsoup4",
-    #
-    # This library is needed to make requests for price sources.
-    "requests",
-    #
+    'beautifulsoup4',
+
     # This library is needed to identify the character set of a file for
     # import, in order to read its contents and match expressions
     # against it.
-    "chardet",
-    #
+    'chardet',
+
+    # This library is needed to make requests for price sources.
+    'requests',
+
     # This library is used to download and convert the documentation
     # programmatically and to upload lists of holdings to a Google
     # Spreadsheet for live intra-day monitoring.
@@ -148,63 +148,65 @@ setup(
       automate the conversion of external data into one's input file in
       Beancount syntax.
       """,
-    license="GNU GPLv2 only",
-    author="Martin Blais",
-    author_email="blais@furius.ca",
-    url="http://furius.ca/beancount",
-    download_url="https://github.com/beancount/beancount",
-    packages=find_packages(
-        exclude=[
-            "experiments*",
-        ]
-    ),
-    package_data={
-        "beancount": ["VERSION"],
-        "beancount.web": ["*.ico", "*.html", "*.css", "third_party/*.js"],
-        "beancount.reports": ["*.html"],
-        "beancount.utils.file_type_testdata": ["*"],
-    },
-    ext_modules=[
-        Extension(
-            "beancount.parser._parser",
-            include_dirs=["."],
-            sources=[
-                "beancount/parser/decimal.c",
-                "beancount/parser/lexer.c",
-                "beancount/parser/grammar.c",
-                "beancount/parser/parser.c",
-                "beancount/parser/tokens.c",
-            ],
-            define_macros=[
-                ("BEANCOUNT_VERSION", version),
-                ("VC_CHANGESET", vc_changeset),
-                ("VC_TIMESTAMP", int(float(vc_timestamp))),
-                ("PARSER_SOURCE_HASH", hash_parser_source_files()),
-            ],
-            extra_compile_args=get_cflags(),
-        ),
-    ],
-    install_requires=install_requires,
-    entry_points={
-        "console_scripts": [
-            "bean-bake = beancount.scripts.bake:main",
-            "bean-check = beancount.scripts.check:main",
-            "bean-doctor = beancount.scripts.doctor:main",
-            "bean-example = beancount.scripts.example:main",
-            "bean-format = beancount.scripts.format:main",
-            "bean-price = beancount.prices.price:main",
-            "bean-query = beancount.query.shell:main",
-            "bean-report = beancount.reports.report:main",
-            "bean-sql = beancount.scripts.sql:main",
-            "bean-web = beancount.web.web:main",
-            "bean-identify = beancount.ingest.scripts_utils:identify_main",
-            "bean-extract = beancount.ingest.scripts_utils:extract_main",
-            "bean-file = beancount.ingest.scripts_utils:file_main",
-            "treeify = beancount.tools.treeify:main",
-            "upload-to-sheets = beancount.tools.sheets_upload:main",
-        ]
-    },
-    python_requires=">=3.6",
+
+      license="GNU GPLv2 only",
+      author="Martin Blais",
+      author_email="blais@furius.ca",
+      url="http://furius.ca/beancount",
+      download_url="https://github.com/beancount/beancount",
+      packages=find_packages(exclude=['experiments*', ]),
+
+      package_data = {
+          'beancount': ['VERSION'],
+          'beancount.web': ['*.ico',
+                            '*.html',
+                            '*.css',
+                            'third_party/*.js'],
+          'beancount.reports': ['*.html'],
+          'beancount.utils.file_type_testdata': ['*'],
+      },
+
+      ext_modules = [
+          Extension("beancount.parser._parser",
+                    include_dirs=["."],
+                    sources=[
+                        "beancount/parser/decimal.c",
+                        "beancount/parser/lexer.c",
+                        "beancount/parser/grammar.c",
+                        "beancount/parser/parser.c",
+                        "beancount/parser/tokens.c",
+                    ],
+                    define_macros=[
+                        ('BEANCOUNT_VERSION', version),
+                        ('VC_CHANGESET', vc_changeset),
+                        ('VC_TIMESTAMP', int(float(vc_timestamp))),
+                        ('PARSER_SOURCE_HASH', hash_parser_source_files())],
+                extra_compile_args=get_cflags()),
+      ],
+
+      install_requires = install_requires,
+
+      entry_points = {
+          'console_scripts': [
+              'bean-bake = beancount.scripts.bake:main',
+              'bean-check = beancount.scripts.check:main',
+              'bean-doctor = beancount.scripts.doctor:main',
+              'bean-example = beancount.scripts.example:main',
+              'bean-format = beancount.scripts.format:main',
+              'bean-price = beancount.prices.price:main',
+              'bean-query = beancount.query.shell:main',
+              'bean-report = beancount.reports.report:main',
+              'bean-sql = beancount.scripts.sql:main',
+              'bean-web = beancount.web.web:main',
+              'bean-identify = beancount.ingest.scripts_utils:identify_main',
+              'bean-extract = beancount.ingest.scripts_utils:extract_main',
+              'bean-file = beancount.ingest.scripts_utils:file_main',
+              'treeify = beancount.tools.treeify:main',
+              'upload-to-sheets = beancount.tools.sheets_upload:main',
+          ]
+      },
+
+      python_requires='>=3.7',
 )
 
 
