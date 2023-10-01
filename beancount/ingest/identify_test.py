@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 from os import path
 from unittest import mock
+import os
 import re
 import subprocess
 import sys
@@ -92,10 +93,13 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
         # Invoke with new-style imports as script, with an ingest() call in the script.
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            env = os.environ.copy()
+            root = path.normpath(path.join(path.dirname(__file__), '..', '..'))
+            env['PYTHONPATH'] = ':'.join([root, *env.get('PYTHONPATH', '').split(':')])
             output = subprocess.check_output(
                 [sys.executable, path.join(self.tempdir, 'testimport.py'),
                  '--downloads', path.join(self.tempdir, 'Downloads'),
-                 'identify'], shell=False)
+                 'identify'], shell=False, env=env)
         self.assertTrue(re.match(regexp, output.decode().strip()))
 
         # Invoke with old-style imports script via tool (with no ingest() call).
