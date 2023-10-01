@@ -25,7 +25,6 @@ from beancount.core import getters
 from beancount.core import interpolate
 from beancount.core import convert
 from beancount.core import prices
-from beancount.ops import balance
 from beancount.utils import bisect_key
 from beancount.parser import options
 
@@ -403,7 +402,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     # has been transferred away; they would break.
     after_entries = [entry
                      for entry in entries[index:]
-                     if not (isinstance(entry, balance.Balance) and
+                     if not (isinstance(entry, data.Balance) and
                              entry.account in transfer_balances)]
 
     # Split the new entries in a new list.
