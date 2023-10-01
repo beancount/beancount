@@ -1,8 +1,0 @@
-Description: Command-line Double-Entry Accounting
-Official-Homepage: http://furius.ca/beancount
-Author: Martin Blais
-Author-Email: blais@furius.ca
-ChangeLog: http://furius.ca/beancount/CHANGES
-Bugs-Reporting: mailto:blais@furius.ca
-Download-Snapshots: https://github.com/beancount/beancount
-License: GNU GPLv2 only
