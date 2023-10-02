@@ -368,8 +368,6 @@ def render_flag(inflag: Optional[str]) -> str:
     """Render a flag, which can be None, a symbol of a character to a string."""
     if not inflag:
         return ''
-    if re.match(r"[A-Z]$", inflag):
-        return "'{}".format(inflag)
     return inflag
 
 
