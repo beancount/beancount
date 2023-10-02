@@ -101,19 +101,19 @@ class TestOpenClose(cmptest.TestCase):
         2012-01-01 open Assets:US:Checking
         2012-01-01 open Assets:CA:Checking
 
-        2012-05-31 'S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking             6,000 CAD
           Equity:Opening-Balances       -6,000 CAD
 
-        2012-05-31 'S "Opening balance for 'Assets:US:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
           Assets:US:Checking           -18,600 USD
           Equity:Opening-Balances       18,600 USD
 
-        2012-05-31 'S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
+        2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
           Equity:Earnings:Previous      13,600 USD
           Equity:Opening-Balances      -13,600 USD
 
-        2012-05-31 'S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
+        2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
           Equity:Conversions:Previous    5,000 USD
           Equity:Opening-Balances       -5,000 USD
           Equity:Conversions:Previous   -6,000 CAD
@@ -190,7 +190,7 @@ class TestOpenClose(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 'C "Conversion for (-8000 USD, 9750 CAD)"
+        2012-08-31 C "Conversion for (-8000 USD, 9750 CAD)"
           Equity:Conversions:Current    8000 USD  @ 0 NOTHING
           Equity:Conversions:Current   -9750 CAD  @ 0 NOTHING
 
@@ -252,11 +252,11 @@ class TestOpenClose(cmptest.TestCase):
           Expenses:Taxes        3600 USD
           Assets:US:Checking  -13600 USD
 
-        2012-12-31 'T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+        2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
           Expenses:Taxes           -10400 USD
           Equity:Earnings:Current   10400 USD
 
-        2012-12-31 'T "Transfer balance for 'Income:Salary' (Transfer balance)"
+        2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
           Income:Salary             -31000 USD
           Equity:Earnings:Current    31000 USD
 
@@ -299,19 +299,19 @@ class TestOpenClose(cmptest.TestCase):
         2012-01-01 open Assets:US:Checking
         2012-01-01 open Assets:CA:Checking
 
-        2012-05-31 'S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking            6,000 CAD
           Equity:Opening-Balances      -6,000 CAD
 
-        2012-05-31 'S "Opening balance for 'Assets:US:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
           Assets:US:Checking          -18,600 USD
           Equity:Opening-Balances      18,600 USD
 
-        2012-05-31 'S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
+        2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
           Equity:Earnings:Previous     13,600 USD
           Equity:Opening-Balances     -13,600 USD
 
-        2012-05-31 'S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
+        2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
           Equity:Conversions:Previous   5,000 USD
           Equity:Opening-Balances      -5,000 USD
           Equity:Conversions:Previous  -6,000 CAD
@@ -330,15 +330,15 @@ class TestOpenClose(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 'C "Conversion for (-3000 USD, 3750 CAD)"
+        2012-08-31 C "Conversion for (-3000 USD, 3750 CAD)"
           Equity:Conversions:Current    3,000 USD @ 0 NOTHING
           Equity:Conversions:Current   -3,750 CAD @ 0 NOTHING
 
-        2012-12-31 'T "Transfer balance for 'Income:Salary' (Transfer balance)"
+        2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
           Income:Salary               -11,000 USD
           Equity:Earnings:Current      11,000 USD
 
-        2012-12-31 'T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+        2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
           Expenses:Taxes               -3,200 USD
           Equity:Earnings:Current       3,200 USD
 
@@ -414,15 +414,15 @@ class TestClamp(cmptest.TestCase):
         2012-01-01 open Assets:US:Checking
         2012-01-01 open Assets:CA:Checking
 
-        2012-05-31 'S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking              6000.00 CAD
           Equity:Opening-Balances         -6000.00 CAD
 
-        2012-05-31 'S "Opening balance for 'Assets:US:Checking' (Summarization)"
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
           Assets:US:Checking            -18600.00 USD
           Equity:Opening-Balances         18600.00 USD
 
-        2012-05-31 'S "Opening balance for 'Equity:Earnings' (Summarization)"
+        2012-05-31 S "Opening balance for 'Equity:Earnings' (Summarization)"
           Equity:Earnings                13600.00 USD
           Equity:Opening-Balances        -13600.00 USD
 
@@ -439,7 +439,7 @@ class TestClamp(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 'C "Conversion for (-3000.00 USD, 3750.00 CAD)"
+        2012-08-31 C "Conversion for (-3000.00 USD, 3750.00 CAD)"
           Equity:Conversions              3000.00 USD  @ 0 NOTHING
           Equity:Conversions             -3750.00 CAD  @ 0 NOTHING
 
@@ -480,15 +480,15 @@ class TestCap(cmptest.TestCase):
         self.assertIncludesEntries(entries, capd_entries)
         self.assertIncludesEntries("""
 
-        2014-03-01 'T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+        2014-03-01 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
           Expenses:Taxes       -3500.00 USD
           Equity:Earnings       3500.00 USD
 
-        2014-03-01 'T "Transfer balance for 'Income:Salary' (Transfer balance)"
+        2014-03-01 T "Transfer balance for 'Income:Salary' (Transfer balance)"
           Income:Salary       -10000.00 USD
           Equity:Earnings      10000.00 USD
 
-        2014-03-01 'C "Conversion for (-5000.00 USD, 6000.00 CAD)"
+        2014-03-01 C "Conversion for (-5000.00 USD, 6000.00 CAD)"
           Equity:Conversions    5000.00 USD @ 0 NOTHING
           Equity:Conversions   -6000.00 CAD @ 0 NOTHING
 
@@ -649,7 +649,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PERIOD), xfer_entries)
         self.assertIncludesEntries("""
 
-        2010-12-31 'T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -2459.98 USD
           Equity:Transfer                                                       2459.98 USD
 
@@ -665,7 +665,7 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, xfer_entries)
         self.assertIncludesEntries("""
 
-        2010-12-31 'T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
           Assets:US:Investing:HOOL         -5 HOOL {510.00 USD, 2010-12-05} ;   -2550.00 USD
           Equity:Transfer             2550.00 USD                           ;    2550.00 USD
 
@@ -684,7 +684,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PERIOD), xfer_entries)
         self.assertIncludesEntries("""
 
-        2011-02-28 'T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+        2011-02-28 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
           Equity:Transfer                                                       8459.98 USD
 
@@ -699,7 +699,7 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, xfer_entries)
         self.assertIncludesEntries("""
 
-        2011-04-01 'T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+        2011-04-01 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
           Equity:Transfer                                                       8459.98 USD
 
@@ -715,23 +715,23 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, xfer_entries)
         self.assertIncludesEntries("""
 
-        2010-12-31 'T "Transfer balance for 'Expenses:Flights' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Expenses:Flights' (Transfer balance)"
           Expenses:Flights                                                      -345.23 USD
           Equity:Transfer                                                        345.23 USD
 
-        2010-12-31 'T "Transfer balance for 'Expenses:Internet' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Expenses:Internet' (Transfer balance)"
           Expenses:Internet                                                      -80.02 USD
           Equity:Transfer                                                         80.02 USD
 
-        2010-12-31 'T "Transfer balance for 'Expenses:Restaurant' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Expenses:Restaurant' (Transfer balance)"
           Expenses:Restaurant                                                    -67.20 USD
           Equity:Transfer                                                         67.20 USD
 
-        2010-12-31 'T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
           Expenses:Taxes                                                       -4000.00 USD
           Equity:Transfer                                                       4000.00 USD
 
-        2010-12-31 'T "Transfer balance for 'Income:US:Employer:Salary' (Transfer balance)"
+        2010-12-31 T "Transfer balance for 'Income:US:Employer:Salary' (Transfer balance)"
           Income:US:Employer:Salary                                            10000.00 USD
           Equity:Transfer                                                     -10000.00 USD
 
@@ -763,39 +763,39 @@ class TestSummarize(cmptest.TestCase):
                                    entry.flag == flags.FLAG_SUMMARIZE)]
         self.assertEqualEntries("""
 
-        2010-12-31 'S "Opening balance for 'Assets:CA:BMO:Checking' (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:CA:BMO:Checking' (Summarization)"
           Assets:CA:BMO:Checking                                                1000.00 CAD
           Equity:Opening-Balances                                              -1000.00 CAD
 
-        2010-12-31 'S "Opening balance for 'Assets:US:Chase:Checking' (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:US:Chase:Checking' (Summarization)"
           Assets:US:Chase:Checking                                              2459.98 USD
           Equity:Opening-Balances                                              -2459.98 USD
 
-        2010-12-31 'S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
           Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD, 2010-12-05}  ;    2550.00 USD
           Equity:Opening-Balances                                              -2550.00 USD                            ;   -2550.00 USD
 
-        2010-12-31 'S "Opening balance for 'Expenses:Flights' (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
           Expenses:Flights                                                       345.23 USD
           Equity:Opening-Balances                                               -345.23 USD
 
-        2010-12-31 'S "Opening balance for 'Expenses:Internet' (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Internet' (Summarization)"
           Expenses:Internet                                                       80.02 USD
           Equity:Opening-Balances                                                -80.02 USD
 
-        2010-12-31 'S "Opening balance for 'Expenses:Restaurant' (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Restaurant' (Summarization)"
           Expenses:Restaurant                                                     67.20 USD
           Equity:Opening-Balances                                                -67.20 USD
 
-        2010-12-31 'S "Opening balance for 'Expenses:Taxes' (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Taxes' (Summarization)"
           Expenses:Taxes                                                        4000.00 USD
           Equity:Opening-Balances                                              -4000.00 USD
 
-        2010-12-31 'S "Opening balance for 'Income:US:Employer:Salary' (Summarization)"
+        2010-12-31 S "Opening balance for 'Income:US:Employer:Salary' (Summarization)"
           Income:US:Employer:Salary                                           -10000.00 USD
           Equity:Opening-Balances                                              10000.00 USD
 
-        2010-12-31 'S "Opening balance for 'Liabilities:US:Chase:CreditCard' (Summarization)"
+        2010-12-31 S "Opening balance for 'Liabilities:US:Chase:CreditCard' (Summarization)"
           Liabilities:US:Chase:CreditCard                                       -412.43 USD
           Equity:Opening-Balances                                                412.43 USD
 
@@ -901,7 +901,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-02 'C "Conversion for (-800.00 USD, 800.00 CAD)"
+        2012-03-02 C "Conversion for (-800.00 USD, 800.00 CAD)"
           Equity:Conversions       800.00 USD @ 0 NOTHING
           Equity:Conversions      -800.00 CAD @ 0 NOTHING
 
@@ -918,7 +918,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-09 'C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD, 2012-03-03})"
+        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   800.00 USD  @ 0 XFER
           Equity:Conversions  -800.00 CAD  @ 0 XFER
 
@@ -936,7 +936,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-09 'C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
+        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
@@ -951,7 +951,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-01 'C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
+        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
