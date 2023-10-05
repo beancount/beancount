@@ -130,7 +130,9 @@ disable=locally-disabled,
   unused-private-member,
   use-maxsplit-arg,
   use-dict-literal,
-  unnecessary-lambda-assignment
+  unnecessary-lambda-assignment,
+  use-implicit-booleaness-not-comparison-to-string,
+  use-implicit-booleaness-not-comparison-to-zero,
 
 [VARIABLES]
 
