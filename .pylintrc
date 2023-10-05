@@ -22,7 +22,7 @@ persistent=yes
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_protobuf
+load-plugins=
 
 # DEPRECATED
 #include-ids=no
