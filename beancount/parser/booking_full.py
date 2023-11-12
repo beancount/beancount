@@ -698,7 +698,7 @@ def convert_costspec_to_cost(posting):
                 # component involved.
                 units_number = abs(posting.units.number)
                 cost_total = number_total
-                if number_per is not MISSING:
+                if number_per is not MISSING and number_per is not None:
                     cost_total += number_per * units_number
                 unit_cost = cost_total / units_number
             else:
