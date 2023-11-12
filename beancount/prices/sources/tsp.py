@@ -44,7 +44,7 @@ TSP_FUND_NAMES = [
 csv.register_dialect('tsp',
     delimiter=',',
     quoting=csv.QUOTE_NONE,
-    quotechar='',
+    quotechar='"',
     lineterminator='\n')
 
 class TSPError(ValueError):
@@ -131,7 +131,7 @@ class Source(source.Source):
             'InvFunds' : '1'
         }
 
-        response = requests.get(url, params=payload)
+        response = requests.get(url, params=payload, timeout=300)
         result = parse_response(response)
         trade_day = list(result.items())[0]
         prices = trade_day[1]

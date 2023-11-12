@@ -1,8 +1,13 @@
 ========================
    beancount: CHANGES
 ========================
+
 Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
+
+2023-10-05
+
+ - Released 2.3.6 with only a few minor bugfixes.
 
 
 2022-02-15

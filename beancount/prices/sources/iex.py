@@ -25,7 +25,7 @@ def fetch_quote(ticker):
     """Fetch the latest price for the given ticker."""
 
     url = "https://api.iextrading.com/1.0/tops/last?symbols={}".format(ticker.upper())
-    response = requests.get(url)
+    response = requests.get(url, timeout=300)
     if response.status_code != requests.codes.ok:
         raise IEXError("Invalid response ({}): {}".format(
             response.status_code, response.text))

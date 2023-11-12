@@ -1,3 +1,9 @@
+#  module-name-hint, method-name-hint, class-name-hint, class-attribute-name-hint,
+#  inlinevar-name-hint, variable-name-hint, const-name-hint, attr-name-hint,
+#  argument-name-hint, function-name-hint, no-space-check
+
+
+
 [MASTER]
 
 # Specify a configuration file.
@@ -16,7 +22,7 @@ persistent=yes
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_protobuf
+load-plugins=
 
 # DEPRECATED
 #include-ids=no
@@ -31,11 +37,6 @@ load-plugins=pylint_protobuf
 # (visual studio) and html. You can also give a reporter class, eg
 # mypackage.mymodule.MyReporterClass.
 output-format=text
-
-# Put messages in a separate file for each module / package specified on the
-# command line instead of printing them on stdout. Reports (if any) will be
-# written in a file name "pylint_global.[txt|html]".
-files-output=no
 
 # Tells whether to display a full report or only the messages
 reports=no
@@ -86,8 +87,6 @@ disable=locally-disabled,
   too-many-function-args,
   unsubscriptable-object,
   too-many-nested-blocks,
-  no-self-use,
-  redefined-variable-type,
   duplicate-code,
   too-few-public-methods,
   too-many-public-methods,
@@ -121,7 +120,6 @@ disable=locally-disabled,
   c-extension-no-member,
   cyclic-import,
   isinstance-second-argument-not-valid-type,
-  bad-continuation,
   consider-using-f-string,
   consider-using-with,
   unspecified-encoding,
@@ -130,12 +128,11 @@ disable=locally-disabled,
   global-variable-not-assigned,
   useless-suppression,
   unused-private-member,
-  use-maxsplit-arg
-
-
-# Notes:
-#   bad-continuation: Is buggy, see https://github.com/PyCQA/pylint/issues/3512
-
+  use-maxsplit-arg,
+  use-dict-literal,
+  unnecessary-lambda-assignment,
+  use-implicit-booleaness-not-comparison-to-string,
+  use-implicit-booleaness-not-comparison-to-zero,
 
 [VARIABLES]
 
@@ -188,9 +185,6 @@ notes=FIXME,XXX,TODO
 
 [BASIC]
 
-# List of builtins function names that should not be used, separated by a comma
-bad-functions=
-
 # Good variable names which should always be accepted, separated by a comma
 good-names=f,i,j,k,ex,Run,_
 
@@ -208,61 +202,61 @@ include-naming-hint=no
 module-rgx=(([a-z_][a-z0-9_\-]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Naming hint for module names
-module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+##module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Regular expression matching correct method names
 method-rgx=[a-z_][a-zA-Z0-9_]{2,72}$
 
 # Naming hint for method names
-method-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$
+##method-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$
 
 # Regular expression matching correct class names
 class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Naming hint for class names
-class-name-hint=[A-Z_][a-zA-Z0-9]+$
+##class-name-hint=[A-Z_][a-zA-Z0-9]+$
 
 # Regular expression matching correct class attribute names
 class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
 
 # Naming hint for class attribute names
-class-attribute-name-hint=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
+##class-attribute-name-hint=([A-Za-z_][A-Za-z0-9_]{1,30}|(__.*__))$
 
 # Regular expression matching correct inline iteration names
 inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 
 # Naming hint for inline iteration names
-inlinevar-name-hint=[A-Za-z_][A-Za-z0-9_]*$
+##inlinevar-name-hint=[A-Za-z_][A-Za-z0-9_]*$
 
 # Regular expression matching correct variable names
 variable-rgx=(_?[a-z_][a-z0-9_]{1,30}|__|mu|no)$
 
 # Naming hint for variable names
-variable-name-hint=[a-z_][a-z0-9_]{1,30}$
+##variable-name-hint=[a-z_][a-z0-9_]{1,30}$
 
 # Regular expression matching correct constant names
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 
 # Naming hint for constant names
-const-name-hint=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+##const-name-hint=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 
 # Regular expression matching correct attribute names
 attr-rgx=[a-z_][a-z0-9_]{1,30}$
 
 # Naming hint for attribute names
-attr-name-hint=[a-z_][a-z0-9_]{1,30}$
+##attr-name-hint=[a-z_][a-z0-9_]{1,30}$
 
 # Regular expression matching correct argument names
 argument-rgx=(_?[a-z_][a-z0-9_]{1,30}|__|mu)$
 
 # Naming hint for argument names
-argument-name-hint=[a-z_][a-z0-9_]{1,30}$
+##argument-name-hint=[a-z_][a-z0-9_]{1,30}$
 
 # Regular expression matching correct function names
 function-rgx=_?[a-z_][a-zA-Z0-9_]{2,64}$
 
 # Naming hint for function names
-function-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$
+##function-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$
 
 # Regular expression which should only match function or class names that do
 # not require a docstring.
@@ -284,9 +278,6 @@ ignore-long-lines=^\s*(# )?<?https?://\S+>?$
 # Allow the body of an if to be on the same line as the test if there is no
 # else.
 single-line-if-stmt=no
-
-# List of optional constructs for which whitespace checking is disabled
-no-space-check=trailing-comma,dict-separator
 
 # Maximum number of lines in a module
 max-module-lines=1000
@@ -380,10 +371,3 @@ valid-classmethod-first-arg=cls
 
 # List of valid names for the first argument in a metaclass class method.
 valid-metaclass-classmethod-first-arg=mcs
-
-
-[EXCEPTIONS]
-
-# Exceptions that will emit a warning when being caught. Defaults to
-# "Exception"
-overgeneral-exceptions=Exception

@@ -32,7 +32,7 @@ def fetch_quote(ticker, time=None):
     if time is not None:
         options['date'] = time.astimezone(tz.tzutc()).date().isoformat()
 
-    response = requests.get(url, options)
+    response = requests.get(url, options, timeout=300)
     if response.status_code != requests.codes.ok:
         raise CoinbaseError("Invalid response ({}): {}".format(response.status_code,
                                                                response.text))

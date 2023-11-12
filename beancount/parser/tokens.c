@@ -5,9 +5,6 @@
 
 #include <assert.h>
 
-/* The maximum number of lines in a string token. */
-#define LONG_STRING_LINES_MAX 256
-
 
 ssize_t validate_decimal_number(const char* str, char* buffer, size_t len)
 {
@@ -70,12 +67,11 @@ PyObject* pydecimal_from_cstring(const char* str)
     return PyDec_FromCString(buffer, len);
 }
 
-ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* lines)
+ssize_t cunescape(const char* string, size_t len, int strict, char** ret)
 {
     const char* src;
     char* buffer;
     char* dst;
-    int lin = 1;
 
     /* The unescaped string can be at most as long as the escaped
      * string. Make sure we hace space for the string terminator: it
@@ -86,8 +82,6 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
     }
 
     for (src = string, dst = buffer; src < string + len; src++) {
-        if (*src == '\n')
-            lin++;
 
         if (*src != '\\') {
             *dst = *src;
@@ -134,7 +128,6 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* l
     *dst = '\0';
 
     *ret = buffer;
-    *lines = lin;
 
     return dst - buffer;
 }
@@ -143,17 +136,10 @@ PyObject* pyunicode_from_cquotedstring(char* string, size_t len, const char* enc
 {
     char* unescaped = NULL;
     ssize_t r;
-    int lines;
 
-    r = cunescape(string, len, false, &unescaped, &lines);
+    r = cunescape(string, len, false, &unescaped);
     if (r < 0) {
         PyErr_Format(PyExc_ValueError, "Invalid string");
-        free(unescaped);
-        return NULL;
-    }
-
-    if (lines > LONG_STRING_LINES_MAX) {
-        PyErr_Format(PyExc_ValueError, "String too long (%d lines)", lines);
         free(unescaped);
         return NULL;
     }

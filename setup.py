@@ -23,9 +23,11 @@ from setuptools import setup, find_packages, Extension
 # file to the PYTHONPATH directly because it contains a 'parser' module and that
 # overrides the stdlib 'parser' module which is used by setuptools, and causes a
 # subtle bug. That's why I import this utility directly from path).
-hashsrc = runpy.run_path(path.join(path.dirname(__file__),
-                                   'beancount/parser/hashsrc.py'))
-hash_parser_source_files = hashsrc['hash_parser_source_files']
+hashsrc = runpy.run_path(
+    path.join(path.dirname(__file__), "beancount/parser/hashsrc.py")
+)
+hash_parser_source_files = hashsrc["hash_parser_source_files"]
+
 
 def get_cflags():
     "Returns suitable CFLAGS for the platform."
@@ -36,36 +38,42 @@ def get_cflags():
     else:
         return ["-std=gnu99"]
 
+
 # Read the version.
 with open("beancount/VERSION") as version_file:
     version = version_file.read().strip()
 assert isinstance(version, str)
 
+
 def get_hg_changeset():
     """Get the Mercurial changeset id."""
     try:
         output = subprocess.check_output(
-            ['hg', 'parent', '--template', '{node} {date|hgdate}'], shell=False)
-        vc_changeset, vc_timestamp = output.decode('utf-8').split()[:2]
-        vc_changeset = 'hg:{}'.format(vc_changeset)
+            ["hg", "parent", "--template", "{node} {date|hgdate}"], shell=False
+        )
+        vc_changeset, vc_timestamp = output.decode("utf-8").split()[:2]
+        vc_changeset = "hg:{}".format(vc_changeset)
         return vc_changeset, vc_timestamp
     except (subprocess.CalledProcessError, FileNotFoundError, PermissionError):
         return None
 
+
 def get_git_changeset():
     """Get the Git changeset id."""
     try:
-        output = subprocess.check_output(['git', 'log', '--pretty=%H %ct', '-1'],
-                                         shell=False)
-        match = re.match(r'([0-9a-f]+) ([0-9]+)$', output.decode('utf-8').strip())
+        output = subprocess.check_output(
+            ["git", "log", "--pretty=%H %ct", "-1"], shell=False
+        )
+        match = re.match(r"([0-9a-f]+) ([0-9]+)$", output.decode("utf-8").strip())
         if match:
-            vc_changeset = 'git:{}'.format(match.group(1))
+            vc_changeset = "git:{}".format(match.group(1))
             vc_timestamp = match.group(2)
             return vc_changeset, vc_timestamp
         else:
             return None
     except (subprocess.CalledProcessError, FileNotFoundError, PermissionError):
         return None
+
 
 # Get the changeset to bake into the binary.
 for get_changeset in get_git_changeset, get_hg_changeset:
@@ -74,67 +82,61 @@ for get_changeset in get_git_changeset, get_hg_changeset:
         vc_changeset, vc_timestamp = changeset_timestamp
         break
 else:
-    vc_changeset, vc_timestamp = '', 0
+    vc_changeset, vc_timestamp = "", 0
 
 
 install_requires = [
     # Testing support now uses the pytest module.
-    'pytest',
-
-    # This is required to parse dates from command-line options in a
-    # loose, accepting format. Note that we use dateutil for timezone
-    # database definitions as well, although it is inferior to pytz, but
-    # because it can use the OS timezone database in the Windows
-    # registry. See this article for context:
-    # https://www.assert.cc/2014/05/25/which-python-time-zone-library.html
-    # However, for creating offset timezones, we use the datetime.timezone
-    # helper class because it is built-in.
-    # Where this matters is for price source fetchers.
-    # (Note: If pytz supported the Windows registry timezone information,
-    # I would switch to that.)
-    'python-dateutil',
-
+    "pytest",
+    #
+    # We use dateutil for timezone database definitions. See this
+    # article for context: https://assert.cc/posts/dateutil-preferred/
+    "python-dateutil",
+    #
     # The SQL parser uses PLY in order to parse the input syntax.
-    'ply',
-
+    "ply",
+    #
     # The bean-web web application is built on top of this web
     # framework.
-    'bottle',
-
+    "bottle",
+    #
     # This XML parsing library is mainly required to web scrape the
     # bean-web pages for testing.
-    'lxml',
-
+    "lxml",
+    #
     # This library is needed to parse XML files (for the OFX examples).
     'beautifulsoup4',
-
-    # This library is needed to make requests for price sources.
-    'requests',
 
     # This library is needed to identify the character set of a file for
     # import, in order to read its contents and match expressions
     # against it.
     'chardet',
 
+    # This library is needed to make requests for price sources.
+    'requests',
+
     # This library is used to download and convert the documentation
     # programmatically and to upload lists of holdings to a Google
     # Spreadsheet for live intra-day monitoring.
-    'google-api-python-client',
-  
+    "google-api-python-client",
+    #
     # This library is needed to identify the type of a file for
     # import. It uses ctypes to wrap the libmagic library which is
     # not generally available on Windows nor is easily installed,
     # thus the conditional dependency.
-    'python-magic>=0.4.12; sys_platform != "win32"'
+    'python-magic>=0.4.12; sys_platform != "win32"',
+    #
+    # Needed for running tests.
+    "pdfminer2",
 ]
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
-setup(name="beancount",
-      version=version,
-      description="Command-line Double-Entry Accounting",
-      long_description=
-      """
+setup(
+    name="beancount",
+    version=version,
+    description="Command-line Double-Entry Accounting",
+    long_description="""
       A double-entry accounting system that uses text files as input.
 
       Beancount defines a simple data format or "language" that lets you define
@@ -204,7 +206,7 @@ setup(name="beancount",
           ]
       },
 
-      python_requires='>=3.6',
+      python_requires='>=3.7',
 )
 
 

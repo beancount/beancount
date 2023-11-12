@@ -83,7 +83,8 @@ class Source(source.Source):
             'exchange': 'NYSE',
         }
         payload.update(_DEFAULT_PARAMS)
-        response = requests.get(url, params=payload, headers={'User-Agent': None})
+        response = requests.get(url, params=payload, headers={'User-Agent': None},
+                                timeout=300)
         result = parse_response(response)
         try:
             price = D(result['regularMarketPrice'])
@@ -114,7 +115,8 @@ class Source(source.Source):
             'interval': '1d',
         }
         payload.update(_DEFAULT_PARAMS)
-        response = requests.get(url, params=payload, headers={'User-Agent': None})
+        response = requests.get(url, params=payload, headers={'User-Agent': None},
+                                timeout=300)
         result = parse_response(response)
 
         meta = result['meta']

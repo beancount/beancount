@@ -94,9 +94,10 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         # Invoke with new-style imports as script, with an ingest() call in the script.
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             env = os.environ.copy()
-            env['PYTHONPATH'] = ':'.join(sys.path)
+            root = path.normpath(path.join(path.dirname(__file__), '..', '..'))
+            env['PYTHONPATH'] = ':'.join([root, *env.get('PYTHONPATH', '').split(':')])
             output = subprocess.check_output(
-                [path.join(self.tempdir, 'testimport.py'),
+                [sys.executable, path.join(self.tempdir, 'testimport.py'),
                  '--downloads', path.join(self.tempdir, 'Downloads'),
                  'identify'], shell=False, env=env)
         self.assertTrue(re.match(regexp, output.decode().strip()))

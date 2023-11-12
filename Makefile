@@ -138,14 +138,6 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-# Bake a release, upload the source.
-release:
-	rm -rf dist
-	python3 setup.py sdist
-	python3.10 setup.py bdist_egg
-	python3.9 setup.py bdist_egg
-	twine upload dist/*.tar.gz dist/*.egg
-
 vtest vtests verbose-test verbose-tests:
 	$(PYTHON) -m pytest -v -s beancount examples
 
@@ -233,6 +225,9 @@ pylint-only:
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
+
+ruff:
+	ruff beancount examples/ingest/office/importers tools
 
 
 # Check everything.

@@ -78,34 +78,29 @@ void test_cunescape()
 {
     char* unescaped;
     ssize_t len;
-    int lines;
     char* s;
 
     s = "a";
-    len = cunescape(s, strlen(s), true, &unescaped, &lines);
+    len = cunescape(s, strlen(s), true, &unescaped);
     assert(len == 1);
-    assert(lines == 1);
     assert(memcmp(unescaped, "a", len) == 0);
     free(unescaped);
 
     s = "something longer";
-    len = cunescape(s, strlen(s), true, &unescaped, &lines);
+    len = cunescape(s, strlen(s), true, &unescaped);
     assert(len == (ssize_t)strlen(s));
-    assert(lines == 1);
     assert(memcmp(unescaped, "something longer", len) == 0);
     free(unescaped);
 
     s = "more\nthan\none\nline";
-    len = cunescape(s, strlen(s), true, &unescaped, &lines);
+    len = cunescape(s, strlen(s), true, &unescaped);
     assert(len == (ssize_t)strlen(s));
-    assert(lines == 4);
     assert(memcmp(unescaped, "more\nthan\none\nline", len) == 0);
     free(unescaped);
 
     s = "escaping\\n\\r";
-    len = cunescape(s, strlen(s), true, &unescaped, &lines);
+    len = cunescape(s, strlen(s), true, &unescaped);
     assert(len == (ssize_t)strlen(s) - 2);
-    assert(lines == 1);
     assert(memcmp(unescaped, "escaping\n\r", len) == 0);
     free(unescaped);
 }
