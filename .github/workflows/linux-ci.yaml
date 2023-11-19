@@ -25,7 +25,7 @@ jobs:
         # These tests are however about the pure C code, thus there is
         # little value in running them for different Python version.
         if: ${{ matrix.python == '3.9' }}
-      - run: make test
+      - run: python -m pytest beancount examples
       - run: make lint
         # There is no need to run pylint with all Python versions.
         if: ${{ matrix.python == '3.9' }}
