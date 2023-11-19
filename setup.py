@@ -85,51 +85,6 @@ else:
     vc_changeset, vc_timestamp = "", 0
 
 
-install_requires = [
-    # Testing support now uses the pytest module.
-    "pytest",
-    #
-    # We use dateutil for timezone database definitions. See this
-    # article for context: https://assert.cc/posts/dateutil-preferred/
-    "python-dateutil",
-    #
-    # The SQL parser uses PLY in order to parse the input syntax.
-    "ply",
-    #
-    # The bean-web web application is built on top of this web
-    # framework.
-    "bottle",
-    #
-    # This XML parsing library is mainly required to web scrape the
-    # bean-web pages for testing.
-    "lxml",
-    #
-    # This library is needed to parse XML files (for the OFX examples).
-    'beautifulsoup4',
-
-    # This library is needed to identify the character set of a file for
-    # import, in order to read its contents and match expressions
-    # against it.
-    'chardet',
-
-    # This library is needed to make requests for price sources.
-    'requests',
-
-    # This library is used to download and convert the documentation
-    # programmatically and to upload lists of holdings to a Google
-    # Spreadsheet for live intra-day monitoring.
-    "google-api-python-client",
-    #
-    # This library is needed to identify the type of a file for
-    # import. It uses ctypes to wrap the libmagic library which is
-    # not generally available on Windows nor is easily installed,
-    # thus the conditional dependency.
-    'python-magic>=0.4.12; sys_platform != "win32"',
-    #
-    # Needed for running tests.
-    "pdfminer2",
-]
-
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
@@ -184,7 +139,58 @@ setup(
                   extra_compile_args=get_cflags()),
     ],
 
-    install_requires = install_requires,
+    install_requires = [
+        # We use dateutil for timezone database definitions. See this
+        # article for context: https://assert.cc/posts/dateutil-preferred/
+        "python-dateutil",
+
+        # The SQL parser uses PLY in order to parse the input syntax.
+        "ply",
+
+        # The bean-web web application is built on top of this web
+        # framework.
+        "bottle",
+
+        # This XML parsing library is mainly required to web scrape the
+        # bean-web pages for testing.
+        "lxml",
+
+        # This library is needed to parse XML files (for the OFX examples).
+        'beautifulsoup4',
+
+        # This library is needed to identify the character set of a file for
+        # import, in order to read its contents and match expressions
+        # against it.
+        "chardet",
+
+        # This library is needed to make requests for price sources.
+        "requests",
+
+        # This library is used to download and convert the documentation
+        # programmatically and to upload lists of holdings to a Google
+        # Spreadsheet for live intra-day monitoring.
+        "google-api-python-client",
+
+        # This library is needed to identify the type of a file for
+        # import. It uses ctypes to wrap the libmagic library which is
+        # not generally available on Windows nor is easily installed,
+        # thus the conditional dependency.
+        "python-magic>=0.4.12; sys_platform != 'win32'",
+    ],
+
+    extra_require = {
+        "test": [
+            "pytest",
+        ],
+        "examples" : [
+            # pdfminer.six is a maintaned fork of pdfminer. pdfminer
+            # maintenance stopped in 2020. There exists also a
+            # pdfminer2 project, which seems to be a fork of
+            # pdfminer.six without any fucntional chages, but which
+            # distributes a broken pdf2txt.py command line utility.
+            "pdfminer-six",
+        ],
+    },
 
     entry_points = {
         'console_scripts': [
