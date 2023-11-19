@@ -137,76 +137,76 @@ setup(
     version=version,
     description="Command-line Double-Entry Accounting",
     long_description="""
-      A double-entry accounting system that uses text files as input.
+        A double-entry accounting system that uses text files as input.
 
-      Beancount defines a simple data format or "language" that lets you define
-      financial transaction records in a text file, load them in memory and
-      generate and export a variety of reports, such as balance sheets or income
-      statements. It also provides a client with an SQL-like query language to
-      filter and aggregate financial data, and a web interface which renders
-      those reports to HTML. Finally, it provides the scaffolding required to
-      automate the conversion of external data into one's input file in
-      Beancount syntax.
-      """,
+        Beancount defines a simple data format or "language" that lets you define
+        financial transaction records in a text file, load them in memory and
+        generate and export a variety of reports, such as balance sheets or income
+        statements. It also provides a client with an SQL-like query language to
+        filter and aggregate financial data, and a web interface which renders
+        those reports to HTML. Finally, it provides the scaffolding required to
+        automate the conversion of external data into one's input file in
+        Beancount syntax.
+    """,
 
-      license="GNU GPLv2 only",
-      author="Martin Blais",
-      author_email="blais@furius.ca",
-      url="http://furius.ca/beancount",
-      download_url="https://github.com/beancount/beancount",
-      packages=find_packages(exclude=['experiments*', ]),
+    license="GNU GPLv2 only",
+    author="Martin Blais",
+    author_email="blais@furius.ca",
+    url="http://furius.ca/beancount",
+    download_url="https://github.com/beancount/beancount",
+    packages=find_packages(exclude=['experiments*', ]),
 
-      package_data = {
-          'beancount': ['VERSION'],
-          'beancount.web': ['*.ico',
-                            '*.html',
-                            '*.css',
-                            'third_party/*.js'],
-          'beancount.reports': ['*.html'],
-          'beancount.utils.file_type_testdata': ['*'],
-      },
+    package_data = {
+        'beancount': ['VERSION'],
+        'beancount.web': ['*.ico',
+                          '*.html',
+                          '*.css',
+                          'third_party/*.js'],
+        'beancount.reports': ['*.html'],
+        'beancount.utils.file_type_testdata': ['*'],
+    },
 
-      ext_modules = [
-          Extension("beancount.parser._parser",
-                    include_dirs=["."],
-                    sources=[
-                        "beancount/parser/decimal.c",
-                        "beancount/parser/lexer.c",
-                        "beancount/parser/grammar.c",
-                        "beancount/parser/parser.c",
-                        "beancount/parser/tokens.c",
-                    ],
-                    define_macros=[
-                        ('BEANCOUNT_VERSION', version),
-                        ('VC_CHANGESET', vc_changeset),
-                        ('VC_TIMESTAMP', int(float(vc_timestamp))),
-                        ('PARSER_SOURCE_HASH', hash_parser_source_files())],
-                extra_compile_args=get_cflags()),
-      ],
+    ext_modules = [
+        Extension("beancount.parser._parser",
+                  include_dirs=["."],
+                  sources=[
+                      "beancount/parser/decimal.c",
+                      "beancount/parser/lexer.c",
+                      "beancount/parser/grammar.c",
+                      "beancount/parser/parser.c",
+                      "beancount/parser/tokens.c",
+                  ],
+                  define_macros=[
+                      ('BEANCOUNT_VERSION', version),
+                      ('VC_CHANGESET', vc_changeset),
+                      ('VC_TIMESTAMP', int(float(vc_timestamp))),
+                      ('PARSER_SOURCE_HASH', hash_parser_source_files())],
+                  extra_compile_args=get_cflags()),
+    ],
 
-      install_requires = install_requires,
+    install_requires = install_requires,
 
-      entry_points = {
-          'console_scripts': [
-              'bean-bake = beancount.scripts.bake:main',
-              'bean-check = beancount.scripts.check:main',
-              'bean-doctor = beancount.scripts.doctor:main',
-              'bean-example = beancount.scripts.example:main',
-              'bean-format = beancount.scripts.format:main',
-              'bean-price = beancount.prices.price:main',
-              'bean-query = beancount.query.shell:main',
-              'bean-report = beancount.reports.report:main',
-              'bean-sql = beancount.scripts.sql:main',
-              'bean-web = beancount.web.web:main',
-              'bean-identify = beancount.ingest.scripts_utils:identify_main',
-              'bean-extract = beancount.ingest.scripts_utils:extract_main',
-              'bean-file = beancount.ingest.scripts_utils:file_main',
-              'treeify = beancount.tools.treeify:main',
-              'upload-to-sheets = beancount.tools.sheets_upload:main',
-          ]
-      },
+    entry_points = {
+        'console_scripts': [
+            'bean-bake = beancount.scripts.bake:main',
+            'bean-check = beancount.scripts.check:main',
+            'bean-doctor = beancount.scripts.doctor:main',
+            'bean-example = beancount.scripts.example:main',
+            'bean-format = beancount.scripts.format:main',
+            'bean-price = beancount.prices.price:main',
+            'bean-query = beancount.query.shell:main',
+            'bean-report = beancount.reports.report:main',
+            'bean-sql = beancount.scripts.sql:main',
+            'bean-web = beancount.web.web:main',
+            'bean-identify = beancount.ingest.scripts_utils:identify_main',
+            'bean-extract = beancount.ingest.scripts_utils:extract_main',
+            'bean-file = beancount.ingest.scripts_utils:file_main',
+            'treeify = beancount.tools.treeify:main',
+            'upload-to-sheets = beancount.tools.sheets_upload:main',
+        ]
+    },
 
-      python_requires='>=3.7',
+    python_requires='>=3.7',
 )
 
 
