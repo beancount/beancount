@@ -178,7 +178,7 @@ setup(
         "python-magic>=0.4.12; sys_platform != 'win32'",
     ],
 
-    extra_require = {
+    extras_require = {
         "test": [
             "pytest",
         ],
