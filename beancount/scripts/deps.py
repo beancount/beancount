@@ -111,8 +111,9 @@ def check_python_magic():
 
     python-magic is an interface to libmagic, which is used by the 'file' tool
     and UNIX to identify file types. Note that there are two Python wrappers
-    which provide the 'magic' import: python-magic and filemagic. The former is
-    what we need, which appears to be more recently maintained.
+    which provide the 'magic' import: python-magic and filemagic. We support
+    both, but the former is recommended, as it appears to be more recently
+    maintained.
 
     Returns:
       A triple of (package-name, version-number, sufficient) as per
@@ -120,10 +121,6 @@ def check_python_magic():
     """
     try:
         import magic
-        # Check that python-magic and not filemagic is installed.
-        if not hasattr(magic, 'from_file'):
-            # 'filemagic' is installed; install python-magic.
-            raise ImportError
         return ('python-magic', 'OK', True)
     except (ImportError, OSError):
         return ('python-magic', None, False)
