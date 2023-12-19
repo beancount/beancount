@@ -65,7 +65,8 @@ div#right {{ float: right; padding: 2px; padding-right: 10px; }}
 def parse_htaccess(filename):
     documents = collections.defaultdict(list)
     redirects = []
-    for line in open(filename):
+    with open(filename) as f:
+      for line in f:
         match = re.match(r'RedirectMatch /doc/(.+?)\$\s+(.+)$', line)
         if match:
             name, url = match.groups()
