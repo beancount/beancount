@@ -15,6 +15,7 @@ from os import path
 from apiclient import discovery
 import httplib2
 from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
+# TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account
 
 from beancount.parser import options
