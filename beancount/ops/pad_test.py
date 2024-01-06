@@ -3,6 +3,9 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
+import tempfile
+from os import path
+import textwrap
 
 from beancount.core.amount import A
 from beancount.core import inventory
@@ -12,7 +15,6 @@ from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
 from beancount import loader
-
 
 class TestPadding(cmptest.TestCase):
 
@@ -570,6 +572,68 @@ class TestPadding(cmptest.TestCase):
         # self.assertRegex(errors[0].message, "Balance failed")
         # self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
 
+    def test_pad_plugin_modify(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger_fn = path.join(tmpdir, 'my.beancount')
+            with open(ledger_fn, 'w') as ledger_file:
+                ledger_file.write(textwrap.dedent("""
+                    option "insert_pythonpath" "True"
+                    plugin "plugin_temp"
+
+                    2020-01-01 open Equity:Opening-Balances
+                    2020-01-01 open Assets:Checking
+                    2020-01-01 open Assets:Cash
+
+                    2023-02-01 * "Add 20$"
+                      Assets:Checking            20.0 USD
+                      Assets:Cash               -20.0 USD
+
+                    2023-03-01 pad Assets:Checking Equity:Opening-Balances
+                    2023-03-02 balance Assets:Checking 100.0 USD
+                    """))
+
+            plugin_fn = path.join(tmpdir, 'plugin_temp.py')
+            with open(plugin_fn, 'w') as plugin_file:
+                plugin_file.write(textwrap.dedent("""
+                    from beancount.core import data
+
+                    __plugins__ = ('plugin_temp',)
+
+                    def plugin_temp(entries, unused_options_map):
+                        new_entries = list(
+                                e._replace(narration=e.narration + " - Duplicate")
+                                for e in data.filter_txns(entries)
+                                if e.flag == '*'
+                                )
+                        return new_entries + entries, []
+                    """))
+            entries, errors, options_map = loader.load_file(ledger_fn)
+
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+            option "insert_pythonpath" "True"
+            plugin "plugin_temp"
+
+            2020-01-01 open Equity:Opening-Balances
+            2020-01-01 open Assets:Checking
+            2020-01-01 open Assets:Cash
+
+            2023-02-01 * "Add 20$ - Duplicate"
+              Assets:Checking            20.0 USD
+              Assets:Cash               -20.0 USD
+
+            2023-02-01 * "Add 20$"
+              Assets:Checking            20.0 USD
+              Assets:Cash               -20.0 USD
+
+            2023-03-01 pad Assets:Checking Equity:Opening-Balances
+
+            2023-03-01 P "(Padding inserted for Balance of 100.0 USD for difference 60.0 USD)"
+              Assets:Checking                                                        60.0 USD
+              Equity:Opening-Balances                                                -60.0 USD
+
+            2023-03-02 balance Assets:Checking 100.0 USD
+            """, entries)
 
 if __name__ == '__main__':
     unittest.main()
