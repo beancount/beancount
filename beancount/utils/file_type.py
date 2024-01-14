@@ -20,12 +20,6 @@ import mimetypes
 # some file types may not be detected..
 try:
     import magic
-    # If 'filemagic' is installed, ignore it. We require the 'python-magic'
-    # wrapper.
-    if not hasattr(magic, 'from_file'):
-        warnings.warn("You have installed 'filemagic' instead of 'python-magic'; "
-                      "disabling.")
-        magic = None # pylint: disable=invalid-name
 except (ImportError, OSError):
     magic = None
 
@@ -60,7 +54,7 @@ def guess_file_type(filename):
 
     # Try out libmagic, if it is installed.
     if magic:
-        filetype = magic.from_file(filename, mime=True)
+        filetype = magic.detect_from_filename(filename).mime_type
         if isinstance(filetype, bytes):
             filetype = filetype.decode('utf8')
         return filetype
