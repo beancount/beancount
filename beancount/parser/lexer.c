@@ -1,4 +1,4 @@
-#line 1 "beancount/parser/lexer.c"
+#line 2 "beancount/parser/lexer.c"
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -54,7 +54,7 @@ yyscan_t yylex_free(yyscan_t scanner);
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
                       PyObject* missing_obj, yyscan_t scanner);
 
-#line 57 "beancount/parser/lexer.c"
+#line 58 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -866,12 +866,12 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         yycolumn += yyleng;                                   \
     }
 
-#line 869 "beancount/parser/lexer.c"
+#line 870 "beancount/parser/lexer.c"
 
 #line 133 "beancount/parser/lexer.l"
  /* Characters that may be used as flags. Single-character letters may also be
   * used as flags, but must be prefixed by a quote, as in "'P' for "P". */
-#line 874 "beancount/parser/lexer.c"
+#line 875 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1162,7 +1162,7 @@ YY_DECL
 
 
  /* Newlines matter. */
-#line 1165 "beancount/parser/lexer.c"
+#line 1166 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1664,7 +1664,7 @@ YY_RULE_SETUP
 #line 332 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1667 "beancount/parser/lexer.c"
+#line 1668 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
