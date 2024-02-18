@@ -22,9 +22,6 @@ package(default_visibility = [
 py_library(
     name = "account",
     srcs = ["account.py"],
-    deps = [
-        "//beancount/utils:regexp_utils",
-    ],
 )
 
 py_test(

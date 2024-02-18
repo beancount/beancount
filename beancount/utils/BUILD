@@ -140,17 +140,6 @@ py_test(
 )
 
 py_library(
-    name = "regexp_utils",
-    srcs = ["regexp_utils.py"],
-)
-
-py_test(
-    name = "regexp_utils_test",
-    srcs = ["regexp_utils_test.py"],
-    deps = [":regexp_utils"],
-)
-
-py_library(
     name = "snoop",
     srcs = ["snoop.py"],
 )

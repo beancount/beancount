@@ -67,7 +67,7 @@ def _cppbase_dependencies():
         name = "com_google_absl",
         url = "https://github.com/abseil/abseil-cpp/archive/refs/heads/lts_2022_06_23.tar.gz",
         strip_prefix = "abseil-cpp-lts_2022_06_23",
-        sha256 = "5acf752f4c9a6b4d935e73581ebc86c21722d72bc054b1cc8949a55ae179bc59",
+        sha256 = "9c32fdb4a7d8c38f74145aa0d9d33ca639822022968732143fcd2cc5aee86701",
         updated = "2022-09-06",
     )
 
