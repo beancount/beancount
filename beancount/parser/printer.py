@@ -395,13 +395,18 @@ def render_flag(inflag: Optional[str]) -> str:
     return inflag
 
 
-def format_entry(entry, dcontext=None, render_weights=False, prefix=None):
+def format_entry(entry, dcontext=None, render_weights=False, prefix=None, write_source=False):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
       entry: An entry instance.
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
+      write_source: If true a source file and line number will be written for each
+        entry in a format interpretable as a message location for Emacs, VSCode or
+        other editors. This information will be commented out by a semicolon. Which
+        will prevent it from being interpreted as as a metadata, if the output is
+        parsed again. Useful for debugging especially in multi-file setups.
     Returns:
       A string, the formatted entry.
     """
