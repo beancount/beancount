@@ -105,7 +105,7 @@ class EntryPrinter:
     # pylint: disable=invalid-name
 
     def __init__(self, dcontext=None, render_weight=False, min_width_account=None,
-                 prefix=None, stringify_invalid_types=False):
+                 prefix=None, stringify_invalid_types=False, write_source=False):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
         self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
@@ -163,6 +163,25 @@ class EntryPrinter:
                         raise ValueError("Unexpected value: '{!r}'".format(value))
                 if value_str is not None:
                     oss.write("{}{}: {}\n".format(prefix, key, value_str))
+
+    def write_entry_source(self, meta, oss, prefix=None):
+        """Write source file and line number in a format interpretable as a message
+        location for Emacs, VSCode or other editors. This information will be
+        commented out by a semicolon. Which will prevent it from being interpreted
+        as as a metadata, if the output is parsed again. Useful for debugging
+        especially in multi-file setups.
+
+        Args:
+          meta: A dict that contains the metadata for this directive.
+          oss: A file object to write to.
+        """
+        if not self.write_source:
+            return
+
+        if prefix is None:
+            prefix = self.prefix
+
+        oss.write('\n{}; source: {}\n'.format(prefix, render_source(meta)))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
@@ -381,10 +400,12 @@ def format_entry(entry, dcontext=None, render_weights=False, prefix=None):
     Returns:
       A string, the formatted entry.
     """
-    return EntryPrinter(dcontext, render_weights, prefix=prefix)(entry)
+    return EntryPrinter(dcontext, render_weights, prefix=prefix,
+                        write_source=write_source)(entry)
 
 
-def print_entry(entry, dcontext=None, render_weights=False, file=None):
+def print_entry(entry, dcontext=None, render_weights=False, file=None,
+                write_source=False):
     """A convenience function that prints a single entry to a file.
 
     Args:
@@ -392,6 +413,11 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
+      write_source: If true a source file and line number will be written for each
+        entry in a format interpretable as a message location for Emacs, VSCode or
+        other editors. This information will be commented out by a semicolon. Which
+        will prevent it from being interpreted as as a metadata, if the output is
+        parsed again. Useful for debugging especially in multi-file setups.
     """
     # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
     # print in-between other statements.
@@ -405,7 +431,8 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
 # TODO(blais): Change this to a function which accepts the same optional
 # arguments as the printer object. Isolate the spacer/segmentation algorithm to
 # its own function.
-def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None):
+def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None,
+                  write_source=False):
     """A convenience function that prints a list of entries to a file.
 
     Args:
@@ -413,6 +440,12 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
+      prefix: User-specific prefix for custom indentation (for Fava).
+      write_source: If true a source file and line number will be written for each
+        entry in a format interpretable as a message location for Emacs, VSCode or
+        other editors. This information will be commented out by a semicolon. Which
+        will prevent it from being interpreted as as a metadata, if the output is
+        parsed again. Useful for debugging especially in multi-file setups.
     """
     assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
@@ -422,7 +455,7 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None
-    eprinter = EntryPrinter(dcontext, render_weights)
+    eprinter = EntryPrinter(dcontext, render_weights, write_source=write_source)
     for entry in entries:
         # Insert a newline between transactions and between blocks of directives
         # of the same type.
