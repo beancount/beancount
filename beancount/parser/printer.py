@@ -124,6 +124,10 @@ class EntryPrinter:
           A string, the rendered directive.
         """
         oss = io.StringIO()
+
+        # We write optional entry source for every entry type, hence writing it here
+        self.write_entry_source(obj.meta, oss, prefix="")
+
         method = getattr(self, obj.__class__.__name__)
         method(obj, oss)
         return oss.getvalue()
