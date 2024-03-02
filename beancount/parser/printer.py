@@ -113,6 +113,7 @@ class EntryPrinter:
         self.min_width_account = min_width_account
         self.prefix = prefix or '  '
         self.stringify_invalid_types = stringify_invalid_types
+        self.write_source = write_source
 
     def __call__(self, obj):
         """Render a directive.
