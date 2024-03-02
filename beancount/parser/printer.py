@@ -171,14 +171,14 @@ class EntryPrinter:
 
     def write_entry_source(self, meta, oss, prefix=None):
         """Write source file and line number in a format interpretable as a message
-        location for Emacs, VSCode or other editors. This information will be
-        commented out by a semicolon. Which will prevent it from being interpreted
-        as as a metadata, if the output is parsed again. Useful for debugging
-        especially in multi-file setups.
+        location for Emacs, VSCode or other editors. As this is for
+        "debugging" purposes, this information will be commented out by a
+        semicolon.
 
         Args:
           meta: A dict that contains the metadata for this directive.
           oss: A file object to write to.
+          prefix: User-specific prefix for custom indentation
         """
         if not self.write_source:
             return
@@ -395,18 +395,19 @@ def render_flag(inflag: Optional[str]) -> str:
     return inflag
 
 
-def format_entry(entry, dcontext=None, render_weights=False, prefix=None, write_source=False):
+def format_entry(entry, dcontext=None, render_weights=False, prefix=None,
+                 write_source=False):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
       entry: An entry instance.
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
-      write_source: If true a source file and line number will be written for each
-        entry in a format interpretable as a message location for Emacs, VSCode or
-        other editors. This information will be commented out by a semicolon. Which
-        will prevent it from being interpreted as as a metadata, if the output is
-        parsed again. Useful for debugging especially in multi-file setups.
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. As this is for
+        "debugging" purposes, this information will be commented out by a
+        semicolon.
     Returns:
       A string, the formatted entry.
     """
@@ -423,11 +424,10 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None,
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
-      write_source: If true a source file and line number will be written for each
-        entry in a format interpretable as a message location for Emacs, VSCode or
-        other editors. This information will be commented out by a semicolon. Which
-        will prevent it from being interpreted as as a metadata, if the output is
-        parsed again. Useful for debugging especially in multi-file setups.
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. This is usefull for "debugging" peurposes,
+        especially in a multi-file setup
     """
     # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
     # print in-between other statements.
@@ -451,11 +451,10 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
       prefix: User-specific prefix for custom indentation (for Fava).
-      write_source: If true a source file and line number will be written for each
-        entry in a format interpretable as a message location for Emacs, VSCode or
-        other editors. This information will be commented out by a semicolon. Which
-        will prevent it from being interpreted as as a metadata, if the output is
-        parsed again. Useful for debugging especially in multi-file setups.
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. This is usefull for "debugging" peurposes,
+        especially in a multi-file setup
     """
     assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
