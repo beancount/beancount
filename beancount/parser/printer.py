@@ -434,7 +434,8 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None,
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
                       if hasattr(sys.stdout, 'buffer') else
                       sys.stdout)
-    output.write(format_entry(entry, dcontext, render_weights))
+    output.write(format_entry(entry, dcontext, render_weights,
+                              write_source=write_source))
     output.write('\n')
 
 
