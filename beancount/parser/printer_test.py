@@ -244,6 +244,7 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via StringIO"):
             self.assertRoundTrip(entries, errors)
 
+        #TODO: This test fails on Windows for the entry with escaped symbols
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
