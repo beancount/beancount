@@ -186,7 +186,7 @@ class EntryPrinter:
         if prefix is None:
             prefix = self.prefix
 
-        oss.write('\n{}; source: {}\n'.format(prefix, render_source(meta)))
+        oss.write('{}; source: {}\n'.format(prefix, render_source(meta)))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
@@ -470,7 +470,7 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         # of the same type.
         entry_type = type(entry)
         if (entry_type in (data.Transaction, data.Commodity) or
-            entry_type is not previous_type):
+            entry_type is not previous_type or write_source):
             output.write('\n')
             previous_type = entry_type
 
