@@ -105,7 +105,7 @@ class EntryPrinter:
     # pylint: disable=invalid-name
 
     def __init__(self, dcontext=None, render_weight=False, min_width_account=None,
-                 prefix=None, stringify_invalid_types=False):
+                 prefix=None, stringify_invalid_types=False, write_source=False):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
         self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
@@ -113,6 +113,7 @@ class EntryPrinter:
         self.min_width_account = min_width_account
         self.prefix = prefix or '  '
         self.stringify_invalid_types = stringify_invalid_types
+        self.write_source = write_source
 
     def __call__(self, obj):
         """Render a directive.
@@ -123,6 +124,10 @@ class EntryPrinter:
           A string, the rendered directive.
         """
         oss = io.StringIO()
+
+        # We write optional entry source for every entry type, hence writing it here
+        self.write_entry_source(obj.meta, oss, prefix="")
+
         method = getattr(self, obj.__class__.__name__)
         method(obj, oss)
         return oss.getvalue()
@@ -163,6 +168,25 @@ class EntryPrinter:
                         raise ValueError("Unexpected value: '{!r}'".format(value))
                 if value_str is not None:
                     oss.write("{}{}: {}\n".format(prefix, key, value_str))
+
+    def write_entry_source(self, meta, oss, prefix=None):
+        """Write source file and line number in a format interpretable as a message
+        location for Emacs, VSCode or other editors. As this is for
+        "debugging" purposes, this information will be commented out by a
+        semicolon.
+
+        Args:
+          meta: A dict that contains the metadata for this directive.
+          oss: A file object to write to.
+          prefix: User-specific prefix for custom indentation
+        """
+        if not self.write_source:
+            return
+
+        if prefix is None:
+            prefix = self.prefix
+
+        oss.write('{}; source: {}\n'.format(prefix, render_source(meta)))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
@@ -371,20 +395,28 @@ def render_flag(inflag: Optional[str]) -> str:
     return inflag
 
 
-def format_entry(entry, dcontext=None, render_weights=False, prefix=None):
+def format_entry(entry, dcontext=None, render_weights=False, prefix=None,
+                 write_source=False):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
       entry: An entry instance.
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. As this is for
+        "debugging" purposes, this information will be commented out by a
+        semicolon.
     Returns:
       A string, the formatted entry.
     """
-    return EntryPrinter(dcontext, render_weights, prefix=prefix)(entry)
+    return EntryPrinter(dcontext, render_weights, prefix=prefix,
+                        write_source=write_source)(entry)
 
 
-def print_entry(entry, dcontext=None, render_weights=False, file=None):
+def print_entry(entry, dcontext=None, render_weights=False, file=None,
+                write_source=False):
     """A convenience function that prints a single entry to a file.
 
     Args:
@@ -392,20 +424,26 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. This is usefull for "debugging" peurposes,
+        especially in a multi-file setup
     """
     # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
     # print in-between other statements.
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
                       if hasattr(sys.stdout, 'buffer') else
                       sys.stdout)
-    output.write(format_entry(entry, dcontext, render_weights))
+    output.write(format_entry(entry, dcontext, render_weights,
+                              write_source=write_source))
     output.write('\n')
 
 
 # TODO(blais): Change this to a function which accepts the same optional
 # arguments as the printer object. Isolate the spacer/segmentation algorithm to
 # its own function.
-def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None):
+def print_entries(entries, dcontext=None, render_weights=False, file=None, prefix=None,
+                  write_source=False):
     """A convenience function that prints a list of entries to a file.
 
     Args:
@@ -413,6 +451,11 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
+      prefix: User-specific prefix for custom indentation (for Fava).
+      write_source: If true a source file and line number will be written for
+        each entry in a format interpretable as a message location for Emacs,
+        VSCode or other editors. This is usefull for "debugging" peurposes,
+        especially in a multi-file setup
     """
     assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
     output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
@@ -422,13 +465,13 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None
-    eprinter = EntryPrinter(dcontext, render_weights)
+    eprinter = EntryPrinter(dcontext, render_weights, write_source=write_source)
     for entry in entries:
         # Insert a newline between transactions and between blocks of directives
         # of the same type.
         entry_type = type(entry)
         if (entry_type in (data.Transaction, data.Commodity) or
-            entry_type is not previous_type):
+            entry_type is not previous_type or write_source):
             output.write('\n')
             previous_type = entry_type
 
