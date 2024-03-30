@@ -79,7 +79,7 @@ def add_implicit_prices(entries, unused_options_map):
                     # reducing leg?  Check.
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     meta[METADATA_FIELD] = "from_cost"
-                    price_entry = data.Price(meta, entry.date,
+                    price_entry = data.Price(meta, cost.date,
                                              units.currency,
                                              amount.Amount(cost.number, cost.currency))
                 else:
