@@ -1,7 +1,4 @@
-"""A plugin of plugins which triggers are all the pedantic plugins.
-
-In a sense, this is the inverse of "pedantic." This is useful when doing some
-types of quick and dirty tests.
+"""A plugin of plugins which triggers all the pedantic plugins.
 """
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
