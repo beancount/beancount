@@ -182,6 +182,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %token <string> LPAREN     /* ( */
 %token <string> RPAREN     /* ) */
 %token <character> FLAG    /* Valid characters for flags */
+%token <character> CAPITAL /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
 %token OPEN                /* 'open' keyword */
@@ -215,6 +216,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 /* Types for non-terminal symbols. */
 %type <character> txn
 %type <character> optflag
+%type <pyobj> currency
 %type <pyobj> account
 %type <pyobj> transaction
 %type <pyobj> posting
@@ -275,7 +277,7 @@ void yyerror(YYLTYPE* loc, yyscan_t scanner, PyObject* builder, char const* mess
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 7
+%expect 8
 
 
 /*--------------------------------------------------------------------------------*/
@@ -299,6 +301,10 @@ txn:
   | HASH
     {
         $$ = '#';
+    }
+  | CAPITAL
+    {
+        $$ = $1;
     }
 
 eol: EOL | YYEOF
@@ -341,6 +347,16 @@ number_expr:
   | LPAREN number_expr RPAREN
     {
         $$ = $2;
+    }
+
+currency:
+  CURRENCY
+    {
+        $$ = $1;
+    }
+  | CAPITAL
+    {
+        $$ = PyUnicode_FromStringAndSize(&$1, 1);
     }
 
 txn_strings:
@@ -399,6 +415,7 @@ optflag:
         $$ = '#';
     }
   | FLAG
+  | CAPITAL
 
 price_annotation:
   incomplete_amount
@@ -449,7 +466,7 @@ key_value_value:
   STRING
   | account
   | DATE
-  | CURRENCY
+  | currency
   | TAG
   | BOOL
   | NONE
@@ -509,12 +526,12 @@ currency_list:
         Py_INCREF(Py_None);
         $$ = Py_None;
     }
-  | CURRENCY
+  | currency
     {
         BUILDY(DECREF($1),
                $$, "handle_list", "OO", Py_None, $1);
     }
-  | currency_list COMMA CURRENCY
+  | currency_list COMMA currency
     {
         BUILDY(DECREF($1, $3),
                $$, "handle_list", "OO", $1, $3);
@@ -574,7 +591,7 @@ close:
     }
 
 commodity:
-  DATE COMMODITY CURRENCY eol key_value_list
+  DATE COMMODITY currency eol key_value_list
     {
         BUILDY(DECREF($1, $3, $5),
                $$, "commodity", "OOO", $1, $3, $5);
@@ -595,21 +612,21 @@ balance:
     }
 
 amount:
-  number_expr CURRENCY
+  number_expr currency
     {
         BUILDY(DECREF($1, $2),
                $$, "amount", "OO", $1, $2);
     }
 
 amount_tolerance:
-  number_expr CURRENCY
+  number_expr currency
     {
         BUILDY(DECREF($1, $2),
                $$.pyobj1, "amount", "OO", $1, $2);
         $$.pyobj2 = Py_None;
         Py_INCREF(Py_None);
     }
-  | number_expr TILDE number_expr CURRENCY
+  | number_expr TILDE number_expr currency
     {
         BUILDY(DECREF($1, $4),
                $$.pyobj1, "amount", "OO", $1, $4);
@@ -625,7 +642,7 @@ maybe_number:
     }
 
 maybe_currency:
-  CURRENCY
+  currency
   | %empty
     {
         Py_INCREF(MISSING_OBJ);
@@ -633,7 +650,7 @@ maybe_currency:
     }
 
 compound_amount:
-  maybe_number CURRENCY
+  maybe_number currency
     {
         BUILDY(DECREF($1, $2),
                $$, "compound_amount", "OOO", $1, Py_None, $2);
@@ -643,7 +660,7 @@ compound_amount:
         BUILDY(DECREF($1, $2),
                $$, "compound_amount", "OOO", $1, Py_None, $2);
     }
-  | maybe_number HASH maybe_number CURRENCY
+  | maybe_number HASH maybe_number currency
     {
         BUILDY(DECREF($1, $3, $4),
                $$, "compound_amount", "OOO", $1, $3, $4);
@@ -702,7 +719,7 @@ cost_comp:
     }
 
 price:
-  DATE PRICE CURRENCY amount eol key_value_list
+  DATE PRICE currency amount eol key_value_list
     {
         BUILDY(DECREF($1, $3, $4, $6),
                $$, "price", "OOOO", $1, $3, $4, $6);

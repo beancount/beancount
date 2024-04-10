@@ -2,7 +2,7 @@
 
 Note that:
 
-- This is using a local Python runtime, which must be 3.10
+- This is using a hermetic Python runtime, which must be 3.10.
 - The pip package for 'protobuf' version *must* match that which is in use in
   this build.
 - Your version of Bazel installed must match that which is used in the github
@@ -10,6 +10,49 @@ Note that:
 
 """
 workspace(name="beancount")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+#------------------------------------------------------------------------------
+# Support for Hermetic Python 3.10 build.
+
+rules_python_version = "93f5ea2f01ce7eb870d3ad3943eda5d354cdaac5"
+
+http_archive(
+    name = "rules_python",
+    strip_prefix = "rules_python-{}".format(rules_python_version),
+    url = "https://github.com/bazelbuild/rules_python/archive/{}.zip".format(rules_python_version),
+    sha256 = "179541b519e8fd7c8fbfd0d2a2a51835cf7c83bd6a8f0f3fd599a0910d1a0981"
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+py_repositories()
+
+python_register_toolchains(
+    name = "python3_10",
+    python_version = "3.10",
+)
+
+load("@python3_10//:defs.bzl", "interpreter")
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+   name = "pypi",
+   requirements_lock = "//requirements:dev_lock.txt",
+   python_interpreter_target = interpreter,
+)
+
+load("@pypi//:requirements.bzl", "install_deps")
+
+install_deps()
+
+pip_parse(
+   name = "pypi_tools",
+   requirements_lock = "//requirements:tools_lock.txt",
+   python_interpreter_target = interpreter,
+)
 
 #------------------------------------------------------------------------------
 # Direct dependencies of Beancount.
@@ -20,7 +63,6 @@ workspace(name="beancount")
 # all the related files. We use maybe_http_archive() throughout.
 
 # Allow an external python_configure() definition to be pulled from pybind11_bael.
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "pybind11_bazel",
     url = "https://github.com/pybind/pybind11_bazel/archive/faf56fb3df11287f26dbc66fdedf60a2fc2c6631.zip",
@@ -29,7 +71,9 @@ http_archive(
 )  # updated = "2022-11-03",
 
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
-python_configure(name = "local_config_python")
+
+# Note: If not using Hermetic, remove the 'python_interpreter_target = interpreter' bit.
+python_configure(name = "local_config_python", python_interpreter_target = interpreter)
 bind(
     name = "python_headers",
     actual = "@local_config_python//:python_headers",

@@ -8,8 +8,6 @@ import datetime
 import os
 import time
 
-import dateutil.parser
-
 
 def iter_dates(start_date, end_date):
     """Yield all the dates between 'start_date' and 'end_date'.
@@ -25,24 +23,6 @@ def iter_dates(start_date, end_date):
     while date < end_date:
         yield date
         date += oneday
-
-
-def parse_date_liberally(string, parse_kwargs_dict=None):
-    """Parse arbitrary strings to dates.
-
-    This function is intended to support liberal inputs, so that we can use it
-    in accepting user-specified dates on command-line scripts.
-
-    Args:
-      string: A string to parse.
-      parse_kwargs_dict: Dict of kwargs to pass to dateutil parser.
-    Returns:
-      A datetime.date object.
-    """
-    # At the moment, rely on the most excellent dateutil.
-    if parse_kwargs_dict is None:
-        parse_kwargs_dict = {}
-    return dateutil.parser.parse(string, **parse_kwargs_dict).date()
 
 
 def render_ofx_date(dtime):

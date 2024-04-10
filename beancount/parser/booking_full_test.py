@@ -1402,7 +1402,7 @@ class TestBookAugmentations(_BookingTestBase):
           Assets:Account          1 HOOL {100.00 USD, 2015-10-01}
 
         2015-10-01 * #reduced
-          'S Assets:Account        1 HOOL {100.00 USD, 2015-10-01}
+          S Assets:Account        1 HOOL {100.00 USD, 2015-10-01}
         """
 
     @book_test(Booking.STRICT)
@@ -1415,7 +1415,7 @@ class TestBookAugmentations(_BookingTestBase):
           Assets:Account          -1 HOOL {100.00 USD, 2015-10-01}
 
         2015-10-01 * #reduced
-          'S Assets:Account        -1 HOOL {100.00 USD, 2015-10-01}
+          S Assets:Account        -1 HOOL {100.00 USD, 2015-10-01}
         """
 
     @book_test(Booking.STRICT)
@@ -1446,7 +1446,7 @@ class TestBookAugmentations(_BookingTestBase):
           Assets:Account          1 HOOL {0 USD, 2015-10-01}
 
         2015-10-01 * #reduced
-          'S Assets:Account          1 HOOL {USD, 2015-10-01}
+          S Assets:Account          1 HOOL {USD, 2015-10-01}
         """
         # Further test what would happen if book_reductions() would be called anyhow.
         entry = find_first_with_tag('apply', entries)
@@ -1579,7 +1579,7 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
 
         2016-05-02 * #reduced
-          'S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
+          S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
 
         2016-01-01 * #ex
           Assets:Account           1 HOOL {115.00 USD, 2016-01-01}
@@ -1601,7 +1601,7 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
 
         2016-05-02 * #reduced
-          'S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
+          S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
 
         2016-01-01 * #ex
           Assets:Account           1 HOOL {115.00 USD, 2016-01-01}
@@ -2105,7 +2105,7 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
           Assets:Account          0 HOOL {}
 
         2015-02-22 * #reduced
-          'S Assets:Account          0 HOOL {USD, 2015-02-22}
+          S Assets:Account          0 HOOL {USD, 2015-02-22}
 
         2015-02-22 * #booked
 
@@ -2262,7 +2262,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
           Assets:Account          0 HOOL {}
 
         2015-02-22 * #reduced
-          'S Assets:Account          0 HOOL {USD, 2015-02-22}
+          S Assets:Account          0 HOOL {USD, 2015-02-22}
 
         2015-02-22 * #booked
 

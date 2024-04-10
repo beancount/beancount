@@ -1234,6 +1234,7 @@ class TestCurrencies(unittest.TestCase):
           2014-01-19 open Assets:Period        DJ.EURO
           2014-01-19 open Assets:Apostrophe    DJ'EURO
           2014-01-19 open Assets:Numbers       EURO123
+          2014-01-19 open Assets:Short         V
         """
         self.assertFalse(errors)
 

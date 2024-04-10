@@ -42,7 +42,6 @@ LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 # List of default plugins to run.
 PLUGINS_PRE = [
-    ("beancount.ops.pad", None),
     ("beancount.ops.documents", None),
     ]
 
@@ -54,6 +53,7 @@ DEFAULT_PLUGINS_AUTO = [
 PLUGINS_AUTO = []
 
 PLUGINS_POST = [
+    ("beancount.ops.pad", None),
     ("beancount.ops.balance", None),
     ]
 

@@ -1,0 +1,91 @@
+[build-system]
+build-backend = "mesonpy"
+requires = [
+    "meson-python >= 0.14.0",
+    "meson >= 1.2.1",
+]
+
+[project]
+name = "beancount"
+description = "Command-line Double-Entry Accounting"
+readme = { content-type = "text/x-rst", text = """
+A double-entry accounting system that uses text files as input.
+
+Beancount defines a simple data format or "language" that lets you
+define financial transaction records in a text file, load them in
+memory and generate and export a variety of reports, such as balance
+sheets or income statements. It also provides a client with an
+SQL-like query language to filter and aggregate financial data, and a
+web interface which renders those reports to HTML. Finally, it
+provides the scaffolding required to automate the conversion of
+external data into one's input file in Beancount syntax.""" }
+authors = [
+    { name = "Martin Blais", email = "blais@furius.ca" },
+]
+license = { text = "GPL-2.0-only" }
+requires-python = ">=3.7"
+dependencies = [
+    "click >=7.0",
+    "python-dateutil >=2.6.0",
+    "regex >=2022.9.13",
+]
+dynamic = ["version"]
+
+[project.scripts]
+bean-check = "beancount.scripts.check:main"
+bean-doctor = "beancount.scripts.doctor:main"
+bean-example = "beancount.scripts.example:main"
+bean-format = "beancount.scripts.format:main"
+treeify = "beancount.tools.treeify:main"
+
+[project.urls]
+homepage = "https://beancount.github.io/"
+documentation = "https://beancount.github.io/docs/"
+repository = "https://github.com/beancount/beancount"
+
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["E", "F", "PL", "PD"]
+ignore = []
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+per-file-ignores = {}
+
+# Same as Black.
+line-length = 92
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.11.
+target-version = "py311"
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
