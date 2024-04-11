@@ -76,7 +76,6 @@ import collections
 import copy
 import enum
 from decimal import Decimal
-from typing import Text
 import uuid
 
 from beancount.core.number import MISSING
@@ -93,7 +92,7 @@ from beancount.core import inventory
 from beancount.core import interpolate
 
 
-def unique_label() -> Text:
+def unique_label() -> str:
     "Return a globally unique label for cost entries."
     return str(uuid.uuid4())
 

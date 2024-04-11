@@ -67,7 +67,7 @@ class TestLexer(unittest.TestCase):
           #sometag123
           ^sometag123
           somekey:
-          % # 'V 'C
+          % # V C
         """
         self.assertEqual([
             ('DATE', 1, b'2013-05-18', datetime.date(2013, 5, 18)),
@@ -87,9 +87,8 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, b'TEST-D', 'TEST-D'),
             ('CURRENCY', 5, b'TEST-3', 'TEST-3'),
             ('CURRENCY', 5, b'NT.TO', 'NT.TO'),
-            # TODO(blais): Not supported in flex parser.
-            ('error', 5, b'V', None),
-            ('error', 5, b'P', None),
+            ('CAPITAL', 5, b'V', None),
+            ('CAPITAL', 5, b'P', None),
             ('CURRENCY', 5, b'V12', 'V12'),
             ('EOL', 6, b'\n', None),
             ('CURRENCY', 6, b'/NQH21', '/NQH21'),

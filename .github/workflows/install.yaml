@@ -11,6 +11,20 @@ jobs:
         with:
           # The oldest supported python version
           python-version: 3.7
+      - run: python -m pip install .
+      - run: |
+          bean-check --help
+          bean-doctor --help
+          bean-example --help
+          bean-format --help
+  install-from-sources-oldstyle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          # The oldest supported python version
+          python-version: 3.7
       - run: python setup.py install
       - run: |
           bean-check --help
@@ -25,8 +39,9 @@ jobs:
         with:
           # The oldest supported python version
           python-version: 3.7
-      - run: python setup.py sdist --format zip
-      - run: pip install dist/beancount-*.zip
+      - run: python -m pip install build
+      - run: python -m build --sdist
+      - run: python -m pip install dist/beancount-*.tar.gz
       - run: |
           bean-check --help
           bean-doctor --help

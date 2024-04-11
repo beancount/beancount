@@ -47,6 +47,7 @@ def check_dependencies():
         check_import('ply', module_name='ply.yacc', min_version='3.4'),
 
         # Optionally required to upload data to Google Drive.
+        # TODO(blais, 2023-11-18): oauth2client is deprecated.
         check_import('googleapiclient'),
         check_import('oauth2client'),
         check_import('httplib2'),

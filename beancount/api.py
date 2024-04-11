@@ -20,6 +20,7 @@ from .core.number import D
 
 from .core.flags import *  # pylint: disable=wildcard-import
 
+# TODO(blais): We should return a namedtuple of all the contents, not the lists.
 from .loader import load_file, load_encrypted_file, load_doc
 
 from .core.data import (
@@ -28,6 +29,8 @@ from .core.data import (
     Flag,
     Meta,
     Booking,
+    Posting,
+    Directive,
     Directives,
     Options,
     new_metadata,
@@ -78,3 +81,7 @@ from .core.realization import RealAccount, realize
 from .core.prices import PriceMap, build_price_map, get_price, get_latest_price
 
 from .parser.options import get_account_types
+
+from .parser.printer import print_entry
+from .parser.printer import print_entries
+from .parser.printer import format_entry

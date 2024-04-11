@@ -9,12 +9,10 @@ import unittest
 import tempfile
 import textwrap
 import sys
-import subprocess
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
-from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -97,21 +95,15 @@ class TestParserInputs(unittest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
-    @classmethod
-    def parse_stdin(cls):
-        entries, errors, _ = parser.parse_file("-")
-        assert entries, "Empty entries: {}".format(entries)
-        assert not errors, "Errors: {}".format(errors)
-
     def test_parse_stdin(self):
-        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
-        code = ('import beancount.parser.parser_test as p; '
-                'p.TestParserInputs.parse_stdin()')
-        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=env,
-                                stdin=subprocess.PIPE)
-        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
-        self.assertEqual(0, pipe.returncode)
+        stdin = sys.stdin
+        try:
+            sys.stdin = io.TextIOWrapper(io.BytesIO(self.INPUT.encode('utf-8')))
+            entries, errors, _ = parser.parse_file("-")
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+        finally:
+            sys.stdin = stdin
 
     def test_parse_None(self):
         # None is treated as the empty string...

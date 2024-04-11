@@ -15,6 +15,7 @@ from os import path
 from apiclient import discovery
 import httplib2
 from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
+# TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account
 
 from beancount.parser import options
@@ -36,7 +37,7 @@ def replace_gdocs_document(http, docid, title, contents):
                                 resumable=True)
     return service.files().update(
         fileId=docid,
-        body=dict(name=title),
+        body={'name': title},
         media_body=media).execute()
 
 
