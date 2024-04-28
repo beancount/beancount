@@ -426,7 +426,7 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None,
       file: An optional file object to write the entries to.
       write_source: If true a source file and line number will be written for
         each entry in a format interpretable as a message location for Emacs,
-        VSCode or other editors. This is usefull for "debugging" peurposes,
+        VSCode or other editors. This is usefull for "debugging" purposes,
         especially in a multi-file setup
     """
     # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
