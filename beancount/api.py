@@ -33,6 +33,7 @@ from .core.data import (
     Directive,
     Directives,
     Options,
+    TxnPosting,
     new_metadata,
     # TODO(blais): Replace this with
     # bn.dfilter(..., bn.dtypes.Transaction).
