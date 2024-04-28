@@ -281,11 +281,14 @@ PUBLIC_OPTION_GROUPS = [
       the balance sheet. This is most often called "Net Income".
     """, [Opt("account_current_earnings", "Earnings:Current")]),
 
+    # TODO(blais): Remove this option, it's not used anymore.
     OptGroup("""
       Leaf name of the equity account used for inserting conversions that will
       zero out remaining amounts due to transfers during the exercise period.
-    """, [Opt("account_current_conversions", "Conversions:Current")]),
+    """, [Opt("account_current_conversions", "Conversions:Current",
+              deprecated=('This was used by reports, not used anymore.'))]),
 
+    # TODO(blais): Remove this option, it's not used anymore.
     OptGroup("""
       The name of an account to be used to post unrealized gains to. This is used
       when making any kind of conversion from cost to price on a balance sheet
@@ -294,7 +297,8 @@ PUBLIC_OPTION_GROUPS = [
       balance on the sheet. This has no effect on behavior, other than providing
       a configurable account name for such postings to occur.
     """, [Opt("account_unrealized_gains",
-              "Earnings:Unrealized", "Earnings:Unrealized")]),
+              "Earnings:Unrealized", "Earnings:Unrealized",
+              deprecated=('This was used by reports, not used anymore.'))]),
 
     OptGroup("""
       The name of an account to be used to post to and accumulate rounding error.
