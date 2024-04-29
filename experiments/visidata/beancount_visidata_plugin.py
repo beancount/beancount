@@ -1,9 +1,16 @@
+"""Visidata support for Beancount files."""
+
+__copyright__ = "Copyright (C) 2024  Martin Blais"
+__license__ = "GNU GPLv2"
+
+from functools import partial
 from typing import List, Iterator
-from visidata import VisiData, Sheet, Progress
 from visidata import ItemColumn, Column, ColumnAttr, SubColumnAttr
-import visidata
+from visidata import VisiData, Sheet, Progress
 import beancount as bn
+import subprocess
 import sys
+import visidata
 
 
 # Note: guess_beancount is implicit in naming files with ext `.beancount`.
@@ -25,10 +32,10 @@ def get_cond_attr(obj, attr):
     return None if obj is None else getattr(obj, attr)
 
 
-def get_location(col, row):
+def get_meta(attr, col, row):
     meta = row.posting.meta
     if meta:
-        return '{:s}:{:d}:'.format(meta['filename'], meta['lineno'])
+        return meta.get(attr, None)
 
 
 class BeancountSheet(Sheet):
@@ -38,18 +45,39 @@ class BeancountSheet(Sheet):
         Column(
             "txnid",
             type=visidata.str,
-            getter=lambda col, row: id(row.txn),
+            getter=lambda col, row: hex(id(row.txn))[2:],
         ),
         Column(
-            "location",
+            "filename",
             type=visidata.str,
-            getter=get_location,
+            getter=partial(get_meta, "filename"),
+            width=0,
+        ),
+        Column(
+            "lineno",
+            type=visidata.str,
+            getter=partial(get_meta, "lineno"),
             width=0,
         ),
         Column(
             "date",
             type=visidata.date,
             getter=lambda col, row: row.txn.date,
+        ),
+        Column(
+            "flag",
+            type=visidata.str,
+            getter=lambda col, row: row.txn.flag,
+        ),
+        Column(
+            "payee",
+            type=visidata.str,
+            getter=lambda col, row: row.txn.payee,
+        ),
+        Column(
+            "narration",
+            type=visidata.str,
+            getter=lambda col, row: row.txn.narration,
         ),
         Column(
             "account",
@@ -120,7 +148,32 @@ class BeancountSheet(Sheet):
             yield tp
 
 
+def open_cursor(tp):
+    meta = tp.posting.meta
+    filename = meta["filename"]
+    lineno = meta["lineno"]
+    subprocess.call(
+        [
+            "en", # Emacs launcher for this tmux session
+            "--eval",
+            f'(progn (find-file "{filename}") (goto-line {lineno}))',
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+BeancountSheet.addCommand(
+    "^O",
+    "beancount-open",
+    "beancount_visidata_plugin.open_cursor(cursorRow)",
+    "Open the source Beancount file with the cursor at the position for the row",
+)
+
+
 # TODO: Add custom aggregators.
+# TODO: Add a way to create a balance column from the current sheet.
+# TODO: Add a way to perform group-by's from the current sheet.
 
 
 """
