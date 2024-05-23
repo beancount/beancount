@@ -9,7 +9,7 @@ import enum
 import sys
 
 from decimal import Decimal
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
+from typing import Any, Dict, FrozenSet, List, NamedTuple, Optional, Set, Union
 
 from beancount.core.amount import Amount
 from beancount.core.number import D
@@ -240,8 +240,8 @@ class Transaction(NamedTuple):
     flag: Flag
     payee: Optional[str]
     narration: str
-    tags: Set
-    links: Set
+    tags: FrozenSet
+    links: FrozenSet
     postings: List[Posting]
 
 
