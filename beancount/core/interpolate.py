@@ -160,8 +160,13 @@ def infer_tolerances(postings, options_map, use_cost=None):
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
-            tolerances[currency] = max(tolerance,
-                                       tolerances.get(currency, -1024))
+
+            # Note that we take the max() and not the min() here because the
+            # tolerance has a dual purpose: it's used to infer the resolution
+            # for interpolation (where we might want the min()) and also for
+            # balance checks (where we favor the looser/larger tolerance).
+            tolerances[currency] = max(tolerance, tolerances.get(currency,
+                                                                 -1024))
 
             if not use_cost:
                 continue
