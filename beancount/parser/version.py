@@ -30,7 +30,7 @@ def compute_version_string(version, changeset, timestamp):
     # Convert timestamp to a date.
     date = None
     if timestamp > 0:
-        date = datetime.datetime.utcfromtimestamp(timestamp).date()
+        date = datetime.datetime.fromtimestamp(timestamp, datetime.UTC).date()
 
     version = 'Beancount {}'.format(version)
     if changeset or date:
