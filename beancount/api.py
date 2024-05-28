@@ -18,7 +18,7 @@ __license__ = "GNU GPLv2"
 
 # pylint: disable=unused-import,unused-wildcard-import
 
-from .core.number import D
+from .core.number import D, ZERO
 
 from .core.flags import *  # pylint: disable=wildcard-import
 
@@ -60,6 +60,7 @@ from .core.account_types import (
     get_account_sign,
 )
 
+from .core import amount
 from .core.amount import (
     Amount,
 )
