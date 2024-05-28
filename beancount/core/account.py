@@ -35,7 +35,7 @@ ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
 ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
-ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
+ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 
 
 # A dummy object which stands for the account type. Values in custom directives
