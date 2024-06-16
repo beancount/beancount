@@ -14,6 +14,7 @@ import shelve
 from os import path
 
 import httplib2
+# TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account
 
 

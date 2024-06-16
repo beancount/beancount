@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import functools
 import logging
+import importlib
 import unittest
 import tempfile
 import textwrap
@@ -13,7 +14,6 @@ from os import path
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
-from beancount.utils import encryption_test
 
 
 TEST_INPUT = """
@@ -31,7 +31,64 @@ TEST_INPUT = """
 """
 
 
+def get_failing_plugin_module(exc_type):
+    """Return a failing plugin module. For testing."""
+    class PluginModule: pass
+    def fail(*args):
+        raise exc_type()
+    PluginModule.__plugins__ = (fail,)
+    return PluginModule
+
+
+real_import_module = importlib.import_module
+
+
+def mock_import_module(exc_type, plugin_name):
+    if plugin_name == "failing":
+        return get_failing_plugin_module(exc_type)
+    else:
+        return real_import_module(plugin_name)
+
+
 class TestLoader(unittest.TestCase):
+
+    def test_import_exception(self):
+        # Test an invalid plugin name.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "invalid.module.name"\n\n' + TEST_INPUT)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(1, len(trans_errors))
+        self.assertRegex(trans_errors[0].message, "ModuleNotFoundError")
+
+    @mock.patch('importlib.import_module', side_effect=ValueError)
+    def test_import_other_exception(self, _):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "doesnt_matter"\n\n' + TEST_INPUT)
+        with self.assertRaises(ValueError):
+            loader.run_transformations(entries, errors, options_map, None)
+
+    @mock.patch('importlib.import_module',
+                functools.partial(mock_import_module, ValueError))
+    def test_run_transformation_exception(self):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "failing"\n\n' + TEST_INPUT)
+        loader.run_transformations(entries, errors, options_map, None)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(1, len(trans_errors))
+        self.assertRegex(trans_errors[0].message, "ValueError")
+
+    @mock.patch('importlib.import_module',
+                functools.partial(mock_import_module, SystemExit))
+    def test_run_transformation_systemexit(self):
+        # Test another exception occurring during import.
+        entries, errors, options_map = parser.parse_string(
+            'plugin "failing"\n\n' + TEST_INPUT)
+        with self.assertRaises(SystemExit):
+            loader.run_transformations(entries, errors, options_map, None)
 
     def test_run_transformations(self):
         # Test success case.
@@ -39,13 +96,6 @@ class TestLoader(unittest.TestCase):
         trans_entries, trans_errors = loader.run_transformations(
             entries, errors, options_map, None)
         self.assertEqual(0, len(trans_errors))
-
-        # Test an invalid plugin name.
-        entries, errors, options_map = parser.parse_string(
-            'plugin "invalid.module.name"\n\n' + TEST_INPUT)
-        trans_entries, trans_errors = loader.run_transformations(
-            entries, errors, options_map, None)
-        self.assertEqual(1, len(trans_errors))
 
     def test_load(self):
         with test_utils.capture():
@@ -274,8 +324,8 @@ class TestLoadIncludes(unittest.TestCase):
                 'fruits/oranges.beancount': """
                   2014-01-02 open Assets:Oranges
                 """})
+            cwd = os.getcwd()
             try:
-                cwd = os.getcwd()
                 os.chdir(tmp)
                 entries, errors, options_map = loader.load_file(
                     path.join(tmp, 'apples.beancount'))
@@ -309,36 +359,6 @@ class TestLoadIncludes(unittest.TestCase):
                             for filename in options_map['include']))
         self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
                          list(map(path.basename, options_map['include'])))
-
-
-class TestLoadIncludesEncrypted(encryption_test.TestEncryptedBase):
-
-    def test_include_encrypted(self):
-        with test_utils.tempdir() as tmpdir:
-            test_utils.create_temporary_files(tmpdir, {
-                'apples.beancount': """
-                  include "oranges.beancount.asc"
-                  2014-01-01 open Assets:Apples
-                """,
-                'oranges.beancount': """
-                  2014-01-02 open Assets:Oranges
-                """})
-
-            # Encrypt the oranges file and remove the unencrypted file.
-            with open(path.join(tmpdir, 'oranges.beancount')) as infile:
-                self.encrypt_as_file(infile.read(),
-                                     path.join(tmpdir, 'oranges.beancount.asc'))
-            os.remove(path.join(tmpdir, 'oranges.beancount'))
-
-            # Load the top-level file which includes the encrypted file.
-            with test_utils.environ('GNUPGHOME', self.ringdir):
-                entries, errors, options_map = loader.load_file(
-                    path.join(tmpdir, 'apples.beancount'))
-
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entries))
-        self.assertRegex(entries[0].meta['filename'], 'apples.beancount')
-        self.assertRegex(entries[1].meta['filename'], 'oranges.+count.asc')
 
 
 class TestLoadCache(unittest.TestCase):
@@ -486,8 +506,8 @@ class TestLoadCache(unittest.TestCase):
     def test_load_cache_disable(self):
         with test_utils.tempdir() as tmp:
             cache_filename = path.join(tmp, "__{filename}__")
-            for kwargs in [dict(use_cache=False),
-                           dict(use_cache=False, cache_filename=cache_filename)]:
+            for kwargs in [{'use_cache': False},
+                           {'use_cache': False, 'cache_filename': cache_filename}]:
                 loader.initialize(**kwargs)
                 test_utils.create_temporary_files(tmp, {
                     'apples.beancount': """
@@ -496,25 +516,6 @@ class TestLoadCache(unittest.TestCase):
                 filename = path.join(tmp, 'apples.beancount')
                 entries, errors, options_map = loader.load_file(filename)
                 self.assertEqual({'apples.beancount'}, set(os.listdir(tmp)))
-
-
-class TestEncoding(unittest.TestCase):
-
-    def test_string_unicode(self):
-        utf8_bytes = textwrap.dedent("""
-          2015-01-01 open Assets:Something
-          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-        """).encode('utf-8')
-        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='utf8')
-        self.assertFalse(errors)
-
-    def test_string_latin1(self):
-        utf8_bytes = textwrap.dedent("""
-          2015-01-01 open Assets:Something
-          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-        """).encode('latin1')
-        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='latin1')
-        self.assertFalse(errors)
 
 
 class TestOptionsAggregation(unittest.TestCase):

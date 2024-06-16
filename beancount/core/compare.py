@@ -37,14 +37,14 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()) -> str:
         if attr_name in ignore:
             continue
         if isinstance(attr_value, (list, set, frozenset)):
-            subhashes = set()
+            subhashes = []
             for element in attr_value:
                 if isinstance(element, tuple):
-                    subhashes.add(stable_hash_namedtuple(element, ignore))
+                    subhashes.append(stable_hash_namedtuple(element, ignore))
                 else:
                     md5 = hashlib.md5()
                     md5.update(str(element).encode())
-                    subhashes.add(md5.hexdigest())
+                    subhashes.append(md5.hexdigest())
             for subhash in sorted(subhashes):
                 hashobj.update(subhash.encode())
         else:

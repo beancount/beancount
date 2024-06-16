@@ -8,7 +8,7 @@ from beancount.utils import test_utils
 from beancount.scripts import format
 
 
-class TestScriptFormat(test_utils.TestCase):
+class TestScriptFormat(test_utils.ClickTestCase):
 
     @test_utils.docfile
     def test_success(self, filename):
@@ -31,9 +31,7 @@ class TestScriptFormat(test_utils.TestCase):
             Assets:Cash
 
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         self.assertEqual(textwrap.dedent("""
 
           * Section header
@@ -52,7 +50,7 @@ class TestScriptFormat(test_utils.TestCase):
             Assets:Other                        10 HOOL {500.23} USD ; Bla
             Assets:Cash
 
-        """), stdout.getvalue())
+        """), result.stdout)
 
     @test_utils.docfile
     def test_align_posting_starts(self, filename):
@@ -69,9 +67,7 @@ class TestScriptFormat(test_utils.TestCase):
             Expenses:Restaurant   50.03 USD
             Assets:Cash
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         self.assertEqual(textwrap.dedent("""
           2014-03-01 * "Something"
             Expenses:Restaurant  50.01 USD
@@ -84,16 +80,14 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-03 * "Something"
             Expenses:Restaurant  50.03 USD
             Assets:Cash
-        """), stdout.getvalue())
+        """), result.stdout)
 
     @test_utils.docfile
     def test_open_only_issue80(self, filename):
         """
           2015-07-16 open Assets:BoA:checking USD
         """
-        with test_utils.capture():
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         with open(filename) as infile:
             actual = infile.read()
         self.assertEqual("""
@@ -117,13 +111,11 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-05 balance   Assets:Cash  -1,050.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other   10 HOOL {5,000.23} USD ; Bla
+            Assets:Other   10 HOOL {5,000.23 USD} ; Bla
             Assets:Cash
 
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         self.assertEqual(textwrap.dedent("""
 
           * Section header
@@ -139,10 +131,10 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-05 balance   Assets:Cash  -1,050.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other                           10 HOOL {5,000.23} USD ; Bla
+            Assets:Other                           10 HOOL {5,000.23 USD} ; Bla
             Assets:Cash
 
-        """), stdout.getvalue())
+        """), result.stdout)
 
     @test_utils.docfile
     def test_currency_issue146(self, filename):
@@ -154,9 +146,7 @@ class TestScriptFormat(test_utils.TestCase):
             Assets:Investments                 1.23 FOO_BAR
             Equity:Opening-balances
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         self.assertEqual(textwrap.dedent("""
           1970-01-01 open Equity:Opening-balances
           1970-01-01 open Assets:Investments
@@ -164,7 +154,7 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-31 * "opening"
             Assets:Investments  1.23 FOO_BAR
             Equity:Opening-balances
-        """), stdout.getvalue())
+        """), result.stdout)
 
     @test_utils.docfile
     def test_fixed_width(self, filename):
@@ -176,9 +166,7 @@ class TestScriptFormat(test_utils.TestCase):
           Expenses:Test     10.00 USD
           Assets:Test
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename, '--prefix-width=40'])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename, '--prefix-width=40')
         self.assertEqual(textwrap.dedent("""
         2016-08-01 open Expenses:Test
         2016-08-01 open Assets:Test
@@ -186,7 +174,7 @@ class TestScriptFormat(test_utils.TestCase):
         2016-08-02 * "" ""
           Expenses:Test                           10.00 USD
           Assets:Test
-        """), stdout.getvalue())
+        """), result.stdout)
 
     @test_utils.docfile
     def test_fixed_column(self, filename):
@@ -199,10 +187,7 @@ class TestScriptFormat(test_utils.TestCase):
           Expenses:Test     10.00 USD
           Assets:Test
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(
-                format.main, [filename, '--currency-column=50'])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename, '--currency-column=50')
         self.assertEqual(textwrap.dedent("""
         2016-08-01 open Expenses:Test
         2016-08-01 open Assets:Test
@@ -211,7 +196,27 @@ class TestScriptFormat(test_utils.TestCase):
         2016-08-02 * "" ""
           Expenses:Test                            10.00 USD
           Assets:Test
-        """), stdout.getvalue())
+        """), result.stdout)
+
+    @test_utils.docfile
+    def test_metadata_issue400(self, filename):
+        """
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test   10.00 EUR
+          Assets:Test  -10.00 EUR
+        """
+        result = self.run_with_args(format.main, filename, '--currency-column=50')
+        self.assertEqual(textwrap.dedent("""
+        2020-01-01 open Assets:Test
+
+        2020-11-10 * Test
+          payment_amount: 20.00 EUR
+          Assets:Test                              10.00 EUR
+          Assets:Test                             -10.00 EUR
+        """), result.stdout)
 
     @unittest.skip("Eventually we will want to support arithmetic expressions. "
                    "It will require to invoke the expression parser because "
@@ -227,9 +232,7 @@ class TestScriptFormat(test_utils.TestCase):
           Expenses:Test     10.0/2 USD
           Assets:Test
         """
-        with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(format.main, [filename])
-        self.assertEqual(0, result)
+        result = self.run_with_args(format.main, filename)
         self.assertEqual(textwrap.dedent("""
 
         2016-08-01 open Expenses:Test
@@ -239,7 +242,45 @@ class TestScriptFormat(test_utils.TestCase):
           Expenses:Test     10.0/2 USD
           Assets:Test
 
-        """), stdout.getvalue())
+        """), result.stdout)
+
+    @test_utils.docfile
+    def test_parenthesized_binary_expressions(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test     10.0 USD
+          Expenses:Test (10.0/2) USD
+          Expenses:Test (10.0+2) USD
+          Expenses:Test (10.0-2) USD
+          Expenses:Test (10.0*2) USD
+          Expenses:Test (-10.0*+2) USD
+          Expenses:Test (-1,000.0*+2.0) USD
+          Assets:Test
+
+        2016-08-03 balance Assets:Test 12.27 USD
+        2016-08-03 balance Assets:Test (12.27 + 1.00) USD
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertEqual(textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-02 * "" ""
+          Expenses:Test                            10.0 USD
+          Expenses:Test                        (10.0/2) USD
+          Expenses:Test                        (10.0+2) USD
+          Expenses:Test                        (10.0-2) USD
+          Expenses:Test                        (10.0*2) USD
+          Expenses:Test                      (-10.0*+2) USD
+          Expenses:Test                 (-1,000.0*+2.0) USD
+          Assets:Test
+
+        2016-08-03 balance Assets:Test            12.27 USD
+        2016-08-03 balance Assets:Test   (12.27 + 1.00) USD
+        """), result.stdout)
 
 
 if __name__ == '__main__':

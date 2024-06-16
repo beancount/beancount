@@ -1,24 +1,18 @@
-#!/usr/bin/env python3
-"""Align a beancount/ledger input file's numbers.
-
-This reformats at beancount or ledger input file so that the amounts in the
-postings are all aligned to the same column. The currency should match.
-
-Note: this does not parse the Beancount ledger. It simply uses regular
-expressions and text manipulations to do its work.
-"""
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import io
-import re
-import sys
+
+import click
+import regex
 
 from beancount.core import amount
 from beancount.core import account
-from beancount.parser import version
+from beancount.parser.version import VERSION
 
+NUMBER_RE = r'[-+]?\s*[\d,]+(?:\.\d*)?'
+PARENTHESIZED_BINARY_OP_RE = rf'\({NUMBER_RE}\s*[-+*/]\s*{NUMBER_RE}\)'
 
 def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):
     """Reformat Beancount input to align all the numbers at the same column.
@@ -43,9 +37,12 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # of the stripped prefix and the number.
     match_pairs = []
     for line in contents.splitlines():
-        match = re.match(
-            r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(amount.CURRENCY_RE),
-            line)
+        match = regex.match(
+            rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
+            rf'({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+'
+            rf'((?:{amount.CURRENCY_RE})\b.*)',
+            line,
+        )
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
@@ -104,10 +101,10 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # Ensure that the file before and after have only whitespace differences.
     # This is a sanity check, to make really sure we never change anything but whitespace,
     # so it's safe.
-    # open('/tmp/before', 'w').write(re.sub(r'[ \t]+', ' ', contents))
-    # open('/tmp/after', 'w').write(re.sub(r'[ \t]+', ' ', formatted_contents))
-    old_stripped = re.sub(r'[ \t\n]+', ' ', contents.rstrip())
-    new_stripped = re.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
+    # open('/tmp/before', 'w').write(regex.sub(r'[ \t]+', ' ', contents))
+    # open('/tmp/after', 'w').write(regex.sub(r'[ \t]+', ' ', formatted_contents))
+    old_stripped = regex.sub(r'[ \t\n]+', ' ', contents.rstrip())
+    new_stripped = regex.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
     assert (old_stripped == new_stripped), (old_stripped, new_stripped)
 
     return formatted_contents
@@ -143,7 +140,7 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
-    match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
+    match_posting = regex.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
         for match in (match_posting(prefix)
@@ -162,43 +159,39 @@ def normalize_indent_whitespace(match_pairs):
     return adjusted_pairs
 
 
-def main():
-    parser = version.ArgumentParser(description=__doc__.strip())
+@click.command()
+@click.argument('filename', type=click.File('r'))
+@click.option('--output', '-o', type=click.File('w'), default='-', help="Output file.")
+@click.option('--prefix-width', '-w', type=int, help="Force fixed prefix width.")
+@click.option('--num-width', '-W', type=int, help="Force fixed numbers width.")
+@click.option('--currency-column', '-c', type=int, help="Align curreencies to this column.")
+@click.version_option(message=VERSION)
+def main(filename, output, prefix_width, num_width, currency_column):
+    """Automatically format a Beancount ledger.
 
-    parser.add_argument('filename', nargs='?', help='Beancount filename')
+    This reformats at beancount or ledger input file so that the
+    amounts in the postings are all aligned to the same column.
 
-    parser.add_argument('-o', '--output', action='store',
-                        help="Output file (stdout if not specified)")
+    If the alignment is not specified with the --currency-column
+    option, it is determined automatically from the maximum lenght of
+    the account names and of the numerical part of the transaction
+    amounts in the input file. The automatically determined widths can
+    be overridden with the --prefix-width and --num-width options
+    respectively.
 
-    parser.add_argument('-w', '--prefix-width', action='store', type=int,
-                        help=("Use this prefix width instead of determining an optimal "
-                              "value automatically"))
+    Note: this tool does not parse the Beancount ledger. It simply
+    uses regular expressions and text manipulations to do its work.
 
-    parser.add_argument('-W', '--num-width', action='store', type=int,
-                        help=("Use this width to render numbers instead of determining "
-                              "an optimal value"))
+    """
+    contents = filename.read()
 
-    parser.add_argument('-c', '--currency-column', action='store', type=int,
-                        help=("Align currencies in this column."))
-
-    opts = parser.parse_args()
-
-    # Read the original contents.
-    file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
-    contents = file.read()
-    file.close()
-
-    # Align the contents.
     formatted_contents = align_beancount(
-        contents, opts.prefix_width, opts.num_width, opts.currency_column)
+        contents, prefix_width, num_width, currency_column)
 
-    # Make sure not to open the output file until we've passed out sanity
-    # checks. We want to allow overwriting the input file, but want to avoid
-    # losing it in case of errors!
-    outfile = open(opts.output, 'w') if opts.output else sys.stdout
-    outfile.write(formatted_contents)
-
-    return 0
+    # Click opens files for writing in lazy mode. This prevents
+    # truncating the input file untill it has been processed and
+    # validated, avoid data loss in case of errors.
+    output.write(formatted_contents)
 
 
 if __name__ == '__main__':

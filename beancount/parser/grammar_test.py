@@ -195,9 +195,10 @@ class TestParserEntryTypes(unittest.TestCase):
     @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
         """
-          2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
+          2013-05-18 note Assets:US:BestBank  "Blah, di blah."
+          2013-05-18 note Assets:US:BestBank  "Blah." ^984446a67382 #something
         """
-        check_list(self, entries, [data.Note])
+        check_list(self, entries, [data.Note, data.Note])
 
     @parser.parse_doc()
     def test_entry_document(self, entries, _, __):
@@ -226,6 +227,29 @@ class TestParserEntryTypes(unittest.TestCase):
                           (amount.from_string('43.03 USD'), amount.Amount),
                           (D('23'), Decimal)],
                          txns[0].values)
+
+
+class TestWhitespace(unittest.TestCase):
+    """Tests for handling of whitespace and indent."""
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_0(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected DATE")
+
+    @parser.parse_doc(expect_errors=True)
+    def test_indent_error_1(self, entries, errors, _):
+        """
+          2020-07-28 open Assets:Foo
+
+            2020-07-28 open Assets:Bar
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertRegex(errors[0].message, "unexpected INDENT")
 
 
 class TestParserComplete(unittest.TestCase):
@@ -279,9 +303,12 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    def test_extra_whitespace_note(self):
-        input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
-        entries, errors, _ = parser.parse_string(input_)
+    @parser.parse_doc()
+    def test_extra_whitespace_note(self, entries, errors, _):
+        """
+        2013-07-11 note Assets:Cash "test"
+          ;;
+        """
         check_list(self, entries, [data.Note])
         check_list(self, errors, [])
 
@@ -629,9 +656,7 @@ class TestParserInclude(unittest.TestCase):
                          options_map['include'])
 
     def test_include_relative_from_string(self):
-        input_string = """
-          include "some/relative/filename.beancount"
-        """
+        input_string = 'include "some/relative/filename.beancount"'
         entries, errors, options_map = parser.parse_string(input_string)
         self.assertFalse(errors)
         self.assertEqual(['some/relative/filename.beancount'],
@@ -1209,6 +1234,7 @@ class TestCurrencies(unittest.TestCase):
           2014-01-19 open Assets:Period        DJ.EURO
           2014-01-19 open Assets:Apostrophe    DJ'EURO
           2014-01-19 open Assets:Numbers       EURO123
+          2014-01-19 open Assets:Short         V
         """
         self.assertFalse(errors)
 
@@ -1338,6 +1364,15 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash   20000.00 USD
         """
         self.assertRegex(errors[0].message, 'Negative.*allowed')
+
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_total_price_with_missing(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT            MSFT @@ 2000.00 USD
+            Assets:Investments:Cash   20000.00 USD
+        """
+        self.assertRegex(errors[0].message, 'Total price on a posting')
 
 
 class TestBalance(unittest.TestCase):
@@ -2483,7 +2518,7 @@ class TestMisc(cmptest.TestCase):
             Assets:Crypto:Bitcoin                -0.00082487 BTC
         """
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "unexpected ACCOUNT")
+        self.assertRegex(errors[0].message, "unexpected INDENT")
 
 
 class TestDocument(unittest.TestCase):

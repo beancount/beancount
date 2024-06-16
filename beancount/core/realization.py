@@ -38,7 +38,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import flags
 from beancount.core import convert
 
 
@@ -207,6 +206,7 @@ def contains(real_account, account_name):
     return get(real_account, account_name) is not None
 
 
+# TODO(blais): Reconcile this with balance_by_account() {2196104406ab}.
 def realize(entries, min_accounts=None, compute_balance=True):
     r"""Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
@@ -316,6 +316,7 @@ def postings_by_account(entries):
     return txn_postings_map
 
 
+# TODO(blais): Invert this in v3, so it's isomorphic to functools.filter().
 def filter(real_account, predicate):
     """Filter a RealAccount tree of nodes by the predicate.
 
@@ -327,7 +328,7 @@ def filter(real_account, predicate):
 
     Args:
       real_account: An instance of RealAccount.
-      predicate: A callable/function which accepts a real_account and returns
+      predicate: A callable/function which accepts a RealAccount and returns
         a boolean. If the function returns True, the node is kept.
     Returns:
       A shallow clone of RealAccount is always returned.
@@ -497,13 +498,7 @@ def find_last_active_posting(txn_postings):
     """
     for txn_posting in reversed(txn_postings):
         assert not isinstance(txn_posting, Posting)
-
         if not isinstance(txn_posting, (TxnPosting, Open, Close, Pad, Balance, Note)):
-            continue
-
-        # pylint: disable=bad-continuation
-        if (isinstance(txn_posting, TxnPosting) and
-            txn_posting.txn.flag == flags.FLAG_UNREALIZED):
             continue
         return txn_posting
 

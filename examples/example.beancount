@@ -6,7 +6,6 @@
 
 option "title" "Example Beancount file"
 option "operating_currency" "USD"
-option "render_commas" "TRUE"
 
 
 

@@ -968,6 +968,26 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 Assets:Account1  -100 JPY
             """, None)}, options_map=options_map)
 
+    @parser.parse_doc()
+    def test_negative_units(self, entries, errors, options_map):
+        """
+          2010-01-01 open Assets:TDA:Main:Cash             USD
+          2010-01-01 open Assets:TDA:Main:MSFT            MSFT
+          2010-01-01 open Expenses:Financial:Commission    USD
+
+          2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+            Assets:TDA:Main:Cash            2452.53 USD
+            Assets:TDA:Main:MSFT                -23 MSFT {106.935 # 6.90 USD}
+            Expenses:Financial:Commission      13.95 USD
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+                Assets:TDA:Main:Cash            2452.53 USD
+                Assets:TDA:Main:MSFT                -23 MSFT {107.235 USD}
+                Expenses:Financial:Commission      13.95 USD
+            """, None)}, options_map=options_map)
+
 
 class TestComputeCostNumber(unittest.TestCase):
 
@@ -1021,6 +1041,13 @@ class TestComputeCostNumber(unittest.TestCase):
             bf.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), None, self.date, None, False),
                 amount.from_string('12 HOOL')))
+
+    def test_negative_numbers(self):
+        self.assertEqual(
+            D('3.5'),
+            bf.compute_cost_number(
+                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
+                amount.from_string('-12 HOOL')))
 
 
 class TestParseBookingOptions(cmptest.TestCase):
@@ -1626,6 +1653,30 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           25 HOOL {116.00 USD, 2016-01-16}
         """
 
+    @book_test(Booking.HIFO)
+    def test_reduce__multiple_reductions_hifo(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           50 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           50 HOOL {116.00 USD, 2016-01-16}
+          Assets:Account           50 HOOL {114.00 USD, 2016-01-17}
+
+        2016-05-02 * #apply
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -35 HOOL {}
+          Assets:Account          -30 HOOL {}
+
+        2016-05-02 * #booked
+          Assets:Account          -40 HOOL {116.00 USD, 2016-01-16}
+          Assets:Account          -10 HOOL {116.00 USD, 2016-01-16}
+          Assets:Account          -25 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account          -25 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           -5 HOOL {114.00 USD, 2016-01-17}
+
+        2016-01-01 * #ex
+          Assets:Account           45 HOOL {114.00 USD, 2016-01-17}
+        """
+
     @book_test(Booking.STRICT)
     def test_reduce__multiple_reductions__competing__with_error(self, _, __):
         """
@@ -1703,7 +1754,6 @@ class TestBookReductions(_BookingTestBase):
 
 class TestHasSelfReductions(cmptest.TestCase):
 
-    # pylint: disable=invalid-name
     BM = collections.defaultdict(lambda: Booking.STRICT)
 
     @loader.load_doc()
@@ -2355,6 +2405,36 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
+@unittest.skip('Crossing is not supported yet. Handle this in the v3 C++ rewrite. '
+               '{d3cbd78f1029}.')
+class TestBookCrossover(_BookingTestBase):
+    """Test reducing + augmenting in a single leg.
+    This happens in futures when you cross the zero position line.
+    For example, if you're short 1 contract and buy 2 contracts,
+    you need to reduce 1 contract and augment 1 contract in the
+    balance. These result must be two legs."""
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__no_match_against_any_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          -1 HOOL {110.00 USD, 2015-10-02}
+
+        2015-02-22 * #apply
+          Assets:Account           2 HOOL {112.00 USD}
+
+        2015-02-22 * #reduced
+          Assets:Account           1 HOOL {110.00 USD, 2015-02-22}
+
+        2015-02-22 * #booked
+          Assets:Account           1 HOOL {110.00 USD, 2015-10-02}
+          Assets:Account           1 HOOL {112.00 USD, 2015-02-22}
+
+        2015-01-01 * #ex
+          Assets:Account           1 HOOL {112.00 USD, 2015-02-22}
+        """
+
+
 @unittest.skip('Booking.AVERAGE is disabled.')
 class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
@@ -2707,6 +2787,44 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          1 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
+
+
+class TestStrictWithSize(_BookingTestBase):
+
+    @book_test(Booking.STRICT_WITH_SIZE)
+    def test_strict_with_size_single(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          1 HOOL {101.00 USD}
+          Assets:Account          2 HOOL {102.00 USD}
+
+        2015-10-02 * #apply
+          Assets:Account         -1 HOOL {}
+
+        2015-10-02 * #booked
+          Assets:Account         -1 HOOL {101.00 USD, 2015-10-01}
+
+        2015-11-04 * #ex
+          Assets:Account          2 HOOL {102.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.STRICT_WITH_SIZE)
+    def test_strict_with_size_multiple(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          2 HOOL {101.00 USD, 2014-06-02}
+          Assets:Account          2 HOOL {102.00 USD, 2014-06-01}
+
+        2015-10-02 * #apply
+          Assets:Account         -2 HOOL {}
+
+        2015-10-02 * #booked
+          Assets:Account         -2 HOOL {102.00 USD, 2014-06-01}
+
+        2015-11-04 * #ex
+          Assets:Account          2 HOOL {101.00 USD, 2014-06-02}
+        """
+
 
 class TestBookingApi(unittest.TestCase):
     def test_book_single(self):

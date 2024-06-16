@@ -2,12 +2,13 @@ __copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
+import click.testing
 
 from beancount.utils import test_utils
 from beancount.scripts import check
 
 
-class TestScriptCheck(test_utils.TestCase):
+class TestScriptCheck(test_utils.ClickTestCase):
 
     @test_utils.docfile
     def test_success(self, filename):
@@ -19,10 +20,8 @@ class TestScriptCheck(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture('stdout', 'stderr') as (stdout, _):
-            result = test_utils.run_with_args(check.main, [filename])
-        self.assertEqual(0, result)
-        self.assertLines("", stdout.getvalue())
+        result = self.run_with_args(check.main, filename)
+        self.assertLines("", result.stdout)
 
     @test_utils.docfile
     def test_fail(self, filename):
@@ -36,11 +35,29 @@ class TestScriptCheck(test_utils.TestCase):
 
         2014-03-07 balance Assets:Cash  100 USD
         """
-        with test_utils.capture('stderr') as stderr:
-            result = test_utils.run_with_args(check.main, [filename])
-        self.assertEqual(1, result)
-        self.assertRegex(stderr.getvalue(), "Balance failed")
-        self.assertRegex(stderr.getvalue(), "Assets:Cash")
+        # We should use mix_stderr=False and we check for the error
+        # message on result.stderr, but it does not work. See
+        # https://github.com/pallets/click/issues/1761
+        runner = click.testing.CliRunner()
+        result = runner.invoke(check.main, [filename])
+        self.assertEqual(result.exit_code, 1)
+        self.assertRegex(result.output, "Balance failed")
+        self.assertRegex(result.output, "Assets:Cash")
+
+    @test_utils.docfile
+    def test_auto_plugins(self, filename):
+        """
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        # We should use mix_stderr=False and we check for the error
+        # message on result.stderr, but it does not work. See
+        # https://github.com/pallets/click/issues/1761
+        runner = click.testing.CliRunner()
+        result = runner.invoke(check.main, ['--auto', filename])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual("", result.output.strip())
 
 
 if __name__ == '__main__':

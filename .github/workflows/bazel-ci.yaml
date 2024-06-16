@@ -1,0 +1,35 @@
+name: bazel-ci
+on:
+  - push
+  - pull_request
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements/dev.txt
+          python3 -m pip install numpy
+      - name: Install bazelisk
+        run: |
+          curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.15.0/bazelisk-linux-amd64"
+          echo "19fd84262d5ef0cb958bcf01ad79b528566d8fef07ca56906c5c516630a0220b  bazelisk-linux-amd64" | sha256sum --check
+          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+      - name: Build
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis build -- //... -//experiments/v3/protos:*
+      - name: Test
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" --bazelrc=.bazelrc.travis test --test_output=errors -- //... -//experiments/v3/protos:*

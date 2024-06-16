@@ -14,6 +14,7 @@ from os import path
 import collections
 
 from beancount.core.data import Open
+from beancount.core.data import Balance
 from beancount.core.data import Close
 from beancount.core.data import Transaction
 from beancount.core.data import Document
@@ -29,7 +30,16 @@ ValidationError = collections.namedtuple('ValidationError', 'source message entr
 
 
 # Directive types that should be allowed after the account is closed.
-ALLOW_AFTER_CLOSE = (Document, Note)
+#
+# - Balance directives may be useful to ensure the closed account is empty. A balance
+#   may be sent as part of a statement that is at a date later than that at which the
+#   closing occurred.
+# - Documents may be received well after account closure, and we want to be able
+#   at their issuance dates.
+# - Notes may be taken in the future for various reasons to resolve issues after
+#   accounts have been closed.
+#
+ALLOW_AFTER_CLOSE = (Balance, Document, Note)
 
 
 def validate_open_close(entries, unused_options_map):
@@ -40,11 +50,11 @@ def validate_open_close(entries, unused_options_map):
     1. An open or a close directive may only show up once for each account. If a
        duplicate is detected, an error is generated.
 
-    2. Close directives may only appears if an open directive has been seen
-       previous (chronologically).
+    2. Close directives may only appear if an open directive has been seen
+       previously (chronologically).
 
     3. The date of close directives must be strictly greater than their
-      corresponding open directive.
+       corresponding open directive.
 
     Args:
       entries: A list of directives.
@@ -77,7 +87,7 @@ def validate_open_close(entries, unused_options_map):
             else:
                 try:
                     open_entry = open_map[entry.account]
-                    if entry.date <= open_entry.date:
+                    if entry.date < open_entry.date:
                         errors.append(
                             ValidationError(
                                 entry.meta,

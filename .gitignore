@@ -13,6 +13,11 @@ TAGS
 bazel-*
 beancount.egg-info
 beancount/parser/grammar.output
+beancount/parser/tokens_test
+beancount/parser/*.o
 build
 dist
 examples/generated/*
+experiments/v3/arrow/*.feather
+experiments/v3/arrow/*.parquet
+experiments/v3/arrow/*.arrow

@@ -18,13 +18,15 @@ from beancount.parser import booking_full
 BookingError = collections.namedtuple('BookingError', 'source message entry')
 
 
-def book(incomplete_entries, options_map):
+def book(incomplete_entries, options_map, initial_balances=None):
     """Book inventory lots and complete all positions with incomplete numbers.
 
     Args:
       incomplete_entries: A list of directives, with some postings possibly left
         with incomplete amounts as produced by the parser.
       options_map: An options dict as produced by the parser.
+      initial_balances: A dict of (account, inventory) pairs to start booking from.
+        This is useful when attempting to book on top of an existing state.
     Returns:
       A pair of
         entries: A list of completed entries with all their postings completed.
@@ -38,7 +40,7 @@ def book(incomplete_entries, options_map):
 
     # Do the booking here!
     entries, booking_errors = booking_full.book(incomplete_entries, options_map,
-                                                booking_methods)
+                                                booking_methods, initial_balances)
 
     # Check for MISSING elements remaining.
     missing_errors = validate_missing_eliminated(entries, options_map)

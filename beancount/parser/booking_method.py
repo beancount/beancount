@@ -38,6 +38,8 @@ def handle_ambiguous_matches(entry, posting, matches, method):
           attributes are ensured to be of type Cost.
         booked_matches: A list of matched postings from the given 'matches' candidates.
         errors: A list of errors to be generated.
+        insufficient: A boolean, true if we could not find enough matches to
+        cover the entire position.
     """
     assert isinstance(method, Booking), (
         "Invalid type: {}".format(method))
@@ -60,7 +62,7 @@ def handle_ambiguous_matches(entry, posting, matches, method):
 
 
 def booking_method_STRICT(entry, posting, matches):
-    """Strict booking method.
+    """Strict booking method. This method fails if there are ambiguous matches.
 
     Args:
       entry: The parent Transaction instance.
@@ -81,6 +83,7 @@ def booking_method_STRICT(entry, posting, matches):
     booked_matches = []
     errors = []
     insufficient = False
+
     # In strict mode, we require at most a single matching posting.
     if len(matches) > 1:
         # If the total requested to reduce matches the sum of all the
@@ -111,17 +114,52 @@ def booking_method_STRICT(entry, posting, matches):
     return booked_reductions, booked_matches, errors, insufficient
 
 
+def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
+    """Strict booking method, but disambiguate further with sizes.
+
+    This booking method applies the same algorithm as the STRICT method, but if
+    only one of the ambiguous lots matches the desired size, select that one
+    automatically.
+    """
+    (booked_reductions, booked_matches, errors,
+     insufficient) = booking_method_STRICT(entry, posting, matches)
+
+    # If we couldn't match strictly, attempt to find a match with the same
+    # number of units. If there is one or more of these, accept the oldest lot.
+    if errors and len(matches) > 1:
+        number = -posting.units.number
+        matching_units = [match
+                          for match in matches
+                          if number == match.units.number]
+        if matching_units:
+            matching_units.sort(key=lambda match: match.cost.date)
+
+            # Replace the posting's units and cost values.
+            match = matching_units[0]
+            booked_reductions.append(posting._replace(units=-match.units, cost=match.cost))
+            booked_matches.append(match)
+            insufficient = False
+            errors = []
+
+    return booked_reductions, booked_matches, errors, insufficient
+
+
 def booking_method_FIFO(entry, posting, matches):
     """FIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, False)
+    return _booking_method_xifo(entry, posting, matches, "date", False)
 
 
 def booking_method_LIFO(entry, posting, matches):
     """LIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, True)
+    return _booking_method_xifo(entry, posting, matches, "date", True)
 
 
-def _booking_method_xifo(entry, posting, matches, reverse_order):
+def booking_method_HIFO(entry, posting, matches):
+    """HIFO booking method implementation."""
+    return _booking_method_xifo(entry, posting, matches, "number", True)
+
+
+def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     """FIFO and LIFO booking method implementations."""
     booked_reductions = []
     booked_matches = []
@@ -131,7 +169,7 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
+    for match in sorted(matches, key=lambda p: p.cost and getattr(p.cost, sortattr),
                         reverse=reverse_order):
         if remaining <= ZERO:
             break
@@ -246,9 +284,11 @@ def booking_method_AVERAGE(entry, posting, matches):
 
 
 _BOOKING_METHODS = {
-    Booking.STRICT : booking_method_STRICT,
-    Booking.FIFO   : booking_method_FIFO,
-    Booking.LIFO   : booking_method_LIFO,
-    Booking.NONE   : booking_method_NONE,
-    Booking.AVERAGE: booking_method_AVERAGE,
+    Booking.STRICT           : booking_method_STRICT,
+    Booking.STRICT_WITH_SIZE : booking_method_STRICT_WITH_SIZE,
+    Booking.FIFO             : booking_method_FIFO,
+    Booking.LIFO             : booking_method_LIFO,
+    Booking.HIFO             : booking_method_HIFO,
+    Booking.NONE             : booking_method_NONE,
+    Booking.AVERAGE          : booking_method_AVERAGE,
 }

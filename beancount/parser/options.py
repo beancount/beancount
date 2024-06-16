@@ -110,7 +110,7 @@ def options_validate_booking_method(value):
     try:
         return data.Booking[value]
     except KeyError as exc:
-        raise ValueError(str(exc))
+        raise ValueError(str(exc)) from exc
 
 
 # List of option groups, with their description, option names and default
@@ -281,10 +281,24 @@ PUBLIC_OPTION_GROUPS = [
       the balance sheet. This is most often called "Net Income".
     """, [Opt("account_current_earnings", "Earnings:Current")]),
 
+    # This common option can be used by reporting systems and is ignored by
+    # Beancount itself.
     OptGroup("""
       Leaf name of the equity account used for inserting conversions that will
       zero out remaining amounts due to transfers during the exercise period.
     """, [Opt("account_current_conversions", "Conversions:Current")]),
+
+    # This common option can be used by reporting systems and is ignored by
+    # Beancount itself.
+    OptGroup("""
+      The name of an account to be used to post unrealized gains to. This is used
+      when making any kind of conversion from cost to price on a balance sheet
+      (or any realization). The amount inserted - the difference between book
+      value and market value - has to be posted to a gains account to keep the
+      balance on the sheet. This has no effect on behavior, other than providing
+      a configurable account name for such postings to occur.
+    """, [Opt("account_unrealized_gains",
+              "Earnings:Unrealized", "Earnings:Unrealized")]),
 
     OptGroup("""
       The name of an account to be used to post to and accumulate rounding error.
@@ -448,7 +462,8 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       A boolean, if true, prepend the directory name of the top-level file to
       the PYTHONPATH.
-    """, [Opt("insert_pythonpath", False, "TRUE")]),
+    """, [Opt("insert_pythonpath", False, "TRUE",
+              converter=options_validate_boolean)]),
     ]
 
 
@@ -524,6 +539,19 @@ def get_current_accounts(options):
                                                options['account_current_conversions'])
     return (account_current_earnings,
             account_current_conversions)
+
+
+def get_unrealized_account(options):
+    """Return the full account name for the unrealized account.
+
+    Args:
+      options: a dict of ledger options.
+    Returns:
+      A tuple of 2 account objects, one for booking current earnings, and one
+      for current conversions.
+    """
+    income = options['name_income']
+    return  account.join(income, options['account_unrealized_gains'])
 
 
 def list_options():

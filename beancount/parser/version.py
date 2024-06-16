@@ -3,33 +3,11 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import datetime
 import re
 
 import beancount
 from beancount.parser import _parser
-
-
-# pylint: disable=invalid-name
-def ArgumentParser(*args, **kwargs):
-    """Add a standard --version option to an ArgumentParser.
-
-    Args:
-      *args: Arguments for the parser.
-      *kwargs: Keyword arguments for the parser.
-    Returns:
-      An instance of ArgumentParser, with our default options set.
-    """
-    parser = argparse.ArgumentParser(*args, **kwargs)
-
-    parser.add_argument('--version', '-V', action='version',
-                        version=compute_version_string(
-                            beancount.__version__,
-                            getattr(_parser, "__vc_changeset__", None),
-                            getattr(_parser, "__vc_timestamp__", 0)))
-
-    return parser
 
 
 def compute_version_string(version, changeset, timestamp):
@@ -52,7 +30,7 @@ def compute_version_string(version, changeset, timestamp):
     # Convert timestamp to a date.
     date = None
     if timestamp > 0:
-        date = datetime.datetime.utcfromtimestamp(timestamp).date()
+        date = datetime.datetime.fromtimestamp(timestamp, datetime.UTC).date()
 
     version = 'Beancount {}'.format(version)
     if changeset or date:
@@ -60,3 +38,9 @@ def compute_version_string(version, changeset, timestamp):
             version, '; '.join(map(str, filter(None, [changeset, date]))))
 
     return version
+
+
+VERSION = compute_version_string(
+    beancount.__version__,
+    getattr(_parser, "__vc_changeset__", None),
+    getattr(_parser, "__vc_timestamp__", 0))

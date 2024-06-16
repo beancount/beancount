@@ -61,6 +61,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import decimal
 import enum
 import io
 from decimal import Decimal
@@ -152,6 +153,11 @@ class _CurrencyContext:
         integer_digits = len(num_tuple.digits) + num_tuple.exponent
         self.integer_max = max(self.integer_max, integer_digits)
 
+    def update_from(self, other):
+        self.has_sign = self.has_sign or other.has_sign
+        self.fractional_dist.update_from(other.fractional_dist)
+        self.integer_max = max(self.integer_max, other.integer_max)
+
     def get_fractional(self, precision):
         """
         Returns:
@@ -200,6 +206,15 @@ class DisplayContext:
         """
         self.ccontexts[currency].update(number)
 
+    def update_from(self, other):
+        """Update the builder with the other given DisplayContext.
+
+        Args:
+          other: Another DisplayContext.
+        """
+        for currency, ccontext in other.ccontexts.items():
+            self.ccontexts[currency].update_from(ccontext)
+
     def quantize(self, number, currency, precision=Precision.MOST_COMMON):
         """Quantize the given number to the given precision.
 
@@ -217,7 +232,15 @@ class DisplayContext:
             # Note: We could probably logging.warn() this situation here.
             return number
         qdigit = Decimal(1).scaleb(-num_fractional_digits)
-        return number.quantize(qdigit)
+
+        with decimal.localcontext() as ctx:
+            # Allow precision for numbers as large as 1 billion in addition to
+            # the required number of fractional digits.
+            #
+            # TODO(blais): Review this to assess performance impact, and whether
+            # we could fold this outside a calling loop.
+            ctx.prec = num_fractional_digits + 9
+            return number.quantize(qdigit)
 
     def build(self,
               alignment=Align.NATURAL,

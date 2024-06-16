@@ -18,9 +18,12 @@ from os import path
 PARSER_SOURCE_FILES = [
     'lexer.l',
     'grammar.y',
+    'decimal.h',
+    'decimal.c',
     'macros.h',
     'parser.h',
     'parser.c',
+    'tokens.h',
 ]
 
 def hash_parser_source_files():

@@ -4,7 +4,10 @@ __license__ = "GNU GPLv2"
 import unittest
 import types
 
-from beancount.core import account
+try:
+    from beancount.core import account
+except ImportError:
+    from beancount.ccore import _core as account
 from beancount.utils import test_utils
 
 
@@ -97,6 +100,9 @@ class TestAccount(unittest.TestCase):
         self.assertEqual('',
                          account.commonprefix(['']))
 
+
+class TestAccountCoreOnly(unittest.TestCase):
+
     def test_parent_matcher(self):
         is_child = account.parent_matcher('Assets:Bank:Checking')
         self.assertTrue(is_child('Assets:Bank:Checking'))
@@ -122,6 +128,7 @@ class TestWalk(test_utils.TmpFilesTestBase):
         'root/Assets/US/Bank/Checking/otherdir/2014-06-08.bank-statement.pdf',
         'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
         'root/Liabilities/US/Bank/',  # Empty directory.
+        'root/Assets/Cäsh/2023-08-18.test.pdf', # Unicode directory name.
     ]
 
     def test_walk(self):
@@ -130,6 +137,10 @@ class TestWalk(test_utils.TmpFilesTestBase):
             for root, account_, dirs, files in account.walk(self.root)]
 
         self.assertEqual([
+            ('/Assets/Cäsh', 'Assets:Cäsh',
+             [],
+             ['2023-08-18.test.pdf']),
+
             ('/Assets/US', 'Assets:US',
              ['Bank'],
              []),
@@ -173,4 +184,8 @@ class TestAccountTransformer(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if not hasattr(account, "__copyright__"):
+        del TestAccountTransformer
+        del TestWalk
+        del TestAccountCoreOnly
     unittest.main()

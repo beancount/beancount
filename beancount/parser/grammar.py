@@ -5,12 +5,12 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import re
-import sys
 import traceback
 from os import path
 from datetime import date
 from decimal import Decimal
+
+import regex
 
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
@@ -92,9 +92,9 @@ def valid_account_regexp(options):
     # Replace the first term of the account regular expression with the specific
     # names allowed under the options configuration. This code is kept in sync
     # with {5672c7270e1e}.
-    return re.compile("(?:{})(?:{}{})+".format('|'.join(names),
-                                               account.sep,
-                                               account.ACC_COMP_NAME_RE))
+    return regex.compile("(?:{})(?:{}{})+".format('|'.join(names),
+                                                  account.sep,
+                                                  account.ACC_COMP_NAME_RE))
 
 
 # A temporary data structure used during parsing to hold and accumulate the
@@ -112,6 +112,7 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         lexer.LexBuilder.__init__(self)
 
@@ -126,6 +127,9 @@ class Builder(lexer.LexBuilder):
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
+
+        # A mapping of all the accounts created.
+        self.accounts = {}
 
         # Make the account regexp more restrictive than the default: check
         # types. Warning: This overrides the value in the base class.
@@ -188,10 +192,6 @@ class Builder(lexer.LexBuilder):
 
         return self.options
 
-    def get_invalid_account(self):
-        """See base class."""
-        return account.join(self.options['name_equity'], 'InvalidAccountName')
-
     def get_long_string_maxlines(self):
         """See base class."""
         return self.options['long_string_maxlines']
@@ -229,6 +229,22 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
+
+    def account(self, filename, lineno, account):
+        """Check account name validity.
+
+        Args:
+          account: a str, the account name.
+        Returns:
+          A string, the account name.
+        """
+        if not self.account_regexp.match(account):
+            meta = new_metadata(filename, lineno)
+            self.errors.append(
+                ParserError(meta, "Invalid account name: {}".format(account), None))
+        # Intern account names. This should reduces memory usage a
+        # fair bit because these strings are repeated liberally.
+        return self.accounts.setdefault(account, account)
 
     def pipe_deprecated_error(self, filename, lineno):
         """Issue a 'Pipe deprecated' error.
@@ -370,10 +386,6 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
-            elif key == 'insert_pythonpath':
-                # Insert the PYTHONPATH to this file when and only if you
-                # encounter this option.
-                sys.path.insert(0, path.dirname(filename))
 
     def include(self, filename, lineno, include_filename):
         """Process an include directive.
@@ -688,7 +700,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Price(meta, date, currency, amount)
 
-    def note(self, filename, lineno, date, account, comment, kvlist):
+    def note(self, filename, lineno, date, account, comment, tags_links, kvlist):
         """Process a note directive.
 
         Args:
@@ -702,7 +714,8 @@ class Builder(lexer.LexBuilder):
           A new Note object.
         """
         meta = new_metadata(filename, lineno, kvlist)
-        return Note(meta, date, account, comment)
+        tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
+        return Note(meta, date, account, comment, tags, links)
 
     def document(self, filename, lineno, date, account, document_filename, tags_links,
                  kvlist):
@@ -801,13 +814,21 @@ class Builder(lexer.LexBuilder):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if units.number == ZERO:
-                number = ZERO
+            if units.number is MISSING:
+                # Note: we could potentially do a better job and attempt to fix
+                # this up after interpolation, but this syntax is pretty rare
+                # anyway.
+                self.errors.append(ParserError(
+                    meta, ("Total price on a posting without units: {}.").format(price),
+                    None))
+                price = None
             else:
-                number = price.number
-                if number is not MISSING:
-                    number = number/abs(units.number)
-            price = Amount(number, price.currency)
+                price_number = price.number
+                if price_number is not MISSING:
+                    price_number = (ZERO
+                                    if units.number == ZERO
+                                    else price_number/abs(units.number))
+                    price = Amount(price_number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
         # conversion entries.
@@ -830,7 +851,7 @@ class Builder(lexer.LexBuilder):
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def tag_link_new(self, filename, lineno, _):
+    def tag_link_new(self, filename, lineno):
         """Create a new TagsLinks instance.
 
         Returns:
@@ -860,18 +881,6 @@ class Builder(lexer.LexBuilder):
           An updated TagsLinks instance.
         """
         tags_links.links.add(link)
-        return tags_links
-
-    def tag_link_STRING(self, filename, lineno, tags_links, string):
-        """Add a string to the TagsLinks accumulator.
-
-        Args:
-          tags_links: The current TagsLinks accumulator.
-          string: A string, the new string to insert in the list.
-        Returns:
-          An updated TagsLinks instance.
-        """
-        tags_links.strings.append(string)
         return tags_links
 
     def _unpack_txn_strings(self, txn_strings, meta):

@@ -16,12 +16,15 @@ from typing import NamedTuple, Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core.number import D
 
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
+CURRENCY_RE = ('|'.join([r'[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b',
+                         r'/[A-Z0-9\'\.\_\-]*[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?']))
+
 
 _Amount = NamedTuple('_Amount', [
     ('number', Optional[Decimal]),
@@ -43,7 +46,7 @@ class Amount(_Amount):
         """Constructor from a number and currency.
 
         Args:
-          number: A string or Decimal instance. Will get converted automatically.
+          number: A Decimal instance.
           currency: A string, the currency symbol to use.
         """
         assert isinstance(number, Amount.valid_types_number), repr(number)
@@ -58,9 +61,12 @@ class Amount(_Amount):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        number_fmt = (dformat.format(self.number, self.currency)
-                      if isinstance(self.number, Decimal)
-                      else str(self.number))
+        if isinstance(self.number, Decimal):
+            number_fmt = dformat.format(self.number, self.currency)
+        elif self.number is MISSING:
+            number_fmt = ''
+        else:
+            number_fmt = str(self.number)
         return "{} {}".format(number_fmt, self.currency)
 
     def __str__(self):
@@ -230,4 +236,3 @@ def abs(amount):
 
 
 A = from_string = Amount.from_string
-NULL_AMOUNT = Amount(ZERO, '')

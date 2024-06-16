@@ -1,38 +1,43 @@
 #!/usr/bin/env python3
-"""List assets and join with attributes of account and commodities to a CSV file.
+"""List assets and attributes of account and commodities.
 
-The purpose of this script is
+This script:
 
-- Produce a table of postings for the assets and liabilities
-- Produce a table of per-account attributes
-- Produce a table of per-commodity attributes
-- Join these tables
-- Output them to a CSV file.
+- produces a table of postings for the assets and liabilities,
 
-The purpose of this script is to then invoke upload-to-sheets to replace the
-contents of an existing sheet inside a Google Sheets doc from which various
-reports to track one's portfolio can be produced, and updated with live market
-data using the =GOOGLEFINANCE() function.
+- produces a table of per-account attributes,
 
-(In theory, this script eventually be replaceable with an SQL shell query; in
-practice, the shell is not quite there yet, so we maintain this script.)
+- produces a table of per-commodity attributes,
+
+- joins these tables,
+
+- outputs them to a CSV file.
+
+The upload-to-sheets program can then be used to replace the contents
+of an existing sheet inside a Google Sheets doc from which various
+reports to track one's portfolio can be produced, and updated with
+live market data using the =GOOGLEFINANCE() function.
+
+In theory, this script could eventually be replaced with an Beancount
+Query Language query. However, BQL is not there yet.
+
 """
+
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from typing import NamedTuple, Tuple, List, Set, Any, Dict
 from decimal import Decimal
-import argparse
 import csv
 import datetime
 import logging
 import re
+import click
 
 from beancount.core.number import ONE
 from beancount.core.number import D
 from beancount.core import data
-from beancount.core import flags
-from beancount.core import inventory
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import getters
@@ -40,13 +45,6 @@ from beancount.ops import summarize
 from beancount.core import prices
 from beancount.parser import options
 from beancount import loader
-
-
-def validate_entries(entries: data.Entries):
-    """Check for problematic entries resulting from some plugins."""
-    for entry in data.filter_txns(entries):
-        if entry.flag == flags.FLAG_UNREALIZED:
-            raise ValueError("Unrealized entries will fail with this plugin.")
 
 
 Header = List[str]
@@ -134,7 +132,7 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
               'cost_number',
               'cost_currency',
               'cost_date']
-    balances, _ = summarize.balance_by_account(entries)
+    balances, _ = summarize.balance_by_account(entries, compress_unbooked=True)
     acctypes = options.get_account_types(options_map)
     rows = []
     for acc, balance in sorted(balances.items()):
@@ -142,22 +140,6 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
         acctype = account_types.get_account_type(acc)
         if not acctype in (acctypes.assets, acctypes.liabilities):
             continue
-
-        # If the account has "NONE" booking method, merge all its postings
-        # together in order to obtain an accurate cost basis and balance of
-        # units.
-        #
-        # (This is a complex issue.) If you accrued positions without having them
-        # booked properly against existing cost bases, you have not properly accounted
-        # for the profit/loss to other postings. This means that the resulting
-        # profit/loss is merged in the cost basis of the positive and negative
-        # postings.
-        dopen = accounts_map.get(acc, None)
-        if dopen is not None and dopen.booking is data.Booking.NONE:
-            average_balance = balance.average()
-            balance = inventory.Inventory(pos
-                                          for pos in average_balance
-                                          if pos.units.number >= threshold)
 
         # Create a posting for each of the positions.
         for pos in balance:
@@ -260,82 +242,85 @@ def reorder_columns(table: Table, new_headers: List[str]) -> Table:
 
 def write_table(table: Table, outfile: str):
     """Write a table to a CSV file."""
-    with outfile:
-        writer = csv.writer(outfile)
-        writer.writerow(table.header)
-        writer.writerows(table.rows)
+    writer = csv.writer(outfile)
+    writer.writerow(table.header)
+    writer.writerows(table.rows)
 
 
-def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount input file')
-
-    parser.add_argument('-C', '--currency', action='store',
-                        help=("Override the default output currency "
-                              "(default is first operating currency)"))
-
-    parser.add_argument('-n', '--dry-run', action='store_true')
-
-    for shortname, longname in [('-c', 'commodities'),
-                                ('-a', 'accounts'),
-                                ('-p', 'prices'),
-                                ('-r', 'rates'),
-                                ('-m', 'postings')]:
-        parser.add_argument(
-            shortname, '--output_{}'.format(longname),
-            type=argparse.FileType('w'),
-            help="CSV filename to write out the {} table to.".format(longname))
-
-    parser.add_argument('-o', '--output',
-                        type=argparse.FileType('w'),
-                        help="CSV filename to write out the final joined table to.")
-
-    args = parser.parse_args()
-
+@click.command(help=__doc__)
+@click.argument('filename')
+@click.option('--currency', '-C',
+              help="Output currency (default is first operating currency).")
+@click.option('--ignore-options', is_flag=True,
+              help=("Ignore options symbols before export. "
+                    "This assumes a separate options trading strategy."))
+@click.option('--dry-run', '-n', is_flag=True)
+@click.option('--insert-date', is_flag=True,
+              help="Insert the date in the header of the output.")
+@click.option('--output', '-o', type=click.File('w'),
+              help="CSV filename to write out the final joined table to.")
+@click.option('--output_commodities', '-c', type=click.File('w'),
+              help="CSV filename to write out the commodities table to.")
+@click.option('--output_accounts', '-a', type=click.File('w'),
+              help="CSV filename to write out the accounts table to.")
+@click.option('--output_prices', '-p', type=click.File('w'),
+              help="CSV filename to write out the prices table to.")
+@click.option('--output_rates', '-r', type=click.File('w'),
+              help="CSV filename to write out the rates table to.")
+@click.option('--output_postings', '-m', type=click.File('w'),
+              help="CSV filename to write out the postings table to.")
+def main(filename, currency, ignore_options, dry_run, insert_date, output,
+         output_commodities, output_accounts, output_prices, output_rates, output_postings):
     # Load the file contents.
-    entries, errors, options_map = loader.load_file(args.filename)
-    validate_entries(entries)
+    entries, errors, options_map = loader.load_file(filename)
 
     # Initialize main output currency.
-    main_currency = args.currency or options_map['operating_currency'][0]
+    main_currency = currency or options_map['operating_currency'][0]
     logging.info("Operating currency: %s", main_currency)
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
         entries, ['export', 'assetcls', 'strategy', 'issuer'])
-    if args.output_commodities is not None:
-        write_table(commodities_table, args.output_commodities)
+    if output_commodities is not None:
+        write_table(commodities_table, output_commodities)
+
+    # Get a table of the commodity names.
+    #
+    # Note: We're fetching the table separately in order to avoid changes to the
+    # spreadsheet upstream, and want to tack on the values as new columns on the
+    # right.
+    names_table = get_commodities_table(entries, ['name'])
 
     # Get the map of accounts to their meta tags.
     accounts_table, accounts_map = get_accounts_table(
         entries, ['tax', 'liquid'])
-    if args.output_accounts is not None:
-        write_table(accounts_table, args.output_accounts)
+    if output_accounts is not None:
+        write_table(accounts_table, output_accounts)
 
     # Enumerate the list of assets.
     postings_table = get_postings_table(entries, options_map, accounts_map)
-    if args.output_postings is not None:
-        write_table(postings_table, args.output_postings)
+    if output_postings is not None:
+        write_table(postings_table, output_postings)
 
     # Get the list of prices.
     prices_table = get_prices_table(entries, main_currency)
-    if args.output_prices is not None:
-        write_table(prices_table, args.output_prices)
+    if output_prices is not None:
+        write_table(prices_table, output_prices)
 
     # Get the list of exchange rates.
     index = postings_table.header.index('cost_currency')
     currencies = set(row[index] for row in postings_table.rows)
     rates_table = get_rates_table(entries, currencies, main_currency)
-    if args.output_rates is not None:
-        write_table(rates_table, args.output_rates)
+    if output_rates is not None:
+        write_table(rates_table, output_rates)
 
     # Join all the tables.
     joined_table = join(postings_table,
                         (('currency',), commodities_table),
                         (('account',), accounts_table),
                         (('currency', 'cost_currency'), prices_table),
-                        (('cost_currency',), rates_table))
+                        (('cost_currency',), rates_table),
+                        (('currency',), names_table))
 
     # Reorder columns.
     # We do this in order to avoid having to change the spreadsheet when we add new columns.
@@ -344,15 +329,24 @@ def main():
     headers.append('issuer')
     final_table = reorder_columns(joined_table, headers)
 
-    # Filter table.
-    rows = [row for row in final_table.rows if row[7].lower() != 'ignore']
+    # Filter table removing rows to ignore (rows not to export).
+    index = final_table.header.index('export')
+    rows = [row for row in final_table.rows
+            if row[index] is None or row[index].lower() != 'ignore']
+
+    # Filter out options if requested.
+    if ignore_options:
+        index = final_table.header.index('currency')
+        is_option = re.compile(r"[A-Z]+_\d{6,}[CP]\d+", re.I).match
+        rows = [row for row in rows
+                if row[index] is None or not is_option(row[index])]
+
     table = Table(final_table.header, rows)
 
-    if args.output is not None:
-        table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
-        write_table(table, args.output)
-
-    return 0
+    if output is not None:
+        if insert_date:
+            table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
+        write_table(table, output)
 
 
 if __name__ == '__main__':

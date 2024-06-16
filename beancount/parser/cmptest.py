@@ -7,11 +7,6 @@ import unittest
 import io
 import textwrap
 
-# TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
-from beancount.utils import test_utils
-test_utils.remove_alt_csv_path()
-import pytest  # pylint: disable=wrong-import-order
-
 from beancount.core import amount
 from beancount.core import compare
 from beancount.core import data
@@ -141,117 +136,110 @@ def _transform_incomplete_amount(amt):
     return amt
 
 
-
-
 class TestCase(unittest.TestCase):
 
-    def assertEqualEntries(self, expected_entries, actual_entries):
-        return assertEqualEntries(expected_entries, actual_entries, self.fail)
-    def assertIncludesEntries(self, subset_entries, entries):
-        return assertIncludesEntries(subset_entries, entries, self.fail)
-    def assertExcludesEntries(self, subset_entries, entries):
-        return assertExcludesEntries(subset_entries, entries, self.fail)
+    def assertEqualEntries(self, expected_entries, actual_entries, allow_incomplete=False):
+        """Check that two lists of entries are equal.
 
+        Entries can be provided either as a list of directives or as a
+        string.  In the latter case, the string is parsed with
+        beancount.parser.parse_string() and the resulting directives
+        list is used. If allow_incomplete is True, light-weight
+        booking is performed before comparing the directive lists,
+        allowing to compare transactions with incomplete postings.
 
-DEFAULT_FAILFUNC = pytest.fail
+        Args:
+          expected_entries: Expected entries.
+          actual_entries: Actual entries.
+          allow_incomplete: Perform booking before comparison.
 
+        Raises:
+          AssertionError: If the exception fails.
 
-def assertEqualEntries(expected_entries, actual_entries,
-                       failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
-    """Compare two lists of entries exactly and print missing entries verbosely if
-    they occur.
+        """
+        expected_entries = read_string_or_entries(expected_entries, allow_incomplete)
+        actual_entries = read_string_or_entries(actual_entries, allow_incomplete)
 
-    Args:
-      expected_entries: Either a list of directives or a string, in which case the
-        string is run through beancount.parser.parse_string() and the resulting
-        list is used.
-      actual_entries: Same treatment as expected_entries, the other list of
-        directives to compare to.
-      failfunc: A function to call on failure.
-      allow_incomplete: A boolean, true if we allow incomplete inputs and perform
-        light-weight booking.
-    Raises:
-      AssertionError: If the exception fails.
-    """
-    expected_entries = read_string_or_entries(expected_entries, allow_incomplete)
-    actual_entries = read_string_or_entries(actual_entries, allow_incomplete)
+        same, expected_missing, actual_missing = \
+            compare.compare_entries(expected_entries, actual_entries)
+        if not same:
+            assert expected_missing or actual_missing, \
+                "Missing is missing: {}, {}".format(expected_missing, actual_missing)
+            oss = io.StringIO()
+            if expected_missing:
+                oss.write("Present in expected set and not in actual set:\n\n")
+                for entry in expected_missing:
+                    oss.write(printer.format_entry(entry))
+                    oss.write('\n')
+            if actual_missing:
+                oss.write("Present in actual set and not in expected set:\n\n")
+                for entry in actual_missing:
+                    oss.write(printer.format_entry(entry))
+                    oss.write('\n')
+            self.fail(oss.getvalue())
 
-    same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
-                                                                     actual_entries)
-    if not same:
-        assert expected_missing or actual_missing, "Missing is missing: {}, {}".format(
-            expected_missing, actual_missing)
-        oss = io.StringIO()
-        if expected_missing:
-            oss.write("Present in expected set and not in actual set:\n\n")
-            for entry in expected_missing:
-                oss.write(printer.format_entry(entry))
-                oss.write('\n')
-        if actual_missing:
-            oss.write("Present in actual set and not in expected set:\n\n")
-            for entry in actual_missing:
-                oss.write(printer.format_entry(entry))
-                oss.write('\n')
-        failfunc(oss.getvalue())
+    def assertIncludesEntries(self, subset_entries, entries, allow_incomplete=False):
+        """Check that subset_entries is included in entries.
 
+        Entries can be provided either as a list of directives or as a
+        string.  In the latter case, the string is parsed with
+        beancount.parser.parse_string() and the resulting directives
+        list is used. If allow_incomplete is True, light-weight
+        booking is performed before comparing the directive lists,
+        allowing to compare transactions with incomplete postings.
 
-def assertIncludesEntries(subset_entries, entries,
-                          failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
-    """Check that subset_entries is included in entries and print missing entries.
+        Args:
+          subset_entries: Subset entries.
+          entries: Entries.
+          allow_incomplete: Perform booking before comparison.
 
-    Args:
-      subset_entries: Either a list of directives or a string, in which case the
-        string is run through beancount.parser.parse_string() and the resulting
-        list is used.
-      entries: Same treatment as subset_entries, the other list of
-        directives to compare to.
-      failfunc: A function to call on failure.
-      allow_incomplete: A boolean, true if we allow incomplete inputs and perform
-        light-weight booking.
-    Raises:
-      AssertionError: If the exception fails.
-    """
-    subset_entries = read_string_or_entries(subset_entries, allow_incomplete)
-    entries = read_string_or_entries(entries)
+        Raises:
+          AssertionError: If the exception fails.
 
-    includes, missing = compare.includes_entries(subset_entries, entries)
-    if not includes:
-        assert missing, "Missing is empty: {}".format(missing)
-        oss = io.StringIO()
-        if missing:
-            oss.write("Missing from from expected set:\n\n")
-            for entry in missing:
-                oss.write(printer.format_entry(entry))
-                oss.write('\n')
-        failfunc(oss.getvalue())
+        """
+        subset_entries = read_string_or_entries(subset_entries, allow_incomplete)
+        entries = read_string_or_entries(entries)
 
+        includes, missing = compare.includes_entries(subset_entries, entries)
+        if not includes:
+            assert missing, "Missing is empty: {}".format(missing)
+            oss = io.StringIO()
+            if missing:
+                oss.write("Missing from from expected set:\n\n")
+                for entry in missing:
+                    oss.write(printer.format_entry(entry))
+                    oss.write('\n')
+            self.fail(oss.getvalue())
 
-def assertExcludesEntries(subset_entries, entries,
-                          failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
-    """Check that subset_entries is not included in entries and print extra entries.
+    def assertExcludesEntries(self, subset_entries, entries, allow_incomplete=False):
+        """Check that subset_entries is not included in entries.
 
-    Args:
-      subset_entries: Either a list of directives or a string, in which case the
-        string is run through beancount.parser.parse_string() and the resulting
-        list is used.
-      entries: Same treatment as subset_entries, the other list of
-        directives to compare to.
-      failfunc: A function to call on failure.
-      allow_incomplete: A boolean, true if we allow incomplete inputs and perform
-        light-weight booking.
-    Raises:
-      AssertionError: If the exception fails.
-    """
-    subset_entries = read_string_or_entries(subset_entries, allow_incomplete)
-    entries = read_string_or_entries(entries)
+        Entries can be provided either as a list of directives or as a
+        string. In the latter case, the string is parsed with
+        beancount.parser.parse_string() and the resulting directives
+        list is used. If allow_incomplete is True, light-weight
+        booking is performed before comparing the directive lists,
+        allowing to compare transactions with incomplete postings.
 
-    excludes, extra = compare.excludes_entries(subset_entries, entries)
-    if not excludes:
-        assert extra, "Extra is empty: {}".format(extra)
-        oss = io.StringIO()
-        if extra:
-            oss.write("Extra from from first/excluded set:\n\n")
-            for entry in extra:
-                oss.write(printer.format_entry(entry))
-                oss.write('\n')
-        failfunc(oss.getvalue())
+        Args:
+          subset_entries: Subset entries.
+          entries: Entries.
+          allow_incomplete: Perform booking before comparison.
+
+        Raises:
+          AssertionError: If the exception fails.
+
+        """
+        subset_entries = read_string_or_entries(subset_entries, allow_incomplete)
+        entries = read_string_or_entries(entries)
+
+        excludes, extra = compare.excludes_entries(subset_entries, entries)
+        if not excludes:
+            assert extra, "Extra is empty: {}".format(extra)
+            oss = io.StringIO()
+            if extra:
+                oss.write("Extra from from first/excluded set:\n\n")
+                for entry in extra:
+                    oss.write(printer.format_entry(entry))
+                    oss.write('\n')
+            self.fail(oss.getvalue())

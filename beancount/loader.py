@@ -4,7 +4,9 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+from typing import Any, Optional
 import collections
+import copy
 import functools
 import glob
 import hashlib
@@ -15,10 +17,11 @@ import logging
 import os
 import pickle
 import struct
+import sys
 import textwrap
 import time
+import traceback
 import warnings
-from typing import Optional
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -31,16 +34,26 @@ from beancount.utils import encryption
 from beancount.utils import file_utils
 
 
+OptionsMap = Any
+
+
 LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 
 # List of default plugins to run.
-DEFAULT_PLUGINS_PRE = [
-    ("beancount.ops.pad", None),
+PLUGINS_PRE = [
     ("beancount.ops.documents", None),
     ]
 
-DEFAULT_PLUGINS_POST = [
+# List of plugins that get enabled by --auto, and list of plugins actually
+# inserted in the list. See {4ec6a3205b6c}.
+DEFAULT_PLUGINS_AUTO = [
+    ("beancount.plugins.auto", None),
+    ]
+PLUGINS_AUTO = []
+
+PLUGINS_POST = [
+    ("beancount.ops.pad", None),
     ("beancount.ops.balance", None),
     ]
 
@@ -63,7 +76,8 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     Args:
       filename: The name of the file to be parsed.
       log_timings: A file object or function to write timings to,
-        or None, if it should remain quiet.
+        or None, if it should remain quiet. (Note that this is intended to use
+        the logging methods and does not insert a newline.)
       log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
@@ -339,6 +353,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
     # Current parse state.
     entries, parse_errors = [], []
     options_map = None
+    other_options_map = []
 
     # A stack of sources to be parsed.
     source_stack = list(sources)
@@ -418,7 +433,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
             if is_top_level:
                 options_map = src_options_map
             else:
-                aggregate_options_map(options_map, src_options_map)
+                other_options_map.append(src_options_map)
 
             # Add includes to the list of sources to process. chdir() for glob,
             # which uses it indirectly.
@@ -448,21 +463,37 @@ def _parse_recursive(sources, log_timings, encoding=None):
     # Save the set of parsed filenames in options_map.
     options_map['include'] = sorted(filenames_seen)
 
+    options_map = aggregate_options_map(options_map, other_options_map)
+
     return entries, parse_errors, options_map
 
 
-def aggregate_options_map(options_map, src_options_map):
+def aggregate_options_map(options_map, other_options_map):
     """Aggregate some of the attributes of options map.
 
     Args:
       options_map: The target map in which we want to aggregate attributes.
         Note: This value is mutated in-place.
-      src_options_map: A source map whose values we'd like to see aggregated.
+      other_options_map: A list of other options maps, some of whose values
+        we'd like to see aggregated.
     """
-    op_currencies = options_map["operating_currency"]
-    for currency in src_options_map["operating_currency"]:
-        if currency not in op_currencies:
-            op_currencies.append(currency)
+    options_map = copy.copy(options_map)
+
+    currencies = list(options_map["operating_currency"])
+    for omap in other_options_map:
+        currencies.extend(omap["operating_currency"])
+        options_map["dcontext"].update_from(omap["dcontext"])
+    options_map["operating_currency"] = list(misc_utils.uniquify(currencies))
+
+
+    # Produce a 'pythonpath' value for transformers.
+    pythonpath = set()
+    for omap in itertools.chain((options_map,), other_options_map):
+        if omap.get("insert_pythonpath", False):
+            pythonpath.add(path.dirname(omap["filename"]))
+    options_map["pythonpath"] = sorted(pythonpath)
+
+    return options_map
 
 
 def _load(sources, log_timings, extra_validations, encoding):
@@ -507,8 +538,16 @@ def _load(sources, log_timings, extra_validations, encoding):
 
     # Transform the entries.
     with misc_utils.log_time('run_transformations', log_timings, indent=1):
-        entries, errors = run_transformations(entries, parse_errors, options_map,
-                                              log_timings)
+
+        # Insert the user PYTHONPATH entries before processing the plugins.
+        saved_pythonpath = list(sys.path)
+        try:
+            if "pythonpath" in options_map:
+                sys.path[0:0] = options_map["pythonpath"]
+            entries, errors = run_transformations(entries, parse_errors, options_map,
+                                                  log_timings)
+        finally:
+            sys.path[:] = saved_pythonpath
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
@@ -547,9 +586,10 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     if options_map['plugin_processing_mode'] == 'raw':
         plugins_iter = options_map["plugin"]
     elif options_map['plugin_processing_mode'] == 'default':
-        plugins_iter = itertools.chain(DEFAULT_PLUGINS_PRE,
+        plugins_iter = itertools.chain(PLUGINS_PRE,
                                        options_map["plugin"],
-                                       DEFAULT_PLUGINS_POST)
+                                       PLUGINS_AUTO,
+                                       PLUGINS_POST)
     else:
         assert "Invalid value for plugin_processing_mode: {}".format(
             options_map['plugin_processing_mode'])
@@ -565,38 +605,55 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             plugin_name = renamed_name
 
         # Try to import the module.
+        #
+        # Note: We intercept import errors and continue but let other plugin
+        # import time exceptions fail a run, by choice.
         try:
             module = importlib.import_module(plugin_name)
             if not hasattr(module, '__plugins__'):
                 continue
+        except ImportError:
+            # Upon failure, just issue an error.
+            formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
+            errors.append(LoadError(data.new_metadata("<load>", 0),
+                                    'Error importing "{}": {}'.format(
+                                        plugin_name, formatted_traceback), None))
+            continue
 
-            with misc_utils.log_time(plugin_name, log_timings, indent=2):
+        # Apply it.
+        with misc_utils.log_time(plugin_name, log_timings, indent=2):
+            # Run each transformer function in the plugin.
+            for function_name in module.__plugins__:
+                if isinstance(function_name, str):
+                    # Support plugin functions provided by name.
+                    callback = getattr(module, function_name)
+                else:
+                    # Support function types directly, not just names.
+                    callback = function_name
 
-                # Run each transformer function in the plugin.
-                for function_name in module.__plugins__:
-                    if isinstance(function_name, str):
-                        # Support plugin functions provided by name.
-                        callback = getattr(module, function_name)
-                    else:
-                        # Support function types directly, not just names.
-                        callback = function_name
+                # Provide arguments if config is provided.
+                # TODO(blais): Make this consistent in v3, not conditional.
+                args = () if plugin_config is None else (plugin_config,)
 
-                    if plugin_config is not None:
-                        entries, plugin_errors = callback(entries, options_map,
-                                                          plugin_config)
-                    else:
-                        entries, plugin_errors = callback(entries, options_map)
+                # Catch all exceptions raised in running the plugin, except exits.
+                try:
+                    entries, plugin_errors = callback(entries, options_map, *args)
                     errors.extend(plugin_errors)
+                except Exception as exc:
+                    # Allow the user to exit in a plugin.
+                    if isinstance(exc, SystemExit):
+                        raise
+
+                    # Upon failure, just issue an error.
+                    formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
+                    errors.append(LoadError(data.new_metadata("<load>", 0),
+                                            'Error applying plugin "{}": {}'.format(
+                                                plugin_name, formatted_traceback), None))
+                    continue
 
             # Ensure that the entries are sorted. Don't trust the plugins
             # themselves.
             entries.sort(key=data.entry_sortkey)
-
-        except (ImportError, TypeError) as exc:
-            # Upon failure, just issue an error.
-            errors.append(LoadError(data.new_metadata("<load>", 0),
-                                    'Error importing "{}": {}'.format(
-                                        plugin_name, str(exc)), None))
 
     return entries, errors
 

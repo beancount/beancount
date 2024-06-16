@@ -15,6 +15,7 @@ from os import path
 from apiclient import discovery
 import httplib2
 from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
+# TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account
 
 from beancount.parser import options
@@ -36,7 +37,7 @@ def replace_gdocs_document(http, docid, title, contents):
                                 resumable=True)
     return service.files().update(
         fileId=docid,
-        body=dict(name=title),
+        body={'name': title},
         media_body=media).execute()
 
 
@@ -46,10 +47,12 @@ def get_options_docid():
     Returns:
       The id of the doc to fix up.
     """
-    htaccess = path.join(test_utils.find_repository_root(__file__), '.htaccess')
-    lines = list(filter(None,
-                        map(re.compile(r'RedirectMatch +/doc/options\$[\t ]+(.*)').match,
-                            open(htaccess).readlines())))
+    htaccess = path.join(test_utils.find_repository_root(__file__), '.nginx.conf')
+    with open(htaccess) as inht:
+        lines = list(filter(
+            None, map(
+                re.compile(r'.*/doc/options.*(https?://docs.google.com/.*);').match,
+                inht.readlines())))
     assert len(lines) == 1
     return list(filter(None, lines[0].group(1).split('/')))[-1]
 

@@ -29,7 +29,7 @@ class ImmutableDictWithDefault(dict):
     set method is make unavailable to prevent mutation beyond construction.
     """
     def __init__(self, *args, default=None):
-        super(ImmutableDictWithDefault, self).__init__(*args)
+        super().__init__(*args)
         self.default = default
 
     def __setitem__(self, key, value):
@@ -43,7 +43,7 @@ class ImmutableDictWithDefault(dict):
         return value
 
     def get(self, key, _=None):
-        return self.__getitem__(key)
+        return self.__getitem__(key)  # pylint: disable=unnecessary-dunder-call
 
     # The next three methods are present in order to support pickling. Note that
     # because this class is a specialization of dict, and that dict has a
@@ -54,7 +54,7 @@ class ImmutableDictWithDefault(dict):
 
     def __setstate__(self, state):
         self.default, items = state
-        super(ImmutableDictWithDefault, self).update(items)
+        super().update(items)
 
     def __reduce__(self):
         return (ImmutableDictWithDefault, (), self.__getstate__())

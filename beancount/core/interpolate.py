@@ -160,8 +160,13 @@ def infer_tolerances(postings, options_map, use_cost=None):
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
-            tolerances[currency] = max(tolerance,
-                                       tolerances.get(currency, -1024))
+
+            # Note that we take the max() and not the min() here because the
+            # tolerance has a dual purpose: it's used to infer the resolution
+            # for interpolation (where we might want the min()) and also for
+            # balance checks (where we favor the looser/larger tolerance).
+            tolerances[currency] = max(tolerance, tolerances.get(currency,
+                                                                 -1024))
 
             if not use_cost:
                 continue
@@ -276,7 +281,7 @@ def compute_entries_balance(entries, prefix=None, date=None):
     return total_balance
 
 
-def compute_entry_context(entries, context_entry):
+def compute_entry_context(entries, context_entry, additional_accounts=None):
     """Compute the balances of all accounts referenced by entry up to entry.
 
     This provides the inventory of the accounts to which the entry is to be
@@ -286,6 +291,10 @@ def compute_entry_context(entries, context_entry):
       entries: A list of directives.
       context_entry: The entry for which we want to obtain the before and after
         context.
+      additional_accounts: Additional list of accounts to include in calculating
+        the balance. This is used when invoked for debugging, in case the booked
+        & interpolated transaction doesn't have all the accounts we need because
+        it had an error (the booking code will remove invalid postings).
     Returns:
       Two dicts of account-name to Inventory instance, one which represents the
       context before the entry is applied, and one that represents the context
@@ -295,6 +304,8 @@ def compute_entry_context(entries, context_entry):
 
     # Get the set of accounts for which to compute the context.
     context_accounts = getters.get_entry_accounts(context_entry)
+    if additional_accounts:
+        context_accounts.update(additional_accounts)
 
     # Iterate over the entries until we find the target one and accumulate the
     # balance.

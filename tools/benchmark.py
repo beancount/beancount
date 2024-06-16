@@ -10,9 +10,21 @@ import os
 import subprocess
 
 
+def prevent_run_with_changes():
+    """Fail if some local changes exist."""
+    output = subprocess.check_output(["git", "status", "--short"])
+    if output:
+        raise RuntimeError("Local changes exist; exiting.")
+
+
 def benchmark_revision(beancount_file: str, revision: str):
     """Run the benchmark on a particular revision."""
-    args = dict(shell=False, stdout=subprocess.PIPE)
+    args = {'shell': False, 'stdout': subprocess.PIPE}
+
+    # Clean up local files. WARNING.
+    subprocess.check_call(["make", "clean"], **args)
+    checkout_command = ["git", "reset", "--hard", "HEAD"]
+    subprocess.check_call(checkout_command, **args)
 
     # Checkout the desired revision.
     checkout_command = ["git", "checkout", revision]
@@ -37,6 +49,7 @@ def main():
 
     args = parser.parse_args()
 
+    prevent_run_with_changes()
     for revision in args.revisions:
         benchmark_revision(args.beancount_file, revision)
 

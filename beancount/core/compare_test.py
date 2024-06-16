@@ -64,6 +64,32 @@ class TestCompare(unittest.TestCase):
         hashes, errors = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))
 
+    def test_hash_entries_same_postings(self):
+        entries1, _, __ = loader.load_string("""
+          2020-01-01 * "BarAlice" "Beer with my guy friends ASDF"
+            Assets:Cash           -10.00 USD
+            Expenses:Food:Drinks    2.00 USD
+              shared: "Assets:Debtors:Bob 4.00 USD"
+              shared901: "Assets:Debtors:Bob 4.00 USD"
+            Assets:Debtors:Bob      4.00 USD
+              shared: "Expenses:Food:Drinks 4.00 USD"
+            Assets:Debtors:Bob      4.00 USD
+              shared: "Expenses:Food:Drinks 4.00 USD"
+        """)
+
+        entries2, _, __ = loader.load_string("""
+          2020-01-01 * "BarAlice" "Beer with my guy friends ASDF"
+            Assets:Cash           -10.00 USD
+            Expenses:Food:Drinks    2.00 USD
+              shared: "Assets:Debtors:Bob 4.00 USD"
+              shared901: "Assets:Debtors:Bob 4.00 USD"
+            Assets:Debtors:Bob      4.00 USD
+              shared: "Expenses:Food:Drinks 4.00 USD"
+        """)
+        hashes1, _ = compare.hash_entries(entries1)
+        hashes2, _ = compare.hash_entries(entries2)
+        self.assertNotEqual(set(hashes1), set(hashes2.keys()))
+
     def test_compare_entries(self):
         entries1, _, __ = loader.load_string(TEST_INPUT)
         entries2, _, __ = loader.load_string(TEST_INPUT)

@@ -4,10 +4,12 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "macros.h"
-#include "parser.h"
-#include "grammar.h"
-#include "lexer.h"
+#include "beancount/parser/decimal.h"
+#include "beancount/parser/macros.h"
+#include "beancount/parser/parser.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/lexer.h"
+#include "beancount/parser/tokens.h"
 
 /*
   If we're running this from the Bazel environment, a genrule() is used to
@@ -38,7 +40,7 @@
 
 extern YY_DECL;
 
-/* Placeolder object for missing cost specifications. */
+/* Placeholder object for missing cost specifications. */
 PyObject* missing_obj;
 
 typedef struct {
@@ -110,32 +112,30 @@ static void parser_dealloc(Parser* self)
 }
 
 PyDoc_STRVAR(parser_parse_doc,
-             "parse(file, filename=None, lineno=1, encoding='utf8')\n"
+             "parse(file, filename=None, lineno=1)\n"
              "\n"
              "Parse input from file object. The filename and lineno keyword\n"
              "arguments allow to specify the file name and start line number to be\n"
              "used in error reporting and in the returned metadata objects. If\n"
              "filename is not specified or None, the name attribute of the file\n"
-             "object is used, if present. The encoding parameter allows to specify\n"
-             "the file encoding. Parsing results are retrieved from the Builder\n"
-             "object specified when the Parser object was instantiated.");
+             "object is used, if present. Parsing results are retrieved from the \n"
+             "Builder object specified when the Parser object was instantiated.");
 
 static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
-    const char* encoding = NULL;
+    static char* kwlist[] = {"file", "filename", "lineno", NULL};
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oi", kwlist,
+                                     &file, &filename, &lineno)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, missing_obj, self->scanner);
 
     /* Run the parser. */
     ret = yyparse(self->scanner, self->builder);
@@ -159,30 +159,28 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(parser_lex_doc,
-             "lex(file, filename=None, lineno=1, encoding='utf8')\n"
+             "lex(file, filename=None, lineno=1)\n"
              "\n"
              "Run the input file object trough the Beancount tokenizer. filename and\n"
              "lineno keyword arguments allow to specify the file name and start line\n"
              "number to be used in error reporting. If filename is not specified or\n"
-             "None, the name attribute of the file object is used, if present.\n"
-             "The encoding parameter allows to specify the file encoding. Return an\n"
-             "iterable yielding (token name, string value, sematical value) tuples.");
+             "None, the name attribute of the file object is used, if present. Return \n"
+             "an iterable yielding (token name, string value, sematical value) tuples.");
 
 static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"file", "filename", "lineno", "encoding", NULL};
-    const char* encoding = NULL;
+    static char* kwlist[] = {"file", "filename", "lineno", NULL};
     PyObject* filename = NULL;
     PyObject* file;
     int lineno = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oiz", kwlist,
-                                     &file, &filename, &lineno, &encoding)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oi", kwlist,
+                                     &file, &filename, &lineno)) {
         return NULL;
     }
 
     /* Initialize the scanner state. */
-    yylex_initialize(file, filename, lineno, encoding, self->scanner);
+    yylex_initialize(file, filename, lineno, missing_obj, self->scanner);
 
     Py_INCREF(self);
     return (PyObject*)self;
@@ -224,7 +222,7 @@ static PyObject* parser_iternext(Parser* self)
     }
 
     /* Yield a (token name, line, matched string, token value) tuple. */
-    return Py_BuildValue("(sis#O)",
+    return Py_BuildValue("(siy#O)",
                          token_to_string(token),
                          yylloc.first_line,
                          yyget_text(self->scanner),
@@ -307,52 +305,51 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit__parser(void)
 {
+    PyObject* beancount_core_number;
+    PyObject* module;
+    PyObject* value;
+
     Py_INCREF(&Parser_Type);
 
-    PyObject* module = PyModule_Create(&moduledef);
+    module = PyModule_Create(&moduledef);
     if (!module) {
         goto error;
     }
 
-#define SETATTR(module, name, value)                       \
-    if (!value) {                                          \
-        goto error;                                        \
-    }                                                      \
-    if (PyObject_SetAttrString(module, name, value) < 0) { \
-        goto error;                                        \
-    }
+    initialize_datetime();
+    PyDecimal_IMPORT;
 
     /* Hash of the this Python extension source code. */
-    SETATTR(module, "SOURCE_HASH",
-            PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH)));
+    value = PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH));
+    PyObject_SetAttrString(module, "SOURCE_HASH", value);
 
     /* Release versions as defined in setup.py. */
-    SETATTR(module, "__version__",
-            PyUnicode_FromString(STRINGIFY(RELEASE_VERSION)));
+    value = PyUnicode_FromString(STRINGIFY(RELEASE_VERSION));
+    PyObject_SetAttrString(module, "__version__", value);
 
 #ifdef VC_CHANGESET
     /* Git changeset from the build source tree.
      * In the Bazel build, this information is absent. */
-    SETATTR(module, "__vc_changeset__",
-            PyUnicode_FromString(STRINGIFY(VC_CHANGESET)));
+    value = PyUnicode_FromString(STRINGIFY(VC_CHANGESET));
+    PyObject_SetAttrString(module, "__vc_changeset__", value);
 #endif
 
 #ifdef VC_TIMESTAMP
     /* Date of the last changeset.
      * In the Bazel build, this information is absent. */
-    SETATTR(module, "__vc_timestamp__",
-            PyLong_FromLong(VC_TIMESTAMP));
+    value = PyLong_FromLong(VC_TIMESTAMP);
+    PyObject_SetAttrString(module, "__vc_timestamp__", value);
 #endif
 
 #undef SETATTR
 
     /* Import the module that defines the missing object constant. */
-    PyObject* number_module = PyImport_ImportModule("beancount.core.number");
-    if (!number_module) {
+    beancount_core_number = PyImport_ImportModule("beancount.core.number");
+    if (!beancount_core_number) {
         goto error;
     }
 
-    missing_obj = PyObject_GetAttrString(number_module, "MISSING");
+    missing_obj = PyObject_GetAttrString(beancount_core_number, "MISSING");
     if (!missing_obj) {
         goto error;
     }
@@ -367,8 +364,8 @@ PyMODINIT_FUNC PyInit__parser(void)
     return module;
 
 error:
-    Py_DECREF(&Parser_Type);
-    Py_DECREF(module);
+    Py_XDECREF(&Parser_Type);
+    Py_XDECREF(module);
     return NULL;
 }
 

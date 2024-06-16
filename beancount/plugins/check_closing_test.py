@@ -4,7 +4,6 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount.parser import cmptest
-from beancount.plugins import auto_accounts
 from beancount import loader
 
 
@@ -29,8 +28,6 @@ class TestCheckClosing(cmptest.TestCase):
             Assets:US:Brokerage:Main:Cash      7416.13 USD
             Income:US:Brokerage:Main:PnL      -3654.00 USD
         """
-        new_entries, _ = auto_accounts.auto_insert_open(entries, options_map)
-
         self.assertEqualEntries("""
 
           2018-02-16 open Assets:US:Brokerage:Main:Cash
@@ -48,7 +45,7 @@ class TestCheckClosing(cmptest.TestCase):
 
           2018-02-17 balance Assets:US:Brokerage:Main:Options  0 QQQ180216C160
 
-        """, new_entries)
+        """, entries)
 
 
 if __name__ == '__main__':

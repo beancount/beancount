@@ -2,11 +2,34 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 5 "beancount/parser/lexer.h"
+#line 6 "beancount/parser/lexer.h"
 
-#include "parser.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#ifdef PYPY_VERSION_NUM
+/* PyPy does not export this function. */
+#define PyExceptionClass_Name(x) (((PyTypeObject*)(x))->tp_name)
+#endif
 
 typedef struct _yyextra_t yyextra_t;
+
+struct _yyextra_t {
+    /* The filename being tokenized. */
+    PyObject* filename;
+
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
+};
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
+
+/* Lexer interface required by Bison. */
+#define YY_DECL int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param, \
+                          yyscan_t yyscanner, PyObject* builder)
 
 /**
  * Allocate a new scanner object including private data.
@@ -24,19 +47,18 @@ yyscan_t yylex_new(void);
 yyscan_t yylex_free(yyscan_t scanner);
 
 /**
- * Allocate and initialize scanner private data.
+ * Initialize scanner private data.
  *
- * Setup @scanner to read from the Python file-like object @file. Set
- * the reported file name to @filename, if not NULL and not None.
- * Otherwise try to obtain the file name from the @name attribute of
- * the @file object. If this fails, use the empty string. @encoding is
- * used to decode strings read from the input file, if not NULL,
- * otherwise the default UTF-8 encoding is used. Python objects
- * references are incremented. It is safe to call this multiple times.
+ * Setup @scanner to read from the Python file-like object @file. Set the
+ * reported file name to @filename, if not NULL and not None. Otherwise try to
+ * obtain the file name from the @name attribute of the @file object. If this
+ * fails, use the empty string. Python objects references are incremented. It
+ * is safe to call this multiple times.
  */
-void yylex_initialize(PyObject* file, PyObject* filename, int lineno, const char* encoding, yyscan_t scanner);
+void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
+                      PyObject* missing_obj, yyscan_t scanner);
 
-#line 39 "beancount/parser/lexer.h"
+#line 62 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -280,7 +302,7 @@ void yyfree ( void * , yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define INVALID 1
-#define STRLIT 2
+#define IGNORE 2
 
 #endif
 
@@ -550,9 +572,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 481 "beancount/parser/lexer.l"
+#line 332 "beancount/parser/lexer.l"
 
 
-#line 556 "beancount/parser/lexer.h"
+#line 579 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

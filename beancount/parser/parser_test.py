@@ -9,14 +9,10 @@ import unittest
 import tempfile
 import textwrap
 import sys
-import subprocess
-
-from pytest import mark
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
-from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -49,7 +45,7 @@ class TestParserDoc(unittest.TestCase):
         self.assertTrue(errors)
 
     @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
-    @mark.xfail
+    @unittest.expectedFailure
     @parser.parse_doc(expect_errors=False)
     def test_parse_doc__errors(self, _, __, ___):
         """
@@ -59,7 +55,7 @@ class TestParserDoc(unittest.TestCase):
         """
 
     @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
-    @mark.xfail
+    @unittest.expectedFailure
     @parser.parse_doc(expect_errors=True)
     def test_parse_doc__noerrors(self, _, __, ___):
         """
@@ -72,11 +68,11 @@ class TestParserDoc(unittest.TestCase):
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
-    INPUT = """
+    INPUT = textwrap.dedent("""
       2013-05-18 * "Nice dinner at Mermaid Inn"
         Expenses:Restaurant         100 USD
         Assets:US:Cash
-    """
+    """)
 
     def test_parse_string(self):
         entries, errors, _ = parser.parse_string(self.INPUT)
@@ -99,21 +95,15 @@ class TestParserInputs(unittest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
-    @classmethod
-    def parse_stdin(cls):
-        entries, errors, _ = parser.parse_file("-")
-        assert entries, "Empty entries: {}".format(entries)
-        assert not errors, "Errors: {}".format(errors)
-
     def test_parse_stdin(self):
-        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
-        code = ('import beancount.parser.parser_test as p; '
-                'p.TestParserInputs.parse_stdin()')
-        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=env,
-                                stdin=subprocess.PIPE)
-        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
-        self.assertEqual(0, pipe.returncode)
+        stdin = sys.stdin
+        try:
+            sys.stdin = io.TextIOWrapper(io.BytesIO(self.INPUT.encode('utf-8')))
+            entries, errors, _ = parser.parse_file("-")
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+        finally:
+            sys.stdin = stdin
 
     def test_parse_None(self):
         # None is treated as the empty string...
@@ -150,29 +140,10 @@ class TestUnicodeErrors(unittest.TestCase):
     def test_bytes_encoded_incorrect(self):
         latin1_bytes = self.test_utf8_string.encode('latin1')
         entries, errors, _ = parser.parse_string(latin1_bytes)
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer failed to convert the string but did not cause
-        # other errors.
-        self.assertNotEqual(self.expected_utf8_string, entries[0].comment)
-
-    # Test providing latin1 bytes to the lexer with an encoding.
-    def test_bytes_encoded_latin1(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='latin1')
-        self.assertEqual(1, len(entries))
-        self.assertFalse(errors)
-        # Check that the lexer correctly parsed the latin1 string.
-        self.assertEqual(self.expected_latin1_string, entries[0].comment)
-
-    # Test using a garbage invalid encoding.
-    def test_bytes_encoded_invalid(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
+        # Check that the lexer failed to convert the string and reported an error.
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "unknown encoding")
+        self.assertRegex(errors[0].message, "^UnicodeDecodeError: 'utf-8' codec ")
         self.assertFalse(entries)
-
 
 class TestTestUtils(unittest.TestCase):
 
@@ -205,6 +176,7 @@ class TestTestUtils(unittest.TestCase):
         self.assertTrue(isinstance(entry, data.Transaction))
 
 
+@unittest.skipUnless(hasattr(sys, 'getrefcount'), 'requires sys.getrefcount()')
 class TestReferenceCounting(unittest.TestCase):
 
     def test_parser_lex(self):
@@ -233,8 +205,8 @@ class TestReferenceCounting(unittest.TestCase):
         self.assertEqual(sys.getrefcount(parser), 3)
 
         tokens = list(iterator)
-        # Just the EOL token.
-        self.assertEqual(len(tokens), 1)
+        # No tokens returned for an empty input.
+        self.assertEqual(len(tokens), 0)
         # Once done scanning is completed the Parser object still has
         # references to the input file and to the name.
         self.assertEqual(sys.getrefcount(name), 4)

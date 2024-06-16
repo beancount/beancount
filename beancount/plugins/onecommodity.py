@@ -83,7 +83,7 @@ def validate_one_commodity(entries, unused_options_map, config=None):
                 if cost:
                     cost_map[posting.account].add(cost.currency)
                     if len(cost_map[posting.account]) > 1:
-                        units_source_map[posting.account] = entry
+                        cost_source_map[posting.account] = entry
 
         elif isinstance(entry, data.Balance):
             if entry.account in skip_accounts:

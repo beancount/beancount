@@ -12,6 +12,13 @@ YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
 
 
+# Support PYTHON being the path to a python interpreter.
+PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
+PYCONFIG = "python$(PYVERSION)-config"
+CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
+LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
+LDLIBS += $(shell $(PYCONFIG) --embed --libs)
+
 all: build
 
 # Clean everything up.
@@ -21,8 +28,8 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -delete
-
+	rm -f $(CROOT)/tokens_test
+	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
@@ -35,14 +42,24 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 
 
 SOURCES =					\
+	$(CROOT)/decimal.c			\
+	$(CROOT)/decimal.h 			\
 	$(CROOT)/lexer.c			\
 	$(CROOT)/lexer.h			\
 	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h
+	$(CROOT)/grammar.h			\
+	$(CROOT)/macros.h			\
+	$(CROOT)/tokens.h
 
 .PHONY: build
 build: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
+
+$(CROOT)/tokens_test: $(CROOT)/tokens_test.o $(CROOT)/tokens.o $(CROOT)/decimal.o
+
+.PHONY: ctest
+ctest: $(CROOT)/tokens_test
+	$(CROOT)/tokens_test
 
 build35: $(SOURCES)
 	python3.5 setup.py build_ext -i
@@ -90,8 +107,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
-	beancount/query/.*_test\.py	 	query/tests		\
-	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -121,10 +136,13 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-# Bake a release.
+# Bake a release, upload the source.
 release:
-	$(PYTHON) setup.py register sdist upload
-
+	rm -rf dist
+	python3 setup.py sdist bdist_wheel
+	python3.10 setup.py bdist_egg
+	python3.9 setup.py bdist_egg
+	twine upload dist/*.tar.gz dist/*.egg
 
 vtest vtests verbose-test verbose-tests:
 	$(PYTHON) -m pytest -v -s beancount examples
@@ -200,7 +218,6 @@ constraints dep-constraints: build/beancount.deps
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   beancount					\
-  examples/ingest/office/importers		\
   bin/*						\
   tools/*.py
 
@@ -213,6 +230,9 @@ pylint-only:
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
+
+ruff:
+	ruff beancount examples/ingest/office/importers tools
 
 
 # Check everything.
@@ -240,6 +260,7 @@ pytype:
 pytype1:
 	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
 
-bazel-link:
+links bazel-link:
 	rm -f beancount/parser/_parser.so
-	ln -s ../../bazel-bin/beancount/parser/_parser.so beancount/parser/_parser.so
+	ln -s -f ../../bazel-bin/beancount/parser/_parser.so beancount/parser/_parser.so
+	ln -s -f ../../bazel-bin/beancount/cparser/extmodule.so beancount/cparser/extmodule.so

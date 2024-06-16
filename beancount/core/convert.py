@@ -103,18 +103,23 @@ def get_weight(pos):
     return weight
 
 
-def get_value(pos, price_map, date=None):
+def get_value(pos, price_map, date=None, output_date_prices=None):
     """Return the market value of a Position or Posting.
 
     Note that if the position is not held at cost, this does not convert
     anything, even if a price is available in the 'price_map'. We don't specify
     a target currency here. If you're attempting to make such a conversion, see
-    ``convert_*()`` functions below.
+    ``convert_*()`` functions below. However, is the object is a posting and it
+    has a price, we will use that price to infer the target currency and those
+    will be converted.
 
     Args:
       pos: An instance of Position or Posting, equivalently.
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
+      output_date_prices: An optional output list of (date, price). If this list
+        is provided, it will be appended to (mutated) to output the price
+        pulled in making the conversions.
     Returns:
       An Amount, either with a successful value currency conversion, or if we
       could not convert the value, just the units, unmodified. This is designed
@@ -122,6 +127,7 @@ def get_value(pos, price_map, date=None):
       information silently in case of failure to convert (possibly due to an
       empty price map). Compare the returned currency to that of the input
       position if you need to check for success.
+
     """
     assert isinstance(pos, Position) or type(pos).__name__ == 'Posting'
     units = pos.units
@@ -136,7 +142,9 @@ def get_value(pos, price_map, date=None):
     if isinstance(value_currency, str):
         # We have a value currency; hit the price database.
         base_quote = (units.currency, value_currency)
-        _, price_number = prices.get_price(price_map, base_quote, date)
+        price_date, price_number = prices.get_price(price_map, base_quote, date)
+        if output_date_prices is not None:
+            output_date_prices.append((price_date, price_number))
         if price_number is not None:
             return Amount(units.number * price_number, value_currency)
 
@@ -144,6 +152,9 @@ def get_value(pos, price_map, date=None):
     return units
 
 
+# TODO(blais): This function needs to be modified to return the difference in
+# value from the conversion, so that it can be inserted elsewhere (e.g. an
+# unrealized gains account).
 def convert_position(pos, target_currency, price_map, date=None):
     """Return the market value of a Position or Posting in a particular currency.
 

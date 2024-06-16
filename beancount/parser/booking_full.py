@@ -77,7 +77,6 @@ import copy
 import enum
 import hashlib
 from decimal import Decimal
-from typing import Text
 import uuid
 
 from beancount.core.number import MISSING
@@ -96,7 +95,7 @@ from beancount.core import interpolate
 from beancount.core import compare
 
 
-def unique_label() -> Text:
+def unique_label() -> str:
     "Return a globally unique label for cost entries."
     return str(uuid.uuid4())
 
@@ -105,18 +104,18 @@ def unique_label() -> Text:
 SelfReduxError = collections.namedtuple('SelfReduxError', 'source message entry')
 
 
-def book(entries, options_map, methods):
+def book(entries, options_map, methods, initial_balances=None):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
     This method only stripes some of the return values.
 
     See _book() for arguments and return values.
     """
-    entries, errors, _ = _book(entries, options_map, methods)
+    entries, errors, _ = _book(entries, options_map, methods, initial_balances)
     return entries, errors
 
 
-def _book(entries, options_map, methods):
+def _book(entries, options_map, methods, initial_balances=None):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
@@ -125,6 +124,8 @@ def _book(entries, options_map, methods):
       options_map: An options dict as produced by the parser.
       methods: A mapping of account name to their corresponding booking
         method.
+      initial_balances: A dict of (account, inventory) pairs to start booking from.
+        This is useful when attempting to book on top of an existing state.
     Returns:
       A triple of
         entries: A list of interpolated entries with all their postings completed.
@@ -133,7 +134,16 @@ def _book(entries, options_map, methods):
     """
     new_entries = []
     errors = []
-    balances = collections.defaultdict(inventory.Inventory)
+
+    # Set initial state to start booking from.
+    #
+    # TODO(blais): In v3 we want to explode this to that this is a common
+    # operation and also abstract the initial balances to a Realization object.
+    balances = (collections.defaultdict(inventory.Inventory)
+                if initial_balances is None
+                else initial_balances)
+    assert isinstance(balances, (dict, collections.defaultdict))
+
     for entry in entries:
         if isinstance(entry, Transaction):
             # Group postings by currency.
@@ -412,9 +422,9 @@ def categorize_by_currency(entry, balances):
                                 entry))
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
-        for currency in groups.keys():
+        for currency, glist in groups.items():
             sortdict.setdefault(currency, refer.index)
-            groups[currency].append(Refer(refer.index, currency, None, None))
+            glist.append(Refer(refer.index, currency, None, None))
 
     # Issue error for all currencies which we could not resolve.
     for currency, refers in groups.items():
@@ -558,8 +568,10 @@ def book_reductions(entry, group_postings, balances,
         # Also note that if there is no existing balance, then won't be any lot
         # reduction because none of the postings will be able to match against
         # any currencies of the balance.
-        previous_balance = balances.get(account, empty)
-        balance = local_balances.setdefault(account, copy.copy(previous_balance))
+        if account not in local_balances:
+            previous_balance = balances.get(account, empty)
+            local_balances[account] = copy.copy(previous_balance)
+        balance = local_balances[account]
 
         # Check if this is a lot held at cost.
         if costspec is None or units.number is MISSING:
@@ -608,6 +620,9 @@ def book_reductions(entry, group_postings, balances,
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
+                # TODO(blais): We'll have to change this, as we want to allow
+                # positions crossing from negative to positive and vice-versa in
+                # a simple application. See {d3cbd78f1029}.
                 reduction_postings, matched_postings, ambi_errors = (
                     booking_method.handle_ambiguous_matches(entry, posting, matches,
                                                             method))
@@ -700,10 +715,10 @@ def compute_cost_number(costspec, units):
         # Compute the per-unit cost if there is some total cost
         # component involved.
         cost_total = number_total
-        units_number = units.number
+        units_number = abs(units.number)
         if number_per is not None:
             cost_total += number_per * units_number
-        unit_cost = cost_total / abs(units_number)
+        unit_cost = cost_total / units_number
     elif number_per is None:
         return None
     else:
@@ -724,16 +739,16 @@ def convert_costspec_to_cost(posting):
     cost = posting.cost
     if isinstance(cost, position.CostSpec):
         if cost is not None:
-            units_number = posting.units.number
             number_per = cost.number_per
             number_total = cost.number_total
             if number_total is not None:
                 # Compute the per-unit cost if there is some total cost
                 # component involved.
+                units_number = abs(posting.units.number)
                 cost_total = number_total
                 if number_per is not MISSING:
                     cost_total += number_per * units_number
-                unit_cost = cost_total / abs(units_number)
+                unit_cost = cost_total / units_number
             else:
                 unit_cost = number_per
             new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
@@ -766,7 +781,7 @@ def interpolate_group(postings, balances, currency, tolerances):
       tolerances: A dict of currency to tolerance values.
     Returns:
       A tuple of
-        postings: A lit of new posting instances.
+        postings: A list of new posting instances.
         errors: A list of errors generated during interpolation.
         interpolated: A boolean, true if we did have to interpolate.
 
@@ -805,7 +820,8 @@ def interpolate_group(postings, balances, currency, tolerances):
             # to be interpolated.
             if cost is not None:
                 assert isinstance(cost.number, Decimal), (
-                    "Internal error: cost has no number: {}".format(cost))
+                    "Internal error: cost has no number: {}; on postings: {}".format(
+                        cost, postings))
 
         if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
@@ -970,7 +986,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             errors.append(InterpolationError(
                 posting.meta,
                 'Amount is zero: "{}"'.format(posting.units), None))
-        if posting.cost.number < ZERO:
+        if posting.cost.number is not None and posting.cost.number < ZERO:
             errors.append(InterpolationError(
                 posting.meta,
                 'Cost is negative: "{}"'.format(posting.cost), None))

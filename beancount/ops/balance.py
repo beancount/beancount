@@ -113,8 +113,8 @@ def check(entries, options_map):
             except KeyError:
                 check_errors.append(
                     BalanceError(entry.meta,
-                                 "Account '{}' does not exist: ".format(entry.account),
-                                 entry))
+                                 "Invalid reference to unknown account '{}'".format(
+                                     entry.account), entry))
                 continue
 
             if (expected_amount is not None and

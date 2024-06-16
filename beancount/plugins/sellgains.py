@@ -149,8 +149,8 @@ def validate_sell_gains(entries, options_map):
             errors.append(
                 SellGainsError(
                     entry.meta,
-                    "Invalid price vs. proceeds/gains: {} vs. {}".format(
-                        total_price, total_proceeds),
+                    "Invalid price vs. proceeds/gains: {} vs. {}; difference: {}".format(
+                        total_price, total_proceeds, (total_price + -total_proceeds)),
                     entry))
 
     return entries, errors

@@ -44,11 +44,10 @@ def check_dependencies():
 
         # Modules we really do need installed.
         check_import('dateutil'),
-        check_import('bottle'),
         check_import('ply', module_name='ply.yacc', min_version='3.4'),
-        check_import('lxml', module_name='lxml.etree', min_version='3'),
 
         # Optionally required to upload data to Google Drive.
+        # TODO(blais, 2023-11-18): oauth2client is deprecated.
         check_import('googleapiclient'),
         check_import('oauth2client'),
         check_import('httplib2'),
@@ -58,7 +57,6 @@ def check_dependencies():
 
         # Optionally required to support imports (identify, extract, file) code.
         check_python_magic(),
-        check_import('beautifulsoup4', module_name='bs4', min_version='4'),
         ]
 
 
@@ -164,3 +162,7 @@ def check_import(package_name, min_version=None, module_name=None):
 def parse_version(version_str: str) -> str:
     """Parse the version string into a comparable tuple."""
     return [int(v) for v in version_str.split('.')]
+
+
+if __name__ == '__main__':
+    list_dependencies(sys.stdout)

@@ -21,6 +21,17 @@ This is meant to accommodate both booked and non-booked amounts. The clever
 trick that we pull to do this is that for positions which aren't booked, we
 simply leave the 'cost' as None. This is the case for most of the transactions.
 
+= Conversions =
+
+If it often desired to convert this inventory into an equivalent position for
+its cost, or to just flatten all the positions with the same currency and count
+the number of units, or to compute the market value for the inventory at a
+specific date. You do these conversions using the reduce() method:
+
+  inventory.reduce(convert.get_cost)
+  inventory.reduce(convert.get_units)
+  inventory.reduce(convert.get_value, price_map, date)
+
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -46,7 +57,7 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 ASSERTS_TYPES = False
 
 
-class Booking(enum.Enum):
+class MatchResult(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
     # A new lot was created.
     CREATED = 1
@@ -61,10 +72,7 @@ class Booking(enum.Enum):
 # FIXME: You should disallow __getitem__, __delitem__ and __setitem__.
 # Move the dict inside the container.
 class Inventory(dict):
-    """An Inventory is a set of positions.
-
-    Attributes:
-      positions: A list of Position instances, held in this Inventory object.
+    """An Inventory is a set of positions, indexed for efficiency.
     """
 
     def __init__(self, positions=None):
@@ -91,6 +99,8 @@ class Inventory(dict):
         """Inequality comparison operator."""
         return sorted(self) < sorted(other)
 
+    # TODO(blais): In v3, remove 'parens' and never render parens. (What a
+    # stupid idea this was.)
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
 
@@ -124,7 +134,7 @@ class Inventory(dict):
 
     def __bool__(self):
         # Don't define this, be explicit by using is_empty() instead.
-        raise NotImplementedError
+        raise NotImplementedError("Use explicit is_empty() method instead.")
 
     def __copy__(self):
         """A shallow copy of this inventory object.
@@ -275,6 +285,8 @@ class Inventory(dict):
                 total_units += position.units.number
         return Amount(total_units, currency)
 
+    # TODO(blais): Remove this, use split() below instead when needed.
+    # TODO(blais): Rename this method to something more explicitly clear.
     def segregate_units(self, currencies):
         """Split up the list of positions to the given currencies.
 
@@ -292,11 +304,32 @@ class Inventory(dict):
             per_currency_dict[key].add_position(position)
         return per_currency_dict
 
+    def split(self):
+        """Split up the list of positions to their corresponding currencies.
+
+        Returns:
+          A dict of currency to Inventory instances.
+        """
+        per_currency_dict = collections.defaultdict(Inventory)
+        for position in self:
+            per_currency_dict[position.units.currency].add_position(position)
+        return dict(per_currency_dict)
+
+    # TODO(blais): We could use a new method that computes the aggregated units
+    # and cost for each currency.
 
     #
     # Methods to convert an Inventory into another.
     #
 
+    # TODO(blais): An improved design would allow conversions to market value to
+    # return the difference between the weight and the inserted value, so it can
+    # get inserted elsewhere on the balance sheet (e.g. to an unrealized gains
+    # account). This should be a natural by-product of conversions and operators
+    # should be modified to make this obvious or even difficult to ignore.
+    #
+    # TODO(blais): This returns another Inventory instance; rename this function
+    # to "map()" and create a proper "reduce()" in the new API.
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 
@@ -368,9 +401,9 @@ class Inventory(dict):
           units: An Amount instance to add.
           cost: An instance of Cost or None, as a key to the inventory.
         Returns:
-          A pair of (position, booking) where 'position' is the position that
-          that was modified BEFORE it was modified, and where 'booking' is a
-          Booking enum that hints at how the lot was booked to this inventory.
+          A pair of (position, matched) where 'position' is the position that
+          that was modified BEFORE it was modified, and where 'matched' is a
+          MatchResult enum that hints at how the lot was booked to this inventory.
           Position may be None if there is no corresponding Position object,
           e.g. the position was deleted.
         """
@@ -391,9 +424,9 @@ class Inventory(dict):
             # Note: In order to augment or reduce, all the fields have to match.
 
             # Check if reducing.
-            booking = (Booking.REDUCED
+            booking = (MatchResult.REDUCED
                        if not same_sign(pos.units.number, units.number)
-                       else Booking.AUGMENTED)
+                       else MatchResult.AUGMENTED)
 
             # Compute the new number of units.
             number = pos.units.number + units.number
@@ -412,10 +445,10 @@ class Inventory(dict):
         else:
             # If not found, create a new one.
             if units.number == ZERO:
-                booking = Booking.IGNORED
+                booking = MatchResult.IGNORED
             else:
                 self[key] = Position(units, cost, original_postings)
-                booking = Booking.CREATED
+                booking = MatchResult.CREATED
 
         return pos, booking
 
@@ -427,8 +460,8 @@ class Inventory(dict):
           position: The Posting or Position to add to this inventory.
         Returns:
           A pair of (position, booking) where 'position' is the position that
-          that was modified, and where 'booking' is a Booking enum that hints at
-          how the lot was booked to this inventory.
+          that was modified, and where 'matched' is a MatchResult enum that
+          hints at how the lot was booked to this inventory.
         """
         if ASSERTS_TYPES:
             assert hasattr(position, 'units') and hasattr(position, 'cost'), (

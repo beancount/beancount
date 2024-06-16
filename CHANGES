@@ -1,7 +1,147 @@
-ho========================
+========================
    beancount: CHANGES
 ========================
-Note: This file contains a list changes in the 'master' branch.
+Note: This file contains a list changes in the 'v2' branch.
+The master branch will rely on the Git repository history.
+
+
+2022-02-15
+
+ - Released 2.3.5 with only a few minor bugfixes. Mainly released for 3.10.
+
+
+2021-03-20
+
+ - Fixed #639: Released 2.3.4.
+
+
+2021-01-09
+
+ - Fixed bug in booking that assumed number is set on cost. I did this while
+   running booking manually on entries freshly created on an importer (never ahd
+   done that before, will be customary in v3).
+
+
+2021-01-08
+
+ - Fixed recently introduced bug with the export script that reordered the
+   columns.
+ - Fixed bug with printer leaving trailing whitespace. Was annoying.
+
+
+2020-12-20
+
+ - Merged half of branch pr128_seltzered_beanpriceupdate on this side of
+   Beancount. The other side will be patched to
+   http://github.com/beancount/beanprice. This adds some trimming functions to
+   beancount.ops.lifetimes.
+
+
+2020-12-14
+
+ - Fixed #588: Catch more narrow exceptions from plugins and render full stack
+   when caught.
+
+
+2020-11-25
+
+ - Fixed #584 - a bug which was occurring because a pathological example using a
+   very large precision was used in inferring the precision of a currency and a
+   subsequent attempt to quantize a large number exceeded the default precision.
+
+
+2020-11-22
+
+ - Fixed bug in parser.parse_file() which when passed a filename in would leave
+   the file unclosed.
+ - Fixed latent bug with key/value parsing (incorrect grammar rule, was working
+   anyway somehow).
+ - Internal changes to lexer and parser to minimize diffs with ongoing work in
+   'master' / C++ scanner/parser.
+
+
+2020-11-17
+
+ - Made it legal to insert a balance entry after account closure. It is a common
+   case that transactions happen on the last day of an account and the balance
+   directive operates at the beginning of the day. It was arguable whether
+   directives should be allowed after closure; notes and documents were allowed
+   because statements and phone calls may still occur after an account is
+   closed, but I suppose you can make the argument that a statement balance can
+   also occur at a later date, so voila, make it legal. You still cannot post
+   transactions to a closed account, which is the thing that really matters.
+
+
+2020-11-15
+
+ - Render the tolerance in Balance directives (merged from Aaron Lindsay).
+
+
+2020-11-01
+
+ - In the process of removing dependencies to the beancount.ops.holdings module,
+   significantly sped up the net-worth-over-time script by using simple
+   aggregation to an inventory (which is how it should be done).
+ - Allow balance_by_account() method to compress positions that aren't booked,
+   as an option.
+ - Added split() method to Inventory, like segregate_units but with no
+   constraints.
+ - Fixed #255: Added a new beancount.core.prices.project() method to project
+   prices to another cost currency.
+
+
+2020-10-26
+
+ - Fixed Github Actions workflows and Wheel generation.
+ - Released 2.3.3 to trigger new binaries.
+
+
+2020-10-25
+
+ - Removed the part of setup_test checks running the binaries with --help, as
+   they fail starting at 3.8. Someone with more time would create a test using
+   pytest-virtualenv.
+
+
+2020-10-17
+
+ - Fixed #566: Duplicate postings on entries should count toward distinct
+   hashes.
+
+
+2020-10-10
+
+ - Moved Emacs support to its own repository
+   (http://github.com/beancount/beancount-mode).
+
+
+2020-09-12
+
+ - Added metadata on implicitly generated Price directives (from implicit_prices
+   plugin).
+
+
+2020-09-12
+
+ - Released 2.3.2.
+
+
+2020-09-07
+
+ - Fixed #401: Fixed initialization bugs on min() and max() functions for the SQL
+   aggregator.
+ - Fixed #364: Fixed important core bug in how the CostSpec were converted to
+   Cost for cost specs with total and per-unit cost numbers, like this {106.935
+   # 6.98 USD}. For short positions, the cost was computed as negative. In a
+   sense this was a naive bug, but a very important one. This occurred only for
+   short positions.
+
+
+2020-08-19
+
+ - Added an option to the printer to allow an arbitraty Python value to be
+   output. This is useful when creating values programmatically with types not
+   supported by the syntax.
 
 
 2020-07-25
