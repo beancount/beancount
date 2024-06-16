@@ -9,8 +9,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.12
       - run: python -m pip install .
       - run: |
           bean-check --help
@@ -23,8 +22,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.12
       - run: python setup.py install
       - run: |
           bean-check --help
@@ -37,8 +35,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.12
       - run: python -m pip install build
       - run: python -m build --sdist
       - run: python -m pip install dist/beancount-*.tar.gz
