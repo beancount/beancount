@@ -5,7 +5,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import re
-import platform
+import sys
 
 import beancount
 from beancount.parser import _parser
@@ -33,7 +33,7 @@ def compute_version_string(version, changeset, timestamp):
     if timestamp > 0:
         utc = (
             datetime.UTC
-            if platform.python_version_tuple() >= ("3", "11")
+            if sys.version_info >= (3, 11)
             else datetime.timezone.utc
         )
         date = datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc).date()
