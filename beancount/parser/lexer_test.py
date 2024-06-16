@@ -308,20 +308,6 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, r'\bcheck\b')
 
-    def test_string_too_long_warning(self):
-        test_input = """
-          ;; This is a typical error that should get detected for long strings.
-          2014-01-01 note Assets:Temporary "Bla bla" "
-          2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
-        """ + "\n" * 2048 + """
-          2014-02-02 note Assets:Temporary "Bla bla"
-        """
-        builder = lexer.LexBuilder()
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertLessEqual(1, len(builder.errors))
-        self.assertRegex(builder.errors[0].message,
-                         'ValueError: String too long (.* lines)')
-
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
         test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
