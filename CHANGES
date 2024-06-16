@@ -5,6 +5,41 @@ Note: This file contains a list changes in the 'v2' branch.
 The master branch will rely on the Git repository history.
 
 
+2024-06-16
+
+- Created branch 'v3' and released 3.0.0
+
+     Based on our recent discussion around Beancount branches being confusing, I did the following to branches:
+
+     - v2: remains the same (no change); but v2 is now even less subject to freeze exceptions than before, because v3 is now officially born and PyPI releases will be made for it.  The default reply to patches to v2 will be "move that to v3."
+
+     - cpp: I turned the previous master branch's state with all C++ and Bazel build into a new 'cpp' branch.
+       All work on the C++ rewrite -- if it is to continue -- will live on that branch.
+       If things do move to Rust, I will probably salvage bits and pieces of that manually into a 'rust' branch.
+       In particular, the schema defined in the proto files is something I'd like to carry forward (nicely
+       documented and distinguishes between the pre and post interpolation data structures explicitly),
+       and perhaps the new reFlex parser will be useful at some point.
+
+     - v3: a new branch, to contain the state of the master branch MINUS the C++ bits.
+       As stated above, the C++ code remains only on branch 'cpp'.
+       This is now the official release branch and PyPI releases will be made of it.
+
+     - master: this branch is now where new work on v3 might live.
+       I'm not sure we really need it or what it should mean, but it should track v3 for now.
+
+     I've reviewed missing PyPI releases and made sure we have these:
+
+     https://pypi.org/project/beancount/
+     https://pypi.org/project/beangulp/
+     https://pypi.org/project/beanquery/
+     https://pypi.org/project/beanprice/
+     https://pypi.org/project/beangrow/
+     https://pypi.org/project/beancount2ledger/
+
+     ​The inclusion of v3 releases for PyPI and new PyPI releases for subprojects should normalize the versioning situation in Beancount. Note that packaging and following other people's conventions are not my forte (and I don't use PyPI for my own projects I just use source), if you have any suggestions or something's missing please reply to this thread.
+     Thanks for your patience,
+
+
 2022-02-15
 
  - Released 2.3.5 with only a few minor bugfixes. Mainly released for 3.10.
