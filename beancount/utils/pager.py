@@ -13,6 +13,7 @@ upon exit we close the file object. This also silences broken pipe errors
 triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,7 +27,7 @@ import logging
 
 
 # The default command to run for a pager, if the PAGER environment variable is not set.
-DEFAULT_PAGER = 'more'
+DEFAULT_PAGER = "more"
 
 
 def create_pager(command, file):
@@ -42,7 +43,7 @@ def create_pager(command, file):
     """
 
     if command is None:
-        command = os.environ.get('PAGER', DEFAULT_PAGER)
+        command = os.environ.get("PAGER", DEFAULT_PAGER)
     if not command:
         command = DEFAULT_PAGER
 
@@ -54,17 +55,16 @@ def create_pager(command, file):
     # we set it here to make default behavior work for most people (we always
     # write UTF-8).
     env = os.environ.copy()
-    env['LESSCHARSET'] = "utf-8"
+    env["LESSCHARSET"] = "utf-8"
 
     try:
-        pipe = subprocess.Popen(command, shell=True,
-                                stdin=subprocess.PIPE,
-                                stdout=file,
-                                env=env)
+        pipe = subprocess.Popen(
+            command, shell=True, stdin=subprocess.PIPE, stdout=file, env=env
+        )
     except OSError as exc:
         logging.error("Invalid pager: {}".format(exc))
     else:
-        stdin_wrapper = io.TextIOWrapper(pipe.stdin, 'utf-8')
+        stdin_wrapper = io.TextIOWrapper(pipe.stdin, "utf-8")
         file = stdin_wrapper
     return file, pipe
 
@@ -73,6 +73,7 @@ class ConditionalPager:
     """A proxy file for a pager that only creates a pager after a minimum number of
     lines has been printed to it.
     """
+
     def __init__(self, command, minlines=None):
         """Create a conditional pager.
 
@@ -85,9 +86,11 @@ class ConditionalPager:
         """
         self.command = command
         self.minlines = minlines
-        self.default_file = (codecs.getwriter("utf-8")(sys.stdout.buffer)
-                             if hasattr(sys.stdout, 'buffer') else
-                             sys.stdout)
+        self.default_file = (
+            codecs.getwriter("utf-8")(sys.stdout.buffer)
+            if hasattr(sys.stdout, "buffer")
+            else sys.stdout
+        )
 
     def __enter__(self):
         """Initialize the context manager and return this instance as it."""
@@ -129,7 +132,7 @@ class ConditionalPager:
         """
         if self.file is None:
             # Accumulate the new lines.
-            self.accumulated_lines += data.count('\n')
+            self.accumulated_lines += data.count("\n")
             self.accumulated_data.append(data)
 
             # If we've reached the threshold, create a file.

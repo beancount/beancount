@@ -7,7 +7,6 @@ from beancount import loader
 
 
 class TestAuto(unittest.TestCase):
-
     @loader.load_doc()
     def test_plugins_auto(self, entries, _, options_map):
         """
@@ -19,5 +18,5 @@ class TestAuto(unittest.TestCase):
         """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

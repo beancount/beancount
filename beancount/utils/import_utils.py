@@ -1,5 +1,5 @@
-"""Utilities for importing symbols programmatically.
-"""
+"""Utilities for importing symbols programmatically."""
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,8 +17,8 @@ def import_symbol(dotted_name):
       ImportError: If the module not not be imported.
       AttributeError: If the symbol could not be found in the module.
     """
-    comps = dotted_name.split('.')
-    module_name = '.'.join(comps[:-1])
+    comps = dotted_name.split(".")
+    module_name = ".".join(comps[:-1])
     symbol_name = comps[-1]
     module = importlib.import_module(module_name)
     return getattr(module, symbol_name)

@@ -154,7 +154,7 @@ def open_cursor(tp):
     lineno = meta["lineno"]
     subprocess.call(
         [
-            "en", # Emacs launcher for this tmux session
+            "en",  # Emacs launcher for this tmux session
             "--eval",
             f'(progn (find-file "{filename}") (goto-line {lineno}))',
         ],

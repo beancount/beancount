@@ -10,7 +10,6 @@ from beancount.parser import printer
 
 
 class TestSellGains(unittest.TestCase):
-
     @loader.load_doc()
     def test_sellgains_success(self, entries, errors, options_map):
         """
@@ -51,8 +50,9 @@ class TestSellGains(unittest.TestCase):
           Assets:US:Company:Cash      2141.36 USD
           Income:US:Company:ESPP:PnL   -11.13 USD
         """
-        self.assertEqual([sellgains.SellGainsError,
-                          validation.ValidationError], list(map(type, errors)))
+        self.assertEqual(
+            [sellgains.SellGainsError, validation.ValidationError], list(map(type, errors))
+        )
 
     @loader.load_doc()
     def test_sellgains_other_currency(self, entries, errors, options_map):
@@ -81,5 +81,5 @@ class TestSellGains(unittest.TestCase):
         self.assertEqual([], list(map(type, errors)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

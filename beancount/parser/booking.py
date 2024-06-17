@@ -1,6 +1,7 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -15,7 +16,7 @@ from beancount.core import position
 from beancount.parser import booking_full
 
 
-BookingError = collections.namedtuple('BookingError', 'source message entry')
+BookingError = collections.namedtuple("BookingError", "source message entry")
 
 
 def book(incomplete_entries, options_map, initial_balances=None):
@@ -39,8 +40,9 @@ def book(incomplete_entries, options_map, initial_balances=None):
             booking_methods[entry.account] = entry.booking
 
     # Do the booking here!
-    entries, booking_errors = booking_full.book(incomplete_entries, options_map,
-                                                booking_methods, initial_balances)
+    entries, booking_errors = booking_full.book(
+        incomplete_entries, options_map, booking_methods, initial_balances
+    )
 
     # Check for MISSING elements remaining.
     missing_errors = validate_missing_eliminated(entries, options_map)
@@ -63,13 +65,16 @@ def validate_missing_eliminated(entries, unused_options_map):
             for posting in entry.postings:
                 units = posting.units
                 cost = posting.cost
-                if (MISSING in (units.number, units.currency) or
-                    cost is not None and MISSING in (cost.number, cost.currency,
-                                                     cost.date, cost.label)):
+                if (
+                    MISSING in (units.number, units.currency)
+                    or cost is not None
+                    and MISSING in (cost.number, cost.currency, cost.date, cost.label)
+                ):
                     errors.append(
-                        BookingError(entry.meta,
-                                     "Transaction has incomplete elements",
-                                     entry))
+                        BookingError(
+                            entry.meta, "Transaction has incomplete elements", entry
+                        )
+                    )
                     break
     return errors
 
@@ -116,9 +121,13 @@ def validate_inventory_booking(entries, unused_options_map, booking_methods):
                     errors.append(
                         BookingError(
                             entry.meta,
-                            ("Reducing position results in inventory with positive "
-                             "and negative lots: {}").format(position_),
-                            entry))
+                            (
+                                "Reducing position results in inventory with positive "
+                                "and negative lots: {}"
+                            ).format(position_),
+                            entry,
+                        )
+                    )
 
     return errors
 
@@ -157,9 +166,10 @@ def convert_lot_specs_to_lots(entries):
                 cost = convert_spec_to_cost(units, cost_spec)
                 if cost_spec is not None and cost is None:
                     errors.append(
-                        BookingError(entry.meta,
-                                     "Cost syntax not supported; cost spec ignored",
-                                     None))
+                        BookingError(
+                            entry.meta, "Cost syntax not supported; cost spec ignored", None
+                        )
+                    )
 
                 if cost and isinstance(units, amount.Amount):
                     # If there is a cost, we don't allow either a cost value of

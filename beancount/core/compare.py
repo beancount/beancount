@@ -1,5 +1,5 @@
-"""Comparison helpers for data objects.
-"""
+"""Comparison helpers for data objects."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,10 +10,10 @@ from beancount.core.data import Price
 from beancount.core import data
 
 
-CompareError = collections.namedtuple('CompareError', 'source message entry')
+CompareError = collections.namedtuple("CompareError", "source message entry")
 
 # A list of field names that are being ignored for persistence.
-IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
+IGNORED_FIELD_NAMES = {"meta", "diff_amount"}
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -65,8 +65,9 @@ def hash_entry(entry, exclude_meta=False):
       A stable hexadecimal hash of this entry.
 
     """
-    return stable_hash_namedtuple(entry,
-                                  IGNORED_FIELD_NAMES if exclude_meta else frozenset())
+    return stable_hash_namedtuple(
+        entry, IGNORED_FIELD_NAMES if exclude_meta else frozenset()
+    )
 
 
 def hash_entries(entries, exclude_meta=False):
@@ -101,14 +102,20 @@ def hash_entries(entries, exclude_meta=False):
             else:
                 other_entry = entry_hash_dict[hash_]
                 errors.append(
-                    CompareError(entry.meta,
-                                 "Duplicate entry: {} == {}".format(entry, other_entry),
-                                 entry))
+                    CompareError(
+                        entry.meta,
+                        "Duplicate entry: {} == {}".format(entry, other_entry),
+                        entry,
+                    )
+                )
         entry_hash_dict[hash_] = entry
 
     if not errors:
         assert len(entry_hash_dict) + num_legal_duplicates == len(entries), (
-            len(entry_hash_dict), len(entries), num_legal_duplicates)
+            len(entry_hash_dict),
+            len(entries),
+            num_legal_duplicates,
+        )
     return entry_hash_dict, errors
 
 

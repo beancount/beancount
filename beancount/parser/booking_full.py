@@ -69,6 +69,7 @@ occur. We may consider that for later, as an experimental feature. My hunch is
 that there are so few cases for which this would be useful that we won't bother
 improving on the algorithm above.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -98,7 +99,7 @@ def unique_label() -> str:
 
 
 # An error of disallowed self-reduction.
-SelfReduxError = collections.namedtuple('SelfReduxError', 'source message entry')
+SelfReduxError = collections.namedtuple("SelfReduxError", "source message entry")
 
 
 def book(entries, options_map, methods, initial_balances=None):
@@ -136,9 +137,11 @@ def _book(entries, options_map, methods, initial_balances=None):
     #
     # TODO(blais): In v3 we want to explode this to that this is a common
     # operation and also abstract the initial balances to a Realization object.
-    balances = (collections.defaultdict(inventory.Inventory)
-                if initial_balances is None
-                else initial_balances)
+    balances = (
+        collections.defaultdict(inventory.Inventory)
+        if initial_balances is None
+        else initial_balances
+    )
     assert isinstance(balances, (dict, collections.defaultdict))
 
     for entry in entries:
@@ -168,8 +171,11 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # Disabled.
                 if False:  # pylint: disable=using-constant-test
                     if has_self_reduction(group_postings, methods):
-                        errors.append(SelfReduxError(
-                            entry.meta, "Self-reduction is not allowed", entry))
+                        errors.append(
+                            SelfReduxError(
+                                entry.meta, "Self-reduction is not allowed", entry
+                            )
+                        )
 
                 # Perform booking reductions, that is, match postings which
                 # reduce the ante-inventory of their accounts to an existing
@@ -184,9 +190,9 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # mixture of Cost and CostSpec instances. This is necessary to
                 # let the interpolation do its magic on partially incomplete
                 # CostSpec instances below.
-                (booked_postings,
-                 booking_errors) = book_reductions(entry, group_postings, balances,
-                                                   methods)
+                (booked_postings, booking_errors) = book_reductions(
+                    entry, group_postings, balances, methods
+                )
 
                 # If there were any errors, skip this group of postings.
                 if booking_errors:
@@ -198,10 +204,9 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # on augmenting postings. After this interpolation, all
                 # 'inter_postings' consists entirely of postings holding
                 # instances of Cost.
-                (inter_postings,
-                 interpolation_errors,
-                 interpolated) = interpolate_group(booked_postings, balances, currency,
-                                                   tolerances)
+                (inter_postings, interpolation_errors, interpolated) = interpolate_group(
+                    booked_postings, balances, currency, tolerances
+                )
 
                 if interpolation_errors:
                     errors.extend(interpolation_errors)
@@ -210,8 +215,7 @@ def _book(entries, options_map, methods, initial_balances=None):
             # Replace postings by interpolated ones.
             meta = entry.meta.copy()
             meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
-            entry = entry._replace(postings=repl_postings,
-                                   meta=meta)
+            entry = entry._replace(postings=repl_postings, meta=meta)
 
             # Update the running balances for each account using the final,
             # booked and interpolated values. Note that we could optimize away
@@ -229,7 +233,7 @@ def _book(entries, options_map, methods, initial_balances=None):
 
 
 # An error raised if we failed to bucket a posting to a particular currency.
-CategorizationError = collections.namedtuple('CategorizationError', 'source message entry')
+CategorizationError = collections.namedtuple("CategorizationError", "source message entry")
 
 
 def get_bucket_currency(refer):
@@ -245,13 +249,16 @@ def get_bucket_currency(refer):
         currency = refer.cost_currency
     elif isinstance(refer.price_currency, str):
         currency = refer.price_currency
-    elif (refer.cost_currency is None and
-          refer.price_currency is None and
-          isinstance(refer.units_currency, str)):
+    elif (
+        refer.cost_currency is None
+        and refer.price_currency is None
+        and isinstance(refer.units_currency, str)
+    ):
         currency = refer.units_currency
     return currency
 
-Refer = collections.namedtuple('Refer', 'index units_currency cost_currency price_currency')
+
+Refer = collections.namedtuple("Refer", "index units_currency cost_currency price_currency")
 
 
 def categorize_by_currency(entry, balances):
@@ -306,15 +313,13 @@ def categorize_by_currency(entry, balances):
         price = posting.price
 
         # Extract and override the currencies locally.
-        units_currency = (units.currency
-                          if units is not MISSING and units is not None
-                          else None)
-        cost_currency = (cost.currency
-                         if cost is not MISSING and cost is not None
-                         else None)
-        price_currency = (price.currency
-                          if price is not MISSING and price is not None
-                          else None)
+        units_currency = (
+            units.currency if units is not MISSING and units is not None else None
+        )
+        cost_currency = cost.currency if cost is not MISSING and cost is not None else None
+        price_currency = (
+            price.currency if price is not MISSING and price is not None else None
+        )
 
         # First we apply the constraint that cost-currency and price-currency
         # must match, if there is both a cost and a price. This reduces the
@@ -391,9 +396,10 @@ def categorize_by_currency(entry, balances):
             groups[currency].append(refer)
         else:
             errors.append(
-                CategorizationError(posting.meta,
-                                    "Failed to categorize posting {}".format(index + 1),
-                                    entry))
+                CategorizationError(
+                    posting.meta, "Failed to categorize posting {}".format(index + 1), entry
+                )
+            )
 
     # Fill in missing units currencies if some remain as missing. This may occur
     # if we used the cost or price to bucket the currency but the units currency
@@ -414,9 +420,12 @@ def categorize_by_currency(entry, balances):
         refer = auto_postings[-1]
         posting = entry.postings[refer.index]
         errors.append(
-            CategorizationError(posting.meta,
-                                "You may not have more than one auto-posting per currency",
-                                entry))
+            CategorizationError(
+                posting.meta,
+                "You may not have more than one auto-posting per currency",
+                entry,
+            )
+        )
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
         for currency, glist in groups.items():
@@ -427,14 +436,19 @@ def categorize_by_currency(entry, balances):
     for currency, refers in groups.items():
         for refer in refers:
             posting = entry.postings[refer.index]
-            for currency, name in [(refer.units_currency, 'units'),
-                                   (refer.cost_currency, 'cost'),
-                                   (refer.price_currency, 'price')]:
+            for currency, name in [
+                (refer.units_currency, "units"),
+                (refer.cost_currency, "cost"),
+                (refer.price_currency, "price"),
+            ]:
                 if currency is MISSING:
-                    errors.append(CategorizationError(
-                        posting.meta,
-                        "Could not resolve {} currency".format(name),
-                        entry))
+                    errors.append(
+                        CategorizationError(
+                            posting.meta,
+                            "Could not resolve {} currency".format(name),
+                            entry,
+                        )
+                    )
 
     sorted_groups = sorted(groups.items(), key=lambda item: sortdict[item[0]])
     return sorted_groups, errors
@@ -483,7 +497,7 @@ def replace_currencies(postings, refer_groups):
 
 
 # An error raised if we failed to reduce the inventory balance unambiguously.
-ReductionError = collections.namedtuple('ReductionError', 'source message entry')
+ReductionError = collections.namedtuple("ReductionError", "source message entry")
 
 
 def has_self_reduction(postings, methods):
@@ -511,8 +525,7 @@ def has_self_reduction(postings, methods):
     return False
 
 
-def book_reductions(entry, group_postings, balances,
-                    methods):
+def book_reductions(entry, group_postings, balances, methods):
     """Book inventory reductions against the ante-balances.
 
     This function accepts a dict of (account, Inventory balance) and for each
@@ -577,9 +590,11 @@ def book_reductions(entry, group_postings, balances,
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
             method = methods[account]
-            if (method is not Booking.NONE and
-                balance is not None and
-                balance.is_reduced_by(units)):
+            if (
+                method is not Booking.NONE
+                and balance is not None
+                and balance.is_reduced_by(units)
+            ):
                 # This posting is a reduction.
 
                 # Match the positions.
@@ -587,41 +602,43 @@ def book_reductions(entry, group_postings, balances,
                 matches = []
                 for position in balance:
                     # Skip inventory contents of a different currency.
-                    if (units.currency and
-                        position.units.currency != units.currency):
+                    if units.currency and position.units.currency != units.currency:
                         continue
                     # Skip balance positions not held at cost.
                     if position.cost is None:
                         continue
-                    if (cost_number is not None and
-                        position.cost.number != cost_number):
+                    if cost_number is not None and position.cost.number != cost_number:
                         continue
-                    if (isinstance(costspec.currency, str) and
-                        position.cost.currency != costspec.currency):
+                    if (
+                        isinstance(costspec.currency, str)
+                        and position.cost.currency != costspec.currency
+                    ):
                         continue
-                    if (costspec.date and
-                        position.cost.date != costspec.date):
+                    if costspec.date and position.cost.date != costspec.date:
                         continue
-                    if (costspec.label and
-                        position.cost.label != costspec.label):
+                    if costspec.label and position.cost.label != costspec.label:
                         continue
                     matches.append(position)
 
                 # Check for ambiguous matches.
                 if len(matches) == 0:
                     errors.append(
-                        ReductionError(entry.meta,
-                                       'No position matches "{}" against balance {}'.format(
-                                           posting, balance),
-                                       entry))
+                        ReductionError(
+                            entry.meta,
+                            'No position matches "{}" against balance {}'.format(
+                                posting, balance
+                            ),
+                            entry,
+                        )
+                    )
                     return [], errors  # This is irreconcilable, remove these postings.
 
                 # TODO(blais): We'll have to change this, as we want to allow
                 # positions crossing from negative to positive and vice-versa in
                 # a simple application. See {d3cbd78f1029}.
                 reduction_postings, matched_postings, ambi_errors = (
-                    booking_method.handle_ambiguous_matches(entry, posting, matches,
-                                                            method))
+                    booking_method.handle_ambiguous_matches(entry, posting, matches, method)
+                )
                 if ambi_errors:
                     errors.extend(ambi_errors)
                     return [], errors
@@ -726,6 +743,7 @@ def convert_costspec_to_cost(posting):
 
 class MissingType(enum.Enum):
     """The type of missing number."""
+
     UNITS = 1
     COST_PER = 2
     COST_TOTAL = 3
@@ -733,7 +751,7 @@ class MissingType(enum.Enum):
 
 
 # An error raised if we are not able to interpolate.
-InterpolationError = collections.namedtuple('InterpolationError', 'source message entry')
+InterpolationError = collections.namedtuple("InterpolationError", "source message entry")
 
 
 def interpolate_group(postings, balances, currency, tolerances):
@@ -784,9 +802,11 @@ def interpolate_group(postings, balances, currency, tolerances):
             # reducing postings that have been booked earlier, those never need
             # to be interpolated.
             if cost is not None:
-                assert isinstance(cost.number, Decimal), (
-                    "Internal error: cost has no number: {}; on postings: {}".format(
-                        cost, postings))
+                assert isinstance(
+                    cost.number, Decimal
+                ), "Internal error: cost has no number: {}; on postings: {}".format(
+                    cost, postings
+                )
 
         if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
@@ -797,17 +817,19 @@ def interpolate_group(postings, balances, currency, tolerances):
     if len(incomplete) == 0:
         # If there are no missing numbers, just convert the CostSpec to Cost and
         # return that.
-        out_postings = [convert_costspec_to_cost(posting)
-                        for posting in postings]
+        out_postings = [convert_costspec_to_cost(posting) for posting in postings]
 
     elif len(incomplete) > 1:
         # If there is more than a single value to be interpolated, generate an
         # error and return no postings.
         _, posting_index = incomplete[0]
-        errors.append(InterpolationError(
-            postings[posting_index].meta,
-            "Too many missing numbers for currency group '{}'".format(currency),
-            None))
+        errors.append(
+            InterpolationError(
+                postings[posting_index].meta,
+                "Too many missing numbers for currency group '{}'".format(currency),
+                None,
+            )
+        )
         out_postings = []
 
     else:
@@ -817,22 +839,28 @@ def interpolate_group(postings, balances, currency, tolerances):
 
         # Convert augmenting postings' costs from CostSpec to corresponding Cost
         # instances, except for the incomplete posting.
-        new_postings = [(posting
-                         if posting is incomplete_posting
-                         else convert_costspec_to_cost(posting))
-                        for posting in postings]
+        new_postings = [
+            (
+                posting
+                if posting is incomplete_posting
+                else convert_costspec_to_cost(posting)
+            )
+            for posting in postings
+        ]
 
         # Compute the balance of the other postings.
-        residual = interpolate.compute_residual(posting
-                                                for posting in new_postings
-                                                if posting is not incomplete_posting)
+        residual = interpolate.compute_residual(
+            posting for posting in new_postings if posting is not incomplete_posting
+        )
         assert len(residual) < 2, "Internal error in grouping postings by currencies."
         if not residual.is_empty():
             respos = next(iter(residual))
-            assert respos.cost is None, (
-                "Internal error; cost appears in weight calculation.")
-            assert respos.units.currency == currency, (
-                "Internal error; residual different than currency group.")
+            assert (
+                respos.cost is None
+            ), "Internal error; cost appears in weight calculation."
+            assert (
+                respos.units.currency == currency
+            ), "Internal error; residual different than currency group."
             weight = -respos.units.number
             weight_currency = respos.units.currency
         else:
@@ -845,78 +873,96 @@ def interpolate_group(postings, balances, currency, tolerances):
             if cost:
                 # Handle the special case where we only have total cost.
                 if cost.number_per == ZERO:
-                    errors.append(InterpolationError(
-                        incomplete_posting.meta,
-                        "Cannot infer per-unit cost only from total", None))
+                    errors.append(
+                        InterpolationError(
+                            incomplete_posting.meta,
+                            "Cannot infer per-unit cost only from total",
+                            None,
+                        )
+                    )
                     return postings, errors, True
 
-                assert cost.currency == weight_currency, (
-                    "Internal error; residual currency different than missing currency.")
+                assert (
+                    cost.currency == weight_currency
+                ), "Internal error; residual currency different than missing currency."
                 cost_total = cost.number_total or ZERO
                 units_number = (weight - cost_total) / cost.number_per
 
             elif incomplete_posting.price:
-                assert incomplete_posting.price.currency == weight_currency, (
-                    "Internal error; residual currency different than missing currency.")
+                assert (
+                    incomplete_posting.price.currency == weight_currency
+                ), "Internal error; residual currency different than missing currency."
                 units_number = weight / incomplete_posting.price.number
 
             else:
-                assert units.currency == weight_currency, (
-                    "Internal error; residual currency different than missing currency.")
+                assert (
+                    units.currency == weight_currency
+                ), "Internal error; residual currency different than missing currency."
                 units_number = weight
 
             # Quantize the interpolated units if necessary.
-            units_number = interpolate.quantize_with_tolerance(tolerances,
-                                                               units.currency,
-                                                               units_number)
+            units_number = interpolate.quantize_with_tolerance(
+                tolerances, units.currency, units_number
+            )
 
             if weight != ZERO:
                 new_pos = Position(Amount(units_number, units.currency), cost)
-                new_posting = incomplete_posting._replace(units=new_pos.units,
-                                                          cost=new_pos.cost)
+                new_posting = incomplete_posting._replace(
+                    units=new_pos.units, cost=new_pos.cost
+                )
             else:
                 new_posting = None
 
         elif missing == MissingType.COST_PER:
             units = incomplete_posting.units
             cost = incomplete_posting.cost
-            assert cost.currency == weight_currency, (
-                "Internal error; residual currency different than missing currency.")
+            assert (
+                cost.currency == weight_currency
+            ), "Internal error; residual currency different than missing currency."
             if units.number != ZERO:
                 number_per = (weight - (cost.number_total or ZERO)) / units.number
                 new_cost = cost._replace(number_per=number_per)
                 new_pos = Position(units, new_cost)
-                new_posting = incomplete_posting._replace(units=new_pos.units,
-                                                          cost=new_pos.cost)
+                new_posting = incomplete_posting._replace(
+                    units=new_pos.units, cost=new_pos.cost
+                )
             else:
                 new_posting = None
 
         elif missing == MissingType.COST_TOTAL:
             units = incomplete_posting.units
             cost = incomplete_posting.cost
-            assert cost.currency == weight_currency, (
-                "Internal error; residual currency different than missing currency.")
-            number_total = (weight - cost.number_per * units.number)
+            assert (
+                cost.currency == weight_currency
+            ), "Internal error; residual currency different than missing currency."
+            number_total = weight - cost.number_per * units.number
             new_cost = cost._replace(number_total=number_total)
             new_pos = Position(units, new_cost)
-            new_posting = incomplete_posting._replace(units=new_pos.units,
-                                                      cost=new_pos.cost)
+            new_posting = incomplete_posting._replace(
+                units=new_pos.units, cost=new_pos.cost
+            )
 
         elif missing == MissingType.PRICE:
             units = incomplete_posting.units
             cost = incomplete_posting.cost
             if cost is not None:
-                errors.append(InterpolationError(
-                    incomplete_posting.meta,
-                    "Cannot infer price for postings with units held at cost", None))
+                errors.append(
+                    InterpolationError(
+                        incomplete_posting.meta,
+                        "Cannot infer price for postings with units held at cost",
+                        None,
+                    )
+                )
                 return postings, errors, True
             else:
                 price = incomplete_posting.price
-                assert price.currency == weight_currency, (
-                    "Internal error; residual currency different than missing currency.")
+                assert (
+                    price.currency == weight_currency
+                ), "Internal error; residual currency different than missing currency."
                 new_price_number = abs(weight / units.number)
-                new_posting = incomplete_posting._replace(price=Amount(new_price_number,
-                                                                       price.currency))
+                new_posting = incomplete_posting._replace(
+                    price=Amount(new_price_number, price.currency)
+                )
 
         else:
             assert False, "Internal error; Invalid missing type."
@@ -935,8 +981,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             del new_postings[index]
         out_postings = new_postings
 
-    assert all(not isinstance(posting.cost, CostSpec)
-               for posting in out_postings)
+    assert all(not isinstance(posting.cost, CostSpec) for posting in out_postings)
 
     # Check that units are non-zero and that no cost remains negative; issue an
     # error if this is the case.
@@ -948,12 +993,16 @@ def interpolate_group(postings, balances, currency, tolerances):
         # the only special case allowed (for conversion entries), but never
         # for costs.
         if posting.units.number == ZERO:
-            errors.append(InterpolationError(
-                posting.meta,
-                'Amount is zero: "{}"'.format(posting.units), None))
+            errors.append(
+                InterpolationError(
+                    posting.meta, 'Amount is zero: "{}"'.format(posting.units), None
+                )
+            )
         if posting.cost.number is not None and posting.cost.number < ZERO:
-            errors.append(InterpolationError(
-                posting.meta,
-                'Cost is negative: "{}"'.format(posting.cost), None))
+            errors.append(
+                InterpolationError(
+                    posting.meta, 'Cost is negative: "{}"'.format(posting.cost), None
+                )
+            )
 
     return out_postings, errors, (new_posting is not None)

@@ -14,5 +14,5 @@ import unittest
 from beancount.parser import booking_method as bm
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

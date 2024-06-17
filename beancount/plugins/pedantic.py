@@ -1,5 +1,5 @@
-"""A plugin of plugins which triggers all the pedantic plugins.
-"""
+"""A plugin of plugins which triggers all the pedantic plugins."""
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 

@@ -1,5 +1,5 @@
-"""Builder for Beancount grammar.
-"""
+"""Builder for Beancount grammar."""
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -40,10 +40,9 @@ from beancount.core import account
 from beancount.core import data
 
 
-ParserError = collections.namedtuple('ParserError', 'source message entry')
-ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
-DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entry')
-
+ParserError = collections.namedtuple("ParserError", "source message entry")
+ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")
+DeprecatedError = collections.namedtuple("DeprecatedError", "source message entry")
 
 
 # Key-value pairs. This is used to hold meta-data attachments temporarily.
@@ -51,7 +50,7 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 # Attributes:
 #  key: A string, the name of the key.
 #  value: Any object.
-KeyValue = collections.namedtuple('KeyValue', 'key value')
+KeyValue = collections.namedtuple("KeyValue", "key value")
 
 # Value-type pairs. This is used to represent custom values where the concrete
 # datatypes aren't matching those which are found in the parser.
@@ -59,7 +58,7 @@ KeyValue = collections.namedtuple('KeyValue', 'key value')
 # Attributes:
 #  value: Any object.
 #  dtype: The datatype of the object.
-ValueType = collections.namedtuple('ValueType', 'value dtype')
+ValueType = collections.namedtuple("ValueType", "value dtype")
 
 # Convenience holding class for amounts with per-share and total value.
 #
@@ -67,12 +66,13 @@ ValueType = collections.namedtuple('ValueType', 'value dtype')
 #   number_per: A Decimal instance, the cost/price per unit.
 #   number_total: A Decimal instance, the total cost/price.
 #   currency: A string, the commodity of the amount.
-CompoundAmount = collections.namedtuple('CompoundAmount',
-                                        'number_per number_total currency')
+CompoundAmount = collections.namedtuple(
+    "CompoundAmount", "number_per number_total currency"
+)
 
 
 # A unique token used to indicate a merge of the lots of an inventory.
-MERGE_COST = '***'
+MERGE_COST = "***"
 
 
 def valid_account_regexp(options):
@@ -83,18 +83,17 @@ def valid_account_regexp(options):
     Returns:
       A string, a regular expression that will match all account names.
     """
-    names = map(options.__getitem__, ('name_assets',
-                                      'name_liabilities',
-                                      'name_equity',
-                                      'name_income',
-                                      'name_expenses'))
+    names = map(
+        options.__getitem__,
+        ("name_assets", "name_liabilities", "name_equity", "name_income", "name_expenses"),
+    )
 
     # Replace the first term of the account regular expression with the specific
     # names allowed under the options configuration. This code is kept in sync
     # with {5672c7270e1e}.
-    return regex.compile("(?:{})(?:{}{})+".format('|'.join(names),
-                                                  account.sep,
-                                                  account.ACC_COMP_NAME_RE))
+    return regex.compile(
+        "(?:{})(?:{}{})+".format("|".join(names), account.sep, account.ACC_COMP_NAME_RE)
+    )
 
 
 # A temporary data structure used during parsing to hold and accumulate the
@@ -105,7 +104,7 @@ def valid_account_regexp(options):
 # Attributes:
 #  tags: a set object  of the tags to be applied to this transaction.
 #  links: a set of link strings to be applied to this transaction.
-TagsLinks = collections.namedtuple('TagsLinks', 'tags links')
+TagsLinks = collections.namedtuple("TagsLinks", "tags links")
 
 
 class Builder(lexer.LexBuilder):
@@ -155,21 +154,27 @@ class Builder(lexer.LexBuilder):
         """
         # If the user left some tags unbalanced, issue an error.
         for tag in self.tags:
-            meta = new_metadata(self.options['filename'], 0)
+            meta = new_metadata(self.options["filename"], 0)
             self.errors.append(
-                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
+                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None)
+            )
 
         # If the user left some metadata unpopped, issue an error.
         for key, value_list in self.meta.items():
-            meta = new_metadata(self.options['filename'], 0)
+            meta = new_metadata(self.options["filename"], 0)
             self.errors.append(
-                ParserError(meta, (
-                    "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
-                        key, ', '.join(value_list)), None))
+                ParserError(
+                    meta,
+                    ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
+                        key, ", ".join(value_list)
+                    ),
+                    None,
+                )
+            )
 
         # Weave the commas option in the DisplayContext itself, so it propagates
         # everywhere it is used automatically.
-        self.dcontext.set_commas(self.options['render_commas'])
+        self.dcontext.set_commas(self.options["render_commas"])
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -188,13 +193,13 @@ class Builder(lexer.LexBuilder):
           A dict of option names to options.
         """
         # Build and store the inferred DisplayContext instance.
-        self.options['dcontext'] = self.dcontext
+        self.options["dcontext"] = self.dcontext
 
         return self.options
 
     def get_long_string_maxlines(self):
         """See base class."""
-        return self.options['long_string_maxlines']
+        return self.options["long_string_maxlines"]
 
     def store_result(self, filename, lineno, entries):
         """Start rule stores the final result here.
@@ -205,10 +210,11 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
         # Also record the name of the processed file.
-        self.options['filename'] = filename
+        self.options["filename"] = filename
 
-    def build_grammar_error(self, filename, lineno, exc_value,
-                            exc_type=None, exc_traceback=None):
+    def build_grammar_error(
+        self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
+    ):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
@@ -223,12 +229,11 @@ class Builder(lexer.LexBuilder):
             strings = traceback.format_exception_only(exc_type, exc_value)
             tblist = traceback.extract_tb(exc_traceback)
             filename, lineno, _, __ = tblist[0]
-            message = '{} ({}:{})'.format(strings[0], filename, lineno)
+            message = "{} ({}:{})".format(strings[0], filename, lineno)
         else:
             message = str(exc_value)
         meta = new_metadata(filename, lineno)
-        self.errors.append(
-            ParserSyntaxError(meta, message, None))
+        self.errors.append(ParserSyntaxError(meta, message, None))
 
     def account(self, filename, lineno, account):
         """Check account name validity.
@@ -241,7 +246,8 @@ class Builder(lexer.LexBuilder):
         if not self.account_regexp.match(account):
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Invalid account name: {}".format(account), None))
+                ParserError(meta, "Invalid account name: {}".format(account), None)
+            )
         # Intern account names. This should reduces memory usage a
         # fair bit because these strings are repeated liberally.
         return self.accounts.setdefault(account, account)
@@ -253,11 +259,10 @@ class Builder(lexer.LexBuilder):
           filename: The current filename
           lineno: The current line number
         """
-        if self.options['allow_pipe_separator']:
+        if self.options["allow_pipe_separator"]:
             return
         meta = new_metadata(filename, lineno)
-        self.errors.append(
-            ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+        self.errors.append(ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
 
     def pushtag(self, filename, lineno, tag):
         """Push a tag on the current set of tags.
@@ -280,7 +285,8 @@ class Builder(lexer.LexBuilder):
         except ValueError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
+                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None)
+            )
 
     def pushmeta(self, filename, lineno, key_value):
         """Set a metadata field on the current key-value pairs to be added to transactions.
@@ -307,9 +313,10 @@ class Builder(lexer.LexBuilder):
         except IndexError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta,
-                            "Attempting to pop absent metadata key: '{}'".format(key),
-                            None))
+                ParserError(
+                    meta, "Attempting to pop absent metadata key: '{}'".format(key), None
+                )
+            )
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -322,13 +329,13 @@ class Builder(lexer.LexBuilder):
         """
         if key not in self.options:
             meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Invalid option: '{}'".format(key), None))
+            self.errors.append(ParserError(meta, "Invalid option: '{}'".format(key), None))
 
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Option '{}' may not be set".format(key), None))
+                ParserError(meta, "Option '{}' may not be set".format(key), None)
+            )
 
         else:
             option_descriptor = options.OPTIONS[key]
@@ -338,7 +345,8 @@ class Builder(lexer.LexBuilder):
                 assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    DeprecatedError(meta, option_descriptor.deprecated, None))
+                    DeprecatedError(meta, option_descriptor.deprecated, None)
+                )
 
             # Rename the option if it has an alias.
             if option_descriptor.alias:
@@ -352,9 +360,10 @@ class Builder(lexer.LexBuilder):
                 except ValueError as exc:
                     meta = new_metadata(filename, lineno)
                     self.errors.append(
-                        ParserError(meta,
-                                    "Error for option '{}': {}".format(key, exc),
-                                    None))
+                        ParserError(
+                            meta, "Error for option '{}': {}".format(key, exc), None
+                        )
+                    )
                     return
 
             option = self.options[key]
@@ -367,7 +376,9 @@ class Builder(lexer.LexBuilder):
                 if not (isinstance(value, tuple) and len(value) == 2):
                     self.errors.append(
                         ParserError(
-                            meta, "Error for option '{}': {}".format(key, value), None))
+                            meta, "Error for option '{}': {}".format(key, value), None
+                        )
+                    )
                     return
                 dict_key, dict_value = value
                 option[dict_key] = dict_value
@@ -375,7 +386,7 @@ class Builder(lexer.LexBuilder):
             elif isinstance(option, bool):
                 # Convert to a boolean.
                 if not isinstance(value, bool):
-                    value = (value.lower() in {'true', 'on'}) or (value == '1')
+                    value = (value.lower() in {"true", "on"}) or (value == "1")
                 self.options[key] = value
 
             else:
@@ -383,7 +394,7 @@ class Builder(lexer.LexBuilder):
                 self.options[key] = value
 
             # Refresh the list of valid account regexps as we go along.
-            if key.startswith('name_'):
+            if key.startswith("name_"):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
 
@@ -395,7 +406,7 @@ class Builder(lexer.LexBuilder):
           lineno: current line number.
           include_name: A string, the name of the file to include.
         """
-        self.options['include'].append(include_filename)
+        self.options["include"].append(include_filename)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.
@@ -407,7 +418,7 @@ class Builder(lexer.LexBuilder):
           plugin_config: A string or None, an optional configuration string to
             pass in to the plugin module.
         """
-        self.options['plugin'].append((plugin_name, plugin_config))
+        self.options["plugin"].append((plugin_name, plugin_config))
 
     def amount(self, filename, lineno, number, currency):
         """Process an amount grammar rule.
@@ -462,8 +473,9 @@ class Builder(lexer.LexBuilder):
         """
         if not cost_comp_list:
             return CostSpec(MISSING, None, MISSING, None, None, False)
-        assert isinstance(cost_comp_list, list), (
-            "Internal error in parser: {}".format(cost_comp_list))
+        assert isinstance(cost_comp_list, list), "Internal error in parser: {}".format(
+            cost_comp_list
+        )
 
         compound_cost = None
         date_ = None
@@ -475,37 +487,58 @@ class Builder(lexer.LexBuilder):
                     compound_cost = comp
                 else:
                     self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Duplicate cost: '{}'.".format(comp), None))
+                        ParserError(
+                            new_metadata(filename, lineno),
+                            "Duplicate cost: '{}'.".format(comp),
+                            None,
+                        )
+                    )
 
             elif isinstance(comp, date):
                 if date_ is None:
                     date_ = comp
                 else:
                     self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Duplicate date: '{}'.".format(comp), None))
+                        ParserError(
+                            new_metadata(filename, lineno),
+                            "Duplicate date: '{}'.".format(comp),
+                            None,
+                        )
+                    )
 
             elif comp is MERGE_COST:
                 if merge is None:
                     merge = True
                     self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Cost merging is not supported yet", None))
+                        ParserError(
+                            new_metadata(filename, lineno),
+                            "Cost merging is not supported yet",
+                            None,
+                        )
+                    )
                 else:
                     self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Duplicate merge-cost spec", None))
+                        ParserError(
+                            new_metadata(filename, lineno),
+                            "Duplicate merge-cost spec",
+                            None,
+                        )
+                    )
 
             else:
-                assert isinstance(comp, str), (
-                    "Currency component is not string: '{}'".format(comp))
+                assert isinstance(
+                    comp, str
+                ), "Currency component is not string: '{}'".format(comp)
                 if label is None:
                     label = comp
                 else:
                     self.errors.append(
-                        ParserError(new_metadata(filename, lineno),
-                                    "Duplicate label: '{}'.".format(comp), None))
+                        ParserError(
+                            new_metadata(filename, lineno),
+                            "Duplicate label: '{}'.".format(comp),
+                            None,
+                        )
+                    )
 
         # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
         # indicate that by creating a CompoundAmount(), always.
@@ -519,9 +552,13 @@ class Builder(lexer.LexBuilder):
                     self.errors.append(
                         ParserError(
                             new_metadata(filename, lineno),
-                            ("Per-unit cost may not be specified using total cost "
-                             "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
-                            None))
+                            (
+                                "Per-unit cost may not be specified using total cost "
+                                "syntax: '{}'; ignoring per-unit cost"
+                            ).format(compound_cost),
+                            None,
+                        )
+                    )
                     # Ignore per-unit number.
                     number_per = ZERO
                 else:
@@ -572,16 +609,16 @@ class Builder(lexer.LexBuilder):
             except KeyError:
                 # If the per-account method is invalid, set it to the global
                 # default method and continue.
-                booking = self.options['booking_method']
+                booking = self.options["booking_method"]
                 error = True
         else:
             booking = None
 
         entry = Open(meta, date, account, currencies, booking)
         if error:
-            self.errors.append(ParserError(meta,
-                                           "Invalid booking method: {}".format(booking_str),
-                                           entry))
+            self.errors.append(
+                ParserError(meta, "Invalid booking method: {}".format(booking_str), entry)
+            )
         return entry
 
     def close(self, filename, lineno, date, account, kvlist):
@@ -717,8 +754,9 @@ class Builder(lexer.LexBuilder):
         tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Note(meta, date, account, comment, tags, links)
 
-    def document(self, filename, lineno, date, account, document_filename, tags_links,
-                 kvlist):
+    def document(
+        self, filename, lineno, date, account, document_filename, tags_links, kvlist
+    ):
         """Process a document directive.
 
         Args:
@@ -734,8 +772,9 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno, kvlist)
         if not path.isabs(document_filename):
-            document_filename = path.abspath(path.join(path.dirname(filename),
-                                                       document_filename))
+            document_filename = path.abspath(
+                path.join(path.dirname(filename), document_filename)
+            )
         tags, links = self._finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
 
@@ -803,11 +842,16 @@ class Builder(lexer.LexBuilder):
         # Prices may not be negative.
         if price and isinstance(price.number, Decimal) and price.number < ZERO:
             self.errors.append(
-                ParserError(meta, (
-                    "Negative prices are not allowed: {} "
-                    "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                    "for workaround)"
-                ).format(price), None))
+                ParserError(
+                    meta,
+                    (
+                        "Negative prices are not allowed: {} "
+                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                        "for workaround)"
+                    ).format(price),
+                    None,
+                )
+            )
             # Fix it and continue.
             price = Amount(abs(price.number), price.currency)
 
@@ -818,16 +862,20 @@ class Builder(lexer.LexBuilder):
                 # Note: we could potentially do a better job and attempt to fix
                 # this up after interpolation, but this syntax is pretty rare
                 # anyway.
-                self.errors.append(ParserError(
-                    meta, ("Total price on a posting without units: {}.").format(price),
-                    None))
+                self.errors.append(
+                    ParserError(
+                        meta,
+                        ("Total price on a posting without units: {}.").format(price),
+                        None,
+                    )
+                )
                 price = None
             else:
                 price_number = price.number
                 if price_number is not MISSING:
-                    price_number = (ZERO
-                                    if units.number == ZERO
-                                    else price_number/abs(units.number))
+                    price_number = (
+                        ZERO if units.number == ZERO else price_number / abs(units.number)
+                    )
                     price = Amount(price_number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -839,15 +887,22 @@ class Builder(lexer.LexBuilder):
 
         # If both cost and price are specified, the currencies must match, or
         # that is an error.
-        if (cost is not None and
-            price is not None and
-            isinstance(cost.currency, str) and
-            isinstance(price.currency, str) and
-            cost.currency != price.currency):
+        if (
+            cost is not None
+            and price is not None
+            and isinstance(cost.currency, str)
+            and isinstance(price.currency, str)
+            and cost.currency != price.currency
+        ):
             self.errors.append(
-                ParserError(meta,
-                            "Cost and price currencies must match: {} != {}".format(
-                                cost.currency, price.currency), None))
+                ParserError(
+                    meta,
+                    "Cost and price currencies must match: {} != {}".format(
+                        cost.currency, price.currency
+                    ),
+                    None,
+                )
+            )
 
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
@@ -902,9 +957,12 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, ""
         else:
             self.errors.append(
-                ParserError(meta,
-                            "Too many strings on transaction description: {}".format(
-                                txn_strings), None))
+                ParserError(
+                    meta,
+                    "Too many strings on transaction description: {}".format(txn_strings),
+                    None,
+                )
+            )
             return None
         return payee, narration
 
@@ -919,11 +977,14 @@ class Builder(lexer.LexBuilder):
         """
         if self.tags:
             tags.update(self.tags)
-        return (frozenset(tags) if tags else EMPTY_SET,
-                frozenset(links) if links else EMPTY_SET)
+        return (
+            frozenset(tags) if tags else EMPTY_SET,
+            frozenset(links) if links else EMPTY_SET,
+        )
 
-    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
-                    posting_or_kv_list):
+    def transaction(
+        self, filename, lineno, date, flag, txn_strings, tags_links, posting_or_kv_list
+    ):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -960,33 +1021,51 @@ class Builder(lexer.LexBuilder):
                     last_posting = posting_or_kv
                 elif isinstance(posting_or_kv, TagsLinks):
                     if postings:
-                        self.errors.append(ParserError(
-                            meta,
-                            "Tags or links not allowed after first " +
-                            "Posting: {}".format(posting_or_kv), None))
+                        self.errors.append(
+                            ParserError(
+                                meta,
+                                "Tags or links not allowed after first "
+                                + "Posting: {}".format(posting_or_kv),
+                                None,
+                            )
+                        )
                     else:
                         tags.update(posting_or_kv.tags)
                         links.update(posting_or_kv.links)
                 else:
                     if last_posting is None:
-                        value = explicit_meta.setdefault(posting_or_kv.key,
-                                                         posting_or_kv.value)
+                        value = explicit_meta.setdefault(
+                            posting_or_kv.key, posting_or_kv.value
+                        )
                         if value is not posting_or_kv.value:
-                            self.errors.append(ParserError(
-                                meta, "Duplicate metadata field on entry: {}".format(
-                                    posting_or_kv), None))
+                            self.errors.append(
+                                ParserError(
+                                    meta,
+                                    "Duplicate metadata field on entry: {}".format(
+                                        posting_or_kv
+                                    ),
+                                    None,
+                                )
+                            )
                     else:
                         if last_posting.meta is None:
                             last_posting = last_posting._replace(meta={})
                             postings.pop(-1)
                             postings.append(last_posting)
 
-                        value = last_posting.meta.setdefault(posting_or_kv.key,
-                                                             posting_or_kv.value)
+                        value = last_posting.meta.setdefault(
+                            posting_or_kv.key, posting_or_kv.value
+                        )
                         if value is not posting_or_kv.value:
-                            self.errors.append(ParserError(
-                                meta, "Duplicate posting metadata field: {}".format(
-                                    posting_or_kv), None))
+                            self.errors.append(
+                                ParserError(
+                                    meta,
+                                    "Duplicate posting metadata field: {}".format(
+                                        posting_or_kv
+                                    ),
+                                    None,
+                                )
+                            )
 
         # Freeze the tags & links or set to default empty values.
         tags, links = self._finalize_tags_links(tags, links)
@@ -1023,5 +1102,4 @@ class Builder(lexer.LexBuilder):
             postings = []
 
         # Create the transaction.
-        return Transaction(meta, date, chr(flag),
-                           payee, narration, tags, links, postings)
+        return Transaction(meta, date, chr(flag), payee, narration, tags, links, postings)

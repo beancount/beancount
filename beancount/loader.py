@@ -1,5 +1,5 @@
-"""Loader code. This is the main entry point to load up a file.
-"""
+"""Loader code. This is the main entry point to load up a file."""
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -37,40 +37,41 @@ from beancount.utils import file_utils
 OptionsMap = Any
 
 
-LoadError = collections.namedtuple('LoadError', 'source message entry')
+LoadError = collections.namedtuple("LoadError", "source message entry")
 
 
 # List of default plugins to run.
 PLUGINS_PRE = [
     ("beancount.ops.documents", None),
-    ]
+]
 
 # List of plugins that get enabled by --auto, and list of plugins actually
 # inserted in the list. See {4ec6a3205b6c}.
 DEFAULT_PLUGINS_AUTO = [
     ("beancount.plugins.auto", None),
-    ]
+]
 PLUGINS_AUTO = []
 
 PLUGINS_POST = [
     ("beancount.ops.pad", None),
     ("beancount.ops.balance", None),
-    ]
+]
 
 # A mapping of modules to warn about, to their renamed names.
 RENAMED_MODULES = {}
 
 
 # Filename pattern for the pickle-cache.
-PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
+PICKLE_CACHE_FILENAME = ".{filename}.picklecache"
 
 # The runtime threshold below which we don't bother creating a cache file, in
 # seconds.
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
-def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-              encoding=None):
+def load_file(
+    filename, log_timings=None, log_errors=None, extra_validations=None, encoding=None
+):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -96,19 +97,24 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
-            filename,
-            log_timings, log_errors,
-            extra_validations, False, encoding)
+            filename, log_timings, log_errors, extra_validations, False, encoding
+        )
     else:
         entries, errors, options_map = _load_file(
-            filename, log_timings,
-            extra_validations, encoding)
+            filename, log_timings, extra_validations, encoding
+        )
         _log_errors(errors, log_errors)
     return entries, errors, options_map
 
 
-def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
-                        dedent=False, encoding=None):
+def load_encrypted_file(
+    filename,
+    log_timings=None,
+    log_errors=None,
+    extra_validations=None,
+    dedent=False,
+    encoding=None,
+):
     """Load an encrypted Beancount input file.
 
     Args:
@@ -125,11 +131,13 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       options parsed from the file.
     """
     contents = encryption.read_encrypted_file(filename)
-    return load_string(contents,
-                       log_timings=log_timings,
-                       log_errors=log_errors,
-                       extra_validations=extra_validations,
-                       encoding=encoding)
+    return load_string(
+        contents,
+        log_timings=log_timings,
+        log_errors=log_errors,
+        extra_validations=extra_validations,
+        encoding=encoding,
+    )
 
 
 def _log_errors(errors, log_errors):
@@ -140,7 +148,7 @@ def _log_errors(errors, log_errors):
         or None, if it should remain quiet.
     """
     if log_errors and errors:
-        if hasattr(log_errors, 'write'):
+        if hasattr(log_errors, "write"):
             printer.print_errors(errors, file=log_errors)
         else:
             error_io = io.StringIO()
@@ -186,6 +194,7 @@ def pickle_cache_function(cache_getter, time_threshold, function):
       A decorated function which will pull its result from a cache file if
       it is available.
     """
+
     @functools.wraps(function)
     def wrapped(toplevel_filename, *args, **kw):
         cache_filename = cache_getter(toplevel_filename)
@@ -194,7 +203,7 @@ def pickle_cache_function(cache_getter, time_threshold, function):
         # timestamps to check.
         exists = path.exists(cache_filename)
         if exists:
-            with open(cache_filename, 'rb') as file:
+            with open(cache_filename, "rb") as file:
                 try:
                     result = pickle.load(file)
                 except Exception as exc:
@@ -221,8 +230,9 @@ def pickle_cache_function(cache_getter, time_threshold, function):
                 os.remove(cache_filename)
             except OSError as exc:
                 # Warn for errors on read-only filesystems.
-                logging.warning("Could not remove picklecache file %s: %s",
-                                cache_filename, exc)
+                logging.warning(
+                    "Could not remove picklecache file %s: %s", cache_filename, exc
+                )
 
         time_before = time.time()
         result = function(toplevel_filename, *args, **kw)
@@ -232,13 +242,15 @@ def pickle_cache_function(cache_getter, time_threshold, function):
         # justifies it.
         if time_after - time_before > time_threshold:
             try:
-                with open(cache_filename, 'wb') as file:
+                with open(cache_filename, "wb") as file:
                     pickle.dump(result, file)
             except Exception as exc:
-                logging.warning("Could not write to picklecache file %s: %s",
-                                cache_filename, exc)
+                logging.warning(
+                    "Could not write to picklecache file %s: %s", cache_filename, exc
+                )
 
         return result
+
     return wrapped
 
 
@@ -252,6 +264,7 @@ def delete_cache_function(cache_getter, function):
     Returns:
       A decorated function which will delete the cached filename, if it exists.
     """
+
     @functools.wraps(function)
     def wrapped(toplevel_filename, *args, **kw):
         # Delete the cache.
@@ -261,6 +274,7 @@ def delete_cache_function(cache_getter, function):
 
         # Invoke the original function.
         return function(toplevel_filename, *args, **kw)
+
     return wrapped
 
 
@@ -280,8 +294,8 @@ def needs_refresh(options_map):
     """
     if options_map is None:
         return True
-    input_hash = compute_input_hash(options_map['include'])
-    return 'input_hash' not in options_map or input_hash != options_map['input_hash']
+    input_hash = compute_input_hash(options_map["include"])
+    return "input_hash" not in options_map or input_hash != options_map["input_hash"]
 
 
 def compute_input_hash(filenames):
@@ -292,17 +306,22 @@ def compute_input_hash(filenames):
     """
     md5 = hashlib.md5()
     for filename in sorted(filenames):
-        md5.update(filename.encode('utf8'))
+        md5.update(filename.encode("utf8"))
         if not path.exists(filename):
             continue
         stat = os.stat(filename)
-        md5.update(struct.pack('dd', stat.st_mtime_ns, stat.st_size))
+        md5.update(struct.pack("dd", stat.st_mtime_ns, stat.st_size))
     return md5.hexdigest()
 
 
-def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
-                dedent=False, encoding=None):
-
+def load_string(
+    string,
+    log_timings=None,
+    log_errors=None,
+    extra_validations=None,
+    dedent=False,
+    encoding=None,
+):
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -323,8 +342,9 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    entries, errors, options_map = _load([(string, False)], log_timings,
-                                         extra_validations, encoding)
+    entries, errors, options_map = _load(
+        [(string, False)], log_timings, extra_validations, encoding
+    )
     _log_errors(errors, log_errors)
     return entries, errors, options_map
 
@@ -362,7 +382,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
     # detect and avoid duplicates (cycles).
     filenames_seen = set()
 
-    with misc_utils.log_time('beancount.parser.parser', log_timings, indent=1):
+    with misc_utils.log_time("beancount.parser.parser", log_timings, indent=1):
         while source_stack:
             source, is_file = source_stack.pop(0)
             is_top_level = options_map is None
@@ -388,25 +408,33 @@ def _parse_recursive(sources, log_timings, encoding=None):
                 # Check for file previously parsed... detect duplicates.
                 if filename in filenames_seen:
                     parse_errors.append(
-                        LoadError(data.new_metadata("<load>", 0),
-                                  'Duplicate filename parsed: "{}"'.format(filename),
-                                  None))
+                        LoadError(
+                            data.new_metadata("<load>", 0),
+                            'Duplicate filename parsed: "{}"'.format(filename),
+                            None,
+                        )
+                    )
                     continue
 
                 # Check for a file that does not exist.
                 if not path.exists(filename):
                     parse_errors.append(
-                        LoadError(data.new_metadata("<load>", 0),
-                                  'File "{}" does not exist'.format(filename), None))
+                        LoadError(
+                            data.new_metadata("<load>", 0),
+                            'File "{}" does not exist'.format(filename),
+                            None,
+                        )
+                    )
                     continue
 
                 # Parse a file from disk directly.
                 filenames_seen.add(filename)
-                with misc_utils.log_time('beancount.parser.parser.parse_file',
-                                         log_timings, indent=2):
-                    (src_entries,
-                     src_errors,
-                     src_options_map) = parser.parse_file(filename, encoding=encoding)
+                with misc_utils.log_time(
+                    "beancount.parser.parser.parse_file", log_timings, indent=2
+                ):
+                    (src_entries, src_errors, src_options_map) = parser.parse_file(
+                        filename, encoding=encoding
+                    )
 
                 cwd = path.dirname(filename)
             else:
@@ -414,14 +442,15 @@ def _parse_recursive(sources, log_timings, encoding=None):
                 if encoding:
                     if isinstance(source, bytes):
                         source = source.decode(encoding)
-                    source = source.encode('ascii', 'replace')
+                    source = source.encode("ascii", "replace")
 
                 # Parse a string buffer from memory.
-                with misc_utils.log_time('beancount.parser.parser.parse_string',
-                                         log_timings, indent=2):
-                    (src_entries,
-                     src_errors,
-                     src_options_map) = parser.parse_string(source, source_filename)
+                with misc_utils.log_time(
+                    "beancount.parser.parser.parse_string", log_timings, indent=2
+                ):
+                    (src_entries, src_errors, src_options_map) = parser.parse_string(
+                        source, source_filename
+                    )
 
             # Merge the entries resulting from the parsed file.
             entries.extend(src_entries)
@@ -439,15 +468,20 @@ def _parse_recursive(sources, log_timings, encoding=None):
             # which uses it indirectly.
             include_expanded = []
             with file_utils.chdir(cwd):
-                for include_filename in src_options_map['include']:
+                for include_filename in src_options_map["include"]:
                     matched_filenames = glob.glob(include_filename, recursive=True)
                     if matched_filenames:
                         include_expanded.extend(matched_filenames)
                     else:
                         parse_errors.append(
-                            LoadError(data.new_metadata("<load>", 0),
-                                      'File glob "{}" does not match any files'.format(
-                                          include_filename), None))
+                            LoadError(
+                                data.new_metadata("<load>", 0),
+                                'File glob "{}" does not match any files'.format(
+                                    include_filename
+                                ),
+                                None,
+                            )
+                        )
             for include_filename in include_expanded:
                 if not path.isabs(include_filename):
                     include_filename = path.join(cwd, include_filename)
@@ -461,7 +495,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
         options_map = options.OPTIONS_DEFAULTS.copy()
 
     # Save the set of parsed filenames in options_map.
-    options_map['include'] = sorted(filenames_seen)
+    options_map["include"] = sorted(filenames_seen)
 
     options_map = aggregate_options_map(options_map, other_options_map)
 
@@ -484,7 +518,6 @@ def aggregate_options_map(options_map, other_options_map):
         currencies.extend(omap["operating_currency"])
         options_map["dcontext"].update_from(omap["dcontext"])
     options_map["operating_currency"] = list(misc_utils.uniquify(currencies))
-
 
     # Produce a 'pythonpath' value for transformers.
     pythonpath = set()
@@ -521,38 +554,40 @@ def _load(sources, log_timings, extra_validations, encoding):
     """
     assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
 
-    if hasattr(log_timings, 'write'):
+    if hasattr(log_timings, "write"):
         log_timings = log_timings.write
 
     # Parse all the files recursively. Ensure that the entries are sorted before
     # running any processes on them.
-    with misc_utils.log_time('parse', log_timings, indent=1):
+    with misc_utils.log_time("parse", log_timings, indent=1):
         entries, parse_errors, options_map = _parse_recursive(
-            sources, log_timings, encoding)
+            sources, log_timings, encoding
+        )
         entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
-    with misc_utils.log_time('booking', log_timings, indent=1):
+    with misc_utils.log_time("booking", log_timings, indent=1):
         entries, balance_errors = booking.book(entries, options_map)
         parse_errors.extend(balance_errors)
 
     # Transform the entries.
-    with misc_utils.log_time('run_transformations', log_timings, indent=1):
-
+    with misc_utils.log_time("run_transformations", log_timings, indent=1):
         # Insert the user PYTHONPATH entries before processing the plugins.
         saved_pythonpath = list(sys.path)
         try:
             if "pythonpath" in options_map:
                 sys.path[0:0] = options_map["pythonpath"]
-            entries, errors = run_transformations(entries, parse_errors, options_map,
-                                                  log_timings)
+            entries, errors = run_transformations(
+                entries, parse_errors, options_map, log_timings
+            )
         finally:
             sys.path[:] = saved_pythonpath
 
     # Validate the list of entries.
-    with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
-        valid_errors = validation.validate(entries, options_map, log_timings,
-                                           extra_validations)
+    with misc_utils.log_time("beancount.ops.validate", log_timings, indent=1):
+        valid_errors = validation.validate(
+            entries, options_map, log_timings, extra_validations
+        )
         errors.extend(valid_errors)
 
         # Note: We could go hardcore here and further verify that the entries
@@ -560,7 +595,7 @@ def _load(sources, log_timings, extra_validations, encoding):
         # comparing hashes before and after. Not needed for now.
 
     # Compute the input hash.
-    options_map['input_hash'] = compute_input_hash(options_map['include'])
+    options_map["input_hash"] = compute_input_hash(options_map["include"])
 
     return entries, errors, options_map
 
@@ -583,25 +618,25 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     errors = list(parse_errors)
 
     # Process the plugins.
-    if options_map['plugin_processing_mode'] == 'raw':
+    if options_map["plugin_processing_mode"] == "raw":
         plugins_iter = options_map["plugin"]
-    elif options_map['plugin_processing_mode'] == 'default':
-        plugins_iter = itertools.chain(PLUGINS_PRE,
-                                       options_map["plugin"],
-                                       PLUGINS_AUTO,
-                                       PLUGINS_POST)
+    elif options_map["plugin_processing_mode"] == "default":
+        plugins_iter = itertools.chain(
+            PLUGINS_PRE, options_map["plugin"], PLUGINS_AUTO, PLUGINS_POST
+        )
     else:
         assert "Invalid value for plugin_processing_mode: {}".format(
-            options_map['plugin_processing_mode'])
+            options_map["plugin_processing_mode"]
+        )
 
     for plugin_name, plugin_config in plugins_iter:
-
         # Issue a warning on a renamed module.
         renamed_name = RENAMED_MODULES.get(plugin_name, None)
         if renamed_name:
-            warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
-                          "please adjust your plugin directive.".format(
-                              plugin_name, renamed_name))
+            warnings.warn(
+                "Deprecation notice: Module '{}' has been renamed to '{}'; "
+                "please adjust your plugin directive.".format(plugin_name, renamed_name)
+            )
             plugin_name = renamed_name
 
         # Try to import the module.
@@ -610,14 +645,18 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
         # import time exceptions fail a run, by choice.
         try:
             module = importlib.import_module(plugin_name)
-            if not hasattr(module, '__plugins__'):
+            if not hasattr(module, "__plugins__"):
                 continue
         except ImportError:
             # Upon failure, just issue an error.
             formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
-            errors.append(LoadError(data.new_metadata("<load>", 0),
-                                    'Error importing "{}": {}'.format(
-                                        plugin_name, formatted_traceback), None))
+            errors.append(
+                LoadError(
+                    data.new_metadata("<load>", 0),
+                    'Error importing "{}": {}'.format(plugin_name, formatted_traceback),
+                    None,
+                )
+            )
             continue
 
         # Apply it.
@@ -646,9 +685,15 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
                     # Upon failure, just issue an error.
                     formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
-                    errors.append(LoadError(data.new_metadata("<load>", 0),
-                                            'Error applying plugin "{}": {}'.format(
-                                                plugin_name, formatted_traceback), None))
+                    errors.append(
+                        LoadError(
+                            data.new_metadata("<load>", 0),
+                            'Error applying plugin "{}": {}'.format(
+                                plugin_name, formatted_traceback
+                            ),
+                            None,
+                        )
+                    )
                     continue
 
             # Ensure that the entries are sorted. Don't trust the plugins
@@ -669,8 +714,7 @@ def combine_plugins(*plugin_modules):
     """
     modules = []
     for module in plugin_modules:
-        modules.extend([getattr(module, name)
-                        for name in module.__plugins__])
+        modules.extend([getattr(module, name) for name in module.__plugins__])
     return modules
 
 
@@ -689,6 +733,7 @@ def load_doc(expect_errors=False):
     Returns:
       A wrapped method that accepts a single 'self' argument.
     """
+
     def decorator(fun):
         """A decorator that parses the function's docstring as an argument.
 
@@ -698,6 +743,7 @@ def load_doc(expect_errors=False):
         Returns:
           A decorated test function.
         """
+
         @functools.wraps(fun)
         def wrapper(self):
             entries, errors, options_map = load_string(fun.__doc__, dedent=True)
@@ -733,22 +779,26 @@ def initialize(use_cache: bool, cache_filename: Optional[str] = None):
     global _load_file
 
     # Make a function to compute the cache filename.
-    cache_pattern = (cache_filename or
-                     os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or
-                     PICKLE_CACHE_FILENAME)
+    cache_pattern = (
+        cache_filename
+        or os.getenv("BEANCOUNT_LOAD_CACHE_FILENAME")
+        or PICKLE_CACHE_FILENAME
+    )
     cache_getter = functools.partial(get_cache_filename, cache_pattern)
 
     if use_cache:
-        _load_file = pickle_cache_function(cache_getter, PICKLE_CACHE_THRESHOLD,
-                                           _uncached_load_file)
+        _load_file = pickle_cache_function(
+            cache_getter, PICKLE_CACHE_THRESHOLD, _uncached_load_file
+        )
     else:
         if cache_filename is not None:
-            logging.warning("Cache disabled; "
-                            "Explicitly overridden cache filename %s will be ignored.",
-                            cache_filename)
-        _load_file = delete_cache_function(cache_getter,
-                                           _uncached_load_file)
+            logging.warning(
+                "Cache disabled; "
+                "Explicitly overridden cache filename %s will be ignored.",
+                cache_filename,
+            )
+        _load_file = delete_cache_function(cache_getter, _uncached_load_file)
 
 
 # Default is to use the cache every time.
-initialize(os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None)
+initialize(os.getenv("BEANCOUNT_DISABLE_LOAD_CACHE") is None)

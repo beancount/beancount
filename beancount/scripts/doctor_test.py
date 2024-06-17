@@ -16,7 +16,6 @@ from beancount.scripts import directories_test
 
 
 class TestScriptDoctor(test_utils.ClickTestCase):
-
     @test_utils.docfile
     def test_dump_lexer(self, filename):
         """
@@ -27,7 +26,7 @@ class TestScriptDoctor(test_utils.ClickTestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        result = self.run_with_args(doctor, 'dump-lexer', filename)
+        result = self.run_with_args(doctor, "dump-lexer", filename)
 
         expected_output = """
             EOL               2 b'\\n'
@@ -59,7 +58,7 @@ class TestScriptDoctor(test_utils.ClickTestCase):
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""
-        rv = self.run_with_args(doctor, 'dump-lexer', filename)
+        rv = self.run_with_args(doctor, "dump-lexer", filename)
         self.assertEqual(rv.stdout, "")
 
     @test_utils.docfile
@@ -72,149 +71,158 @@ class TestScriptDoctor(test_utils.ClickTestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        self.run_with_args(doctor, 'roundtrip', filename)
+        self.run_with_args(doctor, "roundtrip", filename)
 
     def test_list_options(self):
-        self.run_with_args(doctor, 'list_options')
+        self.run_with_args(doctor, "list_options")
 
 
-class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories,
-                                 test_utils.ClickTestCase):
-
+class TestScriptCheckDirectories(
+    directories_test.TestScriptCheckDirectories, test_utils.ClickTestCase
+):
     @test_utils.docfile
     def test_invocation(self, filename):
         """
-            2013-01-01 open Expenses:Restaurant
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Expenses:Alcohol
-            2013-01-01 open Assets:Cash
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Expenses:Alcohol
+        2013-01-01 open Assets:Cash
 
-            2014-03-02 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
         """
         for directory in self.TEST_DIRECTORIES:
             os.makedirs(path.join(self.tmpdir, directory))
 
-        rv = self.run_with_args(doctor, 'directories', filename, self.tmpdir)
+        rv = self.run_with_args(doctor, "directories", filename, self.tmpdir)
         self.assertEqual(2, len(rv.stdout.splitlines()))
         matches = set(match.group(1) for match in re.finditer("'(.*?)'", rv.stdout))
         tmpdir = path.realpath(self.tmpdir)
-        clean_matches = set(match[len(tmpdir)+1:]
-                            if match.startswith(tmpdir)
-                            else match
-                            for match in matches)
-        self.assertEqual({'Expenses/Restaurant/Sub',
-                          'Expenses:Restaurant:Sub',
-                          'Assets:Extra',
-                          'Assets/Extra'}, clean_matches)
+        clean_matches = set(
+            match[len(tmpdir) + 1 :] if match.startswith(tmpdir) else match
+            for match in matches
+        )
+        self.assertEqual(
+            {
+                "Expenses/Restaurant/Sub",
+                "Expenses:Restaurant:Sub",
+                "Assets:Extra",
+                "Assets/Extra",
+            },
+            clean_matches,
+        )
 
 
 class TestScriptMissingOpen(cmptest.TestCase, test_utils.ClickTestCase):
-
     @test_utils.docfile
     def test_missing_open(self, filename):
         """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Assets:Cash
 
-            2014-03-03 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-03 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
 
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-04-04 * "Something"
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
         """
-        rv = self.run_with_args(doctor, 'missing-open', filename)
+        rv = self.run_with_args(doctor, "missing-open", filename)
 
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
             2014-03-03 open Expenses:Restaurant
             2014-04-04 open Expenses:Alcohol
 
-        """, rv.stdout)
+        """,
+            rv.stdout,
+        )
 
 
 class TestScriptDisplayContext(cmptest.TestCase, test_utils.ClickTestCase):
-
     @test_utils.docfile
     def test_display_context(self, filename):
         """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Assets:Cash
 
-            2014-03-03 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-03 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
 
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-04-04 * "Something"
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
         """
-        rv = self.run_with_args(doctor, 'display-context', filename)
+        rv = self.run_with_args(doctor, "display-context", filename)
         # Note: This probably deserves a little more love.
         self.assertTrue(rv.stdout)
 
 
 class TestContext(cmptest.TestCase, test_utils.ClickTestCase):
-
     @test_utils.docfile
     def test_context(self, filename):
         """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Assets:Cash
 
-            2014-03-03 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-03 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
 
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-04-04 * "Something"
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
         """
-        rv = self.run_with_args(doctor, 'context', filename, '6')
-        self.assertRegex(rv.stdout, 'Location:')
-        self.assertRegex(rv.stdout, '50.02')
+        rv = self.run_with_args(doctor, "context", filename, "6")
+        self.assertRegex(rv.stdout, "Location:")
+        self.assertRegex(rv.stdout, "50.02")
 
     @test_utils.docfile
     def test_context_multiple_files(self, filename):
         """
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Assets:Cash
+        2013-01-01 open Expenses:Movie
+        2013-01-01 open Assets:Cash
 
-            2014-03-03 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-03-03 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
 
-            2014-04-04 * "Something"
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
+        2014-04-04 * "Something"
+          Expenses:Alcohol      10.30 USD
+          Expenses:Movie        25.00 USD
+          Assets:Cash
         """
 
-        with tempfile.NamedTemporaryFile('w') as topfile:
-            topfile.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile("w") as topfile:
+            topfile.write(
+                textwrap.dedent(
+                    """
                 include "{}"
-            """.format(filename)))
+            """.format(filename)
+                )
+            )
             topfile.flush()
-            rv = self.run_with_args(doctor, 'context',
-                                   topfile.name, '{}:6'.format(filename))
-            self.assertRegex(rv.stdout, 'Location:')
-            self.assertRegex(rv.stdout, '50.02')
+            rv = self.run_with_args(
+                doctor, "context", topfile.name, "{}:6".format(filename)
+            )
+            self.assertRegex(rv.stdout, "Location:")
+            self.assertRegex(rv.stdout, "50.02")
 
 
 class TestLinked(cmptest.TestCase, test_utils.ClickTestCase):
-
     test_string = """
         2013-01-01 open Expenses:Movie
         2013-01-01 open Assets:Cash
@@ -237,44 +245,49 @@ class TestLinked(cmptest.TestCase, test_utils.ClickTestCase):
 
     @test_utils.docfile_extra(contents=test_string)
     def test_linked_lineno_only(self, filename):
-        rv = self.run_with_args(doctor, 'linked', filename, '6')
-        self.assertRegex(rv.stdout, 'Apples')
-        self.assertRegex(rv.stdout, 'Oranges')
-        self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
-                                                 rv.stdout))))
+        rv = self.run_with_args(doctor, "linked", filename, "6")
+        self.assertRegex(rv.stdout, "Apples")
+        self.assertRegex(rv.stdout, "Oranges")
+        self.assertEqual(
+            2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
+        )
 
     @test_utils.docfile_extra(contents=test_string)
     def test_linked_multiple_files(self, filename):
-        with tempfile.NamedTemporaryFile('w') as topfile:
-            topfile.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile("w") as topfile:
+            topfile.write(
+                textwrap.dedent(
+                    """
                 include "{}"
-            """.format(filename)))
+            """.format(filename)
+                )
+            )
             topfile.flush()
-            rv = self.run_with_args(doctor, 'linked',
-                                   topfile.name, '{}:6'.format(filename))
-            self.assertRegex(rv.stdout, 'Apples')
-            self.assertRegex(rv.stdout, 'Oranges')
-            self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
-                                                     rv.stdout))))
+            rv = self.run_with_args(doctor, "linked", topfile.name, "{}:6".format(filename))
+            self.assertRegex(rv.stdout, "Apples")
+            self.assertRegex(rv.stdout, "Oranges")
+            self.assertEqual(
+                2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
+            )
 
     @test_utils.docfile_extra(contents=test_string)
     def test_linked_explicit_link(self, filename):
-        rv = self.run_with_args(doctor, 'linked', filename, '^abc')
-        self.assertRegex(rv.stdout, 'Apples')
-        self.assertRegex(rv.stdout, 'Oranges')
-        self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
-                                                 rv.stdout))))
+        rv = self.run_with_args(doctor, "linked", filename, "^abc")
+        self.assertRegex(rv.stdout, "Apples")
+        self.assertRegex(rv.stdout, "Oranges")
+        self.assertEqual(
+            2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
+        )
 
 
 class TestRegion(cmptest.TestCase, test_utils.ClickTestCase):
-
     test_string = TestLinked.test_string
 
     @test_utils.docfile_extra(contents=test_string)
     def test_region(self, filename):
-        rv = self.run_with_args(doctor, 'region', filename, '4:12')
-        self.assertRegex(rv.stdout, r'Cash\s+-110.32 USD')
+        rv = self.run_with_args(doctor, "region", filename, "4:12")
+        self.assertRegex(rv.stdout, r"Cash\s+-110.32 USD")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

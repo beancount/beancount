@@ -1,5 +1,5 @@
-"""This plugin validates that there are no unused accounts.
-"""
+"""This plugin validates that there are no unused accounts."""
+
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -8,10 +8,10 @@ import collections
 from beancount.core import data
 from beancount.core import getters
 
-__plugins__ = ('validate_unused_accounts',)
+__plugins__ = ("validate_unused_accounts",)
 
 
-UnusedAccountError = collections.namedtuple('UnusedAccountError', 'source message entry')
+UnusedAccountError = collections.namedtuple("UnusedAccountError", "source message entry")
 
 
 def validate_unused_accounts(entries, unused_options_map):
@@ -46,9 +46,11 @@ def validate_unused_accounts(entries, unused_options_map):
 
     # Create a list of suitable errors, with the location of the Open directives
     # corresponding to the unused accounts.
-    errors = [UnusedAccountError(open_entry.meta,
-                                 "Unused account '{}'".format(account),
-                                 open_entry)
-              for account, open_entry in open_map.items()
-              if account not in referenced_accounts]
+    errors = [
+        UnusedAccountError(
+            open_entry.meta, "Unused account '{}'".format(account), open_entry
+        )
+        for account, open_entry in open_map.items()
+        if account not in referenced_accounts
+    ]
     return entries, errors

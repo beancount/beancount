@@ -11,6 +11,7 @@ different price for the day's closing price, this would generate an error.
 I'm not certain this will be useful in the long run, so placing it in a
 plugin.
 """
+
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -18,10 +19,10 @@ import collections
 
 from beancount.core import data
 
-__plugins__ = ('validate_unique_prices',)
+__plugins__ = ("validate_unique_prices",)
 
 
-UniquePricesError = collections.namedtuple('UniquePricesError', 'source message entry')
+UniquePricesError = collections.namedtuple("UniquePricesError", "source message entry")
 
 
 def validate_unique_prices(entries, unused_options_map):
@@ -46,15 +47,17 @@ def validate_unique_prices(entries, unused_options_map):
     errors = []
     for price_entries in prices.values():
         if len(price_entries) > 1:
-            number_map = {price_entry.amount.number: price_entry
-                          for price_entry in price_entries}
+            number_map = {
+                price_entry.amount.number: price_entry for price_entry in price_entries
+            }
             if len(number_map) > 1:
                 # Note: This should be a list of entries for better error
                 # reporting. (Later.)
                 error_entry = next(iter(number_map.values()))
                 errors.append(
-                    UniquePricesError(error_entry.meta,
-                                      "Disagreeing price entries",
-                                      price_entries))
+                    UniquePricesError(
+                        error_entry.meta, "Disagreeing price entries", price_entries
+                    )
+                )
 
     return entries, errors

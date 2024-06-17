@@ -15,6 +15,7 @@ expiration date, such as 'SPX_121622P3300' - individually.
 Note that if a symbol has been ignored in at least one account, it will
 therefore be further in all Price directives and Metadata values.
 """
+
 __copyright__ = "Copyright (C) 2015-2017,2021  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -24,11 +25,11 @@ import re
 from beancount.core import data
 from beancount.core.amount import CURRENCY_RE
 
-__plugins__ = ('validate_commodity_directives',)
+__plugins__ = ("validate_commodity_directives",)
 
 
-ConfigError = collections.namedtuple('ConfigError', 'source message entry')
-CheckCommodityError = collections.namedtuple('CheckCommodityError', 'source message entry')
+ConfigError = collections.namedtuple("ConfigError", "source message entry")
+CheckCommodityError = collections.namedtuple("CheckCommodityError", "source message entry")
 
 
 # Account placeholder for commodities appearing in Price directives.
@@ -46,8 +47,9 @@ def get_commodity_map_ex(entries, metadata=False):
     # values may result in false positives: common used string are
     # matched by the regular expression. Revisit this when commodities
     # will be represented with their own type.
-    ignore = set(['filename', 'lineno', '__automatic__'])
+    ignore = set(["filename", "lineno", "__automatic__"])
     regexp = re.compile(CURRENCY_RE)
+
     def currencies_in_meta(entry):
         if entry.meta is not None:
             for key, value in entry.meta.items():
@@ -68,7 +70,6 @@ def get_commodity_map_ex(entries, metadata=False):
 
         elif isinstance(entry, data.Transaction):
             for posting in entry.postings:
-
                 # Main currency.
                 units = posting.units
                 occurrences.add((posting.account, units.currency))
@@ -119,9 +120,13 @@ def validate_commodity_directives(entries, options_map, config_str=None):
     if config_str:
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, dict):
-            errors.append(ConfigError(
-                data.new_metadata('<commodity_attr>', 0),
-                "Invalid configuration for check_commodity plugin; skipping.", None))
+            errors.append(
+                ConfigError(
+                    data.new_metadata("<commodity_attr>", 0),
+                    "Invalid configuration for check_commodity plugin; skipping.",
+                    None,
+                )
+            )
             return entries, errors
     else:
         config_obj = {}
@@ -134,10 +139,12 @@ def validate_commodity_directives(entries, options_map, config_str=None):
             try:
                 kv.append(re.compile(pattern).match)
             except re.error:
-                meta = data.new_metadata('<check_commodity>', 0)
+                meta = data.new_metadata("<check_commodity>", 0)
                 errors.append(
                     CheckCommodityError(
-                        meta, "Invalid regexp: '{}' for {}".format(value, key), None))
+                        meta, "Invalid regexp: '{}' for {}".format(value, key), None
+                    )
+                )
         if len(kv) == 2:
             ignore_map[kv[0]] = kv[1]
 
@@ -163,19 +170,22 @@ def validate_commodity_directives(entries, options_map, config_str=None):
             continue
 
         # If any of the ignore patterns matches, ignore and record ignored.
-        if any((context_re(context) and currency_re(currency))
-                for context_re, currency_re in ignore_map.items()):
+        if any(
+            (context_re(context) and currency_re(currency))
+            for context_re, currency_re in ignore_map.items()
+        ):
             ignored.add(currency)
             continue
 
         # Issue error.
-        meta = data.new_metadata('<check_commodity>', 0)
+        meta = data.new_metadata("<check_commodity>", 0)
         errors.append(
             CheckCommodityError(
                 meta,
-                "Missing Commodity directive for '{}' in '{}'".format(
-                    currency, context),
-                None))
+                "Missing Commodity directive for '{}' in '{}'".format(currency, context),
+                None,
+            )
+        )
 
         # Process it only once.
         issued.add(currency)
@@ -187,18 +197,17 @@ def validate_commodity_directives(entries, options_map, config_str=None):
 
         # Skip if (a) the commodity was declared, any of the ignore patterns
         # matches, or an error for that commodity has already been issued.
-        if (commodity_entry is not None or
-            currency in issued or
-            currency in ignored):
+        if commodity_entry is not None or currency in issued or currency in ignored:
             continue
 
         # Issue error.
-        meta = data.new_metadata('<check_commodity>', 0)
+        meta = data.new_metadata("<check_commodity>", 0)
         errors.append(
             CheckCommodityError(
                 meta,
-                "Missing Commodity directive for '{}' in '{}'".format(
-                    currency, context),
-                None))
+                "Missing Commodity directive for '{}' in '{}'".format(currency, context),
+                None,
+            )
+        )
 
     return entries, errors

@@ -1,6 +1,7 @@
 """
 Tests for cmptest base test class.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -19,7 +20,6 @@ from beancount.parser import parser
 
 
 class TestCompareTestFunctions(unittest.TestCase):
-
     def test_read_string_or_entries(self):
         with self.assertRaises(cmptest.TestError) as assctxt:
             cmptest.read_string_or_entries("""
@@ -32,44 +32,92 @@ class TestCompareTestFunctions(unittest.TestCase):
         self.assertRegex(str(assctxt.exception), "may not use interpolation")
 
     def test_local_booking(self):
-        fileloc = data.new_metadata('<local>', 0)
+        fileloc = data.new_metadata("<local>", 0)
         date = datetime.date.today()
         txn = data.Transaction(
-            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+            fileloc,
+            date,
+            "*",
+            None,
+            "Narration",
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            [
                 data.Posting(
-                    'Assets:Something',
+                    "Assets:Something",
                     MISSING,
                     position.CostSpec(MISSING, None, MISSING, MISSING, MISSING, MISSING),
-                    MISSING, None, None)])
+                    MISSING,
+                    None,
+                    None,
+                )
+            ],
+        )
         expected_txn = data.Transaction(
-            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+            fileloc,
+            date,
+            "*",
+            None,
+            "Narration",
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            [
                 data.Posting(
-                    'Assets:Something', None,
+                    "Assets:Something",
+                    None,
                     position.Cost(None, None, None, None),
-                    None, None, None)])
+                    None,
+                    None,
+                    None,
+                )
+            ],
+        )
         actual_txn = cmptest._local_booking(txn)
         self.assertEqual(actual_txn, expected_txn)
 
         txn = data.Transaction(
-            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+            fileloc,
+            date,
+            "*",
+            None,
+            "Narration",
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            [
                 data.Posting(
-                    'Assets:Something',
+                    "Assets:Something",
                     amount.Amount(MISSING, MISSING),
                     position.CostSpec(MISSING, None, MISSING, MISSING, MISSING, MISSING),
-                    amount.Amount(MISSING, MISSING), None, None)])
+                    amount.Amount(MISSING, MISSING),
+                    None,
+                    None,
+                )
+            ],
+        )
         expected_txn = data.Transaction(
-            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+            fileloc,
+            date,
+            "*",
+            None,
+            "Narration",
+            data.EMPTY_SET,
+            data.EMPTY_SET,
+            [
                 data.Posting(
-                    'Assets:Something',
+                    "Assets:Something",
                     amount.Amount(None, None),
                     position.Cost(None, None, None, None),
-                    amount.Amount(None, None), None, None)])
+                    amount.Amount(None, None),
+                    None,
+                    None,
+                )
+            ],
+        )
         actual_txn = cmptest._local_booking(txn)
         self.assertEqual(actual_txn, expected_txn)
 
 
 class TestTestCase(cmptest.TestCase):
-
     ledger_text = textwrap.dedent("""
 
       2014-01-27 * "UNION MARKET -  HOUSNEW YORK / 131129      GROCERY STORE"
@@ -110,29 +158,31 @@ class TestTestCase(cmptest.TestCase):
         self.assertEqualEntries(self.ledger_text, entries)
 
         # Try out various modifications and ensure comparison fails.
-        mod_ledger_text, _ = re.subn(r' \* ', ' ! ', self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r" \* ", " ! ", self.ledger_text, 1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
         mod_ledger_text, _ = re.subn(
-            r'UNION MARKET', 'WHOLE FOODS MARKET', self.ledger_text, 1)
+            r"UNION MARKET", "WHOLE FOODS MARKET", self.ledger_text, 1
+        )
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r'2014-01-27', '2014-01-28', self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"2014-01-27", "2014-01-28", self.ledger_text, 1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r'73.64 USD', '73.65 USD', self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.65 USD", self.ledger_text, 1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r'73.64 USD', '73.64 CAD', self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.64 CAD", self.ledger_text, 1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
         mod_ledger_text, _ = re.subn(
-            r'Expenses:Food:Grocery', 'Expenses:Food:Groceries', self.ledger_text, 1)
+            r"Expenses:Food:Grocery", "Expenses:Food:Groceries", self.ledger_text, 1
+        )
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
@@ -143,29 +193,34 @@ class TestTestCase(cmptest.TestCase):
         self.assertIncludesEntries(entries, self.ledger_text)
         self.assertIncludesEntries(self.ledger_text, entries)
 
-        first_two = '\n'.join(self.ledger_text.splitlines()[0:10])
+        first_two = "\n".join(self.ledger_text.splitlines()[0:10])
         self.assertIncludesEntries(first_two, entries)
 
-        last_three = '\n'.join(self.ledger_text.splitlines()[-13:])
+        last_three = "\n".join(self.ledger_text.splitlines()[-13:])
         self.assertIncludesEntries(last_three, entries)
 
         with self.assertRaises(AssertionError):
-            self.assertIncludesEntries("""
+            self.assertIncludesEntries(
+                """
 
               2014-02-01 * "PLAY"
                 Liabilities:US:Amex:BlueCash     -9.99 USD
                 Expenses:Fun:Music                9.99 USD
 
-            """, entries)
+            """,
+                entries,
+            )
 
-        self.assertIncludesEntries("""
+        self.assertIncludesEntries(
+            """
 
           2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
             Liabilities:US:Amex:BlueCash        -12.74 USD
             Expenses:Books                       12.74 USD
 
-        """, entries)
-
+        """,
+            entries,
+        )
 
     def test_assertExcludesEntries(self):
         entries = self.entries
@@ -177,27 +232,33 @@ class TestTestCase(cmptest.TestCase):
             self.assertExcludesEntries(self.ledger_text, entries)
 
         # Check that partial exclusion of all entries fails.
-        first_two = '\n'.join(self.ledger_text.splitlines()[0:10])
+        first_two = "\n".join(self.ledger_text.splitlines()[0:10])
         with self.assertRaises(AssertionError):
             self.assertExcludesEntries(first_two, entries)
 
-        self.assertExcludesEntries("""
+        self.assertExcludesEntries(
+            """
 
           2014-02-01 * "PLAY"
             Liabilities:US:Amex:BlueCash     -9.99 USD
             Expenses:Fun:Music                9.99 USD
 
-        """, entries)
+        """,
+            entries,
+        )
 
         with self.assertRaises(AssertionError):
-            self.assertExcludesEntries("""
+            self.assertExcludesEntries(
+                """
 
               2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
                 Liabilities:US:Amex:BlueCash             -12.74 USD
                 Expenses:Books                            12.74 USD
 
-            """, entries)
+            """,
+                entries,
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

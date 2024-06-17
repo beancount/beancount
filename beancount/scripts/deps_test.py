@@ -7,7 +7,6 @@ from beancount.scripts import deps
 
 
 class TestCheckDeps(unittest.TestCase):
-
     def test_check_dependencies(self):
         # There isn't much to test here, just run it, it will call all the
         # functions in the module.
@@ -16,5 +15,5 @@ class TestCheckDeps(unittest.TestCase):
         self.assertTrue(isinstance(dependencies, list))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

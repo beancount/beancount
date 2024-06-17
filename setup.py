@@ -2,6 +2,7 @@
 """
 Install script for beancount.
 """
+
 __copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -23,9 +24,7 @@ from setuptools import setup, find_packages, Extension
 # file to the PYTHONPATH directly because it contains a 'parser' module and that
 # overrides the stdlib 'parser' module which is used by setuptools, and causes a
 # subtle bug. That's why I import this utility directly from path).
-hashsrc = runpy.run_path(
-    path.join(path.dirname(__file__), "beancount/parser/hashsrc.py")
-)
+hashsrc = runpy.run_path(path.join(path.dirname(__file__), "beancount/parser/hashsrc.py"))
 hash_parser_source_files = hashsrc["hash_parser_source_files"]
 
 
@@ -85,8 +84,7 @@ else:
     vc_changeset, vc_timestamp = "", 0
 
 
-install_requires = [
-]
+install_requires = []
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.

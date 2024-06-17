@@ -13,6 +13,7 @@ WARNING: This is a prototype API. This is subject to change until the first v3
 release. Principle: Not all symbols are intended to be present here, only the
 most commonly used ones.
 """
+
 __copyright__ = "Copyright (C) 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 

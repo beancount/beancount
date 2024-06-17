@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Estimate and compare the performance of a list of revisions.
-"""
+"""Estimate and compare the performance of a list of revisions."""
+
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -19,7 +19,7 @@ def prevent_run_with_changes():
 
 def benchmark_revision(beancount_file: str, revision: str):
     """Run the benchmark on a particular revision."""
-    args = {'shell': False, 'stdout': subprocess.PIPE}
+    args = {"shell": False, "stdout": subprocess.PIPE}
 
     # Clean up local files. WARNING.
     subprocess.check_call(["make", "clean"], **args)
@@ -38,14 +38,13 @@ def benchmark_revision(beancount_file: str, revision: str):
     run_command = ["bean-check --no-cache $L"]
     env = os.environ.copy()
     env["L"] = beancount_file
-    subprocess.check_call(meta_command + run_command,
-                          shell=False, env=env)
+    subprocess.check_call(meta_command + run_command, shell=False, env=env)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('beancount_file', help="Beancount input file to process.")
-    parser.add_argument('revisions', nargs='+', help="Revisions to compare.")
+    parser.add_argument("beancount_file", help="Beancount input file to process.")
+    parser.add_argument("revisions", nargs="+", help="Revisions to compare.")
 
     args = parser.parse_args()
 
@@ -54,5 +53,5 @@ def main():
         benchmark_revision(args.beancount_file, revision)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

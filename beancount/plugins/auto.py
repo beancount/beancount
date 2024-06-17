@@ -6,6 +6,7 @@ in a macro.
 
 Also see: the 'pedantic' plugin.
 """
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -13,6 +14,4 @@ from beancount.plugins import auto_accounts
 from beancount.plugins import implicit_prices
 from beancount import loader
 
-__plugins__ = loader.combine_plugins(
-    auto_accounts,
-    implicit_prices)
+__plugins__ = loader.combine_plugins(auto_accounts, implicit_prices)

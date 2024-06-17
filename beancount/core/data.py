@@ -1,5 +1,5 @@
-"""Basic data structures used to represent the Ledger entries.
-"""
+"""Basic data structures used to represent the Ledger entries."""
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -36,29 +36,29 @@ EMPTY_SET = frozenset()
 # See http://furius.ca/beancount/doc/inventories for a full explanation.
 @enum.unique
 class Booking(enum.Enum):
-
     # Reject ambiguous matches with an error.
-    STRICT = 'STRICT'
+    STRICT = "STRICT"
 
     # Strict booking method, but disambiguate further with sizes. Reject
     # ambiguous matches with an error but if a lot matches the size exactly,
     # accept it the oldest.
-    STRICT_WITH_SIZE = 'STRICT_WITH_SIZE'
+    STRICT_WITH_SIZE = "STRICT_WITH_SIZE"
 
     # Disable matching and accept the creation of mixed inventories.
-    NONE = 'NONE'
+    NONE = "NONE"
 
     # Average cost booking: merge all matching lots before and after.
-    AVERAGE = 'AVERAGE'
+    AVERAGE = "AVERAGE"
 
     # First-in first-out in the case of ambiguity.
-    FIFO = 'FIFO'
+    FIFO = "FIFO"
 
     # Last-in first-out in the case of ambiguity.
-    LIFO = 'LIFO'
+    LIFO = "LIFO"
 
     # Highest-in first-out in the case of ambiguity.
-    HIFO = 'HIFO'
+    HIFO = "HIFO"
+
 
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
@@ -90,6 +90,7 @@ class Open(NamedTuple):
         be should be left unspecified (None) in the vast majority of cases. See
         Booking below for a selection of valid methods.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -106,6 +107,7 @@ class Close(NamedTuple):
       date: See above.
       account: A string, the name of the account that is being closed.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -127,6 +129,7 @@ class Commodity(NamedTuple):
       date: See above.
       currency: A string, the commodity under consideration.
     """
+
     meta: Meta
     date: datetime.date
     currency: Currency
@@ -147,6 +150,7 @@ class Pad(NamedTuple):
       source_account: A string, the name of the account which is used to debit from
         in order to fill 'account'.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -173,6 +177,7 @@ class Balance(NamedTuple):
       tolerance: A Decimal object, the amount of tolerance to use in the
         verification.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -205,6 +210,7 @@ class Posting(NamedTuple):
         specifically to that posting, or None, if not provided. In practice, most
         of the instances will be unlikely to have metadata.
     """
+
     account: Account
     units: Optional[Amount]
     cost: Optional[Union[Cost, CostSpec]]
@@ -235,6 +241,7 @@ class Transaction(NamedTuple):
       postings: A list of Posting instances, the legs of this transaction. See the
         doc under Posting above.
     """
+
     meta: Meta
     date: datetime.date
     flag: Flag
@@ -255,6 +262,7 @@ class TxnPosting(NamedTuple):
       txn: The parent Transaction instance.
       posting: The Posting instance.
     """
+
     txn: Transaction
     posting: Posting
 
@@ -276,6 +284,7 @@ class Note(NamedTuple):
       comment: A free-form string, the text of the note. This can be long if you
         want it to.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -314,6 +323,7 @@ class Event(NamedTuple):
       description: A free-form string, the value of the variable as of the date
         of the transaction.
     """
+
     meta: Meta
     date: datetime.date
     type: str
@@ -335,6 +345,7 @@ class Query(NamedTuple):
       name: A string, the unique identifier for the query.
       query_string: The SQL query string to be run or made available.
     """
+
     meta: Meta
     date: datetime.date
     name: str
@@ -359,6 +370,7 @@ class Price(NamedTuple):
      amount: An instance of Amount, the number of units and currency that
        'currency' is worth, for instance 1200.12 USD.
     """
+
     meta: Meta
     date: datetime.date
     currency: Currency
@@ -386,6 +398,7 @@ class Document(NamedTuple):
       tags: A set of tag strings (without the '#'), or None, if an empty set.
       links: A set of link strings (without the '^'), or None, if an empty set.
     """
+
     meta: Meta
     date: datetime.date
     account: Account
@@ -411,6 +424,7 @@ class Custom(NamedTuple):
         (Note that this list is not enforced to be consistent for all directives
         of the same type by the parser.)
     """
+
     meta: Meta
     date: datetime.date
     type: str
@@ -430,7 +444,7 @@ ALL_DIRECTIVES = (
     Query,
     Price,
     Document,
-    Custom
+    Custom,
 )
 
 # Type for any of the directives.
@@ -446,12 +460,13 @@ Directive = Union[
     Query,
     Price,
     Document,
-    Custom
+    Custom,
 ]
 
 
 class dtypes:  # pylint: disable=invalid-name
     "Types of directives."
+
     Open = Open
     Close = Close
     Commodity = Commodity
@@ -483,8 +498,7 @@ def new_metadata(filename, lineno, kvlist=None):
     Returns:
       A metadata dict.
     """
-    meta = {'filename': filename,
-            'lineno': lineno}
+    meta = {"filename": filename, "lineno": lineno}
     if kvlist:
         meta.update(kvlist)
     return meta
@@ -516,9 +530,9 @@ def create_simple_posting(entry, account, number, currency):
     return posting
 
 
-def create_simple_posting_with_cost(entry, account,
-                                    number, currency,
-                                    cost_number, cost_currency):
+def create_simple_posting_with_cost(
+    entry, account, number, currency, cost_number, cost_currency
+):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
@@ -548,6 +562,7 @@ def create_simple_posting_with_cost(entry, account,
 
 NoneType = type(None)
 
+
 def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """Check that the entry and its postings has all correct data types.
 
@@ -561,20 +576,24 @@ def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
     assert isinstance(entry.meta, dict), "Invalid type for meta"
-    assert 'filename' in entry.meta, "Missing filename in metadata"
-    assert 'lineno' in entry.meta, "Missing line number in metadata"
+    assert "filename" in entry.meta, "Missing filename in metadata"
+    assert "lineno" in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
         assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
         assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
-        set_types = ((NoneType, set, frozenset)
-                     if allow_none_for_tags_and_links
-                     else (set, frozenset))
-        assert isinstance(entry.tags, set_types), (
-            "Invalid tags type: {}".format(type(entry.tags)))
-        assert isinstance(entry.links, set_types), (
-            "Invalid links type: {}".format(type(entry.links)))
+        set_types = (
+            (NoneType, set, frozenset)
+            if allow_none_for_tags_and_links
+            else (set, frozenset)
+        )
+        assert isinstance(entry.tags, set_types), "Invalid tags type: {}".format(
+            type(entry.tags)
+        )
+        assert isinstance(entry.links, set_types), "Invalid links type: {}".format(
+            type(entry.links)
+        )
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
@@ -596,8 +615,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.cost is None and
-            posting.price is not None)
+    return posting.cost is None and posting.price is not None
 
 
 def transaction_has_conversion(transaction):
@@ -611,8 +629,9 @@ def transaction_has_conversion(transaction):
       A boolean, true if this transaction contains at least one posting with a
       price conversion.
     """
-    assert isinstance(transaction, Transaction), (
-        "Invalid type of entry for transaction: {}".format(transaction))
+    assert isinstance(
+        transaction, Transaction
+    ), "Invalid type of entry for transaction: {}".format(transaction)
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True
@@ -627,9 +646,11 @@ def get_entry(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.txn
-            if isinstance(posting_or_entry, TxnPosting)
-            else posting_or_entry)
+    return (
+        posting_or_entry.txn
+        if isinstance(posting_or_entry, TxnPosting)
+        else posting_or_entry
+    )
 
 
 # Sorting order of directives on the same day, by type:
@@ -714,9 +735,9 @@ def has_entry_account_component(entry, component):
       Boolean: true if the component is in the account. Note that a component
       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
-    return (isinstance(entry, Transaction) and
-            any(has_component(posting.account, component)
-                for posting in entry.postings))
+    return isinstance(entry, Transaction) and any(
+        has_component(posting.account, component) for posting in entry.postings
+    )
 
 
 def find_closest(entries, filename, lineno):
@@ -756,10 +777,13 @@ def remove_account_postings(account, entries):
     new_entries = []
     for entry in entries:
         if isinstance(entry, Transaction) and (
-                any(posting.account == account for posting in entry.postings)):
-            entry = entry._replace(postings=[posting
-                                             for posting in entry.postings
-                                             if posting.account != account])
+            any(posting.account == account for posting in entry.postings)
+        ):
+            entry = entry._replace(
+                postings=[
+                    posting for posting in entry.postings if posting.account != account
+                ]
+            )
         new_entries.append(entry)
     return new_entries
 
