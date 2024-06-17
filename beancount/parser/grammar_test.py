@@ -234,6 +234,21 @@ class TestParserEntryTypes(unittest.TestCase):
         )
 
 
+class TestOrder(unittest.TestCase):
+    """Test the ordering of results."""
+
+    @parser.parse_doc()
+    def test_order_matches_original_file_rather_than_date_order(self, entries, errors, _):
+        """
+          2013-01-01 open Equity:Other
+
+          2010-01-01 open Assets:Investments
+        """
+        self.assertEqual(2, len(entries))
+        self.assertEqual('Equity:Other', entries[0].account)
+        self.assertEqual('Assets:Investments', entries[1].account)
+
+
 class TestWhitespace(unittest.TestCase):
     """Tests for handling of whitespace and indent."""
 
