@@ -1,8 +1,6 @@
 from os import path
 import os
-import pprint
 import itertools
-import tempfile
 import time
 import unittest
 
@@ -10,8 +8,6 @@ try:
     from beancount.cparser import extmodule
 except ImportError:
     extmodule = None
-
-from beancount.parser import printer
 
 
 class CppParserModuleTests(unittest.TestCase):

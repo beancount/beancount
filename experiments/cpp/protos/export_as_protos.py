@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from decimal import Decimal
-from os import path
 import argparse
 import datetime
 import functools
@@ -25,7 +24,6 @@ except ImportError:
     riegeli = None
 from google.protobuf import text_format
 
-from beancount import loader
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.core import data
@@ -41,10 +39,9 @@ from beancount.cparser import options_pb2 as ob
 
 USE_PYEXT_API = True
 if USE_PYEXT_API:
-    from experiments.v3.protos import expose_protos as ep
+    from experiments.v3.protos import expose_protos as ep  # noqa: F401
 else:
     from beancount.cparser import extmodule
-from beancount.parser import printer
 
 
 def copy_decimal(din: Decimal, dout: nb.Number):
@@ -310,7 +307,7 @@ def export_v2_data(filename: str, output_filename: str, num_directives: Optional
         if 0:
             print("-" * 80)
             printer.print_entry(entry)
-            print(txn)
+            print(entry)
             print()
 
     if hasattr(writer, "close"):

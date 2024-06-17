@@ -216,9 +216,6 @@ constraints dep-constraints: build/beancount.deps
 ruff lint:
 	ruff check .
 
-ruff:
-	ruff beancount examples/ingest/office/importers tools
-
 
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test

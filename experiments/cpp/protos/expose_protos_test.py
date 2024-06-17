@@ -4,11 +4,7 @@ bazel test --test_env=LEDGER=<filename.beancount> //experiments/v3/protos:expose
 """
 
 from os import path
-import functools
 import os
-import pprint
-import sys
-import tempfile
 import time
 import unittest
 
@@ -28,7 +24,7 @@ class ExportProtosTests(unittest.TestCase):
     @unittest.skipIf("TEST_SRCDIR" not in os.environ, "No src dir")
     def test_time_parsing(self):
         t1 = time.time()
-        ledger = ep.parse(self.filename)
+        _ledger = ep.parse(self.filename)
         t2 = time.time()
         print((t2 - t1) * 1000)
 

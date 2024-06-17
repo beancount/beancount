@@ -1,7 +1,6 @@
 """Test for cross-language Decimal serialization."""
 
 from decimal import Decimal
-from os import path
 import unittest
 
 from experiments.v3.decimal import decimal_func as mod

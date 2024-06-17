@@ -3,11 +3,6 @@
 bazel test --test_env=LEDGER=<filename.beancount> //experiments/v3/protos:expose_protos_test
 """
 
-import functools
-import sys
-import os
-import pprint
-import tempfile
 import unittest
 
 from experiments.v3.upb import extmodule
