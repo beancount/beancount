@@ -516,7 +516,6 @@ class ExportPortfolioReport(base.TableReport):
         # A list of all accumulated commodities.
         commodities = set()
 
-        # pylint: disable=possibly-unused-variable
         dcontext = options_map["dcontext"]
 
         invtranlist_io = io.StringIO()

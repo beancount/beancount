@@ -10,7 +10,7 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-# pylint: disable=unused-import
+
 from beancount.parser import booking_method as bm  # noqa: F401
 
 

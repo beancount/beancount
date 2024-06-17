@@ -229,7 +229,6 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         return None
     memo.add(id_ntuple)
 
-    # pylint: disable=unidiomatic-typecheck
     if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
         return ntuple
     replacements = {}
@@ -389,7 +388,7 @@ def import_curses():
     # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
-    # pylint: disable=import-outside-toplevel
+
     import curses
 
     return curses

@@ -15,7 +15,7 @@ from os import path
 
 from apiclient import discovery
 import httplib2
-from apiclient.http import MediaInMemoryUpload  # pylint: disable=import-error
+from apiclient.http import MediaInMemoryUpload
 from oauth2client import service_account
 
 from beancount.parser import options

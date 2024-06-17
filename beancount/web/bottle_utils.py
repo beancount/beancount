@@ -33,7 +33,6 @@ class AttrMapper:
         return self.mapper_function(*args, **kwargs)
 
 
-# pylint: disable=invalid-name
 itertools = None
 
 _raise = lambda *args: None

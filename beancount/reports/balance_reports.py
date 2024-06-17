@@ -14,7 +14,6 @@ from beancount.core import convert
 
 # Disable warning for format strings using **locals()
 # Can replace these with f-strings when requiring Python 3.6
-# pylint: disable=possibly-unused-variable
 
 
 class BalancesReport(base.HTMLReport, metaclass=base.RealizationMeta):

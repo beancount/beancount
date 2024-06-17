@@ -111,7 +111,6 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
-    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         lexer.LexBuilder.__init__(self)
 

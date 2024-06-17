@@ -194,7 +194,6 @@ def render_report(
 def render_real_report(
     report_class, real_root, price_map, price_date, args=None, leaf_only=False
 ):
-    # pylint: disable=too-many-arguments
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -229,7 +228,7 @@ NOT_IMPLEMENTED = """
 </p>
 """
 
-# pylint: disable=invalid-name
+
 app = bottle.Bottle()
 A = bottle_utils.AttrMapper(app.router.build)
 
@@ -518,7 +517,7 @@ def doc(filename=None):
 viewapp = bottle.Bottle()
 
 # (We disable this error because access to request.app needs to be delayed.)
-# pylint: disable=unnecessary-lambda
+
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
 Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year - 1, month))
@@ -1144,7 +1143,6 @@ def auto_reload_input_file(callback):
 
             # Print out the list of errors.
             if errors:
-                # pylint: disable=unsupported-assignment-operation
                 request.params["render_overlay"] = True
                 print(",----------------------------------------------------------------")
                 printer.print_errors(errors, file=sys.stdout)
@@ -1169,7 +1167,6 @@ def auto_reload_input_file(callback):
             # For now, the overlay is a link to the errors page. Always render
             # it on the right when there are errors.
             if app.errors:
-                # pylint: disable=unsupported-assignment-operation
                 request.params["render_overlay"] = True
 
         return callback(*posargs, **kwargs)
@@ -1264,7 +1261,7 @@ def setup_monkey_patch_for_server_shutdown():
     (Bottle could easily remedy that.)"""
 
     # Save the original function.
-    # pylint: disable=import-outside-toplevel
+
     from wsgiref.simple_server import make_server
 
     # Create a decorator that will save the server upon start.

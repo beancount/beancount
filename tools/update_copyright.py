@@ -153,7 +153,6 @@ def process(filename, contents):
     """Process the copyright on a single file, return the modified contents."""
     logging.info("Processing {:60}".format(filename))
 
-    # pylint: disable=unbalanced-tuple-unpacking
     lines = contents.splitlines()
     copyright_index, license_index, author_index = find_existing_copyright(lines)
 

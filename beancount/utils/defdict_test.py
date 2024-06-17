@@ -11,7 +11,7 @@ class TestDefDictWithKey(unittest.TestCase):
     def test_defdict_with_key(self):
         factory = mock.MagicMock()
         testdict = defdict.DefaultDictWithKey(factory)
-        # pylint: disable=pointless-statement
+
         testdict["a"]
         testdict["b"]
         self.assertEqual(2, len(factory.mock_calls))

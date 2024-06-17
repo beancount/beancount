@@ -13,8 +13,6 @@ import argparse
 from itertools import count, groupby
 from collections import defaultdict
 
-# pylint: disable=invalid-name
-
 
 def list_chunks(alist, n):
     """Split list in chunks of size n."""

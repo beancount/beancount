@@ -9,7 +9,7 @@ __license__ = "GNU GPLv2"
 from beancount.utils import test_utils
 
 test_utils.remove_alt_csv_path()
-# pylint: disable=wrong-import-order
+
 import csv
 
 import collections
@@ -116,8 +116,6 @@ def get_amounts(iconfig, row, allow_zero_amounts, parse_amount):
 
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
     """Importer for CSV files."""
-
-    # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,

@@ -13,7 +13,7 @@ import textwrap
 from beancount.utils import test_utils
 
 test_utils.remove_alt_csv_path()
-import pytest  # pylint: disable=wrong-import-order
+import pytest
 
 from beancount.core import amount
 from beancount.core import compare

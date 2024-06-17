@@ -36,7 +36,6 @@ NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 _CLEAN_NUMBER_RE = re.compile("[, ]")
 
 
-# pylint: disable=invalid-name
 def D(strord=None):
     """Convert a string into a Decimal object.
 

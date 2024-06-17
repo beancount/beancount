@@ -99,7 +99,6 @@ class TestCSVFunctions(unittest.TestCase):
 class TestCSVImporter(cmptest.TestCase):
     @test_utils.docfile
     def test_column_types(self, filename):
-        # pylint: disable=line-too-long
         """\
           Details,Posting Date,"Description",Amount,Type,Balance,Check or Slip #,
           DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,3409.86,,
@@ -252,7 +251,6 @@ class TestCSVImporter(cmptest.TestCase):
 
     @test_utils.docfile
     def test_zero_balance_produces_assertion(self, filename):
-        # pylint: disable=line-too-long
         """\
           Details,Posting Date,"Description",Amount,Type,Balance,Check or Slip #,
           DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,0,,

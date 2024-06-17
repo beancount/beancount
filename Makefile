@@ -219,7 +219,7 @@ ruff lint:
 	ruff check .
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
+status check: filter-terms missing-tests dep-constraints multi-imports test
 
 
 # Experimental docs conversion.

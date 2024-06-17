@@ -17,7 +17,6 @@ from beancount.query import query_render
 
 
 class ColumnRendererBase(unittest.TestCase):
-    # pylint: disable=not-callable
     RendererClass = None
 
     dcontext = display_context.DisplayContext()
@@ -206,8 +205,6 @@ class TestQueryRender(unittest.TestCase):
         self.dcontext = display_context.DisplayContext()
         self.dcontext.update(D("1.00"), "USD")
         self.dcontext.update(D("1.00"), "CAD")
-
-    # pylint: disable=invalid-name
 
     def test_render_str(self):
         types = [("account", str)]

@@ -16,7 +16,7 @@ from beancount.utils import regexp_utils
 
 
 # Component separator for account names.
-# pylint: disable=invalid-name
+
 sep = ":"
 
 

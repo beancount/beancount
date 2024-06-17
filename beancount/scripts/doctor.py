@@ -23,9 +23,6 @@ from beancount.parser import version
 from beancount.core import display_context
 
 
-# pylint: disable=import-outside-toplevel
-
-
 def do_lex(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 

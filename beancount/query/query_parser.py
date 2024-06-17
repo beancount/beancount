@@ -17,8 +17,6 @@ from beancount.core.number import D
 from beancount.utils.misc_utils import cmptuple
 
 
-# pylint: disable=invalid-name
-
 # A 'select' query action.
 #
 # Attributes:

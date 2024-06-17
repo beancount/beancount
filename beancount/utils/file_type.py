@@ -28,7 +28,7 @@ try:
         warnings.warn(
             "You have installed 'filemagic' instead of 'python-magic'; " "disabling."
         )
-        magic = None  # pylint: disable=invalid-name
+        magic = None
 except (ImportError, OSError):
     magic = None
 

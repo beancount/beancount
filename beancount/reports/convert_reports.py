@@ -148,8 +148,6 @@ class LedgerReport(base.Report):
 class LedgerPrinter:
     "Multi-method for printing directives in Ledger format."
 
-    # pylint: disable=invalid-name
-
     def __init__(self, dcontext=None):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)

@@ -117,7 +117,7 @@ def add_ira_contribs(entries, options_map, config_str):
     # FIXME: Also, don't raise a RuntimeError, return an error object; review
     # this for all the plugins.
     # FIXME: This too is temporary.
-    # pylint: disable=eval-used
+
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")

@@ -23,7 +23,6 @@ class TestSnoop(unittest.TestCase):
         self.assertEqual(history_len, len(snoo.history))
 
     def test_snoop_regexp(self):
-        # pylint: disable=invalid-name
         MatchObject = type(re.match("a", "a"))
         if snoop.snooper(re.match("bro", "brother")):
             self.assertTrue(isinstance(snoop.snooper.value, MatchObject))

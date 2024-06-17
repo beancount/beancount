@@ -126,8 +126,6 @@ class Allocator:
 class RowContext:
     """A dumb container for information used by a row expression."""
 
-    # pylint: disable=too-many-instance-attributes
-
     # The current posting being evaluated.
     posting = None
 
@@ -230,7 +228,7 @@ def execute_query(query, entries, options_map):
     ]
 
     # Create a class for each final result.
-    # pylint: disable=invalid-name
+
     ResultRow = collections.namedtuple(
         "ResultRow", [target.name for target in query.c_targets if target.name is not None]
     )
@@ -410,7 +408,6 @@ def flatten_results(result_types, result_rows):
     if not indexes:
         return (result_types, result_rows)
 
-    # pylint: disable=invalid-name
     ResultRow = type(result_rows[0])
 
     # We have to make at least some conversions.

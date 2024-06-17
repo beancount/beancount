@@ -42,7 +42,7 @@ def bisect_right_with_key(a, x, key, lo=0, hi=None):
     Returns:
       As in bisect.bisect_right, an element from list 'a'.
     """
-    # pylint: disable=invalid-name
+
     if lo < 0:
         raise ValueError("lo must be non-negative")
     if hi is None:

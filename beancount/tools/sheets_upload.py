@@ -75,7 +75,7 @@ def get_credentials(
 
     logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
-    import __main__  # pylint: disable=import-outside-toplevel
+    import __main__
 
     cache_dir = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
     if secrets_filename is None:
@@ -88,7 +88,7 @@ def get_credentials(
     secrets_info = json.load(open(secrets_filename))
     if secrets_info.get("type") == "service_account":
         # Process service account flow.
-        # pylint: disable=import-outside-toplevel
+
         import google.oauth2.service_account as sa
 
         credentials = sa.Credentials.from_service_account_info(secrets_info, scopes=scopes)

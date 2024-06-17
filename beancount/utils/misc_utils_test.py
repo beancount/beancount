@@ -93,7 +93,6 @@ class TestMiscUtils(unittest.TestCase):
         )
 
     def test_filter_type(self):
-        # pylint: disable=invalid-name
         class A:
             pass
 
