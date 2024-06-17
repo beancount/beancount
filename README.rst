@@ -89,7 +89,7 @@ Tickets can be filed at on the Github project page:
 Copyright and License
 =====================
 
-Copyright (C) 2007-2022  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2024  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the terms of the "GNU GPLv2 only".
 See COPYING file for details.

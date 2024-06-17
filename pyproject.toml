@@ -45,9 +45,10 @@ repository = "https://github.com/beancount/beancount"
 
 [tool.black]
 line-length = 92
+# Please note: We use 'ruff format' to autoformat buffers.
+# See 'rust-format.el' and .dir-locals.el at the root of the project.
 
 [tool.ruff]
-
 # Assume Python 3.12.
 target-version = "py312"
 
