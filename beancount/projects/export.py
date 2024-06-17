@@ -23,7 +23,6 @@ Query Language query. However, BQL is not there yet.
 
 """
 
-
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -49,14 +48,13 @@ from beancount import loader
 
 Header = List[str]
 Rows = List[List[Any]]
-Table = NamedTuple('Table', [('header', Header), ('rows', Rows)])
+Table = NamedTuple("Table", [("header", Header), ("rows", Rows)])
 
 
-def get_metamap_table(metamap: Dict[str, data.Directive],
-                      attributes: List[str],
-                      getter) -> Table:
+def get_metamap_table(
+    metamap: Dict[str, data.Directive], attributes: List[str], getter
+) -> Table:
     """Produce a Table of per-commodity attributes."""
-    header = attributes
     attrlist = attributes[1:]
     rows = []
     for key, value in metamap.items():
@@ -70,7 +68,7 @@ def get_metamap_table(metamap: Dict[str, data.Directive],
 def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table:
     """Produce a Table of per-commodity attributes."""
     commodities = getters.get_commodity_directives(entries)
-    header = ['currency'] + attributes
+    header = ["currency"] + attributes
     getter = lambda entry, key: entry.meta.get(key, None)
     table = get_metamap_table(commodities, header, getter)
     return table
@@ -80,9 +78,9 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
     """Produce a Table of per-account attributes."""
     oc_map = getters.get_account_open_close(entries)
     accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
-    header = ['account'] + attributes
-    defaults = {'tax': 'taxable',
-                'liquid': False}
+    header = ["account"] + attributes
+    defaults = {"tax": "taxable", "liquid": False}
+
     def getter(entry, key):
         """Lookup the value working up the accounts tree."""
         value = entry.meta.get(key, None)
@@ -95,6 +93,7 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
         if not parent_entry:
             return defaults.get(key, None)
         return getter(parent_entry, key)
+
     return get_metamap_table(accounts_map, header, getter), accounts_map
 
 
@@ -107,7 +106,7 @@ def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
     while racc:
         racc = account.parent(racc)
         dopen = accounts_map.get(racc, None)
-        if dopen and dopen.meta.get('root', False):
+        if dopen and dopen.meta.get("root", False):
             acc = racc
             break
 
@@ -115,54 +114,61 @@ def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
     acc = account.sans_root(acc)
 
     # Remove the two-letter country code if there is one.
-    if re.match(r'[A-Z][A-Z]', acc):
+    if re.match(r"[A-Z][A-Z]", acc):
         acc = account.sans_root(acc)
 
     return acc
 
 
-def get_postings_table(entries: data.Entries, options_map: Dict,
-                       accounts_map: Dict[str, data.Open],
-                       threshold: Decimal = D('0.01')) -> Table:
+def get_postings_table(
+    entries: data.Entries,
+    options_map: Dict,
+    accounts_map: Dict[str, data.Open],
+    threshold: Decimal = D("0.01"),
+) -> Table:
     """Enumerate all the postings."""
-    header = ['account',
-              'account_abbrev',
-              'number',
-              'currency',
-              'cost_number',
-              'cost_currency',
-              'cost_date']
+    header = [
+        "account",
+        "account_abbrev",
+        "number",
+        "currency",
+        "cost_number",
+        "cost_currency",
+        "cost_date",
+    ]
     balances, _ = summarize.balance_by_account(entries, compress_unbooked=True)
     acctypes = options.get_account_types(options_map)
     rows = []
     for acc, balance in sorted(balances.items()):
         # Keep only the balance sheet accounts.
         acctype = account_types.get_account_type(acc)
-        if not acctype in (acctypes.assets, acctypes.liabilities):
+        if acctype not in (acctypes.assets, acctypes.liabilities):
             continue
 
         # Create a posting for each of the positions.
         for pos in balance:
             acc_abbrev = abbreviate_account(acc, accounts_map)
-            row = [acc,
-                   acc_abbrev,
-                   pos.units.number,
-                   pos.units.currency,
-                   pos.cost.number if pos.cost else ONE,
-                   pos.cost.currency if pos.cost else pos.units.currency,
-                   pos.cost.date if pos.cost else None]
+            row = [
+                acc,
+                acc_abbrev,
+                pos.units.number,
+                pos.units.currency,
+                pos.cost.number if pos.cost else ONE,
+                pos.cost.currency if pos.cost else pos.units.currency,
+                pos.cost.date if pos.cost else None,
+            ]
             rows.append(row)
 
     return Table(header, rows)
 
 
-PRICE_Q = D('0.0000001')
+PRICE_Q = D("0.0000001")
 
 
 def get_prices_table(entries: data.Entries, main_currency: str) -> Table:
     """Enumerate all the prices seen."""
     price_map = prices.build_price_map(entries)
-    header = ['currency', 'cost_currency', 'price_file']
+    header = ["currency", "cost_currency", "price_file"]
     rows = []
     for base_quote in price_map.keys():
         _, price = prices.get_latest_price(price_map, base_quote)
@@ -173,12 +179,12 @@ def get_prices_table(entries: data.Entries, main_currency: str) -> Table:
     return Table(header, rows)
 
 
-def get_rates_table(entries: data.Entries,
-                    currencies: Set[str],
-                    main_currency: str) -> Table:
+def get_rates_table(
+    entries: data.Entries, currencies: Set[str], main_currency: str
+) -> Table:
     """Enumerate all the exchange rates."""
     price_map = prices.build_price_map(entries)
-    header = ['cost_currency', 'rate_file']
+    header = ["cost_currency", "rate_file"]
     rows = []
     for currency in currencies:
         _, rate = prices.get_latest_price(price_map, (currency, main_currency))
@@ -204,7 +210,7 @@ def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Tab
     for cols, col_table in col_tables:
         indexes_main = [main_table.header.index(col) for col in cols]
         indexes_col = [col_table.header.index(col) for col in cols]
-        #indexes_notcol = sorted(set(range(len(col_table.header))) - set(indexes_col))
+        # indexes_notcol = sorted(set(range(len(col_table.header))) - set(indexes_col))
         col_map = {}
         for row in col_table.rows:
             key = tuple(row[index] for index in indexes_col)
@@ -235,8 +241,7 @@ def reorder_columns(table: Table, new_headers: List[str]) -> Table:
     """Reorder the columns of a table to a desired new headers."""
     assert len(table.header) == len(new_headers)
     indexes = [table.header.index(header) for header in new_headers]
-    rows = [[row[index] for index in indexes]
-            for row in table.rows]
+    rows = [[row[index] for index in indexes] for row in table.rows]
     return Table(new_headers, rows)
 
 
@@ -248,39 +253,82 @@ def write_table(table: Table, outfile: str):
 
 
 @click.command(help=__doc__)
-@click.argument('filename')
-@click.option('--currency', '-C',
-              help="Output currency (default is first operating currency).")
-@click.option('--ignore-options', is_flag=True,
-              help=("Ignore options symbols before export. "
-                    "This assumes a separate options trading strategy."))
-@click.option('--dry-run', '-n', is_flag=True)
-@click.option('--insert-date', is_flag=True,
-              help="Insert the date in the header of the output.")
-@click.option('--output', '-o', type=click.File('w'),
-              help="CSV filename to write out the final joined table to.")
-@click.option('--output_commodities', '-c', type=click.File('w'),
-              help="CSV filename to write out the commodities table to.")
-@click.option('--output_accounts', '-a', type=click.File('w'),
-              help="CSV filename to write out the accounts table to.")
-@click.option('--output_prices', '-p', type=click.File('w'),
-              help="CSV filename to write out the prices table to.")
-@click.option('--output_rates', '-r', type=click.File('w'),
-              help="CSV filename to write out the rates table to.")
-@click.option('--output_postings', '-m', type=click.File('w'),
-              help="CSV filename to write out the postings table to.")
-def main(filename, currency, ignore_options, dry_run, insert_date, output,
-         output_commodities, output_accounts, output_prices, output_rates, output_postings):
+@click.argument("filename")
+@click.option(
+    "--currency", "-C", help="Output currency (default is first operating currency)."
+)
+@click.option(
+    "--ignore-options",
+    is_flag=True,
+    help=(
+        "Ignore options symbols before export. "
+        "This assumes a separate options trading strategy."
+    ),
+)
+@click.option("--dry-run", "-n", is_flag=True)
+@click.option(
+    "--insert-date", is_flag=True, help="Insert the date in the header of the output."
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.File("w"),
+    help="CSV filename to write out the final joined table to.",
+)
+@click.option(
+    "--output_commodities",
+    "-c",
+    type=click.File("w"),
+    help="CSV filename to write out the commodities table to.",
+)
+@click.option(
+    "--output_accounts",
+    "-a",
+    type=click.File("w"),
+    help="CSV filename to write out the accounts table to.",
+)
+@click.option(
+    "--output_prices",
+    "-p",
+    type=click.File("w"),
+    help="CSV filename to write out the prices table to.",
+)
+@click.option(
+    "--output_rates",
+    "-r",
+    type=click.File("w"),
+    help="CSV filename to write out the rates table to.",
+)
+@click.option(
+    "--output_postings",
+    "-m",
+    type=click.File("w"),
+    help="CSV filename to write out the postings table to.",
+)
+def main(
+    filename,
+    currency,
+    ignore_options,
+    dry_run,
+    insert_date,
+    output,
+    output_commodities,
+    output_accounts,
+    output_prices,
+    output_rates,
+    output_postings,
+):
     # Load the file contents.
     entries, errors, options_map = loader.load_file(filename)
 
     # Initialize main output currency.
-    main_currency = currency or options_map['operating_currency'][0]
+    main_currency = currency or options_map["operating_currency"][0]
     logging.info("Operating currency: %s", main_currency)
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
-        entries, ['export', 'assetcls', 'strategy', 'issuer'])
+        entries, ["export", "assetcls", "strategy", "issuer"]
+    )
     if output_commodities is not None:
         write_table(commodities_table, output_commodities)
 
@@ -289,11 +337,10 @@ def main(filename, currency, ignore_options, dry_run, insert_date, output,
     # Note: We're fetching the table separately in order to avoid changes to the
     # spreadsheet upstream, and want to tack on the values as new columns on the
     # right.
-    names_table = get_commodities_table(entries, ['name'])
+    names_table = get_commodities_table(entries, ["name"])
 
     # Get the map of accounts to their meta tags.
-    accounts_table, accounts_map = get_accounts_table(
-        entries, ['tax', 'liquid'])
+    accounts_table, accounts_map = get_accounts_table(entries, ["tax", "liquid"])
     if output_accounts is not None:
         write_table(accounts_table, output_accounts)
 
@@ -308,46 +355,50 @@ def main(filename, currency, ignore_options, dry_run, insert_date, output,
         write_table(prices_table, output_prices)
 
     # Get the list of exchange rates.
-    index = postings_table.header.index('cost_currency')
+    index = postings_table.header.index("cost_currency")
     currencies = set(row[index] for row in postings_table.rows)
     rates_table = get_rates_table(entries, currencies, main_currency)
     if output_rates is not None:
         write_table(rates_table, output_rates)
 
     # Join all the tables.
-    joined_table = join(postings_table,
-                        (('currency',), commodities_table),
-                        (('account',), accounts_table),
-                        (('currency', 'cost_currency'), prices_table),
-                        (('cost_currency',), rates_table),
-                        (('currency',), names_table))
+    joined_table = join(
+        postings_table,
+        (("currency",), commodities_table),
+        (("account",), accounts_table),
+        (("currency", "cost_currency"), prices_table),
+        (("cost_currency",), rates_table),
+        (("currency",), names_table),
+    )
 
     # Reorder columns.
     # We do this in order to avoid having to change the spreadsheet when we add new columns.
     headers = list(joined_table.header)
-    headers.remove('issuer')
-    headers.append('issuer')
+    headers.remove("issuer")
+    headers.append("issuer")
     final_table = reorder_columns(joined_table, headers)
 
     # Filter table removing rows to ignore (rows not to export).
-    index = final_table.header.index('export')
-    rows = [row for row in final_table.rows
-            if row[index] is None or row[index].lower() != 'ignore']
+    index = final_table.header.index("export")
+    rows = [
+        row
+        for row in final_table.rows
+        if row[index] is None or row[index].lower() != "ignore"
+    ]
 
     # Filter out options if requested.
     if ignore_options:
-        index = final_table.header.index('currency')
+        index = final_table.header.index("currency")
         is_option = re.compile(r"[A-Z]+_\d{6,}[CP]\d+", re.I).match
-        rows = [row for row in rows
-                if row[index] is None or not is_option(row[index])]
+        rows = [row for row in rows if row[index] is None or not is_option(row[index])]
 
     table = Table(final_table.header, rows)
 
     if output is not None:
         if insert_date:
-            table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
+            table[0][0] += " ({:%Y-%m-%d %H:%M})".format(datetime.datetime.now())
         write_table(table, output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

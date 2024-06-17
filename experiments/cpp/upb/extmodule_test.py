@@ -14,11 +14,9 @@ from experiments.v3.upb import extmodule
 
 
 class ExportProtosTests(unittest.TestCase):
-
-  def test_parse_and_convert(self):
-    print(extmodule)
-
+    def test_parse_and_convert(self):
+        print(extmodule)
 
 
-if __name__ == '__main__':
-  unittest.main()
+if __name__ == "__main__":
+    unittest.main()

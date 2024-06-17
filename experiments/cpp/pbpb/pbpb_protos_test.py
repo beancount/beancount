@@ -18,17 +18,18 @@ from experiments.v3.protos_new import pbpb_protos as ep
 
 
 class ExportProtosTests(absltest.TestCase):
+    def setUp(self):
+        """Get example file from resources."""
+        self.filename = path.join(
+            os.getenv("TEST_SRCDIR"), "beancount/examples/example.beancount"
+        )
 
-  def setUp(self):
-    """Get example file from resources."""
-    self.filename = path.join(os.getenv('TEST_SRCDIR'),
-                              "beancount/examples/example.beancount")
+    def test_time_parsing(self):
+        t1 = time.time()
+        ledger = ep.parse(self.filename)
+        t2 = time.time()
+        print((t2 - t1) * 1000)
 
-  def test_time_parsing(self):
-    t1 = time.time()
-    ledger = ep.parse(self.filename)
-    t2 = time.time()
-    print((t2 - t1) * 1000)
 
 #   @unittest.skipIf('TEST_SRCDIR' not in os.environ, "No src dir")
 #   def test_parse_and_convert(self):
@@ -49,5 +50,5 @@ class ExportProtosTests(absltest.TestCase):
 #     ledger.DebugPrint()
 
 
-if __name__ == '__main__':
-  absltest.main()
+if __name__ == "__main__":
+    absltest.main()

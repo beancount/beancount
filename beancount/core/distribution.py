@@ -1,5 +1,5 @@
-"""A simple accumulator for data about a mathematical distribution.
-"""
+"""A simple accumulator for data about a mathematical distribution."""
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,6 +10,7 @@ class Distribution:
     """A class that computes a histogram of integer values. This is used to compute
     a length that will cover at least some decent fraction of the samples.
     """
+
     def __init__(self):
         self.hist = collections.defaultdict(int)
 

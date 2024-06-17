@@ -1,6 +1,7 @@
 """
 Generic utility packages and functions.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,15 +18,19 @@ import warnings
 
 def deprecated(message):
     """A decorator generator to mark functions as deprecated and log a warning."""
+
     def decorator(func):
         @functools.wraps(func)
         def new_func(*args, **kwargs):
-            warnings.warn("Call to deprecated function {}: {}".format(func.__name__,
-                                                                      message),
-                          category=DeprecationWarning,
-                          stacklevel=2)
+            warnings.warn(
+                "Call to deprecated function {}: {}".format(func.__name__, message),
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
             return func(*args, **kwargs)
+
         return new_func
+
     return decorator
 
 
@@ -47,8 +52,11 @@ def log_time(operation_name, log_timings, indent=0):
     yield time1
     time2 = time()
     if log_timings:
-        log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
-            "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
+        log_timings(
+            "Operation: {:48} Time: {}{:6.0f} ms".format(
+                "'{}'".format(operation_name), "      " * indent, (time2 - time1) * 1000
+            )
+        )
 
 
 @contextlib.contextmanager
@@ -63,13 +71,13 @@ def box(name=None, file=None):
       None.
     """
     file = file or sys.stdout
-    file.write('\n')
+    file.write("\n")
     if name:
-        header = ',--------({})--------\n'.format(name)
-        footer = '`{}\n'.format('-' * (len(header)-2))
+        header = ",--------({})--------\n".format(name)
+        footer = "`{}\n".format("-" * (len(header) - 2))
     else:
-        header = ',----------------\n'
-        footer = '`----------------\n'
+        header = ",----------------\n"
+        footer = "`----------------\n"
 
     file.write(header)
     yield
@@ -161,7 +169,7 @@ def skipiter(iterable, num_skip):
         except StopIteration:
             return
         yield value
-        for _ in range(num_skip-1):
+        for _ in range(num_skip - 1):
             try:
                 next(sit)
             except StopIteration:
@@ -221,7 +229,6 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         return None
     memo.add(id_ntuple)
 
-    # pylint: disable=unidiomatic-typecheck
     if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
         return ntuple
     replacements = {}
@@ -230,11 +237,13 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
             replacements[attribute_name] = mapper(attribute)
         elif type(attribute) is not tuple and isinstance(attribute, tuple):
             replacements[attribute_name] = replace_namedtuple_values(
-                attribute, predicate, mapper, memo)
+                attribute, predicate, mapper, memo
+            )
         elif type(attribute) in (list, tuple):
             replacements[attribute_name] = [
                 replace_namedtuple_values(member, predicate, mapper, memo)
-                for member in attribute]
+                for member in attribute
+            ]
     return ntuple._replace(**replacements)
 
 
@@ -251,8 +260,10 @@ def compute_unique_clean_ids(strings):
     string_set = set(strings)
 
     # Try multiple methods until we get one that has no collisions.
-    for regexp, replacement in [(r'[^A-Za-z0-9.-]', '_'),
-                                (r'[^A-Za-z0-9_]', ''),]:
+    for regexp, replacement in [
+        (r"[^A-Za-z0-9.-]", "_"),
+        (r"[^A-Za-z0-9_]", ""),
+    ]:
         seen = set()
         idmap = {}
         mre = re.compile(regexp)
@@ -265,7 +276,7 @@ def compute_unique_clean_ids(strings):
         else:
             break
     else:
-        return None # Could not find a unique mapping.
+        return None  # Could not find a unique mapping.
 
     return idmap
 
@@ -278,8 +289,7 @@ def escape_string(string):
     Returns.
       The input string, with offending characters replaced.
     """
-    return string.replace('\\', r'\\')\
-                 .replace('"', r'\"')
+    return string.replace("\\", r"\\").replace('"', r"\"")
 
 
 def idify(string):
@@ -290,10 +300,9 @@ def idify(string):
     Returns:
       The input string, with offending characters replaced.
     """
-    for sfrom, sto in [(r'[ \(\)]+', '_'),
-                       (r'_*\._*', '.')]:
+    for sfrom, sto in [(r"[ \(\)]+", "_"), (r"_*\._*", ".")]:
         string = re.sub(sfrom, sto, string)
-    string = string.strip('_')
+    string = string.strip("_")
     return string
 
 
@@ -324,8 +333,9 @@ def map_namedtuple_attributes(attributes, mapper, object_):
       A new instance of the same namedtuple with the named fields mapped by
       mapper.
     """
-    return object_._replace(**{attribute: mapper(getattr(object_, attribute))
-                               for attribute in attributes})
+    return object_._replace(
+        **{attribute: mapper(getattr(object_, attribute)) for attribute in attributes}
+    )
 
 
 def staticvar(varname, initial_value):
@@ -339,9 +349,11 @@ def staticvar(varname, initial_value):
     Returns:
       A function decorator.
     """
+
     def deco(fun):
         setattr(fun, varname, initial_value)
         return fun
+
     return deco
 
 
@@ -359,7 +371,7 @@ def first_paragraph(docstring):
         if not line:
             break
         lines.append(line.rstrip())
-    return ' '.join(lines)
+    return " ".join(lines)
 
 
 def import_curses():
@@ -376,8 +388,9 @@ def import_curses():
     # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
-    # pylint: disable=import-outside-toplevel
+
     import curses
+
     return curses
 
 
@@ -403,7 +416,7 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
       Return 0 if the terminal cannot be initialized.
     """
-    return _get_screen_value('cols', 0)
+    return _get_screen_value("cols", 0)
 
 
 def get_screen_height():
@@ -413,15 +426,17 @@ def get_screen_height():
       An integer, the number of characters the screen is high.
       Return 0 if the terminal cannot be initialized.
     """
-    return _get_screen_value('lines', 0)
+    return _get_screen_value("lines", 0)
 
 
 class TypeComparable:
     """A base class whose equality comparison includes comparing the
     type of the instance itself.
     """
+
     def __eq__(self, other):
         return isinstance(other, type(self)) and super().__eq__(other)
+
 
 def cmptuple(name, attributes):
     """Manufacture a comparable namedtuple class, similar to collections.namedtuple.
@@ -439,8 +454,15 @@ def cmptuple(name, attributes):
       A new namedtuple-derived type that compares False with other
       tuples with same contents.
     """
-    base = collections.namedtuple('_{}'.format(name), attributes)
-    return type(name, (TypeComparable, base,), {})
+    base = collections.namedtuple("_{}".format(name), attributes)
+    return type(
+        name,
+        (
+            TypeComparable,
+            base,
+        ),
+        {},
+    )
 
 
 def uniquify(iterable, keyfunc=None, last=False):
@@ -480,6 +502,7 @@ def uniquify(iterable, keyfunc=None, last=False):
 
 
 UNSET = object()
+
 
 def sorted_uniquify(iterable, keyfunc=None, last=False):
     """Given a sequence of elements, sort and remove duplicates of the given key.
@@ -543,6 +566,7 @@ class LineFileProxy:
     This may be used for writing data to a logging level without having to worry about
     lines.
     """
+
     def __init__(self, line_writer, prefix=None, write_newlines=False):
         """Construct a new line delegator file object proxy.
 
@@ -562,7 +586,7 @@ class LineFileProxy:
         Args:
           data: A string, with or without newlines.
         """
-        if '\n' in data:
+        if "\n" in data:
             self.data.append(data)
             self.flush()
         else:
@@ -570,15 +594,15 @@ class LineFileProxy:
 
     def flush(self):
         """Flush the data to the line writer."""
-        data = ''.join(self.data)
+        data = "".join(self.data)
         if data:
             lines = data.splitlines()
-            self.data = [lines.pop(-1)] if data[-1] != '\n' else []
+            self.data = [lines.pop(-1)] if data[-1] != "\n" else []
             for line in lines:
                 if self.prefix:
                     line = self.prefix + line
                 if self.write_newlines:
-                    line += '\n'
+                    line += "\n"
                 self.line_writer(line)
 
     def close(self):

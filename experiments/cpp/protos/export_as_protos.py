@@ -5,6 +5,7 @@ This is an experiment to generate a realistic dataset for a forked query client
 as a new, separate project. The dream is that this is all that Beancount would
 become: a parser, booking engine and data source provider for a query/api thing.
 """
+
 __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -316,8 +317,9 @@ def export_v2_data(filename: str, output_filename: str, num_directives: Optional
         writer.close()
     output.close()
 
+
 if USE_PYEXT_API:
-    pass # TODO(blais):
+    pass  # TODO(blais):
 else:
     _SORT_ORDER = {
         extmodule.BodyCase.kOpen: -2,

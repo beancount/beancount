@@ -10,7 +10,6 @@ from beancount import loader
 
 
 class TestValidateAmbiguousPrices(cmptest.TestCase):
-
     @loader.load_doc()
     def test_validate_unique_prices__different(self, entries, errors, options_map):
         """
@@ -20,7 +19,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         self.assertEqual([], errors)
         _, valid_errors = unique_prices.validate_unique_prices(entries, options_map)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
-        self.assertRegex(valid_errors[0].message, 'Disagreeing price')
+        self.assertRegex(valid_errors[0].message, "Disagreeing price")
 
     @loader.load_doc()
     def test_validate_unique_prices__same(self, entries, errors, options_map):
@@ -48,11 +47,12 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqual([], errors)
         new_entries, valid_errors = unique_prices.validate_unique_prices(
-            entries, options_map)
+            entries, options_map
+        )
         self.assertGreater(len(new_entries), 0)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
-        self.assertRegex(valid_errors[0].message, 'Disagreeing price ent')
+        self.assertRegex(valid_errors[0].message, "Disagreeing price ent")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

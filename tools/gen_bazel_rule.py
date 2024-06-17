@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a Bazel rule from source code, mainly to automatically (mostly) compute deps.
-"""
+"""Generate a Bazel rule from source code, mainly to automatically (mostly) compute deps."""
 
 from os import path
 import argparse
@@ -11,7 +10,7 @@ import textwrap
 def get_deps(filename):
     deps = set()
     for line in open(filename):
-        if 'beancount' not in line:
+        if "beancount" not in line:
             continue
         line = re.sub(r" as (.*)$", "", line)
         dep = None
@@ -32,7 +31,7 @@ def get_deps(filename):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Filename')
+    parser.add_argument("filename", help="Filename")
     args = parser.parse_args()
 
     deps = get_deps(args.filename)
@@ -43,11 +42,13 @@ def render(filename, deps):
     basename = path.basename(filename)
     name = basename.replace(".py", "")
     target = "py_test" if re.search(r"_test.py$", basename) else "py_library"
-    print(textwrap.dedent(f"""\
+    print(
+        textwrap.dedent(f"""\
         {target}(
             name = "{name}",
             srcs = ["{basename}"],
-            deps = ["""))
+            deps = [""")
+    )
 
     for dep in sorted(deps):
         libdep = dep.replace(".", "/")
@@ -56,11 +57,13 @@ def render(filename, deps):
         libdep = "".join(sdep)
         print(r'        "//{}",'.format(libdep))
 
-    print(textwrap.dedent("""\
+    print(
+        textwrap.dedent("""\
             ],
         )
-    """))
+    """)
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

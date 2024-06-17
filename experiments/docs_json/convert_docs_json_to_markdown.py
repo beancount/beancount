@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Convert Google Docs V1 API's JSON to Markdown.
-"""
+"""Convert Google Docs V1 API's JSON to Markdown."""
+
 __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -8,33 +8,15 @@ __license__ = "GNU GPLv2"
 from os import path
 import argparse
 import textwrap
-import datetime
-import hashlib
 import collections
 import json
 import logging
 import os
-import pickle
-import pprint
 import re
-import shelve
-import shutil
-import subprocess
-import tempfile
-import urllib.parse
-
-from typing import List
-
-import bs4
-import apiclient.errors
-from apiclient import discovery
-import httplib2
-# TODO(blais, 2023-11-18): oauth2client is deprecated.
-from oauth2client import service_account
 
 
 def _get(obj, path):
-    for comp in path.split('/'):
+    for comp in path.split("/"):
         if comp not in obj:
             return
         obj = obj[comp]
@@ -43,71 +25,81 @@ def _get(obj, path):
 
 def _dispatch(table, elem):
     celem = elem.copy()
-    celem.pop('startIndex', None)
-    celem.pop('endIndex', None)
+    celem.pop("startIndex", None)
+    celem.pop("endIndex", None)
     assert len(celem) == 1
     etype, econtents = celem.popitem()
     return table[etype](econtents)
 
 
-TextRun = collections.namedtuple('TextRun', 'text family')
+TextRun = collections.namedtuple("TextRun", "text family")
+
 
 def parse_TextRun(contents):
-    family = _get(contents, 'textStyle/weightedFontFamily/fontFamily')
-    return TextRun(contents['content'], family)
+    family = _get(contents, "textStyle/weightedFontFamily/fontFamily")
+    return TextRun(contents["content"], family)
+
 
 def parse_AutoText(contents):
     raise NotImplementedError
 
+
 def parse_PageBreak(contents):
     pass
+
 
 def parse_ColumnBreak(contents):
     raise NotImplementedError
 
+
 def parse_FootnoteReference(contents):
     pass
-    #raise NotImplementedError(pprint.pformat(contents))
+    # raise NotImplementedError(pprint.pformat(contents))
+
 
 def parse_HorizontalRule(contents):
     pass
 
+
 def parse_Equation(contents):
     raise NotImplementedError
 
+
 def parse_InlineObjectElement(contents):
     pass
-    #raise NotImplementedError
+    # raise NotImplementedError
 
 
 _dispatch_Element = {
-    'textRun': parse_TextRun,
-    'autoText': parse_AutoText,
-    'pageBreak': parse_PageBreak,
-    'columnBreak': parse_ColumnBreak,
-    'footnoteReference': parse_FootnoteReference,
-    'horizontalRule': parse_HorizontalRule,
-    'equation': parse_Equation,
-    'inlineObjectElement': parse_InlineObjectElement,
+    "textRun": parse_TextRun,
+    "autoText": parse_AutoText,
+    "pageBreak": parse_PageBreak,
+    "columnBreak": parse_ColumnBreak,
+    "footnoteReference": parse_FootnoteReference,
+    "horizontalRule": parse_HorizontalRule,
+    "equation": parse_Equation,
+    "inlineObjectElement": parse_InlineObjectElement,
 }
+
 
 def parse_Element(elem):
     return _dispatch(_dispatch_Element, elem)
 
 
 def parse_SectionBreak(econtents):
-    assert econtents.keys() == {'sectionStyle'}, econtents
+    assert econtents.keys() == {"sectionStyle"}, econtents
 
 
 def parse_Table(econtents):
     pass
-    #raise NotImplementedError
+    # raise NotImplementedError
+
 
 def parse_Paragraph(paragraph):
-    style = paragraph['paragraphStyle']['namedStyleType']
+    style = paragraph["paragraphStyle"]["namedStyleType"]
     # Compress runs of text together.
     parelems = []
-    for element in paragraph['elements']:
+    for element in paragraph["elements"]:
         pelem = parse_Element(element)
         if isinstance(pelem, TextRun):
             last = parelems[-1] if parelems else None
@@ -119,40 +111,42 @@ def parse_Paragraph(paragraph):
             assert pelem is None
 
     # Convert all the hard newlines to soft ones.
-    parelems = [elem._replace(text=elem.text.replace('\x0b', '\n'))
-                if isinstance(elem, TextRun)
-                else elem
-                for elem in parelems]
+    parelems = [
+        elem._replace(text=elem.text.replace("\x0b", "\n"))
+        if isinstance(elem, TextRun)
+        else elem
+        for elem in parelems
+    ]
 
     return (style, parelems)
 
+
 def parse_TableOfContents(econtents):
-    assert econtents.keys() == {'content'}, econtents.keys()
+    assert econtents.keys() == {"content"}, econtents.keys()
 
 
 _dispatch_StructuralElement = {
-    'sectionBreak': parse_SectionBreak,
-    'paragraph': parse_Paragraph,
-    'table': parse_Table,
-    'tableOfContents': parse_TableOfContents,
+    "sectionBreak": parse_SectionBreak,
+    "paragraph": parse_Paragraph,
+    "table": parse_Table,
+    "tableOfContents": parse_TableOfContents,
 }
+
 
 def parse_StructuralElement(selem):
     return _dispatch(_dispatch_StructuralElement, selem)
 
 
 def parse_Body(body):
-    assert set(body.keys()) == {'content'}
-    return list(filter(None, [parse_StructuralElement(selem)
-                              for selem in body['content']]))
+    assert set(body.keys()) == {"content"}
+    return list(filter(None, [parse_StructuralElement(selem) for selem in body["content"]]))
 
 
 def parse_Document(document):
-    return (document['title'], parse_Body(document['body']))
+    return (document["title"], parse_Body(document["body"]))
 
 
-
-def remove_default_fonts(body, default_font='Cambria'):
+def remove_default_fonts(body, default_font="Cambria"):
     """Remove text runs with the default font."""
     new_body = []
     for etype, runs in body:
@@ -183,7 +177,6 @@ def merge_runs(body):
 
 
 class Renderer:
-
     def __init__(self, outfile):
         self.file = outfile
 
@@ -206,31 +199,37 @@ class Renderer:
         print("====== {} ======\n".format(item.text.strip()), file=self.file)
 
     def NORMAL_TEXT(self, item):
-        if item.family == 'Consolas':
-            lines = item.text.split('\n')
-            print('\n'.join("   {}".format(line) for line in lines), file=self.file)
+        if item.family == "Consolas":
+            lines = item.text.split("\n")
+            print("\n".join("   {}".format(line) for line in lines), file=self.file)
         else:
             print(textwrap.fill(item.text.strip(), 80), file=self.file)
         print(file=self.file)
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('--fileordir', action='store', default=os.getcwd(),
-                        help="The JSON file or directory to process")
+    parser.add_argument(
+        "--fileordir",
+        action="store",
+        default=os.getcwd(),
+        help="The JSON file or directory to process",
+    )
 
     args = parser.parse_args()
 
     if path.isfile(args.fileordir):
         filenames = [args.fileordir]
     else:
-        filenames = [path.join(args.fileordir, x)
-                     for x in os.listdir(args.fileordir)
-                     if re.search('\.json$', x)]
+        filenames = [
+            path.join(args.fileordir, x)
+            for x in os.listdir(args.fileordir)
+            if re.search("\.json$", x)
+        ]
     for filename in filenames:
-        with open(filename, 'r') as infile:
+        with open(filename, "r") as infile:
             document = json.load(infile)
         title, body = parse_Document(document)
 
@@ -239,8 +238,8 @@ def main():
         body = remove_default_fonts(body)
         body = merge_runs(body)
 
-        output_filename = filename.replace('.json', '.md')
-        with open(output_filename, 'w') as outfile:
+        output_filename = filename.replace(".json", ".md")
+        with open(output_filename, "w") as outfile:
             renderer = Renderer(outfile)
             for etype, runs in body:
                 fun = getattr(renderer, etype, None)
@@ -254,5 +253,5 @@ def main():
             # print(pprint.pformat(body), file=outfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

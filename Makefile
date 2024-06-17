@@ -213,30 +213,15 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	$(TOOLS)/dependency_constraints.py $<
 
-
-# Run the linter on all source code.
-# To list all messages, call: "pylint --list-msgs"
-LINT_SRCS =					\
-  beancount					\
-  bin/*						\
-  tools/*.py
-
-pylint lint:
-	$(PYLINT) $(LINT_SRCS)
-
-LINT_TESTS=useless-suppression,empty-docstring
-pylint-only:
-	$(PYLINT) --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
-
-pyflakes:
-	pyflakes $(LINT_SRCS)
+ruff lint:
+	ruff check .
 
 ruff:
 	ruff beancount examples/ingest/office/importers tools
 
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
+status check: filter-terms missing-tests dep-constraints multi-imports test
 
 
 # Experimental docs conversion.

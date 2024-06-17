@@ -2,14 +2,12 @@
 
 This is meant to be used as an error diagnostic tool.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import sys
 import types
-
-
-# pylint: disable=import-outside-toplevel
 
 
 def list_dependencies(file=sys.stderr):
@@ -20,11 +18,14 @@ def list_dependencies(file=sys.stderr):
     """
     print("Dependencies:")
     for package, version, sufficient in check_dependencies():
-        print("   {:16}: {} {}".format(
-            package,
-            version or 'NOT INSTALLED',
-            "(INSUFFICIENT)" if version and not sufficient else ""),
-              file=file)
+        print(
+            "   {:16}: {} {}".format(
+                package,
+                version or "NOT INSTALLED",
+                "(INSUFFICIENT)" if version and not sufficient else "",
+            ),
+            file=file,
+        )
 
 
 def check_dependencies():
@@ -41,23 +42,19 @@ def check_dependencies():
         # Check for a complete installation of Python itself.
         check_python(),
         check_cdecimal(),
-
         # Modules we really do need installed.
-        check_import('dateutil'),
-        check_import('ply', module_name='ply.yacc', min_version='3.4'),
-
+        check_import("dateutil"),
+        check_import("ply", module_name="ply.yacc", min_version="3.4"),
         # Optionally required to upload data to Google Drive.
         # TODO(blais, 2023-11-18): oauth2client is deprecated.
-        check_import('googleapiclient'),
-        check_import('oauth2client'),
-        check_import('httplib2'),
-
+        check_import("googleapiclient"),
+        check_import("oauth2client"),
+        check_import("httplib2"),
         # Optionally required to support various price source fetchers.
-        check_import('requests', min_version='2.0'),
-
+        check_import("requests", min_version="2.0"),
         # Optionally required to support imports (identify, extract, file) code.
         check_python_magic(),
-        ]
+    ]
 
 
 def check_python():
@@ -67,9 +64,11 @@ def check_python():
       A triple of (package-name, version-number, sufficient) as per
       check_dependencies().
     """
-    return ('python3',
-            '.'.join(map(str, sys.version_info[:3])),
-            sys.version_info[:2] >= (3, 3))
+    return (
+        "python3",
+        ".".join(map(str, sys.version_info[:3])),
+        sys.version_info[:2] >= (3, 3),
+    )
 
 
 def is_fast_decimal(decimal_module):
@@ -89,19 +88,21 @@ def check_cdecimal():
 
     # Try the built-in installation.
     import decimal
+
     if is_fast_decimal(decimal):
-        return ('cdecimal', '{} (built-in)'.format(decimal.__version__), True)
+        return ("cdecimal", "{} (built-in)".format(decimal.__version__), True)
 
     # Try an explicitly installed version.
     try:
         import cdecimal
+
         if is_fast_decimal(cdecimal):
-            return ('cdecimal', getattr(cdecimal, '__version__', 'OKAY'), True)
+            return ("cdecimal", getattr(cdecimal, "__version__", "OKAY"), True)
     except ImportError:
         pass
 
     # Not found.
-    return ('cdecimal', None, False)
+    return ("cdecimal", None, False)
 
 
 def check_python_magic():
@@ -118,13 +119,14 @@ def check_python_magic():
     """
     try:
         import magic
+
         # Check that python-magic and not filemagic is installed.
-        if not hasattr(magic, 'from_file'):
+        if not hasattr(magic, "from_file"):
             # 'filemagic' is installed; install python-magic.
             raise ImportError
-        return ('python-magic', 'OK', True)
+        return ("python-magic", "OK", True)
     except (ImportError, OSError):
-        return ('python-magic', None, False)
+        return ("python-magic", None, False)
 
 
 def check_import(package_name, min_version=None, module_name=None):
@@ -150,8 +152,11 @@ def check_import(package_name, min_version=None, module_name=None):
         if min_version is not None:
             version = module.__version__
             assert isinstance(version, str)
-            is_sufficient = (parse_version(version) >= parse_version(min_version)
-                             if min_version else True)
+            is_sufficient = (
+                parse_version(version) >= parse_version(min_version)
+                if min_version
+                else True
+            )
         else:
             version, is_sufficient = None, True
     except ImportError:
@@ -161,8 +166,8 @@ def check_import(package_name, min_version=None, module_name=None):
 
 def parse_version(version_str: str) -> str:
     """Parse the version string into a comparable tuple."""
-    return [int(v) for v in version_str.split('.')]
+    return [int(v) for v in version_str.split(".")]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     list_dependencies(sys.stdout)

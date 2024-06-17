@@ -7,5 +7,6 @@ in problem-solving using Beancount, work-in-progress that can be selectively
 installed via a --plugin option, or one-offs to answer questions on the
 mailing-list.
 """
+
 __copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"

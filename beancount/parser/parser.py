@@ -106,6 +106,7 @@ or label:
 See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and
 corresponding expected values.
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -124,10 +125,9 @@ from beancount.parser import hashsrc
 from beancount.core import data
 from beancount.core.number import MISSING
 
-# pylint: disable=unused-import
-from beancount.parser.grammar import ParserError
-from beancount.parser.grammar import ParserSyntaxError
-from beancount.parser.grammar import DeprecatedError
+from beancount.parser.grammar import ParserError  # noqa: F401
+from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
+from beancount.parser.grammar import DeprecatedError  # noqa: F401
 
 
 # When importing the module, always check that the compiled source matched the
@@ -146,19 +146,21 @@ def is_posting_incomplete(posting):
       A boolean, true if there are some missing portions of any postings found.
     """
     units = posting.units
-    if (units is MISSING or
-        units.number is MISSING or
-        units.currency is MISSING):
+    if units is MISSING or units.number is MISSING or units.currency is MISSING:
         return True
     price = posting.price
-    if (price is MISSING or
-        price is not None and (price.number is MISSING or
-                               price.currency is MISSING)):
+    if (
+        price is MISSING
+        or price is not None
+        and (price.number is MISSING or price.currency is MISSING)
+    ):
         return True
     cost = posting.cost
-    if cost is not None and (cost.number_per is MISSING or
-                             cost.number_total is MISSING or
-                             cost.currency is MISSING):
+    if cost is not None and (
+        cost.number_per is MISSING
+        or cost.number_total is MISSING
+        or cost.currency is MISSING
+    ):
         return True
     return False
 
@@ -177,8 +179,9 @@ def is_entry_incomplete(entry):
     return False
 
 
-def parse_file(file, report_filename=None, report_firstline=1,
-               encoding=None, debug=False, **kw):
+def parse_file(
+    file, report_filename=None, report_firstline=1, encoding=None, debug=False, **kw
+):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -191,16 +194,16 @@ def parse_file(file, report_filename=None, report_firstline=1,
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
-    if encoding is not None and codecs.lookup(encoding).name != 'utf-8':
-        raise ValueError('Only UTF-8 encoded files are supported.')
+    if encoding is not None and codecs.lookup(encoding).name != "utf-8":
+        raise ValueError("Only UTF-8 encoded files are supported.")
     with contextlib.ExitStack() as ctx:
-        if file == '-':
+        if file == "-":
             file = sys.stdin.buffer
         # It would be more appropriate here to check for io.RawIOBase but
         # that does not work for io.BytesIO despite it implementing the
         # readinto() method.
         elif not isinstance(file, io.IOBase):
-            file = ctx.enter_context(open(file, 'rb'))
+            file = ctx.enter_context(open(file, "rb"))
         builder = grammar.Builder()
         parser = _parser.Parser(builder, debug=debug)
         parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
@@ -224,9 +227,9 @@ def parse_string(string, report_filename=None, dedent=False, **kw):
     if dedent:
         string = textwrap.dedent(string)
     if isinstance(string, str):
-        string = string.encode('utf8')
+        string = string.encode("utf8")
     if report_filename is None:
-        report_filename = '<string>'
+        report_filename = "<string>"
     file = io.BytesIO(string)
     return parse_file(file, report_filename=report_filename, **kw)
 
@@ -249,6 +252,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
     Returns:
       A decorator for test functions.
     """
+
     def decorator(fun):
         """A decorator that parses the function's docstring as an argument.
 
@@ -268,15 +272,16 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
 
         @functools.wraps(fun)
         def wrapper(self):
-            assert fun.__doc__ is not None, (
-                "You need to insert a docstring on {}".format(fun.__name__))
-            entries, errors, options_map = parse_string(fun.__doc__,
-                                                        report_filename=filename,
-                                                        report_firstline=lineno,
-                                                        dedent=True)
+            assert fun.__doc__ is not None, "You need to insert a docstring on {}".format(
+                fun.__name__
+            )
+            entries, errors, options_map = parse_string(
+                fun.__doc__, report_filename=filename, report_firstline=lineno, dedent=True
+            )
 
-            if not allow_incomplete and any(is_entry_incomplete(entry)
-                                            for entry in entries):
+            if not allow_incomplete and any(
+                is_entry_incomplete(entry) for entry in entries
+            ):
                 self.fail("parse_doc() may not use interpolation.")
 
             if expect_errors is not None:
@@ -306,7 +311,7 @@ def parse_many(string, level=0):
       AssertionError: If there are any errors.
     """
     # Get the locals in the stack for the callers and produce the final text.
-    frame = inspect.stack()[level+1]
+    frame = inspect.stack()[level + 1]
     varkwds = frame[0].f_locals
     input_string = textwrap.dedent(string.format(**varkwds))
 

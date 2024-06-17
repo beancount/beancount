@@ -1,5 +1,5 @@
-"""Text manipulation utilities.
-"""
+"""Text manipulation utilities."""
+
 __copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -32,9 +32,7 @@ class Snoop:
           number of last values in the history attribute.
         """
         self.value = None
-        self.history = (collections.deque(maxlen=maxlen)
-                        if maxlen
-                        else None)
+        self.history = collections.deque(maxlen=maxlen) if maxlen else None
 
     def __call__(self, value):
         """Save a value to the snooper. This is meant to wrap
@@ -78,11 +76,13 @@ def snoopify(function):
     and then you can just call 're.match' in a conditional and then access
     're.match.value' to get to the last returned value.
     """
+
     @functools.wraps(function)
     def wrapper(*args, **kw):
         value = function(*args, **kw)
         wrapper.value = value
         return value
+
     wrapper.value = None
     return wrapper
 

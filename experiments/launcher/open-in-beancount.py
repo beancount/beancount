@@ -17,11 +17,11 @@ How to install this on Ubuntu
      xdg-open 'beancount:///path/to/file.beancount?lineno=100'
 
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import cgi
 import sys
 import subprocess
 from urllib import parse
@@ -33,30 +33,30 @@ LISP = r"""
   (find-file \"{filename}\")
   (goto-line {lineno})
   (recenter-top))
-""".replace('\n', ' ').strip()
+""".replace("\n", " ").strip()
 
 EDITOR = r'emacsclient -s server0 -n --eval "{}"'.format(LISP)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('url', help='URL to open')
+    parser.add_argument("url", help="URL to open")
     args = parser.parse_args()
 
     # Parse the URL and extract the filename and line number from it.
     url = parse.urlparse(args.url)
     query_args = parse.parse_qs(url.query)
     filename = url.path
-    lineno = int(query_args['lineno'][0])
+    lineno = int(query_args["lineno"][0])
 
     # Launch your favorite editor to that given location.
     command = EDITOR.format(filename=filename, lineno=lineno)
     print(command)
     code = subprocess.call(command, shell=True)
     if code != 0:
-        print("Error launching editor: %s".format(code), file=sys.stderr)
+        print("Error launching editor: {}".format(code), file=sys.stderr)
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

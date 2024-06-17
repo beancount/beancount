@@ -22,16 +22,16 @@ from beancount import loader
 
 
 # A default options map just to provide the tolerances.
-OPTIONS_MAP = {'inferred_tolerance_default': {},
-               'inferred_tolerance_multiplier': D('0.5'),
-               'account_rounding': None,
-               'infer_tolerance_from_cost': False}
+OPTIONS_MAP = {
+    "inferred_tolerance_default": {},
+    "inferred_tolerance_multiplier": D("0.5"),
+    "account_rounding": None,
+    "infer_tolerance_from_cost": False,
+}
 
 
 class TestBalance(cmptest.TestCase):
-
     def test_has_nontrivial_balance(self):
-
         # Entry without cost, without price.
         posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
         self.assertFalse(interpolate.has_nontrivial_balance(posting))
@@ -49,24 +49,29 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
     def test_compute_residual(self):
-
         # Try with two accounts.
-        residual = interpolate.compute_residual([
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Checking", "-194.50", "USD"),
-            ])
-        self.assertEqual(inventory.from_string("-89 USD"),
-                         residual.reduce(convert.get_units))
+        residual = interpolate.compute_residual(
+            [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Checking", "-194.50", "USD"),
+            ]
+        )
+        self.assertEqual(
+            inventory.from_string("-89 USD"), residual.reduce(convert.get_units)
+        )
 
         # Try with more accounts.
-        residual = interpolate.compute_residual([
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Checking", "-194.50", "USD"),
-            P(None, "Assets:Bank:Investing", "5", "AAPL"),
-            P(None, "Assets:Bank:Savings", "89.00", "USD"),
-            ])
-        self.assertEqual(inventory.from_string("5 AAPL"),
-                         residual.reduce(convert.get_units))
+        residual = interpolate.compute_residual(
+            [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Checking", "-194.50", "USD"),
+                P(None, "Assets:Bank:Investing", "5", "AAPL"),
+                P(None, "Assets:Bank:Savings", "89.00", "USD"),
+            ]
+        )
+        self.assertEqual(
+            inventory.from_string("5 AAPL"), residual.reduce(convert.get_units)
+        )
 
     @loader.load_doc(expect_errors=True)
     def test_fill_residual_posting(self, entries, _, __):
@@ -90,7 +95,7 @@ class TestBalance(cmptest.TestCase):
           Assets:Account1      100.00 USD
           Assets:Other        -112.69 CAD @ 0.8875 USD
         """
-        account = 'Equity:Rounding'
+        account = "Equity:Rounding"
         entries = [entry for entry in entries if isinstance(entry, data.Transaction)]
         for index in 0, 1:
             entry = interpolate.fill_residual_posting(entries[index], account)
@@ -99,37 +104,42 @@ class TestBalance(cmptest.TestCase):
             self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[2], account)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2014-01-03 *
           Assets:Account1      100.00 USD
           Assets:Other        -100.0000001 USD
           Equity:Rounding        0.0000001 USD
 
-        """, [entry])
+        """,
+            [entry],
+        )
         residual = interpolate.compute_residual(entry.postings)
         # Note: The residual calculation ignores postings inserted by the
         # rounding account.
         self.assertFalse(residual.is_empty())
-        self.assertEqual(inventory.from_string('-0.0000001 USD'), residual)
+        self.assertEqual(inventory.from_string("-0.0000001 USD"), residual)
 
         entry = interpolate.fill_residual_posting(entries[3], account)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2014-01-04 *
           Assets:Account1     100.00 USD
           Assets:Other       -112.69 CAD @ 0.8875 USD
           Equity:Rounding   0.012375 USD
 
-        """, [entry])
+        """,
+            [entry],
+        )
         residual = interpolate.compute_residual(entry.postings)
         # Same as above.
         self.assertFalse(residual.is_empty())
-        self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
+        self.assertEqual(inventory.from_string("-0.012375 USD"), residual)
 
 
 class TestComputeBalance(unittest.TestCase):
-
     @loader.load_doc()
     def test_compute_entries_balance_currencies(self, entries, _, __):
         """
@@ -176,10 +186,10 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(A('-400 USD'))
-        expected_balance.add_amount(A('10 HOOL'),
-                                    position.Cost(D('40'), 'USD',
-                                                  datetime.date(2014, 6, 5), None))
+        expected_balance.add_amount(A("-400 USD"))
+        expected_balance.add_amount(
+            A("10 HOOL"), position.Cost(D("40"), "USD", datetime.date(2014, 6, 5), None)
+        )
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()
@@ -198,8 +208,8 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(A('2000.00 EUR'))
-        expected_balance.add_amount(A('-3560.00 GBP'))
+        expected_balance.add_amount(A("2000.00 EUR"))
+        expected_balance.add_amount(A("-3560.00 GBP"))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()
@@ -236,21 +246,27 @@ class TestComputeBalance(unittest.TestCase):
 
         """
         for entry in entries:
-            if (isinstance(entry, data.Transaction) and
-                entry.tags and
-                'context' in entry.tags):
+            if (
+                isinstance(entry, data.Transaction)
+                and entry.tags
+                and "context" in entry.tags
+            ):
                 break
         balance_before, balance_after = interpolate.compute_entry_context(entries, entry)
 
-        self.assertEqual(inventory.from_string('100.00 USD'),
-                         balance_before['Assets:Account1'])
-        self.assertEqual(inventory.from_string('80.00 USD'),
-                         balance_before['Assets:Account2'])
+        self.assertEqual(
+            inventory.from_string("100.00 USD"), balance_before["Assets:Account1"]
+        )
+        self.assertEqual(
+            inventory.from_string("80.00 USD"), balance_before["Assets:Account2"]
+        )
 
-        self.assertEqual(inventory.from_string('105.00 USD'),
-                         balance_after['Assets:Account1'])
-        self.assertEqual(inventory.from_string('75.00 USD'),
-                         balance_after['Assets:Account2'])
+        self.assertEqual(
+            inventory.from_string("105.00 USD"), balance_after["Assets:Account1"]
+        )
+        self.assertEqual(
+            inventory.from_string("75.00 USD"), balance_after["Assets:Account2"]
+        )
 
         # Get the context for an entry that is not a Transaction and ensure that
         # the before and after context is the same.
@@ -262,7 +278,6 @@ class TestComputeBalance(unittest.TestCase):
 
 
 class TestInferTolerances(cmptest.TestCase):
-
     @loader.load_doc(expect_errors=True)
     def test_tolerances__no_precision(self, entries, _, options_map):
         """
@@ -291,7 +306,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -5 USD
         """
         tolerances = interpolate.infer_tolerances(entries[-1].postings, options_map)
-        self.assertEqual({'USD': D('0.05')}, tolerances)
+        self.assertEqual({"USD": D("0.05")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__ignore_price(self, entries, errors, options_map):
@@ -301,7 +316,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -511.11 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'USD': D('0.005')}, tolerances)
+        self.assertEqual({"USD": D("0.005")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__ignore_cost(self, entries, errors, options_map):
@@ -311,8 +326,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -511.11 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'USD': D('0.005')}, tolerances)
-
+        self.assertEqual({"USD": D("0.005")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__ignore_cost_and_price(self, entries, errors, options_map):
@@ -322,7 +336,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -511.11 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'USD': D('0.005')}, tolerances)
+        self.assertEqual({"USD": D("0.005")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__cost_and_number_ignored(self, entries, errors, options_map):
@@ -342,9 +356,9 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -511 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'VHT': D('0.0005')}, tolerances)
+        self.assertEqual({"VHT": D("0.0005")}, tolerances)
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
-        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+        self.assertEqual({"VHT": D("0.0005"), "USD": D("0.051117")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__number_on_cost_used_overrides(self, entries, _, options_map):
@@ -354,9 +368,9 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -511.0 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.05')}, tolerances)
+        self.assertEqual({"VHT": D("0.0005"), "USD": D("0.05")}, tolerances)
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
-        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+        self.assertEqual({"VHT": D("0.0005"), "USD": D("0.051117")}, tolerances)
 
     def test_tolerances__number_on_cost_fail_to_succ(self):
         # An example of a transaction that would fail without the inferred
@@ -376,7 +390,7 @@ class TestInferTolerances(cmptest.TestCase):
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'Transaction does not balance:.*0.20000 USD')
+        self.assertRegex(errors[0].message, "Transaction does not balance:.*0.20000 USD")
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
         self.assertTrue(options_map["infer_tolerance_from_cost"])
@@ -392,7 +406,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4  -1564.18 USD
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'VHT': D('0.000005'), 'USD': D('0.005')}, tolerances)
+        self.assertEqual({"VHT": D("0.000005"), "USD": D("0.005")}, tolerances)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__with_inference(self, entries, _, options_map):
@@ -402,11 +416,9 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4
         """
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
-        self.assertEqual({'VHT': D('0.00005')},
-                         tolerances)
+        self.assertEqual({"VHT": D("0.00005")}, tolerances)
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
-        self.assertEqual({'VHT': D('0.00005'), 'USD': D('0.005111700')},
-                         tolerances)
+        self.assertEqual({"VHT": D("0.00005"), "USD": D("0.005111700")}, tolerances)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__capped_inference(self, entries, _, options_map):
@@ -416,11 +428,9 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4
         """
         tolerances = interpolate.infer_tolerances(entries[-1].postings, options_map)
-        self.assertEqual({'VHT': D('0.05')},
-                         tolerances)
+        self.assertEqual({"VHT": D("0.05")}, tolerances)
         tolerances = interpolate.infer_tolerances(entries[-1].postings, options_map, True)
-        self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
-                         tolerances)
+        self.assertEqual({"VHT": D("0.05"), "USD": D("0.5")}, tolerances)
 
     @loader.load_doc(expect_errors=True)
     def test_tolerances__multiplier(self, entries, errors, options_map):
@@ -519,17 +529,23 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
           Assets:Investments:Cash -9200.00 USD
         """
-        transactions = [entry
-                        for entry in entries
-                        if isinstance(entry, data.Transaction)]
-        self.assertEqual({'USD': D('0.03096'), 'VWELX': D('0.0005')},
-                         transactions[0].meta['__tolerances__'])
-        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
-                         transactions[1].meta['__tolerances__'])
-        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
-                         transactions[2].meta['__tolerances__'])
-        self.assertEqual({'USD': D('0.247680'), 'VWELX': D('0.0005')},
-                         transactions[3].meta['__tolerances__'])
+        transactions = [entry for entry in entries if isinstance(entry, data.Transaction)]
+        self.assertEqual(
+            {"USD": D("0.03096"), "VWELX": D("0.0005")},
+            transactions[0].meta["__tolerances__"],
+        )
+        self.assertEqual(
+            {"USD": D("0.04644"), "VWELX": D("0.0005")},
+            transactions[1].meta["__tolerances__"],
+        )
+        self.assertEqual(
+            {"USD": D("0.04644"), "VWELX": D("0.0005")},
+            transactions[2].meta["__tolerances__"],
+        )
+        self.assertEqual(
+            {"USD": D("0.247680"), "VWELX": D("0.0005")},
+            transactions[3].meta["__tolerances__"],
+        )
         self.assertFalse(errors)
 
     @loader.load_doc()
@@ -546,11 +562,11 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Investments:VWELX 18.572 VWELX @ 20.40 USD
           Assets:Investments:Cash
         """
-        transactions = [entry
-                        for entry in entries
-                        if isinstance(entry, data.Transaction)]
-        self.assertEqual({'USD': D('0.02568'), 'VWELX': D('0.0005')},
-                         transactions[0].meta['__tolerances__'])
+        transactions = [entry for entry in entries if isinstance(entry, data.Transaction)]
+        self.assertEqual(
+            {"USD": D("0.02568"), "VWELX": D("0.0005")},
+            transactions[0].meta["__tolerances__"],
+        )
         self.assertFalse(errors)
 
     @loader.load_doc()
@@ -564,26 +580,31 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Cash     400 CAD
         """
 
+
 class TestQuantize(unittest.TestCase):
-
     def test_quantize_with_tolerance(self):
-        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')},
-                                                      default=D('0.000005'))
+        tolerances = defdict.ImmutableDictWithDefault(
+            {"USD": D("0.01")}, default=D("0.000005")
+        )
         self.assertEqual(
-            D('100.12'),
-            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
+            D("100.12"),
+            interpolate.quantize_with_tolerance(tolerances, "USD", D("100.123123123")),
+        )
         self.assertEqual(
-            D('100.12312'),
-            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+            D("100.12312"),
+            interpolate.quantize_with_tolerance(tolerances, "CAD", D("100.123123123")),
+        )
 
-        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')}, default=ZERO)
+        tolerances = defdict.ImmutableDictWithDefault({"USD": D("0.01")}, default=ZERO)
         self.assertEqual(
-            D('100.12'),
-            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
+            D("100.12"),
+            interpolate.quantize_with_tolerance(tolerances, "USD", D("100.123123123")),
+        )
         self.assertEqual(
-            D('100.123123123'),
-            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+            D("100.123123123"),
+            interpolate.quantize_with_tolerance(tolerances, "CAD", D("100.123123123")),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

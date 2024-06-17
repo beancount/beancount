@@ -1,5 +1,5 @@
-"""Automatic padding of gaps between entries.
-"""
+"""Automatic padding of gaps between entries."""
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -15,10 +15,10 @@ from beancount.core import realization
 from beancount.utils import misc_utils
 from beancount.ops import balance
 
-__plugins__ = ('pad',)
+__plugins__ = ("pad",)
 
 
-PadError = collections.namedtuple('PadError', 'source message entry')
+PadError = collections.namedtuple("PadError", "source message entry")
 
 
 def pad(entries, options_map):
@@ -55,7 +55,6 @@ def pad(entries, options_map):
 
     # Process each account that has a padding group.
     for account_, pad_list in sorted(pad_dict.items()):
-
         # Last encountered / currency active pad entry.
         active_pad = None
 
@@ -72,7 +71,6 @@ def pad(entries, options_map):
 
         pad_balance = inventory.Inventory()
         for entry in postings:
-
             assert not isinstance(entry, data.Posting)
             if isinstance(entry, data.TxnPosting):
                 # This is a transaction; update the running balance for this
@@ -106,42 +104,71 @@ def pad(entries, options_map):
                     # Pad only if pad entry is active and we haven't already
                     # padded that lot since it was last encountered.
                     if active_pad and (check_amount.currency not in padded_lots):
-
                         # Note: we decide that it's an error to try to pad
                         # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = [pos
-                                     for pos in pad_balance.get_positions()
-                                     if pos.units.currency == check_amount.currency]
+                        positions = [
+                            pos
+                            for pos in pad_balance.get_positions()
+                            if pos.units.currency == check_amount.currency
+                        ]
                         for position_ in positions:
                             if position_.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.meta,
-                                             ("Attempt to pad an entry with cost for "
-                                              "balance: {}".format(pad_balance)),
-                                             active_pad))
+                                    PadError(
+                                        entry.meta,
+                                        (
+                                            "Attempt to pad an entry with cost for "
+                                            "balance: {}".format(pad_balance)
+                                        ),
+                                        active_pad,
+                                    )
+                                )
 
                         # Thus our padding lot is without cost by default.
                         diff_position = position.Position.from_amounts(
-                            amount.Amount(check_amount.number - balance_amount.number,
-                                          check_amount.currency))
+                            amount.Amount(
+                                check_amount.number - balance_amount.number,
+                                check_amount.currency,
+                            )
+                        )
 
                         # Synthesize a new transaction entry for the difference.
-                        narration = ('(Padding inserted for Balance of {} for '
-                                     'difference {})').format(check_amount, diff_position)
+                        narration = (
+                            "(Padding inserted for Balance of {} for " "difference {})"
+                        ).format(check_amount, diff_position)
                         new_entry = data.Transaction(
-                            active_pad.meta.copy(), active_pad.date, flags.FLAG_PADDING,
-                            None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
+                            active_pad.meta.copy(),
+                            active_pad.date,
+                            flags.FLAG_PADDING,
+                            None,
+                            narration,
+                            data.EMPTY_SET,
+                            data.EMPTY_SET,
+                            [],
+                        )
 
                         new_entry.postings.append(
-                            data.Posting(active_pad.account,
-                                         diff_position.units, diff_position.cost,
-                                         None, None, {}))
+                            data.Posting(
+                                active_pad.account,
+                                diff_position.units,
+                                diff_position.cost,
+                                None,
+                                None,
+                                {},
+                            )
+                        )
                         neg_diff_position = -diff_position
                         new_entry.postings.append(
-                            data.Posting(active_pad.source_account,
-                                         neg_diff_position.units, neg_diff_position.cost,
-                                         None, None, {}))
+                            data.Posting(
+                                active_pad.source_account,
+                                neg_diff_position.units,
+                                neg_diff_position.cost,
+                                None,
+                                None,
+                                {},
+                            )
+                        )
 
                         # Save it for later insertion after the active pad.
                         new_entries[id(active_pad)].append(new_entry)
@@ -150,7 +177,8 @@ def pad(entries, options_map):
                         pos, _ = pad_balance.add_position(diff_position)
                         if pos is not None and pos.is_negative_at_cost():
                             raise ValueError(
-                                "Position held at cost goes negative: {}".format(pos))
+                                "Position held at cost goes negative: {}".format(pos)
+                            )
 
                 # Mark this lot as padded. Further checks should not pad this lot.
                 padded_lots.add(check_amount.currency)
@@ -165,7 +193,6 @@ def pad(entries, options_map):
                 padded_entries.extend(entry_list)
             else:
                 # Generate errors on unused pad entries.
-                pad_errors.append(
-                    PadError(entry.meta, "Unused Pad entry", entry))
+                pad_errors.append(PadError(entry.meta, "Unused Pad entry", entry))
 
     return padded_entries, pad_errors

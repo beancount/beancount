@@ -13,14 +13,15 @@ WARNING: This is a prototype API. This is subject to change until the first v3
 release. Principle: Not all symbols are intended to be present here, only the
 most commonly used ones.
 """
+
 __copyright__ = "Copyright (C) 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-# pylint: disable=unused-import,unused-wildcard-import
+# ruff: noqa: F401, F403
 
 from .core.number import D, ZERO
 
-from .core.flags import *  # pylint: disable=wildcard-import
+from .core.flags import *
 
 # TODO(blais): We should return a namedtuple of all the contents, not the lists.
 from .loader import load_file, load_encrypted_file, load_doc

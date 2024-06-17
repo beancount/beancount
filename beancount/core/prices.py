@@ -6,6 +6,7 @@ Prices are deduced from Price entries found in the file, or perhaps
 created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -52,7 +53,8 @@ class PriceMap(dict):
     Attributes:
       forward_pairs: A list of (base, quote) keys for the forward pairs.
     """
-    __slots__ = ('forward_pairs',)
+
+    __slots__ = ("forward_pairs",)
 
 
 def build_price_map(entries):
@@ -79,9 +81,7 @@ def build_price_map(entries):
       generated in the price map.
     """
     # Fetch a list of all the price entries seen in the ledger.
-    price_entries = [entry
-                     for entry in entries
-                     if isinstance(entry, Price)]
+    price_entries = [entry for entry in entries if isinstance(entry, Price)]
 
     # Build a map of exchange rates between these units.
     # (base-currency, quote-currency) -> List of (date, rate).
@@ -102,24 +102,25 @@ def build_price_map(entries):
     for base, quote in inversed_units:
         bq_prices = price_map[(base, quote)]
         qb_prices = price_map[(quote, base)]
-        remove = ((base, quote)
-                  if len(bq_prices) < len(qb_prices)
-                  else (quote, base))
+        remove = (base, quote) if len(bq_prices) < len(qb_prices) else (quote, base)
         base, quote = remove
 
         remove_list = price_map[remove]
         insert_list = price_map[(quote, base)]
         del price_map[remove]
 
-        inverted_list = [(date, ONE/rate)
-                         for (date, rate) in remove_list
-                         if rate != ZERO]
+        inverted_list = [(date, ONE / rate) for (date, rate) in remove_list if rate != ZERO]
         insert_list.extend(inverted_list)
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
-    sorted_price_map = PriceMap({
-        base_quote: list(misc_utils.sorted_uniquify(date_rates, lambda x: x[0], last=True))
-        for (base_quote, date_rates) in price_map.items()})
+    sorted_price_map = PriceMap(
+        {
+            base_quote: list(
+                misc_utils.sorted_uniquify(date_rates, lambda x: x[0], last=True)
+            )
+            for (base_quote, date_rates) in price_map.items()
+        }
+    )
 
     # Compute and insert all the inverted rates.
     forward_pairs = list(sorted_price_map.keys())
@@ -127,17 +128,19 @@ def build_price_map(entries):
         # Note: You have to filter out zero prices for zero-cost postings, like
         # gifted options.
         sorted_price_map[(quote, base)] = [
-            (date, ONE/price) for date, price in price_list
-            if price != ZERO]
+            (date, ONE / price) for date, price in price_list if price != ZERO
+        ]
 
     sorted_price_map.forward_pairs = forward_pairs
     return sorted_price_map
 
 
-def project(orig_price_map: PriceMap,
-            from_currency: Currency,
-            to_currency: Currency,
-            base_currencies: Optional[Set[Currency]] = None) -> PriceMap:
+def project(
+    orig_price_map: PriceMap,
+    from_currency: Currency,
+    to_currency: Currency,
+    base_currencies: Optional[Set[Currency]] = None,
+) -> PriceMap:
     """Project all prices with a quote currency to another quote currency.
 
     Say you have a price for HOOL in USD and you'd like to convert HOOL to CAD.
@@ -204,9 +207,11 @@ def project(orig_price_map: PriceMap,
             continue
 
         # Create a mapping of existing prices so we can avoid date collisions.
-        existing_prices = ({date for date, _ in price_map[(base, to_currency)]}
-                           if (base, to_currency) in price_map
-                           else set())
+        existing_prices = (
+            {date for date, _ in price_map[(base, to_currency)]}
+            if (base, to_currency) in price_map
+            else set()
+        )
 
         # Project over each of the prices.
         new_projected = []
@@ -231,8 +236,9 @@ def project(orig_price_map: PriceMap,
             projected.sort()
 
             inverted = price_map.setdefault((to_currency, base), [])
-            inverted.extend((date, ZERO if rate == ZERO else ONE/rate)
-                            for date, rate in new_projected)
+            inverted.extend(
+                (date, ZERO if rate == ZERO else ONE / rate) for date, rate in new_projected
+            )
             inverted.sort()
 
     return price_map
@@ -249,7 +255,7 @@ def normalize_base_quote(base_quote):
       A pair of strings.
     """
     if isinstance(base_quote, str):
-        base_quote_norm = tuple(base_quote.split('/'))
+        base_quote_norm = tuple(base_quote.split("/"))
         assert len(base_quote_norm) == 2, base_quote
         base_quote = base_quote_norm
     assert isinstance(base_quote, tuple), base_quote
@@ -276,7 +282,7 @@ def _lookup_price_and_inverse(price_map, base_quote):
     """
     try:
         return price_map[base_quote]
-    except KeyError as exc:
+    except KeyError:
         base, quote = base_quote
         prices = price_map.get((quote, base), None)
         if prices:
@@ -368,6 +374,6 @@ def get_price(price_map, base_quote, date=None):
         if index == 0:
             return None, None
         else:
-            return price_list[index-1]
+            return price_list[index - 1]
     except KeyError:
         return None, None
