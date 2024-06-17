@@ -26,6 +26,6 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
       - run: python -m pip install setuptools pytest regex click python-dateutil
-      - run: make clean build
+      - run: make build
       - run: pytest beancount
         if: runner.os != 'Windows'
