@@ -43,6 +43,9 @@ homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 
+[tool.black]
+line-length = 92
+
 [tool.ruff]
 
 # Assume Python 3.12.
@@ -74,7 +77,6 @@ exclude = [
 
 # Same as Black.
 line-length = 92
-
 
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
@@ -110,7 +112,6 @@ per-file-ignores = {}
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
 
 [ruff.lint.mccabe]
 
