@@ -10,6 +10,7 @@ output that should be readable by a layperson.
 A special field 'institution' is detected to identify root accounts that should
 be included in the document rendered by this script.
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -50,7 +51,7 @@ def group_accounts_by_metadata(accounts_map, meta_name):
         # not covered by a parent with the metadata, it defines its own group.
         for parent_account in account.parents(account_):
             open_entry = accounts_map.get(parent_account, None)
-            if (open_entry and open_entry.meta and meta_name in open_entry.meta):
+            if open_entry and open_entry.meta and meta_name in open_entry.meta:
                 group = open_entry.meta[meta_name]
                 groups[group].append(account_)
                 break
@@ -74,13 +75,14 @@ def find_institutions(entries, options_map):
 
     # Filter out accounts that are closed or that are income accounts.
     open_close_map = getters.get_account_open_close(entries)
-    accounts_map = {acc: open_entry
-                    for acc, (open_entry, close_entry) in open_close_map.items()
-                    if (account_types.is_balance_sheet_account(acc, acc_types) and
-                        close_entry is None)}
+    accounts_map = {
+        acc: open_entry
+        for acc, (open_entry, close_entry) in open_close_map.items()
+        if (account_types.is_balance_sheet_account(acc, acc_types) and close_entry is None)
+    }
 
     # Group the accounts using groups defined implicitly by metadata.
-    return group_accounts_by_metadata(accounts_map, 'institution')
+    return group_accounts_by_metadata(accounts_map, "institution")
 
 
 def get_first_meta(entries, field_name):
@@ -98,12 +100,11 @@ def get_first_meta(entries, field_name):
 
 
 # Report data types.
-Report = collections.namedtuple(
-    'Report', 'title institutions')
-InstitutionReport = collections.namedtuple(
-    'Institution', 'name fields accounts')
+Report = collections.namedtuple("Report", "title institutions")
+InstitutionReport = collections.namedtuple("Institution", "name fields accounts")
 AccountReport = collections.namedtuple(
-    'Account', 'name open_date balance num_postings fields')
+    "Account", "name open_date balance num_postings fields"
+)
 
 
 def create_report(entries, options_map):
@@ -123,15 +124,16 @@ def create_report(entries, options_map):
     for name, accounts in sorted(groups.items()):
         # Get the institution fields, which is the union of the fields for all
         # the accounts with the institution fields.
-        institution_accounts = [acc for acc in accounts
-                                if 'institution' in open_map[acc].meta]
+        institution_accounts = [
+            acc for acc in accounts if "institution" in open_map[acc].meta
+        ]
 
         institution_fields = {}
         for acc in institution_accounts:
             for key, value in open_map[acc].meta.items():
                 institution_fields.setdefault(key, value)
-        institution_fields.pop('filename', None)
-        institution_fields.pop('lineno', None)
+        institution_fields.pop("filename", None)
+        institution_fields.pop("lineno", None)
 
         # Create infos for each account in this institution.
         account_reports = []
@@ -139,31 +141,37 @@ def create_report(entries, options_map):
             account_fields = {}
             for subacc in account.parents(acc):
                 open_entry = open_map[subacc]
-                if 'institution' in open_entry.meta:
+                if "institution" in open_entry.meta:
                     break
                 account_fields.update(open_entry.meta)
-            account_fields.pop('filename', None)
-            account_fields.pop('lineno', None)
+            account_fields.pop("filename", None)
+            account_fields.pop("lineno", None)
             for field in institution_fields:
                 account_fields.pop(field, None)
 
             real_node = realization.get(real_root, acc)
-            account_reports.append(AccountReport(
-                acc,
-                open_entry.date,
-                real_node.balance,
-                sum(1 for posting in real_node.txn_postings
-                    if isinstance(posting, data.TxnPosting)),
-                account_fields))
+            account_reports.append(
+                AccountReport(
+                    acc,
+                    open_entry.date,
+                    real_node.balance,
+                    sum(
+                        1
+                        for posting in real_node.txn_postings
+                        if isinstance(posting, data.TxnPosting)
+                    ),
+                    account_fields,
+                )
+            )
 
         # Create the institution report.
         institution = InstitutionReport(name, institution_fields, account_reports)
         institutions.append(institution)
 
-    return Report(options_map['title'], institutions)
+    return Report(options_map["title"], institutions)
 
 
-XHTML_TEMPLATE_PRE = '''
+XHTML_TEMPLATE_PRE = """
 <html>
   <head>
     <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300'
@@ -221,43 +229,45 @@ table.fields {
     </style>
   </head>
   <body>
-'''
-XHTML_TEMPLATE_POST = '''
+"""
+XHTML_TEMPLATE_POST = """
   </body>
 </html>
-'''
+"""
 
 
 def format_xhtml_report(report, options_map):
     oss = io.StringIO()
     oss.write(XHTML_TEMPLATE_PRE)
 
-    oss.write('''
+    oss.write(
+        """
       <div class="report">
         <h1 class="title">{r.title}</h1>
-    '''.format(r=report))
+    """.format(r=report)
+    )
 
     for inst in report.institutions:
-        oss.write('''
+        oss.write(
+            """
           <div class="institution">
             <h2>{i.name}</h2>
             {fields}
-        '''.format(i=inst, fields=format_xhtml_table(sorted(inst.fields.items()))))
+        """.format(i=inst, fields=format_xhtml_table(sorted(inst.fields.items())))
+        )
 
         # Compute the set of fields to render.
-        unique_fields = {key
-                         for acc in inst.accounts
-                         for key in acc.fields}
-        fieldnames = ['name', 'open_date'] + sorted(unique_fields) + ['balance']
+        unique_fields = {key for acc in inst.accounts for key in acc.fields}
+        fieldnames = ["name", "open_date"] + sorted(unique_fields) + ["balance"]
         if inst.accounts:
-            oss.write('''
+            oss.write("""
               <table class="accounts">
               <thead>
               <tr>
-            ''')
+            """)
             for fieldname in fieldnames:
-                oss.write('<th>{}</th>'.format(fieldname.strip('_').capitalize()))
-            oss.write('</tr></thead>\n')
+                oss.write("<th>{}</th>".format(fieldname.strip("_").capitalize()))
+            oss.write("</tr></thead>\n")
 
             for acc in inst.accounts:
                 # Skip accounts without postings. This is the case, for
@@ -267,26 +277,28 @@ def format_xhtml_report(report, options_map):
                     continue
 
                 fields = acc.fields.copy()
-                fields['name'] = acc.name
-                fields['open_date'] = acc.open_date
-                dcontext = options_map['dcontext']
-                fields['balance'] = acc.balance.reduce(convert.get_cost).to_string(
-                    dcontext.build(), False)
-                oss.write('<tr>\n')
+                fields["name"] = acc.name
+                fields["open_date"] = acc.open_date
+                dcontext = options_map["dcontext"]
+                fields["balance"] = acc.balance.reduce(convert.get_cost).to_string(
+                    dcontext.build(), False
+                )
+                oss.write("<tr>\n")
                 for field in fieldnames:
-                    oss.write('<td class="{}">{}</td>\n'.format(field,
-                                                                fields.get(field, '')))
-                oss.write('</tr>\n')
-            oss.write('</table>\n')
+                    oss.write(
+                        '<td class="{}">{}</td>\n'.format(field, fields.get(field, ""))
+                    )
+                oss.write("</tr>\n")
+            oss.write("</table>\n")
 
-        oss.write('</div>\n')
-    oss.write('</div>\n')
+        oss.write("</div>\n")
+    oss.write("</div>\n")
 
     oss.write(XHTML_TEMPLATE_POST)
     return oss.getvalue()
 
 
-def format_xhtml_table(items, klass='fields'):
+def format_xhtml_table(items, klass="fields"):
     """Render a mapping of values to an HTML table.
 
     Args:
@@ -297,21 +309,20 @@ def format_xhtml_table(items, klass='fields'):
     oss = io.StringIO()
     oss.write('<table class="{}">\n'.format(klass))
     for key, value in items:
-        if re.match('[a-z]+://', value):
+        if re.match("[a-z]+://", value):
             value = '<a href="{value}">{value}</a>'.format(value=value)
-        oss.write('<tr><td>{}:</td><td>{}</td></tr>'.format(key.capitalize(), value))
-    oss.write('</table>\n')
+        oss.write("<tr><td>{}:</td><td>{}</td></tr>".format(key.capitalize(), value))
+    oss.write("</table>\n")
     return oss.getvalue()
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = version.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount input filename')
+    parser.add_argument("filename", help="Beancount input filename")
     args = parser.parse_args()
 
-    entries, _, options_map = loader.load_file(args.filename,
-                                               log_errors=logging.error)
+    entries, _, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
     report = create_report(entries, options_map)
 
@@ -319,5 +330,5 @@ def main():
     sys.stdout.write(text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

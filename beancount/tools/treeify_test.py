@@ -1,4 +1,5 @@
 """Unit tests for treeify tool."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -7,7 +8,7 @@ import unittest
 import textwrap
 
 
-PROGRAM = __file__.replace('_test.py', '.py')
+PROGRAM = __file__.replace("_test.py", ".py")
 DEBUG = 0
 
 
@@ -20,19 +21,22 @@ def treeify(string, options=None):
     Returns:
       The treeified string.
     """
-    pipe = subprocess.Popen([PROGRAM] + (options or []),
-                            shell=False,
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    output, errors = pipe.communicate(string.encode('utf-8'))
-    return (pipe.returncode,
-            output.decode('utf-8') if output else '',
-            errors.decode('utf-8') if errors else '')
+    pipe = subprocess.Popen(
+        [PROGRAM] + (options or []),
+        shell=False,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    output, errors = pipe.communicate(string.encode("utf-8"))
+    return (
+        pipe.returncode,
+        output.decode("utf-8") if output else "",
+        errors.decode("utf-8") if errors else "",
+    )
 
 
 class TestTreeifyBase(unittest.TestCase):
-
     maxDiff = 8192
 
     def treeify(self, string, expect_errors=False, options=None):
@@ -71,21 +75,21 @@ class TestTreeifyBase(unittest.TestCase):
         output = self.treeify(input_, expect_errors, options)
         expected = textwrap.dedent(expected)
         if DEBUG:
-            print('-(input)----------------------------------')
+            print("-(input)----------------------------------")
             print(input_)
-            print('-(output)---------------------------------')
+            print("-(output)---------------------------------")
             print(output)
-            print('-(expected)-------------------------------')
+            print("-(expected)-------------------------------")
             print(expected)
-            print('------------------------------------------')
+            print("------------------------------------------")
         self.assertEqual(expected, output)
         return output
 
 
 class TestTreeify(TestTreeifyBase):
-
     def test_simple(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           2014-12-25 Assets:US:BofA:Checking                        5,545.01 USD
           2014-11-11 Assets:US:Federal:PreTax401k
           2014-10-04 Assets:US:Hooli:Vacation                         332.64 VACHR
@@ -102,7 +106,8 @@ class TestTreeify(TestTreeifyBase):
           2014-10-12 Expenses:Health:Vision:Insurance               3,045.60 USD
           2014-12-28 Expenses:Home:Electricity                      2,080.00 USD
           2014-10-22 Expenses:Home:Internet                         2,560.22 USD
-        """, """\
+        """,
+            """\
                      |-- Assets
                      |   `-- US
                      |       |-- BofA
@@ -135,15 +140,21 @@ class TestTreeify(TestTreeifyBase):
                          `-- Home
           2014-12-28         |-- Electricity                        2,080.00 USD
           2014-10-22         `-- Internet                           2,560.22 USD
-        """)
+        """,
+        )
 
     def test_empty_string(self):
-        self.treeify_equal("""\
-        """, """\
-        """, True)
+        self.treeify_equal(
+            """\
+        """,
+            """\
+        """,
+            True,
+        )
 
     def test_no_columns(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
 
           Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
@@ -153,7 +164,8 @@ class TestTreeify(TestTreeifyBase):
           pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
           culpa qui officia deserunt mollit anim id est laborum.
 
-        """, """\
+        """,
+            """\
 
           Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
@@ -163,10 +175,13 @@ class TestTreeify(TestTreeifyBase):
           pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
           culpa qui officia deserunt mollit anim id est laborum.
 
-        """, True)
+        """,
+            True,
+        )
 
     def test_flush_left(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:Cash                           -0.07 USD
           Assets:US:Vanguard:RGAGX                         174.22 RGAGX
           Assets:US:Vanguard:VBMPX                         189.03 VBMPX
@@ -175,7 +190,8 @@ class TestTreeify(TestTreeifyBase):
           Expenses:Food:Restaurant                      10,990.74 USD
           Expenses:Health:Dental:Insurance                 208.80 USD
           Expenses:Health:Life:GroupTermLife             1,751.04 USD
-        """, """\
+        """,
+            """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard
@@ -193,10 +209,13 @@ class TestTreeify(TestTreeifyBase):
                   |   `-- Insurance                        208.80 USD
                   `-- Life
                       `-- GroupTermLife                  1,751.04 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_flush_right(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           2014-01-01 Assets:US:Vanguard:Cash
           2014-01-01 Assets:US:Vanguard:RGAGX
           2014-01-01 Assets:US:Vanguard:VBMPX
@@ -205,7 +224,8 @@ class TestTreeify(TestTreeifyBase):
           2014-01-01 Expenses:Food:Restaurant
           2014-01-01 Expenses:Health:Dental:Insurance
           2014-01-01 Expenses:Health:Life:GroupTermLife
-        """, """\
+        """,
+            """\
                      |-- Assets
                      |   `-- US
                      |       `-- Vanguard
@@ -223,10 +243,13 @@ class TestTreeify(TestTreeifyBase):
           2014-01-01         |   `-- Insurance
                              `-- Life
           2014-01-01             `-- GroupTermLife
-        """, False)
+        """,
+            False,
+        )
 
     def test_two_columns(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           2014-01-01 Assets:US:Vanguard:Cash              | Assets:US:Vanguard:Cash            XX
           2014-01-01 Assets:US:Vanguard:RGAGX             | Assets:US:Vanguard:RGAGX           XX
           2014-01-01 Assets:US:Vanguard:VBMPX             | Assets:US:Vanguard:VBMPX           XX
@@ -235,7 +258,8 @@ class TestTreeify(TestTreeifyBase):
           2014-01-01 Expenses:Food:Restaurant             | Expenses:Food:Restaurant           XX
           2014-01-01 Expenses:Health:Dental:Insurance     | Expenses:Health:Dental:Insurance   XX
           2014-01-01 Expenses:Health:Life:GroupTermLife   | Expenses:Health:Life:GroupTermLife XX
-        """, """\
+        """,
+            """\
                      |-- Assets
                      |   `-- US
                      |       `-- Vanguard
@@ -253,10 +277,13 @@ class TestTreeify(TestTreeifyBase):
           2014-01-01         |   `-- Insurance            | Expenses:Health:Dental:Insurance   XX
                              `-- Life
           2014-01-01             `-- GroupTermLife        | Expenses:Health:Life:GroupTermLife XX
-        """, False)
+        """,
+            False,
+        )
 
     def test_overlapping_column(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:Cash            100.00 USD
           Assets:US:Vanguard:RGAGX           100.00 USD
           Assets:US:Vanguard:VBMPX           100.00 USD
@@ -265,7 +292,8 @@ class TestTreeify(TestTreeifyBase):
           Expenses:Food:Restaurant           100.00 USD
           Expenses:Health:Dental:Insurance   100.00 USD
           Expenses:Health:Life:GroupTermLife 100.00 USD
-        """, """\
+        """,
+            """\
           Assets:US:Vanguard:Cash            100.00 USD
           Assets:US:Vanguard:RGAGX           100.00 USD
           Assets:US:Vanguard:VBMPX           100.00 USD
@@ -274,30 +302,38 @@ class TestTreeify(TestTreeifyBase):
           Expenses:Food:Restaurant           100.00 USD
           Expenses:Health:Dental:Insurance   100.00 USD
           Expenses:Health:Life:GroupTermLife 100.00 USD
-        """, True)
+        """,
+            True,
+        )
 
     def test_parents(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US                          100.00 USD
           Assets:US:Vanguard                 101.00 USD
           Assets:US:Vanguard:VBMPX           102.00 USD
-        """, """\
+        """,
+            """\
           `-- Assets
               `-- US                         100.00 USD
                   `-- Vanguard               101.00 USD
                       `-- VBMPX              102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_unsorted(self):
         # Check when the same parent comes around multiple times (the column
         # values aren't sorted properly).
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:VBMPX           100.00 USD
           Assets:CA:Bank:Checking            101.00 USD
           Assets:US:Vanguard:VBMPX           102.00 USD
           Assets:ES:Caja                     103.00 USD
           Assets:US:Vanguard:VBMPX           104.00 USD
-        """, """\
+        """,
+            """\
          `-- Assets
              |-- US
              |   `-- Vanguard
@@ -313,15 +349,19 @@ class TestTreeify(TestTreeifyBase):
              `-- US
                  `-- Vanguard
                      `-- VBMPX              104.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_consecutive(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:VBMPX           100.00 USD
           Assets:US:Vanguard:VBMPX           100.00 USD
           Assets:US:Vanguard:VBMPX           102.00 USD
           Assets:US:Vanguard:VBMPX           104.00 USD
-        """, """\
+        """,
+            """\
           `-- Assets
               `-- US
                   `-- Vanguard
@@ -329,16 +369,20 @@ class TestTreeify(TestTreeifyBase):
                                              100.00 USD
                                              102.00 USD
                                              104.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_noise_before(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Account                         Balance
           ---------------------------------------------
           Assets:US:Vanguard:VBMPX     100.00 USD
           Assets:US:Vanguard:VBMPX     101.00 USD
           Expenses:Food:Groceries      102.00 USD
-        """, """\
+        """,
+            """\
           Account                         Balance
           ---------------------------------------------
           |-- Assets
@@ -349,16 +393,20 @@ class TestTreeify(TestTreeifyBase):
           `-- Expenses
               `-- Food
                   `-- Groceries        102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_noise_after(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:VBMPX     100.00 USD
           Assets:US:Vanguard:VBMPX     101.00 USD
           Expenses:Food:Groceries      102.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Not matching: yep, not matching.
-        """, """\
+        """,
+            """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard
@@ -369,15 +417,19 @@ class TestTreeify(TestTreeifyBase):
                   `-- Groceries        102.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Not matching: yep, not matching.
-        """, False)
+        """,
+            False,
+        )
 
     def test_noise_middle_between_nodes(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:VBMPX     100.00 USD
           Assets:US:Vanguard:VBMPX     101.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Expenses:Food:Groceries      102.00 USD
-        """, """\
+        """,
+            """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard
@@ -387,15 +439,19 @@ class TestTreeify(TestTreeifyBase):
           `-- Expenses
               `-- Food
                   `-- Groceries        102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_noise_middle_same_node(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard:VBMPX     100.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Assets:US:Vanguard:VBMPX     101.00 USD
           Expenses:Food:Groceries      102.00 USD
-        """, """\
+        """,
+            """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard
@@ -405,15 +461,19 @@ class TestTreeify(TestTreeifyBase):
           `-- Expenses
               `-- Food
                   `-- Groceries        102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_noise_middle_parent_child(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:US:Vanguard           100.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Assets:US:Vanguard:VBMPX     101.00 USD
           Expenses:Food:Groceries      102.00 USD
-        """, """\
+        """,
+            """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard         100.00 USD
@@ -422,11 +482,13 @@ class TestTreeify(TestTreeifyBase):
           `-- Expenses
               `-- Food
                   `-- Groceries        102.00 USD
-        """, False)
-
+        """,
+            False,
+        )
 
     def test_filenames(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           -rwxr-xr-x    1 blais   5000  44708 Sep 27 13:54 ./beancount/scripts/example.py
           -rw-r--r--    1 blais   5000    678 Sep 21 12:11 ./beancount/scripts/example_test.py
           -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30 ./beancount/scripts/format.py
@@ -441,7 +503,8 @@ class TestTreeify(TestTreeifyBase):
           -rw-r--r--    1 blais   5000   1130 Aug 17 13:06 ./beancount/utils/file_utils_test.py
           -rw-r--r--    1 blais   5000   8377 Sep 15 06:53 ./beancount/utils/misc_utils.py
           -rw-r--r--    1 blais   5000   4783 Sep 13 15:17 ./beancount/utils/misc_utils_test.py
-        """, """\
+        """,
+            """\
                                                            `-- .
                                                                `-- beancount
                                                                    |-- scripts
@@ -459,46 +522,62 @@ class TestTreeify(TestTreeifyBase):
           -rw-r--r--    1 blais   5000   1130 Aug 17 13:06             |-- file_utils_test.py
           -rw-r--r--    1 blais   5000   8377 Sep 15 06:53             |-- misc_utils.py
           -rw-r--r--    1 blais   5000   4783 Sep 13 15:17             `-- misc_utils_test.py
-        """, False, options=['--pattern=([^ ]+)(/[^ ]+)+', '--split=/'])
+        """,
+            False,
+            options=["--pattern=([^ ]+)(/[^ ]+)+", "--split=/"],
+        )
 
     def test_filenames_tree(self):
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           -rwxr-xr-x    1 blais   5000  44708 Sep 27 13:54 ./beancount
           -rw-r--r--    1 blais   5000    678 Sep 21 12:11 ./beancount/scripts
           -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30 ./beancount/scripts/format.py
-        """, """\
+        """,
+            """\
                                                            `-- .
           -rwxr-xr-x    1 blais   5000  44708 Sep 27 13:54     `-- beancount
           -rw-r--r--    1 blais   5000    678 Sep 21 12:11         `-- scripts
           -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30             `-- format.py
-        """, False, options=['--pattern=([^ ]+)(/[^ ]+)+', '--split=/'])
+        """,
+            False,
+            options=["--pattern=([^ ]+)(/[^ ]+)+", "--split=/"],
+        )
 
     def test_width_wider(self):
         # The treeified column should be wider as it needs to.
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Equity:B       100.00 USD
           Equity:B:C     101.00 USD
           Equity:B:C:D   102.00 USD
-        """, """\
+        """,
+            """\
           `-- Equity
               `-- B           100.00 USD
                   `-- C       101.00 USD
                       `-- D   102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_width_narrower(self):
         # The treeified column should be of the same width even though it does
         # not need to.
-        self.treeify_equal("""\
+        self.treeify_equal(
+            """\
           Assets:Bcdefg                100.00 USD
           Assets:Bcdefg:Cdefgh         101.00 USD
           Assets:Bcdefg:Cdefgh:Defghij 102.00 USD
-        """, """\
+        """,
+            """\
           `-- Assets
               `-- Bcdefg               100.00 USD
                   `-- Cdefgh           101.00 USD
                       `-- Defghij      102.00 USD
-        """, False)
+        """,
+            False,
+        )
 
     def test_whitespace(self):
         # Test with columns that have whitespace in them.
@@ -519,8 +598,10 @@ class TestTreeify(TestTreeifyBase):
              |-- Expenses
              |-- Income
              `-- Liabilities
-        """, False)
+        """,
+            False,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

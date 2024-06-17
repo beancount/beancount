@@ -38,6 +38,7 @@ in to preserve them. You should be able to regress against those correct outputs
 in the future. Use version control to your advantage to visualize the
 differences.
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -120,9 +121,9 @@ def compare_contents_or_generate(actual_string, expect_fn, generate):
         pytest.skip("Generated '{}'".format(expect_fn))
     else:
         # Run the test on an existing expected file.
-        assert path.exists(
+        assert path.exists(expect_fn), "Expected file '{}' is missing. Generate it?".format(
             expect_fn
-        ), "Expected file '{}' is missing. Generate it?".format(expect_fn)
+        )
         with open(expect_fn, encoding="utf-8") as infile:
             expect_string = infile.read()
         assertStringEqualNoWS(expect_string, actual_string)

@@ -32,10 +32,10 @@ __license__ = "GNU GPLv2"
 from beancount.core import inventory
 from beancount.ops import basicops
 
-__plugins__ = ('tag_pending_plugin',)
+__plugins__ = ("tag_pending_plugin",)
 
 
-def tag_pending_transactions(entries, tag_name='PENDING'):
+def tag_pending_transactions(entries, tag_name="PENDING"):
     """Filter out incomplete linked transactions to a transfer account.
 
     Given a list of entries, group the entries by their link and compute the
@@ -73,10 +73,14 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
                     pending_entry_ids.add(id(entry))
 
     # Insert tags if marked.
-    return [(entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
-             if id(entry) in pending_entry_ids
-             else entry)
-            for entry in entries]
+    return [
+        (
+            entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
+            if id(entry) in pending_entry_ids
+            else entry
+        )
+        for entry in entries
+    ]
 
 
 def tag_pending_plugin(entries, options_map):
@@ -88,4 +92,4 @@ def tag_pending_plugin(entries, options_map):
     Returns:
       A tuple of entries and errors.
     """
-    return (tag_pending_transactions(entries, 'PENDING'), [])
+    return (tag_pending_transactions(entries, "PENDING"), [])

@@ -1,5 +1,5 @@
-"""Report classes for all reports that display ending balances of accounts.
-"""
+"""Report classes for all reports that display ending balances of accounts."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,40 +17,55 @@ from beancount.core import convert
 # pylint: disable=possibly-unused-variable
 
 
-class BalancesReport(base.HTMLReport,
-                     metaclass=base.RealizationMeta):
+class BalancesReport(base.HTMLReport, metaclass=base.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
-    names = ['balances', 'bal', 'trial']
-    default_format = 'text'
+    names = ["balances", "bal", "trial"]
+    default_format = "text"
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('-e', '--filter-expression', '--expression', '--regexp',
-                            action='store', default=None,
-                            help="Filter expression for which account balances to display.")
+        parser.add_argument(
+            "-e",
+            "--filter-expression",
+            "--expression",
+            "--regexp",
+            action="store",
+            default=None,
+            help="Filter expression for which account balances to display.",
+        )
 
-        parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
-                            help="Render values at cost, convert the units to cost value")
+        parser.add_argument(
+            "-c",
+            "--at-cost",
+            "--cost",
+            action="store_true",
+            help="Render values at cost, convert the units to cost value",
+        )
 
     def render_real_text(self, real_root, price_map, price_date, options_map, file):
         if self.args.filter_expression:
             regexp = re.compile(self.args.filter_expression)
             real_root = realization.filter(
-                real_root,
-                lambda real_account: regexp.search(real_account.account))
+                real_root, lambda real_account: regexp.search(real_account.account)
+            )
         if real_root:
-            dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
-                                                    reserved=2)
-            realization.dump_balances(real_root, dformat,
-                                      self.args.at_cost, True, file=file)
+            dformat = options_map["dcontext"].build(
+                alignment=display_context.Align.DOT, reserved=2
+            )
+            realization.dump_balances(
+                real_root, dformat, self.args.at_cost, True, file=file
+            )
 
     def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
-        text = tree_table.table_of_balances(real_root,
-                                            price_map, price_date,
-                                            options_map['operating_currency'],
-                                            self.formatter,
-                                            classes=['trial'])
+        text = tree_table.table_of_balances(
+            real_root,
+            price_map,
+            price_date,
+            options_map["operating_currency"],
+            self.formatter,
+            classes=["trial"],
+        )
 
         balance_cost = realization.compute_balance(real_root).reduce(convert.get_cost)
         if not balance_cost.is_empty():
@@ -61,32 +76,38 @@ class BalancesReport(base.HTMLReport,
         file.write(text)
 
 
-class BalanceSheetReport(base.HTMLReport,
-                         metaclass=base.RealizationMeta):
+class BalanceSheetReport(base.HTMLReport, metaclass=base.RealizationMeta):
     """Print out a balance sheet."""
 
-    names = ['balsheet']
-    default_format = 'html'
+    names = ["balsheet"]
+    default_format = "html"
 
     def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
-        operating_currencies = options_map['operating_currency']
+        operating_currencies = options_map["operating_currency"]
         assets = tree_table.table_of_balances(
-            realization.get(real_root, options_map['name_assets']),
-            price_map, price_date,
+            realization.get(real_root, options_map["name_assets"]),
+            price_map,
+            price_date,
             operating_currencies,
-            self.formatter)
+            self.formatter,
+        )
         liabilities = tree_table.table_of_balances(
-            realization.get(real_root, options_map['name_liabilities']),
-            price_map, price_date,
+            realization.get(real_root, options_map["name_liabilities"]),
+            price_map,
+            price_date,
             operating_currencies,
-            self.formatter)
+            self.formatter,
+        )
         equity = tree_table.table_of_balances(
-            realization.get(real_root, options_map['name_equity']),
-            price_map, price_date,
+            realization.get(real_root, options_map["name_equity"]),
+            price_map,
+            price_date,
             operating_currencies,
-            self.formatter)
+            self.formatter,
+        )
 
-        file.write("""
+        file.write(
+            """
                <div class="halfleft">
 
                  <div id="assets">
@@ -109,31 +130,36 @@ class BalanceSheetReport(base.HTMLReport,
                  </div>
 
                </div>
-            """.format(**locals()))
+            """.format(**locals())
+        )
 
 
-class IncomeStatementReport(base.HTMLReport,
-                            metaclass=base.RealizationMeta):
+class IncomeStatementReport(base.HTMLReport, metaclass=base.RealizationMeta):
     """Print out an income statement."""
 
-    names = ['income']
-    default_format = 'html'
+    names = ["income"]
+    default_format = "html"
 
     def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         # Render the income statement tables.
-        operating_currencies = options_map['operating_currency']
+        operating_currencies = options_map["operating_currency"]
         income = tree_table.table_of_balances(
-            realization.get(real_root, options_map['name_income']),
-            price_map, price_date,
+            realization.get(real_root, options_map["name_income"]),
+            price_map,
+            price_date,
             operating_currencies,
-            self.formatter)
+            self.formatter,
+        )
         expenses = tree_table.table_of_balances(
-            realization.get(real_root, options_map['name_expenses']),
-            price_map, price_date,
+            realization.get(real_root, options_map["name_expenses"]),
+            price_map,
+            price_date,
             operating_currencies,
-            self.formatter)
+            self.formatter,
+        )
 
-        file.write("""
+        file.write(
+            """
            <div id="income" class="halfleft">
 
              <div id="income">
@@ -150,11 +176,12 @@ class IncomeStatementReport(base.HTMLReport,
              </div>
 
            </div>
-        """.format(**locals()))
+        """.format(**locals())
+        )
 
 
 __reports__ = [
     BalancesReport,
     BalanceSheetReport,
     IncomeStatementReport,
-    ]
+]

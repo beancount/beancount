@@ -4,6 +4,7 @@ This object is used in lieu of a file in order to allow the various importers to
 reuse each others' conversion results. Converting file contents, e.g. PDF to
 text, can be expensive.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -91,14 +92,16 @@ def head(num_bytes=8192, encoding=None):
       A converter function.
 
     """
+
     def head_reader(filename):
-        with open(filename, 'rb') as fd:
+        with open(filename, "rb") as fd:
             data = fd.read(num_bytes)
-            enc = encoding or chardet.detect(data)['encoding']
+            enc = encoding or chardet.detect(data)["encoding"]
             # A little trick to handle an encoded byte array that
             # terminates with an incomplete unicode character.
             decoder = codecs.iterdecode(iter([data]), enc)
             return next(decoder)
+
     return head_reader
 
 
@@ -112,14 +115,14 @@ def contents(filename):
     """
     # Attempt to detect the input encoding automatically, using chardet and a
     # decent amount of input.
-    with open(filename, 'rb') as infile:
+    with open(filename, "rb") as infile:
         rawdata = infile.read(HEAD_DETECT_MAX_BYTES)
     detected = chardet.detect(rawdata)
-    encoding = detected['encoding']
+    encoding = detected["encoding"]
 
     # Ignore encoding errors for reading the contents because input files
     # routinely break this assumption.
-    errors = 'ignore'
+    errors = "ignore"
 
     with open(filename, encoding=encoding, errors=errors) as file:
         return file.read()
@@ -138,8 +141,10 @@ def get_file(filename):
       A FileMemo instance.
 
     """
-    assert path.isabs(filename), (
-        "Path should be absolute in order to guarantee a single call.")
+    assert path.isabs(
+        filename
+    ), "Path should be absolute in order to guarantee a single call."
     return _CACHE[filename]
+
 
 _CACHE = defdict.DefaultDictWithKey(_FileMemo)

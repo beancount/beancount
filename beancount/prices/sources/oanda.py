@@ -11,6 +11,7 @@ https://api-fxtrade.oanda.com/v1/candles?instrument=EUR_USD&granularity=D&start=
 Timezone information: Input and output datetimes are specified via UTC
 timestamps.
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -53,14 +54,14 @@ def _fetch_candles(params):
       A sorted list of (time, price) points.
     """
 
-    url = '?'.join((URL, parse.urlencode(sorted(params.items()))))
+    url = "?".join((URL, parse.urlencode(sorted(params.items()))))
     logging.info("Fetching '%s'", url)
 
     # Fetch the data.
     response = net_utils.retrying_urlopen(url)
     if response is None:
         return None
-    data_string = response.read().decode('utf-8')
+    data_string = response.read().decode("utf-8")
 
     # Parse it.
     data = json.loads(data_string, parse_float=D)
@@ -68,11 +69,12 @@ def _fetch_candles(params):
         # Find the candle with the latest time before the given time we're searching
         # for.
         time_prices = []
-        candles = sorted(data['candles'], key=lambda candle: candle['time'])
+        candles = sorted(data["candles"], key=lambda candle: candle["time"])
         for candle in candles:
             candle_dt_utc = datetime.datetime.strptime(
-                candle['time'], r"%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=tz.tzutc())
-            candle_price = D(candle['openMid'])
+                candle["time"], r"%Y-%m-%dT%H:%M:%S.%fZ"
+            ).replace(tzinfo=tz.tzutc())
+            candle_price = D(candle["openMid"])
             time_prices.append((candle_dt_utc, candle_price))
     except KeyError:
         logging.error("Unexpected response data: %s", data)
@@ -82,11 +84,10 @@ def _fetch_candles(params):
 
 def _fetch_price(params_dict, time):
     """Fetch a price from OANDA using the given parameters."""
-    ticker = params_dict['instrument']
+    ticker = params_dict["instrument"]
     _, quote_currency = _get_currencies(ticker)
     if quote_currency is None:
-        logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
-                      ticker)
+        logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'", ticker)
         return
 
     time_prices = _fetch_candles(params_dict)
@@ -111,23 +112,23 @@ class Source(source.Source):
         """See contract in beancount.prices.source.Source."""
         time = datetime.datetime.now(tz.tzutc())
         params_dict = {
-            'instrument': ticker,
-            'granularity': 'S5',  # Every two hours.
-            'count': '10',
-            'candleFormat': 'midpoint',
+            "instrument": ticker,
+            "granularity": "S5",  # Every two hours.
+            "count": "10",
+            "candleFormat": "midpoint",
         }
         return _fetch_price(params_dict, time)
 
     def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
         time = time.astimezone(tz.tzutc())
-        query_interval_begin = (time - datetime.timedelta(days=5))
-        query_interval_end = (time + datetime.timedelta(days=1))
+        query_interval_begin = time - datetime.timedelta(days=5)
+        query_interval_end = time + datetime.timedelta(days=1)
         params_dict = {
-            'instrument': ticker,
-            'granularity': 'H2',  # Every two hours.
-            'candleFormat': 'midpoint',
-            'start': query_interval_begin.isoformat('T'),
-            'end': query_interval_end.isoformat('T'),
+            "instrument": ticker,
+            "granularity": "H2",  # Every two hours.
+            "candleFormat": "midpoint",
+            "start": query_interval_begin.isoformat("T"),
+            "end": query_interval_end.isoformat("T"),
         }
         return _fetch_price(params_dict, time)

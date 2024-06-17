@@ -15,8 +15,9 @@ entries, errors, options_map = None, None, None
 
 
 def setup_module():
-    example_filename = path.join(test_utils.find_repository_root(__file__),
-                                 'examples', 'example.beancount')
+    example_filename = path.join(
+        test_utils.find_repository_root(__file__), "examples", "example.beancount"
+    )
     global entries, errors, options_map  # pylint: disable=invalid-name
     entries, errors, options_map = loader.load_file(example_filename)
     assert not errors
@@ -24,14 +25,17 @@ def setup_module():
 
 def runshell(function):
     """Decorate a function to run the shell and return the output."""
+
     def test_function(self):
         def loadfun():
             return entries, errors, options_map
-        with test_utils.capture('stdout') as stdout:
+
+        with test_utils.capture("stdout") as stdout:
             shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
             shell_obj.on_Reload()
             shell_obj.onecmd(function.__doc__)
         return function(self, stdout.getvalue())
+
     return test_function
 
 
@@ -44,7 +48,7 @@ class TestUseCases(unittest.TestCase):
         """
         PRINT FROM narration ~ 'alone'
         """
-        self.assertRegex(output, 'Eating out alone')
+        self.assertRegex(output, "Eating out alone")
 
     @runshell
     def test_accounts(self, output):
@@ -52,52 +56,52 @@ class TestUseCases(unittest.TestCase):
         SELECT DISTINCT account, open_date(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertRegex(output, 'Assets:US:BofA:Checking *2013-01-01')
-        self.assertRegex(output, 'Equity:Opening-Balances *1980-05-12')
-        self.assertRegex(output, 'Expenses:Financial:Commissions *1980-05-12')
+        self.assertRegex(output, "Assets:US:BofA:Checking *2013-01-01")
+        self.assertRegex(output, "Equity:Opening-Balances *1980-05-12")
+        self.assertRegex(output, "Expenses:Financial:Commissions *1980-05-12")
 
     @runshell
     def test_commodities(self, output):
         """
         SELECT DISTINCT currency ORDER BY 1;
         """
-        self.assertRegex(output, 'RGAGX')
-        self.assertRegex(output, 'ITOT')
-        self.assertRegex(output, 'USD')
-        self.assertRegex(output, 'IRAUSD')
+        self.assertRegex(output, "RGAGX")
+        self.assertRegex(output, "ITOT")
+        self.assertRegex(output, "USD")
+        self.assertRegex(output, "IRAUSD")
 
     @runshell
     def test_commodities_cost(self, output):
         """
         SELECT DISTINCT cost_currency ORDER BY 1;
         """
-        self.assertRegex(output, 'USD')
-        self.assertNotRegex(output, 'ITOT')
-        self.assertNotRegex(output, 'IRAUSD')
-        self.assertNotRegex(output, 'RGAGX')
+        self.assertRegex(output, "USD")
+        self.assertNotRegex(output, "ITOT")
+        self.assertNotRegex(output, "IRAUSD")
+        self.assertNotRegex(output, "RGAGX")
 
     @runshell
     def test_commodities_pairs(self, output):
         """
         SELECT DISTINCT currency, cost_currency ORDER BY 1, 2;
         """
-        self.assertRegex(output, 'GLD *USD')
-        self.assertRegex(output, 'VEA *USD')
-        self.assertRegex(output, 'VACHR')
+        self.assertRegex(output, "GLD *USD")
+        self.assertRegex(output, "VEA *USD")
+        self.assertRegex(output, "VACHR")
 
     @runshell
     def test_balances(self, output):
         """
         BALANCES AT cost;
         """
-        self.assertRegex(output, r'Liabilities:US:Chase:Slate *-\d+\.\d+ USD')
+        self.assertRegex(output, r"Liabilities:US:Chase:Slate *-\d+\.\d+ USD")
 
     @runshell
     def test_balances_with_where(self, output):
         """
         JOURNAL 'Vanguard:Cash';
         """
-        self.assertRegex(output, 'Hoogle Payroll')
+        self.assertRegex(output, "Hoogle Payroll")
 
     @runshell
     def test_balance_sheet(self, output):
@@ -105,7 +109,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertRegex(output, r'Assets:US:ETrade:Cash * \d+\.\d+ USD')
+        self.assertRegex(output, r"Assets:US:ETrade:Cash * \d+\.\d+ USD")
 
     @runshell
     def test_income_statement(self, output):
@@ -117,7 +121,8 @@ class TestUseCases(unittest.TestCase):
         ORDER BY account_sortkey(account);
         """
         self.assertRegex(
-            output, 'Expenses:Taxes:Y2014:US:Federal:PreTax401k *17500.00 IRAUSD')
+            output, "Expenses:Taxes:Y2014:US:Federal:PreTax401k *17500.00 IRAUSD"
+        )
 
     @runshell
     def test_journal(self, output):
@@ -126,9 +131,9 @@ class TestUseCases(unittest.TestCase):
         FROM OPEN ON 2014-07-01 CLOSE ON 2014-10-01;
         """
         self.assertRegex(
-            output, "2014-06-30 S *Opening balance for 'Assets:US:BofA:Checking'")
-        self.assertRegex(
-            output, "Transfering accumulated savings to other account")
+            output, "2014-06-30 S *Opening balance for 'Assets:US:BofA:Checking'"
+        )
+        self.assertRegex(output, "Transfering accumulated savings to other account")
 
     @runshell
     def test_conversions(self, output):
@@ -157,14 +162,12 @@ class TestUseCases(unittest.TestCase):
 
 
 class TestRun(unittest.TestCase):
-
     @runshell
     def test_run_custom__list(self, output):
         """
         RUN
         """
-        self.assertEqual("home taxes",
-                         re.sub(r'[] \n\t]+', ' ', output).strip())
+        self.assertEqual("home taxes", re.sub(r"[] \n\t]+", " ", output).strip())
 
     @runshell
     def test_run_custom__query_not_exists(self, output):
@@ -178,30 +181,29 @@ class TestRun(unittest.TestCase):
         """
         RUN taxes
         """
-        self.assertRegex(output, 'date +description +position +balance')
-        self.assertRegex(output, r'Hoogle \| Payroll')
+        self.assertRegex(output, "date +description +position +balance")
+        self.assertRegex(output, r"Hoogle \| Payroll")
 
     @runshell
     def test_run_custom__query_string(self, output):
         """
         RUN "taxes"
         """
-        self.assertRegex(output, 'date +description +position +balance')
-        self.assertRegex(output, r'Hoogle \| Payroll')
+        self.assertRegex(output, "date +description +position +balance")
+        self.assertRegex(output, r"Hoogle \| Payroll")
 
     @runshell
     def test_run_custom__all(self, output):
         """
         RUN *
         """
-        self.assertRegex(output, 'date +description +position +balance')
-        self.assertRegex(output, r'Hoogle \| Payroll')
-        self.assertRegex(output, 'account +total')
-        self.assertRegex(output, 'Expenses:Home:Rent')
+        self.assertRegex(output, "date +description +position +balance")
+        self.assertRegex(output, r"Hoogle \| Payroll")
+        self.assertRegex(output, "account +total")
+        self.assertRegex(output, "Expenses:Home:Rent")
 
 
 class TestShell(test_utils.TestCase):
-
     @test_utils.docfile
     def test_success(self, filename):
         """
@@ -222,7 +224,7 @@ class TestShell(test_utils.TestCase):
           Assets:Account1     -1000 USD
           Assets:Account3       800 EUR @ 1.25 USD
         """
-        with test_utils.capture('stdout', 'stderr') as (stdout, _):
+        with test_utils.capture("stdout", "stderr") as (stdout, _):
             test_utils.run_with_args(shell.main, [filename, "SELECT 1;"])
         self.assertTrue(stdout.getvalue())
 
@@ -230,7 +232,7 @@ class TestShell(test_utils.TestCase):
 __incomplete__ = True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if re.search(r"\.runfiles\b", __file__):
         setup_module()
     unittest.main()

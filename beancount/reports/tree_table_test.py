@@ -12,7 +12,6 @@ from beancount.reports import html_formatter
 
 
 class TestActiveAccounts(unittest.TestCase):
-
     @loader.load_doc()
     def test_is_account_active(self, entries, _, __):
         """
@@ -26,14 +25,15 @@ class TestActiveAccounts(unittest.TestCase):
 
         """
         real_root = realization.realize(entries)
-        self.assertFalse(tree_table.is_account_active(
-            realization.get(real_root, 'Assets:Inactive')))
-        self.assertTrue(tree_table.is_account_active(
-            realization.get(real_root, 'Assets:Active')))
+        self.assertFalse(
+            tree_table.is_account_active(realization.get(real_root, "Assets:Inactive"))
+        )
+        self.assertTrue(
+            tree_table.is_account_active(realization.get(real_root, "Assets:Active"))
+        )
 
 
 class TestTables(unittest.TestCase):
-
     @loader.load_doc()
     def setUp(self, entries, _, __):
         """
@@ -56,36 +56,43 @@ class TestTables(unittest.TestCase):
     def test_tree_table(self):
         oss = io.StringIO()
         for real_node, cells, classes in tree_table.tree_table(
-                oss, self.real_root, None,
-                header=['Account', 'Balance'],
-                classes=['5cdc3b134179']):
-
+            oss,
+            self.real_root,
+            None,
+            header=["Account", "Balance"],
+            classes=["5cdc3b134179"],
+        ):
             if real_node is tree_table.TOTALS_LINE:
-                cells.append('THE_TOTAL')
+                cells.append("THE_TOTAL")
                 continue
             cells.append("<pre>{}</pre>".format(real_node.balance))
         html = oss.getvalue()
-        self.assertRegex(html, '<table')
-        self.assertRegex(html, '3000')
-        self.assertRegex(html, '-3000')
-        self.assertRegex(html, '5cdc3b134179')
-        self.assertRegex(html, 'Assets:US:Checking')
+        self.assertRegex(html, "<table")
+        self.assertRegex(html, "3000")
+        self.assertRegex(html, "-3000")
+        self.assertRegex(html, "5cdc3b134179")
+        self.assertRegex(html, "Assets:US:Checking")
 
     def test_table_of_balances(self):
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         price_map, price_date = {}, None
-        html = tree_table.table_of_balances(self.real_root, price_map, price_date,
-                                            ['USD', 'CAD'], formatter,
-                                            classes=['586e8200b379'])
-        self.assertRegex(html, '<table')
-        self.assertRegex(html, 'USD')
-        self.assertRegex(html, 'CAD')
-        self.assertRegex(html, '586e8200b379')
-        self.assertRegex(html, 'Checking')
+        html = tree_table.table_of_balances(
+            self.real_root,
+            price_map,
+            price_date,
+            ["USD", "CAD"],
+            formatter,
+            classes=["586e8200b379"],
+        )
+        self.assertRegex(html, "<table")
+        self.assertRegex(html, "USD")
+        self.assertRegex(html, "CAD")
+        self.assertRegex(html, "586e8200b379")
+        self.assertRegex(html, "Checking")
 
         # Check that an inactive account is being skipped.
-        self.assertNotRegex(html, 'Inactive')
+        self.assertNotRegex(html, "Inactive")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

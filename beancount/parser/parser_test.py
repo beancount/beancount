@@ -1,6 +1,7 @@
 """
 Tests for parser.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -20,9 +21,9 @@ from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
-
     def test_is_entry_incomplete(self):
-        entries, _, __ = parser.parse_string("""
+        entries, _, __ = parser.parse_string(
+            """
 
           2014-01-27 * "UNION MARKET"
             Liabilities:US:Amex:BlueCash    -22.02 USD
@@ -32,13 +33,14 @@ class TestCompareTestFunctions(unittest.TestCase):
             Liabilities:US:Amex:BlueCash    -22.02 USD
             Expenses:Food:Grocery
 
-        """, dedent=True)
+        """,
+            dedent=True,
+        )
         self.assertFalse(parser.is_entry_incomplete(entries[0]))
         self.assertTrue(parser.is_entry_incomplete(entries[1]))
 
 
 class TestParserDoc(unittest.TestCase):
-
     @parser.parse_doc(expect_errors=None)
     def test_parse_doc__disabled(self, entries, errors, options_map):
         """
@@ -48,7 +50,7 @@ class TestParserDoc(unittest.TestCase):
         """
         self.assertTrue(errors)
 
-    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @unittest.skipIf("/bazel/" in __file__, "Skipping test in Bazel")
     @mark.xfail
     @parser.parse_doc(expect_errors=False)
     def test_parse_doc__errors(self, _, __, ___):
@@ -58,7 +60,7 @@ class TestParserDoc(unittest.TestCase):
           Assets:US:Cash             -100 USD
         """
 
-    @unittest.skipIf('/bazel/' in __file__, "Skipping test in Bazel")
+    @unittest.skipIf("/bazel/" in __file__, "Skipping test in Bazel")
     @mark.xfail
     @parser.parse_doc(expect_errors=True)
     def test_parse_doc__noerrors(self, _, __, ___):
@@ -84,7 +86,7 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_parse_filename(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
+        with tempfile.NamedTemporaryFile("w", suffix=".beancount") as file:
             file.write(self.INPUT)
             file.flush()
             entries, errors, _ = parser.parse_file(file.name)
@@ -92,8 +94,8 @@ class TestParserInputs(unittest.TestCase):
             self.assertEqual(0, len(errors))
 
     def test_parse_file(self):
-        with tempfile.TemporaryFile('w+b', suffix='.beancount') as file:
-            file.write(self.INPUT.encode('utf-8'))
+        with tempfile.TemporaryFile("w+b", suffix=".beancount") as file:
+            file.write(self.INPUT.encode("utf-8"))
             file.seek(0)
             entries, errors, _ = parser.parse_file(file)
             self.assertEqual(1, len(entries))
@@ -106,13 +108,14 @@ class TestParserInputs(unittest.TestCase):
         assert not errors, "Errors: {}".format(errors)
 
     def test_parse_stdin(self):
-        env = test_utils.subprocess_env() if 'bazel' not in __file__ else None
-        code = ('import beancount.parser.parser_test as p; '
-                'p.TestParserInputs.parse_stdin()')
-        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=env,
-                                stdin=subprocess.PIPE)
-        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
+        env = test_utils.subprocess_env() if "bazel" not in __file__ else None
+        code = (
+            "import beancount.parser.parser_test as p; " "p.TestParserInputs.parse_stdin()"
+        )
+        pipe = subprocess.Popen(
+            [sys.executable, "-c", code, __file__], env=env, stdin=subprocess.PIPE
+        )
+        output, errors = pipe.communicate(self.INPUT.encode("utf-8"))
         self.assertEqual(0, pipe.returncode)
 
     def test_parse_None(self):
@@ -126,7 +129,6 @@ class TestParserInputs(unittest.TestCase):
 
 
 class TestUnicodeErrors(unittest.TestCase):
-
     test_utf8_string = textwrap.dedent("""
       2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
     """)
@@ -139,7 +141,7 @@ class TestUnicodeErrors(unittest.TestCase):
 
     # Test providing utf8 bytes to the lexer.
     def test_bytes_encoded_utf8(self):
-        utf8_bytes = self.test_utf8_string.encode('utf8')
+        utf8_bytes = self.test_utf8_string.encode("utf8")
         entries, errors, _ = parser.parse_string(utf8_bytes)
         self.assertEqual(1, len(entries))
         self.assertFalse(errors)
@@ -148,7 +150,7 @@ class TestUnicodeErrors(unittest.TestCase):
 
     # Test providing latin1 bytes to the lexer when it is expecting utf8.
     def test_bytes_encoded_incorrect(self):
-        latin1_bytes = self.test_utf8_string.encode('latin1')
+        latin1_bytes = self.test_utf8_string.encode("latin1")
         entries, errors, _ = parser.parse_string(latin1_bytes)
         self.assertEqual(1, len(entries))
         self.assertFalse(errors)
@@ -158,8 +160,8 @@ class TestUnicodeErrors(unittest.TestCase):
 
     # Test providing latin1 bytes to the lexer with an encoding.
     def test_bytes_encoded_latin1(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='latin1')
+        latin1_bytes = self.test_latin1_string.encode("latin1")
+        entries, errors, _ = parser.parse_string(latin1_bytes, encoding="latin1")
         self.assertEqual(1, len(entries))
         self.assertFalse(errors)
         # Check that the lexer correctly parsed the latin1 string.
@@ -167,22 +169,21 @@ class TestUnicodeErrors(unittest.TestCase):
 
     # Test using a garbage invalid encoding.
     def test_bytes_encoded_invalid(self):
-        latin1_bytes = self.test_latin1_string.encode('latin1')
-        entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
+        latin1_bytes = self.test_latin1_string.encode("latin1")
+        entries, errors, _ = parser.parse_string(latin1_bytes, encoding="garbage")
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "unknown encoding")
         self.assertFalse(entries)
 
 
 class TestTestUtils(unittest.TestCase):
-
     def test_parse_many(self):
         with self.assertRaises(AssertionError):
             entries = parser.parse_many("""
               2014-12-15 * 2014-12-15
             """)
 
-        number = D('101.23')
+        number = D("101.23")
         entries = parser.parse_many("""
           2014-12-15 * "Payee" "Narration"
             Assets:Checking   {number} USD
@@ -205,9 +206,8 @@ class TestTestUtils(unittest.TestCase):
         self.assertTrue(isinstance(entry, data.Transaction))
 
 
-@unittest.skipUnless(hasattr(sys, 'getrefcount'), 'requires sys.getrefcount()')
+@unittest.skipUnless(hasattr(sys, "getrefcount"), "requires sys.getrefcount()")
 class TestReferenceCounting(unittest.TestCase):
-
     def test_parser_lex(self):
         # Do not use a string to avoid issues due to string interning.
         name = object()
@@ -330,7 +330,6 @@ class TestReferenceCounting(unittest.TestCase):
 
 
 class TestLineno(unittest.TestCase):
-
     def test_lex(self):
         f = io.BytesIO(b"1.0")
         builder = lexer.LexBuilder()
@@ -352,36 +351,37 @@ class TestLineno(unittest.TestCase):
         builder = grammar.Builder()
         parser = _parser.Parser(builder)
         parser.parse(f)
-        self.assertEqual(builder.entries[0].meta['lineno'], 1)
+        self.assertEqual(builder.entries[0].meta["lineno"], 1)
 
     def test_parse_lineno(self):
         f = io.BytesIO(b"2020-07-30 open Assets:Test")
         builder = grammar.Builder()
         parser = _parser.Parser(builder)
         parser.parse(f, lineno=42)
-        self.assertEqual(builder.entries[0].meta['lineno'], 42)
+        self.assertEqual(builder.entries[0].meta["lineno"], 42)
 
     def test_parse_string(self):
         entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")
-        self.assertEqual(entries[0].meta['lineno'], 1)
+        self.assertEqual(entries[0].meta["lineno"], 1)
 
     def test_parse_string_lineno(self):
-        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test",
-                                                       report_firstline=42)
-        self.assertEqual(entries[0].meta['lineno'], 42)
+        entries, errors, options = parser.parse_string(
+            b"2020-07-30 open Assets:Test", report_firstline=42
+        )
+        self.assertEqual(entries[0].meta["lineno"], 42)
 
     @parser.parse_doc()
     def test_parse_doc(self, entries, errors, _):
         """
-          2013-01-01 open Assets:US:Cash
+        2013-01-01 open Assets:US:Cash
 
-          2013-05-18 * "Nice dinner at Mermaid Inn"
-            Expenses:Restaurant         100 USD
-            Assets:US:Cash             -100 USD
+        2013-05-18 * "Nice dinner at Mermaid Inn"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
 
-          2013-05-19 balance  Assets:US:Cash   -100 USD
+        2013-05-19 balance  Assets:US:Cash   -100 USD
 
-          2013-05-20 note  Assets:US:Cash   "Something"
+        2013-05-20 note  Assets:US:Cash   "Something"
         """
 
         with open(__file__) as f:
@@ -390,11 +390,11 @@ class TestLineno(unittest.TestCase):
                     break
 
         self.assertEqual(len(entries), 4)
-        self.assertEqual(entries[0].meta['lineno'], lineno)
-        self.assertEqual(entries[1].meta['lineno'], lineno + 2)
-        self.assertEqual(entries[2].meta['lineno'], lineno + 6)
-        self.assertEqual(entries[3].meta['lineno'], lineno + 8)
+        self.assertEqual(entries[0].meta["lineno"], lineno)
+        self.assertEqual(entries[1].meta["lineno"], lineno + 2)
+        self.assertEqual(entries[2].meta["lineno"], lineno + 6)
+        self.assertEqual(entries[3].meta["lineno"], lineno + 8)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

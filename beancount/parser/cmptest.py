@@ -1,5 +1,5 @@
-"""Support utilities for testing scripts.
-"""
+"""Support utilities for testing scripts."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -9,6 +9,7 @@ import textwrap
 
 # TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
 from beancount.utils import test_utils
+
 test_utils.remove_alt_csv_path()
 import pytest  # pylint: disable=wrong-import-order
 
@@ -38,8 +39,7 @@ def read_string_or_entries(entries_or_str, allow_incomplete=False):
       A list of directives.
     """
     if isinstance(entries_or_str, str):
-        entries, errors, options_map = parser.parse_string(
-            textwrap.dedent(entries_or_str))
+        entries, errors, options_map = parser.parse_string(textwrap.dedent(entries_or_str))
 
         if allow_incomplete:
             # Do a simplistic local conversion in order to call the comparison.
@@ -90,8 +90,7 @@ def _local_booking(entry):
         if posting.units is MISSING:
             posting = posting._replace(units=None)
         elif posting.units:
-            posting = posting._replace(
-                units=_transform_incomplete_amount(posting.units))
+            posting = posting._replace(units=_transform_incomplete_amount(posting.units))
 
         # Fixup cost.
         cost = posting.cost
@@ -108,16 +107,17 @@ def _local_booking(entry):
                 cost = cost._replace(label=None)
             if cost.number_total not in (None, MISSING):
                 if not isinstance(posting.units, amount.Amount):
-                    raise ValueError("Cannot convert posting without units: {}".format(
-                        orig_posting))
+                    raise ValueError(
+                        "Cannot convert posting without units: {}".format(orig_posting)
+                    )
                 number = posting.units.number
-                total = ((cost.number_per or ZERO) * number +
-                         (cost.number_total or ZERO))
+                total = (cost.number_per or ZERO) * number + (cost.number_total or ZERO)
                 cost_number = (total / number) or None
             else:
                 cost_number = None if cost.number_per is MISSING else cost.number_per
-            posting = posting._replace(cost=position.Cost(
-                cost_number, cost.currency, cost.date, cost.label))
+            posting = posting._replace(
+                cost=position.Cost(cost_number, cost.currency, cost.date, cost.label)
+            )
             assert cost.date is not MISSING
             assert cost.label is not MISSING
 
@@ -125,8 +125,7 @@ def _local_booking(entry):
         if posting.price is MISSING:
             posting = posting._replace(price=None)
         elif posting.price:
-            posting = posting._replace(
-                price=_transform_incomplete_amount(posting.price))
+            posting = posting._replace(price=_transform_incomplete_amount(posting.price))
 
         new_postings.append(posting)
     return entry._replace(postings=new_postings)
@@ -141,14 +140,13 @@ def _transform_incomplete_amount(amt):
     return amt
 
 
-
-
 class TestCase(unittest.TestCase):
-
     def assertEqualEntries(self, expected_entries, actual_entries):
         return assertEqualEntries(expected_entries, actual_entries, self.fail)
+
     def assertIncludesEntries(self, subset_entries, entries):
         return assertIncludesEntries(subset_entries, entries, self.fail)
+
     def assertExcludesEntries(self, subset_entries, entries):
         return assertExcludesEntries(subset_entries, entries, self.fail)
 
@@ -156,8 +154,9 @@ class TestCase(unittest.TestCase):
 DEFAULT_FAILFUNC = pytest.fail
 
 
-def assertEqualEntries(expected_entries, actual_entries,
-                       failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
+def assertEqualEntries(
+    expected_entries, actual_entries, failfunc=DEFAULT_FAILFUNC, allow_incomplete=False
+):
     """Compare two lists of entries exactly and print missing entries verbosely if
     they occur.
 
@@ -176,27 +175,30 @@ def assertEqualEntries(expected_entries, actual_entries,
     expected_entries = read_string_or_entries(expected_entries, allow_incomplete)
     actual_entries = read_string_or_entries(actual_entries, allow_incomplete)
 
-    same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
-                                                                     actual_entries)
+    same, expected_missing, actual_missing = compare.compare_entries(
+        expected_entries, actual_entries
+    )
     if not same:
         assert expected_missing or actual_missing, "Missing is missing: {}, {}".format(
-            expected_missing, actual_missing)
+            expected_missing, actual_missing
+        )
         oss = io.StringIO()
         if expected_missing:
             oss.write("Present in expected set and not in actual set:\n\n")
             for entry in expected_missing:
                 oss.write(printer.format_entry(entry))
-                oss.write('\n')
+                oss.write("\n")
         if actual_missing:
             oss.write("Present in actual set and not in expected set:\n\n")
             for entry in actual_missing:
                 oss.write(printer.format_entry(entry))
-                oss.write('\n')
+                oss.write("\n")
         failfunc(oss.getvalue())
 
 
-def assertIncludesEntries(subset_entries, entries,
-                          failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
+def assertIncludesEntries(
+    subset_entries, entries, failfunc=DEFAULT_FAILFUNC, allow_incomplete=False
+):
     """Check that subset_entries is included in entries and print missing entries.
 
     Args:
@@ -222,12 +224,13 @@ def assertIncludesEntries(subset_entries, entries,
             oss.write("Missing from from expected set:\n\n")
             for entry in missing:
                 oss.write(printer.format_entry(entry))
-                oss.write('\n')
+                oss.write("\n")
         failfunc(oss.getvalue())
 
 
-def assertExcludesEntries(subset_entries, entries,
-                          failfunc=DEFAULT_FAILFUNC, allow_incomplete=False):
+def assertExcludesEntries(
+    subset_entries, entries, failfunc=DEFAULT_FAILFUNC, allow_incomplete=False
+):
     """Check that subset_entries is not included in entries and print extra entries.
 
     Args:
@@ -253,5 +256,5 @@ def assertExcludesEntries(subset_entries, entries,
             oss.write("Extra from from first/excluded set:\n\n")
             for entry in extra:
                 oss.write(printer.format_entry(entry))
-                oss.write('\n')
+                oss.write("\n")
         failfunc(oss.getvalue())

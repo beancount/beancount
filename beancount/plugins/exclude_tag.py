@@ -11,12 +11,13 @@ https://groups.google.com/d/msg/ledger-cli/N8Slh2t45K0/aAz0i3Be4LYJ
 
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
-__plugins__ = ('exclude_tag',)
+__plugins__ = ("exclude_tag",)
 
 from beancount.core import data
 
 
-EXCLUDED_TAG = 'virtual'
+EXCLUDED_TAG = "virtual"
+
 
 def exclude_tag(entries, options_map):
     """Select all transactions that do not have a #virtual tag.
@@ -27,9 +28,13 @@ def exclude_tag(entries, options_map):
     Returns:
       A tuple of entries and errors.
     """
-    filtered_entries = [entry
-                        for entry in entries
-                        if (not isinstance(entry, data.Transaction) or
-                            not entry.tags or
-                            EXCLUDED_TAG not in entry.tags)]
+    filtered_entries = [
+        entry
+        for entry in entries
+        if (
+            not isinstance(entry, data.Transaction)
+            or not entry.tags
+            or EXCLUDED_TAG not in entry.tags
+        )
+    ]
     return (filtered_entries, [])

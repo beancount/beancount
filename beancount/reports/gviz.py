@@ -1,13 +1,14 @@
 """
 Support for creating Google gviz timeline charts.
 """
+
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import io
 
 
-def gviz_timeline(time_array, data_array_map, css_id='chart'):
+def gviz_timeline(time_array, data_array_map, css_id="chart"):
     """Create a HTML rendering of the given arrays.
 
     Args:
@@ -27,8 +28,9 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     # Write preamble.
     oss = io.StringIO()
 
-    oss.write('<script src="https://www.google.com/jsapi" type="text/javascript">'
-              '</script>\n')
+    oss.write(
+        '<script src="https://www.google.com/jsapi" type="text/javascript">' "</script>\n"
+    )
     oss.write('<script type="text/javascript">\n')
 
     oss.write("""\
@@ -38,21 +40,22 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
       """)
 
     # Declare columns.
-    oss.write("data.addColumn('{}', '{}');\n".format('datetime', 'Time'))
+    oss.write("data.addColumn('{}', '{}');\n".format("datetime", "Time"))
     for name, _ in data_array_map:
-        oss.write("data.addColumn('{}', '{}');\n".format('number', name))
+        oss.write("data.addColumn('{}', '{}');\n".format("number", name))
 
     # Render the rows.
-    oss.write('data.addRows([\n')
+    oss.write("data.addRows([\n")
 
     datalists = [x[1] for x in data_array_map]
 
     for dtime, datas in zip(time_array, zip(*datalists)):
-        js_datetime = ('Date({0.year}, {0.month}, {0.day})').format(dtime)
-        oss.write('  [new {}, {}],\n'.format(js_datetime, ', '.join(map(str, datas))))
-    oss.write(']);\n')
+        js_datetime = ("Date({0.year}, {0.month}, {0.day})").format(dtime)
+        oss.write("  [new {}, {}],\n".format(js_datetime, ", ".join(map(str, datas))))
+    oss.write("]);\n")
 
-    oss.write("""
+    oss.write(
+        """
         var annotatedtimeline = new google.visualization.AnnotatedTimeLine(
             document.getElementById('{css_id}')
         );
@@ -66,8 +69,9 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
       }}
 
       google.setOnLoadCallback(draw);
-    """.format(css_id=css_id))
+    """.format(css_id=css_id)
+    )
 
-    oss.write('</script>\n')
+    oss.write("</script>\n")
 
     return oss.getvalue()

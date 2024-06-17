@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Filter to process docx input.
-"""
+"""Filter to process docx input."""
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,7 +10,7 @@ import pandocfilters
 
 
 def caps(key, value, format, meta):
-    if key == 'BlockQuote':
+    if key == "BlockQuote":
         print(value, file=sys.stderr)
 
 

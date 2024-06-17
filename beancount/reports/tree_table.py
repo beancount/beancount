@@ -1,5 +1,5 @@
-"""Routines to render an HTML table with a tree of accounts.
-"""
+"""Routines to render an HTML table with a tree of accounts."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -59,21 +59,21 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
       last line, the 'real_account' object will be a special sentinel value to
       indicate that it is meant to render the totals line: TOTALS_LINE.
     """
-    write = lambda data: (oss.write(data), oss.write('\n'))
+    write = lambda data: (oss.write(data), oss.write("\n"))
 
     classes = list(classes) if classes else []
-    classes.append('tree-table')
-    write('<table class="{}">'.format(' '.join(classes) if classes else ''))
+    classes.append("tree-table")
+    write('<table class="{}">'.format(" ".join(classes) if classes else ""))
 
     if header:
-        write('<thead>')
-        write('<tr>')
+        write("<thead>")
+        write("<tr>")
         header_iter = iter(header)
         write('<th class="first">{}</th>'.format(next(header_iter)))
         for column in header_iter:
-            write('<th>{}</th>'.format(column))
-        write('</tr>')
-        write('</thead>')
+            write("<th>{}</th>".format(column))
+        write("</tr>")
+        write("</thead>")
 
     # Note: This code eventually should be reworked to be agnostic regarding
     # text or HTML output rendering.
@@ -96,14 +96,16 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
             continue
 
         # Render the row
-        write('<tr class="{}">'.format(' '.join(row_classes)))
+        write('<tr class="{}">'.format(" ".join(row_classes)))
 
         if real_acc is TOTALS_LINE:
             label = '<span class="totals-label"></span>'
         else:
-            label = (formatter.render_account(real_acc.account)
-                     if formatter
-                     else real_acc.account)
+            label = (
+                formatter.render_account(real_acc.account)
+                if formatter
+                else real_acc.account
+            )
 
         write('<td class="tree-node-name">{}</td>'.format(label))
 
@@ -111,14 +113,14 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
         for cell in cells:
             write('<td class="num">{}</td>'.format(cell))
 
-        write('</tr>')
+        write("</tr>")
 
-    write('</table>')
+    write("</table>")
 
 
-def table_of_balances(real_root, price_map, price_date,
-                      operating_currencies, formatter,
-                      classes=None):
+def table_of_balances(
+    real_root, price_map, price_date, operating_currencies, formatter, classes=None
+):
     """Render a tree table with the balance of each accounts.
 
     Args:
@@ -133,34 +135,36 @@ def table_of_balances(real_root, price_map, price_date,
     Returns:
       A string with HTML contents, the rendered table.
     """
-    header = ['Account'] + operating_currencies + ['Other']
+    header = ["Account"] + operating_currencies + ["Other"]
 
     # Pre-calculate which accounts should be rendered.
     real_active = realization.filter(real_root, is_account_active)
     if real_active:
-        active_set = {real_account.account
-                      for real_account in realization.iter_children(real_active)}
+        active_set = {
+            real_account.account for real_account in realization.iter_children(real_active)
+        }
     else:
         active_set = set()
 
     balance_totals = inventory.Inventory()
     oss = io.StringIO()
     classes = list(classes) if classes else []
-    classes.append('fullwidth')
-    for real_account, cells, row_classes in tree_table(oss, real_root, formatter,
-                                                       header, classes):
-
+    classes.append("fullwidth")
+    for real_account, cells, row_classes in tree_table(
+        oss, real_root, formatter, header, classes
+    ):
         if real_account is TOTALS_LINE:
             line_balance = balance_totals
-            row_classes.append('totals')
+            row_classes.append("totals")
         else:
             # Check if this account has had activity; if not, skip rendering it.
-            if (real_account.account not in active_set and
-                not account_types.is_root_account(real_account.account)):
+            if real_account.account not in active_set and not account_types.is_root_account(
+                real_account.account
+            ):
                 continue
 
             if real_account.account is None:
-                row_classes.append('parent-node')
+                row_classes.append("parent-node")
 
             # For each account line, get the final balance of the account at
             # latest market value.
@@ -176,17 +180,20 @@ def table_of_balances(real_root, price_map, price_date,
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
             units = ccy_dict[currency].get_currency_units(currency)
-            cells.append(formatter.render_number(units.number, units.currency)
-                         if units.number != ZERO
-                         else '')
+            cells.append(
+                formatter.render_number(units.number, units.currency)
+                if units.number != ZERO
+                else ""
+            )
 
         # Render all the rest of the inventory in the last cell.
         if None in ccy_dict:
             ccy_balance = ccy_dict[None]
-            last_cell = '<br/>'.join(formatter.render_amount(pos.units)
-                                     for pos in sorted(ccy_balance))
+            last_cell = "<br/>".join(
+                formatter.render_amount(pos.units) for pos in sorted(ccy_balance)
+            )
         else:
-            last_cell = ''
+            last_cell = ""
         cells.append(last_cell)
 
     return oss.getvalue()

@@ -9,6 +9,7 @@ If you don't specify a name for the subaccount (the configuration value is
 optional), by default it inserts the unrealized gains in the same account that
 is being adjusted.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,10 +27,10 @@ from beancount.core import prices
 from beancount.parser import options
 
 
-__plugins__ = ('add_unrealized_gains',)
+__plugins__ = ("add_unrealized_gains",)
 
 
-UnrealizedError = collections.namedtuple('UnrealizedError', 'source message entry')
+UnrealizedError = collections.namedtuple("UnrealizedError", "source message entry")
 
 
 def add_unrealized_gains(entries, options_map, subaccount=None):
@@ -52,7 +53,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
       at the end, and a list of errors. The new list of entries is still sorted.
     """
     errors = []
-    meta = data.new_metadata('<unrealized_gains>', 0)
+    meta = data.new_metadata("<unrealized_gains>", 0)
 
     account_types = options.get_account_types(options_map)
 
@@ -61,9 +62,10 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         validation_account = account.join(account_types.assets, subaccount)
         if not account.is_valid(validation_account):
             errors.append(
-                UnrealizedError(meta,
-                                "Invalid subaccount name: '{}'".format(subaccount),
-                                None))
+                UnrealizedError(
+                    meta, "Invalid subaccount name: '{}'".format(subaccount), None
+                )
+            )
             return entries, errors
 
     if not entries:
@@ -75,7 +77,8 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
 
     # Group positions by (account, cost, cost_currency).
     holdings_list = holdings.aggregate_holdings_by(
-        holdings_list, lambda h: (h.account, h.currency, h.cost_currency))
+        holdings_list, lambda h: (h.account, h.currency, h.cost_currency)
+    )
 
     # Get the latest prices from the entries.
     price_map = prices.build_price_map(entries)
@@ -84,8 +87,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     new_entries = []
     latest_date = entries[-1].date
     for index, holding in enumerate(holdings_list):
-        if (holding.currency == holding.cost_currency or
-            holding.cost_currency is None):
+        if holding.currency == holding.cost_currency or holding.cost_currency is None:
             continue
 
         # Note: since we're only considering positions held at cost, the
@@ -97,9 +99,13 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             # resulting from leaked cost basis. {0ed05c502e63, b/16}
             if holding.number:
                 errors.append(
-                    UnrealizedError(meta,
-                                    "A valid price for {h.currency}/{h.cost_currency} "
-                                    "could not be found".format(h=holding), None))
+                    UnrealizedError(
+                        meta,
+                        "A valid price for {h.currency}/{h.cost_currency} "
+                        "could not be found".format(h=holding),
+                        None,
+                    )
+                )
             continue
 
         # Compute the PnL; if there is no profit or loss, we create a
@@ -113,28 +119,40 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                     meta,
                     "Number of units of {} in {} in holdings sum to zero "
                     "for account {} and should not".format(
-                        holding.currency, holding.cost_currency, holding.account),
-                    None))
+                        holding.currency, holding.cost_currency, holding.account
+                    ),
+                    None,
+                )
+            )
             continue
 
         # Compute the name of the accounts and add the requested subaccount name
         # if requested.
         asset_account = holding.account
-        income_account = account.join(account_types.income,
-                                      account.sans_root(holding.account))
+        income_account = account.join(
+            account_types.income, account.sans_root(holding.account)
+        )
         if subaccount:
             asset_account = account.join(asset_account, subaccount)
             income_account = account.join(income_account, subaccount)
 
         # Create a new transaction to account for this difference in gain.
         gain_loss_str = "gain" if pnl > ZERO else "loss"
-        narration = ("Unrealized {} for {h.number} units of {h.currency} "
-                     "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
-                     "average cost: {h.cost_number:.4f} {h.cost_currency})").format(
-                         gain_loss_str, h=holding)
-        entry = data.Transaction(data.new_metadata(meta["filename"], lineno=1000 + index),
-                                 latest_date, flags.FLAG_UNREALIZED,
-                                 None, narration, EMPTY_SET, EMPTY_SET, [])
+        narration = (
+            "Unrealized {} for {h.number} units of {h.currency} "
+            "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
+            "average cost: {h.cost_number:.4f} {h.cost_currency})"
+        ).format(gain_loss_str, h=holding)
+        entry = data.Transaction(
+            data.new_metadata(meta["filename"], lineno=1000 + index),
+            latest_date,
+            flags.FLAG_UNREALIZED,
+            None,
+            narration,
+            EMPTY_SET,
+            EMPTY_SET,
+            [],
+        )
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitrary choice--maybe it would be best to
@@ -142,31 +160,33 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # user specify this.
         #
         # Note: we never set a price because we don't want these to end up in Conversions.
-        entry.postings.extend([
-            data.Posting(
-                asset_account,
-                amount.Amount(pnl, holding.cost_currency),
-                None,
-                None,
-                None,
-                None),
-            data.Posting(
-                income_account,
-                amount.Amount(-pnl, holding.cost_currency),
-                None,
-                None,
-                None,
-                None)
-        ])
+        entry.postings.extend(
+            [
+                data.Posting(
+                    asset_account,
+                    amount.Amount(pnl, holding.cost_currency),
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting(
+                    income_account,
+                    amount.Amount(-pnl, holding.cost_currency),
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ]
+        )
 
         new_entries.append(entry)
 
     # Ensure that the accounts we're going to use to book the postings exist, by
     # creating open entries for those that we generated that weren't already
     # existing accounts.
-    new_accounts = {posting.account
-                    for entry in new_entries
-                    for posting in entry.postings}
+    new_accounts = {posting.account for entry in new_entries for posting in entry.postings}
     open_entries = getters.get_account_open_close(entries)
     new_open_entries = []
     for account_ in sorted(new_accounts):
@@ -186,7 +206,8 @@ def get_unrealized_entries(entries):
     Returns:
       A list of directives, all of which are in the original list.
     """
-    return [entry
-            for entry in entries
-            if (isinstance(entry, data.Transaction) and
-                entry.flag == flags.FLAG_UNREALIZED)]
+    return [
+        entry
+        for entry in entries
+        if (isinstance(entry, data.Transaction) and entry.flag == flags.FLAG_UNREALIZED)
+    ]

@@ -1,5 +1,5 @@
-"""Reports to Export to third-party portfolio sites.
-"""
+"""Reports to Export to third-party portfolio sites."""
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -25,7 +25,7 @@ from beancount.reports import base
 
 
 # The name of the metadata field used by this report.
-FIELD = 'export'
+FIELD = "export"
 
 
 # An entry to be exported.
@@ -39,7 +39,8 @@ FIELD = 'export'
 #   memo: A string to be attached to the export.
 #   holdings: The list of holdings that this position was create for.
 ExportEntry = collections.namedtuple(
-    'ExportEntry', 'symbol cost_currency number cost_number mutual_fund memo holdings')
+    "ExportEntry", "symbol cost_currency number cost_number mutual_fund memo holdings"
+)
 
 
 def is_mutual_fund(ticker):
@@ -50,7 +51,7 @@ def is_mutual_fund(ticker):
     Returns:
       A boolean, true for mutual funds.
     """
-    return bool(re.match('MUTF.*:', ticker))
+    return bool(re.match("MUTF.*:", ticker))
 
 
 def classify_holdings_for_export(holdings_list, commodities_map):
@@ -72,19 +73,22 @@ def classify_holdings_for_export(holdings_list, commodities_map):
     action_holdings = []
     for holding in holdings_list:
         # Get export field and remove (MONEY:...) specifications.
-        export = re.sub(r'\(.*\)', '', exports.get(holding.currency, None) or '').strip()
+        export = re.sub(r"\(.*\)", "", exports.get(holding.currency, None) or "").strip()
         if export:
             if export.upper() == "CASH":
-                action_holdings.append(('CASH', holding))
+                action_holdings.append(("CASH", holding))
             elif export.upper() == "IGNORE":
-                action_holdings.append(('IGNORE', holding))
+                action_holdings.append(("IGNORE", holding))
             else:
                 action_holdings.append((export, holding))
         else:
-            logging.warning(("Exporting holding using default commodity name '{}'; this "
-                             "can potentially break the OFX import. Consider providing "
-                             "'export' metadata for your commodities.").format(
-                                 holding.currency))
+            logging.warning(
+                (
+                    "Exporting holding using default commodity name '{}'; this "
+                    "can potentially break the OFX import. Consider providing "
+                    "'export' metadata for your commodities."
+                ).format(holding.currency)
+            )
             action_holdings.append((holding.currency, holding))
 
     return action_holdings
@@ -101,13 +105,14 @@ def get_money_instruments(commodities_map):
     """
     instruments = {}
     for currency, entry in commodities_map.items():
-        export = entry.meta.get(FIELD, '')
-        paren_match = re.search(r'\((.*)\)', export)
+        export = entry.meta.get(FIELD, "")
+        paren_match = re.search(r"\((.*)\)", export)
         if paren_match:
-            match = re.match('MONEY:({})'.format(amount.CURRENCY_RE), paren_match.group(1))
+            match = re.match("MONEY:({})".format(amount.CURRENCY_RE), paren_match.group(1))
             if match:
                 instruments[match.group(1)] = (
-                    re.sub(r'\(.*\)', '', export).strip() or currency)
+                    re.sub(r"\(.*\)", "", export).strip() or currency
+                )
             else:
                 logging.error("Invalid money specification: %s", export)
 
@@ -137,13 +142,14 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
     # Get the desired list of holdings.
     holdings_list, price_map = holdings.get_assets_holdings(entries, options_map)
     commodities = getters.get_commodity_directives(entries)
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
 
     # Aggregate the holdings, if requested. Google Finance is notoriously
     # finnicky and if you have many holdings this might help.
     if aggregate_by_commodity:
-        holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                       lambda holding: holding.currency)
+        holdings_list = holdings.aggregate_holdings_by(
+            holdings_list, lambda holding: holding.currency
+        )
 
     # Classify all the holdings for export.
     action_holdings = classify_holdings_for_export(holdings_list, commodities)
@@ -168,13 +174,16 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
             cost_currency = holding.cost_currency
 
         exported.append(
-            ExportEntry(symbol,
-                        cost_currency,
-                        holding.number,
-                        cost_number,
-                        is_mutual_fund(symbol),
-                        holding.account if promiscuous else '',
-                        [holding]))
+            ExportEntry(
+                symbol,
+                cost_currency,
+                holding.number,
+                cost_number,
+                is_mutual_fund(symbol),
+                holding.account if promiscuous else "",
+                [holding],
+            )
+        )
 
     # Convert all the cash entries to their book and market value by currency.
     cash_holdings_map = collections.defaultdict(list)
@@ -237,13 +246,16 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
         assert isinstance(book_value, Decimal)
         assert isinstance(market_value, Decimal)
         converted.append(
-            ExportEntry(symbol,
-                        money_currency,
-                        dcontext.quantize(market_value, money_currency),
-                        dcontext.quantize(book_value / market_value, money_currency),
-                        is_mutual_fund(symbol),
-                        '',
-                        holdings_list))
+            ExportEntry(
+                symbol,
+                money_currency,
+                dcontext.quantize(market_value, money_currency),
+                dcontext.quantize(book_value / market_value, money_currency),
+                is_mutual_fund(symbol),
+                "",
+                holdings_list,
+            )
+        )
 
     # Add all ignored holdings to a final list.
     for symbol, holding in action_holdings:
@@ -261,11 +273,10 @@ def render_ofx_date(dtime):
     Returns:
       A string, rendered to milliseconds.
     """
-    return '{}.{:03d}'.format(dtime.strftime('%Y%m%d%H%M%S'),
-                              int(dtime.microsecond / 1000))
+    return "{}.{:03d}".format(dtime.strftime("%Y%m%d%H%M%S"), int(dtime.microsecond / 1000))
 
 
-def get_symbol(sources, prefer='google'):
+def get_symbol(sources, prefer="google"):
     """Filter a source specification to some corresponding ticker.
 
     Args:
@@ -281,16 +292,15 @@ def get_symbol(sources, prefer='google'):
     # If the ticker is a list of <source>/<symbol>, extract the symbol
     # from it.
     symbol_items = []
-    for source in map(str.strip, sources.split(',')):
-        match = re.match('([a-zA-Z][a-zA-Z0-9._]+)/(.*)', source)
+    for source in map(str.strip, sources.split(",")):
+        match = re.match("([a-zA-Z][a-zA-Z0-9._]+)/(.*)", source)
         if match:
             source, symbol = match.groups()
         else:
             source, symbol = None, source
         symbol_items.append((source, symbol))
     if not symbol_items:
-        raise ValueError(
-            'Invalid source "{}" does not contain a ticker'.format(sources))
+        raise ValueError('Invalid source "{}" does not contain a ticker'.format(sources))
     symbol_map = dict(symbol_items)
     # If not found, return the first symbol in the list of items.
     return symbol_map.get(prefer, symbol_items[0][1])
@@ -299,8 +309,8 @@ def get_symbol(sources, prefer='google'):
 class ExportPortfolioReport(base.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
-    names = ['export_holdings', 'export_portfolio', 'pfexport', 'exportpf']
-    default_format = 'ofx'
+    names = ["export_holdings", "export_portfolio", "pfexport", "exportpf"]
+    default_format = "ofx"
 
     PREFIX = textwrap.dedent("""\
         OFXHEADER:100
@@ -408,52 +418,79 @@ class ExportPortfolioReport(base.TableReport):
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('-d', '--debug', action='store_true',
-                            help="Output position export debugging information on stderr.")
+        parser.add_argument(
+            "-d",
+            "--debug",
+            action="store_true",
+            help="Output position export debugging information on stderr.",
+        )
 
-        parser.add_argument('-p', '--promiscuous', action='store_true',
-                            help=("Include title and account names in memos. "
-                                  "Use this if you trust wherever you upload."))
+        parser.add_argument(
+            "-p",
+            "--promiscuous",
+            action="store_true",
+            help=(
+                "Include title and account names in memos. "
+                "Use this if you trust wherever you upload."
+            ),
+        )
 
-        parser.add_argument('-a', '--aggregate-by-commodity', action='store_true',
-                            help=("Group the holdings by account. This may help if your "
-                                  "portfolio fails to import and you have many holdings."))
+        parser.add_argument(
+            "-a",
+            "--aggregate-by-commodity",
+            action="store_true",
+            help=(
+                "Group the holdings by account. This may help if your "
+                "portfolio fails to import and you have many holdings."
+            ),
+        )
 
-    EXPORT_FORMAT = ("{atype}  "
-                     "{0.number:10.2f} {0.symbol:16}  "
-                     "{cost_number:10.2f} {0.cost_currency:16}  "
-                     "{0.memo}\n")
+    EXPORT_FORMAT = (
+        "{atype}  "
+        "{0.number:10.2f} {0.symbol:16}  "
+        "{cost_number:10.2f} {0.cost_currency:16}  "
+        "{0.memo}\n"
+    )
 
-    HOLDING_FORMAT = ("  Holding: {h.account:48} "
-                      "{h.number:10.2f} {h.currency:12} "
-                      "{cost_number:10.2f} {cost_currency:12}\n")
+    HOLDING_FORMAT = (
+        "  Holding: {h.account:48} "
+        "{h.number:10.2f} {h.currency:12} "
+        "{cost_number:10.2f} {cost_currency:12}\n"
+    )
 
     def _render_debug_exports(self, export_entries, title=None):
         if title:
-            sys.stderr.write('{}:\n'.format(title))
-            sys.stderr.write('----------------------------------------\n')
+            sys.stderr.write("{}:\n".format(title))
+            sys.stderr.write("----------------------------------------\n")
         for export_entry in export_entries:
-            sys.stderr.write(self.EXPORT_FORMAT.format(
-                export_entry,
-                atype='MUTFUND' if export_entry.mutual_fund else 'STOCK  ',
-                cost_number=export_entry.cost_number or 0))
+            sys.stderr.write(
+                self.EXPORT_FORMAT.format(
+                    export_entry,
+                    atype="MUTFUND" if export_entry.mutual_fund else "STOCK  ",
+                    cost_number=export_entry.cost_number or 0,
+                )
+            )
             self._render_debug_holdings(export_entry.holdings)
-        sys.stderr.write('\n')
+        sys.stderr.write("\n")
 
     def _render_debug_holdings(self, holdings, title=None):
         if title:
-            sys.stderr.write('{}:\n'.format(title))
-            sys.stderr.write('----------------------------------------\n')
+            sys.stderr.write("{}:\n".format(title))
+            sys.stderr.write("----------------------------------------\n")
         for holding in holdings:
-            sys.stderr.write(self.HOLDING_FORMAT.format(
-                h=holding,
-                cost_number=holding.cost_number or ZERO,
-                cost_currency=holding.cost_currency))
-        sys.stderr.write('\n')
+            sys.stderr.write(
+                self.HOLDING_FORMAT.format(
+                    h=holding,
+                    cost_number=holding.cost_number or ZERO,
+                    cost_currency=holding.cost_currency,
+                )
+            )
+        sys.stderr.write("\n")
 
     def render_csv(self, entries, unused_errors, options_map, file):
         exported, converted, holdings_ignored = export_holdings(
-            entries, options_map, False, self.args.aggregate_by_commodity)
+            entries, options_map, False, self.args.aggregate_by_commodity
+        )
         writer = csv.writer(file)
         writer.writerow(ExportEntry._fields[:-1])
         for index, export in enumerate(itertools.chain(exported, converted)):
@@ -461,13 +498,14 @@ class ExportPortfolioReport(base.TableReport):
 
     def render_ofx(self, entries, unused_errors, options_map, file):
         exported, converted, holdings_ignored = export_holdings(
-            entries, options_map, False, self.args.aggregate_by_commodity)
+            entries, options_map, False, self.args.aggregate_by_commodity
+        )
 
         # Print debug information if requested, before exporting.
         if self.args.debug:
-            self._render_debug_exports(exported, 'Exported Holdings')
-            self._render_debug_exports(converted, 'Cash Holdings')
-            self._render_debug_holdings(holdings_ignored, 'Ignored Holdings')
+            self._render_debug_exports(exported, "Exported Holdings")
+            self._render_debug_exports(converted, "Cash Holdings")
+            self._render_debug_holdings(holdings_ignored, "Ignored Holdings")
 
         # Compute trade date. Note that we'll enter the positions two days ago.
         # When we have lot-dates on all lots, put these transactions at the
@@ -479,7 +517,7 @@ class ExportPortfolioReport(base.TableReport):
         commodities = set()
 
         # pylint: disable=possibly-unused-variable
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
 
         invtranlist_io = io.StringIO()
         skipped_holdings = []
@@ -493,7 +531,7 @@ class ExportPortfolioReport(base.TableReport):
             # "try" to get it right by inferring this from the symbol. We could
             # eventually recognize a "class" metadata field from the
             # commodities, but I feel that this simpler. Less is more.
-            txntype = ('BUYMF' if export.mutual_fund else 'BUYSTOCK')
+            txntype = "BUYMF" if export.mutual_fund else "BUYSTOCK"
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = export.memo
@@ -502,7 +540,7 @@ class ExportPortfolioReport(base.TableReport):
             unitprice = export.cost_number
             fee = ZERO
             total = -(units * unitprice + fee)
-            buytype = 'BUY'
+            buytype = "BUY"
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
             commodities.add((get_symbol(export.symbol), export.mutual_fund))
@@ -514,21 +552,21 @@ class ExportPortfolioReport(base.TableReport):
         for symbol, mutual_fund in sorted(commodities):
             uniqueid = symbol
             secname = symbol
-            infotype = 'MFINFO' if mutual_fund else 'STOCKINFO'
+            infotype = "MFINFO" if mutual_fund else "STOCKINFO"
             ticker = symbol
             seclist_io.write(self.SECURITY.format(**locals()))
         seclist = seclist_io.getvalue()
 
         # Create the top-level template.
-        broker = 'Beancount'
-        account = options_map['title'] if self.args.promiscuous else ''
+        broker = "Beancount"
+        account = options_map["title"] if self.args.promiscuous else ""
         dtserver = dtasof = dtstart = dtend = render_ofx_date(morning)
         contents = self.TEMPLATE.format(**locals())
 
         # Clean up final contents and output it.
-        stripped_contents = '\n'.join(line.lstrip()
-                                      for line in contents.splitlines()
-                                      if line.strip())
+        stripped_contents = "\n".join(
+            line.lstrip() for line in contents.splitlines() if line.strip()
+        )
         file.write(self.PREFIX + stripped_contents)
 
 

@@ -19,13 +19,14 @@ in the main file overwrites it (external data wins).
   the contents extraction from the encrypted file may appear in the cache.
 
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount import loader
 from beancount.core import getters
 
-__plugins__ = ('merge_meta',)
+__plugins__ = ("merge_meta",)
 
 
 def merge_meta(entries, options_map, config):

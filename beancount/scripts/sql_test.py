@@ -45,18 +45,16 @@ ONE_OF_EACH_TYPE = """
 
 
 class TestScriptSQL(test_utils.TestCase):
-
     def convert_to_sql(self, filename):
-        dbfile = tempfile.NamedTemporaryFile('w', suffix='.db')
-        with test_utils.capture('stdout', 'stderr'):
-            result = test_utils.run_with_args(sql.main,
-                                              [filename, dbfile.name])
+        dbfile = tempfile.NamedTemporaryFile("w", suffix=".db")
+        with test_utils.capture("stdout", "stderr"):
+            result = test_utils.run_with_args(sql.main, [filename, dbfile.name])
         self.assertEqual(0, result)
         self.assertNotEqual(0, path.getsize(dbfile.name))
         return dbfile
 
     def test_all_types(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as infile:
+        with tempfile.NamedTemporaryFile("w", suffix=".beancount") as infile:
             infile.write(ONE_OF_EACH_TYPE)
             infile.flush()
             self.convert_to_sql(infile.name)
@@ -64,9 +62,9 @@ class TestScriptSQL(test_utils.TestCase):
     def test_example(self):
         # Run the SQL translation on our pretty substantial example file.
         root_dir = test_utils.find_repository_root(__file__)
-        filename = path.join(root_dir, 'examples/example.beancount')
+        filename = path.join(root_dir, "examples/example.beancount")
         self.convert_to_sql(filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

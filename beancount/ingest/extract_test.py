@@ -24,12 +24,11 @@ extract_main = functools.partial(scripts_utils.trampoline_to_ingest, extract)
 
 
 class TestScriptExtractFromFile(test_utils.TestCase):
-
     def test_extract_from_file__empty(self):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=[])
-        new_entries = extract.extract_from_file('/tmp/blabla.ofx', imp)
+        new_entries = extract.extract_from_file("/tmp/blabla.ofx", imp)
         self.assertEqual([], new_entries)
 
     def test_extract_from_file__ensure_sorted(self):
@@ -52,7 +51,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
-        new_entries = extract.extract_from_file('/tmp/blabla.ofx', imp)
+        new_entries = extract.extract_from_file("/tmp/blabla.ofx", imp)
         self.assertEqual(3, len(entries))
         self.assertTrue(misc_utils.is_sorted(new_entries, key=lambda entry: entry.date))
 
@@ -69,7 +68,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
         with self.assertRaises(AssertionError):
-            extract.extract_from_file('blabla.ofx', imp)
+            extract.extract_from_file("blabla.ofx", imp)
 
     def test_extract_from_file__min_date(self):
         entries, _, __ = loader.load_string("""
@@ -91,10 +90,13 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
         new_entries = extract.extract_from_file(
-            '/tmp/blabla.ofx', imp, min_date=datetime.date(2016, 2, 2))
+            "/tmp/blabla.ofx", imp, min_date=datetime.date(2016, 2, 2)
+        )
         self.assertEqual(2, len(new_entries))
-        self.assertEqual([datetime.date(2016, 2, 2), datetime.date(2016, 2, 3)],
-                         [entry.date for entry in new_entries])
+        self.assertEqual(
+            [datetime.date(2016, 2, 2), datetime.date(2016, 2, 3)],
+            [entry.date for entry in new_entries],
+        )
 
     @unittest.skip("FIXME: more this to call extract()")
     def test_extract_from_file__existing_entries(self):
@@ -121,16 +123,17 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=[entries[1], entries[3]])
 
-        new_entries = extract.extract_from_file(
-            '/tmp/blabla.ofx', imp, entries)
+        new_entries = extract.extract_from_file("/tmp/blabla.ofx", imp, entries)
         self.assertEqual(2, len(new_entries))
-        self.assertEqual([datetime.date(2016, 2, 2), datetime.date(2016, 2, 4)],
-                         [entry.date for entry in new_entries])
+        self.assertEqual(
+            [datetime.date(2016, 2, 2), datetime.date(2016, 2, 4)],
+            [entry.date for entry in new_entries],
+        )
 
         # Check that the entries have also been marked.
-        marked_entries = [entry
-                          for entry in new_entries
-                          if extract.DUPLICATE_META in entry.meta]
+        marked_entries = [
+            entry for entry in new_entries if extract.DUPLICATE_META in entry.meta
+        ]
         self.assertEqual(new_entries, marked_entries)
 
     @unittest.skip("FIXME: Change this to call extract()")
@@ -151,29 +154,28 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
 
-        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp, [])
+        new_entries, dup_entries = extract.extract_from_file("/tmp/blabla.ofx", imp, [])
         self.assertEqual(1, len(dup_entries))
-        self.assertEqual([datetime.date(2016, 2, 1), datetime.date(2016, 2, 2)],
-                         [entry.date for entry in new_entries])
-        self.assertEqual([datetime.date(2016, 2, 2)],
-                         [entry.date for entry in dup_entries])
+        self.assertEqual(
+            [datetime.date(2016, 2, 1), datetime.date(2016, 2, 2)],
+            [entry.date for entry in new_entries],
+        )
+        self.assertEqual([datetime.date(2016, 2, 2)], [entry.date for entry in dup_entries])
 
     def test_extract_from_file__raises_exception(self):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
         with self.assertRaises(ValueError):
-            extract.extract_from_file('/tmp/blabla.ofx', imp, [])
+            extract.extract_from_file("/tmp/blabla.ofx", imp, [])
 
 
 class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):
-
     class ExtractTestImporter(importer.ImporterProtocol):
-
         def file_account(self, _):
-            return 'Assets:Account1'
+            return "Assets:Account1"
 
-    @mock.patch.object(extract, 'extract_from_file')
+    @mock.patch.object(extract, "extract_from_file")
     def test_print_extracted_entries(self, mock_extract_from_file):
         entries, _, __ = parser.parse_string("""
 
@@ -193,7 +195,8 @@ class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase
         oss = io.StringIO()
         extract.print_extracted_entries(entries, oss)
 
-        self.assertEqual(textwrap.dedent("""\
+        self.assertEqual(
+            textwrap.dedent("""\
 
         ; 2016-02-01 * "A"
         ;   Assets:Account1   11.11 USD
@@ -203,8 +206,9 @@ class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase
           Assets:Account1   22.22 USD
           Assets:Account3  -22.22 USD
 
-        """).strip(), oss.getvalue().strip())
-
+        """).strip(),
+            oss.getvalue().strip(),
+        )
 
 
 class _LoaderImporter(importer.ImporterProtocol):
@@ -212,6 +216,7 @@ class _LoaderImporter(importer.ImporterProtocol):
     This is an odd trick for testing: I just put the expected extracted entries
     in the file and read them.
     """
+
     def __init__(self, filename, account):
         super().__init__()
         self.filename = filename
@@ -229,27 +234,29 @@ class _LoaderImporter(importer.ImporterProtocol):
 
 
 class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        self.config_filename = path.join(self.tempdir, 'extract.import')
-        with open(self.config_filename, 'w') as file:
-            file.write(textwrap.dedent("""\
+        self.config_filename = path.join(self.tempdir, "extract.import")
+        with open(self.config_filename, "w") as file:
+            file.write(
+                textwrap.dedent("""\
               #!/usr/bin/env python3
               from beancount.ingest import extract_test
               CONFIG = [
                 extract_test._LoaderImporter('checking.dl', 'Assets:Checking'),
                 extract_test._LoaderImporter('credit.dl', 'Liabilities:CreditCard'),
               ]
-            """))
+            """)
+            )
 
-        self.downloads = path.join(self.tempdir, 'Downloads')
+        self.downloads = path.join(self.tempdir, "Downloads")
         os.mkdir(self.downloads)
 
-        self.dl_checking = path.join(self.downloads, 'checking.dl')
-        with open(self.dl_checking, 'w') as file:
-            file.write(textwrap.dedent("""\
+        self.dl_checking = path.join(self.downloads, "checking.dl")
+        with open(self.dl_checking, "w") as file:
+            file.write(
+                textwrap.dedent("""\
 
               plugin "beancount.plugins.auto_accounts"
 
@@ -265,11 +272,13 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 Assets:Checking            -48.34 USD
                 Expenses:Internet
 
-            """))
+            """)
+            )
 
-        self.dl_credit = path.join(self.downloads, 'credit.dl')
-        with open(self.dl_credit, 'w') as file:
-            file.write(textwrap.dedent("""\
+        self.dl_credit = path.join(self.downloads, "credit.dl")
+        with open(self.dl_credit, "w") as file:
+            file.write(
+                textwrap.dedent("""\
 
               plugin "beancount.plugins.auto_accounts"
 
@@ -285,41 +294,46 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 Liabilities:CreditCard     -87.30 USD
                 Expenses:Clothing
 
-            """))
+            """)
+            )
 
     def test_extract(self):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract_main,
-                                     [self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')],
-                                     extract.__file__)
+        with test_utils.capture("stdout", "stderr") as (stdout, stderr):
+            test_utils.run_with_args(
+                extract_main,
+                [self.config_filename, path.join(self.tempdir, "Downloads")],
+                extract.__file__,
+            )
         output = stdout.getvalue()
 
-        self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'Assets:Cash +300.00 USD')
-        self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
-        self.assertRegex(output, r'Expenses:Internet +48.34 USD')
+        self.assertRegex(output, r"/checking.dl")
+        self.assertRegex(output, r"Assets:Cash +300.00 USD")
+        self.assertRegex(output, r"Expenses:Electricity +48.34 USD")
+        self.assertRegex(output, r"Expenses:Internet +48.34 USD")
 
-        self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'Expenses:Alcohol +32.23 USD')
-        self.assertRegex(output, r'Expenses:Books +87.30 USD')
-        self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
+        self.assertRegex(output, r"/credit.dl")
+        self.assertRegex(output, r"Expenses:Alcohol +32.23 USD")
+        self.assertRegex(output, r"Expenses:Books +87.30 USD")
+        self.assertRegex(output, r"Expenses:Clothing +87.30 USD")
 
-    @mock.patch.object(extract, 'find_duplicate_entries',
-                       wraps=extract.find_duplicate_entries)
+    @mock.patch.object(
+        extract, "find_duplicate_entries", wraps=extract.find_duplicate_entries
+    )
     def test_extract_find_dups_once_only_with_many_files(self, mock):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract_main,
-                                     [self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')],
-                                     extract.__file__)
+        with test_utils.capture("stdout", "stderr") as (stdout, stderr):
+            test_utils.run_with_args(
+                extract_main,
+                [self.config_filename, path.join(self.tempdir, "Downloads")],
+                extract.__file__,
+            )
         output = stdout.getvalue()
         mock.assert_called_once()
 
     def test_extract_with_previous_entries(self):
-        existing_filename = path.join(self.tempdir, 'existing.beancount')
-        with open(existing_filename, 'w') as file:
-            file.write(textwrap.dedent("""\
+        existing_filename = path.join(self.tempdir, "existing.beancount")
+        with open(existing_filename, "w") as file:
+            file.write(
+                textwrap.dedent("""\
 
               plugin "beancount.plugins.auto_accounts"
 
@@ -344,61 +358,72 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 Liabilities:CreditCard     -32.23 USD
                 Expenses:Alcohol
 
-            """))
+            """)
+            )
 
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract_main,
-                                     ['--existing={}'.format(existing_filename),
-                                      self.config_filename,
-                                      path.join(self.tempdir, 'Downloads')],
-                                     extract.__file__)
+        with test_utils.capture("stdout", "stderr") as (stdout, stderr):
+            test_utils.run_with_args(
+                extract_main,
+                [
+                    "--existing={}".format(existing_filename),
+                    self.config_filename,
+                    path.join(self.tempdir, "Downloads"),
+                ],
+                extract.__file__,
+            )
         output = stdout.getvalue()
 
-        self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'; +Assets:Cash +300.00 USD')
-        self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
-        self.assertRegex(output, r'Expenses:Internet +48.34 USD')
+        self.assertRegex(output, r"/checking.dl")
+        self.assertRegex(output, r"; +Assets:Cash +300.00 USD")
+        self.assertRegex(output, r"Expenses:Electricity +48.34 USD")
+        self.assertRegex(output, r"Expenses:Internet +48.34 USD")
 
-        self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'; +Expenses:Alcohol +32.23 USD')
-        self.assertRegex(output, r'Expenses:Books +87.30 USD')
-        self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
+        self.assertRegex(output, r"/credit.dl")
+        self.assertRegex(output, r"; +Expenses:Alcohol +32.23 USD")
+        self.assertRegex(output, r"Expenses:Books +87.30 USD")
+        self.assertRegex(output, r"Expenses:Clothing +87.30 USD")
 
     def test_extract_no_files(self):
-        emptydir = path.join(self.tempdir, 'Empty')
+        emptydir = path.join(self.tempdir, "Empty")
         os.makedirs(emptydir)
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            test_utils.run_with_args(extract_main, [self.config_filename, emptydir],
-                                     extract.__file__)
+        with test_utils.capture("stdout", "stderr") as (stdout, stderr):
+            test_utils.run_with_args(
+                extract_main, [self.config_filename, emptydir], extract.__file__
+            )
         output = stdout.getvalue()
-        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+        self.assertRegex(output, r";; -\*- mode: org; mode: beancount; coding: utf-8; -\*-")
 
     def test_extract_examples(self):
         example_dir = path.join(
-            test_utils.find_repository_root(__file__), 'examples', 'ingest')
-        config_filename = path.join(example_dir, 'office', 'example.import')
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
-            result = test_utils.run_with_args(extract_main, [
-                '--existing={}'.format(path.join(example_dir, 'example.beancount')),
-                config_filename,
-                path.join(example_dir, 'Downloads')],
-                                              extract.__file__)
+            test_utils.find_repository_root(__file__), "examples", "ingest"
+        )
+        config_filename = path.join(example_dir, "office", "example.import")
+        with test_utils.capture("stdout", "stderr") as (stdout, stderr):
+            result = test_utils.run_with_args(
+                extract_main,
+                [
+                    "--existing={}".format(path.join(example_dir, "example.beancount")),
+                    config_filename,
+                    path.join(example_dir, "Downloads"),
+                ],
+                extract.__file__,
+            )
         self.assertEqual(0, result)
         errors = stderr.getvalue()
-        self.assertTrue(not errors or re.search('ERROR.*pdf2txt', errors))
+        self.assertTrue(not errors or re.search("ERROR.*pdf2txt", errors))
 
         output = stdout.getvalue()
 
-        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+        self.assertRegex(output, r";; -\*- mode: org; mode: beancount; coding: utf-8; -\*-")
 
-        self.assertRegex(output, 'Downloads/UTrade20160215.csv')
-        self.assertRegex(output, 'ORDINARY DIVIDEND~CSKO')
-        self.assertRegex(output, 'Income:US:UTrade:CSKO:Gains')
-        self.assertRegex(output, '2016-02-08 balance Assets:US:UTrade:Cash .*4665.89 USD')
+        self.assertRegex(output, "Downloads/UTrade20160215.csv")
+        self.assertRegex(output, "ORDINARY DIVIDEND~CSKO")
+        self.assertRegex(output, "Income:US:UTrade:CSKO:Gains")
+        self.assertRegex(output, "2016-02-08 balance Assets:US:UTrade:Cash .*4665.89 USD")
 
-        self.assertRegex(output, 'Downloads/ofxdownload.ofx')
+        self.assertRegex(output, "Downloads/ofxdownload.ofx")
         self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
-"""Common front-end to all ingestion tools.
-"""
+"""Common front-end to all ingestion tools."""
+
 __copyright__ = "Copyright (C) 2016,2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,8 +22,9 @@ from beancount.ingest import extract
 from beancount.ingest import file
 
 
-DESCRIPTION = ("Identify, extract or file away data downloaded from "
-               "financial institutions.")
+DESCRIPTION = (
+    "Identify, extract or file away data downloaded from " "financial institutions."
+)
 
 
 def identify_main():
@@ -111,16 +112,23 @@ def ingest(importers_list, detect_duplicates_func=None, hooks=None):
         # FIXME: Remove this when we require version 3.7 or above.
         kwargs = {}
         if sys.version_info >= (3, 7):
-            kwargs['required'] = True
-        subparsers = parser.add_subparsers(dest='command', **kwargs)
+            kwargs["required"] = True
+        subparsers = parser.add_subparsers(dest="command", **kwargs)
 
-        parser.add_argument('--downloads', '-d', metavar='DIR-OR-FILE',
-                            action='append', default=[],
-                            help='Filenames or directories to search for files to import')
+        parser.add_argument(
+            "--downloads",
+            "-d",
+            metavar="DIR-OR-FILE",
+            action="append",
+            default=[],
+            help="Filenames or directories to search for files to import",
+        )
 
-        for cmdname, module in [('identify', identify),
-                                ('extract', extract),
-                                ('file', file)]:
+        for cmdname, module in [
+            ("identify", identify),
+            ("extract", extract),
+            ("file", file),
+        ]:
             parser_cmd = subparsers.add_parser(cmdname, help=module.DESCRIPTION)
             parser_cmd.set_defaults(command=module.run)
             module.add_arguments(parser_cmd)
@@ -133,7 +141,7 @@ def ingest(importers_list, detect_duplicates_func=None, hooks=None):
         # Implement required ourselves.
         # FIXME: Remove this when we require version 3.7 or above.
         if not (sys.version_info >= (3, 7)):
-            if not hasattr(args, 'command'):
+            if not hasattr(args, "command"):
                 parser.error("Subcommand is required.")
 
     abs_downloads = list(map(path.abspath, args.downloads))
@@ -164,14 +172,24 @@ def create_legacy_arguments_parser(description: str, run_func: callable):
     """
     parser = version.ArgumentParser(description=description)
 
-    parser.add_argument('config', action='store', metavar='CONFIG_FILENAME',
-                        help=('Importer configuration file. '
-                              'This is a Python file with a data structure that '
-                              'is specific to your accounts'))
+    parser.add_argument(
+        "config",
+        action="store",
+        metavar="CONFIG_FILENAME",
+        help=(
+            "Importer configuration file. "
+            "This is a Python file with a data structure that "
+            "is specific to your accounts"
+        ),
+    )
 
-    parser.add_argument('downloads', nargs='+', metavar='DIR-OR-FILE',
-                        default=[],
-                        help='Filenames or directories to search for files to import')
+    parser.add_argument(
+        "downloads",
+        nargs="+",
+        metavar="DIR-OR-FILE",
+        default=[],
+        help="Filenames or directories to search for files to import",
+    )
 
     parser.set_defaults(command=run_func)
 
@@ -190,15 +208,15 @@ def trampoline_to_ingest(module):
       An execution return code.
     """
     # Disable debugging logging which is turned on by default in chardet.
-    logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
-    logging.getLogger('chardet.universaldetector').setLevel(logging.INFO)
+    logging.getLogger("chardet.charsetprober").setLevel(logging.INFO)
+    logging.getLogger("chardet.universaldetector").setLevel(logging.INFO)
 
     parser = create_legacy_arguments_parser(module.DESCRIPTION, module.run)
     module.add_arguments(parser)
     return run_import_script_and_ingest(parser)
 
 
-def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'):
+def run_import_script_and_ingest(parser, argv=None, importers_attr_name="CONFIG"):
     """Run the import script and optionally call ingest().
 
     This path is only called when trampolined by one of the bean-* ingestion
@@ -247,7 +265,6 @@ def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'
 
 
 class _TestFileImporter(importer.ImporterProtocol):
-
     def __init__(self, name, account, regexp_mime, regexp_contents):
         self._name = name
         self.account = account
@@ -316,25 +333,25 @@ TXT_FILE = """\
 Some random text file.
 """
 
-class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
 
+class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
     FILES = {
         # Old style configuration which provides importers as a module attribute.
-        'test.import': IMPORT_FILE,
+        "test.import": IMPORT_FILE,
         # New style configuration, which is just a script calling ingest() itself.
-        'testimport.py': IMPORT_FILE + INGEST_MAIN,
+        "testimport.py": IMPORT_FILE + INGEST_MAIN,
         # Example input files.
-        'Downloads/ofxdownload.ofx': OFX_FILE,
-        'Downloads/Subdir/bank.csv': CSV_FILE,
-        'Downloads/Subdir/readme.txt': TXT_FILE,
-        }
+        "Downloads/ofxdownload.ofx": OFX_FILE,
+        "Downloads/Subdir/bank.csv": CSV_FILE,
+        "Downloads/Subdir/readme.txt": TXT_FILE,
+    }
 
     def setUp(self):
         super().setUp()
         for filename, contents in self.FILES.items():
             absname = path.join(self.tempdir, filename)
             os.makedirs(path.dirname(absname), exist_ok=True)
-            with open(absname, 'w') as file:
+            with open(absname, "w") as file:
                 file.write(contents)
-            if filename.endswith('.py') or filename.endswith('.sh'):
-                os.chmod(absname, stat.S_IRUSR|stat.S_IXUSR)
+            if filename.endswith(".py") or filename.endswith(".sh"):
+                os.chmod(absname, stat.S_IRUSR | stat.S_IXUSR)

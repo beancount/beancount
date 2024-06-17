@@ -3,6 +3,7 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -32,9 +33,14 @@ def do_lex(filename, unused_args):
       filename: A string, the Beancount input filename.
     """
     from beancount.parser import lexer
+
     for token, lineno, text, obj in lexer.lex_iter(filename):
-        sys.stdout.write('{:12} {:6d} {}\n'.format(
-            '(None)' if token is None else token, lineno, repr(text)))
+        sys.stdout.write(
+            "{:12} {:6d} {}\n".format(
+                "(None)" if token is None else token, lineno, repr(text)
+            )
+        )
+
 
 do_dump_lexer = do_lex
 
@@ -46,6 +52,7 @@ def do_parse(filename, unused_args):
       filename: A string, the Beancount input filename.
     """
     from beancount.parser import parser
+
     entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
@@ -65,15 +72,15 @@ def do_roundtrip(filename, unused_args):
 
     round1_filename = round2_filename = None
     try:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+        logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
         logging.info("Read the entries")
         entries, errors, options_map = loader.load_file(filename)
         printer.print_errors(errors, file=sys.stderr)
 
         logging.info("Print them out to a file")
         basename, extension = path.splitext(filename)
-        round1_filename = ''.join([basename, '.roundtrip1', extension])
-        with open(round1_filename, 'w') as outfile:
+        round1_filename = "".join([basename, ".roundtrip1", extension])
+        with open(round1_filename, "w") as outfile:
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
@@ -88,30 +95,30 @@ def do_roundtrip(filename, unused_args):
 
         # Print out the list of errors from parsing the results.
         if errors:
-            print(',----------------------------------------------------------------------')
+            print(",----------------------------------------------------------------------")
             printer.print_errors(errors, file=sys.stdout)
-            print('`----------------------------------------------------------------------')
+            print("`----------------------------------------------------------------------")
 
         logging.info("Print what you read to yet another file")
-        round2_filename = ''.join([basename, '.roundtrip2', extension])
-        with open(round2_filename, 'w') as outfile:
+        round2_filename = "".join([basename, ".roundtrip2", extension])
+        with open(round2_filename, "w") as outfile:
             printer.print_entries(entries_roundtrip, file=outfile)
 
         logging.info("Compare the original entries with the re-read ones")
         same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
         if same:
-            logging.info('Entries are the same. Congratulations.')
+            logging.info("Entries are the same. Congratulations.")
         else:
-            logging.error('Entries differ!')
+            logging.error("Entries differ!")
             print()
-            print('\n\nMissing from original:')
+            print("\n\nMissing from original:")
             for entry in entries:
                 print(entry)
                 print(compare.hash_entry(entry))
                 print(printer.format_entry(entry))
                 print()
 
-            print('\n\nMissing from round-trip:')
+            print("\n\nMissing from round-trip:")
             for entry in missing2:
                 print(entry)
                 print(compare.hash_entry(entry))
@@ -137,6 +144,7 @@ def do_directories(filename, args):
     """
     from beancount import loader
     from beancount.scripts import directories
+
     entries, _, __ = loader.load_file(filename)
     directories.validate_directories(entries, args)
 
@@ -148,6 +156,7 @@ def do_list_options(*unused_args):
       unused_args: Ignored.
     """
     from beancount.parser import options
+
     print(options.list_options())
 
 
@@ -158,9 +167,10 @@ def do_print_options(filename, *args):
       unused_args: Ignored.
     """
     from beancount import loader
+
     _, __, options_map = loader.load_file(filename)
     for key, value in sorted(options_map.items()):
-        print('{}: {}'.format(key, value))
+        print("{}: {}".format(key, value))
 
 
 def get_commands():
@@ -171,10 +181,11 @@ def get_commands():
     """
     commands = []
     for attr_name, attr_value in globals().items():
-        match = re.match('do_(.*)', attr_name)
+        match = re.match("do_(.*)", attr_name)
         if match:
-            commands.append((match.group(1),
-                             misc_utils.first_paragraph(attr_value.__doc__)))
+            commands.append(
+                (match.group(1), misc_utils.first_paragraph(attr_value.__doc__))
+            )
     return commands
 
 
@@ -185,9 +196,11 @@ def do_deps(*unused_args):
       unused_args: Ignored.
     """
     from beancount.scripts import deps
+
     deps.list_dependencies(sys.stdout)
-    print('')
+    print("")
     print('Use "pip3 install <package>" to install new packages.')
+
 
 # Alias old name.
 do_checkdeps = do_deps
@@ -220,17 +233,16 @@ def do_context(filename, args):
     elif re.match(r"(\d+)$", args[0]):
         # Note: Make sure to use the absolute filename used by the parser to
         # resolve the file.
-        search_filename = options_map['filename']
+        search_filename = options_map["filename"]
         lineno = int(args[0])
     else:
         raise SystemExit("Invalid format for location.")
 
-    str_context = context.render_file_context(entries, options_map,
-                                              search_filename, lineno)
+    str_context = context.render_file_context(entries, options_map, search_filename, lineno)
     sys.stdout.write(str_context)
 
 
-RenderError = collections.namedtuple('RenderError', 'source message entry')
+RenderError = collections.namedtuple("RenderError", "source message entry")
 
 
 def do_linked(filename, args):
@@ -261,7 +273,7 @@ def do_linked(filename, args):
     # Accept an explicit link name as the location. Must include the '^'
     # character.
     if re.match(r"\^(.*)$", location_spec):
-        search_filename = options_map['filename']
+        search_filename = options_map["filename"]
         links = {location_spec[1:]}
         linked_entries = find_linked_entries(entries, links, False)
 
@@ -275,7 +287,7 @@ def do_linked(filename, args):
         elif re.match(r"(\d+)$", location_spec):
             # Parse the argument as just a line number to pull context from on
             # the main filename.
-            search_filename = options_map['filename']
+            search_filename = options_map["filename"]
             lineno = int(location_spec)
         else:
             raise SystemExit("Invalid line number or link format for location.")
@@ -285,26 +297,27 @@ def do_linked(filename, args):
 
         # Find its links.
         if closest_entry is None:
-            raise SystemExit("No entry could be found before {}:{}".format(
-                search_filename, lineno))
-        links = (closest_entry.links
-                 if isinstance(closest_entry, data.Transaction)
-                 else data.EMPTY_SET)
+            raise SystemExit(
+                "No entry could be found before {}:{}".format(search_filename, lineno)
+            )
+        links = (
+            closest_entry.links
+            if isinstance(closest_entry, data.Transaction)
+            else data.EMPTY_SET
+        )
 
         # Get the linked entries, or just the closest one, if no links.
-        linked_entries = (find_linked_entries(entries, links, True)
-                          if links
-                          else [closest_entry])
+        linked_entries = (
+            find_linked_entries(entries, links, True) if links else [closest_entry]
+        )
 
     # Render linked entries (in date order) as errors (for Emacs).
-    errors = [RenderError(entry.meta, '', entry)
-              for entry in linked_entries]
+    errors = [RenderError(entry.meta, "", entry) for entry in linked_entries]
     printer.print_errors(errors)
 
     # Print out balances.
     real_root = realization.realize(linked_entries)
-    dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
-                                            reserved=2)
+    dformat = options_map["dcontext"].build(alignment=display_context.Align.DOT, reserved=2)
     realization.dump_balances(real_root, dformat, file=sys.stdout)
 
     # Print out net income change.
@@ -315,7 +328,7 @@ def do_linked(filename, args):
             net_income.add_inventory(real_node.balance)
 
     print()
-    print('Net Income: {}'.format(-net_income))
+    print("Net Income: {}".format(-net_income))
 
 
 def find_linked_entries(entries, links, follow_links: bool):
@@ -331,21 +344,25 @@ def find_linked_entries(entries, links, follow_links: bool):
 
     linked_entries = []
     if not follow_links:
-        linked_entries = [entry
-                          for entry in entries
-                          if (isinstance(entry, data.Transaction) and
-                              entry.links and
-                              entry.links & links)]
+        linked_entries = [
+            entry
+            for entry in entries
+            if (isinstance(entry, data.Transaction) and entry.links and entry.links & links)
+        ]
     else:
         links = set(links)
         linked_entries = []
         while True:
             num_linked = len(linked_entries)
-            linked_entries = [entry
-                              for entry in entries
-                              if (isinstance(entry, data.Transaction) and
-                                  entry.links and
-                                  entry.links & links)]
+            linked_entries = [
+                entry
+                for entry in entries
+                if (
+                    isinstance(entry, data.Transaction)
+                    and entry.links
+                    and entry.links & links
+                )
+            ]
             if len(linked_entries) == num_linked:
                 break
             for entry in linked_entries:
@@ -380,10 +397,12 @@ def do_missing_open(filename, args):
     for account, first_use_date in first_use_map.items():
         if account not in open_close_map:
             new_entries.append(
-                data.Open(data.new_metadata(filename, 0), first_use_date, account,
-                          None, None))
+                data.Open(
+                    data.new_metadata(filename, 0), first_use_date, account, None, None
+                )
+            )
 
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
@@ -396,8 +415,9 @@ def do_display_context(filename, args):
         to be an integer as a string.
     """
     from beancount import loader
+
     entries, errors, options_map = loader.load_file(filename)
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
     sys.stdout.write(str(dcontext))
 
 
@@ -409,29 +429,32 @@ def do_validate_html(directory, args):
       args: A tuple of the rest of arguments.
     """
     from beancount.utils import scrape
+
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
-    logging.info('%d files processed', len(files))
+    logging.info("%d files processed", len(files))
     for target in missing:
-        logging.error('Missing %s', target)
+        logging.error("Missing %s", target)
     for target in empty:
-        logging.error('Empty %s', target)
+        logging.error("Empty %s", target)
 
 
 def main():
-    commands_doc = ('Available Commands:\n' +
-                    '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    argparser = version.ArgumentParser(description=__doc__,
-                                       formatter_class=argparse.RawTextHelpFormatter,
-                                       epilog=commands_doc)
-    argparser.add_argument('command', action='store',
-                           help="The command to run.")
-    argparser.add_argument('filename', nargs='?', help='Beancount input filename.')
-    argparser.add_argument('rest', nargs='*', help='All remaining arguments.')
+    commands_doc = "Available Commands:\n" + "\n".join(
+        "  {:24}: {}".format(*x) for x in get_commands()
+    )
+    argparser = version.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=commands_doc,
+    )
+    argparser.add_argument("command", action="store", help="The command to run.")
+    argparser.add_argument("filename", nargs="?", help="Beancount input filename.")
+    argparser.add_argument("rest", nargs="*", help="All remaining arguments.")
     opts = argparser.parse_args()
 
     # Run the command.
     try:
-        command_name = "do_{}".format(opts.command.replace('-', '_'))
+        command_name = "do_{}".format(opts.command.replace("-", "_"))
         function = globals()[command_name]
     except KeyError:
         argparser.error("Invalid command name: '{}'".format(opts.command))
@@ -439,5 +462,5 @@ def main():
         function(opts.filename, opts.rest)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

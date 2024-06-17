@@ -1,5 +1,5 @@
-"""Parser for Beancount Query Language.
-"""
+"""Parser for Beancount Query Language."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -33,8 +33,12 @@ from beancount.utils.misc_utils import cmptuple
 #   distinct: A boolean value (True), or None if absent.
 #   flatten: A boolean value (True), or None if absent.
 Select = collections.namedtuple(
-    'Select', ('targets from_clause where_clause '
-               'group_by order_by pivot_by limit distinct flatten'))
+    "Select",
+    (
+        "targets from_clause where_clause "
+        "group_by order_by pivot_by limit distinct flatten"
+    ),
+)
 
 # A select query that produces final balances for accounts.
 # This is equivalent to
@@ -48,7 +52,7 @@ Select = collections.namedtuple(
 #   summary_func: A method on an inventory to call on the position column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Balances = collections.namedtuple('Balances', 'summary_func from_clause where_clause')
+Balances = collections.namedtuple("Balances", "summary_func from_clause where_clause")
 
 # A select query that produces a journal of postings.
 # This is equivalent to
@@ -61,31 +65,31 @@ Balances = collections.namedtuple('Balances', 'summary_func from_clause where_cl
 #   summary_func: A method on an inventory to call on the position column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Journal = collections.namedtuple('Journal', 'account summary_func from_clause')
+Journal = collections.namedtuple("Journal", "account summary_func from_clause")
 
 # A query that will simply print the selected entries in Beancount format.
 #
 # Attributes:
 #   from_clause: An instance of 'From', or None if absent.
-Print = collections.namedtuple('Print', 'from_clause')
+Print = collections.namedtuple("Print", "from_clause")
 
 # Errors command (prints errors and context around them).
-Errors = collections.namedtuple('Errors', '')
+Errors = collections.namedtuple("Errors", "")
 
 # Reload command (reloads the input file).
-Reload = collections.namedtuple('Reload', '')
+Reload = collections.namedtuple("Reload", "")
 
 # Explains a command (prints out AST for debugging).
 #
 # Attributes:
 #   statement: An instance of a compiled statement to explain.
-Explain = collections.namedtuple('Explain', 'statement')
+Explain = collections.namedtuple("Explain", "statement")
 
 # RunCustom command (runs a custom query defined in the input file).
 #
 # Attributes:
 #   query_name: A string, the name of the custom query.
-RunCustom = collections.namedtuple('RunCustom', 'query_name')
+RunCustom = collections.namedtuple("RunCustom", "query_name")
 
 
 # A parsed SELECT column or target.
@@ -93,10 +97,10 @@ RunCustom = collections.namedtuple('RunCustom', 'query_name')
 # Attributes:
 #   expression: A tree of expression nodes from the parser.
 #   name: A string, the given name of the target (given by "AS <name>").
-Target = cmptuple('Target', 'expression name')
+Target = cmptuple("Target", "expression name")
 
 # A wildcard target. This replaces the list in Select.targets.
-Wildcard = cmptuple('Wildcard', '')
+Wildcard = cmptuple("Wildcard", "")
 
 # A FROM clause.
 #
@@ -105,27 +109,27 @@ Wildcard = cmptuple('Wildcard', '')
 #   close: A CLOSE clause, either None if absent, a boolean if the clause
 #     was present by no date was provided, or a datetime.date instance if
 #     a date was provided.
-From = cmptuple('From', 'expression open close clear')
+From = cmptuple("From", "expression open close clear")
 
 # A GROUP BY clause.
 #
 # Attributes:
 #   columns: A list of group-by expressions, simple Column() or otherwise.
 #   having: An expression tree for the optional HAVING clause, or None.
-GroupBy = cmptuple('GroupBy', 'columns having')
+GroupBy = cmptuple("GroupBy", "columns having")
 
 # An ORDER BY clause.
 #
 # Attributes:
 #   columns: A list of group-by expressions, simple Column() or otherwise.
 #   ordering: None, or 'ASC' or 'DESC' to specify the sorting order.
-OrderBy = cmptuple('OrderBy', 'columns ordering')
+OrderBy = cmptuple("OrderBy", "columns ordering")
 
 # An PIVOT BY clause.
 #
 # Attributes:
 #   columns: A list of group-by expressions, simple Column() or otherwise.
-PivotBy = cmptuple('PivotBy', 'columns')
+PivotBy = cmptuple("PivotBy", "columns")
 
 # Nodes used in expressions. The meaning should be self-explanatory. This is
 # your run-of-the-mill hierarchical logical expression nodes. Any of these nodes
@@ -135,7 +139,7 @@ PivotBy = cmptuple('PivotBy', 'columns')
 #
 # Attributes:
 #   name: A string, the name of the column to access.
-Column = cmptuple('Column', 'name')
+Column = cmptuple("Column", "name")
 
 # A function call.
 #
@@ -143,52 +147,89 @@ Column = cmptuple('Column', 'name')
 #   fname: A string, the name of the function.
 #   operands: A list of other expressions, the arguments of the function to
 #     evaluate. This is possibly an empty list.
-Function = cmptuple('Function', 'fname operands')
+Function = cmptuple("Function", "fname operands")
 
 # A constant node.
 #
 # Attributes:
 #   value: The constant value this represents.
-Constant = cmptuple('Constant', 'value')
+Constant = cmptuple("Constant", "value")
 
 # Base classes for unary operators.
 #
 # Attributes:
 #   operand: An expression, the operand of the operator.
-UnaryOp = cmptuple('UnaryOp', 'operand')
+UnaryOp = cmptuple("UnaryOp", "operand")
+
 
 # Negation operator.
-class Not(UnaryOp): pass
+class Not(UnaryOp):
+    pass
+
 
 # Base classes for binary operators.
 #
 # Attributes:
 #   left: An expression, the left operand.
 #   right: An expression, the right operand.
-BinaryOp = cmptuple('BinaryOp', 'left right')
+BinaryOp = cmptuple("BinaryOp", "left right")
+
 
 # Logical and/or operators.
-class And(BinaryOp): pass
-class Or(BinaryOp): pass
+class And(BinaryOp):
+    pass
+
+
+class Or(BinaryOp):
+    pass
+
 
 # Equality and inequality comparison operators.
-class Equal(BinaryOp): pass
-class Greater(BinaryOp): pass
-class GreaterEq(BinaryOp): pass
-class Less(BinaryOp): pass
-class LessEq(BinaryOp): pass
+class Equal(BinaryOp):
+    pass
+
+
+class Greater(BinaryOp):
+    pass
+
+
+class GreaterEq(BinaryOp):
+    pass
+
+
+class Less(BinaryOp):
+    pass
+
+
+class LessEq(BinaryOp):
+    pass
+
 
 # A regular expression match operator.
-class Match(BinaryOp): pass
+class Match(BinaryOp):
+    pass
+
 
 # Membership operators.
-class Contains(BinaryOp): pass
+class Contains(BinaryOp):
+    pass
+
 
 # Arithmetic operators.
-class Mul(BinaryOp): pass
-class Div(BinaryOp): pass
-class Add(BinaryOp): pass
-class Sub(BinaryOp): pass
+class Mul(BinaryOp):
+    pass
+
+
+class Div(BinaryOp):
+    pass
+
+
+class Add(BinaryOp):
+    pass
+
+
+class Sub(BinaryOp):
+    pass
 
 
 class ParseError(Exception):
@@ -196,27 +237,67 @@ class ParseError(Exception):
 
 
 class Lexer:
-    """PLY lexer for the Beancount Query Language.
-    """
+    """PLY lexer for the Beancount Query Language."""
 
     # List of reserved keywords.
     keywords = {
-        'EXPLAIN',
-        'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCES', 'JOURNAL', 'PRINT', 'RUN', 'AT',
-        'ERRORS', 'RELOAD',
-        'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
-        'LIMIT', 'FLATTEN', 'DISTINCT',
-        'AND', 'OR', 'NOT', 'IN',
-        'TRUE', 'FALSE', 'NULL',
+        "EXPLAIN",
+        "SELECT",
+        "AS",
+        "FROM",
+        "WHERE",
+        "OPEN",
+        "CLOSE",
+        "CLEAR",
+        "ON",
+        "BALANCES",
+        "JOURNAL",
+        "PRINT",
+        "RUN",
+        "AT",
+        "ERRORS",
+        "RELOAD",
+        "GROUP",
+        "BY",
+        "HAVING",
+        "ORDER",
+        "DESC",
+        "ASC",
+        "PIVOT",
+        "LIMIT",
+        "FLATTEN",
+        "DISTINCT",
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "TRUE",
+        "FALSE",
+        "NULL",
     }
 
     # List of valid tokens from the lexer.
     tokens = [
-        'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
-        'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
-        'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE',
-        'ASTERISK', 'SLASH', 'PLUS', 'MINUS',
+        "ID",
+        "INTEGER",
+        "DECIMAL",
+        "STRING",
+        "DATE",
+        "COMMA",
+        "SEMI",
+        "LPAREN",
+        "RPAREN",
+        "TILDE",
+        "EQ",
+        "NE",
+        "GT",
+        "GTE",
+        "LT",
+        "LTE",
+        "ASTERISK",
+        "SLASH",
+        "PLUS",
+        "MINUS",
     ] + list(keywords)
 
     # An identifier, for a column or a dimension or whatever.
@@ -231,34 +312,34 @@ class Lexer:
         return token
 
     def t_STRING(self, token):
-        "(\"[^\"]*\"|\'[^\']*\')"
+        "(\"[^\"]*\"|'[^']*')"
         token.value = token.value[1:-1]
         return token
 
     def t_DATE(self, token):
         r"(\#(\"[^\"]*\"|\'[^\']*\')|\d\d\d\d-\d\d-\d\d)"
-        if token.value[0] == '#':
+        if token.value[0] == "#":
             token.value = dateutil.parser.parse(token.value[2:-1]).date()
         else:
-            token.value = datetime.datetime.strptime(token.value, '%Y-%m-%d').date()
+            token.value = datetime.datetime.strptime(token.value, "%Y-%m-%d").date()
         return token
 
     # Constant tokens.
-    t_COMMA    = r","
-    t_SEMI     = r";"
-    t_LPAREN   = r"\("
-    t_RPAREN   = r"\)"
-    t_NE       = r"!="
-    t_EQ       = r"="
-    t_GTE      = r">="
-    t_GT       = r">"
-    t_LTE      = r"<="
-    t_LT       = r"<"
-    t_TILDE    = r"~"
+    t_COMMA = r","
+    t_SEMI = r";"
+    t_LPAREN = r"\("
+    t_RPAREN = r"\)"
+    t_NE = r"!="
+    t_EQ = r"="
+    t_GTE = r">="
+    t_GT = r">"
+    t_LTE = r"<="
+    t_LT = r"<"
+    t_TILDE = r"~"
     t_ASTERISK = r"\*"
-    t_SLASH    = r"/"
-    t_PLUS     = r"\+"
-    t_MINUS    = r"-"
+    t_SLASH = r"/"
+    t_PLUS = r"\+"
+    t_MINUS = r"-"
 
     # Numbers.
     def t_DECIMAL(self, token):
@@ -280,22 +361,22 @@ class Lexer:
 
 
 class SelectParser(Lexer):
-    """PLY parser for the Beancount Query Language's SELECT statement.
-    """
+    """PLY parser for the Beancount Query Language's SELECT statement."""
 
-    start = 'select_statement'
+    start = "select_statement"
 
     def __init__(self, **options):
-        self.ply_lexer = ply.lex.lex(module=self,
-                                     optimize=False,
-                                     debuglog=None,
-                                     debug=False)
-        self.ply_parser = ply.yacc.yacc(module=self,
-                                        optimize=False,
-                                        write_tables=False,
-                                        debuglog=None,
-                                        debug=False,
-                                        **options)
+        self.ply_lexer = ply.lex.lex(
+            module=self, optimize=False, debuglog=None, debug=False
+        )
+        self.ply_parser = ply.yacc.yacc(
+            module=self,
+            optimize=False,
+            write_tables=False,
+            debuglog=None,
+            debug=False,
+            **options,
+        )
 
         # The default value to use for the close date.
         self.default_close_date = None
@@ -312,9 +393,7 @@ class SelectParser(Lexer):
         try:
             self._input = line
             self.default_close_date = default_close_date
-            return self.ply_parser.parse(line,
-                                         lexer=self.ply_lexer,
-                                         debug=debug)
+            return self.ply_parser.parse(line, lexer=self.ply_lexer, debug=debug)
         finally:
             self._input = None
             self.default_close_date = None
@@ -347,14 +426,14 @@ class SelectParser(Lexer):
         distinct : empty
                  | DISTINCT
         """
-        p[0] = True if p[1] == 'DISTINCT' else None
+        p[0] = True if p[1] == "DISTINCT" else None
 
     def p_target_spec(self, p):
         """
         target_spec : ASTERISK
                     | target_list
         """
-        p[0] = Wildcard() if p[1] == '*' else p[1]
+        p[0] = Wildcard() if p[1] == "*" else p[1]
 
     def p_target_list(self, p):
         """
@@ -405,16 +484,18 @@ class SelectParser(Lexer):
                   | CLOSE
                   | CLOSE ON DATE
         """
-        p[0] = p[3] if len(p) == 4 else (True
-                                         if (p[1] == 'CLOSE') else
-                                         self.default_close_date)
+        p[0] = (
+            p[3]
+            if len(p) == 4
+            else (True if (p[1] == "CLOSE") else self.default_close_date)
+        )
 
     def p_opt_clear(self, p):
         """
         opt_clear : empty
                   | CLEAR
         """
-        p[0] = True if (p[1] == 'CLEAR') else None
+        p[0] = True if (p[1] == "CLEAR") else None
 
     def p_where(self, p):
         """
@@ -487,17 +568,16 @@ class SelectParser(Lexer):
         flatten : empty
                 | FLATTEN
         """
-        p[0] = True if p[1] == 'FLATTEN' else None
-
+        p[0] = True if p[1] == "FLATTEN" else None
 
     precedence = [
-        ('left', 'OR'),
-        ('left', 'AND'),
-        ('left', 'NOT'),
-        ('left', 'PLUS', 'MINUS'),
-        ('left', 'ASTERISK', 'SLASH'),
-        ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE', 'IN'),
-        ]
+        ("left", "OR"),
+        ("left", "AND"),
+        ("left", "NOT"),
+        ("left", "PLUS", "MINUS"),
+        ("left", "ASTERISK", "SLASH"),
+        ("left", "EQ", "NE", "GT", "GTE", "LT", "LTE", "TILDE", "IN"),
+    ]
 
     def p_expression_and(self, p):
         "expression : expression AND expression"
@@ -619,14 +699,14 @@ class SelectParser(Lexer):
                  | STRING
                  | DATE
         """
-        p[0] = Constant(p[1] if p[1] != 'NULL' else None)
+        p[0] = Constant(p[1] if p[1] != "NULL" else None)
 
     def p_boolean(self, p):
         """
         boolean : TRUE
                 | FALSE
         """
-        p[0] = (p[1] == 'TRUE')
+        p[0] = p[1] == "TRUE"
 
     def p_empty(self, _):
         """
@@ -638,19 +718,20 @@ class SelectParser(Lexer):
             raise ParseError("ERROR: unterminated statement. Missing a semicolon?")
 
         oss = io.StringIO()
-        oss.write("ERROR: Syntax error near '{}' (at {})\n".format(token.value,
-                                                                   token.lexpos))
+        oss.write(
+            "ERROR: Syntax error near '{}' (at {})\n".format(token.value, token.lexpos)
+        )
         oss.write("  ")
         oss.write(self._input)
         oss.write("\n")
-        oss.write("  {}^".format(' ' * token.lexpos))
+        oss.write("  {}^".format(" " * token.lexpos))
         raise ParseError(oss.getvalue())
 
 
 class Parser(SelectParser):
-    """PLY parser for the Beancount Query Language's full command syntax.
-    """
-    start = 'top_statement'
+    """PLY parser for the Beancount Query Language's full command syntax."""
+
+    start = "top_statement"
 
     def p_regular_statement(self, p):
         "top_statement : statement delimiter"
@@ -739,19 +820,22 @@ def get_expression_name(expr):
         names = [expr.fname.lower()]
         for operand in expr.operands:
             names.append(get_expression_name(operand))
-        return '_'.join(names)
+        return "_".join(names)
 
     elif isinstance(expr, Constant):
-        return 'c{}'.format(re.sub('[^a-z0-9]+', '_', str(expr.value)))
+        return "c{}".format(re.sub("[^a-z0-9]+", "_", str(expr.value)))
 
     elif isinstance(expr, UnaryOp):
-        return '_'.join([type(expr).__name__.lower(),
-                         get_expression_name(expr.operand)])
+        return "_".join([type(expr).__name__.lower(), get_expression_name(expr.operand)])
 
     elif isinstance(expr, BinaryOp):
-        return '_'.join([type(expr).__name__.lower(),
-                         get_expression_name(expr.left),
-                         get_expression_name(expr.right)])
+        return "_".join(
+            [
+                type(expr).__name__.lower(),
+                get_expression_name(expr.left),
+                get_expression_name(expr.right),
+            ]
+        )
 
     else:
         assert False, "Unknown expression type."

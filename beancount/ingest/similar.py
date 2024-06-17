@@ -2,6 +2,7 @@
 
 This can be used during import in order to identify and flag duplicate entries.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -48,9 +49,10 @@ def find_similar_entries(entries, source_entries, comparator=None, window_days=2
     if source_entries is not None:
         for entry in data.filter_txns(entries):
             for source_entry in data.filter_txns(
-                    data.iter_entry_dates(source_entries,
-                                          entry.date - window_head,
-                                          entry.date + window_tail)):
+                data.iter_entry_dates(
+                    source_entries, entry.date - window_head, entry.date + window_tail
+                )
+            ):
                 if comparator(entry, source_entry):
                     duplicates.append((entry, source_entry))
                     break
@@ -66,7 +68,7 @@ class SimilarityComparator:
     """
 
     # Fraction difference allowed of variation.
-    EPSILON = D('0.05')  # 5%
+    EPSILON = D("0.05")  # 5%
 
     def __init__(self, max_date_delta=None):
         """Constructor a comparator of entries.
@@ -88,9 +90,11 @@ class SimilarityComparator:
         """
         # Check the date difference.
         if self.max_date_delta is not None:
-            delta = ((entry1.date - entry2.date)
-                     if entry1.date > entry2.date else
-                     (entry2.date - entry1.date))
+            delta = (
+                (entry1.date - entry2.date)
+                if entry1.date > entry2.date
+                else (entry2.date - entry1.date)
+            )
             if delta > self.max_date_delta:
                 return False
 
@@ -111,13 +115,11 @@ class SimilarityComparator:
             number2 = amounts2[key]
             if number1 == ZERO and number2 == ZERO:
                 break
-            diff = abs((number1 / number2)
-                       if number2 != ZERO
-                       else (number2 / number1))
+            diff = abs((number1 / number2) if number2 != ZERO else (number2 / number1))
             if diff == ZERO:
                 return False
             if diff < ONE:
-                diff = ONE/diff
+                diff = ONE / diff
             if (diff - ONE) < self.EPSILON:
                 break
         else:

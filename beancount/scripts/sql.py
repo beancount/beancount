@@ -1,5 +1,5 @@
-"""Convert a Beancount ledger into an SQL database.
-"""
+"""Convert a Beancount ledger into an SQL database."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -83,33 +83,51 @@ def output_transactions(connection, entries):
         for eid, entry in enumerate(entries):
             if not isinstance(entry, data.Transaction):
                 continue
-            connection.execute("""
+            connection.execute(
+                """
               insert into entry values (?, ?, ?, ?, ?);
-            """, (eid, entry.date, 'txn', entry.meta["filename"], entry.meta["lineno"]))
+            """,
+                (eid, entry.date, "txn", entry.meta["filename"], entry.meta["lineno"]),
+            )
 
-            connection.execute("""
+            connection.execute(
+                """
               insert into transactions_detail values (?, ?, ?, ?, ?, ?);
-            """, (eid, entry.flag, entry.payee, entry.narration,
-                  ','.join(entry.tags or ()), ','.join(entry.links or ())))
+            """,
+                (
+                    eid,
+                    entry.flag,
+                    entry.payee,
+                    entry.narration,
+                    ",".join(entry.tags or ()),
+                    ",".join(entry.links or ()),
+                ),
+            )
 
             for posting in entry.postings:
                 pid = next(postings_count)
                 units = posting.units
                 cost = posting.cost
                 price = posting.price
-                connection.execute("""
+                connection.execute(
+                    """
                   INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                """, (pid, eid,
-                      posting.flag,
-                      posting.account,
-                      units.number,
-                      units.currency,
-                      cost.number if cost else None,
-                      cost.currency if cost else None,
-                      cost.date if cost else None,
-                      cost.label if cost else None,
-                      price.number if price else None,
-                      price.currency if price else None))
+                """,
+                    (
+                        pid,
+                        eid,
+                        posting.flag,
+                        posting.account,
+                        units.number,
+                        units.currency,
+                        cost.number if cost else None,
+                        cost.currency if cost else None,
+                        cost.date if cost else None,
+                        cost.label if cost else None,
+                        price.number if price else None,
+                        price.currency if price else None,
+                    ),
+                )
 
 
 class DirectiveWriter:
@@ -117,6 +135,7 @@ class DirectiveWriter:
     This is used to factor out code for all the simple directives types
     (all types except Transaction).
     """
+
     # The name of the type of the directive. Override this.
     type = None
 
@@ -134,19 +153,22 @@ class DirectiveWriter:
           entries: A list of directives.
         """
         with connection:
-            columns_text = ','.join(self.columns.strip().splitlines())
-            connection.execute("""
+            columns_text = ",".join(self.columns.strip().splitlines())
+            connection.execute(
+                """
               CREATE TABLE {name}_detail (
                 id 			INTEGER PRIMARY KEY,
                 {columns}
               );
-            """.format(name=self.name,
-                       columns=columns_text))
+            """.format(name=self.name, columns=columns_text)
+            )
 
-            connection.execute("""
+            connection.execute(
+                """
               CREATE VIEW {name} AS
                 SELECT * FROM entry JOIN {name}_detail USING (id);
-            """.format(name=self.name))
+            """.format(name=self.name)
+            )
 
         with connection:
             for eid, entry in enumerate(entries):
@@ -154,18 +176,27 @@ class DirectiveWriter:
                     continue
 
                 # Store common data.
-                connection.execute("""
+                connection.execute(
+                    """
                   INSERT INTO entry VALUES (?, ?, ?, ?, ?);
-                """, (eid, entry.date, self.name,
-                      entry.meta["filename"], entry.meta["lineno"]))
+                """,
+                    (
+                        eid,
+                        entry.date,
+                        self.name,
+                        entry.meta["filename"],
+                        entry.meta["lineno"],
+                    ),
+                )
 
                 # Store detail data.
                 detail_data = self.get_detail(entry)
                 row_data = (eid,) + detail_data
                 query = """
                   INSERT INTO {name}_detail VALUES ({placeholder});
-                """.format(name=self.name,
-                           placeholder=','.join(['?'] * (1 + len(detail_data))))
+                """.format(
+                    name=self.name, placeholder=",".join(["?"] * (1 + len(detail_data)))
+                )
                 connection.execute(query, row_data)
 
     def get_detail(self, entry):
@@ -189,8 +220,7 @@ class OpenWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.account,
-                ','.join(entry.currencies or []))
+        return (entry.account, ",".join(entry.currencies or []))
 
 
 class CloseWriter(DirectiveWriter):
@@ -228,11 +258,13 @@ class BalanceWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.account,
-                entry.amount.number,
-                entry.amount.currency,
-                entry.diff_amount.currency if entry.diff_amount else None,
-                entry.diff_amount.currency if entry.diff_amount else None)
+        return (
+            entry.account,
+            entry.amount.number,
+            entry.amount.currency,
+            entry.diff_amount.currency if entry.diff_amount else None,
+            entry.diff_amount.currency if entry.diff_amount else None,
+        )
 
 
 class NoteWriter(DirectiveWriter):
@@ -244,8 +276,7 @@ class NoteWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.account,
-                entry.comment)
+        return (entry.account, entry.comment)
 
 
 class EventWriter(DirectiveWriter):
@@ -257,8 +288,7 @@ class EventWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.type,
-                entry.description)
+        return (entry.type, entry.description)
 
 
 class QueryWriter(DirectiveWriter):
@@ -270,8 +300,7 @@ class QueryWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.name,
-                entry.query_string)
+        return (entry.name, entry.query_string)
 
 
 class PriceWriter(DirectiveWriter):
@@ -284,9 +313,7 @@ class PriceWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.currency,
-                entry.amount.number,
-                entry.amount.currency)
+        return (entry.currency, entry.amount.number, entry.amount.currency)
 
 
 class DocumentWriter(DirectiveWriter):
@@ -298,9 +325,7 @@ class DocumentWriter(DirectiveWriter):
     """
 
     def get_detail(self, entry):
-        return (entry.account,
-                entry.filename)
-
+        return (entry.account, entry.filename)
 
 
 def adapt_decimal(number):
@@ -326,24 +351,21 @@ def convert_decimal(string):
 
 
 def setup_decimal_support():
-    """Setup sqlite3 to support conversions to/from Decimal numbers.
-    """
+    """Setup sqlite3 to support conversions to/from Decimal numbers."""
     dbapi.register_adapter(Decimal, adapt_decimal)
     dbapi.register_converter("decimal", convert_decimal)
 
 
 def main():
     parser = version.ArgumentParser(description=__doc__)
-    parser.add_argument('filename',
-                        help='Beancount input filename')
-    parser.add_argument('database',
-                        help='Filename of database file to create')
+    parser.add_argument("filename", help="Beancount input filename")
+    parser.add_argument("database", help="Filename of database file to create")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
-    entries, errors, options_map = loader.load_file(args.filename,
-                                                    log_timings=logging.info,
-                                                    log_errors=sys.stderr)
+    entries, errors, options_map = loader.load_file(
+        args.filename, log_timings=logging.info, log_errors=sys.stderr
+    )
 
     # Delete previous database if it already exists.
     if path.exists(args.database):
@@ -354,17 +376,17 @@ def main():
 
     setup_decimal_support()
     for function in [
-            output_common,
-            output_transactions,
-            OpenWriter(),
-            CloseWriter(),
-            PadWriter(),
-            BalanceWriter(),
-            NoteWriter(),
-            PriceWriter(),
-            DocumentWriter(),
+        output_common,
+        output_transactions,
+        OpenWriter(),
+        CloseWriter(),
+        PadWriter(),
+        BalanceWriter(),
+        NoteWriter(),
+        PriceWriter(),
+        DocumentWriter(),
     ]:
-        step_name = getattr(function, '__name__', function.__class__.__name__)
+        step_name = getattr(function, "__name__", function.__class__.__name__)
         with misc_utils.log_time(step_name, logging.info):
             function(connection, entries)
 

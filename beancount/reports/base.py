@@ -4,6 +4,7 @@ Each report class should be able to render a filtered list of entries to a
 variety of formats. Each report has a name, some command-line options, and
 supports some subset of formats.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -82,7 +83,7 @@ class Report:
         """
         formats = []
         for name in dir(cls):
-            match = re.match('render_([a-z0-9]+)$', name)
+            match = re.match("render_([a-z0-9]+)$", name)
             if match:
                 formats.append(match.group(1))
         return sorted(formats)
@@ -106,8 +107,9 @@ class Report:
           ReportError: If the requested format is not supported.
         """
         try:
-            render_method = getattr(self, 'render_{}'.format(output_format or
-                                                             self.default_format))
+            render_method = getattr(
+                self, "render_{}".format(output_format or self.default_format)
+            )
         except AttributeError as exc:
             raise ReportError("Unsupported format: '{}'".format(output_format)) from exc
 
@@ -123,13 +125,14 @@ class Report:
 class HTMLReport(Report):
     """A mixin for reports that support forwarding html to htmldiv implementation."""
 
-    default_format = 'html'
+    default_format = "html"
 
     def __init__(self, *args, formatter=None, css_id=None, css_class=None):
         super().__init__(*args)
         if formatter is None:
             formatter = html_formatter.HTMLFormatter(
-                display_context.DEFAULT_DISPLAY_CONTEXT)
+                display_context.DEFAULT_DISPLAY_CONTEXT
+            )
         self.formatter = formatter
         self.css_id = css_id
         self.css_class = css_class
@@ -138,15 +141,13 @@ class HTMLReport(Report):
         template = get_html_template()
         oss = io.StringIO()
         self.render_htmldiv(entries, errors, options_map, oss)
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
-
+        file.write(template.format(body=oss.getvalue(), title=""))
 
 
 class TableReport(HTMLReport):
     """A base class for reports that supports automatic conversions from Table."""
 
-    default_format = 'text'
+    default_format = "text"
 
     def generate_table(self, entries, errors, options_map):
         """Render the report to a Table instance.
@@ -162,16 +163,17 @@ class TableReport(HTMLReport):
 
     def render_text(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'text')
+        table.render_table(table_, file, "text")
 
     def render_htmldiv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'htmldiv',
-                           css_id=self.css_id, css_class=self.css_class)
+        table.render_table(
+            table_, file, "htmldiv", css_id=self.css_id, css_class=self.css_class
+        )
 
     def render_csv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'csv')
+        table.render_table(table_, file, "csv")
 
 
 class RealizationMeta(type):
@@ -204,13 +206,13 @@ class RealizationMeta(type):
         # Go through the methods of the new type and look for render_real() methods.
         new_methods = {}
         for attr, value in new_type.__dict__.items():
-            match = re.match('render_real_(.*)', attr)
+            match = re.match("render_real_(.*)", attr)
             if not match:
                 continue
 
             # Make sure that if an explicit version of render_*() has already
             # been declared, that we don't override it.
-            render_function_name = 'render_{}'.format(match.group(1))
+            render_function_name = "render_{}".format(match.group(1))
             if render_function_name in new_type.__dict__:
                 continue
 
@@ -221,6 +223,7 @@ class RealizationMeta(type):
                 price_map = prices.build_price_map(entries)
                 # Note: When we forward, use the latest date (None).
                 return fwdfunc(self, real_root, price_map, None, options_map, file)
+
             forward_method.__name__ = render_function_name
             new_methods[render_function_name] = forward_method
 
@@ -229,8 +232,8 @@ class RealizationMeta(type):
             setattr(new_type, mname, mvalue)
 
         # Auto-generate other methods if necessary.
-        if hasattr(new_type, 'render_real_htmldiv'):
-            setattr(new_type, 'render_real_html', mcs.render_real_html)
+        if hasattr(new_type, "render_real_htmldiv"):
+            setattr(new_type, "render_real_html", mcs.render_real_html)
 
         return new_type
 
@@ -247,8 +250,7 @@ class RealizationMeta(type):
         template = get_html_template()
         oss = io.StringIO()
         cls.render_real_htmldiv(real_root, price_map, price_date, options_map, oss)
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
+        file.write(template.format(body=oss.getvalue(), title=""))
 
 
 def get_html_template():
@@ -259,5 +261,5 @@ def get_html_template():
         {title}: for the title of the page.
         {body}: for the body, where the div goes.
     """
-    with open(path.join(path.dirname(__file__), 'template.html')) as infile:
+    with open(path.join(path.dirname(__file__), "template.html")) as infile:
         return infile.read()

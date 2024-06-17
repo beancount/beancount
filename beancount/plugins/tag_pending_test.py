@@ -10,7 +10,6 @@ from beancount.utils import test_utils
 
 
 class TestExampleTrackPending(test_utils.TestCase):
-
     @test_utils.docfile
     def test_tag_pending(self, filename):
         """
@@ -34,12 +33,12 @@ class TestExampleTrackPending(test_utils.TestCase):
         """
         original_entries, errors, _ = loader.load_file(filename)
         self.assertFalse(errors)
-        entries = tag_pending.tag_pending_transactions(original_entries, 'PENDING')
+        entries = tag_pending.tag_pending_transactions(original_entries, "PENDING")
         self.assertEqual(len(original_entries), len(entries))
         self.assertEqual(data.EMPTY_SET, entries[4].tags)
-        self.assertEqual(set(['PENDING']), entries[5].tags)
+        self.assertEqual(set(["PENDING"]), entries[5].tags)
         self.assertEqual(data.EMPTY_SET, entries[6].tags)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

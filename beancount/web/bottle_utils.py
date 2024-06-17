@@ -1,13 +1,14 @@
 """
 Bottle utilities, mostly helpers to do mounts on top of dynamic routes.
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import warnings
 
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     import bottle
     from bottle import request
 
@@ -63,6 +64,7 @@ def internal_redirect(app, path_depth):
     try:
         request.path_shift(path_depth)
         rs = bottle.HTTPResponse([])
+
         def start_response(status, headerlist, exc_info=None):
             if exc_info:
                 try:
@@ -70,10 +72,13 @@ def internal_redirect(app, path_depth):
                 finally:
                     exc_info = None
             rs.status = status
-            for name, value in headerlist: rs.add_header(name, value)
+            for name, value in headerlist:
+                rs.add_header(name, value)
             return rs.body.append
+
         body = app(request.environ, start_response)
-        if body and rs.body: body = itertools.chain(rs.body, body)
+        if body and rs.body:
+            body = itertools.chain(rs.body, body)
         rs.body = body or rs.body
         return rs
     finally:

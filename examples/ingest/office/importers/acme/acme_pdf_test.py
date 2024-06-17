@@ -1,4 +1,5 @@
 """Unit tests for Acme PDF importer (using pytest)."""
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -12,13 +13,15 @@ from . import acme_pdf
 
 IMPORTER = acme_pdf.Importer("Assets:US:AcmeBank")
 
-@pytest.mark.skipif(not acme_pdf.is_pdfminer_installed(),
-                    reason="pdfminer2 is not installed")
+
+@pytest.mark.skipif(
+    not acme_pdf.is_pdfminer_installed(), reason="pdfminer2 is not installed"
+)
 @regtest.with_importer(IMPORTER)
 @regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

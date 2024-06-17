@@ -1,5 +1,5 @@
-"""Execution of interpreter on data rows.
-"""
+"""Execution of interpreter on data rows."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -94,13 +94,13 @@ def execute_print(c_print, entries, options_map, file):
     # precision, but honors the commas option. This is kept in sync with
     # {2c694afe3140} to avoid a dependency.
     dcontext = display_context.DisplayContext()
-    dcontext.set_commas(options_map['dcontext'].commas)
+    dcontext.set_commas(options_map["dcontext"].commas)
     printer.print_entries(entries, dcontext, file=file)
 
 
 class Allocator:
-    """A helper class to count slot allocations and return unique handles to them.
-    """
+    """A helper class to count slot allocations and return unique handles to them."""
+
     def __init__(self):
         self.size = 0
 
@@ -161,17 +161,19 @@ def uses_balance_column(c_expr):
     Returns:
       A boolean, true if the expression contains a BalanceColumn node.
     """
-    return (isinstance(c_expr, query_env.BalanceColumn) or
-            any(uses_balance_column(c_node) for c_node in c_expr.childnodes()))
+    return isinstance(c_expr, query_env.BalanceColumn) or any(
+        uses_balance_column(c_node) for c_node in c_expr.childnodes()
+    )
 
 
 _MIN_VALUES = {
     int: 0,
     float: 0.0,
-    str: '',
+    str: "",
     Decimal: number.ZERO,
     datetime.date: datetime.date.min,
 }
+
 
 def row_sortkey(order_indexes, values, c_exprs):
     """Generate a sortkey for the given values.
@@ -188,9 +190,7 @@ def row_sortkey(order_indexes, values, c_exprs):
     key = []
     for index in order_indexes:
         value = values[index]
-        key.append(_MIN_VALUES.get(c_exprs[index].dtype, None)
-                   if value is None
-                   else value)
+        key.append(_MIN_VALUES.get(c_exprs[index].dtype, None) if value is None else value)
     return tuple(key)
 
 
@@ -223,40 +223,46 @@ def execute_query(query, entries, options_map):
           'result_types'.
     """
     # Figure out the result types that describe what we return.
-    result_types = [(target.name, target.c_expr.dtype)
-                    for target in query.c_targets
-                    if target.name is not None]
+    result_types = [
+        (target.name, target.c_expr.dtype)
+        for target in query.c_targets
+        if target.name is not None
+    ]
 
     # Create a class for each final result.
     # pylint: disable=invalid-name
-    ResultRow = collections.namedtuple('ResultRow',
-                                       [target.name
-                                        for target in query.c_targets
-                                        if target.name is not None])
+    ResultRow = collections.namedtuple(
+        "ResultRow", [target.name for target in query.c_targets if target.name is not None]
+    )
 
     # Pre-compute lists of the expressions to evaluate.
-    group_indexes = (set(query.group_indexes)
-                     if query.group_indexes is not None
-                     else query.group_indexes)
+    group_indexes = (
+        set(query.group_indexes) if query.group_indexes is not None else query.group_indexes
+    )
 
     # Indexes of the columns for result rows and order rows.
-    result_indexes = [index
-                      for index, c_target in enumerate(query.c_targets)
-                      if c_target.name]
+    result_indexes = [
+        index for index, c_target in enumerate(query.c_targets) if c_target.name
+    ]
     order_indexes = query.order_indexes
 
     # Figure out if we need to compute balance.
-    uses_balance = any(uses_balance_column(c_expr)
-                       for c_expr in itertools.chain(
-                               [c_target.c_expr for c_target in query.c_targets],
-                               [query.c_where] if query.c_where else []))
+    uses_balance = any(
+        uses_balance_column(c_expr)
+        for c_expr in itertools.chain(
+            [c_target.c_expr for c_target in query.c_targets],
+            [query.c_where] if query.c_where else [],
+        )
+    )
 
     context = create_row_context(entries, options_map)
 
     # Filter the entries using the FROM clause.
-    filt_entries = (filter_entries(query.c_from, entries, options_map, context)
-                    if query.c_from is not None else
-                    entries)
+    filt_entries = (
+        filter_entries(query.c_from, entries, options_map, context)
+        if query.c_from is not None
+        else entries
+    )
 
     # Dispatch between the non-aggregated queries and aggregated queries.
     c_where = query.c_where
@@ -282,8 +288,7 @@ def execute_query(query, entries, options_map):
                     values = [c_expr(context) for c_expr in c_target_exprs]
 
                     # Compute result and sort-key objects.
-                    result = ResultRow._make(values[index]
-                                             for index in result_indexes)
+                    result = ResultRow._make(values[index] for index in result_indexes)
                     sortkey = row_sortkey(order_indexes, values, c_target_exprs)
                     schwartz_rows.append((sortkey, result))
     else:
@@ -320,8 +325,7 @@ def execute_query(query, entries, options_map):
                         context.balance.add_position(posting)
 
                     # Compute the non-aggregate expressions.
-                    row_key = tuple(c_expr(context)
-                                    for c_expr in c_nonaggregate_exprs)
+                    row_key = tuple(c_expr(context) for c_expr in c_nonaggregate_exprs)
 
                     # Get an appropriate store for the unique key of this row.
                     try:
@@ -355,15 +359,13 @@ def execute_query(query, entries, options_map):
                 values.append(value)
 
             # Compute result and sort-key objects.
-            result = ResultRow._make(values[index]
-                                     for index in result_indexes)
+            result = ResultRow._make(values[index] for index in result_indexes)
             sortkey = row_sortkey(order_indexes, values, c_target_exprs)
             schwartz_rows.append((sortkey, result))
 
     # Order results if requested.
     if order_indexes is not None:
-        schwartz_rows.sort(key=operator.itemgetter(0),
-                           reverse=(query.ordering == 'DESC'))
+        schwartz_rows.sort(key=operator.itemgetter(0), reverse=(query.ordering == "DESC"))
 
     # Extract final results, in sorted order at this point.
     result_rows = [x[1] for x in schwartz_rows]
@@ -374,7 +376,7 @@ def execute_query(query, entries, options_map):
 
     # Apply limit.
     if query.limit is not None:
-        result_rows = result_rows[:query.limit]
+        result_rows = result_rows[: query.limit]
 
     # Flatten inventories if requested.
     if query.flatten:
@@ -400,9 +402,11 @@ def flatten_results(result_types, result_rows):
           'result_types'. All inventories from the input should have been converted
           to Position types.
     """
-    indexes = set(index
-                  for index, (name, result_type) in enumerate(result_types)
-                  if result_type is inventory.Inventory)
+    indexes = set(
+        index
+        for index, (name, result_type) in enumerate(result_types)
+        if result_type is inventory.Inventory
+    )
     if not indexes:
         return (result_types, result_rows)
 
@@ -424,9 +428,9 @@ def flatten_results(result_types, result_rows):
             output_rows.append(ResultRow._make(output_row))
 
     # Convert the types.
-    output_types = [(name, (position.Position
-                            if result_type is inventory.Inventory
-                            else result_type))
-                    for name, result_type in result_types]
+    output_types = [
+        (name, (position.Position if result_type is inventory.Inventory else result_type))
+        for name, result_type in result_types
+    ]
 
     return output_types, output_rows

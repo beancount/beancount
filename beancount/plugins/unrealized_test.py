@@ -23,14 +23,14 @@ def get_entries_with_narration(entries, regexp):
     Returns:
       A list of directives.
     """
-    return [entry
-            for entry in entries
-            if (isinstance(entry, data.Transaction) and
-                re.search(regexp, entry.narration))]
+    return [
+        entry
+        for entry in entries
+        if (isinstance(entry, data.Transaction) and re.search(regexp, entry.narration))
+    ]
 
 
 class TestUnrealized(unittest.TestCase):
-
     def test_empty_entries(self):
         entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
@@ -54,8 +54,7 @@ class TestUnrealized(unittest.TestCase):
         """
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual(new_entries, entries)
-        self.assertEqual([],
-                         unrealized.get_unrealized_entries(new_entries))
+        self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
 
     @loader.load_doc()
     def test_normal_case(self, entries, _, options_map):
@@ -90,13 +89,13 @@ class TestUnrealized(unittest.TestCase):
 
         house = get_entries_with_narration(new_entries, "units of HOUSE")[0]
         self.assertEqual(2, len(house.postings))
-        self.assertEqual(D('350'), house.postings[0].units.number)
-        self.assertEqual('Assets:Account1', house.postings[0].account)
-        self.assertEqual('Income:Account1', house.postings[1].account)
+        self.assertEqual(D("350"), house.postings[0].units.number)
+        self.assertEqual("Assets:Account1", house.postings[0].account)
+        self.assertEqual("Income:Account1", house.postings[1].account)
 
         mansion = get_entries_with_narration(new_entries, "units of MANSION")[0]
         self.assertEqual(2, len(mansion.postings))
-        self.assertEqual(D('-100'), mansion.postings[0].units.number)
+        self.assertEqual(D("-100"), mansion.postings[0].units.number)
 
     @loader.load_doc()
     def test_no_price(self, entries, _, options_map):
@@ -134,8 +133,7 @@ class TestUnrealized(unittest.TestCase):
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
         self.assertEqual(1, len(unreal_entries))
-        self.assertEqual(D('200'),
-                         unreal_entries[0].postings[0].units.number)
+        self.assertEqual(D("200"), unreal_entries[0].postings[0].units.number)
 
     @loader.load_doc()
     def test_conversions_only(self, entries, _, options_map):
@@ -163,14 +161,14 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-15 price HOUSE  100 USD
         """
-        entries, errors = unrealized.add_unrealized_gains(entries, options_map, '_invalid_')
+        entries, errors = unrealized.add_unrealized_gains(entries, options_map, "_invalid_")
         self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
 
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, "Gains")
         entries = unrealized.get_unrealized_entries(new_entries)
         entry = entries[0]
-        self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
-        self.assertEqual('Income:Account1:Gains', entry.postings[1].account)
+        self.assertEqual("Assets:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
 
     @loader.load_doc()
     def test_not_assets(self, entries, _, options_map):
@@ -192,34 +190,34 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-16 price HOUSE 110 USD
         """
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, "Gains")
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
 
-        entry = get_entries_with_narration(unreal_entries, '1 units')[0]
+        entry = get_entries_with_narration(unreal_entries, "1 units")[0]
         self.assertEqual("Assets:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
         self.assertEqual(D("10.00"), entry.postings[0].units.number)
         self.assertEqual(D("-10.00"), entry.postings[1].units.number)
 
-        entry = get_entries_with_narration(unreal_entries, '2 units')[0]
+        entry = get_entries_with_narration(unreal_entries, "2 units")[0]
         self.assertEqual("Liabilities:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
         self.assertEqual(D("18.00"), entry.postings[0].units.number)
         self.assertEqual(D("-18.00"), entry.postings[1].units.number)
 
-        entry = get_entries_with_narration(unreal_entries, '3 units')[0]
+        entry = get_entries_with_narration(unreal_entries, "3 units")[0]
         self.assertEqual("Equity:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
         self.assertEqual(D("24.00"), entry.postings[0].units.number)
         self.assertEqual(D("-24.00"), entry.postings[1].units.number)
 
-        entry = get_entries_with_narration(unreal_entries, '4 units')[0]
+        entry = get_entries_with_narration(unreal_entries, "4 units")[0]
         self.assertEqual("Expenses:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
         self.assertEqual(D("28.00"), entry.postings[0].units.number)
         self.assertEqual(D("-28.00"), entry.postings[1].units.number)
 
-        entry = get_entries_with_narration(unreal_entries, '5 units')[0]
+        entry = get_entries_with_narration(unreal_entries, "5 units")[0]
         self.assertEqual("Income:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
         self.assertEqual(D("30.00"), entry.postings[0].units.number)
@@ -245,22 +243,24 @@ class TestUnrealized(unittest.TestCase):
         # Test it out without a subaccount, only an open directive should be
         # added for the income account.
         new_entries, errors = unrealized.add_unrealized_gains(entries, options_map)
-        self.assertEqual({'Income:Misc',
-                          'Assets:Account1',
-                          'Income:Account1'},
-                         {entry.account for entry in new_entries
-                          if isinstance(entry, data.Open)})
+        self.assertEqual(
+            {"Income:Misc", "Assets:Account1", "Income:Account1"},
+            {entry.account for entry in new_entries if isinstance(entry, data.Open)},
+        )
 
         # Test it with a subaccount; we should observe new open directives for
         # the subaccounts as well.
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, "Gains")
 
-        self.assertEqual({'Income:Misc',
-                          'Assets:Account1',
-                          'Assets:Account1:Gains',
-                          'Income:Account1:Gains'},
-                         {entry.account for entry in new_entries
-                          if isinstance(entry, data.Open)})
+        self.assertEqual(
+            {
+                "Income:Misc",
+                "Assets:Account1",
+                "Assets:Account1:Gains",
+                "Income:Account1:Gains",
+            },
+            {entry.account for entry in new_entries if isinstance(entry, data.Open)},
+        )
 
         # Validate the new entries; validation should pass.
         valid_errors = validation.validate(new_entries, options_map)
@@ -292,5 +292,5 @@ class TestUnrealized(unittest.TestCase):
         self.assertFalse(new_errors)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

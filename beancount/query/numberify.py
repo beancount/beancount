@@ -55,6 +55,7 @@ Notes:
   recommended that you do that.
 
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -153,10 +154,12 @@ def convert_col_Amount(name, drows, index):
         vamount = drow[index]
         if vamount and vamount.currency:
             currency_map[vamount.currency] += 1
-    return [AmountConverter('{} ({})'.format(name, currency), index, currency)
-            for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: (item[1], item[0]),
-                                      reverse=True)]
+    return [
+        AmountConverter("{} ({})".format(name, currency), index, currency)
+        for currency, _ in sorted(
+            currency_map.items(), key=lambda item: (item[1], item[0]), reverse=True
+        )
+    ]
 
 
 class PositionConverter:
@@ -195,10 +198,12 @@ def convert_col_Position(name, drows, index):
         pos = drow[index]
         if pos and pos.units.currency:
             currency_map[pos.units.currency] += 1
-    return [PositionConverter('{} ({})'.format(name, currency), index, currency)
-            for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: (item[1], item[0]),
-                                      reverse=True)]
+    return [
+        PositionConverter("{} ({})".format(name, currency), index, currency)
+        for currency, _ in sorted(
+            currency_map.items(), key=lambda item: (item[1], item[0]), reverse=True
+        )
+    ]
 
 
 class InventoryConverter:
@@ -237,15 +242,17 @@ def convert_col_Inventory(name, drows, index):
         inv = drow[index]
         for currency in inv.currencies():
             currency_map[currency] += 1
-    return [InventoryConverter('{} ({})'.format(name, currency), index, currency)
-            for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: (item[1], item[0]),
-                                      reverse=True)]
+    return [
+        InventoryConverter("{} ({})".format(name, currency), index, currency)
+        for currency, _ in sorted(
+            currency_map.items(), key=lambda item: (item[1], item[0]), reverse=True
+        )
+    ]
 
 
 # A mapping of data types to their converter factory.
 CONVERTING_TYPES = {
-    amount.Amount       : convert_col_Amount,
-    position.Position   : convert_col_Position,
-    inventory.Inventory : convert_col_Inventory,
+    amount.Amount: convert_col_Amount,
+    position.Position: convert_col_Position,
+    inventory.Inventory: convert_col_Inventory,
 }

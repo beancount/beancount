@@ -3,6 +3,7 @@
 Read an import script and a list of downloaded filenames or directories of
 downloaded files, and for each of those files, extract transactions from it.
 """
+
 __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,17 +23,20 @@ from beancount import loader
 
 # The format for the header in the extracted output.
 # You may override this value from your .import script.
-HEADER = ';; -*- mode: beancount -*-\n'
+HEADER = ";; -*- mode: beancount -*-\n"
 
 
 # Name of metadata field to be set to indicate that the entry is a likely duplicate.
-DUPLICATE_META = '__duplicate__'
+DUPLICATE_META = "__duplicate__"
 
 
-def extract_from_file(filename, importer,
-                      existing_entries=None,
-                      min_date=None,
-                      allow_none_for_tags_and_links=False):
+def extract_from_file(
+    filename,
+    importer,
+    existing_entries=None,
+    min_date=None,
+    allow_none_for_tags_and_links=False,
+):
     """Import entries from file 'filename' with the given matches,
 
     Also cross-check against a list of provided 'existing_entries' entries,
@@ -62,8 +66,8 @@ def extract_from_file(filename, importer,
     #
     # Note: For legacy support, support calling without the existing entries.
     kwargs = {}
-    if 'existing_entries' in inspect.signature(importer.extract).parameters:
-        kwargs['existing_entries'] = existing_entries
+    if "existing_entries" in inspect.signature(importer.extract).parameters:
+        kwargs["existing_entries"] = existing_entries
     new_entries = importer.extract(file, **kwargs)
     if not new_entries:
         return []
@@ -77,8 +81,7 @@ def extract_from_file(filename, importer,
 
     # Filter out entries with dates before 'min_date'.
     if min_date:
-        new_entries = list(itertools.dropwhile(lambda x: x.date < min_date,
-                                               new_entries))
+        new_entries = list(itertools.dropwhile(lambda x: x.date < min_date, new_entries))
 
     return new_entries
 
@@ -123,7 +126,7 @@ def print_extracted_entries(entries, file):
     """
     # Print the filename and which modules matched.
     pr = lambda *args: print(*args, file=file)
-    pr('')
+    pr("")
 
     # Print out the entries.
     for entry in entries:
@@ -132,22 +135,24 @@ def print_extracted_entries(entries, file):
             meta = entry.meta.copy()
             meta.pop(DUPLICATE_META)
             entry = entry._replace(meta=meta)
-            entry_string = textwrap.indent(printer.format_entry(entry), '; ')
+            entry_string = textwrap.indent(printer.format_entry(entry), "; ")
         else:
             entry_string = printer.format_entry(entry)
         pr(entry_string)
 
-    pr('')
+    pr("")
 
 
-def extract(importer_config,
-            files_or_directories,
-            output,
-            entries=None,
-            options_map=None,
-            mindate=None,
-            ascending=True,
-            hooks=None):
+def extract(
+    importer_config,
+    files_or_directories,
+    output,
+    entries=None,
+    options_map=None,
+    mindate=None,
+    ascending=True,
+    hooks=None,
+):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file.
@@ -170,12 +175,12 @@ def extract(importer_config,
         is used, automatically.
     """
     allow_none_for_tags_and_links = (
-        options_map and options_map["allow_deprecated_none_for_tags_and_links"])
+        options_map and options_map["allow_deprecated_none_for_tags_and_links"]
+    )
 
     # Run all the importers and gather their result sets.
     new_entries_list = []
-    for filename, importers in identify.find_imports(importer_config,
-                                                     files_or_directories):
+    for filename, importers in identify.find_imports(importer_config, files_or_directories):
         for importer in importers:
             # Import and process the file.
             try:
@@ -184,11 +189,15 @@ def extract(importer_config,
                     importer,
                     existing_entries=entries,
                     min_date=mindate,
-                    allow_none_for_tags_and_links=allow_none_for_tags_and_links)
+                    allow_none_for_tags_and_links=allow_none_for_tags_and_links,
+                )
                 new_entries_list.append((filename, new_entries))
             except Exception as exc:
-                logging.exception("Importer %s.extract() raised an unexpected error: %s",
-                                  importer.name(), exc)
+                logging.exception(
+                    "Importer %s.extract() raised an unexpected error: %s",
+                    importer.name(),
+                    exc,
+                )
                 continue
 
     # Find potential duplicate entries in the result sets, either against the
@@ -208,7 +217,7 @@ def extract(importer_config,
     output.write(HEADER)
     for key, new_entries in new_entries_list:
         output.write(identify.SECTION.format(key))
-        output.write('\n')
+        output.write("\n")
         if not ascending:
             new_entries.reverse()
         print_extracted_entries(new_entries, output)
@@ -220,15 +229,26 @@ DESCRIPTION = "Extract transactions from downloads"
 def add_arguments(parser):
     """Add arguments for the extract command."""
 
-    parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
-                        default=None,
-                        help=('Beancount file or existing entries for de-duplication '
-                              '(optional)'))
+    parser.add_argument(
+        "-e",
+        "-f",
+        "--existing",
+        "--previous",
+        metavar="BEANCOUNT_FILE",
+        default=None,
+        help=("Beancount file or existing entries for de-duplication " "(optional)"),
+    )
 
-    parser.add_argument('-r', '--reverse', '--descending',
-                        action='store_const', dest='ascending',
-                        default=True, const=False,
-                        help='Write out the entries in descending order')
+    parser.add_argument(
+        "-r",
+        "--reverse",
+        "--descending",
+        action="store_const",
+        dest="ascending",
+        default=True,
+        const=False,
+        help="Write out the entries in descending order",
+    )
 
 
 def run(args, _, importers_list, files_or_directories, hooks=None):
@@ -240,10 +260,14 @@ def run(args, _, importers_list, files_or_directories, hooks=None):
     else:
         entries, options_map = None, None
 
-    extract(importers_list, files_or_directories, sys.stdout,
-            entries=entries,
-            options_map=options_map,
-            mindate=None,
-            ascending=args.ascending,
-            hooks=hooks)
+    extract(
+        importers_list,
+        files_or_directories,
+        sys.stdout,
+        entries=entries,
+        options_map=options_map,
+        mindate=None,
+        ascending=args.ascending,
+        hooks=hooks,
+    )
     return 0

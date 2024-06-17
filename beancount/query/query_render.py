@@ -1,5 +1,5 @@
-"""Rendering of rows.
-"""
+"""Rendering of rows."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -25,6 +25,7 @@ class ColumnRenderer:
     align nicely in a column, in the rendered output, whereby all the values
     render to the same width.
     """
+
     # Override, the type of object to be rendered.
     dtype = None
 
@@ -68,6 +69,7 @@ class ColumnRenderer:
 
 class ObjectRenderer(ColumnRenderer):
     """A renderer for a generic object type."""
+
     dtype = object
 
     def __init__(self, dcontext):
@@ -85,11 +87,12 @@ class ObjectRenderer(ColumnRenderer):
         return self.maxlen
 
     def format(self, string):
-        return '' if string is None else str(string)
+        return "" if string is None else str(string)
 
 
 class BoolRenderer(ColumnRenderer):
     """A renderer for left-aligned strings."""
+
     dtype = bool
 
     def __init__(self, dcontext):
@@ -103,17 +106,18 @@ class BoolRenderer(ColumnRenderer):
 
     def prepare(self):
         self.maxlen = 5 if self.seen_true else 4
-        self.fmt = '{{:<{}.{}}}'.format(self.maxlen, self.maxlen)
+        self.fmt = "{{:<{}.{}}}".format(self.maxlen, self.maxlen)
 
     def width(self):
         return self.maxlen
 
     def format(self, value):
-        return self.fmt.format('TRUE' if value else 'FALSE')
+        return self.fmt.format("TRUE" if value else "FALSE")
 
 
 class StringRenderer(ColumnRenderer):
     """A renderer for left-aligned strings."""
+
     dtype = str
 
     def __init__(self, dcontext):
@@ -125,17 +129,18 @@ class StringRenderer(ColumnRenderer):
             self.maxlen = max(self.maxlen, len(string))
 
     def prepare(self):
-        self.fmt = '{{:<{}.{}}}'.format(self.maxlen, self.maxlen)
+        self.fmt = "{{:<{}.{}}}".format(self.maxlen, self.maxlen)
 
     def width(self):
         return self.maxlen
 
     def format(self, string):
-        return self.fmt.format('' if string is None else string)
+        return self.fmt.format("" if string is None else string)
 
 
 class StringSetRenderer(ColumnRenderer):
     """A renderer for sets of strings."""
+
     dtype = set
 
     def __init__(self, dcontext):
@@ -148,8 +153,8 @@ class StringSetRenderer(ColumnRenderer):
         self.maxlen = max(max(len(string) for string in string_set), self.maxlen)
 
     def prepare(self):
-        self.fmt = '{{:<{:d}.{:d}}}'.format(self.maxlen, self.maxlen)
-        self.empty = self.fmt.format('')
+        self.fmt = "{{:<{:d}.{:d}}}".format(self.maxlen, self.maxlen)
+        self.empty = self.fmt.format("")
 
     def width(self):
         return self.maxlen
@@ -164,11 +169,12 @@ class StringSetRenderer(ColumnRenderer):
 
 class DateTimeRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
+
     dtype = datetime.date
 
     def __init__(self, dcontext):
         super().__init__(dcontext)
-        self.empty = ' ' * 10
+        self.empty = " " * 10
 
     def update(self, _):
         pass
@@ -177,11 +183,12 @@ class DateTimeRenderer(ColumnRenderer):
         return 10
 
     def format(self, dtime):
-        return self.empty if dtime is None else dtime.strftime('%Y-%m-%d')
+        return self.empty if dtime is None else dtime.strftime("%Y-%m-%d")
 
 
 class IntegerRenderer(ColumnRenderer):
     """A renderer for integers."""
+
     dtype = int
 
     def __init__(self, dcontext):
@@ -192,28 +199,29 @@ class IntegerRenderer(ColumnRenderer):
     def update(self, number):
         if number is None:
             return
-        self.max_digits = max(self.max_digits,
-                              (int(math.log10(abs(number)))+1) if number else 1)
+        self.max_digits = max(
+            self.max_digits, (int(math.log10(abs(number))) + 1) if number else 1
+        )
         if number < 0:
             self.has_negative = True
 
     def prepare(self):
         self.max_width = (1 if self.has_negative else 0) + self.max_digits
-        self.fmt = '{{:{}{}d}}'.format(' ' if self.has_negative else '',
-                                       self.max_width)
+        self.fmt = "{{:{}{}d}}".format(" " if self.has_negative else "", self.max_width)
 
     def width(self):
         return self.max_width
 
     def format(self, number):
         if number is None:
-            return self.fmt.format('')
+            return self.fmt.format("")
         return self.fmt.format(number)
 
 
 # pylint: disable=too-many-instance-attributes
 class DecimalRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
+
     dtype = Decimal
 
     def __init__(self, dcontext):
@@ -246,7 +254,7 @@ class DecimalRenderer(ColumnRenderer):
             digits_sign = 1 if self.has_negative else 0
             digits_integral = max(self.max_adjusted, 0) + 1
             self.integral_width = digits_sign + digits_integral
-            self.format_number = '{: }'.format if self.has_negative else '{}'.format
+            self.format_number = "{: }".format if self.has_negative else "{}".format
 
             for dist in self.dists.values():
                 # Note: to compute the number of fractional digits to be displayed,
@@ -258,10 +266,10 @@ class DecimalRenderer(ColumnRenderer):
                 if width > total_width:
                     total_width = width
 
-            self.fmt = '{{:<{total_width}.{total_width}}}'.format(total_width=total_width)
+            self.fmt = "{{:<{total_width}.{total_width}}}".format(total_width=total_width)
 
         self.total_width = total_width
-        self.empty = ' ' * total_width
+        self.empty = " " * total_width
 
     def width(self):
         return self.total_width
@@ -269,9 +277,9 @@ class DecimalRenderer(ColumnRenderer):
     # FIXME: 'key' is being ignored here. It shouldn't. This is likely problematic.
     def format(self, number, key=None):
         if self.total_width == 0:
-            return ''
+            return ""
         elif number is None:
-            return self.fmt.format('')
+            return self.fmt.format("")
 
         # This would be the straightforward implementation:
         #   return self.empty if number is None else self.fmt.format(number)
@@ -280,16 +288,16 @@ class DecimalRenderer(ColumnRenderer):
         # convert it to a string, find the period, and pad it manually. We might
         # consider eventually implementing this in C for performance reasons.
         number_str = self.format_number(number)
-        index = number_str.find('.')
+        index = number_str.find(".")
         if index == -1:
             index = len(number_str)
-        left_pad = ' ' * (self.integral_width - index)
+        left_pad = " " * (self.integral_width - index)
         return self.fmt.format(left_pad + number_str)
 
 
 class AmountRenderer(ColumnRenderer):
-    """A renderer for amounts. The currencies align with each other.
-    """
+    """A renderer for amounts. The currencies align with each other."""
+
     dtype = amount.Amount
 
     def __init__(self, dcontext):
@@ -308,10 +316,10 @@ class AmountRenderer(ColumnRenderer):
 
         if self.rdr.width() == 0:
             self.fmt = None
-            self.empty = ''
+            self.empty = ""
         else:
-            self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), max(self.ccylen, 1))
-            self.empty = self.fmt.format('', '')
+            self.fmt = "{{:{0}}} {{:{1}}}".format(self.rdr.width(), max(self.ccylen, 1))
+            self.empty = self.fmt.format("", "")
 
     def width(self):
         return len(self.empty)
@@ -320,15 +328,17 @@ class AmountRenderer(ColumnRenderer):
         if self.fmt is None:
             return self.empty
         elif amount_ is None:
-            return self.fmt.format('', '')
-        return self.fmt.format(self.rdr.format(amount_.number, amount_.currency),
-                               amount_.currency)
+            return self.fmt.format("", "")
+        return self.fmt.format(
+            self.rdr.format(amount_.number, amount_.currency), amount_.currency
+        )
 
 
 class PositionRenderer(ColumnRenderer):
     """A renderer for positions. Inventories renders as a list of position
     strings. Both the unit numbers and the cost numbers are aligned, if any.
     """
+
     dtype = position.Position
 
     def __init__(self, dcontext):
@@ -349,21 +359,22 @@ class PositionRenderer(ColumnRenderer):
         units_width = self.units_rdr.width()
         cost_width = self.cost_rdr.width()
 
-        #fmt_units = '{{{}}}'.format(':{}'.format(units_width) if units_width > 0 else '')
-        fmt_units = '{{:{}}}'.format(units_width)
+        # fmt_units = '{{{}}}'.format(':{}'.format(units_width) if units_width > 0 else '')
+        fmt_units = "{{:{}}}".format(units_width)
 
         if cost_width == 0:
-            self.fmt_with_cost = None # Will not get used.
+            self.fmt_with_cost = None  # Will not get used.
             self.fmt_without_cost = fmt_units
             self.total_width = units_width
         else:
-            fmt_cost = '{{{{{{:{}}}}}}}'.format(cost_width)
-            self.fmt_with_cost = '{} {}'.format(fmt_units, fmt_cost)
-            self.fmt_without_cost = '{} {}'.format(
-                fmt_units, ' ' * len(fmt_cost.format(self.cost_rdr.format(None))))
-            self.total_width = len(self.fmt_with_cost.format('', ''))
+            fmt_cost = "{{{{{{:{}}}}}}}".format(cost_width)
+            self.fmt_with_cost = "{} {}".format(fmt_units, fmt_cost)
+            self.fmt_without_cost = "{} {}".format(
+                fmt_units, " " * len(fmt_cost.format(self.cost_rdr.format(None)))
+            )
+            self.total_width = len(self.fmt_with_cost.format("", ""))
 
-        self.empty = ' ' * self.total_width
+        self.empty = " " * self.total_width
 
     def width(self):
         return self.total_width
@@ -374,20 +385,19 @@ class PositionRenderer(ColumnRenderer):
 
         strings = []
         if self.fmt_with_cost is None:
-            strings.append(
-                self.fmt_without_cost.format(
-                    self.units_rdr.format(pos.units)))
+            strings.append(self.fmt_without_cost.format(self.units_rdr.format(pos.units)))
         else:
             cost = pos.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
-                        self.units_rdr.format(pos.units),
-                        self.cost_rdr.format(cost)))
+                        self.units_rdr.format(pos.units), self.cost_rdr.format(cost)
+                    )
+                )
             else:
                 strings.append(
-                    self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.units)))
+                    self.fmt_without_cost.format(self.units_rdr.format(pos.units))
+                )
 
         if len(strings) == 1:
             return strings[0]
@@ -401,6 +411,7 @@ class InventoryRenderer(PositionRenderer):
     """A renderer for Inventory instances. Inventories renders as a list of position
     strings. Both the unit numbers and the cost numbers are aligned, if any.
     """
+
     dtype = inventory.Inventory
 
     def update(self, inv):
@@ -414,20 +425,21 @@ class InventoryRenderer(PositionRenderer):
         if self.fmt_with_cost is None:
             for pos in inv.get_positions():
                 strings.append(
-                    self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.units)))
+                    self.fmt_without_cost.format(self.units_rdr.format(pos.units))
+                )
         else:
             for pos in inv.get_positions():
                 cost = pos.cost
                 if cost:
                     strings.append(
                         self.fmt_with_cost.format(
-                            self.units_rdr.format(pos.units),
-                            self.cost_rdr.format(cost)))
+                            self.units_rdr.format(pos.units), self.cost_rdr.format(cost)
+                        )
+                    )
                 else:
                     strings.append(
-                        self.fmt_without_cost.format(
-                            self.units_rdr.format(pos.units)))
+                        self.fmt_without_cost.format(self.units_rdr.format(pos.units))
+                    )
 
         if len(strings) == 1:
             return strings[0]
@@ -448,8 +460,7 @@ def get_renderers(result_types, result_rows, dcontext):
     Returns:
       A list of subclass instances of ColumnRenderer.
     """
-    renderers = [RENDERERS[dtype](dcontext)
-                 for _, dtype in result_types]
+    renderers = [RENDERERS[dtype](dcontext) for _, dtype in result_types]
 
     # Prime and prepare each of the renderers with the date in order to be ready
     # to begin rendering with correct alignment.
@@ -463,8 +474,7 @@ def get_renderers(result_types, result_rows, dcontext):
     return renderers
 
 
-def render_rows(result_types, result_rows, dcontext,
-                expand=False, spaced=False):
+def render_rows(result_types, result_rows, dcontext, expand=False, spaced=False):
     """Render the result of executing a query in text format.
 
     Args:
@@ -493,7 +503,7 @@ def render_rows(result_types, result_rows, dcontext,
 
     # Precompute a spacing row.
     if spaced:
-        spacing_row = [''] * len(renderers)
+        spacing_row = [""] * len(renderers)
 
     # Render all the columns of all the rows to strings.
     str_rows = []
@@ -516,7 +526,7 @@ def render_rows(result_types, result_rows, dcontext,
                     max_lines = max(max_lines, len(exp_lines))
                 else:
                     # Join the lines onto a single cell.
-                    exp_lines = ', '.join(exp_lines)
+                    exp_lines = ", ".join(exp_lines)
             exp_row.append(exp_lines)
 
         # If all the values were rendered directly to strings, this is a row that
@@ -529,14 +539,17 @@ def render_rows(result_types, result_rows, dcontext,
         # them on separate lines and insert filler.
         else:
             # Make sure all values in the column are wrapped in sequences.
-            exp_row = [exp_value if isinstance(exp_value, list) else (exp_value,)
-                       for exp_value in exp_row]
+            exp_row = [
+                exp_value if isinstance(exp_value, list) else (exp_value,)
+                for exp_value in exp_row
+            ]
 
             # Create a matrix of the column.
             str_lines = [[] for _ in range(max_lines)]
             for exp_value in exp_row:
-                for index, exp_line in zip_longest(range(max_lines), exp_value,
-                                                   fillvalue=''):
+                for index, exp_line in zip_longest(
+                    range(max_lines), exp_value, fillvalue=""
+                ):
                     str_lines[index].append(exp_line)
             str_rows.extend(str_lines)
 
@@ -546,8 +559,9 @@ def render_rows(result_types, result_rows, dcontext,
     return str_rows, renderers
 
 
-def render_text(result_types, result_rows, dcontext, file,
-                expand=False, boxed=False, spaced=False):
+def render_text(
+    result_types, result_rows, dcontext, file, expand=False, boxed=False, spaced=False
+):
     """Render the result of executing a query in text format.
 
     Args:
@@ -561,33 +575,34 @@ def render_text(result_types, result_rows, dcontext, file,
       spaced: If true, leave an empty line between each of the rows. This is useful if the
         results have a lot of rows that render over multiple lines.
     """
-    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
-                                      expand=expand, spaced=spaced)
+    str_rows, renderers = render_rows(
+        result_types, result_rows, dcontext, expand=expand, spaced=spaced
+    )
 
     # Compute a final format strings.
-    formats = ['{{:{}}}'.format(max(renderer.width(), 1))
-               for renderer in renderers]
-    header_formats = ['{{:^{}.{}}}'.format(renderer.width(), renderer.width())
-                      for renderer in renderers]
+    formats = ["{{:{}}}".format(max(renderer.width(), 1)) for renderer in renderers]
+    header_formats = [
+        "{{:^{}.{}}}".format(renderer.width(), renderer.width()) for renderer in renderers
+    ]
     if boxed:
-        line_formatter = '| ' + ' | '.join(formats) + ' |\n'
-        line_body = '-' + '-+-'.join(('-' * len(fmt.format(''))) for fmt in formats) + "-"
+        line_formatter = "| " + " | ".join(formats) + " |\n"
+        line_body = "-" + "-+-".join(("-" * len(fmt.format(""))) for fmt in formats) + "-"
         top_line = ",{}.\n".format(line_body)
         middle_line = "+{}+\n".format(line_body)
         bottom_line = "`{}'\n".format(line_body)
 
         # Compute the header.
-        header_formatter = '| ' + ' | '.join(header_formats) + ' |\n'
+        header_formatter = "| " + " | ".join(header_formats) + " |\n"
         header_line = header_formatter.format(*[name for name, _ in result_types])
     else:
-        line_formatter = ' '.join(formats) + '\n'
-        line_body = ' '.join(('-' * len(fmt.format(''))) for fmt in formats)
+        line_formatter = " ".join(formats) + "\n"
+        line_body = " ".join(("-" * len(fmt.format(""))) for fmt in formats)
         top_line = None
         middle_line = "{}\n".format(line_body)
         bottom_line = None
 
         # Compute the header.
-        header_formatter = ' '.join(header_formats) + '\n'
+        header_formatter = " ".join(header_formats) + "\n"
         header_line = header_formatter.format(*[name for name, _ in result_types])
 
     # Render each string row to a single line.
@@ -613,8 +628,9 @@ def render_csv(result_types, result_rows, dcontext, file, expand=False):
       file: A file object to render the results to.
       expand: A boolean, if true, expand columns that render to lists on multiple rows.
     """
-    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
-                                      expand=expand, spaced=False)
+    str_rows, renderers = render_rows(
+        result_types, result_rows, dcontext, expand=expand, spaced=False
+    )
 
     writer = csv.writer(file)
     header_row = [name for name, _ in result_types]
@@ -623,15 +639,19 @@ def render_csv(result_types, result_rows, dcontext, file, expand=False):
 
 
 # A mapping of data-type -> (render-function, alignment)
-RENDERERS = {renderer_cls.dtype: renderer_cls
-             for renderer_cls in [ObjectRenderer,
-                                  BoolRenderer,
-                                  StringRenderer,
-                                  StringSetRenderer,
-                                  IntegerRenderer,
-                                  DecimalRenderer,
-                                  DateTimeRenderer,
-                                  StringSetRenderer,
-                                  AmountRenderer,
-                                  PositionRenderer,
-                                  InventoryRenderer]}
+RENDERERS = {
+    renderer_cls.dtype: renderer_cls
+    for renderer_cls in [
+        ObjectRenderer,
+        BoolRenderer,
+        StringRenderer,
+        StringSetRenderer,
+        IntegerRenderer,
+        DecimalRenderer,
+        DateTimeRenderer,
+        StringSetRenderer,
+        AmountRenderer,
+        PositionRenderer,
+        InventoryRenderer,
+    ]
+}

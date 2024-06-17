@@ -14,7 +14,6 @@ from beancount.reports import journal_html
 
 
 class TestJournalRender(unittest.TestCase):
-
     @loader.load_doc(expect_errors=True)
     def setUp(self, entries, _, __):
         """
@@ -56,35 +55,48 @@ class TestJournalRender(unittest.TestCase):
         """
         self.entries = entries
         real_root = realization.realize(self.entries)
-        self.real_account = realization.get(real_root, 'Assets:Checking')
+        self.real_account = realization.get(real_root, "Assets:Checking")
 
     def test_iterate_html_postings(self):
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
-        rows = list(journal_html.iterate_html_postings(self.real_account.txn_postings,
-                                                       formatter))
+        rows = list(
+            journal_html.iterate_html_postings(self.real_account.txn_postings, formatter)
+        )
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).
-        self.assertEqual([
-            (data.Open, 0, 'Open', '', ''),
-            (data.Pad, 0, 'Pad', '', ''),
-            (data.Transaction, 1, 'Padding', '', 'P'),
-            (data.Balance, 0, 'Balance', '', ''),
-            (data.Transaction, 1, 'Transaction', 'warning', '!'),
-            (data.Balance, 0, 'Balance', '', ''),
-            (data.Note, 0, 'Note', '', ''),
-            (data.Document, 0, 'Document', '', ''),
-            (data.Transaction, 2, 'Transaction', '', '*'),
-            (data.Balance, 0, 'Balance', 'fail', ''),
-            (data.Close, 0, 'Close', '', ''),
-            ], [(type(row.entry),
-                 len(row.leg_postings),
-                 row.rowtype,
-                 row.extra_class,
-                 row.flag) for row in rows])
+        self.assertEqual(
+            [
+                (data.Open, 0, "Open", "", ""),
+                (data.Pad, 0, "Pad", "", ""),
+                (data.Transaction, 1, "Padding", "", "P"),
+                (data.Balance, 0, "Balance", "", ""),
+                (data.Transaction, 1, "Transaction", "warning", "!"),
+                (data.Balance, 0, "Balance", "", ""),
+                (data.Note, 0, "Note", "", ""),
+                (data.Document, 0, "Document", "", ""),
+                (data.Transaction, 2, "Transaction", "", "*"),
+                (data.Balance, 0, "Balance", "fail", ""),
+                (data.Close, 0, "Close", "", ""),
+            ],
+            [
+                (
+                    type(row.entry),
+                    len(row.leg_postings),
+                    row.rowtype,
+                    row.extra_class,
+                    row.flag,
+                )
+                for row in rows
+            ],
+        )
 
-        self.assertTrue(all(re.search(row.rowtype, row.description)
-                            for row in rows
-                            if not isinstance(row.entry, data.Transaction)))
+        self.assertTrue(
+            all(
+                re.search(row.rowtype, row.description)
+                for row in rows
+                if not isinstance(row.entry, data.Transaction)
+            )
+        )
 
         self.assertTrue(all(isinstance(row.amount_str, str) for row in rows))
         self.assertTrue(all(isinstance(row.balance_str, str) for row in rows))
@@ -93,25 +105,27 @@ class TestJournalRender(unittest.TestCase):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         journal_html.html_entries_table_with_balance(
-            oss, self.real_account.txn_postings, formatter, True)
+            oss, self.real_account.txn_postings, formatter, True
+        )
         html = oss.getvalue()
         self.assertTrue(isinstance(html, str))
-        self.assertRegex(html, '<table')
+        self.assertRegex(html, "<table")
 
     def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         journal_html.html_entries_table_with_balance(
-            oss, self.real_account.txn_postings, formatter, True)
+            oss, self.real_account.txn_postings, formatter, True
+        )
         html = oss.getvalue()
         self.assertTrue(isinstance(html, str))
-        self.assertRegex(html, '<table')
+        self.assertRegex(html, "<table")
 
     def test_render_links(self):
-        html = journal_html.render_links({'132333b32eab', '6e3ac126f337'})
-        self.assertRegex(html, '132333b32eab')
-        self.assertRegex(html, '6e3ac126f337')
+        html = journal_html.render_links({"132333b32eab", "6e3ac126f337"})
+        self.assertRegex(html, "132333b32eab")
+        self.assertRegex(html, "6e3ac126f337")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

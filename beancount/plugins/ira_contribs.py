@@ -92,7 +92,7 @@ from beancount.core import amount
 from beancount.parser import printer
 
 
-__plugins__ = ('add_ira_contribs',)
+__plugins__ = ("add_ira_contribs",)
 
 
 DEBUG = 0
@@ -123,14 +123,14 @@ def add_ira_contribs(entries, options_map, config_str):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
 
     # Currency of the inserted postings.
-    currency = config_obj.pop('currency', 'UNKNOWN')
+    currency = config_obj.pop("currency", "UNKNOWN")
 
     # Flag to attach to the inserted postings.
-    insert_flag = config_obj.pop('flag', None)
+    insert_flag = config_obj.pop("flag", None)
 
     # A dict of account names that trigger the insertion of postings to pairs of
     # inserted accounts when triggered.
-    accounts = config_obj.pop('accounts', {})
+    accounts = config_obj.pop("accounts", {})
 
     # Convert the key in the accounts configuration for matching.
     account_transforms = {}
@@ -148,26 +148,33 @@ def add_ira_contribs(entries, options_map, config_str):
         if isinstance(entry, data.Transaction):
             orig_entry = entry
             for posting in entry.postings:
-                if (posting.units is not MISSING and
-                    (posting.account in account_transforms) and
-                    (account_types.get_account_sign(posting.account) *
-                     posting.units.number > 0)):
-
+                if (
+                    posting.units is not MISSING
+                    and (posting.account in account_transforms)
+                    and (
+                        account_types.get_account_sign(posting.account)
+                        * posting.units.number
+                        > 0
+                    )
+                ):
                     # Get the new account legs to insert.
-                    required_flag, (neg_account,
-                                    pos_account) = account_transforms[posting.account]
+                    required_flag, (neg_account, pos_account) = account_transforms[
+                        posting.account
+                    ]
                     assert posting.cost is None
 
                     # Check required flag if present.
-                    if (required_flag is None or
-                        (required_flag and required_flag == posting.flag)):
+                    if required_flag is None or (
+                        required_flag and required_flag == posting.flag
+                    ):
                         # Insert income/expense entries for 401k.
                         entry = add_postings(
                             entry,
                             amount.Amount(abs(posting.units.number), currency),
                             neg_account.format(year=entry.date.year),
                             pos_account.format(year=entry.date.year),
-                            insert_flag)
+                            insert_flag,
+                        )
 
             if DEBUG and orig_entry is not entry:
                 printer.print_entry(orig_entry)
@@ -190,7 +197,10 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
     Returns:
       A new, modified entry.
     """
-    return entry._replace(postings=entry.postings + [
-        data.Posting(neg_account, -amount_, None, None, flag, None),
-        data.Posting(pos_account, amount_, None, None, flag, None),
-        ])
+    return entry._replace(
+        postings=entry.postings
+        + [
+            data.Posting(neg_account, -amount_, None, None, flag, None),
+            data.Posting(pos_account, amount_, None, None, flag, None),
+        ]
+    )

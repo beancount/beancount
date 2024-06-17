@@ -1,5 +1,5 @@
-"""Base class that implements configuration and a filing account.
-"""
+"""Base class that implements configuration and a filing account."""
+
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.ingest import importer
@@ -20,13 +20,19 @@ def validate_config(config, schema, importer):
     provided_options = set(config)
     required_options = set(schema)
 
-    for option in (required_options - provided_options):
-        raise ValueError("Missing value from user configuration for importer {}: {}".format(
-            importer.__class__.__name__, option))
+    for option in required_options - provided_options:
+        raise ValueError(
+            "Missing value from user configuration for importer {}: {}".format(
+                importer.__class__.__name__, option
+            )
+        )
 
-    for option in (provided_options - required_options):
-        raise ValueError("Unknown value in user configuration for importer {}: {}".format(
-            importer.__class__.__name__, option))
+    for option in provided_options - required_options:
+        raise ValueError(
+            "Unknown value in user configuration for importer {}: {}".format(
+                importer.__class__.__name__, option
+            )
+        )
 
     # FIXME: Validate types as well, including account type as a default.
 
@@ -41,14 +47,13 @@ def validate_config(config, schema, importer):
 
 
 class ConfigMixin(importer.ImporterProtocol):
-
     # Override this with the configuration.
     REQUIRED_CONFIG = None
 
     def __init__(self, **kwds):
         """Pull 'config' from kwds."""
 
-        config = kwds.pop('config', None)
+        config = kwds.pop("config", None)
         schema = self.REQUIRED_CONFIG
         if config or schema:
             assert config is not None

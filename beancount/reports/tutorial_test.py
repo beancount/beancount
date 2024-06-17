@@ -12,15 +12,15 @@ from beancount.reports import tutorial
 
 
 class TestTutorial(test_utils.TestCase):
-
     def test_generate_tutorial(self):
         rootdir = test_utils.find_repository_root(__file__)
-        example_beancount = path.join(rootdir, 'examples', 'example.beancount')
+        example_beancount = path.join(rootdir, "examples", "example.beancount")
         temp_output_dir = tempfile.mkdtemp()
         try:
-            with test_utils.capture('stdout', 'stderr'):
-                result = test_utils.run_with_args(tutorial.main,
-                                                  [example_beancount, temp_output_dir])
+            with test_utils.capture("stdout", "stderr"):
+                result = test_utils.run_with_args(
+                    tutorial.main, [example_beancount, temp_output_dir]
+                )
             self.assertEqual(0, result)
             output_files = os.listdir(temp_output_dir)
             self.assertLess(20, len(output_files))
@@ -28,5 +28,5 @@ class TestTutorial(test_utils.TestCase):
             shutil.rmtree(temp_output_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

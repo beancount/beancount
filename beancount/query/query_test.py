@@ -10,10 +10,9 @@ from beancount import loader
 
 
 class TestSimple(unittest.TestCase):
-
     def test_run_query(self):
         rootdir = test_utils.find_repository_root(__file__)
-        filename = path.join(rootdir, 'examples', 'example.beancount')
+        filename = path.join(rootdir, "examples", "example.beancount")
         entries, errors, options_map = loader.load_file(filename)
         assert not errors
         sql_query = r"""
@@ -24,13 +23,15 @@ class TestSimple(unittest.TestCase):
           GROUP BY 1
           ORDER BY 2 DESC
         """
-        rtypes, rrows = query.run_query(entries, options_map,
-                                        sql_query, 'Martin',
-                                        numberify=True)
-        self.assertEqual(['account', 'amount (USD)', 'amount (IRAUSD)', 'amount (VACHR)'],
-                         [rt[0] for rt in rtypes])
+        rtypes, rrows = query.run_query(
+            entries, options_map, sql_query, "Martin", numberify=True
+        )
+        self.assertEqual(
+            ["account", "amount (USD)", "amount (IRAUSD)", "amount (VACHR)"],
+            [rt[0] for rt in rtypes],
+        )
         self.assertEqual(len(rrows[0]), 4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

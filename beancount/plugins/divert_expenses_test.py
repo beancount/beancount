@@ -8,7 +8,6 @@ from beancount.parser import cmptest
 
 
 class TestDivertExpenses(cmptest.TestCase):
-
     @loader.load_doc()
     def test_divert(self, entries, errors, __):
         """
@@ -32,7 +31,8 @@ class TestDivertExpenses(cmptest.TestCase):
 
         """
         self.assertFalse(errors)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2012-01-01 open Expenses:Baby:Gear
         2012-01-01 open Expenses:Groceries
@@ -47,7 +47,9 @@ class TestDivertExpenses(cmptest.TestCase):
           Liabilities:CreditCard           -900.00 USD
           Expenses:Kai                      900.00 USD
             diverted_account: "Expenses:Baby:Gear"
-        """, entries)
+        """,
+            entries,
+        )
 
     @loader.load_doc()
     def test_divert_some_postings(self, entries, errors, __):
@@ -69,7 +71,8 @@ class TestDivertExpenses(cmptest.TestCase):
 
         """
         self.assertFalse(errors)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2012-01-01 open Expenses:Pharmacy
         2012-01-01 open Liabilities:CreditCard
@@ -81,7 +84,9 @@ class TestDivertExpenses(cmptest.TestCase):
             diverted_account: "Expenses:Pharmacy"
           Expenses:Pharmacy              45.38 USD
             divert: FALSE
-        """, entries)
+        """,
+            entries,
+        )
 
     @loader.load_doc()
     def test_divert_non_expenses(self, entries, errors, __):
@@ -101,7 +106,8 @@ class TestDivertExpenses(cmptest.TestCase):
             divert: TRUE
         """
         self.assertFalse(errors)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2012-01-01 open Assets:Checking
         2012-01-01 open Assets:Daycare:Deposit
@@ -111,8 +117,10 @@ class TestDivertExpenses(cmptest.TestCase):
           Assets:Checking           -6100.00 USD
           Expenses:Kai               6100.00 USD
             diverted_account: "Assets:Daycare:Deposit"
-        """, entries)
+        """,
+            entries,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

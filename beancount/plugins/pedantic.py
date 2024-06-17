@@ -3,6 +3,7 @@
 In a sense, this is the inverse of "pedantic." This is useful when doing some
 types of quick and dirty tests.
 """
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,4 +27,5 @@ __plugins__ = loader.combine_plugins(
     nounused,
     onecommodity,
     sellgains,
-    unique_prices)
+    unique_prices,
+)

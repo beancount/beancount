@@ -83,7 +83,7 @@ IMPORTANT:
 
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
-__plugins__ = ('book_price_conversions_plugin',)
+__plugins__ = ("book_price_conversions_plugin",)
 
 import collections
 import copy
@@ -104,18 +104,18 @@ from beancount.parser import version
 
 
 # The name of the metadata field used to link matched postings.
-META = 'trades'
+META = "trades"
 
 
 # An error in the configuration for this plugin.
-ConfigError = collections.namedtuple('ConfigError', 'source message entry')
+ConfigError = collections.namedtuple("ConfigError", "source message entry")
 
 # A failure to find a matching lot.
-BookConversionError = collections.namedtuple('BookConversionError', 'source message entry')
+BookConversionError = collections.namedtuple("BookConversionError", "source message entry")
 
 
 def is_matching(posting, account):
-    """"Identify if the given posting is one to be booked.
+    """ "Identify if the given posting is one to be booked.
 
     Args:
       posting: An instance of a Posting.
@@ -123,9 +123,7 @@ def is_matching(posting, account):
     Returns:
       A boolean, true if this posting is one that we should be adding a cost to.
     """
-    return (posting.account == account and
-            posting.cost is None and
-            posting.price is not None)
+    return posting.account == account and posting.cost is None and posting.price is not None
 
 
 def augment_inventory(pending_lots, posting, entry, eindex):
@@ -143,10 +141,8 @@ def augment_inventory(pending_lots, posting, entry, eindex):
     number = posting.units.number
     new_posting = posting._replace(
         units=copy.copy(posting.units),
-        cost=position.Cost(posting.price.number,
-                           posting.price.currency,
-                           entry.date,
-                           None))
+        cost=position.Cost(posting.price.number, posting.price.currency, entry.date, None),
+    )
     pending_lots.append(([number], new_posting, eindex))
     return new_posting
 
@@ -176,19 +172,23 @@ def reduce_inventory(pending_lots, posting, eindex):
     match_currency = posting.units.currency
     cost_currency = posting.price.currency
     while match_number != ZERO:
-
         # Find the first lot with matching currency.
         for fnumber, fposting, findex in pending_lots:
             funits = fposting.units
             fcost = fposting.cost
-            if (funits.currency == match_currency and
-                fcost and fcost.currency == cost_currency):
+            if (
+                funits.currency == match_currency
+                and fcost
+                and fcost.currency == cost_currency
+            ):
                 assert fnumber[0] > ZERO, "Internal error, zero lot"
                 break
         else:
             errors.append(
-                BookConversionError(posting.meta,
-                                    "Could not match position {}".format(posting), None))
+                BookConversionError(
+                    posting.meta, "Could not match position {}".format(posting), None
+                )
+            )
             break
 
         # Reduce the pending lots.
@@ -201,16 +201,15 @@ def reduce_inventory(pending_lots, posting, eindex):
 
         # Add a corresponding posting.
         rposting = posting._replace(
-            units=amount.Amount(-number, posting.units.currency),
-            cost=copy.copy(cost))
+            units=amount.Amount(-number, posting.units.currency), cost=copy.copy(cost)
+        )
         new_postings.append(rposting)
 
         # Update the P/L.
         pnl += number * (posting.price.number - cost.number)
 
         # Add to the list of matches.
-        matches.append(((findex, fposting),
-                        (eindex, rposting)))
+        matches.append(((findex, fposting), (eindex, rposting)))
 
     return new_postings, matches, pnl, errors
 
@@ -228,7 +227,7 @@ def link_entries_with_metadata(entries, all_matches):
     # Allocate trade names and compute a map of posting to trade names.
     link_map = collections.defaultdict(list)
     for (aug_index, aug_posting), (red_index, red_posting) in all_matches:
-        link = 'trade-{}'.format(str(uuid.uuid4()).split('-')[-1])
+        link = "trade-{}".format(str(uuid.uuid4()).split("-")[-1])
         link_map[id(aug_posting)].append(link)
         link_map[id(red_posting)].append(link)
 
@@ -240,7 +239,7 @@ def link_entries_with_metadata(entries, all_matches):
                 links = link_map.pop(id(posting), None)
                 if links:
                     new_posting = posting._replace(meta=posting.meta.copy())
-                    new_posting.meta[META] = ','.join(links)
+                    new_posting.meta[META] = ",".join(links)
                     entry.postings[index] = new_posting
                     postings_repl_map[id(posting)] = new_posting
 
@@ -249,9 +248,13 @@ def link_entries_with_metadata(entries, all_matches):
 
     # Return a list of the modified postings (mapping the old matches to the
     # newly created ones).
-    return [((aug_index, postings_repl_map[id(aug_posting)]),
-             (red_index, postings_repl_map[id(red_posting)]))
-            for (aug_index, aug_posting), (red_index, red_posting) in all_matches]
+    return [
+        (
+            (aug_index, postings_repl_map[id(aug_posting)]),
+            (red_index, postings_repl_map[id(red_posting)]),
+        )
+        for (aug_index, aug_posting), (red_index, red_posting) in all_matches
+    ]
 
 
 def book_price_conversions(entries, assets_account, income_account):
@@ -281,12 +284,11 @@ def book_price_conversions(entries, assets_account, income_account):
     new_entries = []
     errors = []
     for eindex, entry in enumerate(entries):
-
         # Figure out if this transaction has postings in Bitcoins without a cost.
         # The purpose of this plugin is to fixup those.
-        if isinstance(entry, data.Transaction) and any(is_matching(posting, assets_account)
-                                                       for posting in entry.postings):
-
+        if isinstance(entry, data.Transaction) and any(
+            is_matching(posting, assets_account) for posting in entry.postings
+        ):
             # Segregate the reducing lots, augmenting lots and other lots.
             augmenting, reducing, other = [], [], []
             for pindex, posting in enumerate(entry.postings):
@@ -310,8 +312,9 @@ def book_price_conversions(entries, assets_account, income_account):
                 # Process all the reducing postings, booking them to matching lots.
                 pnl = inventory.Inventory()
                 for posting in reducing:
-                    rpostings, matches, posting_pnl, new_errors = (
-                        reduce_inventory(pending_lots, posting, eindex))
+                    rpostings, matches, posting_pnl, new_errors = reduce_inventory(
+                        pending_lots, posting, eindex
+                    )
                     new_postings.extend(rpostings)
                     all_matches.extend(matches)
                     errors.extend(new_errors)
@@ -322,11 +325,10 @@ def book_price_conversions(entries, assets_account, income_account):
                 # which incurred P/L.
                 if not pnl.is_empty():
                     for pos in pnl:
-                        meta = data.new_metadata('<book_conversions>', 0)
+                        meta = data.new_metadata("<book_conversions>", 0)
                         new_postings.append(
-                            data.Posting(income_account,
-                                         -pos.units, None,
-                                         None, None, meta))
+                            data.Posting(income_account, -pos.units, None, None, None, meta)
+                        )
 
             # Third, add back all the other unrelated legs in.
             for posting in other:
@@ -341,9 +343,13 @@ def book_price_conversions(entries, assets_account, income_account):
     mod_matches = link_entries_with_metadata(new_entries, all_matches)
 
     # Resolve the indexes to their possibly modified Transaction instances.
-    matches = [(data.TxnPosting(new_entries[aug_index], aug_posting),
-                data.TxnPosting(new_entries[red_index], red_posting))
-               for (aug_index, aug_posting), (red_index, red_posting) in mod_matches]
+    matches = [
+        (
+            data.TxnPosting(new_entries[aug_index], aug_posting),
+            data.TxnPosting(new_entries[red_index], red_posting),
+        )
+        for (aug_index, aug_posting), (red_index, red_posting) in mod_matches
+    ]
 
     return new_entries, errors, matches
 
@@ -367,15 +373,19 @@ def extract_trades(entries):
         for posting in entry.postings:
             links_str = posting.meta.get(META, None)
             if links_str:
-                links = links_str.split(',')
+                links = links_str.split(",")
                 for link in links:
                     trade_map[link].append((index, entry, posting))
 
     # Sort matches according to the index of the first entry, drop the index
     # used for doing this, and convert the objects to tuples..
-    trades = [(data.TxnPosting(augmenting[1], augmenting[2]),
-               data.TxnPosting(reducing[1], reducing[2]))
-              for augmenting, reducing in sorted(trade_map.values())]
+    trades = [
+        (
+            data.TxnPosting(augmenting[1], augmenting[2]),
+            data.TxnPosting(reducing[1], reducing[2]),
+        )
+        for augmenting, reducing in sorted(trade_map.values())
+    ]
 
     # Sanity check.
     for matches in trades:
@@ -401,7 +411,7 @@ def book_price_conversions_plugin(entries, options_map, config):
     # The expected configuration is two account names, separated by whitespace.
     errors = []
     try:
-        assets_account, income_account = re.split(r'[,; \t]', config)
+        assets_account, income_account = re.split(r"[,; \t]", config)
         if not account.is_valid(assets_account) or not account.is_valid(income_account):
             raise ValueError("Invalid account string")
     except ValueError as exc:
@@ -409,7 +419,9 @@ def book_price_conversions_plugin(entries, options_map, config):
             ConfigError(
                 None,
                 ('Invalid configuration: "{}": {}, skipping booking').format(config, exc),
-                None))
+                None,
+            )
+        )
         return entries, errors
 
     new_entries, errors, _ = book_price_conversions(entries, assets_account, income_account)
@@ -417,18 +429,25 @@ def book_price_conversions_plugin(entries, options_map, config):
 
 
 def main():
-    """Extract trades from metadata-annotated postings and report on them.
-    """
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    """Extract trades from metadata-annotated postings and report on them."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = version.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount input filename')
+    parser.add_argument("filename", help="Beancount input filename")
 
-    oparser = parser.add_argument_group('Outputs')
-    oparser.add_argument('-o', '--output', action='store',
-                         help="Filename to output results to (default goes to stdout)")
-    oparser.add_argument('-f', '--format', default='text',
-                         choices=['text', 'csv'],
-                         help="Output format to render to (text, csv)")
+    oparser = parser.add_argument_group("Outputs")
+    oparser.add_argument(
+        "-o",
+        "--output",
+        action="store",
+        help="Filename to output results to (default goes to stdout)",
+    )
+    oparser.add_argument(
+        "-f",
+        "--format",
+        default="text",
+        choices=["text", "csv"],
+        help="Output format to render to (text, csv)",
+    )
 
     args = parser.parse_args()
 
@@ -439,31 +458,43 @@ def main():
     trades = extract_trades(entries)
 
     # Produce a table of all the trades.
-    columns = ('units currency cost_currency '
-               'buy_date buy_price sell_date sell_price pnl').split()
-    header = ['Units', 'Currency', 'Cost Currency',
-              'Buy Date', 'Buy Price', 'Sell Date', 'Sell Price',
-              'P/L']
+    columns = (
+        "units currency cost_currency " "buy_date buy_price sell_date sell_price pnl"
+    ).split()
+    header = [
+        "Units",
+        "Currency",
+        "Cost Currency",
+        "Buy Date",
+        "Buy Price",
+        "Sell Date",
+        "Sell Price",
+        "P/L",
+    ]
     body = []
     for aug, red in trades:
         units = -red.posting.units.number
         buy_price = aug.posting.price.number
         sell_price = red.posting.price.number
         pnl = (units * (sell_price - buy_price)).quantize(buy_price)
-        body.append([
-            -red.posting.units.number,
-            red.posting.units.currency,
-            red.posting.price.currency,
-            aug.txn.date.isoformat(), buy_price,
-            red.txn.date.isoformat(), sell_price,
-            pnl
-            ])
+        body.append(
+            [
+                -red.posting.units.number,
+                red.posting.units.currency,
+                red.posting.price.currency,
+                aug.txn.date.isoformat(),
+                buy_price,
+                red.txn.date.isoformat(),
+                sell_price,
+                pnl,
+            ]
+        )
     trades_table = table.Table(columns, header, body)
 
     # Render the table as text or CSV.
-    outfile = open(args.output, 'w') if args.output else sys.stdout
+    outfile = open(args.output, "w") if args.output else sys.stdout
     table.render_table(trades_table, outfile, args.format)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

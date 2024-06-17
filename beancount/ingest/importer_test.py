@@ -8,10 +8,9 @@ from beancount.ingest import cache
 
 
 class TestImporterProtocol(unittest.TestCase):
-
     def test_importer_methods(self):
         # Kind of a dumb test, but for consistency we just test everything.
-        memo = cache._FileMemo('/tmp/test')
+        memo = cache._FileMemo("/tmp/test")
         imp = importer.ImporterProtocol()
         self.assertIsInstance(imp.FLAG, str)
         self.assertFalse(imp.identify(memo))
@@ -21,5 +20,5 @@ class TestImporterProtocol(unittest.TestCase):
         self.assertFalse(imp.file_name(memo))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

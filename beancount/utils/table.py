@@ -1,5 +1,5 @@
-"""Table rendering.
-"""
+"""Table rendering."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -19,7 +19,7 @@ import itertools
 #   header: A sequence of strings, a header to be rendered for each column.
 #   rows: A list of rows, each of which is a sequence of strings, the
 #     contents of all the cells of the table body.
-Table = collections.namedtuple('Table', 'columns header body')
+Table = collections.namedtuple("Table", "columns header body")
 
 
 def attribute_to_title(fieldname):
@@ -29,8 +29,8 @@ def attribute_to_title(fieldname):
       fieldname: A string, a programming ids, such as 'book_value'.
     Returns:
       A readable string, such as 'Book Value.'
-   """
-    return fieldname.replace('_', ' ').title()
+    """
+    return fieldname.replace("_", " ").title()
 
 
 def create_table(rows, field_spec=None):
@@ -50,8 +50,7 @@ def create_table(rows, field_spec=None):
     # Normalize field_spec to a dict.
     if field_spec is None:
         namedtuple_class = type(rows[0])
-        field_spec = [(field, None, None)
-                      for field in namedtuple_class._fields]
+        field_spec = [(field, None, None) for field in namedtuple_class._fields]
 
     elif isinstance(field_spec, (list, tuple)):
         new_field_spec = []
@@ -78,10 +77,14 @@ def create_table(rows, field_spec=None):
         field_spec = new_field_spec
 
     # Ensure a nicely formatted header.
-    field_spec = [((name, attribute_to_title(name), formatter)
-                   if header_ is None
-                   else (name, header_, formatter))
-                  for (name, header_, formatter) in field_spec]
+    field_spec = [
+        (
+            (name, attribute_to_title(name), formatter)
+            if header_ is None
+            else (name, header_, formatter)
+        )
+        for (name, header_, formatter) in field_spec
+    ]
 
     assert isinstance(field_spec, list), field_spec
     assert all(len(x) == 3 for x in field_spec), field_spec
@@ -109,7 +112,7 @@ def create_table(rows, field_spec=None):
                 else:
                     value = str(value)
             else:
-                value = ''
+                value = ""
             body_row.append(value)
         body.append(body_row)
 
@@ -130,35 +133,33 @@ def table_to_html(table, classes=None, file=None):
     """
     # Initialize file.
     oss = io.StringIO() if file is None else file
-    oss.write('<table class="{}">\n'.format(' '.join(classes or [])))
+    oss.write('<table class="{}">\n'.format(" ".join(classes or [])))
 
     # Render header.
     if table.header:
-        oss.write('  <thead>\n')
-        oss.write('    <tr>\n')
+        oss.write("  <thead>\n")
+        oss.write("    <tr>\n")
         for header in table.header:
-            oss.write('      <th>{}</th>\n'.format(header))
-        oss.write('    </tr>\n')
-        oss.write('  </thead>\n')
+            oss.write("      <th>{}</th>\n".format(header))
+        oss.write("    </tr>\n")
+        oss.write("  </thead>\n")
 
     # Render body.
-    oss.write('  <tbody>\n')
+    oss.write("  <tbody>\n")
     for row in table.body:
-        oss.write('    <tr>\n')
+        oss.write("    <tr>\n")
         for cell in row:
-            oss.write('      <td>{}</td>\n'.format(cell))
-        oss.write('    </tr>\n')
-    oss.write('  </tbody>\n')
+            oss.write("      <td>{}</td>\n".format(cell))
+        oss.write("    </tr>\n")
+    oss.write("  </tbody>\n")
 
     # Render footer.
-    oss.write('</table>\n')
+    oss.write("</table>\n")
     if file is None:
         return oss.getvalue()
 
 
-def table_to_text(table,
-                  column_interspace=" ",
-                  formats=None):
+def table_to_text(table, column_interspace=" ", formats=None):
     """Render a Table to ASCII text.
 
     Args:
@@ -171,13 +172,12 @@ def table_to_text(table,
     Returns:
       A string, the rendered text table.
     """
-    column_widths = compute_table_widths(itertools.chain([table.header],
-                                                         table.body))
+    column_widths = compute_table_widths(itertools.chain([table.header], table.body))
 
     # Insert column format chars and compute line formatting string.
     column_formats = []
     if formats:
-        default_format = formats.get('*', None)
+        default_format = formats.get("*", None)
     for column, width in zip(table.columns, column_widths):
         if column and formats:
             format_ = formats.get(column, default_format)
@@ -189,7 +189,7 @@ def table_to_text(table,
             column_formats.append("{{:{:d}}}".format(width))
 
     line_format = column_interspace.join(column_formats) + "\n"
-    separator = line_format.format(*[('-' * width) for width in column_widths])
+    separator = line_format.format(*[("-" * width) for width in column_widths])
 
     # Render the header.
     oss = io.StringIO()
@@ -250,7 +250,7 @@ def compute_table_widths(rows):
             cell_len = len(cell)
             if cell_len > column_widths[i]:
                 column_widths[i] = cell_len
-        if i+1 != num_columns:
+        if i + 1 != num_columns:
             raise IndexError("Invalid number of rows")
     return column_widths
 
@@ -268,27 +268,26 @@ def render_table(table_, output, output_format, css_id=None, css_class=None):
       css_id: A string, an optional CSS id for the table object (only used for HTML).
       css_class: A string, an optional CSS class for the table object (only used for HTML).
     """
-    if output_format in ('txt', 'text'):
-        text = table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
+    if output_format in ("txt", "text"):
+        text = table_to_text(table_, "  ", formats={"*": ">", "account": "<"})
         output.write(text)
 
-    elif output_format in ('csv',):
+    elif output_format in ("csv",):
         table_to_csv(table_, file=output)
 
-    elif output_format in ('htmldiv', 'html'):
+    elif output_format in ("htmldiv", "html"):
+        if output_format == "html":
+            output.write("<html>\n")
+            output.write("<body>\n")
 
-        if output_format == 'html':
-            output.write('<html>\n')
-            output.write('<body>\n')
-
-        output.write('<div id="{}">\n'.format(css_id) if css_id else '<div>\n')
+        output.write('<div id="{}">\n'.format(css_id) if css_id else "<div>\n")
         classes = [css_class] if css_class else None
         table_to_html(table_, file=output, classes=classes)
-        output.write('</div>\n')
+        output.write("</div>\n")
 
-        if output_format == 'html':
-            output.write('</body>\n')
-            output.write('</html>\n')
+        if output_format == "html":
+            output.write("</body>\n")
+            output.write("</html>\n")
 
     else:
         raise NotImplementedError("Unsupported format: {}".format(output_format))

@@ -14,6 +14,7 @@ https://query1.finance.yahoo.com/v8/finance/chart/SYMBOL
 Timezone information: Input and output datetimes are specified via UNIX
 timestamps, but the timezone of the particular market is included in the output.
 """
+
 __copyright__ = "Copyright (C) 2015-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -39,33 +40,36 @@ def parse_response(response: requests.models.Response) -> Dict:
     json = response.json(parse_float=D)
     content = next(iter(json.values()))
     if response.status_code != requests.codes.ok:
-        raise YahooError("Status {}: {}".format(response.status_code, content['error']))
+        raise YahooError("Status {}: {}".format(response.status_code, content["error"]))
     if len(json) != 1:
-        raise YahooError("Invalid format in response from Yahoo; many keys: {}".format(
-            ','.join(json.keys())))
-    if content['error'] is not None:
-        raise YahooError("Error fetching Yahoo data: {}".format(content['error']))
-    return content['result'][0]
+        raise YahooError(
+            "Invalid format in response from Yahoo; many keys: {}".format(
+                ",".join(json.keys())
+            )
+        )
+    if content["error"] is not None:
+        raise YahooError("Error fetching Yahoo data: {}".format(content["error"]))
+    return content["result"][0]
 
 
 # Note: Feel free to suggest more here via a PR.
 _MARKETS = {
-    'us_market': 'USD',
-    'ca_market': 'CAD',
+    "us_market": "USD",
+    "ca_market": "CAD",
 }
 
 
 def parse_currency(result: Dict[str, Any]) -> str:
     """Infer the currency from the result."""
-    if 'market' not in result:
+    if "market" not in result:
         return None
-    return _MARKETS.get(result['market'], None)
+    return _MARKETS.get(result["market"], None)
 
 
 _DEFAULT_PARAMS = {
-    'lang': 'en-US',
-    'corsDomain': 'finance.yahoo.com',
-    '.tsrc': 'finance',
+    "lang": "en-US",
+    "corsDomain": "finance.yahoo.com",
+    ".tsrc": "finance",
 }
 
 
@@ -76,27 +80,31 @@ class Source(source.Source):
         """See contract in beancount.prices.source.Source."""
 
         url = "https://query1.finance.yahoo.com/v7/finance/quote"
-        fields = ['symbol', 'regularMarketPrice', 'regularMarketTime']
+        fields = ["symbol", "regularMarketPrice", "regularMarketTime"]
         payload = {
-            'symbols': ticker,
-            'fields': ','.join(fields),
-            'exchange': 'NYSE',
+            "symbols": ticker,
+            "fields": ",".join(fields),
+            "exchange": "NYSE",
         }
         payload.update(_DEFAULT_PARAMS)
-        response = requests.get(url, params=payload, headers={'User-Agent': None},
-                                timeout=300)
+        response = requests.get(
+            url, params=payload, headers={"User-Agent": None}, timeout=300
+        )
         result = parse_response(response)
         try:
-            price = D(result['regularMarketPrice'])
+            price = D(result["regularMarketPrice"])
 
             timezone = datetime.timezone(
-                datetime.timedelta(hours=result['gmtOffSetMilliseconds'] / 3600000),
-                result['exchangeTimezoneName'])
-            trade_time = datetime.datetime.fromtimestamp(result['regularMarketTime'],
-                                                         tz=timezone)
+                datetime.timedelta(hours=result["gmtOffSetMilliseconds"] / 3600000),
+                result["exchangeTimezoneName"],
+            )
+            trade_time = datetime.datetime.fromtimestamp(
+                result["regularMarketTime"], tz=timezone
+            )
         except KeyError as exc:
-            raise YahooError("Invalid response from Yahoo: {}".format(
-                repr(result))) from exc
+            raise YahooError(
+                "Invalid response from Yahoo: {}".format(repr(result))
+            ) from exc
 
         currency = parse_currency(result)
 
@@ -110,26 +118,30 @@ class Source(source.Source):
         dt_start = time - datetime.timedelta(days=5)
         dt_end = time
         payload = {
-            'period1': int(dt_start.timestamp()),
-            'period2': int(dt_end.timestamp()),
-            'interval': '1d',
+            "period1": int(dt_start.timestamp()),
+            "period2": int(dt_end.timestamp()),
+            "interval": "1d",
         }
         payload.update(_DEFAULT_PARAMS)
-        response = requests.get(url, params=payload, headers={'User-Agent': None},
-                                timeout=300)
+        response = requests.get(
+            url, params=payload, headers={"User-Agent": None}, timeout=300
+        )
         result = parse_response(response)
 
-        meta = result['meta']
-        timezone = datetime.timezone(datetime.timedelta(hours=meta['gmtoffset'] / 3600),
-                                     meta['exchangeTimezoneName'])
+        meta = result["meta"]
+        timezone = datetime.timezone(
+            datetime.timedelta(hours=meta["gmtoffset"] / 3600), meta["exchangeTimezoneName"]
+        )
 
-        if 'timestamp' not in result:
-            raise YahooError('Could not find price on {} for {}'.format(time, ticker))
-        timestamp_array = result['timestamp']
+        if "timestamp" not in result:
+            raise YahooError("Could not find price on {} for {}".format(time, ticker))
+        timestamp_array = result["timestamp"]
 
-        close_array = result['indicators']['quote'][0]['close']
-        series = [(datetime.datetime.fromtimestamp(timestamp, tz=timezone), D(price))
-                  for timestamp, price in zip(timestamp_array, close_array)]
+        close_array = result["indicators"]["quote"][0]["close"]
+        series = [
+            (datetime.datetime.fromtimestamp(timestamp, tz=timezone), D(price))
+            for timestamp, price in zip(timestamp_array, close_array)
+        ]
 
         # Get the latest data returned.
         latest = None
@@ -140,5 +152,5 @@ class Source(source.Source):
         if latest is None:
             raise YahooError("Could not find price before {} in {}".format(time, series))
 
-        currency = result['meta']['currency']
+        currency = result["meta"]["currency"]
         return source.SourcePrice(price, data_dt, currency)

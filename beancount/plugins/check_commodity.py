@@ -4,6 +4,7 @@ This is useful if you're a bit pedantic and like to make sure that you're
 declared attributes for each of the commodities you use. It's useful if you use
 the portfolio export, for example.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -13,15 +14,14 @@ import re
 from beancount.core import data
 from beancount.core.amount import CURRENCY_RE
 
-__plugins__ = ('validate_commodity_directives',)
+__plugins__ = ("validate_commodity_directives",)
 
 
-CheckCommodityError = collections.namedtuple('CheckCommodityError', 'source message entry')
+CheckCommodityError = collections.namedtuple("CheckCommodityError", "source message entry")
 
 
 def get_commodity_map_ex(entries, metadata=False):
-
-    ignore = set(['filename', 'lineno', '__automatic__'])
+    ignore = set(["filename", "lineno", "__automatic__"])
     regexp = re.compile(CURRENCY_RE)
 
     def currencies_in_meta(entry):
@@ -44,7 +44,6 @@ def get_commodity_map_ex(entries, metadata=False):
 
         elif isinstance(entry, data.Transaction):
             for posting in entry.postings:
-
                 # Main currency.
                 units = posting.units
                 commodities_map.setdefault(units.currency, None)
@@ -90,7 +89,7 @@ def validate_commodity_directives(entries, options_map):
     """
     errors = []
 
-    meta = data.new_metadata('<check_commodity>', 0)
+    meta = data.new_metadata("<check_commodity>", 0)
 
     # TODO(dnicolodi) Unfortunately detecting commodities in metadata
     # values may result in false positives: common used string are
@@ -102,8 +101,8 @@ def validate_commodity_directives(entries, options_map):
         if commodity_entry is None:
             errors.append(
                 CheckCommodityError(
-                    meta,
-                    "Missing Commodity directive for '{}'".format(commodity),
-                    None))
+                    meta, "Missing Commodity directive for '{}'".format(commodity), None
+                )
+            )
 
     return entries, errors

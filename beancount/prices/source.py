@@ -3,6 +3,7 @@
 This module describes the contract to be fulfilled by all implementations of
 price sources.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -20,10 +21,14 @@ from typing import Optional, NamedTuple
 #     used to compute a corresponding date in the user's timezone.
 #   quote-currency: A string, the quote currency of the given price, if
 #     available.
-SourcePrice = NamedTuple('SourcePrice',
-                         [('price', Decimal),
-                          ('time', Optional[datetime.datetime]),
-                          ('quote_currency', Optional[str])])
+SourcePrice = NamedTuple(
+    "SourcePrice",
+    [
+        ("price", Decimal),
+        ("time", Optional[datetime.datetime]),
+        ("quote_currency", Optional[str]),
+    ],
+)
 
 
 class Source:

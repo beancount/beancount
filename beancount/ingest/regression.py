@@ -13,6 +13,7 @@ WARNING: This is deprecated. Nose itself has been deprecated for a while and
 Beancount is now using only pytest. Ignore this and use
 beancount.ingest.regression_ptest instead.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -88,15 +89,16 @@ class ImportFileTestCase(unittest.TestCase):
         printer.print_entries(entries, file=oss)
         string = oss.getvalue()
 
-        expect_filename = '{}.extract'.format(filename)
+        expect_filename = "{}.extract".format(filename)
         if path.exists(expect_filename):
-            expect_string = open(expect_filename, encoding='utf-8').read()
+            expect_string = open(expect_filename, encoding="utf-8").read()
             self.assertEqual(expect_string.strip(), string.strip())
         else:
             # Write out the expected file for review.
-            open(expect_filename, 'w', encoding='utf-8').write(string)
-            self.skipTest("Expected file not present; generating '{}'".format(
-                expect_filename))
+            open(expect_filename, "w", encoding="utf-8").write(string)
+            self.skipTest(
+                "Expected file not present; generating '{}'".format(expect_filename)
+            )
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_date(self, filename, msg):
@@ -117,17 +119,18 @@ class ImportFileTestCase(unittest.TestCase):
         if date is None:
             self.fail("No date produced from {}".format(file.name))
 
-        expect_filename = '{}.file_date'.format(file.name)
+        expect_filename = "{}.file_date".format(file.name)
         if path.exists(expect_filename) and path.getsize(expect_filename) > 0:
-            expect_date_str = open(expect_filename, encoding='utf-8').read().strip()
-            expect_date = datetime.datetime.strptime(expect_date_str, '%Y-%m-%d').date()
+            expect_date_str = open(expect_filename, encoding="utf-8").read().strip()
+            expect_date = datetime.datetime.strptime(expect_date_str, "%Y-%m-%d").date()
             self.assertEqual(expect_date, date)
         else:
             # Write out the expected file for review.
-            with open(expect_filename, 'w', encoding='utf-8') as outfile:
-                print(date.strftime('%Y-%m-%d'), file=outfile)
-            self.skipTest("Expected file not present; generating '{}'".format(
-                expect_filename))
+            with open(expect_filename, "w", encoding="utf-8") as outfile:
+                print(date.strftime("%Y-%m-%d"), file=outfile)
+            self.skipTest(
+                "Expected file not present; generating '{}'".format(expect_filename)
+            )
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_name(self, filename, msg):
@@ -152,16 +155,17 @@ class ImportFileTestCase(unittest.TestCase):
         self.assertFalse(path.isabs(generated_basename), generated_basename)
         self.assertNotRegex(generated_basename, os.sep)
 
-        expect_filename = '{}.file_name'.format(file.name)
+        expect_filename = "{}.file_name".format(file.name)
         if path.exists(expect_filename) and path.getsize(expect_filename) > 0:
-            expect_filename = open(expect_filename, encoding='utf-8').read().strip()
+            expect_filename = open(expect_filename, encoding="utf-8").read().strip()
             self.assertEqual(expect_filename, generated_basename)
         else:
             # Write out the expected file for review.
-            with open(expect_filename, 'w', encoding='utf-8') as file:
+            with open(expect_filename, "w", encoding="utf-8") as file:
                 print(generated_basename, file=file)
-            self.skipTest("Expected file not present; generating '{}'".format(
-                expect_filename))
+            self.skipTest(
+                "Expected file not present; generating '{}'".format(expect_filename)
+            )
 
 
 def find_input_files(directory):
@@ -174,7 +178,7 @@ def find_input_files(directory):
     """
     for sroot, dirs, files in os.walk(directory):
         for filename in files:
-            if re.match(r'.*\.(extract|file_date|file_name|py|pyc|DS_Store)$', filename):
+            if re.match(r".*\.(extract|file_date|file_name|py|pyc|DS_Store)$", filename):
                 continue
             yield path.join(sroot, filename)
 
@@ -208,16 +212,15 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
     for filename in find_input_files(directory):
         # For each of the methods to be tested, check if there is an actual
         # implementation and if so, run a comparison with an expected file.
-        for name in ['identify',
-                     'extract',
-                     'file_date',
-                     'file_name']:
+        for name in ["identify", "extract", "file_date", "file_name"]:
             # Check if the method has been overridden from the protocol
             # interface. If so, even if it's provided by concretely inherited
             # method, we want to require a test against that method.
             func = getattr(importer, name).__func__
-            if (func is not getattr(ImporterProtocol, name) and
-                (ignore_cls is None or (func is not getattr(ignore_cls, name, None)))):
-                method = getattr(ImportFileTestCase(importer),
-                                 'test_expect_{}'.format(name))
+            if func is not getattr(ImporterProtocol, name) and (
+                ignore_cls is None or (func is not getattr(ignore_cls, name, None))
+            ):
+                method = getattr(
+                    ImportFileTestCase(importer), "test_expect_{}".format(name)
+                )
                 yield (method, filename, name)

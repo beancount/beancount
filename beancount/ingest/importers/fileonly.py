@@ -2,6 +2,7 @@
 
 Sometimes you just want to save and accumulate data
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 

@@ -9,7 +9,6 @@ from beancount import loader
 
 
 class TestFillAccountOpen(cmptest.TestCase):
-
     @loader.load_doc(expect_errors=True)
     def test_fill_account_invalid_account(self, entries, errors, _):
         """
@@ -37,10 +36,10 @@ class TestFillAccountOpen(cmptest.TestCase):
           Expenses:Restaurant       100 USD
           Liabilities:CreditCard
         """
-        new_entries, _ = fill_account.fill_account(entries, options_map,
-                                                   "Assets:Cash")
+        new_entries, _ = fill_account.fill_account(entries, options_map, "Assets:Cash")
 
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2001-01-01 open Assets:Cash
         2001-01-01 open Liabilities:CreditCard
@@ -54,7 +53,9 @@ class TestFillAccountOpen(cmptest.TestCase):
           Expenses:Restaurant       100 USD
           Liabilities:CreditCard   -100 USD
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
     @loader.load_doc()
     def test_fill_account_with_cost(self, entries, _, options_map):
@@ -68,10 +69,10 @@ class TestFillAccountOpen(cmptest.TestCase):
         2014-02-01 *
           Expenses:Restaurant       100 MSFT {101.23 USD}
         """
-        new_entries, _ = fill_account.fill_account(entries, options_map,
-                                                   "Assets:Cash")
+        new_entries, _ = fill_account.fill_account(entries, options_map, "Assets:Cash")
 
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2001-01-01 open Assets:Cash
         2001-01-01 open Liabilities:CreditCard
@@ -81,8 +82,10 @@ class TestFillAccountOpen(cmptest.TestCase):
           Expenses:Restaurant       100 MSFT {101.23 USD}
           Assets:Cash         -10123.00 USD
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

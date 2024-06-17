@@ -11,7 +11,6 @@ from beancount import loader
 
 
 class TestMiscReports(unittest.TestCase):
-
     def test_all_reports_empty(self):
         # Test rendering all reports from empty list of entries.
         entries = []
@@ -35,5 +34,5 @@ class TestMiscReports(unittest.TestCase):
             report_.render_htmldiv(entries, errors, options_map, oss)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

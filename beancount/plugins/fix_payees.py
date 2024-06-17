@@ -36,6 +36,7 @@ For example:
     ]"
 
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -46,10 +47,10 @@ import re
 from beancount.core import data
 
 
-__plugins__ = ('fix_payees',)
+__plugins__ = ("fix_payees",)
 
 
-FixPayeesError = collections.namedtuple('FixPayeesError', 'source message entry')
+FixPayeesError = collections.namedtuple("FixPayeesError", "source message entry")
 
 
 # Set this to true to dump debug output.
@@ -72,10 +73,10 @@ def fix_payees(entries, options_map, config):
         try:
             expr = ast.literal_eval(config)
         except (SyntaxError, ValueError):
-            meta = data.new_metadata(options_map['filename'], 0)
-            errors.append(FixPayeesError(meta,
-                                         "Syntax error in config: {}".format(config),
-                                         None))
+            meta = data.new_metadata(options_map["filename"], 0)
+            errors.append(
+                FixPayeesError(meta, "Syntax error in config: {}".format(config), None)
+            )
             return entries, errors
     else:
         return entries, errors
@@ -87,12 +88,12 @@ def fix_payees(entries, options_map, config):
         new_payee = next(clauses)
         regexps = []
         for clause in clauses:
-            match = re.match('([AD]):(.*)', clause)
+            match = re.match("([AD]):(.*)", clause)
             if not match:
-                meta = data.new_metadata(options_map['filename'], 0)
-                errors.append(FixPayeesError(meta,
-                                             "Invalid clause: {}".format(clause),
-                                             None))
+                meta = data.new_metadata(options_map["filename"], 0)
+                errors.append(
+                    FixPayeesError(meta, "Invalid clause: {}".format(clause), None)
+                )
                 continue
             command, regexp = match.groups()
             regexps.append((command, re.compile(regexp, re.I).search))
@@ -111,11 +112,13 @@ def fix_payees(entries, options_map, config):
                 # Attempt to match all the clauses.
                 for clause in clauses:
                     command, func = clause
-                    if command == 'D':
-                        if not ((entry.payee is not None and func(entry.payee)) or
-                                (entry.narration is not None and func(entry.narration))):
+                    if command == "D":
+                        if not (
+                            (entry.payee is not None and func(entry.payee))
+                            or (entry.narration is not None and func(entry.narration))
+                        ):
                             break
-                    elif command == 'A':
+                    elif command == "A":
                         if not any(func(posting.account) for posting in entry.postings):
                             break
                 else:
@@ -126,9 +129,9 @@ def fix_payees(entries, options_map, config):
 
     if _DEBUG:
         # Print debugging info.
-        for payee, repl_entries in sorted(replaced_entries.items(),
-                                          key=lambda x: len(x[1]),
-                                          reverse=True):
-            print('{:60}: {}'.format(payee, len(repl_entries)))
+        for payee, repl_entries in sorted(
+            replaced_entries.items(), key=lambda x: len(x[1]), reverse=True
+        ):
+            print("{:60}: {}".format(payee, len(repl_entries)))
 
     return new_entries, errors

@@ -1,5 +1,5 @@
-"""Network utilities.
-"""
+"""Network utilities."""
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 

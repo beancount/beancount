@@ -4,6 +4,7 @@ This object encapsulates the rendering of various objects to HTML.
 You may, and should, derive and override from this object in order to
 provide links within a web interface.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,8 +23,7 @@ class HTMLFormatter:
         Args:
           dcontext: DisplayContext to use to render the numbers.
         """
-        self._dformat = dcontext.build(
-            precision=display_context.Precision.MOST_COMMON)
+        self._dformat = dcontext.build(precision=display_context.Precision.MOST_COMMON)
 
     def render_account(self, account_name):
         """Render an account name.
@@ -67,8 +67,7 @@ class HTMLFormatter:
         Returns:
           A string of HTML to be spliced inside a table cell.
         """
-        return '<br/>'.join(position_.to_string(self._dformat)
-                            for position_ in sorted(inv))
+        return "<br/>".join(position_.to_string(self._dformat) for position_ in sorted(inv))
 
     def render_context(self, entry):
         """Render a reference to context around a transaction (maybe as an HTML link).
@@ -78,7 +77,7 @@ class HTMLFormatter:
         Returns:
           A string of HTML to be spliced inside an HTML template.
         """
-        return ''
+        return ""
 
     def render_link(self, link):
         """Render a transaction link (maybe as an HTML link).
@@ -120,7 +119,7 @@ class HTMLFormatter:
         Returns:
           A string of HTML to be spliced inside an HTML template.
         """
-        return '{} / {}'.format(*base_quote)
+        return "{} / {}".format(*base_quote)
 
     def render_source(self, meta):
         """Render a reference to the source file.

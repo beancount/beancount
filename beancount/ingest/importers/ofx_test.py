@@ -15,17 +15,17 @@ from beancount.parser import cmptest
 
 def clean_xml(string):
     """Compress some formatted XML as it might appear in a real file."""
-    return re.sub(r"(^[ \t\n]+|[ \t\n]+$)", "", string,
-                  flags=re.MULTILINE).replace('\n', '')
+    return re.sub(r"(^[ \t\n]+|[ \t\n]+$)", "", string, flags=re.MULTILINE).replace(
+        "\n", ""
+    )
 
 
 class TestOFXImporter(cmptest.TestCase):
-
     def test_parse_ofx_time(self):
         dtime = datetime.datetime(2014, 1, 12, 5, 0, 0)
-        self.assertEqual(dtime, ofx.parse_ofx_time('20140112050000.000[-7:MST]'))
-        self.assertEqual(dtime, ofx.parse_ofx_time('20140112050000'))
-        self.assertEqual(dtime.replace(hour=0), ofx.parse_ofx_time('20140112'))
+        self.assertEqual(dtime, ofx.parse_ofx_time("20140112050000.000[-7:MST]"))
+        self.assertEqual(dtime, ofx.parse_ofx_time("20140112050000"))
+        self.assertEqual(dtime.replace(hour=0), ofx.parse_ofx_time("20140112"))
 
     def test_find_acctids(self):
         contents = clean_xml("""
@@ -39,8 +39,7 @@ class TestOFXImporter(cmptest.TestCase):
                     <ACCTID>379700001111222
                     <DOWNLOAD.FLAG>false
         """)
-        self.assertEqual(['379700001111222'],
-                         list(ofx.find_acctids(contents)))
+        self.assertEqual(["379700001111222"], list(ofx.find_acctids(contents)))
 
     def test_find_max_date(self):
         contents = clean_xml("""
@@ -100,7 +99,7 @@ class TestOFXImporter(cmptest.TestCase):
             </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        soup = bs4.BeautifulSoup(contents, 'lxml')
+        soup = bs4.BeautifulSoup(contents, "lxml")
         self.assertEqual("USD", ofx.find_currency(soup))
 
     def test_find_statement_transactions(self):
@@ -221,18 +220,18 @@ class TestOFXImporter(cmptest.TestCase):
            </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        soup = bs4.BeautifulSoup(contents, 'lxml')
+        soup = bs4.BeautifulSoup(contents, "lxml")
         txns = list(ofx.find_statement_transactions(soup))
 
         self.assertEqual(2, len(txns))
 
-        self.assertEqual('379700001111222', txns[0][0])
+        self.assertEqual("379700001111222", txns[0][0])
         self.assertIsInstance(txns[0][2][0], bs4.element.Tag)
         self.assertEqual(4, len(txns[0]))
         self.assertEqual(2, len(txns[0][2]))
 
         self.assertIsInstance(txns[1][2][0], bs4.element.Tag)
-        self.assertEqual('456700001111222', txns[1][0])
+        self.assertEqual("456700001111222", txns[1][0])
         self.assertEqual(4, len(txns[1]))
         self.assertEqual(1, len(txns[1][2]))
 
@@ -255,26 +254,21 @@ class TestOFXImporter(cmptest.TestCase):
            </TRNTYPE>
           </STMTTRN>
         """)
-        node = bs4.BeautifulSoup(contents, 'lxml')
+        node = bs4.BeautifulSoup(contents, "lxml")
 
-        self.assertEqual('20131122000000.000[-7:MST]',
-                         ofx.find_child(node, 'dtposted'))
-        self.assertEqual('-13.93',
-                         ofx.find_child(node, 'trnamt'))
-        self.assertEqual('320133260227320537',
-                         ofx.find_child(node, 'fitid'))
-        self.assertEqual('320133260227320537',
-                         ofx.find_child(node, 'refnum'))
-        self.assertEqual('WHOLE & FDS HOU 10236 02124201320',
-                         ofx.find_child(node, 'name'))
-        self.assertEqual('042102720272124201320',
-                         ofx.find_child(node, 'memo'))
+        self.assertEqual("20131122000000.000[-7:MST]", ofx.find_child(node, "dtposted"))
+        self.assertEqual("-13.93", ofx.find_child(node, "trnamt"))
+        self.assertEqual("320133260227320537", ofx.find_child(node, "fitid"))
+        self.assertEqual("320133260227320537", ofx.find_child(node, "refnum"))
+        self.assertEqual("WHOLE & FDS HOU 10236 02124201320", ofx.find_child(node, "name"))
+        self.assertEqual("042102720272124201320", ofx.find_child(node, "memo"))
 
         # Test conversions.
-        self.assertEqual(datetime.datetime(2013, 11, 22, 0, 0, 0),
-                         ofx.find_child(node, 'dtposted', ofx.parse_ofx_time))
-        self.assertEqual(D('-13.93'),
-                         ofx.find_child(node, 'trnamt', D))
+        self.assertEqual(
+            datetime.datetime(2013, 11, 22, 0, 0, 0),
+            ofx.find_child(node, "dtposted", ofx.parse_ofx_time),
+        )
+        self.assertEqual(D("-13.93"), ofx.find_child(node, "trnamt", D))
 
     def test_build_transaction(self):
         contents = clean_xml("""
@@ -295,13 +289,15 @@ class TestOFXImporter(cmptest.TestCase):
            </TRNTYPE>
           </STMTTRN>
         """)
-        node = bs4.BeautifulSoup(contents, 'lxml')
-        entry = ofx.build_transaction(node, '&', 'Liabilities:CreditCard', 'EUR')
-        self.assertEqualEntries("""
+        node = bs4.BeautifulSoup(contents, "lxml")
+        entry = ofx.build_transaction(node, "&", "Liabilities:CreditCard", "EUR")
+        self.assertEqualEntries(
+            """
           2013-11-22 & "WHOLEFDS HOU 10236 02124201320 / 042102720272124201320"
             Liabilities:CreditCard  -13.93 EUR
-        """, [entry])
-
+        """,
+            [entry],
+        )
 
     def _extract_with_balance(self):
         ofx_contents = clean_xml("""
@@ -436,7 +432,7 @@ class TestOFXImporter(cmptest.TestCase):
            </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        soup = bs4.BeautifulSoup(ofx_contents, 'lxml')
+        soup = bs4.BeautifulSoup(ofx_contents, "lxml")
 
         entries, _, __ = parser.parse_string("""
 
@@ -455,9 +451,14 @@ class TestOFXImporter(cmptest.TestCase):
 
     def test_extract_with_balance_declared(self):
         soup, exp_entries = self._extract_with_balance()
-        entries = ofx.extract(soup, 'test.ofx',
-                              '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.DECLARED)
+        entries = ofx.extract(
+            soup,
+            "test.ofx",
+            "379700001111222",
+            "Liabilities:CreditCard",
+            "*",
+            ofx.BalanceType.DECLARED,
+        )
         balance_entries, _, __ = parser.parse_string("""
           2014-01-13 balance Liabilities:CreditCard            -2356.38 USD
         """)
@@ -465,14 +466,18 @@ class TestOFXImporter(cmptest.TestCase):
 
     def test_extract_with_balance_last(self):
         soup, exp_entries = self._extract_with_balance()
-        entries = ofx.extract(soup, 'test.ofx',
-                              '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.LAST)
+        entries = ofx.extract(
+            soup,
+            "test.ofx",
+            "379700001111222",
+            "Liabilities:CreditCard",
+            "*",
+            ofx.BalanceType.LAST,
+        )
         balance_entries, _, __ = parser.parse_string("""
           2013-11-27 balance Liabilities:CreditCard            -2356.38 USD
         """)
         self.assertEqualEntries(exp_entries + balance_entries, entries)
-
 
     def test_two_distinct_balances(self):
         ofx_contents = clean_xml("""
@@ -521,16 +526,24 @@ class TestOFXImporter(cmptest.TestCase):
            </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        soup = bs4.BeautifulSoup(ofx_contents, 'lxml')
-        entries = ofx.extract(soup, 'test.ofx',
-                              '379700001111222', 'Liabilities:CreditCard', '*',
-                              ofx.BalanceType.DECLARED)
-        balance_entries, _, __ = parser.parse_string("""
+        soup = bs4.BeautifulSoup(ofx_contents, "lxml")
+        entries = ofx.extract(
+            soup,
+            "test.ofx",
+            "379700001111222",
+            "Liabilities:CreditCard",
+            "*",
+            ofx.BalanceType.DECLARED,
+        )
+        balance_entries, _, __ = parser.parse_string(
+            """
           2014-01-02 balance Liabilities:CreditCard   100.00 USD
           2014-01-03 balance Liabilities:CreditCard   200.00 USD
-        """, dedent=True)
+        """,
+            dedent=True,
+        )
         self.assertEqualEntries(balance_entries, entries)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

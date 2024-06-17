@@ -28,6 +28,7 @@ See unit test for details.
 See this thread for context:
 https://docs.google.com/drawings/d/18fTrrGlmz0jFbfcGGHTffbdRwbmST8r9_3O26Dd1Xww/edit?usp=sharing
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -36,7 +37,7 @@ from beancount.core import account_types
 from beancount.parser import options
 
 
-__plugins__ = ('divert_expenses',)
+__plugins__ = ("divert_expenses",)
 
 
 def divert_expenses(entries, options_map, config_str):
@@ -58,8 +59,8 @@ def divert_expenses(entries, options_map, config_str):
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
-    tag = config_obj['tag']
-    replacement_account = config_obj['account']
+    tag = config_obj["tag"]
+    replacement_account = config_obj["account"]
 
     acctypes = options.get_account_types(options_map)
 
@@ -85,11 +86,13 @@ def replace_diverted_accounts(entry, replacement_account, acctypes):
     """
     new_postings = []
     for posting in entry.postings:
-        divert = posting.meta.get('divert', None) if posting.meta else None
-        if (divert is True or (
-                divert is None and
-                account_types.is_account_type(acctypes.expenses, posting.account))):
-            posting = posting._replace(account=replacement_account,
-                                       meta={'diverted_account': posting.account})
+        divert = posting.meta.get("divert", None) if posting.meta else None
+        if divert is True or (
+            divert is None
+            and account_types.is_account_type(acctypes.expenses, posting.account)
+        ):
+            posting = posting._replace(
+                account=replacement_account, meta={"diverted_account": posting.account}
+            )
         new_postings.append(posting)
     return entry._replace(postings=new_postings)

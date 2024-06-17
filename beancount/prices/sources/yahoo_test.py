@@ -16,7 +16,6 @@ from beancount.core.number import D
 from beancount.utils import date_utils
 
 
-
 class MockResponse:
     """A mock requests.Models.Response object for testing."""
 
@@ -29,9 +28,9 @@ class MockResponse:
 
 
 class YahooFinancePriceFetcher(unittest.TestCase):
-
     def _test_get_latest_price(self):
-        response = MockResponse(textwrap.dedent("""
+        response = MockResponse(
+            textwrap.dedent("""
             {"quoteResponse":
              {"error": null,
               "result": [{"esgPopulated": false,
@@ -50,15 +49,17 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                           "sourceInterval": 15,
                           "symbol": "XSP.TO",
                           "tradeable": false}]}}
-            """))
-        with mock.patch('requests.get', return_value=response):
-            srcprice = yahoo.Source().get_latest_price('XSP.TO')
+            """)
+        )
+        with mock.patch("requests.get", return_value=response):
+            srcprice = yahoo.Source().get_latest_price("XSP.TO")
         self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('29.99'), srcprice.price)
-        timezone = datetime.timezone(datetime.timedelta(hours=-4), 'America/Toronto')
-        self.assertEqual(datetime.datetime(2018, 3, 29, 15, 59, 49, tzinfo=timezone),
-                         srcprice.time)
-        self.assertEqual('CAD', srcprice.quote_currency)
+        self.assertEqual(D("29.99"), srcprice.price)
+        timezone = datetime.timezone(datetime.timedelta(hours=-4), "America/Toronto")
+        self.assertEqual(
+            datetime.datetime(2018, 3, 29, 15, 59, 49, tzinfo=timezone), srcprice.time
+        )
+        self.assertEqual("CAD", srcprice.quote_currency)
 
     def test_get_latest_price(self):
         for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
@@ -66,7 +67,8 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                 self._test_get_latest_price()
 
     def _test_get_historical_price(self):
-        response = MockResponse(textwrap.dedent("""
+        response = MockResponse(
+            textwrap.dedent("""
             {"chart":
              {"error": null,
               "result": [{"indicators": {"adjclose": [{"adjclose": [29.236251831054688,
@@ -120,16 +122,19 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                           "timestamp": [1509111000,
                                         1509370200,
                                         1509456600,
-                                        1509543000]}]}}"""))
-        with mock.patch('requests.get', return_value=response):
+                                        1509543000]}]}}""")
+        )
+        with mock.patch("requests.get", return_value=response):
             srcprice = yahoo.Source().get_historical_price(
-                'XSP.TO', datetime.datetime(2017, 11, 1, 16, 0, 0, tzinfo=tz.tzutc()))
+                "XSP.TO", datetime.datetime(2017, 11, 1, 16, 0, 0, tzinfo=tz.tzutc())
+            )
         self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('29.469999313354492'), srcprice.price)
-        timezone = datetime.timezone(datetime.timedelta(hours=-4), 'America/Toronto')
-        self.assertEqual(datetime.datetime(2017, 11, 1, 9, 30, tzinfo=timezone),
-                         srcprice.time)
-        self.assertEqual('CAD', srcprice.quote_currency)
+        self.assertEqual(D("29.469999313354492"), srcprice.price)
+        timezone = datetime.timezone(datetime.timedelta(hours=-4), "America/Toronto")
+        self.assertEqual(
+            datetime.datetime(2017, 11, 1, 9, 30, tzinfo=timezone), srcprice.time
+        )
+        self.assertEqual("CAD", srcprice.quote_currency)
 
     def test_get_historical_price(self):
         for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
@@ -138,24 +143,26 @@ class YahooFinancePriceFetcher(unittest.TestCase):
 
     def test_parse_response_error_status_code(self):
         response = MockResponse(
-            '{"quoteResponse": {"error": "Not supported", "result": [{}]}}',
-            status_code=400)
+            '{"quoteResponse": {"error": "Not supported", "result": [{}]}}', status_code=400
+        )
         with self.assertRaises(yahoo.YahooError):
             yahoo.parse_response(response)
 
     def test_parse_response_error_invalid_format(self):
         response = MockResponse(
             """{"quoteResponse": {"error": null, "result": [{}]},
-             "chart": {"error": null, "result": [{}]}}""")
+             "chart": {"error": null, "result": [{}]}}"""
+        )
         with self.assertRaises(yahoo.YahooError):
             yahoo.parse_response(response)
 
     def test_parse_response_error_not_none(self):
         response = MockResponse(
-            '{"quoteResponse": {"error": "Non-zero error", "result": [{}]}}')
+            '{"quoteResponse": {"error": "Non-zero error", "result": [{}]}}'
+        )
         with self.assertRaises(yahoo.YahooError):
             yahoo.parse_response(response)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -28,6 +28,7 @@ Timezone information: Input and output datetimes are limited to dates, and I
 believe the dates are presumed to live in the timezone of each particular data
 source. (It's unclear, not documented.)
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -48,18 +49,17 @@ class QuandlError(ValueError):
     "An error from the Quandl API."
 
 
-TickerSpec = collections.namedtuple('TickerSpec', 'database dataset column')
+TickerSpec = collections.namedtuple("TickerSpec", "database dataset column")
 
 
 def parse_ticker(ticker):
     """Convert ticker to Quandl codes."""
     if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:; ]+)?$", ticker):
-        raise ValueError(
-            'Invalid code. Use "<DATABASE>:<DATASET>[:<COLUMN NAME>]" format.')
+        raise ValueError('Invalid code. Use "<DATABASE>:<DATASET>[:<COLUMN NAME>]" format.')
     split = ticker.split(":")
     if len(split) == 2:
         return TickerSpec(split[0], split[1], None)
-    return TickerSpec(split[0], split[1], split[2].replace('_', ' '))
+    return TickerSpec(split[0], split[1], split[2].replace("_", " "))
 
 
 def fetch_time_series(ticker, time=None):
@@ -67,7 +67,8 @@ def fetch_time_series(ticker, time=None):
     # Create request payload.
     ticker_spec = parse_ticker(ticker)
     url = "https://www.quandl.com/api/v3/datasets/{}/{}.json".format(
-        ticker_spec.database, ticker_spec.dataset)
+        ticker_spec.database, ticker_spec.dataset
+    )
     payload = {"limit": 1}
     if time is not None:
         date = time.date()
@@ -75,41 +76,42 @@ def fetch_time_series(ticker, time=None):
         payload["end_date"] = date.isoformat()
 
     # Add API key, if it is set in the environment.
-    if 'QUANDL_API_KEY' in os.environ:
-        payload['api_key'] = os.environ['QUANDL_API_KEY']
+    if "QUANDL_API_KEY" in os.environ:
+        payload["api_key"] = os.environ["QUANDL_API_KEY"]
 
     # Fetch and process errors.
     response = requests.get(url, params=payload, timeout=300)
     if response.status_code != requests.codes.ok:
-        raise QuandlError("Invalid response ({}): {}".format(response.status_code,
-                                                             response.text))
+        raise QuandlError(
+            "Invalid response ({}): {}".format(response.status_code, response.text)
+        )
     result = response.json()
-    if 'quandl_error' in result:
-        raise QuandlError(result['quandl_error']['message'])
+    if "quandl_error" in result:
+        raise QuandlError(result["quandl_error"]["message"])
 
     # Parse result container.
-    dataset = result['dataset']
-    column_names = dataset['column_names']
-    date_index = column_names.index('Date')
+    dataset = result["dataset"]
+    column_names = dataset["column_names"]
+    date_index = column_names.index("Date")
     if ticker_spec.column is not None:
         data_index = column_names.index(ticker_spec.column)
     else:
         try:
-            data_index = column_names.index('Adj. Close')
+            data_index = column_names.index("Adj. Close")
         except ValueError:
-            data_index = column_names.index('Close')
-    data = dataset['data'][0]
+            data_index = column_names.index("Close")
+    data = dataset["data"][0]
 
     # Gather time and assume it's in UTC timezone (Quandl does not provide the
     # market's timezone).
-    time = datetime.datetime.strptime(data[date_index], '%Y-%m-%d')
+    time = datetime.datetime.strptime(data[date_index], "%Y-%m-%d")
     time = time.replace(tzinfo=tz.tzutc())
 
     # Gather price.
     # Quantize with the same precision default rendering of floats occur.
     price_float = data[data_index]
     price = D(price_float)
-    match = re.search(r'(\..*)', str(price_float))
+    match = re.search(r"(\..*)", str(price_float))
     if match:
         price = price.quantize(D(match.group(1)))
 

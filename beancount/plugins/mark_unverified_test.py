@@ -10,7 +10,6 @@ from beancount import loader
 
 
 class TestMarkUnverified(cmptest.TestCase):
-
     @loader.load_doc()
     def test_mark_unverified(self, entries, errors, options_map):
         """
@@ -75,9 +74,10 @@ class TestMarkUnverified(cmptest.TestCase):
         """)
         for expect_entry, entry in zip(expect_entries, data.filter_txns(entries)):
             for expect_posting, posting in zip(expect_entry.postings, entry.postings):
-                self.assertEqual(expect_posting.meta.get('unverified'),
-                                 posting.meta.get('unverified'))
+                self.assertEqual(
+                    expect_posting.meta.get("unverified"), posting.meta.get("unverified")
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

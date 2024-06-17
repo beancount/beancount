@@ -7,6 +7,7 @@ this is the best solution in the short-term, the account types are used
 in too many places to pass around that state everywhere. Maybe we change
 this later on.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -23,14 +24,12 @@ from beancount.core import account
 #   equity: a str, the name of the prefix for the Equity subaccounts.
 #   income: a str, the name of the prefix for the Income subaccounts.
 #   expenses: a str, the name of the prefix for the Expenses subaccounts.
-AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
+AccountTypes = namedtuple("AccountTypes", "assets liabilities equity income expenses")
 
 # Default values for root accounts.
-DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
-                                     "Liabilities",
-                                     "Equity",
-                                     "Income",
-                                     "Expenses")
+DEFAULT_ACCOUNT_TYPES = AccountTypes(
+    "Assets", "Liabilities", "Equity", "Income", "Expenses"
+)
 
 
 def get_account_sort_key(account_types, account_name):
@@ -74,7 +73,7 @@ def is_account_type(account_type, account_name):
     Returns:
       A boolean, true if the account is of the given type.
     """
-    return bool(re.match('^{}{}'.format(account_type, account.sep), account_name))
+    return bool(re.match("^{}{}".format(account_type, account.sep), account_name))
 
 
 def is_root_account(account_name, account_types=None):
@@ -93,13 +92,12 @@ def is_root_account(account_name, account_types=None):
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     if account_types is not None:
-        assert isinstance(account_types, AccountTypes), (
-            "Account types has invalid type: {}".format(account_types))
+        assert isinstance(
+            account_types, AccountTypes
+        ), "Account types has invalid type: {}".format(account_types)
         return account_name in account_types
     else:
-        return (account_name and
-                bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
-
+        return account_name and bool(re.match(r"([A-Z][A-Za-z0-9\-]+)$", account_name))
 
 
 def is_balance_sheet_account(account_name, account_types):
@@ -113,12 +111,15 @@ def is_balance_sheet_account(account_name, account_types):
       A boolean, true if the account is a balance sheet account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(account_types, AccountTypes), (
-        "Account types has invalid type: {}".format(account_types))
+    assert isinstance(
+        account_types, AccountTypes
+    ), "Account types has invalid type: {}".format(account_types)
     account_type = get_account_type(account_name)
-    return account_type in (account_types.assets,
-                            account_types.liabilities,
-                            account_types.equity)
+    return account_type in (
+        account_types.assets,
+        account_types.liabilities,
+        account_types.equity,
+    )
 
 
 def is_income_statement_account(account_name, account_types):
@@ -132,11 +133,11 @@ def is_income_statement_account(account_name, account_types):
       A boolean, true if the account is an income statement account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(account_types, AccountTypes), (
-        "Account types has invalid type: {}".format(account_types))
+    assert isinstance(
+        account_types, AccountTypes
+    ), "Account types has invalid type: {}".format(account_types)
     account_type = get_account_type(account_name)
-    return account_type in (account_types.income,
-                            account_types.expenses)
+    return account_type in (account_types.income, account_types.expenses)
 
 
 def is_equity_account(account_name, account_types):
@@ -149,8 +150,9 @@ def is_equity_account(account_name, account_types):
       A boolean, true if the account is an equity account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(account_types, AccountTypes), (
-        "Account types has invalid type: {}".format(account_types))
+    assert isinstance(
+        account_types, AccountTypes
+    ), "Account types has invalid type: {}".format(account_types)
     account_type = get_account_type(account_name)
     return account_type == account_types.equity
 
@@ -168,7 +170,4 @@ def get_account_sign(account_name, account_types=None):
         account_types = DEFAULT_ACCOUNT_TYPES
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     account_type = get_account_type(account_name)
-    return (+1
-            if account_type in (account_types.assets,
-                                account_types.expenses)
-            else -1)
+    return +1 if account_type in (account_types.assets, account_types.expenses) else -1

@@ -15,13 +15,14 @@ Also, postings for accounts without a single Balance directive on them will not
 be marked as unverified as all (otherwise all the postings would be marked, this
 would make no sense).
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import data
 
 
-__plugins__ = ('mark_unverified',)
+__plugins__ = ("mark_unverified",)
 
 
 def mark_unverified(entries, options_map):
@@ -51,7 +52,7 @@ def mark_unverified(entries, options_map):
                     if new_postings is postings:
                         new_postings = postings.copy()
                     new_meta = posting.meta.copy()
-                    new_meta['unverified'] = True
+                    new_meta["unverified"] = True
                     new_postings[index] = posting._replace(meta=new_meta)
             if new_postings is not postings:
                 entry = entry._replace(postings=new_postings)

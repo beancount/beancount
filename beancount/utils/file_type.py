@@ -8,6 +8,7 @@ This attempts to identify the mime-type of a file suing
    Quicken files.
 
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -20,12 +21,14 @@ import mimetypes
 # some file types may not be detected..
 try:
     import magic
+
     # If 'filemagic' is installed, ignore it. We require the 'python-magic'
     # wrapper.
-    if not hasattr(magic, 'from_file'):
-        warnings.warn("You have installed 'filemagic' instead of 'python-magic'; "
-                      "disabling.")
-        magic = None # pylint: disable=invalid-name
+    if not hasattr(magic, "from_file"):
+        warnings.warn(
+            "You have installed 'filemagic' instead of 'python-magic'; " "disabling."
+        )
+        magic = None  # pylint: disable=invalid-name
 except (ImportError, OSError):
     magic = None
 
@@ -34,9 +37,10 @@ except (ImportError, OSError):
 EXTRA_FILE_TYPES = [
     (re.compile(regexp, re.I), filetype)
     for regexp, filetype in (
-        (r'.*\.qbo$', 'application/vnd.intu.qbo'),
-        (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
-    )]
+        (r".*\.qbo$", "application/vnd.intu.qbo"),
+        (r".*\.(qfx|ofx)$", "application/x-ofx"),
+    )
+]
 
 
 def guess_file_type(filename):
@@ -62,8 +66,11 @@ def guess_file_type(filename):
     if magic:
         filetype = magic.from_file(filename, mime=True)
         if isinstance(filetype, bytes):
-            filetype = filetype.decode('utf8')
+            filetype = filetype.decode("utf8")
         return filetype
     else:
-        raise ValueError(("Could not identify the type of file '{}'; "
-                          "try installing python-magic").format(filename))
+        raise ValueError(
+            (
+                "Could not identify the type of file '{}'; " "try installing python-magic"
+            ).format(filename)
+        )

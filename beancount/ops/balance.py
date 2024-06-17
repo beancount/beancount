@@ -1,5 +1,5 @@
-"""Automatic padding of gaps between entries.
-"""
+"""Automatic padding of gaps between entries."""
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -14,10 +14,10 @@ from beancount.core import account
 from beancount.core import realization
 from beancount.core import getters
 
-__plugins__ = ('check',)
+__plugins__ = ("check",)
 
 
-BalanceError = collections.namedtuple('BalanceError', 'source message entry')
+BalanceError = collections.namedtuple("BalanceError", "source message entry")
 
 
 def get_balance_tolerance(balance_entry, options_map):
@@ -71,22 +71,22 @@ def check(entries, options_map):
     # order to hold the incremental tree of balances, so that we can easily get
     # the amounts of an account's subaccounts for making checks on parent
     # accounts.
-    real_root = realization.RealAccount('')
+    real_root = realization.RealAccount("")
 
     # Figure out the set of accounts for which we need to compute a running
     # inventory balance.
-    asserted_accounts = {entry.account
-                         for entry in entries
-                         if isinstance(entry, Balance)}
+    asserted_accounts = {entry.account for entry in entries if isinstance(entry, Balance)}
 
     # Add all children accounts of an asserted account to be calculated as well,
     # and pre-create these accounts, and only those (we're just being tight to
     # make sure).
-    asserted_match_list = [account.parent_matcher(account_)
-                           for account_ in asserted_accounts]
+    asserted_match_list = [
+        account.parent_matcher(account_) for account_ in asserted_accounts
+    ]
     for account_ in getters.get_accounts(entries):
-        if (account_ in asserted_accounts or
-            any(match(account_) for match in asserted_match_list)):
+        if account_ in asserted_accounts or any(
+            match(account_) for match in asserted_match_list
+        ):
             realization.get_or_create(real_root, account_)
 
     # Get the Open directives for each account.
@@ -112,19 +112,29 @@ def check(entries, options_map):
                 open, _ = open_close_map[entry.account]
             except KeyError:
                 check_errors.append(
-                    BalanceError(entry.meta,
-                                 "Account '{}' does not exist: ".format(entry.account),
-                                 entry))
+                    BalanceError(
+                        entry.meta,
+                        "Account '{}' does not exist: ".format(entry.account),
+                        entry,
+                    )
+                )
                 continue
 
-            if (expected_amount is not None and
-                open and open.currencies and
-                expected_amount.currency not in open.currencies):
+            if (
+                expected_amount is not None
+                and open
+                and open.currencies
+                and expected_amount.currency not in open.currencies
+            ):
                 check_errors.append(
-                    BalanceError(entry.meta,
-                                 "Invalid currency '{}' for Balance directive: ".format(
-                                     expected_amount.currency),
-                                 entry))
+                    BalanceError(
+                        entry.meta,
+                        "Invalid currency '{}' for Balance directive: ".format(
+                            expected_amount.currency
+                        ),
+                        entry,
+                    )
+                )
 
             # Sum up the current balances for this account and its
             # sub-accounts. We want to support checks for parent accounts
@@ -151,24 +161,28 @@ def check(entries, options_map):
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
-                    BalanceError(entry.meta,
-                                 ("Balance failed for '{}': "
-                                  "expected {} != accumulated {} ({} {})").format(
-                                      entry.account, expected_amount, balance_amount,
-                                      abs(diff_amount.number),
-                                      ('too much'
-                                       if diff_amount.number > 0
-                                       else 'too little')),
-                                 entry))
+                    BalanceError(
+                        entry.meta,
+                        (
+                            "Balance failed for '{}': "
+                            "expected {} != accumulated {} ({} {})"
+                        ).format(
+                            entry.account,
+                            expected_amount,
+                            balance_amount,
+                            abs(diff_amount.number),
+                            ("too much" if diff_amount.number > 0 else "too little"),
+                        ),
+                        entry,
+                    )
+                )
 
                 # Substitute the entry by a failing entry, with the diff_amount
                 # field set on it. I'm not entirely sure that this is the best
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = entry._replace(
-                    meta=entry.meta.copy(),
-                    diff_amount=diff_amount)
+                entry = entry._replace(meta=entry.meta.copy(), diff_amount=diff_amount)
 
         new_entries.append(entry)
 

@@ -1,6 +1,7 @@
 """
 Utilities for reading and writing CSV files.
 """
+
 __copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -36,12 +37,12 @@ def csv_clean_header(header_row):
     fieldnames = []
     for index, column in enumerate(header_row):
         field = column.lower()
-        field = re.sub(r'\bp/l\b', 'pnl', field)
-        field = re.sub('[^a-z0-9]', '_', field)
-        field = field.strip(' _')
-        field = re.sub('__+', '_', field)
+        field = re.sub(r"\bp/l\b", "pnl", field)
+        field = re.sub("[^a-z0-9]", "_", field)
+        field = field.strip(" _")
+        field = re.sub("__+", "_", field)
         if not field:
-            field = 'col{}'.format(index)
+            field = "col{}".format(index)
         assert field not in fieldnames, field
         fieldnames.append(field)
     return fieldnames
@@ -77,7 +78,7 @@ def csv_tuple_reader(fileobj, **kw):
     reader = csv.reader(fileobj, **kw)
     ireader = iter(reader)
     fieldnames = csv_clean_header(next(ireader))
-    Tuple = collections.namedtuple('Row', fieldnames)
+    Tuple = collections.namedtuple("Row", fieldnames)
     for row in ireader:
         try:
             yield Tuple(*row)
@@ -132,7 +133,7 @@ def csv_split_sections_with_titles(rows):
             name = section[0][0]
             section = section[1:]
         else:
-            name = 'Section {}'.format(index)
+            name = "Section {}".format(index)
         sections_map[name] = section
     return sections_map
 
@@ -156,9 +157,9 @@ def iter_sections(fileobj, separating_predicate=None):
     lineiter = iter(fileobj)
     for line in lineiter:
         if separating_predicate(line):
-            iterator = itertools.chain((line,),
-                                       iter_until_empty(lineiter,
-                                                        separating_predicate))
+            iterator = itertools.chain(
+                (line,), iter_until_empty(lineiter, separating_predicate)
+            )
             yield iterator
             for _ in iterator:
                 pass

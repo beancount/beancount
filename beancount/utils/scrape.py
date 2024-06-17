@@ -84,12 +84,11 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
 
         skipped_urls = set()
         content_type = response.info().get_content_type()
-        if content_type == 'text/html':
+        if content_type == "text/html":
             # Process all the links in the page and register all the unseen links to
             # be processed.
             html_root = lxml.html.document_fromstring(response_contents)
             for link in iterlinks(html_root, url):
-
                 # Skip URLs to be ignored.
                 if ignore_regexp and re.match(ignore_regexp, link):
                     logging.debug("Skipping: %s", link)
@@ -131,7 +130,7 @@ def validate_local_links(filename):
         empty: A boolean, true if this file is empty.
     """
     filedir = path.dirname(filename)
-    contents = open(filename, 'rb').read()
+    contents = open(filename, "rb").read()
 
     empty = len(contents) == 0
     missing = set()
@@ -162,8 +161,7 @@ def validate_local_links_in_dir(directory):
         missing: A set of strings, the names of links to files that do not exist.
         empty: A boolean, true if this file is empty.
     """
-    logging.basicConfig(level=logging.INFO,
-                        format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     allfiles = []
     missing, empty = set(), set()
     for root, dirs, files in os.walk(directory):

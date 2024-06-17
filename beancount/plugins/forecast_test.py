@@ -9,7 +9,6 @@ from beancount.parser import cmptest
 
 
 class TestExampleForecast(cmptest.TestCase):
-
     def test_forecast(self):
         input_text = textwrap.dedent("""
 
@@ -25,7 +24,8 @@ class TestExampleForecast(cmptest.TestCase):
         """)
         entries, errors, __ = loader.load_string(input_text)
         self.assertFalse(errors)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
@@ -61,8 +61,10 @@ class TestExampleForecast(cmptest.TestCase):
             2011-12-17 # "Something"
               Expenses:Restaurant           50.02 USD
               Assets:Cash                  -50.02 USD
-        """, entries)
+        """,
+            entries,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

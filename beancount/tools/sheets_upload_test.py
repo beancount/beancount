@@ -1,48 +1,67 @@
 """Unit tests for sheets upload tool."""
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 # Skip the tests if oauth2client is not available.
 import unittest
 import pytest
-oauth2client = pytest.importorskip('oauth2client')
+
+oauth2client = pytest.importorskip("oauth2client")
 
 from beancount.tools import sheets_upload
 
 
-_NOT_FOUND = '__NOT_FOUND__'
+_NOT_FOUND = "__NOT_FOUND__"
 
 
 class TestPopAlist(unittest.TestCase):
-
     def test_pop_alist__empty(self):
-        self.assertIs(_NOT_FOUND, sheets_upload.pop_alist([], 'apples', _NOT_FOUND))
+        self.assertIs(_NOT_FOUND, sheets_upload.pop_alist([], "apples", _NOT_FOUND))
 
     def test_pop_alist__not_found(self):
-        self.assertIs(_NOT_FOUND, sheets_upload.pop_alist([
-            ('oranges', 100),
-            ('bananas', 101),
-        ], 'apples', _NOT_FOUND))
+        self.assertIs(
+            _NOT_FOUND,
+            sheets_upload.pop_alist(
+                [
+                    ("oranges", 100),
+                    ("bananas", 101),
+                ],
+                "apples",
+                _NOT_FOUND,
+            ),
+        )
 
     def test_pop_alist__found(self):
-        self.assertIs(101, sheets_upload.pop_alist([
-            ('oranges', 100),
-            ('apples', 101),
-            ('bananas', 102),
-        ], 'apples'))
+        self.assertIs(
+            101,
+            sheets_upload.pop_alist(
+                [
+                    ("oranges", 100),
+                    ("apples", 101),
+                    ("bananas", 102),
+                ],
+                "apples",
+            ),
+        )
 
     def test_pop_alist__not_unique(self):
-        self.assertIs(101, sheets_upload.pop_alist([
-            ('oranges', 100),
-            ('apples', 101),
-            ('apples', 102),
-            ('bananas', 103),
-            ('apples', 104),
-        ], 'apples'))
+        self.assertIs(
+            101,
+            sheets_upload.pop_alist(
+                [
+                    ("oranges", 100),
+                    ("apples", 101),
+                    ("apples", 102),
+                    ("bananas", 103),
+                    ("apples", 104),
+                ],
+                "apples",
+            ),
+        )
 
 
 class TestSheetsUtils(unittest.TestCase):
-
     def test_get_alpha_column(self):
         self.assertEqual("A", sheets_upload.get_alpha_column(0))
         self.assertEqual("B", sheets_upload.get_alpha_column(1))
@@ -64,11 +83,9 @@ class TestSheetsUtils(unittest.TestCase):
         self.assertEqual("AAAAA", sheets_upload.get_alpha_column(475254))
 
     def test_sheet_range(self):
-        self.assertEqual('Balances!A1:T100',
-                         sheets_upload.sheet_range(100, 20, 'Balances'))
-        self.assertEqual('A1:T100',
-                         sheets_upload.sheet_range(100, 20))
+        self.assertEqual("Balances!A1:T100", sheets_upload.sheet_range(100, 20, "Balances"))
+        self.assertEqual("A1:T100", sheets_upload.sheet_range(100, 20))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

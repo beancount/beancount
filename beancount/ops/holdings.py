@@ -1,5 +1,5 @@
-"""Compute final holdings for a list of entries.
-"""
+"""Compute final holdings for a list of entries."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -42,9 +42,11 @@ from beancount.parser import options
 # WARNING: This really could be replaced by a Posting; to be done later on, this
 # will eventually be replaced by a Posting type. All related code will have the
 # same logic.
-Holding = collections.namedtuple('Holding',
-                                 'account number currency cost_number cost_currency '
-                                 'book_value market_value price_number price_date')
+Holding = collections.namedtuple(
+    "Holding",
+    "account number currency cost_number cost_currency "
+    "book_value market_value price_number price_date",
+)
 
 
 def get_final_holdings(entries, included_account_types=None, price_map=None, date=None):
@@ -76,19 +78,20 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     #
     # Note: Perhaps it would make sense to generalize this concept of "inserted
     # unrealized gains."
-    simple_entries = [entry
-                      for entry in entries
-                      if (not isinstance(entry, data.Transaction) or
-                          entry.flag != flags.FLAG_UNREALIZED)]
+    simple_entries = [
+        entry
+        for entry in entries
+        if (not isinstance(entry, data.Transaction) or entry.flag != flags.FLAG_UNREALIZED)
+    ]
 
     # Realize the accounts into a tree (because we want the positions by-account).
     root_account = realization.realize(simple_entries)
 
     # For each account, look at the list of positions and build a list.
     holdings = []
-    for real_account in sorted(list(realization.iter_children(root_account)),
-                               key=lambda ra: ra.account):
-
+    for real_account in sorted(
+        list(realization.iter_children(root_account)), key=lambda ra: ra.account
+    ):
         if included_account_types:
             # Skip accounts of invalid types, we only want to reflect the requested
             # account types, typically assets and liabilities.
@@ -102,32 +105,35 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
                 market_value = None
                 if price_map is not None:
                     base_quote = (pos.units.currency, pos.cost.currency)
-                    price_date, price_number = prices.get_price(price_map,
-                                                                base_quote, date)
+                    price_date, price_number = prices.get_price(price_map, base_quote, date)
                     if price_number is not None:
                         market_value = pos.units.number * price_number
                 else:
                     price_date, price_number = None, None
 
-                holding = Holding(real_account.account,
-                                  pos.units.number,
-                                  pos.units.currency,
-                                  pos.cost.number,
-                                  pos.cost.currency,
-                                  pos.units.number * pos.cost.number,
-                                  market_value,
-                                  price_number,
-                                  price_date)
+                holding = Holding(
+                    real_account.account,
+                    pos.units.number,
+                    pos.units.currency,
+                    pos.cost.number,
+                    pos.cost.currency,
+                    pos.units.number * pos.cost.number,
+                    market_value,
+                    price_number,
+                    price_date,
+                )
             else:
-                holding = Holding(real_account.account,
-                                  pos.units.number,
-                                  pos.units.currency,
-                                  None,
-                                  pos.units.currency,
-                                  pos.units.number,
-                                  pos.units.number,
-                                  None,
-                                  None)
+                holding = Holding(
+                    real_account.account,
+                    pos.units.number,
+                    pos.units.currency,
+                    None,
+                    pos.units.currency,
+                    pos.units.number,
+                    pos.units.number,
+                    None,
+                    None,
+                )
             holdings.append(holding)
 
     return holdings
@@ -149,10 +155,9 @@ def get_assets_holdings(entries, options_map, currency=None):
 
     # Get the list of holdings.
     account_types = options.get_account_types(options_map)
-    holdings_list = get_final_holdings(entries,
-                                       (account_types.assets,
-                                        account_types.liabilities),
-                                       price_map)
+    holdings_list = get_final_holdings(
+        entries, (account_types.assets, account_types.liabilities), price_map
+    )
 
     # Convert holdings to a unified currency.
     if currency:
@@ -207,8 +212,9 @@ def get_commodities_at_date(entries, options_map, date=None):
     holdings_list = get_final_holdings(entries)
 
     # Obtain the unique list of currencies we need to fetch.
-    commodities_list = {(holding.currency, holding.cost_currency)
-                        for holding in holdings_list}
+    commodities_list = {
+        (holding.currency, holding.cost_currency) for holding in holdings_list
+    }
 
     # Add in the associated ticker symbols.
     commodities = getters.get_commodity_directives(entries)
@@ -216,14 +222,13 @@ def get_commodities_at_date(entries, options_map, date=None):
     for currency, cost_currency in sorted(commodities_list):
         try:
             commodity_entry = commodities[currency]
-            ticker = commodity_entry.meta.get('ticker', None)
-            quote_currency = commodity_entry.meta.get('quote', None)
+            ticker = commodity_entry.meta.get("ticker", None)
+            quote_currency = commodity_entry.meta.get("quote", None)
         except KeyError:
             ticker = None
             quote_currency = None
 
-        commodities_symbols_list.append(
-            (currency, cost_currency, quote_currency, ticker))
+        commodities_symbols_list.append((currency, cost_currency, quote_currency, ticker))
 
     return commodities_symbols_list
 
@@ -246,8 +251,9 @@ def aggregate_holdings_by(holdings, keyfun):
     for holding in holdings:
         key = (keyfun(holding), holding.cost_currency)
         grouped[key].append(holding)
-    grouped_holdings = (aggregate_holdings_list(key_holdings)
-                        for key_holdings in grouped.values())
+    grouped_holdings = (
+        aggregate_holdings_list(key_holdings) for key_holdings in grouped.values()
+    )
 
     # We could potentially filter out holdings with zero units here. These types
     # of holdings might occur on a group with leaked (i.e., non-zero) cost basis
@@ -261,8 +267,7 @@ def aggregate_holdings_by(holdings, keyfun):
     ##                     if holding.number != ZERO)
 
     # Return the holdings in order.
-    return sorted(grouped_holdings,
-                  key=lambda holding: (holding.account, holding.currency))
+    return sorted(grouped_holdings, key=lambda holding: (holding.account, holding.currency))
 
 
 def aggregate_holdings_list(holdings):
@@ -328,18 +333,28 @@ def aggregate_holdings_list(holdings):
         average_price = None
 
     if len(cost_currencies) != 1:
-        raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(
-            ','.join(map(str, cost_currencies))))
+        raise ValueError(
+            "Cost currencies are not homogeneous for aggregation: {}".format(
+                ",".join(map(str, cost_currencies))
+            )
+        )
 
     units = units if len(currencies) == 1 else ZERO
-    currency = currencies.pop() if len(currencies) == 1 else '*'
+    currency = currencies.pop() if len(currencies) == 1 else "*"
     cost_currency = cost_currencies.pop()
-    account_ = (accounts.pop()
-                if len(accounts) == 1
-                else account.commonprefix(accounts))
+    account_ = accounts.pop() if len(accounts) == 1 else account.commonprefix(accounts)
     price_date = price_dates.pop() if len(price_dates) == 1 else None
-    return Holding(account_, units, currency, average_cost, cost_currency,
-                   total_book_value, total_market_value, average_price, price_date)
+    return Holding(
+        account_,
+        units,
+        currency,
+        average_cost,
+        cost_currency,
+        total_book_value,
+        total_market_value,
+        average_price,
+        price_date,
+    )
 
 
 def convert_to_currency(price_map, target_currency, holdings_list):
@@ -356,7 +371,7 @@ def convert_to_currency(price_map, target_currency, holdings_list):
       'currency', or None, if it was not possible to convert.
     """
     # A list of the fields we should convert.
-    convert_fields = ('cost_number', 'book_value', 'market_value', 'price_number')
+    convert_fields = ("cost_number", "book_value", "market_value", "price_number")
 
     new_holdings = []
     for holding in holdings_list:
@@ -388,7 +403,8 @@ def convert_to_currency(price_map, target_currency, holdings_list):
                 new_holding = misc_utils.map_namedtuple_attributes(
                     convert_fields,
                     lambda number, r=rate: number if number is None else number * r,
-                    holding)
+                    holding,
+                )
                 # Ensure we set the new cost currency after conversion.
                 new_holding = new_holding._replace(cost_currency=target_currency)
             else:
@@ -396,7 +412,8 @@ def convert_to_currency(price_map, target_currency, holdings_list):
                 # currency to None. This enough marks the holding conversion as
                 # a failure.
                 new_holding = misc_utils.map_namedtuple_attributes(
-                    convert_fields, lambda number: None, holding)
+                    convert_fields, lambda number: None, holding
+                )
                 new_holding = new_holding._replace(cost_currency=None)
 
         new_holdings.append(new_holding)
@@ -436,18 +453,25 @@ def reduce_relative(holdings):
 
         # Sort the currency's holdings with decreasing values of market value.
         currency_holdings.sort(
-            key=lambda holding: holding.market_value or ZERO,
-            reverse=True)
+            key=lambda holding: holding.market_value or ZERO, reverse=True
+        )
 
         # Output new holdings with the relevant values replaced.
         for holding in currency_holdings:
             fractional_holdings.append(
-                holding._replace(book_value=(holding.book_value / total_book_value
-                                             if holding.book_value is not None
-                                             else None),
-                                 market_value=(holding.market_value / total_market_value
-                                               if holding.market_value is not None
-                                               else None)))
+                holding._replace(
+                    book_value=(
+                        holding.book_value / total_book_value
+                        if holding.book_value is not None
+                        else None
+                    ),
+                    market_value=(
+                        holding.market_value / total_market_value
+                        if holding.market_value is not None
+                        else None
+                    ),
+                )
+            )
     return fractional_holdings
 
 
@@ -469,7 +493,8 @@ def scale_holding(holding, scale_factor):
         holding.book_value * scale_factor if holding.book_value else None,
         holding.market_value * scale_factor if holding.market_value else None,
         holding.price_number,
-        holding.price_date)
+        holding.price_date,
+    )
 
 
 def holding_to_position(holding):
@@ -482,9 +507,12 @@ def holding_to_position(holding):
     """
     return position.Position(
         amount.Amount(holding.number, holding.currency),
-        (position.Cost(holding.cost_number, holding.cost_currency, None, None)
-         if holding.cost_number
-         else None))
+        (
+            position.Cost(holding.cost_number, holding.cost_currency, None, None)
+            if holding.cost_number
+            else None
+        ),
+    )
 
 
 def holding_to_posting(holding):
@@ -496,7 +524,9 @@ def holding_to_posting(holding):
       An instance of Position.
     """
     position_ = holding_to_position(holding)
-    price = (amount.Amount(holding.price_number, holding.cost_currency)
-             if holding.price_number
-             else None)
+    price = (
+        amount.Amount(holding.price_number, holding.cost_currency)
+        if holding.price_number
+        else None
+    )
     return data.Posting(holding.account, position_.units, position_.cost, price, None, None)

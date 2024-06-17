@@ -12,7 +12,6 @@ from beancount import loader
 
 
 class TestHoldingsReports(unittest.TestCase):
-
     @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
@@ -37,17 +36,20 @@ class TestHoldingsReports(unittest.TestCase):
     # Very basic tests, but still worthwhile. Running the code is a minimum.
 
     def test_report_holdings(self):
-        for args in [[],
-                     ['--currency=USD'],
-                     ['--by=commodity'],
-                     ['--by=account'],
-                     ['--by=currency']]:
+        for args in [
+            [],
+            ["--currency=USD"],
+            ["--by=commodity"],
+            ["--by=account"],
+            ["--by=currency"],
+        ]:
             report_ = holdings_reports.HoldingsReport.from_args(args)
             for format_ in report_.get_supported_formats():
-                if format_ == 'beancount' and args:
+                if format_ == "beancount" and args:
                     continue
-                output = report_.render(self.entries, self.errors, self.options_map,
-                                        format_)
+                output = report_.render(
+                    self.entries, self.errors, self.options_map, format_
+                )
                 self.assertTrue(output)
 
     def test_report_networth(self):
@@ -59,7 +61,8 @@ class TestHoldingsReports(unittest.TestCase):
     def test_load_from_csv(self):
         oss = io.StringIO()
         table_ = holdings_reports.report_holdings(
-            None, False, self.entries, self.options_map)
+            None, False, self.entries, self.options_map
+        )
         table.table_to_csv(table_, file=oss)
         iss = io.StringIO(oss.getvalue())
         holdings_list = list(holdings_reports.load_from_csv(iss))
@@ -69,7 +72,6 @@ class TestHoldingsReports(unittest.TestCase):
 
 
 class TestMultiCurrencyNetWorthCalculation(unittest.TestCase):
-
     @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
@@ -92,11 +94,12 @@ class TestMultiCurrencyNetWorthCalculation(unittest.TestCase):
         self.options_map = options_map
 
     def test_calculate_net_worths(self):
-        net_worths = holdings_reports.calculate_net_worths(self.entries,
-                                                           self.options_map)
+        net_worths = holdings_reports.calculate_net_worths(self.entries, self.options_map)
         self.assertTrue(isinstance(net_worths, list))
         self.assertListEqual(
-            [('CHF', Decimal('120.0')), ('USD', Decimal('200'))], net_worths)
+            [("CHF", Decimal("120.0")), ("USD", Decimal("200"))], net_worths
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

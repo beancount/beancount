@@ -1,6 +1,7 @@
 """Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -16,7 +17,7 @@ import time
 import warnings
 
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     import bottle
     from bottle import response
     from bottle import request
@@ -49,11 +50,11 @@ from beancount.parser import context
 
 
 # The default view page to redirect to.
-DEFAULT_VIEW_REDIRECT = 'balsheet'
+DEFAULT_VIEW_REDIRECT = "balsheet"
 
 
 # The protocol to use for file links.
-FILELINK_PROTOCOL = 'beancount://{filename}?lineno={lineno}'
+FILELINK_PROTOCOL = "beancount://{filename}?lineno={lineno}"
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -63,6 +64,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
+
     def __init__(self, dcontext, build_url, leaf_only, account_xform, view_links=True):
         super().__init__(dcontext)
         self.build_url = build_url
@@ -83,28 +85,34 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
                 # Calculate the number of components to figure out the indent to
                 # render at.
                 components = account.split(account_name)
-                indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
+                indent = "{:.1f}".format(len(components) * self.EMS_PER_COMPONENT)
                 anchor = '<a href="{}" class="account">{}</a>'.format(
-                    self.build_url('journal',
-                                   account_name=self.account_xform.render(account_name)),
-                    account.leaf(account_name))
+                    self.build_url(
+                        "journal", account_name=self.account_xform.render(account_name)
+                    ),
+                    account.leaf(account_name),
+                )
                 return '<span "account" style="padding-left: {}em">{}</span>'.format(
-                    indent, anchor)
+                    indent, anchor
+                )
             else:
                 anchor = '<a href="{}" class="account">{}</a>'.format(
-                    self.build_url('journal',
-                                   account_name=self.account_xform.render(account_name)),
-                    account_name)
+                    self.build_url(
+                        "journal", account_name=self.account_xform.render(account_name)
+                    ),
+                    account_name,
+                )
                 return '<span "account">{}</span>'.format(anchor)
         else:
             if self.leaf_only:
                 # Calculate the number of components to figure out the indent to
                 # render at.
                 components = account.split(account_name)
-                indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
+                indent = "{:.1f}".format(len(components) * self.EMS_PER_COMPONENT)
                 account_name = account.leaf(account_name)
                 return '<span "account" style="padding-left: {}em">{}</span>'.format(
-                    indent, account_name)
+                    indent, account_name
+                )
             else:
                 return '<span "account">{}</span>'.format(account_name)
 
@@ -117,37 +125,44 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         # Note: rendering to global application.
         # Note(2): we could avoid rendering links to summarizing and transfer
         # entries which are not going to be found.
-        return self.build_global('context', ehash=compare.hash_entry(entry))
+        return self.build_global("context", ehash=compare.hash_entry(entry))
 
     def render_link(self, link):
         """See base class."""
         # Note: rendering to global application.
-        return self.build_global('link', link=link)
+        return self.build_global("link", link=link)
 
     def render_doc(self, filename):
         """See base class."""
         return '<a href="{}" class="filename">{}</a>'.format(
-            self.build_url('doc', filename=filename.lstrip('/')),
-            path.basename(filename))
+            self.build_url("doc", filename=filename.lstrip("/")), path.basename(filename)
+        )
 
     def render_event_type(self, event):
         """See base class."""
-        return '<a href="{}">{}</a>'.format(self.build_url('event', event=event),
-                                            event)
+        return '<a href="{}">{}</a>'.format(self.build_url("event", event=event), event)
 
     def render_commodity(self, base_quote):
         """See base class."""
         base, quote = base_quote
         return '<a href="{}">{} / {}</a>'.format(
-            self.build_url('prices', base=base, quote=quote), base, quote)
+            self.build_url("prices", base=base, quote=quote), base, quote
+        )
 
     def render_source(self, source):
         """See base class."""
-        return '{}#{}'.format(app.get_url('source'), source['lineno'])
+        return "{}#{}".format(app.get_url("source"), source["lineno"])
 
 
-def render_report(report_class, entries, args=None,
-                  css_id=None, css_class=None, center=False, leaf_only=True):
+def render_report(
+    report_class,
+    entries,
+    args=None,
+    css_id=None,
+    css_class=None,
+    center=False,
+    leaf_only=True,
+):
     """Instantiate a report and rendering it to a string.
 
     Args:
@@ -161,23 +176,24 @@ def render_report(report_class, entries, args=None,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, leaf_only, app.account_xform)
+    formatter = HTMLFormatter(
+        app.options["dcontext"], request.app.get_url, leaf_only, app.account_xform
+    )
     oss = io.StringIO()
     if center:
-        oss.write('<center>\n')
-    report_ = report_class.from_args(args,
-                                     formatter=formatter,
-                                     css_id=css_id,
-                                     css_class=css_class)
+        oss.write("<center>\n")
+    report_ = report_class.from_args(
+        args, formatter=formatter, css_id=css_id, css_class=css_class
+    )
     report_.render_htmldiv(entries, app.errors, app.options, oss)
     if center:
-        oss.write('</center>\n')
+        oss.write("</center>\n")
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root, price_map, price_date,
-                       args=None, leaf_only=False):
+def render_real_report(
+    report_class, real_root, price_map, price_date, args=None, leaf_only=False
+):
     # pylint: disable=too-many-arguments
     """Instantiate a report and rendering it to a string.
 
@@ -194,23 +210,24 @@ def render_real_report(report_class, real_root, price_map, price_date,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, leaf_only, app.account_xform)
+    formatter = HTMLFormatter(
+        app.options["dcontext"], request.app.get_url, leaf_only, app.account_xform
+    )
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, price_map, price_date, app.options, oss)
     return oss.getvalue()
 
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # Global application pages.
 
 
-NOT_IMPLEMENTED = '''
+NOT_IMPLEMENTED = """
 <p style="color:red; font-weight: bold; font-style: italic;">
   (Feature not implemented yet.)
 </p>
-'''
+"""
 
 # pylint: disable=invalid-name
 app = bottle.Bottle()
@@ -225,12 +242,12 @@ def render_overlay(contents):
     Returns:
       A string of HTML for the contents of the errors overlay.
     """
-    return '''
+    return """
       <div class="navigation" id="nav-right">
         <ul>
           {}
         </ul>
-      </div>'''.format(contents)
+      </div>""".format(contents)
 
     # It would be nice to have a fancy overlay here, that automatically appears
     # after parsing if there are errors and that automatically smoothly fades
@@ -246,32 +263,35 @@ def render_global(*args, **kw):
     Returns:
       An HTML string of the rendered template.
     """
-    response.content_type = 'text/html'
-    kw['A'] = A # Application mapper
-    kw['V'] = V # View mapper
-    kw['title'] = app.options['title']
-    kw['view_title'] = ''
-    kw['navigation'] = GLOBAL_NAVIGATION
-    kw['scripts'] = kw.get('scripts', '')
+    response.content_type = "text/html"
+    kw["A"] = A  # Application mapper
+    kw["V"] = V  # View mapper
+    kw["title"] = app.options["title"]
+    kw["view_title"] = ""
+    kw["navigation"] = GLOBAL_NAVIGATION
+    kw["scripts"] = kw.get("scripts", "")
 
-    kw['overlay'] = (
-        render_overlay('<li><a href="{}">Errors</a></li>'.format(
-            app.router.build('errors')))
-        if request.params.pop('render_overlay', True)
-        else '')
+    kw["overlay"] = (
+        render_overlay(
+            '<li><a href="{}">Errors</a></li>'.format(app.router.build("errors"))
+        )
+        if request.params.pop("render_overlay", True)
+        else ""
+    )
     return template.render(*args, **kw)
 
 
-@app.route('/', name='root')
+@app.route("/", name="root")
 def root():
     "Redirect the root page to the home page."
-    bottle.redirect(app.get_url('toc'))
+    bottle.redirect(app.get_url("toc"))
 
 
-@app.route('/index', name='toc')
+@app.route("/index", name="toc")
 def toc():
-    entries_no_open_close = [entry for entry in app.entries
-                             if not isinstance(entry, (data.Open, data.Close))]
+    entries_no_open_close = [
+        entry for entry in app.entries if not isinstance(entry, (data.Open, data.Close))
+    ]
     if entries_no_open_close:
         mindate, maxdate = None, None
     else:
@@ -283,32 +303,49 @@ def toc():
     viewboxes = []
     if app.args.view:
         # Render a single link to a view, the view selected from --view.
-        viewboxes.append(('selected', None,
-                          [('/', 'Selected View')]))
+        viewboxes.append(("selected", None, [("/", "Selected View")]))
     else:
         # Render a menu of various views.
 
         # Global views.
-        viewboxes.append(('global', None,
-                          [(view_url('all'), 'All Transactions')]))
+        viewboxes.append(("global", None, [(view_url("all"), "All Transactions")]))
 
         # By year views.
         viewboxes.append(
-            ('year', 'By Year',
-             [(view_url('year', year=year), 'Year {}'.format(year))
-              for year in reversed(app.active_years)]))
+            (
+                "year",
+                "By Year",
+                [
+                    (view_url("year", year=year), "Year {}".format(year))
+                    for year in reversed(app.active_years)
+                ],
+            )
+        )
 
         # By tag views.
-        viewboxes.append(('tag', 'Tags',
-                          [(view_url('tag', tag=tag), '#{}'.format(tag))
-                           for tag in getters.get_all_tags(app.entries)]))
+        viewboxes.append(
+            (
+                "tag",
+                "Tags",
+                [
+                    (view_url("tag", tag=tag), "#{}".format(tag))
+                    for tag in getters.get_all_tags(app.entries)
+                ],
+            )
+        )
 
         # By component.
         components = getters.get_account_components(app.entries)
         viewboxes.append(
-            ('component', 'Component',
-             [(view_url('component', component=component), '{}'.format(component))
-              for component in components]))
+            (
+                "component",
+                "Component",
+                [
+                    (view_url("component", component=component), "{}".format(component))
+                    for component in components
+                ],
+            )
+        )
 
         # Note: With the filtering language, payees will be added and much many more
         # options. Don't worry.
@@ -316,9 +353,11 @@ def toc():
     oss = io.StringIO()
     oss.write('<div id="viewboxes">\n')
     for cssid, title, viewbox in viewboxes:
-        view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
-                      for url, title in viewbox]
-        oss.write("""
+        view_items = [
+            '<li><a href="{}">{}</a></li>'.format(url, title) for url, title in viewbox
+        ]
+        oss.write(
+            """
           <div id="{cssid}" class="viewbox">
             {title}
             <ul>
@@ -326,25 +365,27 @@ def toc():
             </ul>
           </div>
           <hr/>
-        """.format(cssid=cssid,
-                   title='<h2>{}</h2>'.format(title) if title else '',
-                   view_items='\n'.join(view_items)))
-    oss.write('</div> <!-- viewboxes -->\n')
+        """.format(
+                cssid=cssid,
+                title="<h2>{}</h2>".format(title) if title else "",
+                view_items="\n".join(view_items),
+            )
+        )
+    oss.write("</div> <!-- viewboxes -->\n")
 
-    return render_global(
-        pagetitle="Table of Contents",
-        contents=oss.getvalue())
+    return render_global(pagetitle="Table of Contents", contents=oss.getvalue())
 
 
-@app.route('/errors', name='errors')
+@app.route("/errors", name="errors")
 def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
         pagetitle="Errors",
-        contents=render_report(misc_reports.ErrorReport, [], leaf_only=False))
+        contents=render_report(misc_reports.ErrorReport, [], leaf_only=False),
+    )
 
 
-@app.route('/source', name='source')
+@app.route("/source", name="source")
 def source():
     "Render the source file, allowing scrolling at a specific line."
 
@@ -354,52 +395,51 @@ def source():
     else:
         contents.write('<div id="source">')
         for i, line in enumerate(app.source.splitlines()):
-            lineno = i+1
+            lineno = i + 1
             contents.write(
                 '<pre id="{lineno}">{lineno}  {line}</pre>\n'.format(
-                    lineno=lineno, line=line.rstrip()))
-        contents.write('</div>')
+                    lineno=lineno, line=line.rstrip()
+                )
+            )
+        contents.write("</div>")
 
-    return render_global(
-        pagetitle="Source",
-        contents=contents.getvalue()
-        )
+    return render_global(pagetitle="Source", contents=contents.getvalue())
 
 
-@app.route('/link/<link:re:.*>', name='link')
+@app.route("/link/<link:re:.*>", name="link")
 def link(link=None):
     "Serve journals for links."
 
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, False, app.account_xform,
-                              view_links=False)
+    formatter = HTMLFormatter(
+        app.options["dcontext"],
+        request.app.get_url,
+        False,
+        app.account_xform,
+        view_links=False,
+    )
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
-    return render_global(
-        pagetitle="Link: {}".format(link),
-        contents=oss.getvalue())
+    return render_global(pagetitle="Link: {}".format(link), contents=oss.getvalue())
 
 
-@app.route('/context/<ehash:re:[a-fA-F0-9]*>', name='context')
+@app.route("/context/<ehash:re:[a-fA-F0-9]*>", name="context")
 def context_(ehash=None):
     "Render the before & after context around a transaction entry."
 
-    matching_entries = [entry
-                        for entry in app.entries
-                        if ehash == compare.hash_entry(entry)]
+    matching_entries = [
+        entry for entry in app.entries if ehash == compare.hash_entry(entry)
+    ]
 
     oss = io.StringIO()
     if len(matching_entries) == 0:
-        print("ERROR: Could not find matching entry for '{}'".format(ehash),
-              file=oss)
+        print("ERROR: Could not find matching entry for '{}'".format(ehash), file=oss)
 
     elif len(matching_entries) > 1:
-        print("ERROR: Ambiguous entries for '{}'".format(ehash),
-              file=oss)
+        print("ERROR: Ambiguous entries for '{}'".format(ehash), file=oss)
         print(file=oss)
-        dcontext = app.options['dcontext']
+        dcontext = app.options["dcontext"]
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
@@ -413,20 +453,12 @@ def context_(ehash=None):
         # Render the filelinks.
         if FILELINK_PROTOCOL:
             meta = entry.meta
-            uri = FILELINK_PROTOCOL.format(filename=meta.get('filename'),
-                                           lineno=meta.get('lineno'))
-            oss.write('<div class="filelink"><a href="{}">{}</a></div>'.format(uri, 'Open'))
+            uri = FILELINK_PROTOCOL.format(
+                filename=meta.get("filename"), lineno=meta.get("lineno")
+            )
+            oss.write('<div class="filelink"><a href="{}">{}</a></div>'.format(uri, "Open"))
 
-    return render_global(
-        pagetitle="Context: {}".format(ehash),
-        contents=oss.getvalue())
-
-
-
-
-
-
-
+    return render_global(pagetitle="Context: {}".format(ehash), contents=oss.getvalue())
 
 
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
@@ -438,32 +470,35 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(A=A)
 
 
-@app.route('/resources/web.css', name='style')
+@app.route("/resources/web.css", name="style")
 def style():
     "Stylesheet for the entire document."
-    response.content_type = 'text/css'
+    response.content_type = "text/css"
     if app.args.debug:
-        with open(path.join(path.dirname(__file__), 'web.css')) as f:
-            global STYLE; STYLE = f.read()
+        with open(path.join(path.dirname(__file__), "web.css")) as f:
+            global STYLE
+            STYLE = f.read()
     return STYLE
 
 
-@app.get('/favicon.ico')
+@app.get("/favicon.ico")
 def favicon():
-    return bottle.static_file('favicon.ico', path.dirname(__file__))
+    return bottle.static_file("favicon.ico", path.dirname(__file__))
 
 
-@app.get('/third_party/<filename:re:.*>')
+@app.get("/third_party/<filename:re:.*>")
 def third_party(filename=None):
     return bottle.static_file(request.path[1:], path.dirname(__file__))
 
 
-doc_name = 'doc'
-@app.route('/doc/<filename:re:.*>', name=doc_name)
+doc_name = "doc"
+
+
+@app.route("/doc/<filename:re:.*>", name=doc_name)
 def doc(filename=None):
     "Serve static filenames for documents directives."
 
-    filename = '/' + filename
+    filename = "/" + filename
 
     # Check that there is a document directive that has this filename.
     # This is for security; we don't want to be able to serve just any file.
@@ -474,11 +509,10 @@ def doc(filename=None):
         raise bottle.HTTPError(404, "Not found")
 
     # Just serve the file ourselves.
-    return bottle.static_file(path.basename(filename),
-                              path.dirname(filename))
+    return bottle.static_file(path.basename(filename), path.dirname(filename))
 
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # View application pages.
 
 viewapp = bottle.Bottle()
@@ -487,19 +521,17 @@ viewapp = bottle.Bottle()
 # pylint: disable=unnecessary-lambda
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
-Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year-1, month))
-Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, month))
+Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year - 1, month))
+Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year + 1, month))
 
 
 def month_request(year, month):
-    """Render a URL to a particular month of the context's request.
-    """
+    """Render a URL to a particular month of the context's request."""
     if year < app.active_years[0] or year > app.active_years[-1]:
-        return ''
+        return ""
     month = list(calendar.month_abbr).index(month)
     month = "{:0>2d}".format(month)
-    return app.router.build('month', year=year, month=month,
-            path=request.path[1:])
+    return app.router.build("month", year=year, month=month, path=request.path[1:])
 
 
 def render_view(*args, **kw):
@@ -511,32 +543,32 @@ def render_view(*args, **kw):
     Returns:
       An HTML string of the rendered template.
     """
-    response.content_type = 'text/html'
-    kw['A'] = A # Application mapper
-    kw['V'] = V # View mapper
-    kw['title'] = app.options['title']
-    kw['view_title'] = ' - ' + request.view.title
+    response.content_type = "text/html"
+    kw["A"] = A  # Application mapper
+    kw["V"] = V  # View mapper
+    kw["title"] = app.options["title"]
+    kw["view_title"] = " - " + request.view.title
 
     overlays = []
-    if request.params.pop('render_overlay', False):
+    if request.params.pop("render_overlay", False):
         overlays.append(
-            '<li><a href="{}">Errors</a></li>'.format(app.router.build('errors')))
+            '<li><a href="{}">Errors</a></li>'.format(app.router.build("errors"))
+        )
 
     # Render navigation, with monthly navigation option.
     oss = io.StringIO()
     oss.write(APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title))
     if request.view.monthly is views.MonthNavigation.COMPACT:
-        overlays.append(
-            '<li><a href="{}">Monthly</a></li>'.format(M.Jan))
+        overlays.append('<li><a href="{}">Monthly</a></li>'.format(M.Jan))
     elif request.view.monthly is views.MonthNavigation.FULL:
-        annual = app.router.build('year',
-                                  path=DEFAULT_VIEW_REDIRECT,
-                                  year=request.view.year)
+        annual = app.router.build(
+            "year", path=DEFAULT_VIEW_REDIRECT, year=request.view.year
+        )
         oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M, Mp=Mp, Mn=Mn, V=V, annual=annual))
-    kw['navigation'] = oss.getvalue()
-    kw['overlay'] = render_overlay(' '.join(overlays))
+    kw["navigation"] = oss.getvalue()
+    kw["overlay"] = render_overlay(" ".join(overlays))
 
-    kw['scripts'] = kw.get('scripts', '')
+    kw["scripts"] = kw.get("scripts", "")
 
     return template.render(*args, **kw)
 
@@ -576,168 +608,208 @@ APP_NAVIGATION_MONTHLY_FULL = bottle.SimpleTemplate("""
 </ul>
 """)
 
-@viewapp.route('/', name='approot')
+
+@viewapp.route("/", name="approot")
 def approot():
     bottle.redirect(request.app.get_url(DEFAULT_VIEW_REDIRECT))
 
 
-@viewapp.route('/index', name='index')
+@viewapp.route("/index", name="index")
 def index():
     "Index of all pages, so that navigation need not have all links."
 
     oss = io.StringIO()
-    oss.write('<ul>\n')
+    oss.write("<ul>\n")
     for title, page in [
-            ("Balances", "trial"),
-            ("Balance Sheet", "balsheet"),
-            ("Opening Balances", "openbal"),
-            ("Income Statement", "income"),
-            ("General Journal", "journal_all"),
-            ("Conversions", "conversions"),
-            ("Documents", "documents"),
-            ("Holdings (Full Detail)", "holdings"),
-            ("Holdings by Account", "holdings_byaccount"),
-            ("Holdings by Root Account", "holdings_byrootaccount"),
-            ("Holdings by Commodity", "holdings_bycommodity"),
-            ("Holdings by Currency", "holdings_bycurrency"),
-            ("Net Worth", "networth"),
-            ("Commodities", "commodities"),
-            ("Events", "event_index"),
-            ("Activity/Update", "activity"),
-            ("Statistics (Types)", "stats_types"),
-            ("Statistics (Postings)", "stats_postings"),
+        ("Balances", "trial"),
+        ("Balance Sheet", "balsheet"),
+        ("Opening Balances", "openbal"),
+        ("Income Statement", "income"),
+        ("General Journal", "journal_all"),
+        ("Conversions", "conversions"),
+        ("Documents", "documents"),
+        ("Holdings (Full Detail)", "holdings"),
+        ("Holdings by Account", "holdings_byaccount"),
+        ("Holdings by Root Account", "holdings_byrootaccount"),
+        ("Holdings by Commodity", "holdings_bycommodity"),
+        ("Holdings by Currency", "holdings_bycurrency"),
+        ("Net Worth", "networth"),
+        ("Commodities", "commodities"),
+        ("Events", "event_index"),
+        ("Activity/Update", "activity"),
+        ("Statistics (Types)", "stats_types"),
+        ("Statistics (Postings)", "stats_postings"),
     ]:
-        oss.write('<li><a href={}>{}</a></li>\n'.format(
-            request.app.get_url(page), title))
-    oss.write('</ul>\n')
+        oss.write("<li><a href={}>{}</a></li>\n".format(request.app.get_url(page), title))
+    oss.write("</ul>\n")
 
-    return render_view(
-        pagetitle="Index",
-        contents=oss.getvalue())
+    return render_view(pagetitle="Index", contents=oss.getvalue())
 
 
-@viewapp.route('/trial', name='trial')
+@viewapp.route("/trial", name="trial")
 def trial():
     "Trial balance / Chart of Accounts."
     return render_view(
         pagetitle="Trial Balance",
-        contents=render_real_report(balance_reports.BalancesReport,
-                                    request.view.real_accounts,
-                                    app.price_map,
-                                    request.view.price_date,
-                                    leaf_only=True))
+        contents=render_real_report(
+            balance_reports.BalancesReport,
+            request.view.real_accounts,
+            app.price_map,
+            request.view.price_date,
+            leaf_only=True,
+        ),
+    )
 
 
-@viewapp.route('/balsheet', name='balsheet')
+@viewapp.route("/balsheet", name="balsheet")
 def balsheet():
     "Balance sheet."
-    return render_view(pagetitle="Balance Sheet",
-                       contents=render_real_report(balance_reports.BalanceSheetReport,
-                                                   request.view.closing_real_accounts,
-                                                   app.price_map,
-                                                   request.view.price_date,
-                                                   leaf_only=True))
+    return render_view(
+        pagetitle="Balance Sheet",
+        contents=render_real_report(
+            balance_reports.BalanceSheetReport,
+            request.view.closing_real_accounts,
+            app.price_map,
+            request.view.price_date,
+            leaf_only=True,
+        ),
+    )
 
 
-@viewapp.route('/openbal', name='openbal')
+@viewapp.route("/openbal", name="openbal")
 def openbal():
     "Opening balances."
-    return render_view(pagetitle="Opening Balances",
-                       contents=render_real_report(balance_reports.BalanceSheetReport,
-                                                   request.view.opening_real_accounts,
-                                                   app.price_map,
-                                                   request.view.price_date,
-                                                   leaf_only=True))
+    return render_view(
+        pagetitle="Opening Balances",
+        contents=render_real_report(
+            balance_reports.BalanceSheetReport,
+            request.view.opening_real_accounts,
+            app.price_map,
+            request.view.price_date,
+            leaf_only=True,
+        ),
+    )
 
 
-@viewapp.route('/income', name='income')
+@viewapp.route("/income", name="income")
 def income():
     "Income statement."
-    return render_view(pagetitle="Income Statement",
-                       contents=render_real_report(balance_reports.IncomeStatementReport,
-                                                   request.view.real_accounts,
-                                                   app.price_map,
-                                                   request.view.price_date,
-                                                   leaf_only=True))
+    return render_view(
+        pagetitle="Income Statement",
+        contents=render_real_report(
+            balance_reports.IncomeStatementReport,
+            request.view.real_accounts,
+            app.price_map,
+            request.view.price_date,
+            leaf_only=True,
+        ),
+    )
 
 
-@viewapp.route('/equity/holdings', name='holdings')
+@viewapp.route("/equity/holdings", name="holdings")
 def holdings_():
     "Render a detailed table of all holdings."
-    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
-                               [],
-                               css_class='holdings detail-table sortable', center=True)
+    html_table = render_report(
+        holdings_reports.HoldingsReport,
+        request.view.entries,
+        [],
+        css_class="holdings detail-table sortable",
+        center=True,
+    )
     return render_view(
         pagetitle="Holdings",
         contents=html_table,
-        scripts='<script src="/third_party/sorttable.js"></script>')
+        scripts='<script src="/third_party/sorttable.js"></script>',
+    )
 
-@viewapp.route('/equity/holdings_byaccount', name='holdings_byaccount')
+
+@viewapp.route("/equity/holdings_byaccount", name="holdings_byaccount")
 def holdings_byaccount():
     "Render a table of holdings by account."
 
-    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
-                               ['--by', 'account'],
-                               css_class='holdings detail-table sortable', center=True)
+    html_table = render_report(
+        holdings_reports.HoldingsReport,
+        request.view.entries,
+        ["--by", "account"],
+        css_class="holdings detail-table sortable",
+        center=True,
+    )
     return render_view(
         pagetitle="Holdings by Account",
         contents=html_table,
-        scripts='<script src="/third_party/sorttable.js"></script>')
+        scripts='<script src="/third_party/sorttable.js"></script>',
+    )
 
-@viewapp.route('/equity/holdings_byrootaccount', name='holdings_byrootaccount')
+
+@viewapp.route("/equity/holdings_byrootaccount", name="holdings_byrootaccount")
 def holdings_byrootaccount():
     "Render a table of holdings by account."
 
-    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
-                               ['--by', 'root-account'],
-                               css_class='holdings detail-table sortable', center=True)
+    html_table = render_report(
+        holdings_reports.HoldingsReport,
+        request.view.entries,
+        ["--by", "root-account"],
+        css_class="holdings detail-table sortable",
+        center=True,
+    )
     return render_view(
         pagetitle="Holdings by Account",
         contents=html_table,
-        scripts='<script src="/third_party/sorttable.js"></script>')
+        scripts='<script src="/third_party/sorttable.js"></script>',
+    )
 
-@viewapp.route('/equity/holdings_bycommodity', name='holdings_bycommodity')
+
+@viewapp.route("/equity/holdings_bycommodity", name="holdings_bycommodity")
 def holdings_bycommodity():
     "Render a table of holdings by commodity."
 
-    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
-                               ['--by', 'commodity'],
-                               css_class='holdings detail-table sortable', center=True)
+    html_table = render_report(
+        holdings_reports.HoldingsReport,
+        request.view.entries,
+        ["--by", "commodity"],
+        css_class="holdings detail-table sortable",
+        center=True,
+    )
     return render_view(
         pagetitle="Holdings by Commodity",
         contents=html_table,
-        scripts='<script src="/third_party/sorttable.js"></script>')
+        scripts='<script src="/third_party/sorttable.js"></script>',
+    )
 
-@viewapp.route('/equity/holdings_bycurrency', name='holdings_bycurrency')
+
+@viewapp.route("/equity/holdings_bycurrency", name="holdings_bycurrency")
 def holdings_bycurrency():
     "Render a table of holdings by currency."
 
-    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
-                               ['--by', 'currency'],
-                               css_class='holdings detail-table sortable', center=True)
+    html_table = render_report(
+        holdings_reports.HoldingsReport,
+        request.view.entries,
+        ["--by", "currency"],
+        css_class="holdings detail-table sortable",
+        center=True,
+    )
     return render_view(
         pagetitle="Holdings by Currency",
         contents=html_table,
-        scripts='<script src="/third_party/sorttable.js"></script>')
+        scripts='<script src="/third_party/sorttable.js"></script>',
+    )
 
-@viewapp.route('/equity/networth', name='networth')
+
+@viewapp.route("/equity/networth", name="networth")
 def networth():
     "Render a table of the net worth for this filter."
 
     html_table = render_report(holdings_reports.NetWorthReport, request.view.entries)
-    return render_view(
-        pagetitle="Net Worth",
-        contents=html_table)
+    return render_view(pagetitle="Net Worth", contents=html_table)
 
 
-
-@viewapp.route('/journal/all', name='journal_all')
+@viewapp.route("/journal/all", name="journal_all")
 def journal_all():
     "A list of all the entries in this realization."
-    bottle.redirect(request.app.get_url('journal', account_name=''))
+    bottle.redirect(request.app.get_url("journal", account_name=""))
 
 
-@viewapp.route('/journal/<account_name:re:.*>', name='journal')
+@viewapp.route("/journal/<account_name:re:.*>", name="journal")
 def journal_(account_name=None):
     "A list of all the entries for this account realization."
     account_name = app.account_xform.parse(account_name)
@@ -745,42 +817,49 @@ def journal_(account_name=None):
     # Figure out which account to render this from.
     real_accounts = request.view.real_accounts
     if account_name:
-        if account_name and account_types.is_balance_sheet_account(account_name,
-                                                                   app.account_types):
+        if account_name and account_types.is_balance_sheet_account(
+            account_name, app.account_types
+        ):
             real_accounts = request.view.closing_real_accounts
 
     # Render the report.
     args = []
     if account_name:
-        args.append('--account={}'.format(account_name))
+        args.append("--account={}".format(account_name))
 
-    render_postings = request.params.get('postings', True)
+    render_postings = request.params.get("postings", True)
     if isinstance(render_postings, str):
-        render_postings = render_postings.lower() in ('1', 'true')
+        render_postings = render_postings.lower() in ("1", "true")
     if render_postings:
-        args.append('--verbose')
+        args.append("--verbose")
 
     try:
-        html_journal = render_real_report(journal_reports.JournalReport,
-                                          real_accounts,
-                                          app.price_map,
-                                          request.view.price_date,
-                                          args, leaf_only=False)
+        html_journal = render_real_report(
+            journal_reports.JournalReport,
+            real_accounts,
+            app.price_map,
+            request.view.price_date,
+            args,
+            leaf_only=False,
+        )
     except KeyError as e:
-        raise bottle.HTTPError(404, '{}'.format(e))
+        raise bottle.HTTPError(404, "{}".format(e))
 
-    return render_view(pagetitle='{}'.format(account_name or
-                                             'General Ledger (All Accounts)'),
-                       contents=html_journal)
+    return render_view(
+        pagetitle="{}".format(account_name or "General Ledger (All Accounts)"),
+        contents=html_journal,
+    )
 
 
-@viewapp.route('/conversions', name='conversions')
+@viewapp.route("/conversions", name="conversions")
 def conversions_():
     "Render the list of transactions with conversions."
     return render_view(
         pagetitle="Conversions",
-        contents=render_report(journal_reports.ConversionsReport,
-                               request.view.entries, leaf_only=False))
+        contents=render_report(
+            journal_reports.ConversionsReport, request.view.entries, leaf_only=False
+        ),
+    )
 
 
 # Note: these redirects are necessary to let the view router create global links
@@ -788,93 +867,103 @@ def conversions_():
 # can just pass in the view's request.app.get_url() function and it can call
 # this with 'doc' or 'link' and a redirect moves it to the corresponding global
 # page.
-@viewapp.route('/doc/<filename:re:.*>', name=doc_name)
+@viewapp.route("/doc/<filename:re:.*>", name=doc_name)
 def doc__view(filename=None):
     # Redirect to global page.
-    bottle.redirect(app.router.build('doc', filename=filename))
+    bottle.redirect(app.router.build("doc", filename=filename))
 
-@viewapp.route('/documents', name='documents')
+
+@viewapp.route("/documents", name="documents")
 def documents():
     "Render a tree with all the documents found."
     return render_view(
         pagetitle="Documents",
-        contents=render_report(journal_reports.DocumentsReport,
-                               request.view.entries, leaf_only=False))
+        contents=render_report(
+            journal_reports.DocumentsReport, request.view.entries, leaf_only=False
+        ),
+    )
 
 
-@viewapp.route('/prices'
-               r'/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
-               r'/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
+@viewapp.route(
+    "/prices"
+    r"/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>"
+    r"/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>",
+    name="prices",
+)
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
-    html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
-                               ['--commodity', '{}/{}'.format(base, quote)],
-                               css_id='price-index')
-    return render_view(
-        pagetitle="Price: {} / {}".format(base, quote),
-        contents=html_table)
+    html_table = render_report(
+        price_reports.CommodityPricesReport,
+        request.view.entries,
+        ["--commodity", "{}/{}".format(base, quote)],
+        css_id="price-index",
+    )
+    return render_view(pagetitle="Price: {} / {}".format(base, quote), contents=html_table)
 
 
-@viewapp.route('/commodities', name='commodities')
+@viewapp.route("/commodities", name="commodities")
 def commodities():
     "Render a list commodities with list their prices page."
-    html_table = render_report(price_reports.CommoditiesReport, request.view.entries,
-                               [],
-                               css_id='price-index')
-    return render_view(
-        pagetitle="Commodities",
-        contents=html_table)
+    html_table = render_report(
+        price_reports.CommoditiesReport, request.view.entries, [], css_id="price-index"
+    )
+    return render_view(pagetitle="Commodities", contents=html_table)
 
 
-@viewapp.route(r'/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
+@viewapp.route(r"/event/<event:re:([A-Za-z0-9\-_/.]+)?>", name="event")
 def event(event=None):
     "Render all values of a particular event."
     if not event:
-        bottle.redirect(app.get_url('event_index'))
+        bottle.redirect(app.get_url("event_index"))
     return render_view(
         pagetitle="Event: {}".format(event),
-        contents=render_report(misc_reports.EventsReport, app.entries,
-                               ['--expr', event]))
+        contents=render_report(misc_reports.EventsReport, app.entries, ["--expr", event]),
+    )
 
 
-@viewapp.route('/event', name='event_index')
+@viewapp.route("/event", name="event_index")
 def event_index():
     "Render the latest values of all events and an index."
     return render_view(
         pagetitle="Events Index",
-        contents=render_report(misc_reports.CurrentEventsReport,
-                               request.view.entries))
+        contents=render_report(misc_reports.CurrentEventsReport, request.view.entries),
+    )
 
 
-@viewapp.route('/activity', name='activity')
+@viewapp.route("/activity", name="activity")
 def activity():
     "Render the update activity."
     return render_global(
         pagetitle="Update Activity",
-        contents=render_real_report(misc_reports.ActivityReport,
-                                    request.view.real_accounts,
-                                    app.price_map,
-                                    request.view.price_date,
-                                    leaf_only=False))
+        contents=render_real_report(
+            misc_reports.ActivityReport,
+            request.view.real_accounts,
+            app.price_map,
+            request.view.price_date,
+            leaf_only=False,
+        ),
+    )
 
-@viewapp.route('/stats_types', name='stats_types')
+
+@viewapp.route("/stats_types", name="stats_types")
 def stats_types():
     "Compute and render statistics about the input file."
     return render_view(
         pagetitle="Directives Statistics",
-        contents=render_report(misc_reports.StatsDirectivesReport,
-                               request.view.entries))
+        contents=render_report(misc_reports.StatsDirectivesReport, request.view.entries),
+    )
 
-@viewapp.route('/stats_postings', name='stats_postings')
+
+@viewapp.route("/stats_postings", name="stats_postings")
 def stats_postings():
     "Compute and render statistics about the input file."
     return render_view(
         pagetitle="Postings Statistics",
-        contents=render_report(misc_reports.StatsPostingsReport,
-                               request.view.entries))
+        contents=render_report(misc_reports.StatsPostingsReport, request.view.entries),
+    )
 
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # Views.
 
 
@@ -893,10 +982,11 @@ def handle_view(path_depth):
     Returns:
       A decorator function, used to wrap view handlers.
     """
+
     def view_populator(callback):
         def wrapper(*args, **kwargs):
-            components = request.path.split('/')
-            viewid = '/'.join(components[:path_depth+1])
+            components = request.path.split("/")
+            viewid = "/".join(components[: path_depth + 1])
             try:
                 # Try fetching the view from the cache.
                 view = app.views[viewid]
@@ -906,9 +996,11 @@ def handle_view(path_depth):
 
             # Save the view for the subrequest and redirect. populate_view()
             # picks this up and saves it in request.view.
-            request.environ['VIEW'] = view
+            request.environ["VIEW"] = view
             return bottle_utils.internal_redirect(viewapp, path_depth)
+
         return wrapper
+
     return view_populator
 
 
@@ -920,10 +1012,13 @@ def populate_view(callback):
     Returns:
       A function to call to install view-specific parameters on the request.
     """
+
     def wrapper(*args, **kwargs):
-        request.view = request.environ['VIEW']
+        request.view = request.environ["VIEW"]
         return callback(*args, **kwargs)
+
     return wrapper
+
 
 viewapp.install(populate_view)
 
@@ -938,21 +1033,26 @@ def url_restrict_generator(url_prefix):
       A handler decorator.
     """
     # A list of URLs that should always be accepted, even when restricted.
-    allowed_regexps = [re.compile(regexp).match
-                       for regexp in ['/resources',
-                                      '/favicon.ico',
-                                      '/index',
-                                      '/errors',
-                                      '/source',
-                                      '/context',
-                                      '/third_party']]
+    allowed_regexps = [
+        re.compile(regexp).match
+        for regexp in [
+            "/resources",
+            "/favicon.ico",
+            "/index",
+            "/errors",
+            "/source",
+            "/context",
+            "/third_party",
+        ]
+    ]
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):
-            if (any(match(request.path) for match in allowed_regexps) or
-                request.path.startswith(url_prefix)):
+            if any(
+                match(request.path) for match in allowed_regexps
+            ) or request.path.startswith(url_prefix):
                 return callback(*args, **kwargs)
-            if request.path == '/':
+            if request.path == "/":
                 bottle.redirect(url_prefix)
 
             # Note: we issue a "202 Accepted" status in order to satisfy bean-bake,
@@ -960,6 +1060,7 @@ def url_restrict_generator(url_prefix):
             raise bottle.HTTPError(202, "URLs restricted to '{}'".format(url_prefix))
 
         return wrapper
+
     return url_restrict_handler
 
 
@@ -969,65 +1070,73 @@ def get_all_view(app):
     Returns:
       An instance of AllView, that covers all transactions.
     """
-    return views.AllView(app.entries, app.options, 'All Transactions')
+    return views.AllView(app.entries, app.options, "All Transactions")
 
 
-@app.route(r'/view/all/<path:re:.*>', name='all')
+@app.route(r"/view/all/<path:re:.*>", name="all")
 @handle_view(2)
 def all(path=None):
     return get_all_view(app)
 
-@app.route(r'/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>',
-           name='month')
+
+@app.route(
+    r"/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>", name="month"
+)
 @handle_view(5)
 def month(year=None, month=None, path=None):
     year = int(year)
     month = int(month)
     date = datetime.date(year, month, 1)
-    text = date.strftime('%B %Y')
+    text = date.strftime("%B %Y")
     return views.MonthView(app.entries, app.options, text, year, month)
 
-@app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
+
+@app.route(r"/view/year/<year:re:\d\d\d\d>/<path:re:.*>", name="year")
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
     first_month = app.args.first_month
-    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
-                          year, first_month)
+    return views.YearView(
+        app.entries, app.options, "Year {:4d}".format(year), year, first_month
+    )
 
-@app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
+
+@app.route(r"/view/tag/<tag:re:[^/]*>/<path:re:.*>", name="tag")
 @handle_view(3)
 def tag(tag=None, path=None):
-    return views.TagView(app.entries, app.options, 'Tag {}'.format(tag), set([tag]))
+    return views.TagView(app.entries, app.options, "Tag {}".format(tag), set([tag]))
 
 
-@app.route(r'/view/payee/<payee:re:[^/]*>/<path:re:.*>', name='payee')
+@app.route(r"/view/payee/<payee:re:[^/]*>/<path:re:.*>", name="payee")
 @handle_view(3)
 def payee(payee=None, path=None):
-    return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
+    return views.PayeeView(app.entries, app.options, "Payee {}".format(payee), payee)
 
-@app.route(r'/view/component/<component:re:[^/]*>/<path:re:.*>', name='component')
+
+@app.route(r"/view/component/<component:re:[^/]*>/<path:re:.*>", name="component")
 @handle_view(3)
 def component(component=None, path=None):
-    return views.ComponentView(app.entries, app.options,
-                               'Component: {}'.format(component), component)
+    return views.ComponentView(
+        app.entries, app.options, "Component: {}".format(component), component
+    )
 
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # Bootstrapping and main program.
 
 
 def auto_reload_input_file(callback):
     """A plugin that automatically reloads the input file if it changed since the
     last page was loaded."""
+
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
 
         if loader.needs_refresh(app.options):
-            logging.info('Reloading...')
+            logging.info("Reloading...")
 
             # Save the source for later, to render.
-            with open(filename, encoding='utf8') as f:
+            with open(filename, encoding="utf8") as f:
                 app.source = f.read()
 
             # Parse the beancount file.
@@ -1036,10 +1145,10 @@ def auto_reload_input_file(callback):
             # Print out the list of errors.
             if errors:
                 # pylint: disable=unsupported-assignment-operation
-                request.params['render_overlay'] = True
-                print(',----------------------------------------------------------------')
+                request.params["render_overlay"] = True
+                print(",----------------------------------------------------------------")
                 printer.print_errors(errors, file=sys.stdout)
-                print('`----------------------------------------------------------------')
+                print("`----------------------------------------------------------------")
 
             # Save globals in the global app.
             app.entries = entries
@@ -1061,10 +1170,12 @@ def auto_reload_input_file(callback):
             # it on the right when there are errors.
             if app.errors:
                 # pylint: disable=unsupported-assignment-operation
-                request.params['render_overlay'] = True
+                request.params["render_overlay"] = True
 
         return callback(*posargs, **kwargs)
+
     return wrapper
+
 
 app.install(auto_reload_input_file)
 
@@ -1079,8 +1190,7 @@ def incognito(callback):
 
     def wrapper(*posargs, **kwargs):
         contents = callback(*posargs, **kwargs)
-        if (response.content_type in ('text/html', '') and
-            isinstance(contents, str)):
+        if response.content_type in ("text/html", "") and isinstance(contents, str):
             contents = text_utils.replace_numbers(contents)
         return contents
 
@@ -1090,9 +1200,9 @@ def incognito(callback):
 # Global template.
 template = None
 
+
 def run_app(args, quiet=None):
-    logging.basicConfig(level=logging.INFO,
-                        format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
     app_installs = []
     view_installs = []
@@ -1107,7 +1217,7 @@ def run_app(args, quiet=None):
 
     # Install code that will restrict all resources to a particular view.
     if args.view:
-        view_url_prefix = '/view/{}/'.format(args.view)
+        view_url_prefix = "/view/{}/".format(args.view)
         url_restrictor = url_restrict_generator(view_url_prefix)
         app.install(url_restrictor)
         app_installs.append(url_restrictor)
@@ -1115,22 +1225,27 @@ def run_app(args, quiet=None):
     app.options = None
 
     # Add an account transformer.
-    app.account_xform = account.AccountTransformer('__' if args.no_colons else None)
+    app.account_xform = account.AccountTransformer("__" if args.no_colons else None)
 
     # Load templates.
-    with open(path.join(path.dirname(__file__), 'web.html')) as f:
+    with open(path.join(path.dirname(__file__), "web.html")) as f:
         global template
         template = bottle.SimpleTemplate(f)
 
-    with open(path.join(path.dirname(__file__), 'web.css')) as f:
-        global STYLE; STYLE = f.read()
+    with open(path.join(path.dirname(__file__), "web.css")) as f:
+        global STYLE
+        STYLE = f.read()
 
     # Run the server.
     app.args = args
-    bind_address = '0.0.0.0' if args.public else 'localhost'
-    app.run(host=bind_address, port=args.port,
-            debug=args.debug, reloader=False,
-            quiet=args.quiet if hasattr(args, 'quiet') else quiet)
+    bind_address = "0.0.0.0" if args.public else "localhost"
+    app.run(
+        host=bind_address,
+        port=args.port,
+        debug=args.debug,
+        reloader=False,
+        quiet=args.quiet if hasattr(args, "quiet") else quiet,
+    )
 
     # Uninstall applications.
     for function in app_installs:
@@ -1141,6 +1256,7 @@ def run_app(args, quiet=None):
 
 # The global server instance.
 server = None
+
 
 def setup_monkey_patch_for_server_shutdown():
     """Setup globals to steal access to the server reference.
@@ -1159,9 +1275,12 @@ def setup_monkey_patch_for_server_shutdown():
 
     # Patch up wsgiref itself with the decorated function.
     import wsgiref.simple_server
+
     wsgiref.simple_server.make_server = stealing_make_server
 
+
 setup_monkey_patch_for_server_shutdown()
+
 
 def wait_ready():
     """Wait until the 'server' global has been set.
@@ -1169,6 +1288,7 @@ def wait_ready():
     """
     while server is None:
         time.sleep(0.05)
+
 
 def shutdown():
     """Request for the server to shutdown."""
@@ -1178,36 +1298,59 @@ def shutdown():
 def add_web_arguments(argparser):
     group = argparser.add_argument_group("Web server arguments")
 
-    group.add_argument('filename',
-                       help="Beancount input filename to serve.")
+    group.add_argument("filename", help="Beancount input filename to serve.")
 
-    group.add_argument('--port', action='store', type=int, default=8080,
-                       help="Which port to listen on.")
+    group.add_argument(
+        "--port", action="store", type=int, default=8080, help="Which port to listen on."
+    )
 
-    group.add_argument('-q', '--quiet', action='store_true',
-                       help="Don't even print out web server log")
+    group.add_argument(
+        "-q", "--quiet", action="store_true", help="Don't even print out web server log"
+    )
 
-    group.add_argument('--debug', action='store_true',
-                       help="Enable debugging features (auto-reloading of css).")
+    group.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debugging features (auto-reloading of css).",
+    )
 
-    group.add_argument('--incognito', action='store_true',
-                       help=("Filter the output in order to hide all the numbers. "
-                             "This is great for demos using my real file."))
+    group.add_argument(
+        "--incognito",
+        action="store_true",
+        help=(
+            "Filter the output in order to hide all the numbers. "
+            "This is great for demos using my real file."
+        ),
+    )
 
-    group.add_argument('--no-source', action='store_true',
-                       help=("Don't render the source."))
+    group.add_argument(
+        "--no-source", action="store_true", help=("Don't render the source.")
+    )
 
-    group.add_argument('--no-colons', action='store_true',
-                       help=("Don't render colons in filenames (for Windows)."))
+    group.add_argument(
+        "--no-colons",
+        action="store_true",
+        help=("Don't render colons in filenames (for Windows)."),
+    )
 
-    group.add_argument('--view', action='store',
-                       help="Render only the specified view (identify by URL)")
+    group.add_argument(
+        "--view", action="store", help="Render only the specified view (identify by URL)"
+    )
 
-    group.add_argument('--public', '--inaddr-any', action='store_true',
-                       help="Bind server to listen to any address, not just localhost.")
+    group.add_argument(
+        "--public",
+        "--inaddr-any",
+        action="store_true",
+        help="Bind server to listen to any address, not just localhost.",
+    )
 
-    group.add_argument('--first-month', action='store', type=int, default=1,
-                       help="The first month of the calendar year.")
+    group.add_argument(
+        "--first-month",
+        action="store",
+        type=int,
+        default=1,
+        help="The first month of the calendar year.",
+    )
 
     return group
 
@@ -1237,7 +1380,7 @@ def scrape_webapp(webargs, callback, ignore_regexp):
     Returns:
       A set of all the processed URLs and a set of all the skipped URLs.
     """
-    url_format = 'http://localhost:{}{{}}'.format(webargs.port)
+    url_format = "http://localhost:{}{{}}".format(webargs.port)
 
     thread = thread_server_start(webargs)
 
@@ -1263,11 +1406,8 @@ def thread_server_start(web_args, **kwargs):
       A new Thread instance.
 
     """
-    thread = threading.Thread(
-        target=run_app,
-        args=(web_args,),
-        kwargs=kwargs)
-    thread.daemon = True # Automatically exit if the process comes dwn.
+    thread = threading.Thread(target=run_app, args=(web_args,), kwargs=kwargs)
+    thread.daemon = True  # Automatically exit if the process comes dwn.
     thread.start()
 
     # Ensure the server has at least started before running the scraper.

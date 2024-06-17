@@ -23,6 +23,7 @@ After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings
 to accounts with a component by their name.
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -45,7 +46,7 @@ from beancount.query import query_render
 from beancount.parser import version
 
 
-__plugins__ = ('split_expenses',)
+__plugins__ = ("split_expenses",)
 
 
 def split_expenses(entries, options_map, config):
@@ -66,16 +67,19 @@ def split_expenses(entries, options_map, config):
     elif isinstance(config, (tuple, list)):
         members = config
     else:
-        raise RuntimeError("Invalid plugin configuration: configuration for split_expenses "
-                           "should be a string or a sequence.")
+        raise RuntimeError(
+            "Invalid plugin configuration: configuration for split_expenses "
+            "should be a string or a sequence."
+        )
 
     acctypes = options.get_account_types(options_map)
+
     def is_expense_account(account):
         return account_types.get_account_type(account) == acctypes.expenses
 
     # A predicate to quickly identify if an account contains the name of a
     # member.
-    is_individual_account = re.compile('|'.join(map(re.escape, members))).search
+    is_individual_account = re.compile("|".join(map(re.escape, members))).search
 
     # Existing and previously unseen accounts.
     new_accounts = set()
@@ -86,12 +90,13 @@ def split_expenses(entries, options_map, config):
         if isinstance(entry, data.Transaction):
             new_postings = []
             for posting in entry.postings:
-                if (is_expense_account(posting.account) and
-                    not is_individual_account(posting.account)):
-
+                if is_expense_account(posting.account) and not is_individual_account(
+                    posting.account
+                ):
                     # Split this posting into multiple postings.
-                    split_units = amount.Amount(posting.units.number / len(members),
-                                                posting.units.currency)
+                    split_units = amount.Amount(
+                        posting.units.number / len(members), posting.units.currency
+                    )
 
                     for member in members:
                         # Mark the account as new if never seen before.
@@ -108,10 +113,13 @@ def split_expenses(entries, options_map, config):
                         # Add a new posting for each member, to a new account
                         # with the name of this member.
                         new_postings.append(
-                            posting._replace(meta=meta,
-                                             account=subaccount,
-                                             units=split_units,
-                                             cost=posting.cost))
+                            posting._replace(
+                                meta=meta,
+                                account=subaccount,
+                                units=split_units,
+                                cost=posting.cost,
+                            )
+                        )
                 else:
                     new_postings.append(posting)
 
@@ -123,7 +131,7 @@ def split_expenses(entries, options_map, config):
     # Create Open directives for new subaccounts if necessary.
     oc_map = getters.get_account_open_close(entries)
     open_date = entries[0].date
-    meta = data.new_metadata('<split_expenses>', 0)
+    meta = data.new_metadata("<split_expenses>", 0)
     open_entries = []
     for new_account in new_accounts:
         if new_account not in oc_map:
@@ -133,8 +141,17 @@ def split_expenses(entries, options_map, config):
     return open_entries + new_entries, []
 
 
-def save_query(title, participant, entries, options_map, sql_query, *format_args,
-               boxed=True, spaced=False, args=None):
+def save_query(
+    title,
+    participant,
+    entries,
+    options_map,
+    sql_query,
+    *format_args,
+    boxed=True,
+    spaced=False,
+    args=None,
+):
     """Save the multiple files for this query.
 
     Args:
@@ -162,48 +179,50 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
     """
     # Replace CONV() to convert the currencies or not; if so, replace to
     # CONVERT(..., currency).
-    replacement = (r'\1'
-                   if args.currency is None else
-                   r'CONVERT(\1, "{}")'.format(args.currency))
-    sql_query = re.sub(r'CONV\[(.*?)\]', replacement, sql_query)
+    replacement = (
+        r"\1" if args.currency is None else r'CONVERT(\1, "{}")'.format(args.currency)
+    )
+    sql_query = re.sub(r"CONV\[(.*?)\]", replacement, sql_query)
 
     # Run the query.
-    rtypes, rrows = query.run_query(entries, options_map,
-                                    sql_query, *format_args,
-                                    numberify=True)
+    rtypes, rrows = query.run_query(
+        entries, options_map, sql_query, *format_args, numberify=True
+    )
 
     # The base of all filenames.
-    filebase = title.replace(' ', '_')
+    filebase = title.replace(" ", "_")
 
-    fmtopts = dict(boxed=boxed,
-                   spaced=spaced)
+    fmtopts = dict(boxed=boxed, spaced=spaced)
 
     # Output the text files.
     if args.output_text:
-        basedir = (path.join(args.output_text, participant)
-                   if participant
-                   else args.output_text)
+        basedir = (
+            path.join(args.output_text, participant) if participant else args.output_text
+        )
         os.makedirs(basedir, exist_ok=True)
-        filename = path.join(basedir, filebase + '.txt')
-        with open(filename, 'w') as file:
-            query_render.render_text(rtypes, rrows, options_map['dcontext'],
-                                     file, **fmtopts)
+        filename = path.join(basedir, filebase + ".txt")
+        with open(filename, "w") as file:
+            query_render.render_text(
+                rtypes, rrows, options_map["dcontext"], file, **fmtopts
+            )
 
     # Output the CSV files.
     if args.output_csv:
-        basedir = (path.join(args.output_csv, participant)
-                   if participant
-                   else args.output_csv)
+        basedir = (
+            path.join(args.output_csv, participant) if participant else args.output_csv
+        )
         os.makedirs(basedir, exist_ok=True)
-        filename = path.join(basedir, filebase + '.csv')
-        with open(filename, 'w') as file:
-            query_render.render_csv(rtypes, rrows, options_map['dcontext'],
-                                    file, expand=False)
+        filename = path.join(basedir, filebase + ".csv")
+        with open(filename, "w") as file:
+            query_render.render_csv(
+                rtypes, rrows, options_map["dcontext"], file, expand=False
+            )
 
     if args.output_stdout:
         # Write out the query to stdout.
-        query_render.render_text(rtypes, rrows, options_map['dcontext'],
-                                 sys.stdout, **fmtopts)
+        query_render.render_text(
+            rtypes, rrows, options_map["dcontext"], sys.stdout, **fmtopts
+        )
 
 
 def get_participants(filename, options_map):
@@ -234,21 +253,28 @@ def main():
     between each other.
     """
 
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = version.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount input filename')
+    parser.add_argument("filename", help="Beancount input filename")
 
-    parser.add_argument('-c', '--currency', action='store',
-                        help="Convert all the amounts to a single common currency")
+    parser.add_argument(
+        "-c",
+        "--currency",
+        action="store",
+        help="Convert all the amounts to a single common currency",
+    )
 
-    oparser = parser.add_argument_group('Outputs')
+    oparser = parser.add_argument_group("Outputs")
 
-    oparser.add_argument('-o', '--output-text', '--text', action='store',
-                         help="Render results to text boxes")
-    oparser.add_argument('--output-csv', '--csv', action='store',
-                         help="Render results to CSV files")
-    oparser.add_argument('--output-stdout', '--stdout', action='store_true',
-                         help="Render results to stdout")
+    oparser.add_argument(
+        "-o", "--output-text", "--text", action="store", help="Render results to text boxes"
+    )
+    oparser.add_argument(
+        "--output-csv", "--csv", action="store", help="Render results to CSV files"
+    )
+    oparser.add_argument(
+        "--output-stdout", "--stdout", action="store_true", help="Render results to stdout"
+    )
 
     args = parser.parse_args()
 
@@ -264,16 +290,30 @@ def main():
     for participant in participants:
         print("Participant: {}".format(participant))
 
-        save_query("balances", participant, entries, options_map, r"""
+        save_query(
+            "balances",
+            participant,
+            entries,
+            options_map,
+            r"""
           SELECT
             PARENT(account) AS account,
             CONV[SUM(position)] AS amount
           WHERE account ~ ':\b{}'
           GROUP BY 1
           ORDER BY 2 DESC
-        """, participant, boxed=False, args=args)
+        """,
+            participant,
+            boxed=False,
+            args=args,
+        )
 
-        save_query("expenses", participant, entries, options_map, r"""
+        save_query(
+            "expenses",
+            participant,
+            entries,
+            options_map,
+            r"""
           SELECT
             date, flag, description,
             PARENT(account) AS account,
@@ -281,9 +321,17 @@ def main():
             CONV[position] AS amount,
             CONV[balance] AS balance
           WHERE account ~ 'Expenses.*\b{}'
-        """, participant, args=args)
+        """,
+            participant,
+            args=args,
+        )
 
-        save_query("income", participant, entries, options_map, r"""
+        save_query(
+            "income",
+            participant,
+            entries,
+            options_map,
+            r"""
           SELECT
             date, flag, description,
             account,
@@ -291,20 +339,31 @@ def main():
             CONV[position] AS amount,
             CONV[balance] AS balance
           WHERE account ~ 'Income.*\b{}'
-        """, participant, args=args)
+        """,
+            participant,
+            args=args,
+        )
 
-    save_query("final", None, entries, options_map, r"""
+    save_query(
+        "final",
+        None,
+        entries,
+        options_map,
+        r"""
       SELECT
         GREP('\b({})\b', account) AS participant,
         CONV[SUM(position)] AS balance
       GROUP BY 1
       ORDER BY 2
-    """, '|'.join(participants), args=args)
+    """,
+        "|".join(participants),
+        args=args,
+    )
 
     # FIXME: Make this output to CSV files and upload to a spreadsheet.
     # FIXME: Add a fixed with option. This requires changing adding this to the
     # the renderer to be able to have elastic space and line splitting..
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

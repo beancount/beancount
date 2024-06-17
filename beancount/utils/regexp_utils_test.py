@@ -14,7 +14,6 @@ def match(regexp, string):
 
 
 class TestRegexpUtils(unittest.TestCase):
-
     def test_replace_unicode(self):
         self.assertTrue(match(r"[\p{L}]+", "Assets"))
         self.assertFalse(match(r"[\p{L}]+", "Assets:Checking"))
@@ -28,5 +27,5 @@ class TestRegexpUtils(unittest.TestCase):
         self.assertTrue(match(r"[\p{Nd}]+", "78654865347"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -48,13 +48,11 @@ def _gen_missing_combinations(template, args):
       Strings of formatted template.
     """
     for mask in range(2 ** len(args)):
-        actual_args = [arg if not (1<<i & mask) else ''
-                       for i, arg in enumerate(args)]
+        actual_args = [arg if not (1 << i & mask) else "" for i, arg in enumerate(args)]
         yield template.format(*actual_args)
 
 
 class TestAllInterpolationCombinations(cmptest.TestCase):
-
     def test_all_currency_interpolations(self):
         template = textwrap.dedent("""
           2015-10-02 *
@@ -62,14 +60,10 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
             Assets:Other
         """)
         for pos_template, args in [
-                ('100.00 {:3}',
-                 ['USD']),
-                ('100.00 {:3} @ 1.20 {:3}',
-                 ['USD', 'CAD']),
-                ('10 {:4} {{100.00 {:3}}}',
-                 ['HOOL', 'USD']),
-                ('10 {:4} {{100.00 {:3}}} @ 120.00 {:3}',
-                 ['HOOL', 'USD', 'USD']),
+            ("100.00 {:3}", ["USD"]),
+            ("100.00 {:3} @ 1.20 {:3}", ["USD", "CAD"]),
+            ("10 {:4} {{100.00 {:3}}}", ["HOOL", "USD"]),
+            ("10 {:4} {{100.00 {:3}}} @ 120.00 {:3}", ["HOOL", "USD", "USD"]),
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
                 entries, errors, _ = parser.parse_string(string)
@@ -82,16 +76,14 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
             Assets:Other
         """)
         for pos_template, args in [
-                ('{:7} {:3}',
-                 ['100.00', 'USD']),
-                ('{:7} {:3} @ {:7} {:3}',
-                 ['100.00', 'USD', '1.20', 'CAD']),
-                ('{:2} {:4} {{{:7} {:3}}}',
-                 ['10', 'HOOL', '100.00', 'USD']),
-                ('{:2} {:4} {{{:7} # {:7} USD}}',
-                 ['10', 'HOOL', '100.00', '9.95']),
-                ('{:2} {:4} {{{:7} # {:7} USD}} @ {:7} {:3}',
-                 ['10', 'HOOL', '100.00', '9.95', '120.00', 'USD']),
+            ("{:7} {:3}", ["100.00", "USD"]),
+            ("{:7} {:3} @ {:7} {:3}", ["100.00", "USD", "1.20", "CAD"]),
+            ("{:2} {:4} {{{:7} {:3}}}", ["10", "HOOL", "100.00", "USD"]),
+            ("{:2} {:4} {{{:7} # {:7} USD}}", ["10", "HOOL", "100.00", "9.95"]),
+            (
+                "{:2} {:4} {{{:7} # {:7} USD}} @ {:7} {:3}",
+                ["10", "HOOL", "100.00", "9.95", "120.00", "USD"],
+            ),
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
                 entries, errors, _ = parser.parse_string(string)
@@ -105,8 +97,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
 
 def indexes(groups):
     """Return only the index sets from currency categorized groups."""
-    return {currency: {refer[0] for refer in refers}
-            for currency, refers in groups}
+    return {currency: {refer[0] for refer in refers} for currency, refers in groups}
 
 
 class TestCategorizeCurrencyGroup(unittest.TestCase):
@@ -126,7 +117,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         for entry in entries:
             groups, errors = bf.categorize_by_currency(entry, {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0, 1}}, indexes(groups))
+            self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__ambiguous(self, entries, _, options_map):
@@ -143,16 +134,16 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(
-            entries[1], {'Assets:Account': I('1.00 USD')})
+            entries[1], {"Assets:Account": I("1.00 USD")}
+        )
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
-        groups, errors = bf.categorize_by_currency(
-            entries[1], {})
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Failed to categorize posting')
+        self.assertRegex(errors[0].message, "Failed to categorize posting")
         self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
@@ -168,17 +159,17 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(
-            entries[1], {'Assets:Account': I('1.00 USD')})
+            entries[1], {"Assets:Account": I("1.00 USD")}
+        )
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
-        groups, errors = bf.categorize_by_currency(
-            entries[1], {})
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
+        self.assertRegex(errors[0].message, "Could not resolve units currency")
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__ambiguous(self, entries, _, options_map):
@@ -204,21 +195,22 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(
-            entries[1], {'Assets:Account': I('1.00 USD')})
+            entries[1], {"Assets:Account": I("1.00 USD")}
+        )
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
         groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
+        self.assertRegex(errors[0].message, "Could not resolve units currency")
+        self.assertEqual({"CAD": {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'Failed to categorize posting')
+            self.assertRegex(errors[0].message, "Failed to categorize posting")
             self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
@@ -234,16 +226,17 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(
-            entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+            entries[1], {"Assets:Account": I("1 HOOL {1.00 USD}")}
+        )
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
         groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertRegex(errors[0].message, "Could not resolve units currency")
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__ambiguous(self, entries, _, options_map):
@@ -269,26 +262,27 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(
-            entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+            entries[1], {"Assets:Account": I("1 HOOL {1.00 USD}")}
+        )
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
         groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertRegex(errors[0].message, "Could not resolve units currency")
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = bf.categorize_by_currency(
-                entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+                entries[i], {"Assets:Account": I("1 HOOL {1.00 USD}")}
+            )
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0, 1}}, indexes(groups))
-            groups, errors = bf.categorize_by_currency(
-                entries[i], {})
+            self.assertEqual({"USD": {0, 1}}, indexes(groups))
+            groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'Failed to categorize posting')
+            self.assertRegex(errors[0].message, "Failed to categorize posting")
             self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
@@ -321,13 +315,13 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         for i in 0, 2, 4:
             groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0, 1}}, indexes(groups))
+            self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         for i in 1, 3, 5:
             groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'Could not resolve units currency')
-            self.assertEqual({'USD': {0, 1}}, indexes(groups))
+            self.assertRegex(errors[0].message, "Could not resolve units currency")
+            self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__ambiguous(self, entries, _, options_map):
@@ -352,22 +346,22 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0, 1}}, indexes(groups))
+        self.assertRegex(errors[0].message, "Could not resolve units currency")
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = bf.categorize_by_currency(
-                entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+                entries[i], {"Assets:Account": I("1 HOOL {1.00 USD}")}
+            )
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0, 1}}, indexes(groups))
-            groups, errors = bf.categorize_by_currency(
-                entries[i], {})
+            self.assertEqual({"USD": {0, 1}}, indexes(groups))
+            groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertTrue(errors)
-            self.assertRegex(errors[0].message, 'Failed to categorize posting')
+            self.assertRegex(errors[0].message, "Failed to categorize posting")
             self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
@@ -380,7 +374,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0, 2}, 'CAD': {1, 2}}, indexes(groups))
+        self.assertEqual({"USD": {0, 2}, "CAD": {1, 2}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__redundant_auto_postings(self, entries, _, options_map):
@@ -401,11 +395,14 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account          -40 HOOL {}
           Assets:Account          -35 HOOL {}
         """
-        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
-                                        '50 HOOL {116.00 USD, 2016-01-16}')}
+        balances = {
+            "Assets:Account": I(
+                "50 HOOL {115.00 USD, 2016-01-15}, " "50 HOOL {116.00 USD, 2016-01-16}"
+            )
+        }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
         self.assertEqual(1, len(groups))
-        self.assertEqual(2, len(dict(groups)['USD']))
+        self.assertEqual(2, len(dict(groups)["USD"]))
         self.assertFalse(errors)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -414,12 +411,15 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         2016-05-02 *
           Assets:Account          -40 HOOL {}
         """
-        balances = {'Assets:Account': I('50 HOOL {100.00 USD, 2016-01-15}, '
-                                        '50 HOOL { 50.00 CAD, 2016-01-15}')}
+        balances = {
+            "Assets:Account": I(
+                "50 HOOL {100.00 USD, 2016-01-15}, " "50 HOOL { 50.00 CAD, 2016-01-15}"
+            )
+        }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
         self.assertEqual(0, len(groups))
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Failed to categorize posting')
+        self.assertRegex(errors[0].message, "Failed to categorize posting")
 
 
 class TestReplaceCurrenciesInGroup(unittest.TestCase):
@@ -430,18 +430,25 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
         self.assertFalse(errors)
         posting_groups = bf.replace_currencies(entry.postings, groups)
         check_groups = {
-            currency: [(posting.account,
-                        posting.units.currency,
-                        posting.cost.currency if posting.cost else None,
-                        posting.price.currency if posting.price else None)
-                       for posting in postings]
-            for currency, postings in posting_groups}
+            currency: [
+                (
+                    posting.account,
+                    posting.units.currency,
+                    posting.cost.currency if posting.cost else None,
+                    posting.price.currency if posting.price else None,
+                )
+                for posting in postings
+            ]
+            for currency, postings in posting_groups
+        }
         self.assertEqual(expected, check_groups)
 
         # Check all the postings are unique instances.
-        all_postings = [posting
-                        for postings in [item[1] for item in posting_groups]
-                        for posting in postings]
+        all_postings = [
+            posting
+            for postings in [item[1] for item in posting_groups]
+            for posting in postings
+        ]
         self.assertEqual(len(set(map(id, all_postings))), len(all_postings))
 
     @parser.parse_doc(allow_incomplete=True)
@@ -462,16 +469,41 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
           Assets:US:Other  USD
           Assets:CA:Other  CAD
         """
-        self.check({'USD': [('Assets:Account', 'USD', None, None),
-                            ('Assets:Other', 'USD', None, None)]}, entries[0])
-        self.check({'CAD': [('Assets:Account', 'CAD', None, None),
-                            ('Assets:Other', 'CAD', None, None)],
-                    'USD': [('Assets:Account', 'USD', None, None),
-                            ('Assets:Other', 'USD', None, None)]}, entries[1])
-        self.check({'CAD': [('Assets:Account', 'CAD', None, None),
-                            ('Assets:CA:Other', 'CAD', None, None)],
-                    'USD': [('Assets:Account', 'USD', None, None),
-                            ('Assets:US:Other', 'USD', None, None)]}, entries[2])
+        self.check(
+            {
+                "USD": [
+                    ("Assets:Account", "USD", None, None),
+                    ("Assets:Other", "USD", None, None),
+                ]
+            },
+            entries[0],
+        )
+        self.check(
+            {
+                "CAD": [
+                    ("Assets:Account", "CAD", None, None),
+                    ("Assets:Other", "CAD", None, None),
+                ],
+                "USD": [
+                    ("Assets:Account", "USD", None, None),
+                    ("Assets:Other", "USD", None, None),
+                ],
+            },
+            entries[1],
+        )
+        self.check(
+            {
+                "CAD": [
+                    ("Assets:Account", "CAD", None, None),
+                    ("Assets:CA:Other", "CAD", None, None),
+                ],
+                "USD": [
+                    ("Assets:Account", "USD", None, None),
+                    ("Assets:US:Other", "USD", None, None),
+                ],
+            },
+            entries[2],
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_missing(self, entries, _, options_map):
@@ -495,19 +527,54 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
           Assets:Account   10 HOOL {100.00 USD} @ 120.00
           Assets:Another  -1000.00 USD
         """
-        self.check({'USD': [('Assets:Account', 'USD', None, None),
-                            ('Assets:Another', 'USD', None, None)]}, entries[0])
+        self.check(
+            {
+                "USD": [
+                    ("Assets:Account", "USD", None, None),
+                    ("Assets:Another", "USD", None, None),
+                ]
+            },
+            entries[0],
+        )
 
-        self.check({'CAD': [('Assets:Account', 'USD', None, 'CAD'),
-                            ('Assets:Another', 'CAD', None, None)]}, entries[1])
+        self.check(
+            {
+                "CAD": [
+                    ("Assets:Account", "USD", None, "CAD"),
+                    ("Assets:Another", "CAD", None, None),
+                ]
+            },
+            entries[1],
+        )
 
-        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', None),
-                            ('Assets:Another', 'USD', None, None)]}, entries[2])
+        self.check(
+            {
+                "USD": [
+                    ("Assets:Account", "HOOL", "USD", None),
+                    ("Assets:Another", "USD", None, None),
+                ]
+            },
+            entries[2],
+        )
 
-        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', 'USD'),
-                            ('Assets:Another', 'USD', None, None)]}, entries[3])
-        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', 'USD'),
-                            ('Assets:Another', 'USD', None, None)]}, entries[4])
+        self.check(
+            {
+                "USD": [
+                    ("Assets:Account", "HOOL", "USD", "USD"),
+                    ("Assets:Another", "USD", None, None),
+                ]
+            },
+            entries[3],
+        )
+        self.check(
+            {
+                "USD": [
+                    ("Assets:Account", "HOOL", "USD", "USD"),
+                    ("Assets:Another", "USD", None, None),
+                ]
+            },
+            entries[4],
+        )
 
 
 def normalize_postings(postings):
@@ -520,9 +587,10 @@ def normalize_postings(postings):
     Returns:
       A new reordered and normalized Posting instances.
     """
-    return [posting._replace(meta=None)
-            for posting in sorted(postings,
-                                  key=lambda posting: posting.meta['lineno'])]
+    return [
+        posting._replace(meta=None)
+        for posting in sorted(postings, key=lambda posting: posting.meta["lineno"])
+    ]
 
 
 class TestInterpolateCurrencyGroup(unittest.TestCase):
@@ -555,7 +623,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
             # Run the interpolation for that group.
             new_postings, errors, interpolated = bf.interpolate_group(
-                postings, balances, currency, tolerances)
+                postings, balances, currency, tolerances
+            )
 
             # Print out infos for troubleshooting.
             if debug:
@@ -573,16 +642,16 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             self.assertEqual(len(exp_errors) if exp_errors else 0, len(errors))
             if exp_errors:
                 for exp_error in exp_errors:
-                    self.assertTrue(any(re.match(exp_error, error.message)
-                                        for error in errors))
+                    self.assertTrue(
+                        any(re.match(exp_error, error.message) for error in errors)
+                    )
 
             # Check the expected postings.
             if exp_string is not None:
                 exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
                 exp_entries, err2 = booking.convert_lot_specs_to_lots(exp_entries)
                 self.assertFalse(err1 or err2, "Internal error in test")
-                self.assertEqual(1, len(exp_entries),
-                                 "Internal error, expected one entry")
+                self.assertEqual(1, len(exp_entries), "Internal error, expected one entry")
                 exp_postings = normalize_postings(exp_entries[0].postings)
                 self.assertEqual(exp_postings, normalize_postings(new_postings))
 
@@ -595,7 +664,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   100.00 USD
           Assets:Other    -100.00 USD
         """
-        self.check(entries[0], {'USD': (False, None, None)})
+        self.check(entries[0], {"USD": (False, None, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_twomiss_diff_units(self, entries, _, options_map):
@@ -604,19 +673,24 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account          USD
           Assets:Other            USD
         """
-        self.check(entries[0], {
-            'USD': (False, None, ["Too many missing numbers for currency group"])})
+        self.check(
+            entries[0],
+            {"USD": (False, None, ["Too many missing numbers for currency group"])},
+        )
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_incomplete_impossible_twomiss_diff_cost_and_units(self,
-                                                               entries, _, options_map):
+    def test_incomplete_impossible_twomiss_diff_cost_and_units(
+        self, entries, _, options_map
+    ):
         """
         2015-10-02 *
           Assets:Account   2 HOOL {USD}
           Assets:Other       USD
         """
-        self.check(entries[0], {
-            'USD': (False, None, ["Too many missing numbers for currency group"])})
+        self.check(
+            entries[0],
+            {"USD": (False, None, ["Too many missing numbers for currency group"])},
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_miss_same_posting(self, entries, _, options_map):
@@ -625,8 +699,10 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account            HOOL {USD}
           Assets:Other      -100.00 USD
         """
-        self.check(entries[0], {
-            'USD': (False, None, ["Too many missing numbers for currency group"])})
+        self.check(
+            entries[0],
+            {"USD": (False, None, ["Too many missing numbers for currency group"])},
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_units(self, entries, _, options_map):
@@ -655,44 +731,86 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account          CAD @ 1.25 USD
           Assets:Other    -100.00 USD
         """
-        self.check(entries[0], {
-            'USD': (True, """
+        self.check(
+            entries[0],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account   100.00 USD
                 Assets:Other    -100.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
-        self.check(entries[1], {
-            'USD': (True, """
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
-        self.check(entries[2], {
-            'USD': (True, """
+        self.check(
+            entries[2],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 USD}
                 Assets:Other   -1000.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
-        self.check(entries[3], {
-            'USD': (True, """
+        self.check(
+            entries[3],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 USD} @ 110.00 USD
                 Assets:Other   -1000.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
         # Check impossible case.
-        self.check(entries[4], {
-            'USD': (True, None, ["Cannot infer per-unit cost only from total"])})
+        self.check(
+            entries[4],
+            {"USD": (True, None, ["Cannot infer per-unit cost only from total"])},
+        )
 
-        self.check(entries[5], {
-            'USD': (True, """
+        self.check(
+            entries[5],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account    80.00 CAD @ 1.25 USD
                 Assets:Other    -100.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_both(self, entries, _, options_map):
@@ -709,24 +827,48 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 HOOL {USD, "blah"}
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], {
-            'USD': (True, """
+        self.check(
+            entries[0],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.995 USD}
                 Assets:Other   -1009.95 USD
-            """, None)})
-        self.check(entries[1], {
-            'USD': (True, """
+            """,
+                    None,
+                )
+            },
+        )
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.995 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
-            """, None)})
-        self.check(entries[2], {
-            'USD': (True, """
+            """,
+                    None,
+                )
+            },
+        )
+        self.check(
+            entries[2],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.995 USD, "blah"}
                 Assets:Other   -1009.95 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_per(self, entries, _, options_map):
@@ -739,18 +881,34 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 HOOL {# 9.95 USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], {
-            'USD': (True, """
+        self.check(
+            entries[0],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
-            """, None)})
-        self.check(entries[1], {
-            'USD': (True, """
+            """,
+                    None,
+                )
+            },
+        )
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 # 9.95 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_total(self, entries, _, options_map):
@@ -763,18 +921,34 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 HOOL {100.00 # USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], {
-            'USD': (True, """
+        self.check(
+            entries[0],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
-            """, None)})
-        self.check(entries[1], {
-            'USD': (True, """
+            """,
+                    None,
+                )
+            },
+        )
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account       10 HOOL {100.00 # 9.95 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_price(self, entries, _, options_map):
@@ -787,46 +961,73 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 HOOL {100.00 # 9.95 USD} @ USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], {
-            'USD': (True, """
+        self.check(
+            entries[0],
+            {
+                "USD": (
+                    True,
+                    """
               2015-10-02 *
                 Assets:Account  125.00 CAD @ 0.8 USD
                 Assets:Other   -100.00 USD
-            """, None)})
-        self.check(entries[1], {
-            'USD': (True, None,
-                    ["Cannot infer price for postings with units held at cost"])})
+            """,
+                    None,
+                )
+            },
+        )
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    None,
+                    ["Cannot infer price for postings with units held at cost"],
+                )
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_multiple_groups(self, entries, _, options_map):
         """
-          2010-05-28 *
-            Assets:Account1     100.00 CAD
-            Assets:Account2     -80.00 CAD
-            Assets:Account3            CAD
-            Assets:Account4     200.00 USD
-            Assets:Account5            USD
+        2010-05-28 *
+          Assets:Account1     100.00 CAD
+          Assets:Account2     -80.00 CAD
+          Assets:Account3            CAD
+          Assets:Account4     200.00 USD
+          Assets:Account5            USD
 
-          2010-05-28 *
-            Assets:Account1     100.00 CAD
-            Assets:Account2     -80.00 CAD
-            Assets:Account3     -20.00 CAD
-            Assets:Account4     200.00 USD
-            Assets:Account5            USD
+        2010-05-28 *
+          Assets:Account1     100.00 CAD
+          Assets:Account2     -80.00 CAD
+          Assets:Account3     -20.00 CAD
+          Assets:Account4     200.00 USD
+          Assets:Account5            USD
         """
         for entry in entries:
-            self.check(entries[0], {
-                'CAD': (True, """
+            self.check(
+                entries[0],
+                {
+                    "CAD": (
+                        True,
+                        """
                   2010-05-28 *
                     Assets:Account1     100.00 CAD
                     Assets:Account2     -80.00 CAD
                     Assets:Account3     -20.00 CAD
-                """, None),
-                'USD': (True, """
+                """,
+                        None,
+                    ),
+                    "USD": (
+                        True,
+                        """
                   2010-05-28 *
                     Assets:Account4     200.00 USD
                     Assets:Account5    -200.00 USD
-                """, None)})
+                """,
+                        None,
+                    ),
+                },
+            )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_underdefined(self, entries, _, options_map):
@@ -837,9 +1038,10 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Income:PnL
         """
         # Interpolation and booking both required... impossible.
-        self.check(entries[0], {
-            'USD': (False, None, ["Too many missing numbers for currency group"])
-        })
+        self.check(
+            entries[0],
+            {"USD": (False, None, ["Too many missing numbers for currency group"])},
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_underdefined2(self, entries, _, options_map):
@@ -851,229 +1053,318 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
         """
         # Interpolation and booking both required... impossible.
-        self.check(entries[0], {
-            'CAD': (True, """
+        self.check(
+            entries[0],
+            {
+                "CAD": (
+                    True,
+                    """
               1997-03-16 *
                 Assets:CA:Life:RRSP:Cash    2000 CAD
                 Assets:CA:Pop:Checking     -2000 CAD
-            """, None),
-            'RSPCAD': (False, """
+            """,
+                    None,
+                ),
+                "RSPCAD": (
+                    False,
+                    """
               1997-03-16 *
                 Assets:CA:CRA:PreTaxRSP:Allowed  -2000 RSPCAD
                 Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
-            """, None)})
+            """,
+                    None,
+                ),
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__superfluous_unused(self, entries, errors, _):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
+        2000-01-01 open Assets:Account1
+        2000-01-01 open Assets:Account2
 
-          2016-04-23 * ""
-            Assets:Account1     0.00 USD
-            Assets:Account2
+        2016-04-23 * ""
+          Assets:Account1     0.00 USD
+          Assets:Account2
         """
-        self.check(entries[-1], {
-            'USD': (False, """
+        self.check(
+            entries[-1],
+            {
+                "USD": (
+                    False,
+                    """
               2016-04-23 * ""
                 Assets:Account1     0.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
         # FIXME: This ought to return a "Superfluous posting" error for Account2 only.
 
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__superfluous_unneeded(self, entries, errors, _):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
-          2000-01-01 open Assets:Account3
+        2000-01-01 open Assets:Account1
+        2000-01-01 open Assets:Account2
+        2000-01-01 open Assets:Account3
 
-          2016-04-23 * ""
-            Assets:Account1   100.00 USD
-            Assets:Account2  -100.00 USD
-            Assets:Account3
+        2016-04-23 * ""
+          Assets:Account1   100.00 USD
+          Assets:Account2  -100.00 USD
+          Assets:Account3
         """
-        self.check(entries[-1], {
-            'USD': (False, """
+        self.check(
+            entries[-1],
+            {
+                "USD": (
+                    False,
+                    """
               2016-04-23 * ""
                 Assets:Account1   100.00 USD
                 Assets:Account2  -100.00 USD
-            """, None)})
+            """,
+                    None,
+                )
+            },
+        )
         # FIXME: This ought to return a "Superfluous posting" error for Account3 only.
 
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__superfluous_needed_one_side(self, entries, errors, _):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
-          2000-01-01 open Assets:Account3
-          2000-01-01 open Assets:Account4
-          2000-01-01 open Assets:Account5
+        2000-01-01 open Assets:Account1
+        2000-01-01 open Assets:Account2
+        2000-01-01 open Assets:Account3
+        2000-01-01 open Assets:Account4
+        2000-01-01 open Assets:Account5
 
-          2016-04-23 * ""
-            Assets:Account1   100.00 USD
-            Assets:Account2  -100.00 USD
-            Assets:Account3   100.00 CAD
-            Assets:Account4   -99.00 CAD
-            Assets:Account5
+        2016-04-23 * ""
+          Assets:Account1   100.00 USD
+          Assets:Account2  -100.00 USD
+          Assets:Account3   100.00 CAD
+          Assets:Account4   -99.00 CAD
+          Assets:Account5
         """
-        self.check(entries[-1], {
-            'USD': (False, """
+        self.check(
+            entries[-1],
+            {
+                "USD": (
+                    False,
+                    """
               2016-04-23 * ""
                 Assets:Account1   100.00 USD
                 Assets:Account2  -100.00 USD
-            """, None),
-            'CAD': (True, """
+            """,
+                    None,
+                ),
+                "CAD": (
+                    True,
+                    """
               2016-04-23 * ""
                 Assets:Account3   100.00 CAD
                 Assets:Account4   -99.00 CAD
                 Assets:Account5    -1.00 CAD
-            """, None)})
+            """,
+                    None,
+                ),
+            },
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
         """
-          option "inferred_tolerance_default" "USD:0.00005"
-          option "inferred_tolerance_default" "JPY:0.5"
+        option "inferred_tolerance_default" "USD:0.00005"
+        option "inferred_tolerance_default" "JPY:0.5"
 
-          2000-01-01 open Assets:Account1
+        2000-01-01 open Assets:Account1
 
-          2016-04-23 * ""
-            Assets:Account1   100.123412341234 USD
-            Assets:Account1
+        2016-04-23 * ""
+          Assets:Account1   100.123412341234 USD
+          Assets:Account1
 
-          2016-04-24 * ""
-            Assets:Account1   100.123412341234 CAD
-            Assets:Account1
+        2016-04-24 * ""
+          Assets:Account1   100.123412341234 CAD
+          Assets:Account1
 
-          2016-04-25 * ""
-            Assets:Account1   100.123412341234 JPY
-            Assets:Account1
+        2016-04-25 * ""
+          Assets:Account1   100.123412341234 JPY
+          Assets:Account1
         """
-        self.check(entries[1], {
-            'USD': (True, """
+        self.check(
+            entries[1],
+            {
+                "USD": (
+                    True,
+                    """
               2016-04-24 * ""
                 Assets:Account1   100.123412341234 USD
                 Assets:Account1  -100.1234 USD
-            """, None)}, options_map=options_map)
-        self.check(entries[2], {
-            'CAD': (True, """
+            """,
+                    None,
+                )
+            },
+            options_map=options_map,
+        )
+        self.check(
+            entries[2],
+            {
+                "CAD": (
+                    True,
+                    """
               2016-04-24 * ""
                 Assets:Account1   100.123412341234 CAD
                 Assets:Account1  -100.123412341234 CAD
-            """, None)}, options_map=options_map)
-        self.check(entries[3], {
-            'JPY': (True, """
+            """,
+                    None,
+                )
+            },
+            options_map=options_map,
+        )
+        self.check(
+            entries[3],
+            {
+                "JPY": (
+                    True,
+                    """
               2016-04-25 * ""
                 Assets:Account1   100.123412341234 JPY
                 Assets:Account1  -100 JPY
-            """, None)}, options_map=options_map)
+            """,
+                    None,
+                )
+            },
+            options_map=options_map,
+        )
 
     @parser.parse_doc()
     def test_negative_units(self, entries, errors, options_map):
         """
-          2010-01-01 open Assets:TDA:Main:Cash             USD
-          2010-01-01 open Assets:TDA:Main:MSFT            MSFT
-          2010-01-01 open Expenses:Financial:Commission    USD
+        2010-01-01 open Assets:TDA:Main:Cash             USD
+        2010-01-01 open Assets:TDA:Main:MSFT            MSFT
+        2010-01-01 open Expenses:Financial:Commission    USD
 
-          2018-10-31 * "Sold Short 23 MSFT @ 106.935"
-            Assets:TDA:Main:Cash            2452.53 USD
-            Assets:TDA:Main:MSFT                -23 MSFT {106.935 # 6.90 USD}
-            Expenses:Financial:Commission      13.95 USD
+        2018-10-31 * "Sold Short 23 MSFT @ 106.935"
+          Assets:TDA:Main:Cash            2452.53 USD
+          Assets:TDA:Main:MSFT                -23 MSFT {106.935 # 6.90 USD}
+          Expenses:Financial:Commission      13.95 USD
         """
-        self.check(entries[-1], {
-            'USD': (False, """
+        self.check(
+            entries[-1],
+            {
+                "USD": (
+                    False,
+                    """
               2018-10-31 * "Sold Short 23 MSFT @ 106.935"
                 Assets:TDA:Main:Cash            2452.53 USD
                 Assets:TDA:Main:MSFT                -23 MSFT {107.235 USD}
                 Expenses:Financial:Commission      13.95 USD
-            """, None)}, options_map=options_map)
+            """,
+                    None,
+                )
+            },
+            options_map=options_map,
+        )
 
 
 class TestComputeCostNumber(unittest.TestCase):
-
     date = datetime.date(2016, 1, 1)
 
     def test_missing_per(self):
         self.assertEqual(
             None,
             bf.compute_cost_number(
-                position.CostSpec(MISSING, D('1'), 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(MISSING, D("1"), "USD", None, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_missing_total(self):
         self.assertEqual(
             None,
             bf.compute_cost_number(
-                position.CostSpec(D('1'), MISSING, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(D("1"), MISSING, "USD", None, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_both_none(self):
         self.assertEqual(
             None,
             bf.compute_cost_number(
-                position.CostSpec(None, None, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(None, None, "USD", None, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_total_only(self):
         self.assertEqual(
-            D('4'),
+            D("4"),
             bf.compute_cost_number(
-                position.CostSpec(None, D('48'), 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(None, D("48"), "USD", None, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_per_only(self):
         self.assertEqual(
-            D('4'),
+            D("4"),
             bf.compute_cost_number(
-                position.CostSpec(D('4'), None, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(D("4"), None, "USD", None, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_both(self):
         self.assertEqual(
-            D('3.5'),
+            D("3.5"),
             bf.compute_cost_number(
-                position.CostSpec(D('3'), D('6'), 'USD', self.date, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(D("3"), D("6"), "USD", self.date, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_no_currency(self):
         self.assertEqual(
-            D('3.5'),
+            D("3.5"),
             bf.compute_cost_number(
-                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(D("3"), D("6"), None, self.date, None, False),
+                amount.from_string("12 HOOL"),
+            ),
+        )
 
     def test_negative_numbers(self):
         self.assertEqual(
-            D('3.5'),
+            D("3.5"),
             bf.compute_cost_number(
-                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
-                amount.from_string('-12 HOOL')))
+                position.CostSpec(D("3"), D("6"), None, self.date, None, False),
+                amount.from_string("-12 HOOL"),
+            ),
+        )
 
 
 class TestParseBookingOptions(cmptest.TestCase):
-
     @loader.load_doc()
     def test_booking_method__strict(self, entries, _, options_map):
         """
-          option "booking_method" "STRICT"
+        option "booking_method" "STRICT"
         """
         self.assertEqual(Booking.STRICT, options_map["booking_method"])
 
     @loader.load_doc()
     def test_booking_method__average(self, entries, _, options_map):
         """
-          option "booking_method" "AVERAGE"
+        option "booking_method" "AVERAGE"
         """
         self.assertEqual(Booking.AVERAGE, options_map["booking_method"])
 
     @loader.load_doc(expect_errors=True)
     def test_booking_method__invalid(self, _, errors, options_map):
         """
-          option "booking_method" "XXX"
+        option "booking_method" "XXX"
         """
         self.assertEqual(1, len(errors))
-        self.assertEqual(Booking.STRICT,
-                         options_map["booking_method"])
+        self.assertEqual(Booking.STRICT, options_map["booking_method"])
 
 
 # Base class and helpers for writing booking tests.
@@ -1084,6 +1375,7 @@ class TestParseBookingOptions(cmptest.TestCase):
 # follows is a helper base class for these tests.
 
 _UNSET = object()
+
 
 def find_first_with_tag(tag, entries, default=_UNSET):
     """Return the first entry matching the given tag."""
@@ -1103,13 +1395,16 @@ def find_first_with_tag(tag, entries, default=_UNSET):
 @test_utils.nottest
 def book_test(method):
     "A decorator factory for all booking tests. This calls _book() below."
+
     def decorator(func):
         @parser.parse_doc(allow_incomplete=True)
         @functools.wraps(func)
         def wrapper(self, entries, unused_errors, options_map):
             self._book(entries, options_map, method)
             return func(self, entries, options_map)
+
         return wrapper
+
     return decorator
 
 
@@ -1128,14 +1423,16 @@ class _BookingTestBase(unittest.TestCase):
     maxDiff = 8192
 
     # A set of the valid tags on transactions.
-    VALID_TAGS = {'ante',
-                  'ex',
-                  'apply',
-                  'booked',
-                  'ambi-matches',
-                  'ambi-resolved',
-                  'reduced',
-                  'print'}
+    VALID_TAGS = {
+        "ante",
+        "ex",
+        "apply",
+        "booked",
+        "ambi-matches",
+        "ambi-resolved",
+        "reduced",
+        "print",
+    }
 
     def _book(self, entries, options_map, method):
         """Test a call to book a particular scenario.
@@ -1200,22 +1497,18 @@ class _BookingTestBase(unittest.TestCase):
             assert entry.tags
             for tag in entry.tags:
                 assert tag in self.VALID_TAGS, tag
-            remaining_meta = set(entry.meta.keys()) - set(['error', 'filename', 'lineno'])
+            remaining_meta = set(entry.meta.keys()) - set(["error", "filename", "lineno"])
             assert not remaining_meta, remaining_meta
 
         # Print all explicitly requested entries.
         for entry in entries:
-            if 'print' in entry.tags:
+            if "print" in entry.tags:
                 printer.print_entry(entry)
 
         # Find all entries with tags.
-        entries_apply = [entry
-                         for entry in entries
-                         if 'apply' in entry.tags]
+        entries_apply = [entry for entry in entries if "apply" in entry.tags]
         assert entries_apply, "Internal error: No 'apply' entries found in test input"
-        entries_other = [entry
-                         for entry in entries
-                         if 'apply' not in entry.tags]
+        entries_other = [entry for entry in entries if "apply" not in entry.tags]
 
         # Dispatch all the entries.
         for entry_apply in entries_apply:
@@ -1228,34 +1521,38 @@ class _BookingTestBase(unittest.TestCase):
 
         # Override the booking method.
         options_map = options_map.copy()
-        options_map['booking_method'] = method
+        options_map["booking_method"] = method
         input_entries = []
 
         # Fetch the 'ante' entry.
-        entry_ante = find_first_with_tag('ante', all_entries, None)
+        entry_ante = find_first_with_tag("ante", all_entries, None)
         if entry_ante:
             input_entries.append(entry_ante)
 
         # Check that the 'apply' entry has a single posting only.
         # assert len(entry_apply.postings) == 1, (
         #     "Internal error: 'apply' entry has more than one posting")
-        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
-            "Accounts don't match for 'apply' entry")
+        assert (
+            len(set(posting.account for posting in entry_apply.postings)) == 1
+        ), "Accounts don't match for 'apply' entry"
         account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 
         # Call the booking routine.
         methods = collections.defaultdict(lambda: method)
-        handle_patch = mock.patch.object(bm, 'handle_ambiguous_matches',
-                                         test_utils.record(bm.handle_ambiguous_matches))
-        reduce_patch = mock.patch.object(bf, 'book_reductions',
-                                         test_utils.record(bf.book_reductions))
+        handle_patch = mock.patch.object(
+            bm, "handle_ambiguous_matches", test_utils.record(bm.handle_ambiguous_matches)
+        )
+        reduce_patch = mock.patch.object(
+            bf, "book_reductions", test_utils.record(bf.book_reductions)
+        )
         with handle_patch as handle_mock, reduce_patch as reduce_mock:
-            book_entries, book_errors, balances = bf._book(input_entries, options_map,
-                                                           methods)
+            book_entries, book_errors, balances = bf._book(
+                input_entries, options_map, methods
+            )
 
         # If requested, check the result of booking.
-        entry_booked = find_first_with_tag('booked', all_entries, None)
+        entry_booked = find_first_with_tag("booked", all_entries, None)
         if entry_booked:
             # Check the output postings and errors.
             self.assertErrors(entry_booked, book_errors)
@@ -1265,18 +1562,18 @@ class _BookingTestBase(unittest.TestCase):
 
         # Check that the resulting inventory balance matches that of the 'ex'
         # entry, if present.
-        entry_ex = find_first_with_tag('ex', all_entries, None)
+        entry_ex = find_first_with_tag("ex", all_entries, None)
         if entry_ex:
             inv_expected = inventory.Inventory()
             for posting in entry_ex.postings:
-                inv_expected.add_amount(posting.units,
-                                        booking.convert_spec_to_cost(
-                                            posting.units, posting.cost))
+                inv_expected.add_amount(
+                    posting.units, booking.convert_spec_to_cost(posting.units, posting.cost)
+                )
             self.assertEqual(inv_expected, balances[account])
 
         # If requested, check the output values to the last call to
         # book_reductions().
-        entry_reduced = find_first_with_tag('reduced', all_entries, None)
+        entry_reduced = find_first_with_tag("reduced", all_entries, None)
         if entry_reduced:
             # Note: If there are multiple currencies in the input entries here
             # this equality may not match.
@@ -1287,8 +1584,8 @@ class _BookingTestBase(unittest.TestCase):
 
         # If requested, check the input and output values to the last call to
         # handle_ambiguous_matches().
-        entry_matches = find_first_with_tag('ambi-matches', all_entries, None)
-        entry_resolved = find_first_with_tag('ambi-resolved', all_entries, None)
+        entry_matches = find_first_with_tag("ambi-matches", all_entries, None)
+        entry_resolved = find_first_with_tag("ambi-resolved", all_entries, None)
         if entry_matches or entry_resolved:
             self.assertEqual(1, len(handle_mock.calls))
             call = handle_mock.calls[-1]
@@ -1298,10 +1595,13 @@ class _BookingTestBase(unittest.TestCase):
             # handle_ambiguous_matches().
             if entry_matches:
                 actual_matches = call.args[2]
-                expected_matches = [Position(posting.units,
-                                             booking.convert_spec_to_cost(
-                                                 posting.units, posting.cost))
-                                    for posting in entry_matches.postings]
+                expected_matches = [
+                    Position(
+                        posting.units,
+                        booking.convert_spec_to_cost(posting.units, posting.cost),
+                    )
+                    for posting in entry_matches.postings
+                ]
                 self.assertEqual(sorted(expected_matches), sorted(actual_matches))
 
             # Convert the list of expected resolved postings to those returned
@@ -1318,7 +1618,7 @@ class _BookingTestBase(unittest.TestCase):
           entry: A Transaction instance, with some metadata.
           errors: A list of actual errors generated.
         """
-        error_regexp = entry.meta.get('error', None)
+        error_regexp = entry.meta.get("error", None)
         if error_regexp:
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, error_regexp)
@@ -1344,27 +1644,30 @@ class _BookingTestBase(unittest.TestCase):
 
         # Optionally convert CostSpec to Cost, removing the flag.
         expected_postings = [
-            posting._replace(meta=None,
-                             flag=None,
-                             cost=(posting.cost
-                                   if posting.flag == 'S' else
-                                   booking.convert_spec_to_cost(
-                                       posting.units, posting.cost)))
-            for posting in expected_postings]
+            posting._replace(
+                meta=None,
+                flag=None,
+                cost=(
+                    posting.cost
+                    if posting.flag == "S"
+                    else booking.convert_spec_to_cost(posting.units, posting.cost)
+                ),
+            )
+            for posting in expected_postings
+        ]
 
         actual_postings = [
-            posting._replace(meta=None,
-                             flag=None)
-            for posting in actual_postings]
+            posting._replace(meta=None, flag=None) for posting in actual_postings
+        ]
 
         # Compare them while maintaining their order.
         self.assertEqual(len(expected_postings), len(actual_postings))
-        for (posting_expected,
-             actual_posting) in zip(expected_postings,
-                                    actual_postings):
-            self.assertEqual(posting_expected, actual_posting,
-                             "Postings don't match:\n{} !=\n{}".format(posting_expected,
-                                                                       actual_posting))
+        for posting_expected, actual_posting in zip(expected_postings, actual_postings):
+            self.assertEqual(
+                posting_expected,
+                actual_posting,
+                "Postings don't match:\n{} !=\n{}".format(posting_expected, actual_posting),
+            )
 
 
 class TestBookAugmentations(_BookingTestBase):
@@ -1428,13 +1731,15 @@ class TestBookAugmentations(_BookingTestBase):
           error: "Failed to categorize posting"
         """
         # Further test what would happen if book_reductions() would be called anyhow.
-        entry = find_first_with_tag('apply', entries)
-        postings, errors = bf.book_reductions(entry, entry.postings,
-                                              {}, _BM(Booking.STRICT))
+        entry = find_first_with_tag("apply", entries)
+        postings, errors = bf.book_reductions(
+            entry, entry.postings, {}, _BM(Booking.STRICT)
+        )
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
-            postings[0].cost)
+            postings[0].cost,
+        )
 
     @book_test(Booking.STRICT)
     def test_augment__from_empty__incomplete_cost__with_currency(self, entries, __):
@@ -1449,17 +1754,18 @@ class TestBookAugmentations(_BookingTestBase):
           S Assets:Account          1 HOOL {USD, 2015-10-01}
         """
         # Further test what would happen if book_reductions() would be called anyhow.
-        entry = find_first_with_tag('apply', entries)
-        postings, errors = bf.book_reductions(entry, entry.postings,
-                                              {}, _BM(Booking.STRICT))
+        entry = find_first_with_tag("apply", entries)
+        postings, errors = bf.book_reductions(
+            entry, entry.postings, {}, _BM(Booking.STRICT)
+        )
         self.assertFalse(errors)
         self.assertEqual(
-            CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
-            postings[0].cost)
+            CostSpec(MISSING, None, "USD", datetime.date(2015, 10, 1), None, False),
+            postings[0].cost,
+        )
 
 
 class TestBookReductions(_BookingTestBase):
-
     # Test that reductions with no cost basis are left alone.
     @book_test(Booking.STRICT)
     def test_reduce__no_cost(self, _, __):
@@ -1751,9 +2057,7 @@ class TestBookReductions(_BookingTestBase):
         """
 
 
-
 class TestHasSelfReductions(cmptest.TestCase):
-
     BM = collections.defaultdict(lambda: Booking.STRICT)
 
     @loader.load_doc()
@@ -1829,7 +2133,7 @@ class TestHasSelfReductions(cmptest.TestCase):
         """
         self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
 
-    @unittest.skip('Disabled until we can support total self-redux with replacement')
+    @unittest.skip("Disabled until we can support total self-redux with replacement")
     @loader.load_doc()
     def test_has_self_reductions__total_replacement(self, entries, _, __):
         """
@@ -1851,12 +2155,11 @@ class TestHasSelfReductions(cmptest.TestCase):
           Assets:Account      -10 GOOGL {}
         """
         methods = self.BM.copy()
-        methods['Assets:Account'] = Booking.NONE
+        methods["Assets:Account"] = Booking.NONE
         self.assertFalse(bf.has_self_reduction(entries[-1].postings, methods))
 
 
 class TestBookReductionsSelf(_BookingTestBase):
-
     @book_test(Booking.STRICT)
     def test_reduce__augment_and_reduce_with_empty_balance(self, _, errors):
         """
@@ -1874,7 +2177,7 @@ class TestBookReductionsSelf(_BookingTestBase):
         # that both postings will be detected as augmentations. The matching
         # code should be modified for this to trigger an error.
 
-    @unittest.skip('Disabled until self-reduction is supported')
+    @unittest.skip("Disabled until self-reduction is supported")
     @book_test(Booking.STRICT)
     def test_reduce__augment_and_reduce_with_empty_balance__matching_pos(self, _, __):
         """
@@ -1891,7 +2194,7 @@ class TestBookReductionsSelf(_BookingTestBase):
           Assets:Account            2 HOOL {115.00 USD}
         """
 
-    @unittest.skip('Disabled until self-reduction is supported')
+    @unittest.skip("Disabled until self-reduction is supported")
     @book_test(Booking.STRICT)
     def test_reduce__augment_and_reduce_with_empty_balance__matching_neg(self, _, __):
         """
@@ -1908,7 +2211,7 @@ class TestBookReductionsSelf(_BookingTestBase):
           Assets:Account           -2 HOOL {115.00 USD}
         """
 
-    @unittest.skip('Disabled until self-reduction is supported')
+    @unittest.skip("Disabled until self-reduction is supported")
     @book_test(Booking.STRICT)
     def test_reduce__augment_and_reduce_with_non_empty_balance(self, _, __):
         """
@@ -1929,7 +2232,6 @@ class TestBookReductionsSelf(_BookingTestBase):
 
 
 class TestBookAmbiguous(_BookingTestBase):
-
     @book_test(Booking.FIFO)
     def test_ambiguous__NONE__matching_existing1(self, _, __):
         """
@@ -2092,7 +2394,6 @@ class TestBookAmbiguous(_BookingTestBase):
 
 
 class TestBookAmbiguousFIFO(_BookingTestBase):
-
     @book_test(Booking.FIFO)
     def test_ambiguous__FIFO__no_match_against_any_lots(self, _, __):
         """
@@ -2249,7 +2550,6 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
 
 
 class TestBookAmbiguousLIFO(_BookingTestBase):
-
     @book_test(Booking.LIFO)
     def test_ambiguous__LIFO__no_match_against_any_lots(self, _, __):
         """
@@ -2405,9 +2705,8 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
-@unittest.skip('Booking.AVERAGE is disabled.')
+@unittest.skip("Booking.AVERAGE is disabled.")
 class _TestBookAmbiguousAVERAGE(_BookingTestBase):
-
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__trivial1(self, _, __):
         """
@@ -2548,8 +2847,6 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
         2015-06-01 * #booked #reduced
           error: "Not enough lots to reduce"
         """
-
-
 
     # Tests with mixed currencies. These should fail if the match is at all
     # ambiguous.
@@ -2707,7 +3004,6 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
 
 class TestBasicBooking(_BookingTestBase):
-
     @book_test(Booking.STRICT)
     def test_augment__at_cost__same_date(self, _, __):
         """
@@ -2758,18 +3054,21 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
 
+
 class TestBookingApi(unittest.TestCase):
     def test_book_single(self):
-        txn = data.Transaction(data.new_metadata(__file__, 0),
-                               datetime.date(2018, 12, 31),
-                               '*',
-                               'Payee',
-                               'Narration',
-                               None,
-                               None,
-                               [])
-        data.create_simple_posting(txn, 'Assets:Cash', 100.00, 'USD')
-        data.create_simple_posting(txn, 'Expenses:Stuff', None, None)
+        txn = data.Transaction(
+            data.new_metadata(__file__, 0),
+            datetime.date(2018, 12, 31),
+            "*",
+            "Payee",
+            "Narration",
+            None,
+            None,
+            [],
+        )
+        data.create_simple_posting(txn, "Assets:Cash", 100.00, "USD")
+        data.create_simple_posting(txn, "Expenses:Stuff", None, None)
         for method in Booking:
             methods = collections.defaultdict(lambda m=method: m)
             entries, errors = bf.book([txn], options.OPTIONS_DEFAULTS.copy(), methods)
@@ -2780,29 +3079,23 @@ class TestBookingApi(unittest.TestCase):
             self.assertEqual(len(entry.postings), 2)
             self.assertEqual(entry.postings[0], txn.postings[0])
             self.assertNotEqual(entry.postings[1], txn.postings[1])
-            self.assertEqual(entry.postings[1].account, 'Expenses:Stuff')
-            self.assertEqual(entry.postings[1].units, A('-100.00 USD'))
+            self.assertEqual(entry.postings[1].account, "Expenses:Stuff")
+            self.assertEqual(entry.postings[1].units, A("-100.00 USD"))
 
 
 # FIXME: TODO - Rewrite these tests. See average_test.py.
 class TestBook(unittest.TestCase):
-
-    def book_reductions(self, entries, currency='USD'):
+    def book_reductions(self, entries, currency="USD"):
         balances = collections.defaultdict(inventory.Inventory)
         methods = collections.defaultdict(lambda: Booking.STRICT)
         for entry in entries:
-            (booked_postings,
-             booked_errors) = bf.book_reductions(entry,
-                                                 entry.postings,
-                                                 balances,
-                                                 methods)
+            (booked_postings, booked_errors) = bf.book_reductions(
+                entry, entry.postings, balances, methods
+            )
             tolerances = {}
-            (inter_postings,
-             inter_errors,
-             interpolated) = bf.interpolate_group(booked_postings,
-                                                  balances,
-                                                  currency,
-                                                  tolerances)
+            (inter_postings, inter_errors, interpolated) = bf.interpolate_group(
+                booked_postings, balances, currency, tolerances
+            )
             for posting in inter_postings:
                 balances[posting.account].add_position(posting)
 
@@ -2825,15 +3118,24 @@ class TestBook(unittest.TestCase):
           Assets:Other          -204.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}, '
-                           '2 HOOL {101.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('101.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-204.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {101.00 USD, 2015-10-01}"),
+            balances["Assets:Account1"],
+        )
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("2 HOOL"),
+                    Cost(D("101.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("-204.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_currency(self, entries, _, __):
@@ -2847,15 +3149,24 @@ class TestBook(unittest.TestCase):
           Assets:Other          -200.00 CAD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}, '
-                           '2 HOOL {100.00 CAD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('100.00'), 'CAD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-200.00 CAD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {100.00 CAD, 2015-10-01}"),
+            balances["Assets:Account1"],
+        )
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("2 HOOL"),
+                    Cost(D("100.00"), "CAD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("-200.00 CAD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_label(self, entries, _, __):
@@ -2869,15 +3180,27 @@ class TestBook(unittest.TestCase):
           Assets:Other          -200.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}, '
-                           '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), "lot1"),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(
+            I(
+                "1 HOOL {100.00 USD, 2015-10-01}, "
+                '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'
+            ),
+            balances["Assets:Account1"],
+        )
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("2 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), "lot1"),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("-200.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__no_cost(self, entries, _, __):
@@ -2891,8 +3214,7 @@ class TestBook(unittest.TestCase):
           Assets:Other2            1 USD
         """
         _, balances = self.book_reductions(entries)
-        self.assertEqual(I('9 USD'),
-                         balances['Assets:Account1'])
+        self.assertEqual(I("9 USD"), balances["Assets:Account1"])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_cost(self, entries, _, __):
@@ -2906,14 +3228,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        100.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('2 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-1 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("2 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__any_spec(self, entries, _, __):
@@ -2927,14 +3256,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        100.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('2 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-1 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("2 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_cost__per(self, entries, _, __):
@@ -2948,14 +3284,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        100.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('2 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-1 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("2 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_cost__total(self, entries, _, __):
@@ -2969,14 +3312,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        200.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-2 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('200.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("1 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-2 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("200.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_currency(self, entries, _, __):
@@ -2990,14 +3340,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        100.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('2 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-1 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("2 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_date(self, entries, _, __):
@@ -3011,14 +3368,21 @@ class TestBook(unittest.TestCase):
           Assets:Other        100.00 USD
         """
         postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('2 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('-1 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+        self.assertEqual(I("2 HOOL {100.00 USD, 2015-10-01}"), balances["Assets:Account1"])
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), None),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_label(self, entries, _, __):
@@ -3034,15 +3398,23 @@ class TestBook(unittest.TestCase):
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
             I('2 HOOL {100.00 USD, 2015-10-01, "6e425dd7b820"}'),
-            balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting(
-                'Assets:Account1', A('-1 HOOL'),
-                Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), "6e425dd7b820"),
-                None, None, None),
-            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
-            ], postings)
+            balances["Assets:Account1"],
+        )
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(D("100.00"), "USD", datetime.date(2015, 10, 1), "6e425dd7b820"),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

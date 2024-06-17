@@ -2,6 +2,7 @@
 """
 Install script for beancount.
 """
+
 __copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -23,9 +24,7 @@ from setuptools import setup, find_packages, Extension
 # file to the PYTHONPATH directly because it contains a 'parser' module and that
 # overrides the stdlib 'parser' module which is used by setuptools, and causes a
 # subtle bug. That's why I import this utility directly from path).
-hashsrc = runpy.run_path(
-    path.join(path.dirname(__file__), "beancount/parser/hashsrc.py")
-)
+hashsrc = runpy.run_path(path.join(path.dirname(__file__), "beancount/parser/hashsrc.py"))
 hash_parser_source_files = hashsrc["hash_parser_source_files"]
 
 
@@ -103,86 +102,77 @@ setup(
         automate the conversion of external data into one's input file in
         Beancount syntax.
     """,
-
     license="GNU GPLv2 only",
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
     download_url="https://github.com/beancount/beancount",
-    packages=find_packages(exclude=['experiments*', ]),
-
-    package_data = {
-        'beancount': ['VERSION'],
-        'beancount.web': ['*.ico',
-                          '*.html',
-                          '*.css',
-                          'third_party/*.js'],
-        'beancount.reports': ['*.html'],
-        'beancount.utils.file_type_testdata': ['*'],
+    packages=find_packages(
+        exclude=[
+            "experiments*",
+        ]
+    ),
+    package_data={
+        "beancount": ["VERSION"],
+        "beancount.web": ["*.ico", "*.html", "*.css", "third_party/*.js"],
+        "beancount.reports": ["*.html"],
+        "beancount.utils.file_type_testdata": ["*"],
     },
-
-    ext_modules = [
-        Extension("beancount.parser._parser",
-                  include_dirs=["."],
-                  sources=[
-                      "beancount/parser/decimal.c",
-                      "beancount/parser/lexer.c",
-                      "beancount/parser/grammar.c",
-                      "beancount/parser/parser.c",
-                      "beancount/parser/tokens.c",
-                  ],
-                  define_macros=[
-                      ('BEANCOUNT_VERSION', version),
-                      ('VC_CHANGESET', vc_changeset),
-                      ('VC_TIMESTAMP', int(float(vc_timestamp))),
-                      ('PARSER_SOURCE_HASH', hash_parser_source_files())],
-                  extra_compile_args=get_cflags()),
+    ext_modules=[
+        Extension(
+            "beancount.parser._parser",
+            include_dirs=["."],
+            sources=[
+                "beancount/parser/decimal.c",
+                "beancount/parser/lexer.c",
+                "beancount/parser/grammar.c",
+                "beancount/parser/parser.c",
+                "beancount/parser/tokens.c",
+            ],
+            define_macros=[
+                ("BEANCOUNT_VERSION", version),
+                ("VC_CHANGESET", vc_changeset),
+                ("VC_TIMESTAMP", int(float(vc_timestamp))),
+                ("PARSER_SOURCE_HASH", hash_parser_source_files()),
+            ],
+            extra_compile_args=get_cflags(),
+        ),
     ],
-
-    install_requires = [
+    install_requires=[
         # We use dateutil for timezone database definitions. See this
         # article for context: https://assert.cc/posts/dateutil-preferred/
         "python-dateutil",
-
         # The SQL parser uses PLY in order to parse the input syntax.
         "ply",
-
         # The bean-web web application is built on top of this web
         # framework.
         "bottle",
-
         # This XML parsing library is mainly required to web scrape the
         # bean-web pages for testing.
         "lxml",
-
         # This library is needed to parse XML files (for the OFX examples).
-        'beautifulsoup4',
-
+        "beautifulsoup4",
         # This library is needed to identify the character set of a file for
         # import, in order to read its contents and match expressions
         # against it.
         "chardet",
-
         # This library is needed to make requests for price sources.
         "requests",
-
         # This library is used to download and convert the documentation
         # programmatically and to upload lists of holdings to a Google
         # Spreadsheet for live intra-day monitoring.
         "google-api-python-client",
-
         # This library is needed to identify the type of a file for
         # import. It uses ctypes to wrap the libmagic library which is
         # not generally available on Windows nor is easily installed,
         # thus the conditional dependency.
         "python-magic>=0.4.12; sys_platform != 'win32'",
     ],
-
-    extras_require = {
+    extras_require={
         "test": [
             "pytest",
         ],
-        "examples" : [
+        "examples": [
             # pdfminer.six is a maintaned fork of pdfminer. pdfminer
             # maintenance stopped in 2020. There exists also a
             # pdfminer2 project, which seems to be a fork of
@@ -191,28 +181,26 @@ setup(
             "pdfminer-six",
         ],
     },
-
-    entry_points = {
-        'console_scripts': [
-            'bean-bake = beancount.scripts.bake:main',
-            'bean-check = beancount.scripts.check:main',
-            'bean-doctor = beancount.scripts.doctor:main',
-            'bean-example = beancount.scripts.example:main',
-            'bean-format = beancount.scripts.format:main',
-            'bean-price = beancount.prices.price:main',
-            'bean-query = beancount.query.shell:main',
-            'bean-report = beancount.reports.report:main',
-            'bean-sql = beancount.scripts.sql:main',
-            'bean-web = beancount.web.web:main',
-            'bean-identify = beancount.ingest.scripts_utils:identify_main',
-            'bean-extract = beancount.ingest.scripts_utils:extract_main',
-            'bean-file = beancount.ingest.scripts_utils:file_main',
-            'treeify = beancount.tools.treeify:main',
-            'upload-to-sheets = beancount.tools.sheets_upload:main',
+    entry_points={
+        "console_scripts": [
+            "bean-bake = beancount.scripts.bake:main",
+            "bean-check = beancount.scripts.check:main",
+            "bean-doctor = beancount.scripts.doctor:main",
+            "bean-example = beancount.scripts.example:main",
+            "bean-format = beancount.scripts.format:main",
+            "bean-price = beancount.prices.price:main",
+            "bean-query = beancount.query.shell:main",
+            "bean-report = beancount.reports.report:main",
+            "bean-sql = beancount.scripts.sql:main",
+            "bean-web = beancount.web.web:main",
+            "bean-identify = beancount.ingest.scripts_utils:identify_main",
+            "bean-extract = beancount.ingest.scripts_utils:extract_main",
+            "bean-file = beancount.ingest.scripts_utils:file_main",
+            "treeify = beancount.tools.treeify:main",
+            "upload-to-sheets = beancount.tools.sheets_upload:main",
         ]
     },
-
-    python_requires='>=3.7',
+    python_requires=">=3.7",
 )
 
 

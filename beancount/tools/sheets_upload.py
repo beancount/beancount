@@ -40,6 +40,7 @@ Moreover, you will need to enable the Google Sheets API in the developer console
 and download the Client Secrets that Google provides to ~/.google-apis.json. (You
 can override this location with the GOOGLE_APIS environment variable.)
 """
+
 __copyright__ = "Copyright (C) 2013-2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -62,17 +63,20 @@ from googleapiclient import errors
 
 # The name of a sheet left as the unique sheet temporarily, while creating a new
 # spreadsheet.
-EMPTY_SHEET_TITLE = '__EMPTY__'
+EMPTY_SHEET_TITLE = "__EMPTY__"
 
 
-def get_credentials(scopes: List[str],
-                    secrets_filename: Optional[str] = None,
-                    storage_filename: Optional[str] = None):
+def get_credentials(
+    scopes: List[str],
+    secrets_filename: Optional[str] = None,
+    storage_filename: Optional[str] = None,
+):
     """Authenticate via oauth2 and return credentials."""
 
-    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+    logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
     import __main__  # pylint: disable=import-outside-toplevel
+
     cache_dir = path.expanduser(path.join("~/.google", path.basename(__main__.__file__)))
     if secrets_filename is None:
         secrets_filename = "{}.json".format(cache_dir)
@@ -86,24 +90,23 @@ def get_credentials(scopes: List[str],
         # Process service account flow.
         # pylint: disable=import-outside-toplevel
         import google.oauth2.service_account as sa
-        credentials = sa.Credentials.from_service_account_info(
-            secrets_info, scopes=scopes)
+
+        credentials = sa.Credentials.from_service_account_info(secrets_info, scopes=scopes)
     else:
         # Process OAuth flow.
         credentials = None
         if path.exists(storage_filename):
-            with open(storage_filename, 'rb') as token:
+            with open(storage_filename, "rb") as token:
                 credentials = pickle.load(token)
         # If there are no (valid) credentials available, let the user log in.
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(grequests.Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    secrets_filename, scopes)
+                flow = InstalledAppFlow.from_client_secrets_file(secrets_filename, scopes)
                 credentials = flow.run_console()
             # Save the credentials for the next run
-            with open(storage_filename, 'wb') as token:
+            with open(storage_filename, "wb") as token:
                 pickle.dump(credentials, token)
 
     return credentials
@@ -154,7 +157,7 @@ def get_alpha_column(column):
     while column >= 0:
         letters.append(string.ascii_uppercase[column % 26])
         column = column // 26 - 1
-    return ''.join(reversed(letters))
+    return "".join(reversed(letters))
 
 
 def sheet_range(nrows, ncols, title=None):
@@ -168,9 +171,9 @@ def sheet_range(nrows, ncols, title=None):
       A string representing the full range of this sheet.
     """
     if title is None:
-        return 'A1:{}{}'.format(get_alpha_column(ncols-1), nrows)
+        return "A1:{}{}".format(get_alpha_column(ncols - 1), nrows)
     else:
-        return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
+        return "{}!A1:{}{}".format(title, get_alpha_column(ncols - 1), nrows)
 
 
 def create_doc(service):
@@ -185,9 +188,12 @@ def create_doc(service):
       A string, the id of the spreadsheet drive document. Something that
       looks like '1xcCjHM-Tjvkwq3R5NuHCv0dGj1ubo0Y09DfGn8HRMLY'.
     """
-    resp = service.spreadsheets().create(body={
-        'sheets': {'properties': {'title': EMPTY_SHEET_TITLE}}}).execute()
-    return resp['spreadsheetId']
+    resp = (
+        service.spreadsheets()
+        .create(body={"sheets": {"properties": {"title": EMPTY_SHEET_TITLE}}})
+        .execute()
+    )
+    return resp["spreadsheetId"]
 
 
 class Doc:
@@ -200,12 +206,14 @@ class Doc:
 
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
-        requests = [{'deleteSheet': {'sheetId': sheet_id}}
-                    for title, sheet_id in self.get_sheets()
-                    if title == EMPTY_SHEET_TITLE]
+        requests = [
+            {"deleteSheet": {"sheetId": sheet_id}}
+            for title, sheet_id in self.get_sheets()
+            if title == EMPTY_SHEET_TITLE
+        ]
         self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
+            spreadsheetId=self.docid, body={"requests": requests}
+        ).execute()
 
     def get_sheets(self):
         """Get the sheet titles and ids of the given spreadsheet.
@@ -215,8 +223,10 @@ class Doc:
           the document.
         """
         resp = self.service.spreadsheets().get(spreadsheetId=self.docid).execute()
-        return [(sheet['properties']['title'], sheet['properties']['sheetId'])
-                for sheet in resp['sheets']]
+        return [
+            (sheet["properties"]["title"], sheet["properties"]["sheetId"])
+            for sheet in resp["sheets"]
+        ]
 
     def add_sheet(self, title):
         """Create a new sheet in an existing doc.
@@ -228,11 +238,13 @@ class Doc:
         """
         # Note: the 'index' options appears not to work. It always prepends at
         # the beginning of the sheets list.
-        requests = [{'addSheet': {'properties': {'title': title}}}]
-        resp = self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
-        return resp['replies'][0]['addSheet']['properties']['sheetId']
+        requests = [{"addSheet": {"properties": {"title": title}}}]
+        resp = (
+            self.service.spreadsheets()
+            .batchUpdate(spreadsheetId=self.docid, body={"requests": requests})
+            .execute()
+        )
+        return resp["replies"][0]["addSheet"]["properties"]["sheetId"]
 
     def get_sheet_size(self, title):
         """Get the size of a spreadsheet.
@@ -242,11 +254,13 @@ class Doc:
         Returns:
           A pair of (num-rows, num-columns) integers, the size of the sheet.
         """
-        resp = self.service.spreadsheets().get(
-            spreadsheetId=self.docid,
-            ranges=title).execute()
-        grid_props = resp['sheets'][0]['properties']['gridProperties']
-        return (grid_props['rowCount'], grid_props['columnCount'])
+        resp = (
+            self.service.spreadsheets()
+            .get(spreadsheetId=self.docid, ranges=title)
+            .execute()
+        )
+        grid_props = resp["sheets"][0]["properties"]["gridProperties"]
+        return (grid_props["rowCount"], grid_props["columnCount"])
 
     def clear_sheet(self, title, nrowcols=None):
         """Clear the sheet.
@@ -261,10 +275,12 @@ class Doc:
         else:
             nrows, ncols = nrowcols
         srange = sheet_range(nrows, ncols, title)
-        resp = self.service.spreadsheets().values().clear(
-            spreadsheetId=self.docid,
-            range=srange,
-            body={}).execute()
+        resp = (
+            self.service.spreadsheets()
+            .values()
+            .clear(spreadsheetId=self.docid, range=srange, body={})
+            .execute()
+        )
 
     def resize_sheet(self, sheet_id, title, nrows, ncols):
         """Update the size of a sheet.
@@ -275,16 +291,21 @@ class Doc:
           nrows: An integer, the number of rows to resize to.
           ncols: An integer, the number of columns to resize to.
         """
-        requests = [{'updateSheetProperties': {
-            'properties': {
-                'sheetId': sheet_id,
-                'title': title,  # Required, unfortunately.
-                'gridProperties': {'rowCount': nrows,
-                                   'columnCount': ncols}},
-            'fields': 'gridProperties(rowCount, columnCount)'}}]
+        requests = [
+            {
+                "updateSheetProperties": {
+                    "properties": {
+                        "sheetId": sheet_id,
+                        "title": title,  # Required, unfortunately.
+                        "gridProperties": {"rowCount": nrows, "columnCount": ncols},
+                    },
+                    "fields": "gridProperties(rowCount, columnCount)",
+                }
+            }
+        ]
         self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
+            spreadsheetId=self.docid, body={"requests": requests}
+        ).execute()
 
     def auto_resize_sheet(self, sheet_id):
         """Auto-resize the spreadsheet based on the current data in it.
@@ -292,12 +313,16 @@ class Doc:
         Args:
           sheet_id: An integer, the id of the sheet in the doc.
         """
-        requests = [{'autoResizeDimensions': {
-            'dimensions': {'sheetId': sheet_id,
-                           'dimension': 'COLUMNS'}}}]
+        requests = [
+            {
+                "autoResizeDimensions": {
+                    "dimensions": {"sheetId": sheet_id, "dimension": "COLUMNS"}
+                }
+            }
+        ]
         self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
+            spreadsheetId=self.docid, body={"requests": requests}
+        ).execute()
 
     def update_sheet(self, sheet_id, title, filename):
         """Clear and replace the data in a sheet with that of a file.
@@ -308,7 +333,7 @@ class Doc:
           filename: A string, the path to the CSV filename to load and upload.
         """
         # Load the CSV file into an array of rows.
-        with open(filename, 'r', encoding='utf-8') as csvfile:
+        with open(filename, "r", encoding="utf-8") as csvfile:
             rows = list(csv.reader(csvfile))
 
         nrows = len(rows)
@@ -332,12 +357,17 @@ class Doc:
         # the values would be an improvement and allow for much more control over
         # the formatting of numbers. It would be better not to use USER_ENTERED.
         srange = sheet_range(nrows, ncols, title)
-        resp = self.service.spreadsheets().values().update(
-            spreadsheetId=self.docid,
-            range=srange,
-            valueInputOption='USER_ENTERED',
-            body={'range': srange,
-                  'values': rows}).execute()
+        resp = (
+            self.service.spreadsheets()
+            .values()
+            .update(
+                spreadsheetId=self.docid,
+                range=srange,
+                valueInputOption="USER_ENTERED",
+                body={"range": srange, "values": rows},
+            )
+            .execute()
+        )
 
         # Make sure the newly created sheet looks good by default, by sizing the
         # columns to fit the newly updated data.
@@ -349,59 +379,91 @@ class Doc:
         Args:
           doctitle: A string, the name of the document.
         """
-        requests = [{'updateSpreadsheetProperties': {
-            'properties': {'title': doctitle},
-            'fields': 'title'}}]
+        requests = [
+            {
+                "updateSpreadsheetProperties": {
+                    "properties": {"title": doctitle},
+                    "fields": "title",
+                }
+            }
+        ]
         self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
+            spreadsheetId=self.docid, body={"requests": requests}
+        ).execute()
 
 
 def _main():
-    parser = argparse.ArgumentParser(description=__doc__.strip(),
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__.strip(), formatter_class=argparse.RawTextHelpFormatter
+    )
 
-    parser.add_argument('filenames', nargs='*', action='store',
-                        help=("CSV filenames[:name] to upload. "
-                              "If 'name' is not provided, infer from the filename."))
+    parser.add_argument(
+        "filenames",
+        nargs="*",
+        action="store",
+        help=(
+            "CSV filenames[:name] to upload. "
+            "If 'name' is not provided, infer from the filename."
+        ),
+    )
 
-    parser.add_argument('--docid', '--doc', '--id', '-d', dest='docid', action='store',
-                        help="Spreadsheets doc id to update")
+    parser.add_argument(
+        "--docid",
+        "--doc",
+        "--id",
+        "-d",
+        dest="docid",
+        action="store",
+        help="Spreadsheets doc id to update",
+    )
 
-    parser.add_argument('--title', '-t', action='store', dest='doctitle',
-                        help="Set or update the spreadsheet's title")
+    parser.add_argument(
+        "--title",
+        "-t",
+        action="store",
+        dest="doctitle",
+        help="Set or update the spreadsheet's title",
+    )
 
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        help="Print out the log")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Print out the log")
 
-    parser.add_argument('--min-rows', action='store', type=int, default=0,
-                        help=("Minimum number rows to resize uploaded sheet to. "
-                              "This is useful when another sheet feeds from the uploaded "
-                              "one, which otherwise automatically renumbers its "
-                              "references to rows beyond it if they existed, to avoid "
-                              "most such resizing woes."))
+    parser.add_argument(
+        "--min-rows",
+        action="store",
+        type=int,
+        default=0,
+        help=(
+            "Minimum number rows to resize uploaded sheet to. "
+            "This is useful when another sheet feeds from the uploaded "
+            "one, which otherwise automatically renumbers its "
+            "references to rows beyond it if they existed, to avoid "
+            "most such resizing woes."
+        ),
+    )
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
-                        format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(
+        level=logging.INFO if args.verbose else logging.WARNING,
+        format="%(levelname)-8s: %(message)s",
+    )
 
     # Parse out the doc id, in case the user provided a full URL.
     if args.docid:
-        match = re.match('https://docs.google.com/spreadsheets/d/([^/]+)(/|$)', args.docid)
+        match = re.match("https://docs.google.com/spreadsheets/d/([^/]+)(/|$)", args.docid)
         if match:
             args.docid = match.group(1)
 
     # Discover the service.
-    creds = get_credentials('https://www.googleapis.com/auth/spreadsheets')
-    url = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
-    service = discovery.build('sheets', 'v4', credentials=creds)
+    creds = get_credentials("https://www.googleapis.com/auth/spreadsheets")
+    url = "https://sheets.googleapis.com/$discovery/rest?version=v4"
+    service = discovery.build("sheets", "v4", credentials=creds)
 
     # Figure out what the name mappings should be, from the filenames (or
     # explicitly).
     new_sheets = []
     for filename in args.filenames:
-        match = re.match('(.*):(.*)$', filename)
+        match = re.match("(.*):(.*)$", filename)
         if match:
             sheet_name, filename = (match.group(1), match.group(2))
             # Support inverted sheets name labels.
@@ -472,5 +534,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

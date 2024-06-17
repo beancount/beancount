@@ -3,6 +3,7 @@
 This is convenient to use in files which have mostly expenses, such as during a trip.
 Set the name of the default account to fill in as an option.
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -13,10 +14,10 @@ from beancount.core import convert
 from beancount.core import data
 from beancount.core import inventory
 
-__plugins__ = ('fill_account',)
+__plugins__ = ("fill_account",)
 
 
-FillAccountError = collections.namedtuple('FillAccountError', 'source message entry')
+FillAccountError = collections.namedtuple("FillAccountError", "source message entry")
 
 
 def fill_account(entries, unused_options_map, insert_account):
@@ -32,9 +33,12 @@ def fill_account(entries, unused_options_map, insert_account):
     """
     if not account.is_valid(insert_account):
         return entries, [
-            FillAccountError(data.new_metadata('<fill_account>', 0),
-                             "Invalid account name: '{}'".format(insert_account),
-                             None)]
+            FillAccountError(
+                data.new_metadata("<fill_account>", 0),
+                "Invalid account name: '{}'".format(insert_account),
+                None,
+            )
+        ]
 
     new_entries = []
     for entry in entries:
@@ -48,8 +52,9 @@ def fill_account(entries, unused_options_map, insert_account):
             inv.reduce(convert.get_units)
             new_postings = list(entry.postings)
             for pos in inv:
-                new_postings.append(data.Posting(insert_account, -pos.units,
-                                                 None, None, None, None))
+                new_postings.append(
+                    data.Posting(insert_account, -pos.units, None, None, None, None)
+                )
             entry = entry._replace(postings=new_postings)
         new_entries.append(entry)
 

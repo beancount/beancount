@@ -15,36 +15,35 @@ from beancount.scripts import bake
 
 
 class TestBakeFunctions(test_utils.TestCase):
-
     def check(self, from_, to_):
         self.assertEqual(to_, bake.normalize_filename(from_))
 
     def test_normalize_directories(self):
         # Index files should become index.
-        self.check('/path/to/dir/', '/path/to/dir/index.html')
+        self.check("/path/to/dir/", "/path/to/dir/index.html")
 
     def test_normalize_normal(self):
         # Files without extensions should become .html
-        self.check('/path/to/file', '/path/to/file.html')
+        self.check("/path/to/file", "/path/to/file.html")
 
     def test_normalize_untouched(self):
         # Existing extensions that shouldn't be touched.
-        self.check('/path/to/file', '/path/to/file.html')
-        self.check('/favicon.ico', '/favicon.ico')
-        self.check('/resources/file.css', '/resources/file.css')
-        self.check('/resources/file.js', '/resources/file.js')
+        self.check("/path/to/file", "/path/to/file.html")
+        self.check("/favicon.ico", "/favicon.ico")
+        self.check("/resources/file.css", "/resources/file.css")
+        self.check("/resources/file.js", "/resources/file.js")
 
     def test_normalize_other(self):
         # Other extensions should become .html.
-        self.check('/path/to/file.csv', '/path/to/file.csv.html')
-        self.check('/path/to/file.png', '/path/to/file.png.html')
-        self.check('/link/tag.pdf', '/link/tag.pdf.html')
+        self.check("/path/to/file.csv", "/path/to/file.csv.html")
+        self.check("/path/to/file.png", "/path/to/file.png.html")
+        self.check("/link/tag.pdf", "/link/tag.pdf.html")
 
     def test_normalize_protected(self):
         # Unless they are in doc or third_party.
-        self.check('/doc/file.csv', '/doc/file.csv')
-        self.check('/resources/file.png', '/resources/file.png')
-        self.check('/third_party/file.csv', '/third_party/file.csv')
+        self.check("/doc/file.csv", "/doc/file.csv")
+        self.check("/resources/file.png", "/resources/file.png")
+        self.check("/third_party/file.csv", "/third_party/file.csv")
 
     test_html = textwrap.dedent("""
       <html>
@@ -78,8 +77,8 @@ class TestBakeFunctions(test_utils.TestCase):
 
     def test_relativize_links(self):
         html = lxml.html.document_fromstring(self.test_html)
-        bake.relativize_links(html, '/path/to/index')
-        contents = lxml.html.tostring(html, method="html").decode('utf8')
+        bake.relativize_links(html, "/path/to/index")
+        contents = lxml.html.tostring(html, method="html").decode("utf8")
         self.assertLines(self.expected_html, contents)
 
     nolinks_html = textwrap.dedent("""
@@ -98,23 +97,23 @@ class TestBakeFunctions(test_utils.TestCase):
 
     def test_remove_links(self):
         html = lxml.html.document_fromstring(self.test_html)
-        bake.remove_links(html, {'/path/to/other',
-                                 '/path/to/sub/child'})
-        contents = lxml.html.tostring(html, method="html").decode('utf8')
+        bake.remove_links(html, {"/path/to/other", "/path/to/sub/child"})
+        contents = lxml.html.tostring(html, method="html").decode("utf8")
         self.assertLines(self.nolinks_html, contents)
 
     def test_save_scraped_document__file(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
             response = mock.MagicMock()
-            response.url = '/path/to/file'
+            response.url = "/path/to/file"
             response.status = 200
-            response.read.return_value = self.test_html.encode('utf8')
-            response.info().get_content_type.return_value = 'text/html'
+            response.read.return_value = self.test_html.encode("utf8")
+            response.info().get_content_type.return_value = "text/html"
 
             bake.save_scraped_document(
-                tmp, response.url, response, response.read.return_value, html, set())
-            filename = path.join(tmp, 'path/to/file.html')
+                tmp, response.url, response, response.read.return_value, html, set()
+            )
+            filename = path.join(tmp, "path/to/file.html")
             self.assertTrue(path.exists(filename))
             self.assertLines(open(filename).read(), self.expected_html)
 
@@ -122,41 +121,42 @@ class TestBakeFunctions(test_utils.TestCase):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
             response = mock.MagicMock()
-            response.url = '/doc/to/'
+            response.url = "/doc/to/"
             response.status = 200
-            response.read.return_value = self.test_html.encode('utf8')
-            response.info().get_content_type.return_value = 'text/html'
+            response.read.return_value = self.test_html.encode("utf8")
+            response.info().get_content_type.return_value = "text/html"
 
             bake.save_scraped_document(
-                tmp, response.url, response, response.read.return_value, html, set())
+                tmp, response.url, response, response.read.return_value, html, set()
+            )
             self.assertEqual([], os.listdir(tmp))
 
     def test_save_scraped_document__binary_content(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
             response = mock.MagicMock()
-            response.url = '/resources/something.png'
+            response.url = "/resources/something.png"
             response.status = 200
-            expected_contents = 'IMAGE!'.encode('utf8')
+            expected_contents = "IMAGE!".encode("utf8")
             response.read.return_value = expected_contents
-            response.info().get_content_type.return_value = 'image/png'
+            response.info().get_content_type.return_value = "image/png"
 
             bake.save_scraped_document(
-                tmp, response.url, response, expected_contents, html, set())
-            actual_contents = open(path.join(tmp, 'resources/something.png'), 'rb').read()
+                tmp, response.url, response, expected_contents, html, set()
+            )
+            actual_contents = open(path.join(tmp, "resources/something.png"), "rb").read()
             self.assertEqual(expected_contents, actual_contents)
 
 
 class TestScriptBake(test_utils.TestCase):
-
     def get_args(self):
-        return ['--quiet', '--port', str(test_utils.get_test_port())]
+        return ["--quiet", "--port", str(test_utils.get_test_port())]
 
     def test_bake_missing_input(self):
         with test_utils.tempdir() as tmpdir:
             with self.assertRaises(SystemExit):
-                output = path.join(tmpdir, 'output')
-                filename = path.join(tmpdir, 'does_not_exist.beancount')
+                output = path.join(tmpdir, "output")
+                filename = path.join(tmpdir, "does_not_exist.beancount")
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, output])
 
     @test_utils.docfile
@@ -171,20 +171,20 @@ class TestScriptBake(test_utils.TestCase):
         """
         with test_utils.tempdir() as tmpdir:
             with self.assertRaises(SystemExit):
-                output = path.join(tmpdir, 'output')
+                output = path.join(tmpdir, "output")
                 os.mkdir(output)
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, output])
 
         with test_utils.tempdir() as tmpdir:
             with self.assertRaises(SystemExit):
-                output = path.join(tmpdir, 'output.tar.gz')
+                output = path.join(tmpdir, "output.tar.gz")
                 os.mkdir(output)
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, output])
 
         with test_utils.tempdir() as tmpdir:
             with self.assertRaises(SystemExit):
-                output = path.join(tmpdir, 'output.tar.gz')
-                open(output, 'w')
+                output = path.join(tmpdir, "output.tar.gz")
+                open(output, "w")
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, output])
 
     @test_utils.docfile
@@ -198,8 +198,8 @@ class TestScriptBake(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            outdir = path.join(tmpdir, 'output')
-            with test_utils.capture('stdout', 'stderr') as (output, _):
+            outdir = path.join(tmpdir, "output")
+            with test_utils.capture("stdout", "stderr") as (output, _):
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, outdir])
             self.assertTrue(output.getvalue())
             self.assertTrue(path.exists(outdir) and path.isdir(outdir))
@@ -208,7 +208,6 @@ class TestScriptBake(test_utils.TestCase):
 
 
 class TestScriptArchive(TestScriptBake):
-
     @test_utils.docfile
     def test_bake_archive__known(self, filename):
         """
@@ -220,16 +219,14 @@ class TestScriptArchive(TestScriptBake):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            archives = ('archive.tar.gz',
-                        'archive.tgz',
-                        'archive.tar.bz2',
-                        'archive.zip')
-            archives = ('archive.zip',)
+            archives = ("archive.tar.gz", "archive.tgz", "archive.tar.bz2", "archive.zip")
+            archives = ("archive.zip",)
             for archive_name in archives:
                 outfile = path.join(tmpdir, archive_name)
-                with test_utils.capture('stdout', 'stderr'):
-                    test_utils.run_with_args(bake.main,
-                                             self.get_args() + [filename, outfile])
+                with test_utils.capture("stdout", "stderr"):
+                    test_utils.run_with_args(
+                        bake.main, self.get_args() + [filename, outfile]
+                    )
                 self.assertFalse(path.exists(file_utils.path_greedy_split(outfile)[0]))
                 self.assertTrue(path.exists(outfile) and path.getsize(outfile) > 0)
 
@@ -244,13 +241,13 @@ class TestScriptArchive(TestScriptBake):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            for archive_name in ('archive.tar.zip',
-                                 'archive.tar.xz'):
+            for archive_name in ("archive.tar.zip", "archive.tar.xz"):
                 with self.assertRaises(SystemExit):
                     outfile = path.join(tmpdir, archive_name)
-                    test_utils.run_with_args(bake.main,
-                                             self.get_args() + [filename, outfile])
+                    test_utils.run_with_args(
+                        bake.main, self.get_args() + [filename, outfile]
+                    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

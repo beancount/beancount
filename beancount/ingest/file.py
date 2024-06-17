@@ -4,6 +4,7 @@ Read an import script and a list of downloaded filenames or directories of
 downloaded files, and for each of those files, move the file under an account
 corresponding to the filing directory.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -49,20 +50,29 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
             account_ = importer.file_account(file)
         except Exception as exc:
             account_ = None
-            logging.exception("Importer %s.file_account() raised an unexpected error: %s",
-                              importer.name(), exc)
+            logging.exception(
+                "Importer %s.file_account() raised an unexpected error: %s",
+                importer.name(),
+                exc,
+            )
         if account_ is not None:
             file_accounts.append(account_)
 
     file_accounts_set = set(file_accounts)
     if not file_accounts_set:
-        logging.error("No account provided by importers: {}".format(
-            ", ".join(imp.name() for imp in importers)))
+        logging.error(
+            "No account provided by importers: {}".format(
+                ", ".join(imp.name() for imp in importers)
+            )
+        )
         return None
 
     if len(file_accounts_set) > 1:
-        logging.warning("Ambiguous accounts from many importers: {}".format(
-            ', '.join(file_accounts_set)))
+        logging.warning(
+            "Ambiguous accounts from many importers: {}".format(
+                ", ".join(file_accounts_set)
+            )
+        )
         # Note: Don't exit; select the first matching importer's account.
 
     file_account = file_accounts.pop(0)
@@ -82,15 +92,16 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     try:
         date = importer.file_date(file)
     except Exception as exc:
-        logging.exception("Importer %s.file_date() raised an unexpected error: %s",
-                          importer.name(), exc)
+        logging.exception(
+            "Importer %s.file_date() raised an unexpected error: %s", importer.name(), exc
+        )
         date = None
     if date is None:
         # Fallback on the last modified time of the file.
         date = mtime_date
-        date_source = 'mtime'
+        date_source = "mtime"
     else:
-        date_source = 'contents'
+        date_source = "contents"
 
     # Apply filename renaming, if implemented.
     # Otherwise clean up the filename.
@@ -100,20 +111,28 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         # Warn the importer implementor if a name is returned and it's an
         # absolute filename.
         if clean_filename and (path.isabs(clean_filename) or os.sep in clean_filename):
-            logging.error(("The importer '%s' file_name() method should return a relative "
-                           "filename; the filename '%s' is absolute or contains path "
-                           "separators"),
-                          importer.name(), clean_filename)
+            logging.error(
+                (
+                    "The importer '%s' file_name() method should return a relative "
+                    "filename; the filename '%s' is absolute or contains path "
+                    "separators"
+                ),
+                importer.name(),
+                clean_filename,
+            )
     except Exception as exc:
-        logging.exception("Importer %s.file_name() raised an unexpected error: %s",
-                          importer.name(), exc)
+        logging.exception(
+            "Importer %s.file_name() raised an unexpected error: %s", importer.name(), exc
+        )
         clean_filename = None
     if clean_filename is None:
         # If no filename has been provided, use the basename.
         clean_filename = path.basename(file.name)
-    elif re.match(r'\d\d\d\d-\d\d-\d\d', clean_filename):
-        logging.error("The importer '%s' file_name() method should not date the "
-                      "returned filename. Implement file_date() instead.")
+    elif re.match(r"\d\d\d\d-\d\d-\d\d", clean_filename):
+        logging.error(
+            "The importer '%s' file_name() method should not date the "
+            "returned filename. Implement file_date() instead."
+        )
 
     # We need a simple filename; remove the directory part if there is one.
     clean_basename = path.basename(clean_filename)
@@ -123,32 +142,34 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         clean_basename = misc_utils.idify(clean_basename)
 
     # Prepend the date prefix.
-    new_filename = '{0:%Y-%m-%d}.{1}'.format(date, clean_basename)
+    new_filename = "{0:%Y-%m-%d}.{1}".format(date, clean_basename)
 
     # Prepend destination directory.
-    new_fullname = path.normpath(path.join(destination,
-                                           file_account.replace(account.sep, os.sep),
-                                           new_filename))
+    new_fullname = path.normpath(
+        path.join(destination, file_account.replace(account.sep, os.sep), new_filename)
+    )
 
     # Print the filename and which modules matched.
     if logfile is not None:
-        logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
-        logfile.write('Account:     {}\n'.format(file_account))
-        logfile.write('Date:        {} (from {})\n'.format(date, date_source))
-        logfile.write('Destination: {}\n'.format(new_fullname))
-        logfile.write('\n')
+        logfile.write("Importer:    {}\n".format(importer.name() if importer else "-"))
+        logfile.write("Account:     {}\n".format(file_account))
+        logfile.write("Date:        {} (from {})\n".format(date, date_source))
+        logfile.write("Destination: {}\n".format(new_fullname))
+        logfile.write("\n")
 
     return new_fullname
 
 
-def file(importer_config,
-         files_or_directories,
-         destination,
-         dry_run=False,
-         mkdirs=False,
-         overwrite=False,
-         idify=False,
-         logfile=None):
+def file(
+    importer_config,
+    files_or_directories,
+    destination,
+    dry_run=False,
+    mkdirs=False,
+    overwrite=False,
+    idify=False,
+    logfile=None,
+):
     """File importable files under a destination directory.
 
     Given an importer configuration object, search for files that can be
@@ -178,9 +199,9 @@ def file(importer_config,
     """
     jobs = []
     has_errors = False
-    for filename, importers in identify.find_imports(importer_config,
-                                                     files_or_directories,
-                                                     logfile):
+    for filename, importers in identify.find_imports(
+        importer_config, files_or_directories, logfile
+    ):
         # If we're debugging, print out the match text.
         # This option is useful when we're building our importer configuration,
         # to figure out which patterns to create as unique signatures.
@@ -215,8 +236,11 @@ def file(importer_config,
         destmap[dest].append(src)
     for dest, sources in destmap.items():
         if len(sources) != 1:
-            logging.error("Collision in destination filenames '{}': from {}.".format(
-                dest, ", ".join(["'{}'".format(source) for source in sources])))
+            logging.error(
+                "Collision in destination filenames '{}': from {}.".format(
+                    dest, ", ".join(["'{}'".format(source) for source in sources])
+                )
+            )
             has_errors = True
 
     # If there are any errors, just don't do anything at all. This is a nicer
@@ -257,24 +281,39 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     os.remove(src_filename)
 
 
-DESCRIPTION = ("Move and rename downloaded files to a documents tree "
-               "mirroring the chart of accounts")
+DESCRIPTION = (
+    "Move and rename downloaded files to a documents tree "
+    "mirroring the chart of accounts"
+)
 
 
 def add_arguments(parser):
     """Add arguments for the extract command."""
 
-    parser.add_argument('-o', '--output', '--output-dir', '--destination',
-                        dest='output_dir', action='store',
-                        help="The root of the documents tree to move the files to.")
+    parser.add_argument(
+        "-o",
+        "--output",
+        "--output-dir",
+        "--destination",
+        dest="output_dir",
+        action="store",
+        help="The root of the documents tree to move the files to.",
+    )
 
-    parser.add_argument('-n', '--dry-run', action='store_true',
-                        help=("Just print where the files would be moved; "
-                              "don't actually move them."))
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help=("Just print where the files would be moved; " "don't actually move them."),
+    )
 
-    parser.add_argument('--no-overwrite', dest='overwrite',
-                        action='store_false', default=True,
-                        help="Don't overwrite destination files with the same name.")
+    parser.add_argument(
+        "--no-overwrite",
+        dest="overwrite",
+        action="store_false",
+        default=True,
+        help="Don't overwrite destination files with the same name.",
+    )
 
 
 def run(args, parser, importers_list, files_or_directories, hooks=None):
@@ -284,20 +323,25 @@ def run(args, parser, importers_list, files_or_directories, hooks=None):
     # the import configuration file is located. (Providing this default seems
     # better than using a required option.)
     if args.output_dir is None:
-        if hasattr(args, 'config'):
+        if hasattr(args, "config"):
             args.output_dir = path.dirname(path.abspath(args.config))
         else:
-            import __main__ # pylint: disable=import-outside-toplevel
+            import __main__  # pylint: disable=import-outside-toplevel
+
             args.output_dir = path.dirname(path.abspath(__main__.__file__))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):
         parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
 
-    file(importers_list, files_or_directories, args.output_dir,
-         dry_run=args.dry_run,
-         mkdirs=True,
-         overwrite=args.overwrite,
-         idify=True,
-         logfile=sys.stdout)
+    file(
+        importers_list,
+        files_or_directories,
+        args.output_dir,
+        dry_run=args.dry_run,
+        mkdirs=True,
+        overwrite=args.overwrite,
+        idify=True,
+        logfile=sys.stdout,
+    )
     return 0

@@ -33,6 +33,7 @@ specific date. You do these conversions using the reduce() method:
   inventory.reduce(convert.get_value, price_map, date)
 
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -58,6 +59,7 @@ ASSERTS_TYPES = False
 
 class Booking(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
+
     # A new lot was created.
     CREATED = 1
     # An existing lot was reduced.
@@ -110,9 +112,8 @@ class Inventory(dict):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        fmt = '({})' if parens else '{}'
-        return fmt.format(
-            ', '.join(pos.to_string(dformat) for pos in sorted(self)))
+        fmt = "({})" if parens else "{}"
+        return fmt.format(", ".join(pos.to_string(dformat) for pos in sorted(self)))
 
     def __str__(self):
         """Render as a human-readable string.
@@ -160,8 +161,7 @@ class Inventory(dict):
                     return False
             small = True
         else:
-            small = not any(abs(position.units.number) > tolerances
-                            for position in self)
+            small = not any(abs(position.units.number) > tolerances for position in self)
         return small
 
     def is_mixed(self):
@@ -191,8 +191,9 @@ class Inventory(dict):
             return False
         for position in self:
             units = position.units
-            if (ramount.currency == units.currency and
-                not same_sign(ramount.number, units.number)):
+            if ramount.currency == units.currency and not same_sign(
+                ramount.number, units.number
+            ):
                 return True
         return False
 
@@ -240,9 +241,7 @@ class Inventory(dict):
         Returns:
           A set of currency strings.
         """
-        return set(cost.currency
-                   for _, cost in self.keys()
-                   if cost is not None)
+        return set(cost.currency for _, cost in self.keys() if cost is not None)
 
     def currency_pairs(self):
         """Return the commodities held in this inventory.
@@ -266,8 +265,9 @@ class Inventory(dict):
         """
         if len(self) > 0:
             if len(self) > 1:
-                raise AssertionError("Inventory has more than one expected "
-                                     "position: {}".format(self))
+                raise AssertionError(
+                    "Inventory has more than one expected " "position: {}".format(self)
+                )
             return next(iter(self))
 
     def get_currency_units(self, currency):
@@ -294,12 +294,11 @@ class Inventory(dict):
         Returns:
           A dict of currency to Inventory instances.
         """
-        per_currency_dict = {currency: Inventory()
-                             for currency in currencies}
+        per_currency_dict = {currency: Inventory() for currency in currencies}
         per_currency_dict[None] = Inventory()
         for position in self:
             currency = position.units.currency
-            key = (currency if currency in currencies else None)
+            key = currency if currency in currencies else None
             per_currency_dict[key].add_position(position)
         return per_currency_dict
 
@@ -313,7 +312,6 @@ class Inventory(dict):
         for position in self:
             per_currency_dict[position.units.currency].add_position(position)
         return dict(per_currency_dict)
-
 
     #
     # Methods to convert an Inventory into another.
@@ -342,32 +340,34 @@ class Inventory(dict):
         """
         groups = collections.defaultdict(list)
         for position in self:
-            key = (position.units.currency,
-                   position.cost.currency if position.cost else None)
+            key = (
+                position.units.currency,
+                position.cost.currency if position.cost else None,
+            )
             groups[key].append(position)
 
         average_inventory = Inventory()
         for (currency, cost_currency), positions in groups.items():
-            total_units = sum(position.units.number
-                              for position in positions)
+            total_units = sum(position.units.number for position in positions)
             # Explicitly skip aggregates when resulting in zero units.
             if total_units == ZERO:
                 continue
             units_amount = Amount(total_units, currency)
 
             if cost_currency:
-                total_cost = sum(convert.get_cost(position).number
-                                 for position in positions)
-                cost_number = (Decimal('Infinity')
-                               if total_units == ZERO
-                               else (total_cost / total_units))
+                total_cost = sum(
+                    convert.get_cost(position).number for position in positions
+                )
+                cost_number = (
+                    Decimal("Infinity")
+                    if total_units == ZERO
+                    else (total_cost / total_units)
+                )
                 min_date = None
                 for pos in positions:
                     pos_date = pos.cost.date if pos.cost else None
                     if pos_date is not None:
-                        min_date = (pos_date
-                                    if min_date is None
-                                    else min(min_date, pos_date))
+                        min_date = pos_date if min_date is None else min(min_date, pos_date)
                 cost = Cost(cost_number, cost_currency, min_date, None)
             else:
                 cost = None
@@ -375,7 +375,6 @@ class Inventory(dict):
             average_inventory.add_amount(units_amount, cost)
 
         return average_inventory
-
 
     #
     # Methods to build an Inventory instance.
@@ -397,10 +396,12 @@ class Inventory(dict):
           e.g. the position was deleted.
         """
         if ASSERTS_TYPES:
-            assert isinstance(units, Amount), (
-                "Internal error: {!r} (type: {})".format(units, type(units).__name__))
-            assert cost is None or isinstance(cost, Cost), (
-                "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
+            assert isinstance(units, Amount), "Internal error: {!r} (type: {})".format(
+                units, type(units).__name__
+            )
+            assert cost is None or isinstance(
+                cost, Cost
+            ), "Internal error: {!r} (type: {})".format(cost, type(cost).__name__)
 
         # Find the position.
         key = (units.currency, cost)
@@ -410,9 +411,11 @@ class Inventory(dict):
             # Note: In order to augment or reduce, all the fields have to match.
 
             # Check if reducing.
-            booking = (Booking.REDUCED
-                       if not same_sign(pos.units.number, units.number)
-                       else Booking.AUGMENTED)
+            booking = (
+                Booking.REDUCED
+                if not same_sign(pos.units.number, units.number)
+                else Booking.AUGMENTED
+            )
 
             # Compute the new number of units.
             number = pos.units.number + units.number
@@ -444,10 +447,12 @@ class Inventory(dict):
           how the lot was booked to this inventory.
         """
         if ASSERTS_TYPES:
-            assert hasattr(position, 'units') and hasattr(position, 'cost'), (
-                "Invalid type for position: {}".format(position))
-            assert isinstance(position.cost, (type(None), Cost)), (
-                "Invalid type for cost: {}".format(position.cost))
+            assert hasattr(position, "units") and hasattr(
+                position, "cost"
+            ), "Invalid type for position: {}".format(position)
+            assert isinstance(
+                position.cost, (type(None), Cost)
+            ), "Invalid type for cost: {}".format(position.cost)
         return self.add_amount(position.units, position.cost)
 
     def add_inventory(self, other):
@@ -497,7 +502,8 @@ class Inventory(dict):
         # We need to split the comma-separated positions but ignore commas
         # occurring within a {...cost...} specification.
         position_strs = re.split(
-            r'([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
+            r"([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*", string
+        )[1::2]
         for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory

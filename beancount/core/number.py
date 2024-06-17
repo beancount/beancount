@@ -9,6 +9,7 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -18,18 +19,22 @@ from decimal import Decimal
 
 # Constants.
 ZERO = Decimal()
-HALF = Decimal('0.5')
-ONE = Decimal('1')
+HALF = Decimal("0.5")
+ONE = Decimal("1")
+
 
 # A constant used to make incomplete data, e.g. missing numbers in the cost spec
 # to be filled in automatically. We define this as a class so that it appears in
 # errors that would occur from attempts to access incomplete data.
-class MISSING: pass
+class MISSING:
+    pass
+
 
 # Regular expression for parsing a number in Python.
 NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 
-_CLEAN_NUMBER_RE = re.compile('[, ]')
+_CLEAN_NUMBER_RE = re.compile("[, ]")
+
 
 # pylint: disable=invalid-name
 def D(strord=None):
@@ -49,10 +54,10 @@ def D(strord=None):
     """
     try:
         # Note: try a map lookup and optimize performance here.
-        if strord is None or strord == '':
+        if strord is None or strord == "":
             return Decimal()
         elif isinstance(strord, str):
-            return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
+            return Decimal(_CLEAN_NUMBER_RE.sub("", strord))
         elif isinstance(strord, Decimal):
             return strord
         elif isinstance(strord, (int, float)):
@@ -60,8 +65,9 @@ def D(strord=None):
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
     except Exception as exc:
-        raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(
-            strord, exc)) from exc
+        raise ValueError(
+            "Impossible to create Decimal instance from {!s}: {}".format(strord, exc)
+        ) from exc
 
 
 def round_to(number, increment):

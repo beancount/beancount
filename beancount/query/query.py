@@ -1,5 +1,5 @@
-"""A library to run queries. This glues together all the parts of the query engine.
-"""
+"""A library to run queries. This glues together all the parts of the query engine."""
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -39,17 +39,14 @@ def run_query(entries, options_map, query, *format_args, numberify=False):
     statement = parser.parse(formatted_query)
 
     # Compile the SELECT statement.
-    c_query = query_compile.compile(statement,
-                                    env_targets,
-                                    env_postings,
-                                    env_entries)
+    c_query = query_compile.compile(statement, env_targets, env_postings, env_entries)
 
     # Execute it to obtain the result rows.
     rtypes, rrows = query_execute.execute_query(c_query, entries, options_map)
 
     # Numberify the results, if requested.
     if numberify:
-        dformat = options_map['dcontext'].build()
+        dformat = options_map["dcontext"].build()
         rtypes, rrows = numberify_lib.numberify_results(rtypes, rrows, dformat)
 
     return rtypes, rrows

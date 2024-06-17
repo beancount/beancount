@@ -4,6 +4,7 @@ Read an import script and a list of downloaded filenames or directories of
 2downloaded files, and for each of those files, identify which importer it should
 be associated with.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,12 +18,12 @@ from beancount.ingest import cache
 
 # The format for the section titles in the extracted output.
 # You may override this value from your .import script.
-SECTION = '**** {}'
+SECTION = "**** {}"
 
 
 # A file size beyond which we will simply ignore the file. This is used to skip
 # large files that are commonly co-present in a Downloads directory.
-FILE_TOO_LARGE_THRESHOLD = 8*1024*1024
+FILE_TOO_LARGE_THRESHOLD = 8 * 1024 * 1024
 
 
 def find_imports(importer_config, files_or_directories, logfile=None):
@@ -45,13 +46,14 @@ def find_imports(importer_config, files_or_directories, logfile=None):
     for filename in file_utils.find_files(files_or_directories):
         if logfile is not None:
             logfile.write(SECTION.format(filename))
-            logfile.write('\n')
+            logfile.write("\n")
 
         # Skip files that are simply too large.
         size = path.getsize(filename)
         if size > FILE_TOO_LARGE_THRESHOLD:
-            logging.warning("File too large: '{}' ({} bytes); skipping.".format(
-                filename, size))
+            logging.warning(
+                "File too large: '{}' ({} bytes); skipping.".format(filename, size)
+            )
             continue
 
         # For each of the sources the user has declared, identify which
@@ -64,8 +66,11 @@ def find_imports(importer_config, files_or_directories, logfile=None):
                 if matched:
                     matching_importers.append(importer)
             except Exception as exc:
-                logging.exception("Importer %s.identify() raised an unexpected error: %s",
-                                  importer.name(), exc)
+                logging.exception(
+                    "Importer %s.identify() raised an unexpected error: %s",
+                    importer.name(),
+                    exc,
+                )
 
         yield (filename, matching_importers)
 
@@ -78,13 +83,14 @@ def identify(importers_list, files_or_directories):
       files_or_directories: A list of strings, files or directories.
     """
     logfile = sys.stdout
-    for filename, importers in find_imports(importers_list, files_or_directories,
-                                            logfile=logfile):
+    for filename, importers in find_imports(
+        importers_list, files_or_directories, logfile=logfile
+    ):
         file = cache.get_file(filename)
         for importer in importers:
-            logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
-            logfile.write('Account:     {}\n'.format(importer.file_account(file)))
-            logfile.write('\n')
+            logfile.write("Importer:    {}\n".format(importer.name() if importer else "-"))
+            logfile.write("Account:     {}\n".format(importer.file_account(file)))
+            logfile.write("\n")
 
 
 DESCRIPTION = "Identify files for import"

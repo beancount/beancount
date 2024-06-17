@@ -3,6 +3,7 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -19,7 +20,7 @@ from beancount.core import display_context
 from beancount.reports import base
 
 
-ROUNDING_ACCOUNT = 'Equity:Rounding'
+ROUNDING_ACCOUNT = "Equity:Rounding"
 
 
 def quote(match):
@@ -31,7 +32,7 @@ def quote(match):
       A quoted string of the match contents.
     """
     currency = match.group(1)
-    return '"{}"'.format(currency) if re.search(r'[0-9\.]', currency) else currency
+    return '"{}"'.format(currency) if re.search(r"[0-9\.]", currency) else currency
 
 
 def quote_currency(string):
@@ -42,7 +43,7 @@ def quote_currency(string):
     Returns:
       A string of text, with the commodity expressions surrounded with quotes.
     """
-    return re.sub(r'\b({})\b'.format(amount.CURRENCY_RE), quote, string)
+    return re.sub(r"\b({})\b".format(amount.CURRENCY_RE), quote, string)
 
 
 def postings_by_type(entry):
@@ -109,19 +110,21 @@ def split_currency_conversions(entry):
         replacement_postings = []
         for posting_orig in postings_at_price:
             weight = convert.get_weight(posting_orig)
-            posting_pos = data.Posting(posting_orig.account, weight, None,
-                                       None, None, None)
-            posting_neg = data.Posting(posting_orig.account, -weight, None,
-                                       None, None, None)
+            posting_pos = data.Posting(posting_orig.account, weight, None, None, None, None)
+            posting_neg = data.Posting(
+                posting_orig.account, -weight, None, None, None, None
+            )
 
             currency_entry = entry._replace(
                 postings=[posting_orig, posting_neg],
-                narration=entry.narration + ' (Currency conversion)')
+                narration=entry.narration + " (Currency conversion)",
+            )
             new_entries.append(currency_entry)
             replacement_postings.append(posting_pos)
 
-        converted_entry = entry._replace(postings=(
-            postings_at_cost + postings_simple + replacement_postings))
+        converted_entry = entry._replace(
+            postings=(postings_at_cost + postings_simple + replacement_postings)
+        )
         new_entries.append(converted_entry)
     else:
         new_entries = [entry]
@@ -132,14 +135,14 @@ def split_currency_conversions(entry):
 class LedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by Ledger."""
 
-    names = ['ledger']
-    default_format = 'ledger'
+    names = ["ledger"]
+    default_format = "ledger"
 
     def render_ledger(self, entries, errors, options_map, file):
         ledger_printer = LedgerPrinter()
         for entry in entries:
             file.write(ledger_printer(entry))
-            file.write('\n')
+            file.write("\n")
 
 
 class LedgerPrinter:
@@ -170,55 +173,57 @@ class LedgerPrinter:
 
         # Compute the string for the payee and narration line.
         if entry.payee:
-            strings.append('{} |'.format(entry.payee))
+            strings.append("{} |".format(entry.payee))
         if entry.narration:
             strings.append(entry.narration)
 
-        oss.write('{e.date:%Y-%m-%d} {flag} {}\n'.format(' '.join(strings),
-                                                         flag=entry.flag or '',
-                                                         e=entry))
+        oss.write(
+            "{e.date:%Y-%m-%d} {flag} {}\n".format(
+                " ".join(strings), flag=entry.flag or "", e=entry
+            )
+        )
 
         if entry.tags:
-            oss.write('  ; :{}:\n'.format(':'.join(sorted(entry.tags))))
+            oss.write("  ; :{}:\n".format(":".join(sorted(entry.tags))))
         if entry.links:
-            oss.write('  ; Link: {}\n'.format(', '.join(sorted(entry.links))))
+            oss.write("  ; Link: {}\n".format(", ".join(sorted(entry.links))))
 
         for posting in entry.postings:
             self.Posting(posting, entry, oss)
 
     def Posting(self, posting, entry, oss):
-        flag = '{} '.format(posting.flag) if posting.flag else ''
+        flag = "{} ".format(posting.flag) if posting.flag else ""
         assert posting.account is not None
 
-        flag_posting = '{:}{:62}'.format(flag, posting.account)
+        flag_posting = "{:}{:62}".format(flag, posting.account)
 
-        pos_str = (position.to_string(posting, self.dformat, detail=False)
-                   if isinstance(posting.units, Amount)
-                   else '')
+        pos_str = (
+            position.to_string(posting, self.dformat, detail=False)
+            if isinstance(posting.units, Amount)
+            else ""
+        )
 
         if posting.price is not None:
-            price_str = '@ {}'.format(posting.price.to_string(self.dformat_max))
+            price_str = "@ {}".format(posting.price.to_string(self.dformat_max))
         else:
             # Figure out if we need to insert a price on a posting held at cost.
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
-            (postings_simple,
-             postings_at_price,
-             postings_at_cost) = postings_by_type(entry)
+            (postings_simple, postings_at_price, postings_at_cost) = postings_by_type(entry)
 
             cost = posting.cost
             if postings_at_price and postings_at_cost and cost:
-                price_str = '@ {}'.format(
-                    amount.Amount(cost.number,
-                                  cost.currency).to_string(self.dformat))
+                price_str = "@ {}".format(
+                    amount.Amount(cost.number, cost.currency).to_string(self.dformat)
+                )
             else:
-                price_str = ''
+                price_str = ""
 
-        posting_str = '  {:64} {} {}'.format(flag_posting,
-                                             quote_currency(pos_str),
-                                             quote_currency(price_str))
+        posting_str = "  {:64} {} {}".format(
+            flag_posting, quote_currency(pos_str), quote_currency(price_str)
+        )
         oss.write(posting_str.rstrip())
 
-        oss.write('\n')
+        oss.write("\n")
 
     def Balance(_, entry, oss):
         # We cannot output balance directive equivalents because Ledger only
@@ -228,45 +233,57 @@ class LedgerPrinter:
         pass
 
     def Note(_, entry, oss):
-        oss.write(';; Note: {e.date:%Y-%m-%d} {e.account} {e.comment}\n'.format(e=entry))
+        oss.write(";; Note: {e.date:%Y-%m-%d} {e.account} {e.comment}\n".format(e=entry))
 
     def Document(_, entry, oss):
-        oss.write(';; Document: {e.date:%Y-%m-%d} {e.account} {e.filename}\n'.format(
-            e=entry))
+        oss.write(
+            ";; Document: {e.date:%Y-%m-%d} {e.account} {e.filename}\n".format(e=entry)
+        )
 
     def Pad(_, entry, oss):
         # Note: We don't need to output these because when we're loading the
         # Beancount file explicit padding entries will be generated
         # automatically, thus balancing the accounts. Ledger does not support
         # automatically padding, so we can just output this as a comment.
-        oss.write(';; Pad: {e.date:%Y-%m-%d} {e.account} {e.source_account}\n'.format(
-            e=entry))
+        oss.write(
+            ";; Pad: {e.date:%Y-%m-%d} {e.account} {e.source_account}\n".format(e=entry)
+        )
 
     def Commodity(_, entry, oss):
         # No need for declaration.
-        oss.write('commodity {e.currency}\n'.format(e=entry))
+        oss.write("commodity {e.currency}\n".format(e=entry))
 
     def Open(_, entry, oss):
-        oss.write('account {e.account:47}\n'.format(e=entry))
+        oss.write("account {e.account:47}\n".format(e=entry))
         if entry.currencies:
-            oss.write('  assert {}\n'.format(' | '.join('commodity == "{}"'.format(currency)
-                                                        for currency in entry.currencies)))
+            oss.write(
+                "  assert {}\n".format(
+                    " | ".join(
+                        'commodity == "{}"'.format(currency)
+                        for currency in entry.currencies
+                    )
+                )
+            )
 
     def Close(_, entry, oss):
-        oss.write(';; Close: {e.date:%Y-%m-%d} close {e.account}\n'.format(e=entry))
+        oss.write(";; Close: {e.date:%Y-%m-%d} close {e.account}\n".format(e=entry))
 
     def Price(_, entry, oss):
         oss.write(
-            'P {:%Y-%m-%d} 00:00:00 {:<16} {:>16}\n'.format(
-            entry.date, quote_currency(entry.currency), str(entry.amount)))
+            "P {:%Y-%m-%d} 00:00:00 {:<16} {:>16}\n".format(
+                entry.date, quote_currency(entry.currency), str(entry.amount)
+            )
+        )
 
     def Event(_, entry, oss):
         oss.write(
-            ';; Event: {e.date:%Y-%m-%d} "{e.type}" "{e.description}"\n'.format(e=entry))
+            ';; Event: {e.date:%Y-%m-%d} "{e.type}" "{e.description}"\n'.format(e=entry)
+        )
 
     def Query(_, entry, oss):
         oss.write(
-            ';; Query: {e.date:%Y-%m-%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
+            ';; Query: {e.date:%Y-%m-%d} "{e.name}" "{e.query_string}"\n'.format(e=entry)
+        )
 
     def Custom(_, entry, oss):
         pass  # Don't render anything.
@@ -275,14 +292,14 @@ class LedgerPrinter:
 class HLedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by HLedger."""
 
-    names = ['hledger']
-    default_format = 'hledger'
+    names = ["hledger"]
+    default_format = "hledger"
 
     def render_hledger(self, entries, errors, options_map, file):
         hledger_printer = HLedgerPrinter()
         for entry in entries:
             file.write(hledger_printer(entry))
-            file.write('\n')
+            file.write("\n")
 
 
 class HLedgerPrinter(LedgerPrinter):
@@ -300,52 +317,58 @@ class HLedgerPrinter(LedgerPrinter):
 
         # Compute the string for the payee and narration line.
         if entry.payee:
-            strings.append('{} |'.format(entry.payee))
+            strings.append("{} |".format(entry.payee))
         if entry.narration:
             strings.append(entry.narration)
 
-        oss.write('{e.date:%Y-%m-%d} {flag} {}\n'.format(' '.join(strings),
-                                                         flag=entry.flag or '',
-                                                         e=entry))
+        oss.write(
+            "{e.date:%Y-%m-%d} {flag} {}\n".format(
+                " ".join(strings), flag=entry.flag or "", e=entry
+            )
+        )
 
         if entry.tags:
-            oss.write('  ; {}:\n'.format(':, '.join(sorted(entry.tags))))
+            oss.write("  ; {}:\n".format(":, ".join(sorted(entry.tags))))
         if entry.links:
-            oss.write('  ; Link: {}\n'.format(' '.join(sorted(entry.links))))
+            oss.write("  ; Link: {}\n".format(" ".join(sorted(entry.links))))
 
         for posting in entry.postings:
             self.Posting(posting, entry, oss)
 
     def Posting(self, posting, entry, oss):
-        flag = '{} '.format(posting.flag) if posting.flag else ''
+        flag = "{} ".format(posting.flag) if posting.flag else ""
         assert posting.account is not None
 
-        flag_posting = '{:}{:62}'.format(flag, posting.account)
+        flag_posting = "{:}{:62}".format(flag, posting.account)
 
-        pos_str = (position.to_string(posting, self.dformat, detail=False)
-                   if isinstance(posting.units, Amount)
-                   else '')
+        pos_str = (
+            position.to_string(posting, self.dformat, detail=False)
+            if isinstance(posting.units, Amount)
+            else ""
+        )
         if pos_str:
             # Convert the cost as a price entry, that's what HLedger appears to want.
-            pos_str = pos_str.replace('{', '@ ').replace('}', '')
+            pos_str = pos_str.replace("{", "@ ").replace("}", "")
 
-        price_str = ('@ {}'.format(posting.price.to_string(self.dformat_max))
-                     if posting.price is not None
-                     else '')
+        price_str = (
+            "@ {}".format(posting.price.to_string(self.dformat_max))
+            if posting.price is not None
+            else ""
+        )
 
-        posting_str = '  {:64} {:>16} {:>16}'.format(flag_posting,
-                                                     quote_currency(pos_str),
-                                                     quote_currency(price_str))
+        posting_str = "  {:64} {:>16} {:>16}".format(
+            flag_posting, quote_currency(pos_str), quote_currency(price_str)
+        )
         oss.write(posting_str.rstrip())
 
-        oss.write('\n')
+        oss.write("\n")
 
     def Open(_, entry, oss):
         # Not supported by HLedger AFAIK.
-        oss.write(';; Open: {e.date:%Y-%m-%d} close {e.account}\n'.format(e=entry))
+        oss.write(";; Open: {e.date:%Y-%m-%d} close {e.account}\n".format(e=entry))
 
 
 __reports__ = [
     LedgerReport,
     HLedgerReport,
-    ]
+]

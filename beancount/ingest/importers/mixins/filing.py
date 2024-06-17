@@ -7,6 +7,7 @@ like this:
   YYYY-MM-DD.institution.Original_File_Name.pdf
 
 """
+
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
@@ -16,7 +17,6 @@ from beancount.ingest import importer
 
 
 class FilingMixin(importer.ImporterProtocol):
-
     def __init__(self, **kwds):
         """Pull 'filing' and 'prefix' from kwds.
 
@@ -25,10 +25,10 @@ class FilingMixin(importer.ImporterProtocol):
           prefix: The name of the institution prefix to insert.
         """
 
-        self.filing_account = kwds.pop('filing', None)
+        self.filing_account = kwds.pop("filing", None)
         assert account.is_valid(self.filing_account)
 
-        self.prefix = kwds.pop('prefix', None)
+        self.prefix = kwds.pop("prefix", None)
 
         super().__init__(**kwds)
 
@@ -45,5 +45,6 @@ class FilingMixin(importer.ImporterProtocol):
         if not self.prefix:
             return supername
         else:
-            return '.'.join(filter(None, [self.prefix,
-                                          supername or path.basename(file.name)]))
+            return ".".join(
+                filter(None, [self.prefix, supername or path.basename(file.name)])
+            )

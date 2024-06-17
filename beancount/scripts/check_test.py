@@ -8,7 +8,6 @@ from beancount.scripts import check
 
 
 class TestScriptCheck(test_utils.TestCase):
-
     @test_utils.docfile
     def test_success(self, filename):
         """
@@ -19,7 +18,7 @@ class TestScriptCheck(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture('stdout', 'stderr') as (stdout, _):
+        with test_utils.capture("stdout", "stderr") as (stdout, _):
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(0, result)
         self.assertLines("", stdout.getvalue())
@@ -36,12 +35,12 @@ class TestScriptCheck(test_utils.TestCase):
 
         2014-03-07 balance Assets:Cash  100 USD
         """
-        with test_utils.capture('stderr') as stderr:
+        with test_utils.capture("stderr") as stderr:
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(1, result)
         self.assertRegex(stderr.getvalue(), "Balance failed")
         self.assertRegex(stderr.getvalue(), "Assets:Cash")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

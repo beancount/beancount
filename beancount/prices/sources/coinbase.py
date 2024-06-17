@@ -30,18 +30,19 @@ def fetch_quote(ticker, time=None):
     url = "https://api.coinbase.com/v2/prices/{}/spot".format(ticker.lower())
     options = {}
     if time is not None:
-        options['date'] = time.astimezone(tz.tzutc()).date().isoformat()
+        options["date"] = time.astimezone(tz.tzutc()).date().isoformat()
 
     response = requests.get(url, options, timeout=300)
     if response.status_code != requests.codes.ok:
-        raise CoinbaseError("Invalid response ({}): {}".format(response.status_code,
-                                                               response.text))
+        raise CoinbaseError(
+            "Invalid response ({}): {}".format(response.status_code, response.text)
+        )
     result = response.json()
 
-    price = D(result['data']['amount'])
+    price = D(result["data"]["amount"])
     if time is None:
         time = datetime.datetime.now(tz.tzutc())
-    currency = result['data']['currency']
+    currency = result["data"]["currency"]
 
     return source.SourcePrice(price, time, currency)
 

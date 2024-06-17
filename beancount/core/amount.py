@@ -6,6 +6,7 @@ currency:
   (number, currency).
 
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -21,11 +22,10 @@ from beancount.core.number import D
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
+CURRENCY_RE = r"[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]"
 
-_Amount = NamedTuple('_Amount', [
-    ('number', Optional[Decimal]),
-    ('currency', str)])
+_Amount = NamedTuple("_Amount", [("number", Optional[Decimal]), ("currency", str)])
+
 
 class Amount(_Amount):
     """An 'Amount' represents a number of a particular unit of something.
@@ -58,9 +58,11 @@ class Amount(_Amount):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        number_fmt = (dformat.format(self.number, self.currency)
-                      if isinstance(self.number, Decimal)
-                      else str(self.number))
+        number_fmt = (
+            dformat.format(self.number, self.currency)
+            if isinstance(self.number, Decimal)
+            else str(self.number)
+        )
         return "{} {}".format(number_fmt, self.currency)
 
     def __str__(self):
@@ -123,8 +125,9 @@ class Amount(_Amount):
         Returns:
           A new instance of Amount.
         """
-        match = re.match(r'\s*([-+]?[0-9.]+)\s+({currency})'.format(currency=CURRENCY_RE),
-                         string)
+        match = re.match(
+            r"\s*([-+]?[0-9.]+)\s+({currency})".format(currency=CURRENCY_RE), string
+        )
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)
@@ -136,6 +139,7 @@ class Amount(_Amount):
 # objects with functions instead of objects with methods... alright, this is
 # okay.
 
+
 def sortkey(amount):
     """A comparison function that sorts by currency first.
 
@@ -146,6 +150,7 @@ def sortkey(amount):
     """
     return (amount.currency, amount.number)
 
+
 def mul(amount, number):
     """Multiply the given amount by a number.
 
@@ -155,11 +160,14 @@ def mul(amount, number):
     Returns:
       An Amount, with the same currency, but with 'number' times units.
     """
-    assert isinstance(amount.number, Decimal), (
-        "Amount's number is not a Decimal instance: {}".format(amount.number))
-    assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(number))
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
+    assert isinstance(number, Decimal), "Number is not a Decimal instance: {}".format(
+        number
+    )
     return Amount(amount.number * number, amount.currency)
+
 
 def div(amount, number):
     """Divide the given amount by a number.
@@ -170,11 +178,14 @@ def div(amount, number):
     Returns:
       An Amount, with the same currency, but with amount units divided by 'number'.
     """
-    assert isinstance(amount.number, Decimal), (
-        "Amount's number is not a Decimal instance: {}".format(amount.number))
-    assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(number))
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
+    assert isinstance(number, Decimal), "Number is not a Decimal instance: {}".format(
+        number
+    )
     return Amount(amount.number / number, amount.currency)
+
 
 def add(amount1, amount2):
     """Add the given amounts with the same currency.
@@ -186,15 +197,18 @@ def add(amount1, amount2):
       An instance of Amount, with the sum the two amount's numbers, in the same
       currency.
     """
-    assert isinstance(amount1.number, Decimal), (
-        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
-    assert isinstance(amount2.number, Decimal), (
-        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
+    assert isinstance(
+        amount1.number, Decimal
+    ), "Amount1's number is not a Decimal instance: {}".format(amount1.number)
+    assert isinstance(
+        amount2.number, Decimal
+    ), "Amount2's number is not a Decimal instance: {}".format(amount2.number)
     if amount1.currency != amount2.currency:
         raise ValueError(
-            "Unmatching currencies for operation on {} and {}".format(
-                amount1, amount2))
+            "Unmatching currencies for operation on {} and {}".format(amount1, amount2)
+        )
     return Amount(amount1.number + amount2.number, amount1.currency)
+
 
 def sub(amount1, amount2):
     """Subtract the given amounts with the same currency.
@@ -206,15 +220,18 @@ def sub(amount1, amount2):
       An instance of Amount, with the difference between the two amount's
       numbers, in the same currency.
     """
-    assert isinstance(amount1.number, Decimal), (
-        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
-    assert isinstance(amount2.number, Decimal), (
-        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
+    assert isinstance(
+        amount1.number, Decimal
+    ), "Amount1's number is not a Decimal instance: {}".format(amount1.number)
+    assert isinstance(
+        amount2.number, Decimal
+    ), "Amount2's number is not a Decimal instance: {}".format(amount2.number)
     if amount1.currency != amount2.currency:
         raise ValueError(
-            "Unmatching currencies for operation on {} and {}".format(
-                amount1, amount2))
+            "Unmatching currencies for operation on {} and {}".format(amount1, amount2)
+        )
     return Amount(amount1.number - amount2.number, amount1.currency)
+
 
 def abs(amount):
     """Return the absolute value of the given amount.
@@ -224,10 +241,8 @@ def abs(amount):
     Returns:
       An instance of Amount.
     """
-    return (amount
-            if amount.number >= ZERO
-            else Amount(-amount.number, amount.currency))
+    return amount if amount.number >= ZERO else Amount(-amount.number, amount.currency)
 
 
 A = from_string = Amount.from_string
-NULL_AMOUNT = Amount(ZERO, '')
+NULL_AMOUNT = Amount(ZERO, "")

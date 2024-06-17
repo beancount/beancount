@@ -1,5 +1,5 @@
-"""Views are filters on the global list of entries, which produces a subset of entries.
-"""
+"""Views are filters on the global list of entries, which produces a subset of entries."""
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -16,9 +16,9 @@ from beancount.utils import date_utils
 
 
 class MonthNavigation(enum.Enum):
-    NONE = 0    # No monthly navigation.
-    COMPACT = 1 # Compact combobox outgoing to monthly navigation.
-    FULL = 2    # Full rendering with single-click to each month.
+    NONE = 0  # No monthly navigation.
+    COMPACT = 1  # Compact combobox outgoing to monthly navigation.
+    FULL = 2  # Full rendering with single-click to each month.
 
 
 class View:
@@ -67,12 +67,13 @@ class View:
 
         # Get the filtered list of entries.
         self.entries, self.begin_index, self.price_date = self.apply_filter(
-            self.all_entries, options_map)
+            self.all_entries, options_map
+        )
 
         # Compute the list of entries for the opening balances sheet.
-        self.opening_entries = (self.entries[:self.begin_index]
-                                if self.begin_index is not None
-                                else [])
+        self.opening_entries = (
+            self.entries[: self.begin_index] if self.begin_index is not None else []
+        )
 
         # Compute the list of entries that includes transfer entries of the
         # income/expenses amounts to the balance sheet's equity (as "net
@@ -82,17 +83,18 @@ class View:
 
         # Realize the three sets of entries.
         account_types = options.get_account_types(options_map)
-        with misc_utils.log_time('realize_opening', logging.info):
-            self.opening_real_accounts = realization.realize(self.opening_entries,
-                                                             account_types)
+        with misc_utils.log_time("realize_opening", logging.info):
+            self.opening_real_accounts = realization.realize(
+                self.opening_entries, account_types
+            )
 
-        with misc_utils.log_time('realize', logging.info):
-            self.real_accounts = realization.realize(self.entries,
-                                                     account_types)
+        with misc_utils.log_time("realize", logging.info):
+            self.real_accounts = realization.realize(self.entries, account_types)
 
-        with misc_utils.log_time('realize_closing', logging.info):
-            self.closing_real_accounts = realization.realize(self.closing_entries,
-                                                             account_types)
+        with misc_utils.log_time("realize_closing", logging.info):
+            self.closing_real_accounts = realization.realize(
+                self.closing_entries, account_types
+            )
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None
@@ -170,11 +172,9 @@ class YearView(View):
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, self.first_month, 1)
-        end_date = datetime.date(self.year+1, self.first_month, 1)
-        with misc_utils.log_time('clamp', logging.info):
-            entries, index = summarize.clamp_opt(entries,
-                                                 begin_date, end_date,
-                                                 options_map)
+        end_date = datetime.date(self.year + 1, self.first_month, 1)
+        with misc_utils.log_time("clamp", logging.info):
+            entries, index = summarize.clamp_opt(entries, begin_date, end_date, options_map)
         return entries, index, end_date
 
 
@@ -202,10 +202,8 @@ class MonthView(View):
         begin_date = datetime.date(self.year, self.month, 1)
         end_date = date_utils.next_month(begin_date)
 
-        with misc_utils.log_time('clamp', logging.info):
-            entries, index = summarize.clamp_opt(entries,
-                                                 begin_date, end_date,
-                                                 options_map)
+        with misc_utils.log_time("clamp", logging.info):
+            entries, index = summarize.clamp_opt(entries, begin_date, end_date, options_map)
         return entries, index, end_date
 
 
@@ -234,7 +232,8 @@ class TagView(View):
         tagged_entries = [
             entry
             for entry in entries
-            if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
+            if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)
+        ]
 
         return tagged_entries, None, None
 
@@ -260,9 +259,11 @@ class PayeeView(View):
 
     def apply_filter(self, entries, options_map):
         payee = self.payee
-        payee_entries = [entry
-                         for entry in entries
-                         if isinstance(entry, data.Transaction) and (entry.payee == payee)]
+        payee_entries = [
+            entry
+            for entry in entries
+            if isinstance(entry, data.Transaction) and (entry.payee == payee)
+        ]
 
         return payee_entries, None, None
 
@@ -289,8 +290,8 @@ class ComponentView(View):
 
     def apply_filter(self, entries, options_map):
         component = self.component
-        component_entries = [entry
-                             for entry in entries
-                             if data.has_entry_account_component(entry, component)]
+        component_entries = [
+            entry for entry in entries if data.has_entry_account_component(entry, component)
+        ]
 
         return component_entries, None, None

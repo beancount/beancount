@@ -1,5 +1,5 @@
-"""Report classes for all reports that display ending journals of accounts.
-"""
+"""Report classes for all reports that display ending journals of accounts."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -11,45 +11,77 @@ from beancount.core import realization
 from beancount.utils import misc_utils
 
 
-class JournalReport(base.HTMLReport,
-                    metaclass=base.RealizationMeta):
+class JournalReport(base.HTMLReport, metaclass=base.RealizationMeta):
     """Print out an account register/journal."""
 
-    names = ['journal', 'register', 'account']
-    default_format = 'text'
+    names = ["journal", "register", "account"]
+    default_format = "text"
 
     # Default width for screen.
     default_width = 80
 
     # For the tests we specify the width to render to to avoid having to invoke
     # the terminal functions which fail in the test runner without capture mode.
-    test_args = ['--width={}'.format(default_width)]
+    test_args = ["--width={}".format(default_width)]
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('-a', '--account',
-                            action='store', default=None,
-                            help="Account to render")
+        parser.add_argument(
+            "-a", "--account", action="store", default=None, help="Account to render"
+        )
 
-        parser.add_argument('-w', '--width', action='store', type=int, default=0,
-                            help="The number of characters wide to render the report to")
+        parser.add_argument(
+            "-w",
+            "--width",
+            action="store",
+            type=int,
+            default=0,
+            help="The number of characters wide to render the report to",
+        )
 
-        parser.add_argument('-k', '--precision', action='store', type=int, default=2,
-                            help="The number of digits to render after the period")
+        parser.add_argument(
+            "-k",
+            "--precision",
+            action="store",
+            type=int,
+            default=2,
+            help="The number of digits to render after the period",
+        )
 
-        parser.add_argument('-b', '--render-balance', '--balance', action='store_true',
-                            help="Render a running balance, not just changes")
+        parser.add_argument(
+            "-b",
+            "--render-balance",
+            "--balance",
+            action="store_true",
+            help="Render a running balance, not just changes",
+        )
 
-        parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
-                            help="Render values at cost, convert the units to cost value")
+        parser.add_argument(
+            "-c",
+            "--at-cost",
+            "--cost",
+            action="store_true",
+            help="Render values at cost, convert the units to cost value",
+        )
 
-        parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
-                            const=journal_text.COMPACT, default=journal_text.NORMAL,
-                            help="Rendering compactly")
+        parser.add_argument(
+            "-x",
+            "--compact",
+            dest="verbosity",
+            action="store_const",
+            const=journal_text.COMPACT,
+            default=journal_text.NORMAL,
+            help="Rendering compactly",
+        )
 
-        parser.add_argument('-X', '--verbose', dest='verbosity', action='store_const',
-                            const=journal_text.VERBOSE,
-                            help="Rendering verbosely")
+        parser.add_argument(
+            "-X",
+            "--verbose",
+            dest="verbosity",
+            action="store_const",
+            const=journal_text.VERBOSE,
+            help="Rendering verbosely",
+        )
 
     def get_postings(self, real_root):
         """Return the postings corresponding to the account filter option.
@@ -73,17 +105,19 @@ class JournalReport(base.HTMLReport,
         return realization.get_postings(real_account)
 
     def _render_text_formats(self, real_root, options_map, file, output_format):
-        width = (self.args.width or
-                 misc_utils.get_screen_width() or
-                 self.default_width)
+        width = self.args.width or misc_utils.get_screen_width() or self.default_width
         postings = self.get_postings(real_root)
         try:
-            journal_text.text_entries_table(file, postings, width,
-                                            self.args.at_cost,
-                                            self.args.render_balance,
-                                            self.args.precision,
-                                            self.args.verbosity,
-                                            output_format)
+            journal_text.text_entries_table(
+                file,
+                postings,
+                width,
+                self.args.at_cost,
+                self.args.render_balance,
+                self.args.precision,
+                self.args.verbosity,
+                output_format,
+            )
         except ValueError as exc:
             raise base.ReportError(exc)
 
@@ -96,23 +130,27 @@ class JournalReport(base.HTMLReport,
     def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         postings = self.get_postings(real_root)
         render_postings = self.args.verbosity == journal_text.VERBOSE
-        journal_html.html_entries_table_with_balance(file, postings, self.formatter,
-                                                     render_postings)
+        journal_html.html_entries_table_with_balance(
+            file, postings, self.formatter, render_postings
+        )
 
 
 class ConversionsReport(base.HTMLReport):
     """Print out a report of all conversions."""
 
-    names = ['conversions']
+    names = ["conversions"]
 
     def render_htmldiv(self, entries, errors, options_map, file):
         # Return the subset of transaction entries which have a conversion.
-        conversion_entries = [entry
-                              for entry in misc_utils.filter_type(entries, data.Transaction)
-                              if data.transaction_has_conversion(entry)]
+        conversion_entries = [
+            entry
+            for entry in misc_utils.filter_type(entries, data.Transaction)
+            if data.transaction_has_conversion(entry)
+        ]
 
-        journal_html.html_entries_table(file, conversion_entries, self.formatter,
-                              render_postings=True)
+        journal_html.html_entries_table(
+            file, conversion_entries, self.formatter, render_postings=True
+        )
 
         # Note: Can we somehow add a balance at the bottom? Do we really need one?
         # conversion_balance = interpolate.compute_entries_balance(conversion_entries)
@@ -121,7 +159,7 @@ class ConversionsReport(base.HTMLReport):
 class DocumentsReport(base.HTMLReport):
     """Print out a report of documents."""
 
-    names = ['documents']
+    names = ["documents"]
 
     def render_htmldiv(self, entries, errors, options_map, file):
         document_entries = list(misc_utils.filter_type(entries, data.Document))
@@ -135,4 +173,4 @@ __reports__ = [
     JournalReport,
     ConversionsReport,
     DocumentsReport,
-    ]
+]

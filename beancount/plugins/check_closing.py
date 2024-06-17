@@ -31,6 +31,7 @@ Would expand into the following two directives:
 
 Insert the closing line when you know you're closing the position.
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -40,7 +41,7 @@ from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import amount
 
-__plugins__ = ('check_closing',)
+__plugins__ = ("check_closing",)
 
 
 def check_closing(entries, options_map):
@@ -56,18 +57,22 @@ def check_closing(entries, options_map):
     for entry in entries:
         if isinstance(entry, data.Transaction):
             for posting in entry.postings:
-                if posting.meta and posting.meta.get('closing', False):
+                if posting.meta and posting.meta.get("closing", False):
                     # Remove the metadata.
                     meta = posting.meta.copy()
-                    del meta['closing']
+                    del meta["closing"]
                     entry = entry._replace(meta=meta)
 
                     # Insert a balance.
                     date = entry.date + datetime.timedelta(days=1)
-                    balance = data.Balance(data.new_metadata("<check_closing>", 0),
-                                           date, posting.account,
-                                           amount.Amount(ZERO, posting.units.currency),
-                                           None, None)
+                    balance = data.Balance(
+                        data.new_metadata("<check_closing>", 0),
+                        date,
+                        posting.account,
+                        amount.Amount(ZERO, posting.units.currency),
+                        None,
+                        None,
+                    )
                     new_entries.append(balance)
         new_entries.append(entry)
     return new_entries, []

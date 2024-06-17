@@ -9,7 +9,6 @@ from beancount.parser import options
 
 
 class TestMiscReports(unittest.TestCase):
-
     def test_all_reports_empty(self):
         # Test rendering all reports from empty list of entries.
         entries = []
@@ -22,5 +21,5 @@ class TestMiscReports(unittest.TestCase):
             self.assertTrue(isinstance(output, str))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

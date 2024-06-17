@@ -1,6 +1,7 @@
 """Produce a rendering of the account balances just before and after a
 particular entry is applied.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -41,17 +42,20 @@ def render_file_context(entries, options_map, filename, lineno):
     # remove the postings) on the input file to produced the corresponding
     # unbooked transaction, so that we can get the list of accounts.
     if path.exists(filename):
-        parsed_entries, _, __= parser.parse_file(filename)
+        parsed_entries, _, __ = parser.parse_file(filename)
 
         # Note: We cannot bisect as we cannot rely on sorting behavior from the parser.
-        lineno = closest_entry.meta['lineno']
-        closest_parsed_entries = [parsed_entry
-                                  for parsed_entry in parsed_entries
-                                  if parsed_entry.meta['lineno'] == lineno]
+        lineno = closest_entry.meta["lineno"]
+        closest_parsed_entries = [
+            parsed_entry
+            for parsed_entry in parsed_entries
+            if parsed_entry.meta["lineno"] == lineno
+        ]
         if len(closest_parsed_entries) != 1:
             # This is an internal error, this should never occur.
             raise RuntimeError(
-                "Parsed entry corresponding to real entry not found in original filename.")
+                "Parsed entry corresponding to real entry not found in original filename."
+            )
         closest_parsed_entry = next(iter(closest_parsed_entries))
     else:
         closest_parsed_entry = None
@@ -94,18 +98,22 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
     if parsed_entry is None:
         parsed_entry = entry
     if isinstance(parsed_entry, data.Transaction):
-        order = {posting.account: index
-                 for index, posting in enumerate(parsed_entry.postings)}
-    accounts = sorted(getters.get_entry_accounts(parsed_entry),
-                      key=lambda account: order.get(account, 10000))
+        order = {
+            posting.account: index for index, posting in enumerate(parsed_entry.postings)
+        }
+    accounts = sorted(
+        getters.get_entry_accounts(parsed_entry),
+        key=lambda account: order.get(account, 10000),
+    )
 
     # Accumulate the balances of these accounts up to the entry.
     balance_before, balance_after = interpolate.compute_entry_context(
-        entries, entry, additional_accounts=accounts)
+        entries, entry, additional_accounts=accounts
+    )
 
     # Create a format line for printing the contents of account balances.
     max_account_width = max(map(len, accounts)) if accounts else 1
-    position_line = '{{:1}} {{:{width}}}  {{:>49}}'.format(width=max_account_width)
+    position_line = "{{:1}} {{:{width}}}  {{:>49}}".format(width=max_account_width)
 
     # Print the context before.
     pr(header.format("Balances before transaction"))
@@ -115,14 +123,14 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
         positions = balance_before[account].get_positions()
         for position in positions:
             before_hashes.add((account, hash(position)))
-            pr(position_line.format('', account, str(position)))
+            pr(position_line.format("", account, str(position)))
         if not positions:
-            pr(position_line.format('', account, ''))
+            pr(position_line.format("", account, ""))
         pr()
     pr()
 
     # Print the entry itself.
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
     pr(header.format("Unbooked Transaction"))
     pr()
     if parsed_entry:
@@ -142,21 +150,26 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
         residual = interpolate.compute_residual(entry.postings)
         if not residual.is_empty():
             # Note: We render the residual at maximum precision, for debugging.
-            pr('Residual: {}'.format(residual))
+            pr("Residual: {}".format(residual))
 
         # Dump the tolerances used.
         tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         if tolerances:
-            pr('Tolerances: {}'.format(
-                ', '.join('{}={}'.format(key, value)
-                          for key, value in sorted(tolerances.items()))))
+            pr(
+                "Tolerances: {}".format(
+                    ", ".join(
+                        "{}={}".format(key, value)
+                        for key, value in sorted(tolerances.items())
+                    )
+                )
+            )
 
         # Compute the total cost basis.
         cost_basis = inventory.Inventory(
             pos for pos in entry.postings if pos.cost is not None
         ).reduce(convert.get_cost)
         if not cost_basis.is_empty():
-            pr('Basis: {}'.format(cost_basis))
+            pr("Basis: {}".format(cost_basis))
         pr()
         pr()
 
@@ -167,10 +180,12 @@ def render_entry_context(entries, options_map, entry, parsed_entry=None):
         positions = balance_after[account].get_positions()
         for position in positions:
             changed = (account, hash(position)) not in before_hashes
-            print(position_line.format('*' if changed else '', account, str(position)),
-                  file=oss)
+            print(
+                position_line.format("*" if changed else "", account, str(position)),
+                file=oss,
+            )
         if not positions:
-            pr(position_line.format('', account, ''))
+            pr(position_line.format("", account, ""))
         pr()
 
     return oss.getvalue()

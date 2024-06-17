@@ -3,6 +3,7 @@
 For example, the options documentation is a Google Doc. It can be generated from
 the source code and updated automatically using this script.
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -14,7 +15,7 @@ from os import path
 
 from apiclient import discovery
 import httplib2
-from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
+from apiclient.http import MediaInMemoryUpload  # pylint: disable=import-error
 from oauth2client import service_account
 
 from beancount.parser import options
@@ -30,14 +31,15 @@ def replace_gdocs_document(http, docid, title, contents):
       title: A string, the title of the document.
       contents: A string, the body of the document.
     """
-    service = discovery.build('drive', 'v3', http=http)
-    media = MediaInMemoryUpload(contents.encode('utf8'),
-                                mimetype='text/plain',
-                                resumable=True)
-    return service.files().update(
-        fileId=docid,
-        body=dict(name=title),
-        media_body=media).execute()
+    service = discovery.build("drive", "v3", http=http)
+    media = MediaInMemoryUpload(
+        contents.encode("utf8"), mimetype="text/plain", resumable=True
+    )
+    return (
+        service.files()
+        .update(fileId=docid, body=dict(name=title), media_body=media)
+        .execute()
+    )
 
 
 def get_options_docid():
@@ -46,15 +48,21 @@ def get_options_docid():
     Returns:
       The id of the doc to fix up.
     """
-    htaccess = path.join(test_utils.find_repository_root(__file__), '.htaccess')
-    lines = list(filter(None,
-                        map(re.compile(r'RedirectMatch +/doc/options\$[\t ]+(.*)').match,
-                            open(htaccess).readlines())))
+    htaccess = path.join(test_utils.find_repository_root(__file__), ".htaccess")
+    lines = list(
+        filter(
+            None,
+            map(
+                re.compile(r"RedirectMatch +/doc/options\$[\t ]+(.*)").match,
+                open(htaccess).readlines(),
+            ),
+        )
+    )
     assert len(lines) == 1
-    return list(filter(None, lines[0].group(1).split('/')))[-1]
+    return list(filter(None, lines[0].group(1).split("/")))[-1]
 
 
-SERVICE_ACCOUNT_FILE = os.path.expanduser('~/.google-apis-service-account.json')
+SERVICE_ACCOUNT_FILE = os.path.expanduser("~/.google-apis-service-account.json")
 
 
 def get_auth_via_service_account(scopes):
@@ -67,14 +75,15 @@ def get_auth_via_service_account(scopes):
       http client object, from which you can use the Google APIs.
     """
     credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
-        SERVICE_ACCOUNT_FILE, scopes)
+        SERVICE_ACCOUNT_FILE, scopes
+    )
     http = httplib2.Http()
     credentials.authorize(http)
     return credentials, http
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
     args = parser.parse_args()
 
@@ -82,16 +91,17 @@ def main():
     docid = get_options_docid()
 
     # Connect to the service.
-    scopes = ['https://www.googleapis.com/auth/drive',
-              'https://www.googleapis.com/auth/drive.scripts']
+    scopes = [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/drive.scripts",
+    ]
     _, http = get_auth_via_service_account(scopes)
 
     # Replace the document.
-    replace_gdocs_document(http,
-                           docid,
-                           "Beancount - Options Reference",
-                           options.list_options())
+    replace_gdocs_document(
+        http, docid, "Beancount - Options Reference", options.list_options()
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

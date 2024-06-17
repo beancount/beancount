@@ -25,6 +25,7 @@ it in order to do anything meaningful. Simply instantiating this importer will
 not match not provide any useful information. It just defines the protocol for
 all importers.
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -45,7 +46,7 @@ class ImporterProtocol:
           A string which uniquely identifies this importer.
         """
         cls = self.__class__
-        return '{}.{}'.format(cls.__module__, cls.__name__)
+        return "{}.{}".format(cls.__module__, cls.__name__)
 
     __str__ = name
 

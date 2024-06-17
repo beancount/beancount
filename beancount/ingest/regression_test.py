@@ -1,5 +1,5 @@
-"""TD Ameritrade PDF statement importer.
-"""
+"""TD Ameritrade PDF statement importer."""
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -23,9 +23,11 @@ def suppress_deprecation(fun):
     @functools.wraps(fun)
     def wrapped(*args, **kw):
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', module=r'.*\.regression',
-                                    category=DeprecationWarning)
+            warnings.filterwarnings(
+                "ignore", module=r".*\.regression", category=DeprecationWarning
+            )
             return fun(*args, **kw)
+
     return wrapped
 
 
@@ -34,9 +36,8 @@ class _DummyImporter(importer.ImporterProtocol):
 
 
 class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
-
     @suppress_deprecation
-    @mock.patch('beancount.ingest.extract.extract_from_file')
+    @mock.patch("beancount.ingest.extract.extract_from_file")
     def test_test_expect_extract(self, extract_mock):
         importer = _DummyImporter()
 
@@ -47,15 +48,15 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
         """)
         entry = parser.parse_one(string)
 
-        filename = path.join(self.tempdir, 'input.csv')
-        expect_filename = path.join(self.tempdir, 'input.csv.extract')
-        with open(filename, 'w'):
+        filename = path.join(self.tempdir, "input.csv")
+        expect_filename = path.join(self.tempdir, "input.csv.extract")
+        with open(filename, "w"):
             pass
-        with open(expect_filename, 'w') as file:
+        with open(expect_filename, "w") as file:
             file.write(string)
 
         # Required to trigger the test creation.
-        with mock.patch.object(importer.__class__, 'extract') as imp_meth:
+        with mock.patch.object(importer.__class__, "extract") as imp_meth:
             imp_meth.__func__ = True
             imp_meth.return_value = []
 
@@ -81,15 +82,15 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
         importer = _DummyImporter()
 
         date = datetime.date(2013, 1, 28)
-        filename = path.join(self.tempdir, 'input.csv')
-        expect_filename = path.join(self.tempdir, 'input.csv.file_date')
-        with open(filename, 'w'):
+        filename = path.join(self.tempdir, "input.csv")
+        expect_filename = path.join(self.tempdir, "input.csv.file_date")
+        with open(filename, "w"):
             pass
-        with open(expect_filename, 'w') as file:
+        with open(expect_filename, "w") as file:
             file.write("{:%Y-%m-%d}\n".format(date))
 
         # Required to trigger the test creation.
-        with mock.patch.object(importer.__class__, 'file_date') as imp_meth:
+        with mock.patch.object(importer.__class__, "file_date") as imp_meth:
             imp_meth.__func__ = True
             imp_meth.return_value = date
 
@@ -114,16 +115,16 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
     def test_test_expect_file_name(self):
         importer = _DummyImporter()
 
-        filename = path.join(self.tempdir, 'input.csv')
-        expect_filename = path.join(self.tempdir, 'input.csv.file_name')
-        with open(filename, 'w'):
+        filename = path.join(self.tempdir, "input.csv")
+        expect_filename = path.join(self.tempdir, "input.csv.file_name")
+        with open(filename, "w"):
             pass
         renamed_filename = "renamed.csv"
-        with open(expect_filename, 'w') as file:
+        with open(expect_filename, "w") as file:
             file.write("{}\n".format(renamed_filename))
 
         # Required to trigger the test creation.
-        with mock.patch.object(importer.__class__, 'file_name') as imp_meth:
+        with mock.patch.object(importer.__class__, "file_name") as imp_meth:
             imp_meth.__func__ = True
             imp_meth.return_value = renamed_filename
 
@@ -146,38 +147,39 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
 
 
 class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase):
-
     def test_find_input_files(self):
-        for filename in ['something.extract',
-                         'something.file_date',
-                         'something.file_name',
-                         'something.py',
-                         'something.pyc',
-                         'something.other']:
-            open(path.join(self.tempdir, filename), 'w')
+        for filename in [
+            "something.extract",
+            "something.file_date",
+            "something.file_name",
+            "something.py",
+            "something.pyc",
+            "something.other",
+        ]:
+            open(path.join(self.tempdir, filename), "w")
         files = list(regression.find_input_files(self.tempdir))
-        self.assertEqual([path.join(self.tempdir, 'something.other')], files)
+        self.assertEqual([path.join(self.tempdir, "something.other")], files)
 
     @suppress_deprecation
     def test_compare_sample_files__no_directory(self):
         importer = _DummyImporter()
         this_module = sys.modules[type(importer).__module__]
-        with mock.patch.object(this_module, '__file__', new=self.tempdir):
-            with mock.patch.object(importer.__class__, 'file_date') as imp_meth:
+        with mock.patch.object(this_module, "__file__", new=self.tempdir):
+            with mock.patch.object(importer.__class__, "file_date") as imp_meth:
                 imp_meth.__func__ = True
-                open(path.join(self.tempdir, 'something.csv'), 'w')
-                open(path.join(self.tempdir, 'something.csv.file_date'), 'w')
+                open(path.join(self.tempdir, "something.csv"), "w")
+                open(path.join(self.tempdir, "something.csv.file_date"), "w")
                 tests = list(regression.compare_sample_files(importer))
                 self.assertEqual(1, len(tests))
 
     @suppress_deprecation
     def test_compare_sample_files__with_directory(self):
         importer = _DummyImporter()
-        with mock.patch.object(importer.__class__, 'file_date') as imp_meth:
+        with mock.patch.object(importer.__class__, "file_date") as imp_meth:
             imp_meth.__func__ = True
-            filename = path.join(self.tempdir, 'something.csv')
-            open(filename, 'w')
-            open(path.join(self.tempdir, 'something.csv.file_date'), 'w')
+            filename = path.join(self.tempdir, "something.csv")
+            open(filename, "w")
+            open(path.join(self.tempdir, "something.csv.file_date"), "w")
 
             # Test with a directory.
             tests = list(regression.compare_sample_files(importer, self.tempdir))
@@ -188,5 +190,5 @@ class TestImporterTestGenerators(test_utils.TestTempdirMixin, unittest.TestCase)
             self.assertEqual(1, len(tests))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

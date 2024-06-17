@@ -1,4 +1,5 @@
 """Unit tests for UTrade CSV importer (using pytest)."""
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,7 +18,8 @@ IMPORTER = utrade_csv.Importer(
     "Income:US:UTrade:{}:Dividend",
     "Income:US:UTrade:{}:Gains",
     "Expenses:Financial:Fees",
-    "Assets:US:BofA:Checking")
+    "Assets:US:BofA:Checking",
+)
 
 
 @regtest.with_importer(IMPORTER)
@@ -26,5 +28,5 @@ class TestImporter(regtest.ImporterTestBase):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

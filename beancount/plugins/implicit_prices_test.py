@@ -11,7 +11,6 @@ from beancount import loader
 
 
 class TestImplicitPrices(cmptest.TestCase):
-
     @loader.load_doc()
     def test_add_implicit_prices__all_cases(self, entries, _, options_map):
         """
@@ -53,10 +52,12 @@ class TestImplicitPrices(cmptest.TestCase):
         """
         self.assertEqual(10, len(entries))
         new_entries, _ = implicit_prices.add_implicit_prices(entries, options_map)
-        price_entries = list(filter(lambda entry: isinstance(entry, data.Price),
-                                    new_entries))
+        price_entries = list(
+            filter(lambda entry: isinstance(entry, data.Price), new_entries)
+        )
 
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -97,17 +98,22 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Other                       -270000 USD
 
         2013-04-06 price HOOL 560 USD
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
         self.assertEqual(6, len(price_entries))
-        expected_values = [(x[0], x[1], D(x[2])) for x in [
-            ('USD', 'CAD', '1.10'),
-            ('USD', 'CAD', '1.12'),
-            ('HOOL', 'USD', '520.00'),
-            ('HOOL', 'USD', '530.00'),
-            ('HOOL', 'USD', '540.00'),
-            ('HOOL', 'USD', '560.00')
-            ]]
+        expected_values = [
+            (x[0], x[1], D(x[2]))
+            for x in [
+                ("USD", "CAD", "1.10"),
+                ("USD", "CAD", "1.12"),
+                ("HOOL", "USD", "520.00"),
+                ("HOOL", "USD", "530.00"),
+                ("HOOL", "USD", "540.00"),
+                ("HOOL", "USD", "560.00"),
+            ]
+        ]
         for expected, price in zip(expected_values, price_entries):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
@@ -137,7 +143,8 @@ class TestImplicitPrices(cmptest.TestCase):
 
         """
         new_entries, _ = implicit_prices.add_implicit_prices(entries, options_map)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2  "NONE"
@@ -166,11 +173,14 @@ class TestImplicitPrices(cmptest.TestCase):
         ;; Because a match was not found against the inventory, a price will be added.
         2013-04-11 price HOOL 531 USD
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
     @loader.load_doc()
-    def test_add_implicit_prices__duplicates_on_same_transaction(self,
-                                                                 entries, _, options_map):
+    def test_add_implicit_prices__duplicates_on_same_transaction(
+        self, entries, _, options_map
+    ):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -189,7 +199,8 @@ class TestImplicitPrices(cmptest.TestCase):
         """
         new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqual([], [type(error) for error in errors])
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -210,12 +221,14 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-02 price HOOL 520 USD
         2013-04-02 price HOOL 530 USD  ;; Allowed for now.
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
     @loader.load_doc()
-    def test_add_implicit_prices__duplicates_on_different_transactions(self,
-                                                                       entries, _,
-                                                                       options_map):
+    def test_add_implicit_prices__duplicates_on_different_transactions(
+        self, entries, _, options_map
+    ):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -240,7 +253,8 @@ class TestImplicitPrices(cmptest.TestCase):
         """
         new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqual([], [type(error) for error in errors])
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -267,7 +281,9 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-02 price HOOL 520 USD
         2013-04-02 price HOOL 530 USD  ;; Allowed for now.
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
     @loader.load_doc()
     def test_add_implicit_prices__duplicates_overloaded(self, entries, _, options_map):
@@ -289,7 +305,8 @@ class TestImplicitPrices(cmptest.TestCase):
         """
         new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqual([], [type(error) for error in errors])
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Other
@@ -309,8 +326,10 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-01 price HOOL 520 USD
         2013-04-01 price HOOL 530 USD
 
-        """, new_entries)
+        """,
+            new_entries,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

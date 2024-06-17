@@ -1,5 +1,5 @@
-"""Text manipulation utilities.
-"""
+"""Text manipulation utilities."""
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -17,7 +17,8 @@ def replace_number(match):
     Returns:
       A replacement string, consisting only of X'es.
     """
-    return re.sub('[0-9]', 'X', match.group(1)) + match.group(2)
+    return re.sub("[0-9]", "X", match.group(1)) + match.group(2)
+
 
 def replace_numbers(text):
     """Replace all numbers found within text.
@@ -32,7 +33,7 @@ def replace_numbers(text):
       A string, with relevant numbers hopefully replaced with X'es.
 
     """
-    return re.sub(r'\b([0-9,]+(?:\.[0-9]*)?)\b([ \t<]+[^0-9,.]|$)', replace_number, text)
+    return re.sub(r"\b([0-9,]+(?:\.[0-9]*)?)\b([ \t<]+[^0-9,.]|$)", replace_number, text)
 
 
 def entitize_ampersand(filename):
@@ -47,10 +48,10 @@ def entitize_ampersand(filename):
       A self-destructing NamedTemporaryFile object that has been flushed and
       which you may read to obtain the fixed contents.
     """
-    tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w', delete=False)
+    tidy_file = tempfile.NamedTemporaryFile(suffix=".xls", mode="w", delete=False)
     with open(filename) as infile:
         contents = infile.read()
-    new_contents = re.sub('&([^;&]{12})', '&amp;\\1', contents)
+    new_contents = re.sub("&([^;&]{12})", "&amp;\\1", contents)
     tidy_file.write(new_contents)
     tidy_file.flush()
     return tidy_file

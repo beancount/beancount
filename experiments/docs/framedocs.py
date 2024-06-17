@@ -12,6 +12,7 @@ editing mode. Google Docs does not appear to support an option to open a
 document in "Viewing" mode by default (and by that I mean "Viewing" as part of
 the /edit page).
 """
+
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -66,10 +67,10 @@ def parse_htaccess(filename):
     documents = collections.defaultdict(list)
     redirects = []
     for line in open(filename):
-        match = re.match(r'RedirectMatch /doc/(.+?)\$\s+(.+)$', line)
+        match = re.match(r"RedirectMatch /doc/(.+?)\$\s+(.+)$", line)
         if match:
             name, url = match.groups()
-            url_match = re.match('https://docs.google.com/document/d/(.+)/$', url)
+            url_match = re.match("https://docs.google.com/document/d/(.+)/$", url)
             if url_match:
                 docid = url_match.group(1)
                 documents[docid].insert(0, name)
@@ -78,9 +79,9 @@ def parse_htaccess(filename):
 
     doc2id = {name[0]: docid for docid, name in documents.items()}
     for name, url in redirects:
-        if not url.startswith('/beancount/doc/'):
+        if not url.startswith("/beancount/doc/"):
             continue
-        url = re.sub('^/beancount/doc/', '', url)
+        url = re.sub("^/beancount/doc/", "", url)
         try:
             docid = doc2id[url]
             documents[docid].append(name)
@@ -92,14 +93,20 @@ def parse_htaccess(filename):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
-    parser.add_argument('htaccess', action='store', default=os.getcwd(),
-                        help="Input .htaccess file")
-    parser.add_argument('output', action='store', default=os.getcwd(),
-                        help="Output directory for all the filenames")
-    parser.add_argument('docs_url', action='store',
-                        help="URL from the root where the documents are served")
+    parser.add_argument(
+        "htaccess", action="store", default=os.getcwd(), help="Input .htaccess file"
+    )
+    parser.add_argument(
+        "output",
+        action="store",
+        default=os.getcwd(),
+        help="Output directory for all the filenames",
+    )
+    parser.add_argument(
+        "docs_url", action="store", help="URL from the root where the documents are served"
+    )
 
     args = parser.parse_args()
 
@@ -111,18 +118,20 @@ def main():
         name, synonyms = names[0], names[1:]
         filename = path.join(args.output, names[0])
         logging.info("Writing %s", filename)
-        with open(filename, 'w') as file:
+        with open(filename, "w") as file:
             file.write(TEMPLATE.format(id=docid))
 
     # Generate a .htaccess for that directory.
-    with open(path.join(args.output, '.htaccess'), 'w') as file:
+    with open(path.join(args.output, ".htaccess"), "w") as file:
         for names in documents.values():
             name = names[0]
             name, synonyms = names[0], names[1:]
             for synonym in synonyms:
-                print('RedirectMatch {}$ {}/{}'.format(synonym, args.docs_url, name),
-                      file=file)
+                print(
+                    "RedirectMatch {}$ {}/{}".format(synonym, args.docs_url, name),
+                    file=file,
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

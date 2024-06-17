@@ -3,6 +3,7 @@
 regular expressions matching unicode characters belonging to particular
 categories.
 """
+
 __copyright__ = "Copyright (C) 2018  Adrián Medraño Calvo"
 __license__ = "GNU GPLv2"
 
@@ -14,10 +15,12 @@ from collections import defaultdict
 
 # pylint: disable=invalid-name
 
+
 def list_chunks(l, n):
     """Split list in chunks of size n."""
     for it in range(0, len(l), n):
-        yield l[it:it+n]
+        yield l[it : it + n]
+
 
 def groupby_sequences(iterable, keyfunc):
     """
@@ -26,7 +29,8 @@ def groupby_sequences(iterable, keyfunc):
     """
     if keyfunc is None:
         keyfunc = lambda x: x
-    return groupby(iterable, lambda i, c=count(): keyfunc(i)-next(c))
+    return groupby(iterable, lambda i, c=count(): keyfunc(i) - next(c))
+
 
 def categorize_unicode():
     """
@@ -38,17 +42,20 @@ def categorize_unicode():
         bycat[unicodedata.category(c)].append(c)
     return bycat
 
+
 def bytes_prefix(bs):
     """
     Return all but the last byte from a byte sequence.
     """
     return bs[0:-1]
 
+
 def bytes_last(bs):
     """
     Return the last byte from a byte sequence.
     """
     return bs[-1]
+
 
 def py_unicode_literal(c):
     """
@@ -60,6 +67,7 @@ def py_unicode_literal(c):
     else:
         return "\\U{:08x}".format(codepoint)
 
+
 def py_unicode_range_literal(beg, end):
     """
     Convert a range of characters into an unicode range literal
@@ -69,9 +77,8 @@ def py_unicode_range_literal(beg, end):
     if beg == end:
         return py_unicode_literal(beg)
     else:
-        return "{}-{}".format(
-            py_unicode_literal(beg),
-            py_unicode_literal(end))
+        return "{}-{}".format(py_unicode_literal(beg), py_unicode_literal(end))
+
 
 def py_unicode_ranges(chars):
     """
@@ -86,11 +93,13 @@ def py_unicode_ranges(chars):
         ranges.append(py_unicode_range_literal(beg, end))
     return "r'" + "".join(ranges) + "'"
 
+
 def lex_byte_literal(b):
     """
     Convert a byte into a byte literal, as supported by lex (e.g., "\x40").
     """
     return "\\x{:02x}".format(b)
+
 
 def lex_byte_literals(bs):
     """
@@ -98,6 +107,7 @@ def lex_byte_literals(bs):
     by lex (e.g., "\x40").
     """
     return "".join(["\\x{:02x}".format(b) for b in bs])
+
 
 def lex_byte_range_literal(prefix, beg, end):
     pat = lex_byte_literals(prefix)
@@ -110,6 +120,7 @@ def lex_byte_range_literal(prefix, beg, end):
         pat += lex_byte_literal(end)
         pat += "]"
     return pat
+
 
 def lex_unicode_ranges(name, chars):
     """
@@ -132,31 +143,26 @@ def lex_unicode_ranges(name, chars):
         i = 0
         for pats in list_chunks(pats, MAXPATS):
             partname = "{}-{}".format(name, i)
-            res += "{}\t{}\n".format(
-                partname,
-                "|".join(pats))
+            res += "{}\t{}\n".format(partname, "|".join(pats))
             partnames.append(partname)
             i += 1
-        res += "{}\t{{{}}}".format(
-            name,
-            "}|{".join(partnames))
+        res += "{}\t{{{}}}".format(name, "}|{".join(partnames))
     else:
-        res += "{}\t{}".format(
-            name,
-            "|".join(pats))
+        res += "{}\t{}".format(name, "|".join(pats))
     return res
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument("--name", required=True, help="name to assign the result")
     parser.add_argument(
-        '--name', required=True,
-        help='name to assign the result')
+        "--categories",
+        required=True,
+        help="unicode categories to print, separated by commas (e.g. Lu,Ll)",
+    )
     parser.add_argument(
-        '--categories', required=True,
-        help='unicode categories to print, separated by commas (e.g. Lu,Ll)')
-    parser.add_argument(
-        '--format', required=True, choices=['py', 'lex'],
-        help='output format')
+        "--format", required=True, choices=["py", "lex"], help="output format"
+    )
     args = parser.parse_args()
 
     bycategory = categorize_unicode()
@@ -165,10 +171,11 @@ def main():
         chars += bycategory[cat]
     chars.sort()
 
-    if args.format == 'py':
+    if args.format == "py":
         print(py_unicode_ranges(chars))
-    elif args.format == 'lex':
+    elif args.format == "lex":
         print(lex_unicode_ranges(args.name, chars))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

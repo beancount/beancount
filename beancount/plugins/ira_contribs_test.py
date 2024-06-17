@@ -8,7 +8,6 @@ from beancount.parser import cmptest
 
 
 class TestIraContributions(cmptest.TestCase):
-
     @loader.load_doc()
     def test_ira_contribs(self, entries, errors, __):
         """
@@ -62,7 +61,8 @@ class TestIraContributions(cmptest.TestCase):
 
         """
         self.assertFalse(errors)
-        self.assertEqualEntries("""
+        self.assertEqualEntries(
+            """
 
         2012-01-01 open Assets:US:BofA:Checking
         2012-01-01 open Assets:US:Federal:Match401k
@@ -103,8 +103,10 @@ class TestIraContributions(cmptest.TestCase):
 
         2013-02-17 price SE2030                             17.834 USD
 
-        """, entries)
+        """,
+            entries,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

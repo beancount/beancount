@@ -1,5 +1,5 @@
-"""A test for setup.py.
-"""
+"""A test for setup.py."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,9 +22,8 @@ def is_bazel_build():
 
 
 class TestSetup(test_utils.TestCase):
-
     def setUp(self):
-        self.installdir = tempfile.mkdtemp(prefix='beancount-setup-test.')
+        self.installdir = tempfile.mkdtemp(prefix="beancount-setup-test.")
 
     def tearDown(self):
         if path.exists(self.installdir):
@@ -38,15 +37,15 @@ class TestSetup(test_utils.TestCase):
         # large error message with instructions on how to work with setuptools.
         site_packages_path = path.join(
             self.installdir,
-            'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(
-                vi=sys.version_info))
+            "lib/python{vi.major:d}.{vi.minor:d}/site-packages".format(vi=sys.version_info),
+        )
         os.makedirs(site_packages_path)
-        self.run_setup(self.installdir, {'PYTHONPATH': site_packages_path})
+        self.run_setup(self.installdir, {"PYTHONPATH": site_packages_path})
 
         # Setuptools will leave some crud in the installation source. Clean this
         # up so as not to be annoying.
         rootdir = test_utils.find_repository_root(__file__)
-        egg_info = path.join(rootdir, 'beancount.egg-info')
+        egg_info = path.join(rootdir, "beancount.egg-info")
         if path.exists(egg_info):
             shutil.rmtree(egg_info)
 
@@ -60,33 +59,39 @@ class TestSetup(test_utils.TestCase):
         rootdir = test_utils.find_repository_root(__file__)
 
         # Clean previously built "build" output.
-        command = [sys.executable, 'setup.py', 'clean', '--all']
+        command = [sys.executable, "setup.py", "clean", "--all"]
         subprocess_env = os.environ.copy()
         if extra_env:
             subprocess_env.update(extra_env)
-        pipe = subprocess.Popen(command, shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                cwd=rootdir,
-                                env=subprocess_env)
+        pipe = subprocess.Popen(
+            command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=rootdir,
+            env=subprocess_env,
+        )
         stdout, stderr = pipe.communicate()
         self.assertEqual(0, pipe.returncode, stderr)
 
         # Install in a temporary directory.
-        command = [sys.executable, 'setup.py', 'install', '--prefix={}'.format(installdir)]
+        command = [sys.executable, "setup.py", "install", "--prefix={}".format(installdir)]
         subprocess_env = os.environ.copy()
         if extra_env:
             subprocess_env.update(extra_env)
-        pipe = subprocess.Popen(command, shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                cwd=rootdir,
-                                env=subprocess_env)
+        pipe = subprocess.Popen(
+            command,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=rootdir,
+            env=subprocess_env,
+        )
         stdout, stderr = pipe.communicate()
         self.assertEqual(0, pipe.returncode, stderr)
 
-        self.assertTrue(path.exists(path.join(installdir, 'bin')))
-        self.assertTrue(path.exists(path.join(installdir, 'lib')))
+        self.assertTrue(path.exists(path.join(installdir, "bin")))
+        self.assertTrue(path.exists(path.join(installdir, "lib")))
         self.assertGreater(len(list(os.walk(installdir))), 20)
 
         # Note: We used to run the commands with --help in the past, but after
@@ -99,29 +104,34 @@ class TestSetup(test_utils.TestCase):
         # Clean previously built "build" output.
         rootdir = test_utils.find_repository_root(__file__)
         subprocess.check_call(
-            [sys.executable, 'setup.py', 'sdist', '--dist-dir', self.installdir],
-            cwd=rootdir, shell=False,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            [sys.executable, "setup.py", "sdist", "--dist-dir", self.installdir],
+            cwd=rootdir,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         files = os.listdir(self.installdir)
         self.assertEqual(1, len(files))
         targz = path.join(self.installdir, files[0])
 
         # Find the set of expected header & C files.
         exp_filenames = set()
-        for root, dirs, files in os.walk(path.join(rootdir, 'beancount')):
+        for root, dirs, files in os.walk(path.join(rootdir, "beancount")):
             for filename in files:
-                if re.match(r'.*\.[hc]$', filename):
-                    exp_filenames.add(path.join(root[len(rootdir)+1:], filename))
+                if re.match(r".*\.[hc]$", filename):
+                    exp_filenames.add(path.join(root[len(rootdir) + 1 :], filename))
 
         # Find the set of packaged files in the source distribution.
         tar = tarfile.open(targz)
-        tar_filenames = set(re.sub('^.*?{}'.format(os.sep), '', info.name)
-                            for info in tar
-                            if re.match(r'.*\.[hc]$', info.name))
+        tar_filenames = set(
+            re.sub("^.*?{}".format(os.sep), "", info.name)
+            for info in tar
+            if re.match(r".*\.[hc]$", info.name)
+        )
 
         # Check that all the expected files are present.
         self.assertLessEqual(exp_filenames, tar_filenames)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

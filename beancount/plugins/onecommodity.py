@@ -25,10 +25,10 @@ import re
 
 from beancount.core import data
 
-__plugins__ = ('validate_one_commodity',)
+__plugins__ = ("validate_one_commodity",)
 
 
-OneCommodityError = collections.namedtuple('OneCommodityError', 'source message entry')
+OneCommodityError = collections.namedtuple("OneCommodityError", "source message entry")
 
 
 def validate_one_commodity(entries, unused_options_map, config=None):
@@ -62,9 +62,11 @@ def validate_one_commodity(entries, unused_options_map, config=None):
     for entry in entries:
         if not isinstance(entry, data.Open):
             continue
-        if (not entry.meta.get("onecommodity", True) or
-            (accounts_re and not accounts_re.match(entry.account)) or
-            (entry.currencies and len(entry.currencies) > 1)):
+        if (
+            not entry.meta.get("onecommodity", True)
+            or (accounts_re and not accounts_re.match(entry.account))
+            or (entry.currencies and len(entry.currencies) > 1)
+        ):
             skip_accounts.add(entry.account)
 
     # Accumulate all the commodities used.
@@ -103,21 +105,29 @@ def validate_one_commodity(entries, unused_options_map, config=None):
         if account in skip_accounts:
             continue
         if len(currencies) > 1:
-            errors.append(OneCommodityError(
-                units_source_map[account].meta,
-                "More than one currency in account '{}': {}".format(
-                    account, ','.join(currencies)),
-                None))
+            errors.append(
+                OneCommodityError(
+                    units_source_map[account].meta,
+                    "More than one currency in account '{}': {}".format(
+                        account, ",".join(currencies)
+                    ),
+                    None,
+                )
+            )
 
     # Check costs.
     for account, currencies in cost_map.items():
         if account in skip_accounts:
             continue
         if len(currencies) > 1:
-            errors.append(OneCommodityError(
-                cost_source_map[account].meta,
-                "More than one cost currency in account '{}': {}".format(
-                    account, ','.join(currencies)),
-                None))
+            errors.append(
+                OneCommodityError(
+                    cost_source_map[account].meta,
+                    "More than one cost currency in account '{}': {}".format(
+                        account, ",".join(currencies)
+                    ),
+                    None,
+                )
+            )
 
     return entries, errors

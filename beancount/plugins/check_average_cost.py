@@ -9,6 +9,7 @@ booking method will do, manually, and not to leak too much cost basis through
 unmatching bookings without checks. (Note the contrived context here: Ideally
 the "NONE" booking method would simply not exist.)
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -21,10 +22,10 @@ from beancount.core.data import Booking
 from beancount.core import getters
 from beancount.core import inventory
 
-__plugins__ = ('validate_average_cost',)
+__plugins__ = ("validate_average_cost",)
 
 
-MatchBasisError = collections.namedtuple('MatchBasisError', 'source message entry')
+MatchBasisError = collections.namedtuple("MatchBasisError", "source message entry")
 
 
 # A fraction of tolerance from the average cost the reduction is allowed to be
@@ -49,8 +50,9 @@ def validate_average_cost(entries, options_map, config_str=None):
         # pylint: disable=eval-used
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, float):
-            raise RuntimeError("Invalid configuration for check_average_cost: "
-                               "must be a float")
+            raise RuntimeError(
+                "Invalid configuration for check_average_cost: " "must be a float"
+            )
         tolerance = config_obj
     else:
         tolerance = DEFAULT_TOLERANCE
@@ -66,9 +68,13 @@ def validate_average_cost(entries, options_map, config_str=None):
                 dopen = ocmap.get(posting.account, None)
                 # Only process accounts with a NONE booking value.
                 if dopen and dopen[0] and dopen[0].booking == Booking.NONE:
-                    balance = balances[(posting.account,
-                                        posting.units.currency,
-                                        posting.cost.currency if posting.cost else None)]
+                    balance = balances[
+                        (
+                            posting.account,
+                            posting.units.currency,
+                            posting.cost.currency if posting.cost else None,
+                        )
+                    ]
                     if posting.units.number < ZERO:
                         average = balance.average().get_only_position()
                         if average is not None:
@@ -79,9 +85,14 @@ def validate_average_cost(entries, options_map, config_str=None):
                                 errors.append(
                                     MatchBasisError(
                                         entry.meta,
-                                        ("Cost basis on reducing posting is too far from "
-                                         "the average cost ({} vs. {})".format(
-                                             posting.cost.number, average.cost.number)),
-                                        entry))
+                                        (
+                                            "Cost basis on reducing posting is too far from "
+                                            "the average cost ({} vs. {})".format(
+                                                posting.cost.number, average.cost.number
+                                            )
+                                        ),
+                                        entry,
+                                    )
+                                )
                     balance.add_position(posting)
     return entries, errors

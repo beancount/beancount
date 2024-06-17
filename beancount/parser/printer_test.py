@@ -15,10 +15,10 @@ from beancount.utils import test_utils
 from beancount import loader
 
 
-META = data.new_metadata('beancount/core/testing.beancount', 12345)
+META = data.new_metadata("beancount/core/testing.beancount", 12345)
+
 
 class TestPrinter(unittest.TestCase):
-
     def test_methods_coverage(self):
         for klass in data.ALL_DIRECTIVES:
             self.assertTrue(hasattr(printer.EntryPrinter, klass.__name__))
@@ -26,11 +26,11 @@ class TestPrinter(unittest.TestCase):
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
-        self.assertRegex(source_str, '12345')
-        self.assertRegex(source_str, META['filename'])
+        self.assertRegex(source_str, "12345")
+        self.assertRegex(source_str, META["filename"])
 
     def test_format_and_print_error(self):
-        entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
+        entry = data.Open(META, date(2014, 1, 15), "Assets:Bank:Checking", [], None)
         error = interpolate.BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
@@ -45,7 +45,6 @@ class TestPrinter(unittest.TestCase):
 
 
 class TestEntryPrinter(cmptest.TestCase):
-
     def assertRoundTrip(self, entries1, errors1):
         self.assertFalse(errors1)
 
@@ -221,8 +220,8 @@ class TestEntryPrinter(cmptest.TestCase):
         self.assertRoundTrip(entries, errors)
 
     def test_metadata(self):
-        meta = data.new_metadata('beancount/core/testing.beancount', 12345)
-        meta['something'] = r'a"\c'
+        meta = data.new_metadata("beancount/core/testing.beancount", 12345)
+        meta["something"] = r'a"\c'
         oss = io.StringIO()
         printer.EntryPrinter().write_metadata(meta, oss)
         self.assertEqual('  something: "a\\"\\\\c"\n', oss.getvalue())
@@ -238,14 +237,14 @@ def characterize_spaces(text):
     """
     lines = []
     for line in text.splitlines():
-        if re.match(r'\d\d\d\d-\d\d-\d\d open', line):
-            linecls = 'open'
-        elif re.match(r'\d\d\d\d-\d\d-\d\d price', line):
-            linecls = 'price'
-        elif re.match(r'\d\d\d\d-\d\d-\d\d', line):
-            linecls = 'txn'
-        elif re.match(r'[ \t]$', line):
-            linecls = 'empty'
+        if re.match(r"\d\d\d\d-\d\d-\d\d open", line):
+            linecls = "open"
+        elif re.match(r"\d\d\d\d-\d\d-\d\d price", line):
+            linecls = "price"
+        elif re.match(r"\d\d\d\d-\d\d-\d\d", line):
+            linecls = "txn"
+        elif re.match(r"[ \t]$", line):
+            linecls = "empty"
         else:
             linecls = None
         lines.append(linecls)
@@ -253,7 +252,6 @@ def characterize_spaces(text):
 
 
 class TestPrinterSpacing(unittest.TestCase):
-
     maxDiff = 8192
 
     def test_interline_spacing(self):
@@ -292,7 +290,6 @@ class TestPrinterSpacing(unittest.TestCase):
 
 
 class TestDisplayContext(test_utils.TestCase):
-
     maxDiff = 2048
 
     @loader.load_doc()
@@ -315,7 +312,7 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Cash       -4444.4444 FP4
           Assets:Cash     -55555.55555 FP5
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
 
@@ -342,29 +339,33 @@ class TestDisplayContext(test_utils.TestCase):
 
 
 class TestPrinterAlignment(test_utils.TestCase):
-
     maxDiff = None
 
     def test_align_position_strings(self):
-        aligned_strings, width = printer.align_position_strings([
-            '45 HOOL {504.30 USD}',
-            '4 HOOL {504.30 USD / 2014-11-11}',
-            '9.9505 USD',
-            '',
-            '-22473.32 CAD @ 1.10 USD',
-            'UNKNOWN',
-            '76400.203',
-        ])
+        aligned_strings, width = printer.align_position_strings(
+            [
+                "45 HOOL {504.30 USD}",
+                "4 HOOL {504.30 USD / 2014-11-11}",
+                "9.9505 USD",
+                "",
+                "-22473.32 CAD @ 1.10 USD",
+                "UNKNOWN",
+                "76400.203",
+            ]
+        )
         self.assertEqual(40, width)
-        self.assertEqual([
-            '       45 HOOL {504.30 USD}             ',
-            '        4 HOOL {504.30 USD / 2014-11-11}',
-            '   9.9505 USD                           ',
-            '                                        ',
-            '-22473.32 CAD @ 1.10 USD                ',
-            'UNKNOWN                                 ',
-            '76400.203                               ',
-            ], aligned_strings)
+        self.assertEqual(
+            [
+                "       45 HOOL {504.30 USD}             ",
+                "        4 HOOL {504.30 USD / 2014-11-11}",
+                "   9.9505 USD                           ",
+                "                                        ",
+                "-22473.32 CAD @ 1.10 USD                ",
+                "UNKNOWN                                 ",
+                "76400.203                               ",
+            ],
+            aligned_strings,
+        )
 
     @loader.load_doc()
     def test_align(self, entries, errors, options_map):
@@ -376,7 +377,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  9.9505 USD
           Expenses:Commissions  -20009.9505 USD
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
         expected_str = textwrap.dedent("""\
@@ -399,7 +400,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  9.9505 USD
           Expenses:Commissions  -20009.9505 USD
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
         oss.write(eprinter(entries[1]))
@@ -425,7 +426,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
         self.assertFalse(errors)
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
 
         # oss = io.StringIO()
         # printer.print_entries(entries, dcontext, render_weights=False, file=oss)
@@ -459,7 +460,6 @@ class TestPrinterAlignment(test_utils.TestCase):
 
 
 class TestPrinterMisc(test_utils.TestCase):
-
     @loader.load_doc(expect_errors=True)
     def test_no_valid_account(self, entries, errors, options_map):
         """
@@ -533,7 +533,7 @@ class TestPrinterMisc(test_utils.TestCase):
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
-        self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
+        self.assertRegex(oss.getvalue(), "0.0000000000000000000000001 DKK")
 
     def test_render_missing(self):
         # We want to make sure we never render with scientific notation.
@@ -564,8 +564,8 @@ class TestPrinterMisc(test_utils.TestCase):
         """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
-        self.assertIs(entries[-1].postings[-1].meta['foo'], None)
+        self.assertIs(entries[-1].postings[-1].meta["foo"], None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

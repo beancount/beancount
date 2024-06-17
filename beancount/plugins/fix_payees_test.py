@@ -9,7 +9,6 @@ from beancount import loader
 
 
 class TestFixPayees(cmptest.TestCase):
-
     @loader.load_doc()
     def setUp(self, entries, _, options_map):
         """
@@ -73,5 +72,5 @@ class TestFixPayees(cmptest.TestCase):
         self.assertEqualEntries(entries, self.in_entries)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

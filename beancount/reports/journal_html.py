@@ -1,5 +1,5 @@
-"""HTML rendering routines for serving a lists of postings/entries.
-"""
+"""HTML rendering routines for serving a lists of postings/entries."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -15,9 +15,9 @@ from beancount.core import flags
 
 # Names to render for transaction rows.
 FLAG_ROWTYPES = {
-    flags.FLAG_PADDING  : 'Padding',
-    flags.FLAG_SUMMARIZE: 'Summarize',
-    flags.FLAG_TRANSFER : 'Transfer',
+    flags.FLAG_PADDING: "Padding",
+    flags.FLAG_SUMMARIZE: "Summarize",
+    flags.FLAG_TRANSFER: "Transfer",
 }
 
 
@@ -37,9 +37,11 @@ FLAG_ROWTYPES = {
 #   balance_str: A string, the rendered inventory of the resulting balance after
 #     applying the change to this row.
 #
-Row = collections.namedtuple('Row',
-                             'entry leg_postings rowtype extra_class flag '
-                             'description links amount_str balance_str')
+Row = collections.namedtuple(
+    "Row",
+    "entry leg_postings rowtype extra_class flag "
+    "description links amount_str balance_str",
+)
 
 
 def iterate_html_postings(txn_postings, formatter):
@@ -62,19 +64,19 @@ def iterate_html_postings(txn_postings, formatter):
         balance_str = formatter.render_inventory(entry_balance)
 
         rowtype = entry.__class__.__name__
-        flag = ''
-        extra_class = ''
+        flag = ""
+        extra_class = ""
         links = None
 
         if isinstance(entry, data.Transaction):
-            rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
-            extra_class = 'warning' if entry.flag == flags.FLAG_WARNING else ''
+            rowtype = FLAG_ROWTYPES.get(entry.flag, "Transaction")
+            extra_class = "warning" if entry.flag == flags.FLAG_WARNING else ""
             flag = entry.flag
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
-                description = ('<span class="payee">{}</span>'
-                               '<span class="pnsep">|</span>'
-                               '{}').format(entry.payee, description)
+                description = (
+                    '<span class="payee">{}</span>' '<span class="pnsep">|</span>' "{}"
+                ).format(entry.payee, description)
             amount_str = formatter.render_inventory(change)
 
             if entry.links and formatter:
@@ -83,46 +85,58 @@ def iterate_html_postings(txn_postings, formatter):
         elif isinstance(entry, data.Balance):
             # Check the balance here and possibly change the rowtype
             if entry.diff_amount is None:
-                description = 'Balance {} has {}'.format(
-                    formatter.render_account(entry.account),
-                    entry.amount)
+                description = "Balance {} has {}".format(
+                    formatter.render_account(entry.account), entry.amount
+                )
             else:
-                description = ('Balance in {} fails; '
-                               'expected = {}, balance = {}, difference = {}').format(
-                                   formatter.render_account(entry.account),
-                                   entry.amount,
-                                   entry_balance.get_currency_units(entry.amount.currency),
-                                   entry.diff_amount)
-                extra_class = 'fail'
+                description = (
+                    "Balance in {} fails; " "expected = {}, balance = {}, difference = {}"
+                ).format(
+                    formatter.render_account(entry.account),
+                    entry.amount,
+                    entry_balance.get_currency_units(entry.amount.currency),
+                    entry.diff_amount,
+                )
+                extra_class = "fail"
 
             amount_str = formatter.render_amount(entry.amount)
 
         elif isinstance(entry, (data.Open, data.Close)):
-            description = '{} {}'.format(entry.__class__.__name__,
-                                         formatter.render_account(entry.account))
-            amount_str = ''
+            description = "{} {}".format(
+                entry.__class__.__name__, formatter.render_account(entry.account)
+            )
+            amount_str = ""
 
         elif isinstance(entry, data.Note):
-            description = '{} {}'.format(entry.__class__.__name__, entry.comment)
-            amount_str = ''
-            balance_str = ''
+            description = "{} {}".format(entry.__class__.__name__, entry.comment)
+            amount_str = ""
+            balance_str = ""
 
         elif isinstance(entry, data.Document):
             assert path.isabs(entry.filename)
-            description = 'Document for {}: {}'.format(
+            description = "Document for {}: {}".format(
                 formatter.render_account(entry.account),
-                formatter.render_doc(entry.filename))
-            amount_str = ''
-            balance_str = ''
+                formatter.render_doc(entry.filename),
+            )
+            amount_str = ""
+            balance_str = ""
 
         else:
             description = entry.__class__.__name__
-            amount_str = ''
-            balance_str = ''
+            amount_str = ""
+            balance_str = ""
 
-        yield Row(entry, leg_postings,
-                  rowtype, extra_class,
-                  flag, description, links, amount_str, balance_str)
+        yield Row(
+            entry,
+            leg_postings,
+            rowtype,
+            extra_class,
+            flag,
+            description,
+            links,
+            amount_str,
+            balance_str,
+        )
 
 
 def html_entries_table_with_balance(oss, txn_postings, formatter, render_postings=True):
@@ -138,9 +152,9 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """
-    write = lambda data: (oss.write(data), oss.write('\n'))
+    write = lambda data: (oss.write(data), oss.write("\n"))
 
-    write('''
+    write("""
       <table class="entry-table">
       <thead>
         <tr>
@@ -154,7 +168,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
          <th class="balance">Balance</th>
         </tr>
       </thead>
-    ''')
+    """)
 
     for row in iterate_html_postings(txn_postings, formatter):
         entry = row.entry
@@ -164,7 +178,8 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
             description += render_links(row.links)
 
         # Render a row.
-        write('''
+        write(
+            """
           <tr class="{} {}" title="{}">
             <td class="datecell"><a href="{}">{}</a></td>
             <td class="flag">{}</td>
@@ -172,22 +187,29 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
             <td class="change num">{}</td>
             <td class="balance num">{}</td>
           </tr>
-        '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
-                   formatter.render_context(entry), entry.date,
-                   row.flag, description,
-                   row.amount_str, row.balance_str))
+        """.format(
+                row.rowtype,
+                row.extra_class,
+                "{}:{}".format(entry.meta["filename"], entry.meta["lineno"]),
+                formatter.render_context(entry),
+                entry.date,
+                row.flag,
+                description,
+                row.amount_str,
+                row.balance_str,
+            )
+        )
 
         if render_postings and isinstance(entry, data.Transaction):
             for posting in entry.postings:
-
-                classes = ['Posting']
+                classes = ["Posting"]
                 if posting.flag == flags.FLAG_WARNING:
-                    classes.append('warning')
+                    classes.append("warning")
                 if posting in row.leg_postings:
-                    classes.append('leg')
+                    classes.append("leg")
 
-                write('''
+                write(
+                    """
                   <tr class="{}">
                     <td class="datecell"></td>
                     <td class="flag">{}</td>
@@ -198,14 +220,17 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
                     <td class="change num"></td>
                     <td class="balance num"></td>
                   </tr>
-                '''.format(' '.join(classes),
-                           posting.flag or '',
-                           formatter.render_account(posting.account),
-                           position.to_string(posting),
-                           posting.price or '',
-                           convert.get_weight(posting)))
+                """.format(
+                        " ".join(classes),
+                        posting.flag or "",
+                        formatter.render_account(posting.account),
+                        position.to_string(posting),
+                        posting.price or "",
+                        convert.get_weight(posting),
+                    )
+                )
 
-    write('</table>')
+    write("</table>")
 
 
 def html_entries_table(oss, txn_postings, formatter, render_postings=True):
@@ -225,9 +250,9 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """
-    write = lambda data: (oss.write(data), oss.write('\n'))
+    write = lambda data: (oss.write(data), oss.write("\n"))
 
-    write('''
+    write("""
       <table class="entry-table">
       <thead>
         <tr>
@@ -240,7 +265,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
          <th class="balance">Balance</th>
         </tr>
       </thead>
-    ''')
+    """)
 
     for row in iterate_html_postings(txn_postings, formatter):
         entry = row.entry
@@ -250,25 +275,32 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
             description += render_links(row.links)
 
         # Render a row.
-        write('''
+        write(
+            """
           <tr class="{} {}" title="{}">
             <td class="datecell"><a href="{}">{}</a></td>
             <td class="flag">{}</td>
             <td class="description" colspan="5">{}</td>
           </tr>
-        '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
-                   formatter.render_context(entry), entry.date,
-                   row.flag, description))
+        """.format(
+                row.rowtype,
+                row.extra_class,
+                "{}:{}".format(entry.meta["filename"], entry.meta["lineno"]),
+                formatter.render_context(entry),
+                entry.date,
+                row.flag,
+                description,
+            )
+        )
 
         if render_postings and isinstance(entry, data.Transaction):
             for posting in entry.postings:
-
-                classes = ['Posting']
+                classes = ["Posting"]
                 if posting.flag == flags.FLAG_WARNING:
-                    classes.append('warning')
+                    classes.append("warning")
 
-                write('''
+                write(
+                    """
                   <tr class="{}">
                     <td class="datecell"></td>
                     <td class="flag">{}</td>
@@ -278,15 +310,18 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
                     <td class="price num">{}</td>
                     <td class="balance num">{}</td>
                   </tr>
-                '''.format(' '.join(classes),
-                           posting.flag or '',
-                           formatter.render_account(posting.account),
-                           posting.units or '',
-                           posting.cost or '',
-                           posting.price or '',
-                           convert.get_weight(posting)))
+                """.format(
+                        " ".join(classes),
+                        posting.flag or "",
+                        formatter.render_account(posting.account),
+                        posting.units or "",
+                        posting.cost or "",
+                        posting.price or "",
+                        convert.get_weight(posting),
+                    )
+                )
 
-    write('</table>')
+    write("</table>")
 
 
 def render_links(links):
@@ -298,5 +333,5 @@ def render_links(links):
       A string, a snippet of HTML to be rendering somewhere.
     """
     return '<span class="links">{}</span>'.format(
-        ''.join('<a href="{}">^</a>'.format(link)
-                for link in links))
+        "".join('<a href="{}">^</a>'.format(link) for link in links)
+    )

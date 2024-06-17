@@ -1,5 +1,5 @@
-"""Basic data structures used to represent the Ledger entries.
-"""
+"""Basic data structures used to represent the Ledger entries."""
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -36,24 +36,24 @@ EMPTY_SET = frozenset()
 # See http://furius.ca/beancount/doc/inventories for a full explanation.
 @enum.unique
 class Booking(enum.Enum):
-
     # Reject ambiguous matches with an error.
-    STRICT = 'STRICT'
+    STRICT = "STRICT"
 
     # Disable matching and accept the creation of mixed inventories.
-    NONE = 'NONE'
+    NONE = "NONE"
 
     # Average cost booking: merge all matching lots before and after.
-    AVERAGE = 'AVERAGE'
+    AVERAGE = "AVERAGE"
 
     # First-in first-out in the case of ambiguity.
-    FIFO = 'FIFO'
+    FIFO = "FIFO"
 
     # Last-in first-out in the case of ambiguity.
-    LIFO = 'LIFO'
+    LIFO = "LIFO"
 
     # Highest-in first-out in the case of ambiguity.
-    HIFO = 'HIFO'
+    HIFO = "HIFO"
+
 
 def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
     """Create a directive class. Do not include default fields.
@@ -66,9 +66,7 @@ def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
     Returns:
       A type object for the new directive type.
     """
-    return NamedTuple(
-        clsname,
-        [('meta', Meta), ('date', datetime.date)] + fields)
+    return NamedTuple(clsname, [("meta", Meta), ("date", datetime.date)] + fields)
 
 
 # All possible types of entries. These are the main data structures in use
@@ -98,18 +96,16 @@ def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
 #     specification), or None if not specified. In practice, this attribute will
 #     be should be left unspecified (None) in the vast majority of cases. See
 #     Booking below for a selection of valid methods.
-Open = new_directive('Open', [
-    ('account', Account),
-    ('currencies', List[Currency]),
-    ('booking', Booking)])
+Open = new_directive(
+    "Open", [("account", Account), ("currencies", List[Currency]), ("booking", Booking)]
+)
 
 
 # A "close account" directive.
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = new_directive('Close', [
-    ('account', Account)])
+Close = new_directive("Close", [("account", Account)])
 
 # An optional commodity declaration directive. Commodities generally do not need
 # to be declared, but they may, and this is mainly created as intended to be
@@ -124,8 +120,7 @@ Close = new_directive('Close', [
 #   meta: See above.
 #   date: See above.
 #   currency: A string, the commodity under consideration.
-Commodity = new_directive('Commodity', [
-    ('currency', Currency)])
+Commodity = new_directive("Commodity", [("currency", Currency)])
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -139,9 +134,7 @@ Commodity = new_directive('Commodity', [
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the name of the account which is used to debit from
 #     in order to fill 'account'.
-Pad = new_directive('Pad', [
-    ('account', Account),
-    ('source_account', Account)])
+Pad = new_directive("Pad", [("account", Account), ("source_account", Account)])
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -160,11 +153,15 @@ Pad = new_directive('Pad', [
 #     an Amount instance if the balance fails, the amount of the difference.
 #   tolerance: A Decimal object, the amount of tolerance to use in the
 #     verification.
-Balance = new_directive('Balance', [
-    ('account', Account),
-    ('amount', Amount),
-    ('tolerance', Optional[Decimal]),
-    ('diff_amount', Optional[Amount])])
+Balance = new_directive(
+    "Balance",
+    [
+        ("account", Account),
+        ("amount", Amount),
+        ("tolerance", Optional[Decimal]),
+        ("diff_amount", Optional[Amount]),
+    ],
+)
 
 
 # Postings are contained in Transaction entries. These represent the individual
@@ -187,13 +184,17 @@ Balance = new_directive('Balance', [
 #   meta: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = NamedTuple('Posting', [
-    ('account', Account),
-    ('units', Amount),
-    ('cost', Optional[Union[Cost, CostSpec]]),
-    ('price', Optional[Amount]),
-    ('flag', Optional[Flag]),
-    ('meta', Optional[Meta])])
+Posting = NamedTuple(
+    "Posting",
+    [
+        ("account", Account),
+        ("units", Amount),
+        ("cost", Optional[Union[Cost, CostSpec]]),
+        ("price", Optional[Amount]),
+        ("flag", Optional[Flag]),
+        ("meta", Optional[Meta]),
+    ],
+)
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -214,13 +215,17 @@ Posting = NamedTuple('Posting', [
 #   links: A set of link strings (without the '^'), or EMPTY_SET.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting above.
-Transaction = new_directive('Transaction', [
-    ('flag', Flag),
-    ('payee', Optional[str]),
-    ('narration', str),
-    ('tags', Set),
-    ('links', Set),
-    ('postings', List[Posting])])
+Transaction = new_directive(
+    "Transaction",
+    [
+        ("flag", Flag),
+        ("payee", Optional[str]),
+        ("narration", str),
+        ("tags", Set),
+        ("links", Set),
+        ("postings", List[Posting]),
+    ],
+)
 
 # A pair of a Posting and its parent Transaction. This is inserted as
 # temporaries in lists of postings-of-entries, which is the product of a
@@ -229,9 +234,7 @@ Transaction = new_directive('Transaction', [
 # Attributes:
 #   txn: The parent Transaction instance.
 #   posting: The Posting instance.
-TxnPosting = NamedTuple('TxnPosting', [
-    ('txn', Transaction),
-    ('posting', Posting)])
+TxnPosting = NamedTuple("TxnPosting", [("txn", Transaction), ("posting", Posting)])
 
 
 # A note directive, a general note that is attached to an account. These are
@@ -248,9 +251,7 @@ TxnPosting = NamedTuple('TxnPosting', [
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be long if you
 #     want it to.
-Note = new_directive('Note', [
-    ('account', Account),
-    ('comment', str)])
+Note = new_directive("Note", [("account", Account), ("comment", str)])
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -279,9 +280,7 @@ Note = new_directive('Note', [
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = new_directive('Event', [
-    ('type', str),
-    ('description', str)])
+Event = new_directive("Event", [("type", str), ("description", str)])
 
 # A named query declaration. This directive is used to create pre-canned queries
 # that can then be automatically run or made available to the shell, or perhaps be
@@ -295,9 +294,7 @@ Event = new_directive('Event', [
 #     the CLOSE modifier in the shell syntax.
 #   name: A string, the unique identifier for the query.
 #   query_string: The SQL query string to be run or made available.
-Query = new_directive('Query', [
-    ('name', str),
-    ('query_string', str)])
+Query = new_directive("Query", [("name", str), ("query_string", str)])
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -314,9 +311,7 @@ Query = new_directive('Query', [
 #  currency: A string, the currency that is being priced, e.g. HOOL.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = new_directive('Price', [
-    ('currency', Currency),
-    ('amount', Amount)])
+Price = new_directive("Price", [("currency", Currency), ("amount", Amount)])
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -336,11 +331,15 @@ Price = new_directive('Price', [
 #   filename: The absolute filename of the document file.
 #   tags: A set of tag strings (without the '#'), or None, if an empty set.
 #   links: A set of link strings (without the '^'), or None, if an empty set.
-Document = new_directive('Document', [
-    ('account', Account),
-    ('filename', str),
-    ('tags', Optional[Set]),
-    ('links', Optional[Set])])
+Document = new_directive(
+    "Document",
+    [
+        ("account", Account),
+        ("filename", str),
+        ("tags", Optional[Set]),
+        ("links", Optional[Set]),
+    ],
+)
 
 
 # A custom directive. This directive can be used to implement new experimental
@@ -360,9 +359,7 @@ Document = new_directive('Document', [
 #   values: A list of values of various simple types supported by the grammar.
 #     (Note that this list is not enforced to be consistent for all directives
 #     of the same type by the parser.)
-Custom = new_directive('Custom', [
-    ('type', str),
-    ('values', List)])
+Custom = new_directive("Custom", [("type", str), ("values", List)])
 
 
 # A list of all the valid directive types.
@@ -378,7 +375,7 @@ ALL_DIRECTIVES = (
     Query,
     Price,
     Document,
-    Custom
+    Custom,
 )
 
 # Type for any of the directives.
@@ -394,7 +391,7 @@ Directive = Union[
     Query,
     Price,
     Document,
-    Custom
+    Custom,
 ]
 
 # Type for the list of entries and options map.
@@ -412,8 +409,7 @@ def new_metadata(filename, lineno, kvlist=None):
     Returns:
       A metadata dict.
     """
-    meta = {'filename': filename,
-            'lineno': lineno}
+    meta = {"filename": filename, "lineno": lineno}
     if kvlist:
         meta.update(kvlist)
     return meta
@@ -445,9 +441,9 @@ def create_simple_posting(entry, account, number, currency):
     return posting
 
 
-def create_simple_posting_with_cost(entry, account,
-                                    number, currency,
-                                    cost_number, cost_currency):
+def create_simple_posting_with_cost(
+    entry, account, number, currency, cost_number, cost_currency
+):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
@@ -477,6 +473,7 @@ def create_simple_posting_with_cost(entry, account,
 
 NoneType = type(None)
 
+
 def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """Check that the entry and its postings has all correct data types.
 
@@ -490,20 +487,24 @@ def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
     assert isinstance(entry.meta, dict), "Invalid type for meta"
-    assert 'filename' in entry.meta, "Missing filename in metadata"
-    assert 'lineno' in entry.meta, "Missing line number in metadata"
+    assert "filename" in entry.meta, "Missing filename in metadata"
+    assert "lineno" in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
         assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
         assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
-        set_types = ((NoneType, set, frozenset)
-                     if allow_none_for_tags_and_links
-                     else (set, frozenset))
-        assert isinstance(entry.tags, set_types), (
-            "Invalid tags type: {}".format(type(entry.tags)))
-        assert isinstance(entry.links, set_types), (
-            "Invalid links type: {}".format(type(entry.links)))
+        set_types = (
+            (NoneType, set, frozenset)
+            if allow_none_for_tags_and_links
+            else (set, frozenset)
+        )
+        assert isinstance(entry.tags, set_types), "Invalid tags type: {}".format(
+            type(entry.tags)
+        )
+        assert isinstance(entry.links, set_types), "Invalid links type: {}".format(
+            type(entry.links)
+        )
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
@@ -525,8 +526,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.cost is None and
-            posting.price is not None)
+    return posting.cost is None and posting.price is not None
 
 
 def transaction_has_conversion(transaction):
@@ -540,8 +540,9 @@ def transaction_has_conversion(transaction):
       A boolean, true if this transaction contains at least one posting with a
       price conversion.
     """
-    assert isinstance(transaction, Transaction), (
-        "Invalid type of entry for transaction: {}".format(transaction))
+    assert isinstance(
+        transaction, Transaction
+    ), "Invalid type of entry for transaction: {}".format(transaction)
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True
@@ -556,9 +557,11 @@ def get_entry(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.txn
-            if isinstance(posting_or_entry, TxnPosting)
-            else posting_or_entry)
+    return (
+        posting_or_entry.txn
+        if isinstance(posting_or_entry, TxnPosting)
+        else posting_or_entry
+    )
 
 
 # Sorting order of directives on the same day, by type:
@@ -643,9 +646,9 @@ def has_entry_account_component(entry, component):
       Boolean: true if the component is in the account. Note that a component
       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
-    return (isinstance(entry, Transaction) and
-            any(has_component(posting.account, component)
-                for posting in entry.postings))
+    return isinstance(entry, Transaction) and any(
+        has_component(posting.account, component) for posting in entry.postings
+    )
 
 
 def find_closest(entries, filename, lineno):
@@ -685,10 +688,13 @@ def remove_account_postings(account, entries):
     new_entries = []
     for entry in entries:
         if isinstance(entry, Transaction) and (
-                any(posting.account == account for posting in entry.postings)):
-            entry = entry._replace(postings=[posting
-                                             for posting in entry.postings
-                                             if posting.account != account])
+            any(posting.account == account for posting in entry.postings)
+        ):
+            entry = entry._replace(
+                postings=[
+                    posting for posting in entry.postings if posting.account != account
+                ]
+            )
         new_entries.append(entry)
     return new_entries
 

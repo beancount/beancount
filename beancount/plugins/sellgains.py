@@ -56,6 +56,7 @@ This provides yet another level of verification and allows you to elide the
 income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -70,10 +71,10 @@ from beancount.core import account_types
 from beancount.core import interpolate
 from beancount.parser import options
 
-__plugins__ = ('validate_sell_gains',)
+__plugins__ = ("validate_sell_gains",)
 
 
-SellGainsError = collections.namedtuple('SellGainsError', 'source message entry')
+SellGainsError = collections.namedtuple("SellGainsError", "source message entry")
 
 
 # A multiplier of the regular tolerance being used. This provides a little extra
@@ -92,21 +93,21 @@ def validate_sell_gains(entries, options_map):
     """
     errors = []
     acc_types = options.get_account_types(options_map)
-    proceed_types = set([acc_types.assets,
-                         acc_types.liabilities,
-                         acc_types.equity,
-                         acc_types.expenses])
+    proceed_types = set(
+        [acc_types.assets, acc_types.liabilities, acc_types.equity, acc_types.expenses]
+    )
 
     for entry in entries:
         if not isinstance(entry, data.Transaction):
             continue
 
         # Find transactions whose lots at cost all have a price.
-        postings_at_cost = [posting
-                            for posting in entry.postings
-                            if posting.cost is not None]
-        if not postings_at_cost or not all(posting.price is not None
-                                           for posting in postings_at_cost):
+        postings_at_cost = [
+            posting for posting in entry.postings if posting.cost is not None
+        ]
+        if not postings_at_cost or not all(
+            posting.price is not None for posting in postings_at_cost
+        ):
             continue
 
         # Accumulate the total expected proceeds and the sum of the asset and
@@ -126,10 +127,8 @@ def validate_sell_gains(entries, options_map):
                     total_proceeds.add_amount(convert.get_weight(posting))
 
         # Compare inventories, currency by currency.
-        dict_price = {pos.units.currency: pos.units.number
-                      for pos in total_price}
-        dict_proceeds = {pos.units.currency: pos.units.number
-                         for pos in total_proceeds}
+        dict_price = {pos.units.currency: pos.units.number for pos in total_price}
+        dict_proceeds = {pos.units.currency: pos.units.number for pos in total_proceeds}
 
         tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         invalid = False
@@ -150,7 +149,10 @@ def validate_sell_gains(entries, options_map):
                 SellGainsError(
                     entry.meta,
                     "Invalid price vs. proceeds/gains: {} vs. {}".format(
-                        total_price, total_proceeds),
-                    entry))
+                        total_price, total_proceeds
+                    ),
+                    entry,
+                )
+            )
 
     return entries, errors
