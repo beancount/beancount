@@ -26,6 +26,6 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
       - run: python -m pip install pytest
-      - run: python -m pip install . -Csetup-args=--vsenv
-      - run: cd /tmp && pytest beancount
+      - run: make clean build
+      - run: pytest beancount
         if: runner.os != 'Windows'
