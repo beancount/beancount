@@ -26,6 +26,7 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
       - run: python -m pip install pytest
+      - run: python -m pip install setuptools
       - run: make clean build
       - run: pytest beancount
         if: runner.os != 'Windows'
