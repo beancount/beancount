@@ -100,7 +100,7 @@ def assertStringEqualNoWS(actual_string: str, expected_string: str):
     actual_string_nows = re.sub(r"[ \t\n]+", " ", actual_string.strip())
     expected_string_nows = re.sub(r"[ \t\n]+", " ", expected_string.strip())
     msg = f"{actual_string} != {expected_string}"
-    assert actual_string_nows == expected_string_nows
+    assert actual_string_nows == expected_string_nows, msg
 
 
 def compare_contents_or_generate(actual_string, expect_fn, generate):

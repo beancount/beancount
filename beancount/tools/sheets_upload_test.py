@@ -3,6 +3,8 @@
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+# ruff: noqa: E402
+
 # Skip the tests if oauth2client is not available.
 import unittest
 import pytest

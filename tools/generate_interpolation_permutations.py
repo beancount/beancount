@@ -20,7 +20,7 @@ def gen_inputs(template, args):
 def main():
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    args = parser.parse_args()
+    _ = parser.parse_args()
 
     gen_inputs("  Assets:Account        {:7} {:3}\n", ["100.00", "USD"])
     gen_inputs(

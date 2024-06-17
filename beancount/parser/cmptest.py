@@ -3,6 +3,8 @@
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+# ruff: noqa: E402
+
 import unittest
 import io
 import textwrap

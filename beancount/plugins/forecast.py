@@ -72,9 +72,6 @@ def forecast_plugin(entries, options_map):
       A tuple of entries and errors.
     """
 
-    # Find the last entry's date.
-    date_today = entries[-1].date
-
     # Filter out forecast entries from the list of valid entries.
     forecast_entries = []
     filtered_entries = []

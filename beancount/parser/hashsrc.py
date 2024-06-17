@@ -87,7 +87,7 @@ def gen_include():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    args = parser.parse_args()
+    _ = parser.parse_args()
     print(gen_include())
 
 

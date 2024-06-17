@@ -125,6 +125,7 @@ from beancount.core import data
 from beancount.core.number import MISSING
 
 # pylint: disable=unused-import
+# ruff: noqa: F401
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
 from beancount.parser.grammar import DeprecatedError

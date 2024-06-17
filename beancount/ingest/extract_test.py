@@ -326,7 +326,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 [self.config_filename, path.join(self.tempdir, "Downloads")],
                 extract.__file__,
             )
-        output = stdout.getvalue()
+        _ = stdout.getvalue()
         mock.assert_called_once()
 
     def test_extract_with_previous_entries(self):

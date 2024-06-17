@@ -39,7 +39,7 @@ class TestWeb(unittest.TestCase):
         )
 
         argparser = version.ArgumentParser()
-        group = web.add_web_arguments(argparser)
+        _ = web.add_web_arguments(argparser)
         argv = [abs_filename, "--quiet", "--port", str(test_utils.get_test_port())]
         if extra_args:
             argv.extend(extra_args)

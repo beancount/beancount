@@ -139,8 +139,8 @@ class TestWillReport(test_utils.TestCase):
 
         """
         report = will.create_report(entries, options_map)
-        text = will.format_xhtml_report(report, options_map)
-        with open("/tmp/index.html", "w") as infile:
+        _ = will.format_xhtml_report(report, options_map)
+        with open("/tmp/index.html", "w") as _:
             pass  # print(text, file=infile)
 
 

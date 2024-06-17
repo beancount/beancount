@@ -71,7 +71,7 @@ def fix_payees(entries, options_map, config):
     errors = []
     if config.strip():
         try:
-            expr = ast.literal_eval(config)
+            _ = ast.literal_eval(config)
         except (SyntaxError, ValueError):
             meta = data.new_metadata(options_map["filename"], 0)
             errors.append(

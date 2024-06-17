@@ -217,7 +217,7 @@ def booking_method_AVERAGE(entry, posting, matches):
             number = min(abs(match.units.number), abs(posting.units.number))
             match_units = Amount(number * sign, match.units.currency)
             booked_reductions.append(posting._replace(units=match_units, cost=match.cost))
-            insufficient = match_units.number != posting.units.number
+            # insufficient = match_units.number != posting.units.number
         else:
             # Merge the matching postings to a single one.
             merged_units = inventory.Inventory()
@@ -276,7 +276,7 @@ def booking_method_AVERAGE(entry, posting, matches):
                     booked_reductions.append(
                         posting._replace(units=posting.units, cost=cost)
                     )
-                    insufficient = abs(posting.units.number) > abs(units.number)
+                    # insufficient = abs(posting.units.number) > abs(units.number)
 
 
 _BOOKING_METHODS = {

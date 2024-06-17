@@ -15,7 +15,6 @@ import subprocess
 from os import path
 from typing import List
 from typing import Tuple
-from pprint import pprint
 
 import bs4
 

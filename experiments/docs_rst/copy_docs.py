@@ -5,7 +5,6 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import logging
 import shutil
 from os import path
 

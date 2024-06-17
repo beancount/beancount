@@ -62,7 +62,6 @@ def main():
     parser.add_argument("source_root", action="store")
     opts = parser.parse_args()
 
-    root_dir = path.realpath(path.dirname(path.dirname(__file__)))
     missing_tests = list(find_missing_tests(opts.source_root))
     if missing_tests:
         for filename, test_filename, missing in missing_tests:

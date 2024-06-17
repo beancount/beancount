@@ -14,7 +14,6 @@ import logging
 import os
 import tempfile
 import subprocess
-import tempfile
 from os import path
 
 from apiclient import discovery
@@ -79,7 +78,7 @@ def main():
     filenames = docs.download_docs(files, {args.docid}, tmpdir, "txt")
     filenames = docs.download_docs(files, {args.docid}, tmpdir, "pdf")
     filenames = docs.download_docs(files, {args.docid}, tmpdir, "html")
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "rtf")
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, "rtf")  # noqa: F841
 
     ##logging.info("Output produced in {}".format(args.output))
 

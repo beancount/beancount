@@ -85,7 +85,7 @@ def convert_bool(string):
     Returns:
       The corresponding boolean.
     """
-    return not string.lower() in ("f", "false", "0")
+    return string.lower() not in ("f", "false", "0")
 
 
 class DispatchingShell(cmd.Cmd):
@@ -238,7 +238,7 @@ class DispatchingShell(cmd.Cmd):
             print(statement, file=self.outfile)
         except (query_parser.ParseError, query_compile.CompilationError) as exc:
             print(exc, file=self.outfile)
-        except Exception as exc:
+        except Exception:
             traceback.print_exc(file=self.outfile)
 
     def dispatch(self, statement):
@@ -279,7 +279,7 @@ class DispatchingShell(cmd.Cmd):
             self.dispatch(statement)
         except query_parser.ParseError as exc:
             print(exc, file=self.outfile)
-        except Exception as exc:
+        except Exception:
             traceback.print_exc(file=self.outfile)
 
     def emptyline(self):

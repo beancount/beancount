@@ -58,7 +58,6 @@ def get_metamap_table(
     metamap: Dict[str, data.Directive], attributes: List[str], getter
 ) -> Table:
     """Produce a Table of per-commodity attributes."""
-    header = attributes
     attrlist = attributes[1:]
     rows = []
     for key, value in metamap.items():
@@ -146,7 +145,7 @@ def get_postings_table(
     for acc, balance in sorted(balances.items()):
         # Keep only the balance sheet accounts.
         acctype = account_types.get_account_type(acc)
-        if not acctype in (acctypes.assets, acctypes.liabilities):
+        if acctype not in (acctypes.assets, acctypes.liabilities):
             continue
 
         # Create a posting for each of the positions.

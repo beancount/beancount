@@ -16,10 +16,10 @@ from collections import defaultdict
 # pylint: disable=invalid-name
 
 
-def list_chunks(l, n):
+def list_chunks(alist, n):
     """Split list in chunks of size n."""
-    for it in range(0, len(l), n):
-        yield l[it : it + n]
+    for it in range(0, len(alist), n):
+        yield alist[it : it + n]
 
 
 def groupby_sequences(iterable, keyfunc):

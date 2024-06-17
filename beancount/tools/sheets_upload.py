@@ -275,7 +275,7 @@ class Doc:
         else:
             nrows, ncols = nrowcols
         srange = sheet_range(nrows, ncols, title)
-        resp = (
+        _ = (
             self.service.spreadsheets()
             .values()
             .clear(spreadsheetId=self.docid, range=srange, body={})
@@ -357,7 +357,7 @@ class Doc:
         # the values would be an improvement and allow for much more control over
         # the formatting of numbers. It would be better not to use USER_ENTERED.
         srange = sheet_range(nrows, ncols, title)
-        resp = (
+        _ = (
             self.service.spreadsheets()
             .values()
             .update(
@@ -456,7 +456,6 @@ def _main():
 
     # Discover the service.
     creds = get_credentials("https://www.googleapis.com/auth/spreadsheets")
-    url = "https://sheets.googleapis.com/$discovery/rest?version=v4"
     service = discovery.build("sheets", "v4", credentials=creds)
 
     # Figure out what the name mappings should be, from the filenames (or

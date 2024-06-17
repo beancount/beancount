@@ -35,7 +35,7 @@ from beancount.parser import options
 from beancount import loader
 
 
-I = inventory.from_string
+I = inventory.from_string  # noqa: F811
 
 
 def _gen_missing_combinations(template, args):

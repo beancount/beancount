@@ -253,7 +253,7 @@ class Today(query_compile.EvalFunction):
         super().__init__(operands, datetime.date)
 
     def __call__(self, context):
-        args = self.eval_args(context)
+        _ = self.eval_args(context)
         return datetime.date.today()
 
 

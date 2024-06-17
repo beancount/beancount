@@ -282,7 +282,7 @@ def _lookup_price_and_inverse(price_map, base_quote):
     """
     try:
         return price_map[base_quote]
-    except KeyError as exc:
+    except KeyError:
         base, quote = base_quote
         prices = price_map.get((quote, base), None)
         if prices:

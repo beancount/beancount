@@ -3,6 +3,8 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+# ruff: noqa: E402
+
 # TODO(blais): Rename the beancount.ingest.importers.csv module and remove this.
 from beancount.utils import test_utils
 

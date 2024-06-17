@@ -124,7 +124,6 @@ class Source(source.Source):
             )
 
         url = "https://secure.tsp.gov/components/CORS/getSharePricesRaw.html"
-        fields = ["startdate", "enddate", "download", "Lfunds", "InvFunds"]
         payload = {
             # Grabbing the last fourteen days of data in event the markets were closed.
             "startdate": (time - datetime.timedelta(days=14)).strftime("%Y%m%d"),

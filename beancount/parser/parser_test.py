@@ -264,7 +264,7 @@ class TestReferenceCounting(unittest.TestCase):
         builder = lexer.LexBuilder()
         parser = _parser.Parser(builder)
         iterator = parser.lex(f, filename=name)
-        tokens = list(iterator)
+        _ = list(iterator)
         # The Parser object keeps references to the input file and to
         # the name while iterating over the tokens in the input file.
         self.assertEqual(sys.getrefcount(name), 3)
@@ -290,8 +290,8 @@ class TestReferenceCounting(unittest.TestCase):
 
         builder = lexer.LexBuilder()
         parser = _parser.Parser(builder)
-        tokens = list(parser.lex(file1))
-        tokens = list(parser.lex(file2))
+        _ = list(parser.lex(file1))
+        _ = list(parser.lex(file2))
 
         del parser
         # Once the Parser object is gone we should have just the local

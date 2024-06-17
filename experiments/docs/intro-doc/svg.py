@@ -8,8 +8,6 @@ import argparse
 import bisect
 import csv
 import collections
-import logging
-import math
 import random
 import re
 import textwrap
