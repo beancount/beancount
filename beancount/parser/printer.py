@@ -76,10 +76,9 @@ def align_position_strings(strings):
     fmt_unknown = "{{:<{0}}}".format(max_total).format
 
     # Align the strings and return them.
-    # pylint: disable=format-string-without-interpolation
+
     aligned_strings = []
     for index, string in string_items:
-        # pylint: disable=format-string-without-interpolation
         if index is not None:
             string = fmt(string[:index], string[index:])
         else:
@@ -101,8 +100,6 @@ class EntryPrinter:
       stringify_invalid_types: If a metadata value is invalid, force a conversion to
         string for printout.
     """
-
-    # pylint: disable=invalid-name
 
     def __init__(
         self,

@@ -214,8 +214,8 @@ def booking_method_AVERAGE(entry, posting, matches):
     return booked_reductions, booked_matches, errors, False
 
     # FIXME: Future implementation here.
-    # pylint: disable=unreachable
-    if False:  # pylint: disable=using-constant-test
+
+    if False:
         # DISABLED - This is the code for AVERAGE, which is currently disabled.
 
         # If there is more than a single match we need to ultimately merge the

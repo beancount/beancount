@@ -145,7 +145,6 @@ OptDesc = collections.namedtuple(
 UNSET = object()
 
 
-# pylint: disable=invalid-name
 def Opt(
     name, default_value, example_value=UNSET, converter=None, deprecated=False, alias=None
 ):

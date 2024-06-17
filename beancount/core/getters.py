@@ -51,8 +51,6 @@ class GetAccounts:
         method = getattr(self, entry.__class__.__name__)
         return set(method(entry))
 
-    # pylint: disable=invalid-name
-
     def Transaction(_, entry):
         """Process a Transaction directive.
 

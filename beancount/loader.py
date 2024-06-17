@@ -775,7 +775,7 @@ def initialize(use_cache: bool, cache_filename: Optional[str] = None):
     # Unless an environment variable disables it, use the pickle load cache
     # automatically. Note that this works across all Python programs running the
     # loader which is why it's located here.
-    # pylint: disable=invalid-name
+
     global _load_file
 
     # Make a function to compute the cache filename.

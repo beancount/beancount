@@ -169,7 +169,7 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # reductions prior to the augmentations in order to support
                 # reductions between the postings of a single transaction.)
                 # Disabled.
-                if False:  # pylint: disable=using-constant-test
+                if False:
                     if has_self_reduction(group_postings, methods):
                         errors.append(
                             SelfReduxError(

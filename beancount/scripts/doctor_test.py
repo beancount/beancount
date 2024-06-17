@@ -54,7 +54,6 @@ class TestScriptDoctor(test_utils.ClickTestCase):
         """
         self.assertLines(expected_output, result.stdout)
 
-    # pylint: disable=empty-docstring
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""

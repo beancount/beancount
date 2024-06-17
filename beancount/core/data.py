@@ -464,7 +464,7 @@ Directive = Union[
 ]
 
 
-class dtypes:  # pylint: disable=invalid-name
+class dtypes:
     "Types of directives."
 
     Open = Open

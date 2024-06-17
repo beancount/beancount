@@ -116,7 +116,6 @@ def validate_commodity_directives(entries, options_map, config_str=None):
     """
     errors = []
 
-    # pylint: disable=eval-used
     if config_str:
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, dict):

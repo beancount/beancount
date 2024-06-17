@@ -23,7 +23,7 @@ Account = str
 
 
 # Component separator for account names.
-# pylint: disable=invalid-name
+
 sep = ":"
 
 

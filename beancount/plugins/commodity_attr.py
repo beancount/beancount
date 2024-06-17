@@ -41,7 +41,6 @@ def validate_commodity_attr(entries, unused_options_map, config_str):
     """
     errors = []
 
-    # pylint: disable=eval-used
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         errors.append(

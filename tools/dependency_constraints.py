@@ -15,7 +15,6 @@ import sys
 from os import path
 
 
-# pylint: disable=line-too-long
 RULES = [
     ("ALLOW", "beancount/.*_test$", "beancount/loader"),
     ("ALLOW", "beancount/.*_test$", "beancount/utils"),
@@ -64,7 +63,6 @@ def main():
 
     has_errors = False
     for line in open(opts.dependencies):
-        # pylint: disable=eval-used
         ((from_dir, from_file), (to_dir, to_file)) = eval(line)
         if to_dir is None:
             continue

@@ -21,7 +21,7 @@ __license__ = "GNU GPLv2"
 
 from .core.number import D, ZERO
 
-from .core.flags import *  # pylint: disable=wildcard-import
+from .core.flags import *
 
 # TODO(blais): We should return a namedtuple of all the contents, not the lists.
 from .loader import load_file, load_encrypted_file, load_doc

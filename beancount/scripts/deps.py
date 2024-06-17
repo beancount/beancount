@@ -10,9 +10,6 @@ import sys
 import types
 
 
-# pylint: disable=import-outside-toplevel
-
-
 def list_dependencies(file=sys.stderr):
     """Check the dependencies and produce a listing on the given file.
 
