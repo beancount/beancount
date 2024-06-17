@@ -1,4 +1,4 @@
 -r requirements.txt
-pylint>=2.5.2
+ruff>=0.4.9
 pytest>=5.4.2
 pdfminer-six

@@ -5,7 +5,6 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= python3
-PYLINT ?= $(PYTHON) -m pylint
 LEX = flex
 YACC = bison
 YFLAGS = --report=itemset --verbose -Wall -Werror
@@ -216,19 +215,8 @@ LINT_SRCS =					\
   bin/*						\
   tools/*.py
 
-pylint lint:
-	$(PYLINT) $(LINT_SRCS)
-
-LINT_TESTS=useless-suppression,empty-docstring
-pylint-only:
-	$(PYLINT) --disable=all --enable=$(LINT_TESTS) $(LINT_SRCS)
-
-pyflakes:
-	pyflakes $(LINT_SRCS)
-
-ruff:
-	ruff beancount examples/ingest/office/importers tools
-
+ruff lint:
+	ruff check .
 
 # Check everything.
 status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
