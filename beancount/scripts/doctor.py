@@ -521,11 +521,11 @@ def missing_open(filename):
     open_close_map = getters.get_account_open_close(entries)
 
     new_entries = []
-    for account, first_use_date in first_use_map.items():
-        if account not in open_close_map:
+    for account_, first_use_date in first_use_map.items():
+        if account_ not in open_close_map:
             new_entries.append(
                 data.Open(
-                    data.new_metadata(filename, 0), first_use_date, account, None, None
+                    data.new_metadata(filename, 0), first_use_date, account_, None, None
                 )
             )
 

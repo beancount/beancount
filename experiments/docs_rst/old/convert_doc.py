@@ -14,7 +14,6 @@ import logging
 import os
 import tempfile
 import subprocess
-import tempfile
 from os import path
 
 from apiclient import discovery
@@ -73,13 +72,13 @@ def main():
     os.makedirs(tmpdir, exist_ok=True)
 
     # Download the docs.
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "docx")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "docx")
     # native = pandoc(filenames[0], 'docx')
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "odt")
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "txt")
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "pdf")
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "html")
-    filenames = docs.download_docs(files, {args.docid}, tmpdir, "rtf")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "odt")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "txt")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "pdf")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "html")
+    _filenames = docs.download_docs(files, {args.docid}, tmpdir, "rtf")
 
     ##logging.info("Output produced in {}".format(args.output))
 

@@ -17,7 +17,7 @@ most commonly used ones.
 __copyright__ = "Copyright (C) 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-# pylint: disable=unused-import,unused-wildcard-import
+# ruff: noqa: F401, F403
 
 from .core.number import D, ZERO
 

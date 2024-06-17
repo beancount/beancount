@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """ """
 
-from os import path
 import os
-import argparse
 import json
 import re
-import logging
 
 
 def main():

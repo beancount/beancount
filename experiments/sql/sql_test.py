@@ -47,7 +47,7 @@ ONE_OF_EACH_TYPE = """
 class TestScriptSQL(test_utils.ClickTestCase):
     def convert_to_sql(self, filename):
         dbfile = tempfile.NamedTemporaryFile("w", suffix=".db")
-        result = self.run_with_args(sql.main, filename, dbfile.name)
+        _result = self.run_with_args(sql.main, filename, dbfile.name)
         self.assertNotEqual(0, path.getsize(dbfile.name))
         return dbfile
 

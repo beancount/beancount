@@ -5,11 +5,10 @@ __license__ = "GNU GPLv2"
 
 from functools import partial
 from typing import List, Iterator
-from visidata import ItemColumn, Column, ColumnAttr, SubColumnAttr
+from visidata import ItemColumn, Column, ColumnAttr, SubColumnAttr  # noqa: F401
 from visidata import VisiData, Sheet, Progress
 import beancount as bn
 import subprocess
-import sys
 import visidata
 
 

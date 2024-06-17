@@ -125,10 +125,9 @@ from beancount.parser import hashsrc
 from beancount.core import data
 from beancount.core.number import MISSING
 
-# pylint: disable=unused-import
-from beancount.parser.grammar import ParserError
-from beancount.parser.grammar import ParserSyntaxError
-from beancount.parser.grammar import DeprecatedError
+from beancount.parser.grammar import ParserError  # noqa: F401
+from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
+from beancount.parser.grammar import DeprecatedError  # noqa: F401
 
 
 # When importing the module, always check that the compiled source matched the

@@ -34,7 +34,6 @@ def validate_unique_prices(entries, unused_options_map):
     Returns:
       The list of input entries, and a list of new UniquePricesError instances generated.
     """
-    new_entries = []
     errors = []
 
     prices = collections.defaultdict(list)

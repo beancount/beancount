@@ -22,7 +22,6 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import cgi
 import sys
 import subprocess
 from urllib import parse
@@ -55,7 +54,7 @@ def main():
     print(command)
     code = subprocess.call(command, shell=True)
     if code != 0:
-        print("Error launching editor: %s".format(code), file=sys.stderr)
+        print("Error launching editor: {}".format(code), file=sys.stderr)
         sys.exit(1)
 
 

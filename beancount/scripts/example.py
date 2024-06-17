@@ -672,7 +672,6 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
         while txn_date.weekday() != calendar.MONDAY:
             txn_date += ONE_DAY
 
-        amount_invested = ZERO
         for commodity, fraction in commodities_items:
             amount_fraction = amount_to_invest * D(fraction)
 
@@ -840,7 +839,6 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 commodities = random.sample(stocks, random.randint(1, len(stocks)))
                 lot_amount = round_to(invest_cash / len(commodities), round_amount)
 
-                invested_amount = ZERO
                 for stock in commodities:
                     # Find the price at that date.
                     _, price = prices.get_price(price_map, (stock, "CCY"), date)

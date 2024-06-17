@@ -682,7 +682,7 @@ class TestLexerUnicode(unittest.TestCase):
     def test_bytes_encoded_latin1_invalid(self):
         latin1_bytes = self.test_utf8_string.encode("latin1")
         builder = lexer.LexBuilder()
-        tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
+        _tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
         errors = builder.errors
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, "^UnicodeDecodeError: 'utf-8' codec ")
@@ -691,7 +691,7 @@ class TestLexerUnicode(unittest.TestCase):
     def test_bytes_encoded_utf16_invalid(self):
         utf16_bytes = self.test_utf8_string.encode("utf16")
         builder = lexer.LexBuilder()
-        tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
+        _tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
         self.assertTrue(builder.errors)
 
 

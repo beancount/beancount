@@ -88,7 +88,7 @@ def get_auth_via_service_account(scopes):
 def main():
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    args = parser.parse_args()
+    _args = parser.parse_args()
 
     # Find the document id.
     docid = get_options_docid()

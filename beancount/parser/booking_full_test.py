@@ -35,9 +35,6 @@ from beancount.parser import options
 from beancount import loader
 
 
-I = inventory.from_string
-
-
 def _gen_missing_combinations(template, args):
     """Generate all possible expansions of args in template.
 

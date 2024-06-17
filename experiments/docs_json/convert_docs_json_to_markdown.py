@@ -8,30 +8,11 @@ __license__ = "GNU GPLv2"
 from os import path
 import argparse
 import textwrap
-import datetime
-import hashlib
 import collections
 import json
 import logging
 import os
-import pickle
-import pprint
 import re
-import shelve
-import shutil
-import subprocess
-import tempfile
-import urllib.parse
-
-from typing import List
-
-import bs4
-import apiclient.errors
-from apiclient import discovery
-import httplib2
-
-# TODO(blais, 2023-11-18): oauth2client is deprecated.
-from oauth2client import service_account
 
 
 def _get(obj, path):

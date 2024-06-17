@@ -14,18 +14,11 @@ __license__ = "GNU GPLv2"
 
 from os import path
 import argparse
-import datetime
-import hashlib
 import json
 import logging
 import os
-import pickle
 import re
-import shelve
-import shutil
 import subprocess
-import tempfile
-import urllib.parse
 
 from typing import List
 

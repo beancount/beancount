@@ -21,4 +21,4 @@ with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
 # Expose the public API.
 del path
 del sys
-from .api import *  # pylint: disable=wildcard-import
+from .api import *  # noqa: E402, F403

@@ -133,7 +133,7 @@ class TestInferQuantization(unittest.TestCase):
             Decimal("0.776343267939352063908577816800"),
             Decimal("0.782074844562624603847313364900"),
         ]
-        exp = number.infer_quantum_from_list(prices)
+        _exp = number.infer_quantum_from_list(prices)
 
     def test_auto_quantize(self):
         self.assertEqual(

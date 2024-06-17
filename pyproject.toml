@@ -83,18 +83,9 @@ line-length = 92
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F", "PL", "PD"]
 ignore = [
-    'E402',
     'E501',
-    'E701',
-    'E713',
     'E731',
     'E741',
-    'F401',
-    'F402',
-    'F403',
-    'F523',
-    'F811',
-    'F841',
     'PD011',
     'PLR0912',
     'PLR0913',

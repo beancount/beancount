@@ -92,7 +92,7 @@ class TestScriptFormat(test_utils.ClickTestCase):
         """
         2015-07-16 open Assets:BoA:checking USD
         """
-        result = self.run_with_args(format.main, filename)
+        _result = self.run_with_args(format.main, filename)
         with open(filename) as infile:
             actual = infile.read()
         self.assertEqual(

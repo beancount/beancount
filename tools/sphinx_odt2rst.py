@@ -15,7 +15,6 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import logging
-import os
 import shutil
 import tempfile
 import subprocess
@@ -37,7 +36,6 @@ def convert(inputdir, sphinxdir):
       inputdir: The name of an input directory with ODT files.
       sphinxdir: A string, the name of the beancount-docs directory.
     """
-    filenames = [path.join(inputdir, x) for x in os.listdir(inputdir)]
     with tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None) as tmpdir:
         for basename, destname in sorted(OVERLAY_DOCS.items()):
             filename_odt = path.join(inputdir, basename + ".odt")

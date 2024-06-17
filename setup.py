@@ -8,13 +8,10 @@ __license__ = "GNU GPLv2"
 
 
 from os import path
-import datetime
-import os
 import platform
 import re
 import runpy
 import subprocess
-import sys
 
 from setuptools import setup, find_packages, Extension
 

@@ -198,9 +198,7 @@ def convert_spec_to_cost(units, cost_spec):
       An instance of Cost.
     """
     cost = cost_spec
-    errors = []
     if isinstance(units, amount.Amount):
-        currency = units.currency
         if cost_spec is not None:
             number_per, number_total, cost_currency, date, label, merge = cost_spec
 
