@@ -25,8 +25,8 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install setuptools pytest regex click python-dateutil
         if: runner.os == 'macOS'
+      - run: python -m pip install setuptools pytest regex click python-dateutil
       - run: make build
       - run: pytest beancount
         if: runner.os != 'Windows'
