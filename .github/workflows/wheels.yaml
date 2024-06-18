@@ -18,7 +18,7 @@ jobs:
           - os: windows
             architecture: x86
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
@@ -44,7 +44,7 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: python -m pip install build
       - run: python -m build --sdist
       - uses: actions/upload-artifact@v3
