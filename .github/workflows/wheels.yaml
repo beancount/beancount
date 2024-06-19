@@ -15,11 +15,16 @@ jobs:
       matrix:
         include:
           - os: ubuntu
-          - os: macos
-          - os: windows
-            architecture: AMD64
-          - os: windows
-            architecture: x86
+        python:
+          - '3.12'
+
+#          - os: macos
+#          - os: windows
+#            architecture: AMD64
+#          - os: windows
+#            architecture: x86
+
+
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
@@ -65,6 +70,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+      - name: Display structure of downloaded files
+        run: ls -R
       - run: python -m pip install twine
       - run: python -m twine upload dist/*
         env:
