@@ -1,10 +1,9 @@
-name: build
+name: wheels
 on:
   push:
-    tags: '*'
-
+    tags:
+      - '*'
 jobs:
-
   wheels:
     runs-on: ${{ matrix.os }}-latest
     strategy:
@@ -37,7 +36,7 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: x86_64 aarch64
           CIBW_ARCHS_WINDOWS: ${{ matrix.architecture }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
 
@@ -47,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: python -m pip install build
       - run: python -m build --sdist
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
 
