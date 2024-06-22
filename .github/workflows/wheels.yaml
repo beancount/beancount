@@ -38,7 +38,7 @@ jobs:
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
       - run: pipx run cibuildwheel==2.19.1
         env:
-          CIBW_BUILD: cp312-*
+          CIBW_BUILD: cp311-*
           CIBW_SKIP: pp* cp36-* cp37-* *-musllinux*
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: x86_64 aarch64
@@ -47,7 +47,7 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}}
           path: wheelhouse/*.whl
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' || runner.os == 'macOS'
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}}-${{ matrix.architecture }}}
