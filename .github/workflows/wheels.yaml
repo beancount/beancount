@@ -1,13 +1,8 @@
 name: wheels
 on:
-  - push
-
-
-# Temporarily removed.
-#  push:
-#    tags:
-#      - 'v[0-9]+.[0-9]+.[0-9]+'
-
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   wheels:
