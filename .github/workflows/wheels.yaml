@@ -50,7 +50,7 @@ jobs:
           path: wheelhouse/*.whl
 
   sdist:
-    name: Builds source distribution
+    name: Build source distribution
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,4 +77,4 @@ jobs:
       - run: python -m twine upload dist/*/*
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
