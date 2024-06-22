@@ -7,7 +7,6 @@ on:
 #    tags:
 #      - '*'
 
-
 jobs:
   wheels:
     name: Build wheels
@@ -22,7 +21,6 @@ jobs:
             architecture: AMD64
           - os: windows
             architecture: x86
-        python: ["cp312"]
 
     steps:
       - uses: actions/checkout@v4
@@ -38,8 +36,9 @@ jobs:
         with:
           architecture: x86
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
-      - run: pipx run cibuildwheel==2.15.0
+      - run: pipx run cibuildwheel==2.19.1
         env:
+          CIBW_BUILD: cp312-manylinux*
           CIBW_SKIP: pp* cp36-* cp37-* *-musllinux*
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: x86_64 aarch64
@@ -74,7 +73,7 @@ jobs:
       - name: Display structure of downloaded files
         run: find . -type f -ls
       - run: python -m pip install twine
-      - run: python -m twine upload dist/*/*
+      - run: python -m twine --skip-existing upload dist/*/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
