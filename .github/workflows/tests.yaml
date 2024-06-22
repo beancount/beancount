@@ -19,12 +19,14 @@ jobs:
           - '3.11'
           - '3.12'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
-      - run: python -m pip install pytest
-      - run: python -m pip install . -Csetup-args=--vsenv
-      - run: pytest --import-mode=importlib beancount
+      - run: python -m pip install --upgrade pip
+        if: runner.os == 'macOS'
+      - run: python -m pip install setuptools pytest regex click python-dateutil
+      - run: make build
+      - run: pytest beancount
         if: runner.os != 'Windows'

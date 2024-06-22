@@ -39,26 +39,14 @@ def check_dependencies():
       Beancount.
     """
     return [
-        # Check for a complete installation of Python itself.
         check_python(),
         check_cdecimal(),
-        # Modules we really do need installed.
         check_import("dateutil"),
-        check_import("ply", module_name="ply.yacc", min_version="3.4"),
-        # Optionally required to upload data to Google Drive.
-        # TODO(blais, 2023-11-18): oauth2client is deprecated.
-        check_import("googleapiclient"),
-        check_import("oauth2client"),
-        check_import("httplib2"),
-        # Optionally required to support various price source fetchers.
-        check_import("requests", min_version="2.0"),
-        # Optionally required to support imports (identify, extract, file) code.
-        check_python_magic(),
     ]
 
 
 def check_python():
-    """Check that Python 3.3 or above is installed.
+    """Check that Python 3.7 or above is installed.
 
     Returns:
       A triple of (package-name, version-number, sufficient) as per
@@ -67,7 +55,7 @@ def check_python():
     return (
         "python3",
         ".".join(map(str, sys.version_info[:3])),
-        sys.version_info[:2] >= (3, 3),
+        sys.version_info[:2] >= (3, 7),
     )
 
 
