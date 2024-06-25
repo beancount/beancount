@@ -22,20 +22,21 @@ def compute_version_string(version, changeset, timestamp):
     """
     # Shorten changeset.
     if changeset:
-        if re.match('hg:', changeset):
+        if re.match("hg:", changeset):
             changeset = changeset[:15]
-        elif re.match('git:', changeset):
+        elif re.match("git:", changeset):
             changeset = changeset[:12]
 
     # Convert timestamp to a date.
     date = None
     if timestamp > 0:
-        date = datetime.datetime.utcfromtimestamp(timestamp).date()
+        date = datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc).date()
 
-    version = 'Beancount {}'.format(version)
+    version = "Beancount {}".format(version)
     if changeset or date:
-        version = '{} ({})'.format(
-            version, '; '.join(map(str, filter(None, [changeset, date]))))
+        version = "{} ({})".format(
+            version, "; ".join(map(str, filter(None, [changeset, date])))
+        )
 
     return version
 
@@ -43,4 +44,5 @@ def compute_version_string(version, changeset, timestamp):
 VERSION = compute_version_string(
     beancount.__version__,
     getattr(_parser, "__vc_changeset__", None),
-    getattr(_parser, "__vc_timestamp__", 0))
+    getattr(_parser, "__vc_timestamp__", 0),
+)

@@ -6,11 +6,11 @@ jobs:
   install-from-sources:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.8
       - run: python -m pip install .
       - run: |
           bean-check --help
@@ -20,11 +20,11 @@ jobs:
   install-from-sources-oldstyle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.8
       - run: python setup.py install
       - run: |
           bean-check --help
@@ -34,11 +34,11 @@ jobs:
   install-from-sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           # The oldest supported python version
-          python-version: 3.7
+          python-version: 3.8
       - run: python -m pip install build
       - run: python -m build --sdist
       - run: python -m pip install dist/beancount-*.tar.gz

@@ -7,6 +7,7 @@ invariants are violated. They are not sanity checks--user data is subject to
 constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,7 +27,7 @@ from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
-ValidationError = collections.namedtuple('ValidationError', 'source message entry')
+ValidationError = collections.namedtuple("ValidationError", "source message entry")
 
 
 # Directive types that should be allowed after the account is closed.
@@ -66,14 +67,15 @@ def validate_open_close(entries, unused_options_map):
     open_map = {}
     close_map = {}
     for entry in entries:
-
         if isinstance(entry, Open):
             if entry.account in open_map:
                 errors.append(
                     ValidationError(
                         entry.meta,
                         "Duplicate open directive for {}".format(entry.account),
-                        entry))
+                        entry,
+                    )
+                )
             else:
                 open_map[entry.account] = entry
 
@@ -83,7 +85,9 @@ def validate_open_close(entries, unused_options_map):
                     ValidationError(
                         entry.meta,
                         "Duplicate close directive for {}".format(entry.account),
-                        entry))
+                        entry,
+                    )
+                )
             else:
                 try:
                     open_entry = open_map[entry.account]
@@ -93,13 +97,17 @@ def validate_open_close(entries, unused_options_map):
                                 entry.meta,
                                 "Internal error: closing date for {} "
                                 "appears before opening date".format(entry.account),
-                                entry))
+                                entry,
+                            )
+                        )
                 except KeyError:
                     errors.append(
                         ValidationError(
                             entry.meta,
                             "Unopened account {} is being closed".format(entry.account),
-                            entry))
+                            entry,
+                        )
+                    )
 
                 close_map[entry.account] = entry
 
@@ -136,7 +144,9 @@ def validate_duplicate_balances(entries, unused_options_map):
                     ValidationError(
                         entry.meta,
                         "Duplicate balance assertion with different amounts",
-                        entry))
+                        entry,
+                    )
+                )
         except KeyError:
             balance_entries[key] = entry
 
@@ -168,7 +178,9 @@ def validate_duplicate_commodities(entries, unused_options_map):
                     ValidationError(
                         entry.meta,
                         "Duplicate commodity directives for '{}'".format(key),
-                        entry))
+                        entry,
+                    )
+                )
         except KeyError:
             commodity_entries[key] = entry
 
@@ -211,8 +223,7 @@ def validate_active_accounts(entries, unused_options_map):
                 if account not in active_set:
                     # Allow document and note directives that occur after an
                     # account is closed.
-                    if (isinstance(entry, ALLOW_AFTER_CLOSE) and
-                        account in opened_accounts):
+                    if isinstance(entry, ALLOW_AFTER_CLOSE) and account in opened_accounts:
                         continue
 
                     # Register an error to be logged later, with an appropriate
@@ -248,9 +259,11 @@ def validate_currency_constraints(entries, options_map):
     """
 
     # Get all the open entries with currency constraints.
-    open_map = {entry.account: entry
-                for entry in entries
-                if isinstance(entry, Open) and entry.currencies}
+    open_map = {
+        entry.account: entry
+        for entry in entries
+        if isinstance(entry, Open) and entry.currencies
+    }
 
     errors = []
     for entry in entries:
@@ -274,8 +287,11 @@ def validate_currency_constraints(entries, options_map):
                     ValidationError(
                         entry.meta,
                         "Invalid currency {} for account '{}'".format(
-                            posting.units.currency, posting.account),
-                        entry))
+                            posting.units.currency, posting.account
+                        ),
+                        entry,
+                    )
+                )
 
     return errors
 
@@ -293,10 +309,11 @@ def validate_documents_paths(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    return [ValidationError(entry.meta, "Invalid relative path for entry", entry)
-            for entry in entries
-            if (isinstance(entry, Document) and
-                not path.isabs(entry.filename))]
+    return [
+        ValidationError(entry.meta, "Invalid relative path for entry", entry)
+        for entry in entries
+        if (isinstance(entry, Document) and not path.isabs(entry.filename))
+    ]
 
 
 def validate_data_types(entries, options_map):
@@ -317,12 +334,12 @@ def validate_data_types(entries, options_map):
     for entry in entries:
         try:
             data.sanity_check_types(
-                entry, options_map["allow_deprecated_none_for_tags_and_links"])
+                entry, options_map["allow_deprecated_none_for_tags_and_links"]
+            )
         except AssertionError as exc:
             errors.append(
-                ValidationError(entry.meta,
-                                "Invalid data types: {}".format(exc),
-                                entry))
+                ValidationError(entry.meta, "Invalid data types: {}".format(exc), entry)
+            )
     return errors
 
 
@@ -355,21 +372,26 @@ def validate_check_transaction_balances(entries, options_map):
             tolerances = interpolate.infer_tolerances(entry.postings, options_map)
             if not residual.is_small(tolerances):
                 errors.append(
-                    ValidationError(entry.meta,
-                                    "Transaction does not balance: {}".format(residual),
-                                    entry))
+                    ValidationError(
+                        entry.meta,
+                        "Transaction does not balance: {}".format(residual),
+                        entry,
+                    )
+                )
 
     return errors
 
 
 # A list of reasonably fast validations to always run by default.
-BASIC_VALIDATIONS = [validate_open_close,
-                     validate_active_accounts,
-                     validate_currency_constraints,
-                     validate_duplicate_balances,
-                     validate_duplicate_commodities,
-                     validate_documents_paths,
-                     validate_check_transaction_balances]
+BASIC_VALIDATIONS = [
+    validate_open_close,
+    validate_active_accounts,
+    validate_currency_constraints,
+    validate_duplicate_balances,
+    validate_duplicate_commodities,
+    validate_documents_paths,
+    validate_check_transaction_balances,
+]
 
 # These are slow, and thus only turned on in the check() routine.
 # We're hoping to optimize these and make them decently fast, so
@@ -401,8 +423,9 @@ def validate(entries, options_map, log_timings=None, extra_validations=None):
     # Run various validation routines define above.
     errors = []
     for validation_function in validation_tests:
-        with misc_utils.log_time('function: {}'.format(validation_function.__name__),
-                                 log_timings, indent=2):
+        with misc_utils.log_time(
+            "function: {}".format(validation_function.__name__), log_timings, indent=2
+        ):
             new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 

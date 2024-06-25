@@ -16,6 +16,7 @@ The script is given a doc id and a JSON file with a mapping, like this:
 and replaces the links in the doc that have an entry in the mapping. Links not
 matching any entry are ignored.
 """
+
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -29,7 +30,7 @@ from googleapiclient import discovery
 from beancount.tools import gapis  # See http://github.com/blais/gapis
 
 
-Json = Mapping[str, 'Json']
+Json = Mapping[str, "Json"]
 
 
 def find_links(obj: Any, find_key: str) -> Iterator[List[Json]]:
@@ -52,32 +53,36 @@ def find_links(obj: Any, find_key: str) -> Iterator[List[Json]]:
 
 def iter_links(document: Json) -> List[Tuple[str, str]]:
     """Find all the links and return them."""
-    for jpath in find_links(document, 'link'):
+    for jpath in find_links(document, "link"):
         for item in jpath:
-            if 'textRun' in item:
-                content = item['textRun']['content']
-                link = item['textRun']['textStyle']['link']
-                if 'url' not in link:
+            if "textRun" in item:
+                content = item["textRun"]["content"]
+                link = item["textRun"]["textStyle"]["link"]
+                if "url" not in link:
                     continue
-                url = link['url']
+                url = link["url"]
                 yield (url, content, item)
 
 
-def process_links(document: Json,
-                  func: Callable[[str, str], Optional[str]]) -> List[Json]:
+def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> List[Json]:
     """Find all the links and prepare updates.
     Outputs a list of batchUpdate requests to apply."""
     requests = []
     for url, content, item in iter_links(document):
         proposed_url = func(url, content)
         if proposed_url:
-            requests.append({
-                'updateTextStyle': {
-                    'range': {'startIndex': item['startIndex'],
-                              'endIndex': item['endIndex']},
-                    'textStyle': {'link': {'url': proposed_url}},
-                    'fields': 'link'
-                }})
+            requests.append(
+                {
+                    "updateTextStyle": {
+                        "range": {
+                            "startIndex": item["startIndex"],
+                            "endIndex": item["endIndex"],
+                        },
+                        "textStyle": {"link": {"url": proposed_url}},
+                        "fields": "link",
+                    }
+                }
+            )
     return requests
 
 
@@ -118,28 +123,35 @@ def transform_links(service, docid: str, mapping: Dict[str, str], dry_run: bool)
         # Execute them.
         print("Sending {} requests".format(len(requests)))
         service.documents().batchUpdate(
-            documentId=docid,
-            body={'requests': list(reversed(requests))}).execute()
+            documentId=docid, body={"requests": list(reversed(requests))}
+        ).execute()
     else:
         print("No changes.")
 
 
 def main():
     """Main function."""
-    parser = argparse.ArgumentParser(description=__doc__.strip(),
-                                     formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('docid', action='store',
-                        help="Kix doc id to update")
-    parser.add_argument('mapping_json', nargs='?', action='store',
-                        help="Path to JSON list of pairs to replace")
-    parser.add_argument('--dry-run', '-n', action='store_true',
-                        help="Only print the existing links and replacments, do not run.")
+    parser = argparse.ArgumentParser(
+        description=__doc__.strip(), formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument("docid", action="store", help="Kix doc id to update")
+    parser.add_argument(
+        "mapping_json",
+        nargs="?",
+        action="store",
+        help="Path to JSON list of pairs to replace",
+    )
+    parser.add_argument(
+        "--dry-run",
+        "-n",
+        action="store_true",
+        help="Only print the existing links and replacments, do not run.",
+    )
     args = parser.parse_args()
-
 
     # Parse out the doc id, in case the user provided a full URL.
     if args.docid:
-        match = re.match('https://docs.google.com/document/d/([^/]+)(/|$)', args.docid)
+        match = re.match("https://docs.google.com/document/d/([^/]+)(/|$)", args.docid)
         if match:
             args.docid = match.group(1)
 
@@ -151,14 +163,13 @@ def main():
         mapping = {}
 
     # Discover the service.
-    creds = gapis.get_credentials(['https://www.googleapis.com/auth/documents'],
-                                  'beancount-docs')
-    service = discovery.build('docs', 'v1', credentials=creds)
+    creds = gapis.get_credentials(
+        ["https://www.googleapis.com/auth/documents"], "beancount-docs"
+    )
+    service = discovery.build("docs", "v1", credentials=creds)
 
     transform_links(service, args.docid, mapping, args.dry_run)
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

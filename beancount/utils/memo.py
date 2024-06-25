@@ -1,5 +1,5 @@
-"""Memoization utilities.
-"""
+"""Memoization utilities."""
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -29,15 +29,16 @@ def memoize_recent_fileobj(function, cache_filename, expiration=None):
     Returns:
       A memoized version of the function.
     """
-    urlcache = shelve.open(cache_filename, 'c')
+    urlcache = shelve.open(cache_filename, "c")
     urlcache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe.
+
     @functools.wraps(function)
     def memoized(*args, **kw):
         # Encode the arguments, including a date string in order to invalidate
         # results over some time.
         md5 = hashlib.md5()
-        md5.update(str(args).encode('utf-8'))
-        md5.update(str(sorted(kw.items())).encode('utf-8'))
+        md5.update(str(args).encode("utf-8"))
+        md5.update(str(sorted(kw.items())).encode("utf-8"))
 
         hash_ = md5.hexdigest()
         time_now = now()
@@ -56,4 +57,5 @@ def memoize_recent_fileobj(function, cache_filename, expiration=None):
                 contents = None
 
         return io.BytesIO(contents) if contents else None
+
     return memoized

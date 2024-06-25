@@ -9,6 +9,7 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -19,21 +20,24 @@ from typing import List, Optional
 
 # Constants.
 ZERO = Decimal()
-HALF = Decimal('0.5')
-ONE = Decimal('1')
-TEN = Decimal('10')
+HALF = Decimal("0.5")
+ONE = Decimal("1")
+TEN = Decimal("10")
+
 
 # A constant used to make incomplete data, e.g. missing numbers in the cost spec
 # to be filled in automatically. We define this as a class so that it appears in
 # errors that would occur from attempts to access incomplete data.
-class MISSING: pass
+class MISSING:
+    pass
+
 
 # Regular expression for parsing a number in Python.
 NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 
-_CLEAN_NUMBER_RE = re.compile('[, ]')
+_CLEAN_NUMBER_RE = re.compile("[, ]")
 
-# pylint: disable=invalid-name
+
 def D(strord=None):
     """Convert a string into a Decimal object.
 
@@ -51,10 +55,10 @@ def D(strord=None):
     """
     try:
         # Note: try a map lookup and optimize performance here.
-        if strord is None or strord == '':
+        if strord is None or strord == "":
             return Decimal()
         elif isinstance(strord, str):
-            return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
+            return Decimal(_CLEAN_NUMBER_RE.sub("", strord))
         elif isinstance(strord, Decimal):
             return strord
         elif isinstance(strord, (int, float)):
@@ -62,8 +66,9 @@ def D(strord=None):
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
     except Exception as exc:
-        raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(
-            strord, exc)) from exc
+        raise ValueError(
+            "Impossible to create Decimal instance from {!s}: {}".format(strord, exc)
+        ) from exc
 
 
 def round_to(number, increment):
@@ -95,12 +100,12 @@ def auto_quantized_exponent(number: Decimal, threshold: float) -> int:
     dtuple = number.normalize().as_tuple()
     norm = Decimal(dtuple._replace(sign=0, exponent=-len(dtuple.digits)))
     low_threshold = threshold
-    high_threshold = 1. - low_threshold
+    high_threshold = 1.0 - low_threshold
     while norm != ZERO:
         if not (low_threshold <= norm <= high_threshold):
             break
         ntuple = norm.scaleb(1).as_tuple()
-        norm = Decimal(ntuple._replace(digits=ntuple.digits[ntuple.exponent:]))
+        norm = Decimal(ntuple._replace(digits=ntuple.digits[ntuple.exponent :]))
     return dtuple.exponent - norm.as_tuple().exponent
 
 
@@ -120,7 +125,7 @@ def auto_quantize(number: Decimal, threshold: float) -> Decimal:
     """
     exponent = auto_quantized_exponent(number, threshold)
     if exponent != number.as_tuple().exponent:
-        quant = TEN ** exponent
+        quant = TEN**exponent
         qnumber = number.quantize(quant).normalize()
         return qnumber
     else:
@@ -132,8 +137,9 @@ def num_fractional_digits(number: Decimal) -> int:
     return -number.as_tuple().exponent
 
 
-def infer_quantum_from_list(numbers: List[Decimal],
-                            threshold: float=0.01) -> Optional[Decimal]:
+def infer_quantum_from_list(
+    numbers: List[Decimal], threshold: float = 0.01
+) -> Optional[Decimal]:
     """Given a list of numbers from floats, infer the common quantization.
 
     For a series of numbers provided as floats, e.g., prices from a price

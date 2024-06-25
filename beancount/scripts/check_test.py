@@ -9,7 +9,6 @@ from beancount.scripts import check
 
 
 class TestScriptCheck(test_utils.ClickTestCase):
-
     @test_utils.docfile
     def test_success(self, filename):
         """
@@ -55,10 +54,10 @@ class TestScriptCheck(test_utils.ClickTestCase):
         # message on result.stderr, but it does not work. See
         # https://github.com/pallets/click/issues/1761
         runner = click.testing.CliRunner()
-        result = runner.invoke(check.main, ['--auto', filename])
+        result = runner.invoke(check.main, ["--auto", filename])
         self.assertEqual(result.exit_code, 0)
         self.assertEqual("", result.output.strip())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

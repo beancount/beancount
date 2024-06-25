@@ -10,7 +10,6 @@ from beancount import loader
 
 
 class TestContext(test_utils.TestCase):
-
     @loader.load_doc()
     def test_context(self, entries, errors, options_map):
         """
@@ -63,11 +62,13 @@ class TestContext(test_utils.TestCase):
 
         search_filename = entries[0].meta["filename"]
         search_lineno = entries[-3].meta["lineno"] + 2
-        str_context = context.render_file_context(entries, options_map,
-                                                  search_filename, search_lineno)
+        str_context = context.render_file_context(
+            entries, options_map, search_filename, search_lineno
+        )
 
         print(str_context)
-        self.assertLines(textwrap.dedent("""
+        self.assertLines(
+            textwrap.dedent("""
 
         ** Transaction Id --------------------------------
 
@@ -122,10 +123,12 @@ class TestContext(test_utils.TestCase):
 
         * Expenses:Financial:Commissions                                          53.70 USD
 
-        """), str_context)
+        """),
+            str_context,
+        )
 
     maxDiff = 8192
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -17,6 +17,7 @@ to:
     2020-02-02 balance Assets:Project:Cash    0 USD
     2020-02-02 balance Assets:Project:Cash    0 CAD
 """
+
 __copyright__ = "Copyright (C) 2022  Martin Blais"
 __license__ = "GNU GPLv2"
 

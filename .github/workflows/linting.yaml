@@ -6,11 +6,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     strategy:
+      matrix:
+        os: [ubuntu-latest]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-      - run: pip install -r requirements/dev.txt
+          python-version: '3.12'
+      - run: pip install ruff
       - run: make lint

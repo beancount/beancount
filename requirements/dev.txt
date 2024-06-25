@@ -1,4 +1,0 @@
--r tools.txt
-pylint>=2.6.0
-pylint_protobuf>=0.13
-pytest>=6.0.2

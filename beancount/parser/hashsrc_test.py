@@ -9,7 +9,6 @@ from beancount.parser import _parser
 
 
 class TestHashSource(unittest.TestCase):
-
     def test_hash_parser_source_files(self):
         source_hash = hashsrc.hash_parser_source_files()
         self.assertTrue(isinstance(source_hash, str))
@@ -20,5 +19,5 @@ class TestHashSource(unittest.TestCase):
         hashsrc.check_parser_source_files(_parser)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

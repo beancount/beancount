@@ -15,6 +15,7 @@ attribute is set, set the list of valid values to None, as in the 'name'
 attribute in the example above.
 
 """
+
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,10 +23,10 @@ import collections
 
 from beancount.core import data
 
-__plugins__ = ('validate_commodity_attr',)
+__plugins__ = ("validate_commodity_attr",)
 
-ConfigError = collections.namedtuple('ConfigError', 'source message entry')
-CommodityError = collections.namedtuple('CommodityError', 'source message entry')
+ConfigError = collections.namedtuple("ConfigError", "source message entry")
+CommodityError = collections.namedtuple("CommodityError", "source message entry")
 
 
 def validate_commodity_attr(entries, unused_options_map, config_str):
@@ -40,32 +41,47 @@ def validate_commodity_attr(entries, unused_options_map, config_str):
     """
     errors = []
 
-    # pylint: disable=eval-used
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
-        errors.append(ConfigError(
-            data.new_metadata('<commodity_attr>', 0),
-            "Invalid configuration for commodity_attr plugin; skipping.", None))
+        errors.append(
+            ConfigError(
+                data.new_metadata("<commodity_attr>", 0),
+                "Invalid configuration for commodity_attr plugin; skipping.",
+                None,
+            )
+        )
         return entries, errors
 
-    validmap = {attr: frozenset(values) if values is not None else None
-                for attr, values in config_obj.items()}
+    validmap = {
+        attr: frozenset(values) if values is not None else None
+        for attr, values in config_obj.items()
+    }
     for entry in entries:
         if not isinstance(entry, data.Commodity):
             continue
         for attr, values in validmap.items():
             value = entry.meta.get(attr, None)
             if value is None:
-                errors.append(CommodityError(
-                    entry.meta,
-                    "Missing attribute '{}' for Commodity directive {}".format(
-                        attr, entry.currency), None))
+                errors.append(
+                    CommodityError(
+                        entry.meta,
+                        "Missing attribute '{}' for Commodity directive {}".format(
+                            attr, entry.currency
+                        ),
+                        None,
+                    )
+                )
                 continue
             if values and value not in values:
-                errors.append(CommodityError(
-                    entry.meta,
-                    "Invalid value '{}' for attribute {}, Commodity".format(value, attr) +
-                    " directive {}; valid options: {}".format(
-                        entry.currency, ', '.join(values)), None))
+                errors.append(
+                    CommodityError(
+                        entry.meta,
+                        "Invalid value '{}' for attribute {}, Commodity".format(value, attr)
+                        + " directive {}; valid options: {}".format(
+                            entry.currency, ", ".join(values)
+                        ),
+                        None,
+                    )
+                )
 
     return entries, errors

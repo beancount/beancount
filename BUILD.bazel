@@ -1,8 +1,0 @@
-# Empty
-#package(default_visibility = ["//visibility:public"])
-
-filegroup(
-    name = "nginx.conf",
-    srcs = [".nginx.conf"],
-    visibility = ["//tools:__subpackages__"],
-)

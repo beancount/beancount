@@ -10,6 +10,7 @@ Note: If your paths have spaces in them, this will not work. Space is used as a
 delimiter to detect the end of a column. You can customize the delimiter with an
 option.
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -22,8 +23,7 @@ import sys
 
 
 # Default regular expressions used for splitting.
-DEFAULT_PATTERN = (r"(Assets|Liabilities|Equity|Income|Expenses)"
-                   r"(:[A-Z][A-Za-z0-9-_']*)*")
+DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)" r"(:[A-Z][A-Za-z0-9-_']*)*"
 DEFAULT_DELIMITER = "[ \t]+"
 DEFAULT_SPLITTER = ":"
 
@@ -76,39 +76,40 @@ def find_column(lines, pattern, delimiter):
     # Expenses:Health:Dental:Insurance   208.80 USD
     #
     for leftmost_column, column_matches in sorted(beginnings.items()):
-
         # Compute the location of the rightmost column of text.
         rightmost_column = max(match.end(1) for _, _, match in column_matches)
 
         # Compute the leftmost location of the content following the column text
         # and past its whitespace.
-        following_column = min(match.end() if match.group('ws') else 10000
-                               for _, _, match in column_matches)
+        following_column = min(
+            match.end() if match.group("ws") else 10000 for _, _, match in column_matches
+        )
 
         if rightmost_column < following_column:
             # We process only the very first match.
-            return_matches = [(no, match.group(1).rstrip())
-                              for no, _, match in column_matches]
+            return_matches = [
+                (no, match.group(1).rstrip()) for no, _, match in column_matches
+            ]
             return return_matches, leftmost_column, rightmost_column
-
 
 
 class Node(list):
     """A node with a name attribute, a list of line numbers and a list of children
     (from its parent class).
     """
+
     def __init__(self, name):
         list.__init__(self)
         self.name = name
         self.nos = []
 
     def __str__(self):
-        return '<Node {} {}>'.format(self.name, [node.name for node in self])
+        return "<Node {} {}>".format(self.name, [node.name for node in self])
 
     __repr__ = __str__
 
 
-def dump_tree(node, file=sys.stdout, prefix=''):
+def dump_tree(node, file=sys.stdout, prefix=""):
     """Render a tree as a tree.
 
     Args:
@@ -118,9 +119,9 @@ def dump_tree(node, file=sys.stdout, prefix=''):
     """
     file.write(prefix)
     file.write(node.name)
-    file.write('\n')
+    file.write("\n")
     for child in node:
-        dump_tree(child, file, prefix + '... ')
+        dump_tree(child, file, prefix + "... ")
 
 
 def create_tree(column_matches, regexp_split):
@@ -133,7 +134,7 @@ def create_tree(column_matches, regexp_split):
     Returns:
       An instance of Node, the root node of the created tree.
     """
-    root = Node('')
+    root = Node("")
     for no, name in column_matches:
         parts = re.split(regexp_split, name)
         node = root
@@ -147,10 +148,11 @@ def create_tree(column_matches, regexp_split):
     return root
 
 
-PREFIX_CHILD_1 = '|-- '
-PREFIX_CHILD_C = '|   '
-PREFIX_LEAF_1 = '`-- '
-PREFIX_LEAF_C = '    '
+PREFIX_CHILD_1 = "|-- "
+PREFIX_CHILD_C = "|   "
+PREFIX_LEAF_1 = "`-- "
+PREFIX_LEAF_C = "    "
+
 
 def render_tree(root):
     """Render a tree of nodes.
@@ -169,13 +171,13 @@ def render_tree(root):
     # Start with the root node. We push the constant prefix before this node,
     # the account name, and the RealAccount instance. We will maintain a stack
     # of children nodes to render.
-    stack = [('', root.name, root, True)]
+    stack = [("", root.name, root, True)]
     while stack:
         prefix, name, node, is_last = stack.pop(-1)
 
         if node is root:
             # For the root node, we don't want to render any prefix.
-            first = cont = ''
+            first = cont = ""
         else:
             # Compute the string that precedes the name directly and the one below
             # that for the continuation lines.
@@ -202,9 +204,7 @@ def render_tree(root):
 
         # Add a line for this account.
         if not (node is root and not name):
-            lines.append((first + name,
-                          cont + cont_name,
-                          node))
+            lines.append((first + name, cont + cont_name, node))
 
         # Push the children onto the stack, being careful with ordering and
         # marking the last node as such.
@@ -222,11 +222,11 @@ def render_tree(root):
     # Compute the maximum width of the lines and convert all of them to the same
     # maximal width. This makes it easy on the client.
     max_width = max(len(first_line) for first_line, _, __ in lines)
-    line_format = '{{:{width}}}'.format(width=max_width)
-    return [(line_format.format(first_line),
-             line_format.format(cont_line),
-             node)
-            for (first_line, cont_line, node) in lines], max_width
+    line_format = "{{:{width}}}".format(width=max_width)
+    return [
+        (line_format.format(first_line), line_format.format(cont_line), node)
+        for (first_line, cont_line, node) in lines
+    ], max_width
 
 
 def enum_tree_by_input_line_num(tree_lines):
@@ -255,44 +255,77 @@ def enum_tree_by_input_line_num(tree_lines):
 def _main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('input', nargs='?', action='store',
-                        help='Name of the file to process (default: stdin)')
+    parser.add_argument(
+        "input",
+        nargs="?",
+        action="store",
+        help="Name of the file to process (default: stdin)",
+    )
 
-    parser.add_argument('-o', '--output', action='store',
-                        help='Name of the file to write (default: stdout)')
+    parser.add_argument(
+        "-o", "--output", action="store", help="Name of the file to write (default: stdout)"
+    )
 
-    parser.add_argument('-r', '--pattern', action='store',
-                        default=None,
-                        help=("Pattern for repeatable components "
-                              "(default: \"{}\")".format(DEFAULT_PATTERN)))
+    parser.add_argument(
+        "-r",
+        "--pattern",
+        action="store",
+        default=None,
+        help=(
+            "Pattern for repeatable components " '(default: "{}")'.format(DEFAULT_PATTERN)
+        ),
+    )
 
-    parser.add_argument('-d', '--delimiter', action='store',
-                        default=DEFAULT_DELIMITER,
-                        help=("Delimiter pattern to detect the end of a column text. "
-                              "If your pattens contain strings, you may want to set this "
-                              "to a longer string, like ' {{2,}}' "
-                              "(default: \"{}\")").format(DEFAULT_DELIMITER))
+    parser.add_argument(
+        "-d",
+        "--delimiter",
+        action="store",
+        default=DEFAULT_DELIMITER,
+        help=(
+            "Delimiter pattern to detect the end of a column text. "
+            "If your pattens contain strings, you may want to set this "
+            "to a longer string, like ' {{2,}}' "
+            '(default: "{}")'
+        ).format(DEFAULT_DELIMITER),
+    )
 
-    parser.add_argument('-s', '--split', action='store',
-                        default=DEFAULT_SPLITTER,
-                        help="Pattern splitting into components (default: \"{}\")".format(
-                            DEFAULT_SPLITTER))
+    parser.add_argument(
+        "-s",
+        "--split",
+        action="store",
+        default=DEFAULT_SPLITTER,
+        help='Pattern splitting into components (default: "{}")'.format(DEFAULT_SPLITTER),
+    )
 
-    parser.add_argument('-F', '--filenames', action='store_true',
-                        help="Use pattern and split suitable for filenames")
+    parser.add_argument(
+        "-F",
+        "--filenames",
+        action="store_true",
+        help="Use pattern and split suitable for filenames",
+    )
 
-    parser.add_argument('-A', '--loose-accounts', action='store_true',
-                        help="Use pattern and split suitable for loose account names")
+    parser.add_argument(
+        "-A",
+        "--loose-accounts",
+        action="store_true",
+        help="Use pattern and split suitable for loose account names",
+    )
 
-    parser.add_argument('--filler', action='store',
-                        default=' ',
-                        help="Filler string for new lines inserted for formatting")
+    parser.add_argument(
+        "--filler",
+        action="store",
+        default=" ",
+        help="Filler string for new lines inserted for formatting",
+    )
 
     args = parser.parse_args()
 
-    if sum(1 if expr else 0 for expr in (args.filenames,
-                                         args.loose_accounts,
-                                         args.pattern)) > 1:
+    if (
+        sum(
+            1 if expr else 0 for expr in (args.filenames, args.loose_accounts, args.pattern)
+        )
+        > 1
+    ):
         parser.error("Conflicted pattern options")
 
     if args.pattern is None:
@@ -309,15 +342,14 @@ def _main():
         args.split = LOOSE_SPLITTER
 
     # Open input and output files.
-    input_file = open(args.input, 'r') if args.input else sys.stdin
-    output_file = open(args.output, 'w') if args.output else sys.stdout
+    input_file = open(args.input, "r") if args.input else sys.stdin
+    output_file = open(args.output, "w") if args.output else sys.stdout
     lines = list(input_file)
 
     # Find a column in the file. If not found, this will return None.
     result = find_column(lines, args.pattern, args.delimiter)
     if result is None:
-        print("WARNING: Could not find any valid column in input",
-              file=sys.stderr)
+        print("WARNING: Could not find any valid column in input", file=sys.stderr)
         for line in lines:
             output_file.write(line)
         output_file.close()
@@ -355,18 +387,18 @@ def _main():
             for line, node in next_tree_lines:
                 if not node.nos:
                     # Render new lines, inserted just for the hierarchy.
-                    prefix_string = args.filler * (left//len(args.filler)+1)
+                    prefix_string = args.filler * (left // len(args.filler) + 1)
                     output_file.write(prefix_string[:left])
                     output_file.write(line.rstrip())
-                    output_file.write('\n')
+                    output_file.write("\n")
                 else:
                     # Render lines that replace previous lines, with prefix and
                     # suffix.
                     prefix = input_line[:left]
-                    suffix = input_line[right:].rstrip('\r\n')
+                    suffix = input_line[right:].rstrip("\r\n")
                     out_line = prefix + line_format.format(line) + suffix
                     output_file.write(out_line.rstrip())
-                    output_file.write('\n')
+                    output_file.write("\n")
             try:
                 no, next_tree_lines = next(tree_iter)
             except StopIteration:
@@ -384,5 +416,5 @@ def main():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

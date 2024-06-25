@@ -6,6 +6,7 @@ a specific time period: we don't want to see the entries from before some period
 of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -29,13 +30,15 @@ from beancount.utils import bisect_key
 from beancount.parser import options
 
 
-def open(entries,
-         date,
-         account_types,
-         conversion_currency,
-         account_earnings,
-         account_opening,
-         account_conversions):
+def open(
+    entries,
+    date,
+    account_types,
+    conversion_currency,
+    account_earnings,
+    account_opening,
+    account_conversions,
+):
     """Summarize entries before a date and transfer income/expenses to equity.
 
     This method essentially prepares a list of directives to contain only
@@ -96,10 +99,7 @@ def open(entries,
     return entries, index
 
 
-def close(entries,
-          date,
-          conversion_currency,
-          account_conversions):
+def close(entries, date, conversion_currency, account_conversions):
     """Truncate entries that occur after a particular date and ensure balance.
 
     This method essentially removes entries after a date. It truncates the
@@ -145,10 +145,7 @@ def close(entries,
 
 
 # TODO(blais): This needs to be renamed in v3. Long name. Not obvious enough.
-def clear(entries,
-          date,
-          account_types,
-          account_earnings):
+def clear(entries, date, account_types, account_earnings):
     """Transfer income and expenses balances at the given date to the equity accounts.
 
     This method insert entries to zero out balances on income and expenses
@@ -170,44 +167,48 @@ def clear(entries,
     index = len(entries)
 
     # Transfer income and expenses before the period to equity.
-    income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, account_types))
-    new_entries = transfer_balances(entries, date,
-                                    income_statement_account_pred, account_earnings)
+    income_statement_account_pred = lambda account: is_income_statement_account(
+        account, account_types
+    )
+    new_entries = transfer_balances(
+        entries, date, income_statement_account_pred, account_earnings
+    )
 
     return new_entries, index
 
 
 def open_opt(entries, date, options_map):
-    """Convenience function to open() using an options map.
-    """
+    """Convenience function to open() using an options map."""
     account_types = options.get_account_types(options_map)
     previous_accounts = options.get_previous_accounts(options_map)
-    conversion_currency = options_map['conversion_currency']
+    conversion_currency = options_map["conversion_currency"]
     return open(entries, date, account_types, conversion_currency, *previous_accounts)
 
+
 def close_opt(entries, date, options_map):
-    """Convenience function to close() using an options map.
-    """
-    conversion_currency = options_map['conversion_currency']
+    """Convenience function to close() using an options map."""
+    conversion_currency = options_map["conversion_currency"]
     current_accounts = options.get_current_accounts(options_map)
     return close(entries, date, conversion_currency, current_accounts[1])
 
+
 def clear_opt(entries, date, options_map):
-    """Convenience function to clear() using an options map.
-    """
+    """Convenience function to clear() using an options map."""
     account_types = options.get_account_types(options_map)
     current_accounts = options.get_current_accounts(options_map)
     return clear(entries, date, account_types, current_accounts[0])
 
 
-def clamp(entries,
-          begin_date, end_date,
-          account_types,
-          conversion_currency,
-          account_earnings,
-          account_opening,
-          account_conversions):
+def clamp(
+    entries,
+    begin_date,
+    end_date,
+    account_types,
+    conversion_currency,
+    account_earnings,
+    account_opening,
+    account_conversions,
+):
     """Filter entries to include only those during a specified time period.
 
     Firstly, this method will transfer all balances for the income and expense
@@ -247,10 +248,12 @@ def clamp(entries,
       sheet fed with only the summarized entries.
     """
     # Transfer income and expenses before the period to equity.
-    income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, account_types))
-    entries = transfer_balances(entries, begin_date,
-                                income_statement_account_pred, account_earnings)
+    income_statement_account_pred = lambda account: is_income_statement_account(
+        account, account_types
+    )
+    entries = transfer_balances(
+        entries, begin_date, income_statement_account_pred, account_earnings
+    )
 
     # Summarize all the previous balances, after transferring the income and
     # expense balances, so all entries for those accounts before the begin date
@@ -283,20 +286,20 @@ def clamp_opt(entries, begin_date, end_date, options_map):
     previous_earnings, previous_balances, _ = options.get_previous_accounts(options_map)
     _, current_conversions = options.get_current_accounts(options_map)
 
-    conversion_currency = options_map['conversion_currency']
-    return clamp(entries, begin_date, end_date,
-                 account_types,
-                 conversion_currency,
-                 previous_earnings,
-                 previous_balances,
-                 current_conversions)
-
-
-def cap(entries,
+    conversion_currency = options_map["conversion_currency"]
+    return clamp(
+        entries,
+        begin_date,
+        end_date,
         account_types,
         conversion_currency,
-        account_earnings,
-        account_conversions):
+        previous_earnings,
+        previous_balances,
+        current_conversions,
+    )
+
+
+def cap(entries, account_types, conversion_currency, account_earnings, account_conversions):
     """Transfer net income to equity and insert a final conversion entry.
 
     This is used to move and nullify balances from the income and expense
@@ -319,11 +322,12 @@ def cap(entries,
 
     # Transfer the balances of income and expense accounts as earnings / net
     # income.
-    income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, account_types))
-    entries = transfer_balances(entries, None,
-                                income_statement_account_pred,
-                                account_earnings)
+    income_statement_account_pred = lambda account: is_income_statement_account(
+        account, account_types
+    )
+    entries = transfer_balances(
+        entries, None, income_statement_account_pred, account_earnings
+    )
 
     # Insert final conversion entries.
     entries = conversions(entries, account_conversions, conversion_currency, None)
@@ -344,11 +348,8 @@ def cap_opt(entries, options_map):
     """
     account_types = options.get_account_types(options_map)
     current_accounts = options.get_current_accounts(options_map)
-    conversion_currency = options_map['conversion_currency']
-    return cap(entries,
-               account_types,
-               conversion_currency,
-               *current_accounts)
+    conversion_currency = options_map["conversion_currency"]
+    return cap(entries, account_types, conversion_currency, *current_accounts)
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):
@@ -383,9 +384,9 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     balances, index = balance_by_account(entries, date)
 
     # Filter out to keep only the accounts we want.
-    transfer_balances = {account: balance
-                         for account, balance in balances.items()
-                         if account_pred(account)}
+    transfer_balances = {
+        account: balance for account, balance in balances.items() if account_pred(account)
+    }
 
     # We need to insert the entries at the end of the previous day.
     if date:
@@ -395,19 +396,25 @@ def transfer_balances(entries, date, account_pred, transfer_account):
 
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
-        transfer_balances, transfer_date, transfer_account, False,
-        data.new_metadata('<transfer_balances>', 0), flags.FLAG_TRANSFER,
-        "Transfer balance for '{account}' (Transfer balance)")
+        transfer_balances,
+        transfer_date,
+        transfer_account,
+        False,
+        data.new_metadata("<transfer_balances>", 0),
+        flags.FLAG_TRANSFER,
+        "Transfer balance for '{account}' (Transfer balance)",
+    )
 
     # Remove balance assertions that occur after a transfer on an account that
     # has been transferred away; they would break.
-    after_entries = [entry
-                     for entry in entries[index:]
-                     if not (isinstance(entry, data.Balance) and
-                             entry.account in transfer_balances)]
+    after_entries = [
+        entry
+        for entry in entries[index:]
+        if not (isinstance(entry, data.Balance) and entry.account in transfer_balances)
+    ]
 
     # Split the new entries in a new list.
-    return (entries[:index] + transfer_entries + after_entries)
+    return entries[:index] + transfer_entries + after_entries
 
 
 def summarize(entries, date, account_opening):
@@ -441,9 +448,14 @@ def summarize(entries, date, account_opening):
 
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
-        balances, summarize_date, account_opening, True,
-        data.new_metadata('<summarize>', 0), flags.FLAG_SUMMARIZE,
-        "Opening balance for '{account}' (Summarization)")
+        balances,
+        summarize_date,
+        account_opening,
+        True,
+        data.new_metadata("<summarize>", 0),
+        flags.FLAG_SUMMARIZE,
+        "Opening balance for '{account}' (Summarization)",
+    )
 
     # Insert the last price entry for each commodity from before the date.
     price_entries = prices.get_last_price_entries(entries, date)
@@ -452,8 +464,9 @@ def summarize(entries, date, account_opening):
     open_entries = get_open_entries(entries, date)
 
     # Compute entries before the date and preserve the entries after the date.
-    before_entries = sorted(open_entries + price_entries + summarizing_entries,
-                            key=data.entry_sortkey)
+    before_entries = sorted(
+        open_entries + price_entries + summarizing_entries, key=data.entry_sortkey
+    )
     after_entries = entries[index:]
 
     # Return a new list of entries and the index that points after the entries
@@ -492,10 +505,18 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         index = len(entries)
         last_date = entries[-1].date
 
-    meta = data.new_metadata('<conversions>', -1)
-    narration = 'Conversion for {}'.format(conversion_balance)
-    conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
-                                   None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
+    meta = data.new_metadata("<conversions>", -1)
+    narration = "Conversion for {}".format(conversion_balance)
+    conversion_entry = Transaction(
+        meta,
+        last_date,
+        flags.FLAG_CONVERSIONS,
+        None,
+        narration,
+        data.EMPTY_SET,
+        data.EMPTY_SET,
+        [],
+    )
     for position in conversion_cost_balance.get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
@@ -504,8 +525,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         price = amount.Amount(ZERO, conversion_currency)
         neg_pos = -position
         conversion_entry.postings.append(
-            data.Posting(conversion_account, neg_pos.units, neg_pos.cost,
-                         price, None, None))
+            data.Posting(conversion_account, neg_pos.units, neg_pos.cost, price, None, None)
+        )
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -523,14 +544,14 @@ def truncate(entries, date):
     Returns:
       A truncated list of directives.
     """
-    index = bisect_key.bisect_left_with_key(entries, date,
-                                            key=lambda entry: entry.date)
+    index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
     return entries[:index]
 
 
-def create_entries_from_balances(balances, date, source_account, direction,
-                                 meta, flag, narration_template):
-    """"Create a list of entries from a dict of balances.
+def create_entries_from_balances(
+    balances, date, source_account, direction, meta, flag, narration_template
+):
+    """ "Create a list of entries from a dict of balances.
 
     This method creates a list of new entries to transfer the amounts in the
     'balances' dict to/from another account specified in 'source_account'.
@@ -557,7 +578,6 @@ def create_entries_from_balances(balances, date, source_account, direction,
     """
     new_entries = []
     for account, account_balance in sorted(balances.items()):
-
         # Don't create new entries where there is no balance.
         if account_balance.is_empty():
             continue
@@ -569,14 +589,15 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings)
+            meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings
+        )
 
         for position in account_balance.get_positions():
-            postings.append(data.Posting(account, position.units, position.cost,
-                                         None, None, None))
+            postings.append(
+                data.Posting(account, position.units, position.cost, None, None, None)
+            )
             cost = -convert.get_cost(position)
-            postings.append(data.Posting(source_account, cost, None,
-                                         None, None, None))
+            postings.append(data.Posting(source_account, cost, None, None, None, None))
 
         new_entries.append(new_entry)
 

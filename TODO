@@ -21,6 +21,11 @@ beancount: TODO
     Let that be the default. Make DEFAULT some other name. V3 should include
     all the pedantry by default.
 
+** For API
+
+- Inventory: Add a function to discard by currency.
+- Inventory: Make it easier to reduce & convert to a single currency.
+
 
 * Priorities
 

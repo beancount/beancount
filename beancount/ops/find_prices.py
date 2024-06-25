@@ -1,5 +1,5 @@
-"""A library of codes create price fetching jobs from strings and files.
-"""
+"""A library of codes create price fetching jobs from strings and files."""
+
 __copyright__ = "Copyright (C) 2015-2016,2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -110,8 +110,9 @@ def find_balance_currencies(entries, date=None):
     # Create currency pairs from the currencies which are on account balances.
     # In order to figure out the quote currencies, we use the list of price
     # conversions until this date.
-    converted = (find_currencies_converted(entries, date) |
-                 find_currencies_priced(entries, date))
+    converted = find_currencies_converted(entries, date) | find_currencies_priced(
+        entries, date
+    )
     for cbase in currencies_on_books:
         for base_quote in converted:
             base, quote = base_quote

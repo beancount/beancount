@@ -80,7 +80,7 @@ PyObject* pydecimal_from_cstring(const char* str);
  * string contains is not valid, -ENOMEM if the output string cannot
  * be allocated.
  */
-ssize_t cunescape(const char* string, size_t len, int strict, char** ret, int* lines);
+ssize_t cunescape(const char* string, size_t len, int strict, char** ret);
 
 
 /**

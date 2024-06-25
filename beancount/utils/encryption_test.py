@@ -86,16 +86,15 @@ INPUT = """\
 
 
 class TestEncryptedBase(unittest.TestCase):
-
     def setUp(self):
-        self.tmpdir = tempfile.TemporaryDirectory(prefix='beancount.')
-        self.ringdir = path.join(self.tmpdir.name, 'keyring')
+        self.tmpdir = tempfile.TemporaryDirectory(prefix="beancount.")
+        self.ringdir = path.join(self.tmpdir.name, "keyring")
         os.makedirs(self.ringdir)
         os.chmod(self.ringdir, 0o700)
 
         # Import secret and public keys.
-        self.run_gpg('--import', stdin=TEST_PUBLIC_KEY.encode('ascii'))
-        self.run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
+        self.run_gpg("--import", stdin=TEST_PUBLIC_KEY.encode("ascii"))
+        self.run_gpg("--import", stdin=TEST_SECRET_KEY.encode("ascii"))
 
     def tearDown(self):
         try:
@@ -104,97 +103,114 @@ class TestEncryptedBase(unittest.TestCase):
             pass  # Ignore those, GPG agent sometimes causes this problem.
 
     def run_gpg(self, *args, **kw):
-        command = ('gpg',
-                   '--batch',
-                   '--armor',
-                   '--homedir', self.ringdir,
-                   '--trust-model', 'always') + args
-        stdin = kw.pop('stdin', None)
-        pipe = subprocess.Popen(command, shell=False,
-                                stdin=subprocess.PIPE if stdin else None,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        command = (
+            "gpg",
+            "--batch",
+            "--armor",
+            "--homedir",
+            self.ringdir,
+            "--trust-model",
+            "always",
+        ) + args
+        stdin = kw.pop("stdin", None)
+        pipe = subprocess.Popen(
+            command,
+            shell=False,
+            stdin=subprocess.PIPE if stdin else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         out, err = pipe.communicate(stdin)
         if pipe.returncode != 0:
-            raise OSError('Error running command "{}":\n{}\n'.format(' '.join(command),
-                                                                     err.decode('utf8')))
-        return out.decode('utf8'), err.decode('utf8')
+            raise OSError(
+                'Error running command "{}":\n{}\n'.format(
+                    " ".join(command), err.decode("utf8")
+                )
+            )
+        return out.decode("utf8"), err.decode("utf8")
 
     def encrypt_as_file(self, string, encrypted_filename):
         # Encrypt the Beancount plaintext file with it.
-        out, err = self.run_gpg('--recipient', 'beancount-test', '--encrypt', '--output=-',
-                                stdin=string.encode('utf8'))
-        with open(encrypted_filename, 'w') as encfile:
+        out, err = self.run_gpg(
+            "--recipient",
+            "beancount-test",
+            "--encrypt",
+            "--output=-",
+            stdin=string.encode("utf8"),
+        )
+        with open(encrypted_filename, "w") as encfile:
             encfile.write(out)
 
 
 class TestEncryptedFiles(TestEncryptedBase):
-
     @unittest.skipIf(not encryption.is_gpg_installed(), "gpg is not installed")
     def test_read_encrypted_file(self):
-        encrypted_file = path.join(self.tmpdir.name, 'test.beancount.asc')
+        encrypted_file = path.join(self.tmpdir.name, "test.beancount.asc")
         self.encrypt_as_file(INPUT, encrypted_file)
 
-        with test_utils.environ('GNUPGHOME', self.ringdir):
+        with test_utils.environ("GNUPGHOME", self.ringdir):
             plaintext = encryption.read_encrypted_file(encrypted_file)
             self.assertEqual(INPUT, plaintext)
 
 
-
 class TestEncryptedFilesCheck(unittest.TestCase):
-
     def test_is_encrypted_file(self):
-        with tempfile.NamedTemporaryFile(suffix='.txt') as file:
-            file.write(b'\n')
+        with tempfile.NamedTemporaryFile(suffix=".txt") as file:
+            file.write(b"\n")
             file.flush()
             self.assertFalse(encryption.is_encrypted_file(file.name))
 
-        with tempfile.NamedTemporaryFile(suffix='.gpg') as file:
+        with tempfile.NamedTemporaryFile(suffix=".gpg") as file:
             file.flush()
             self.assertTrue(encryption.is_encrypted_file(file.name))
 
-        with tempfile.NamedTemporaryFile(suffix='.asc') as file:
-            file.write(b'Anything else\n')
+        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
+            file.write(b"Anything else\n")
             file.flush()
             self.assertFalse(encryption.is_encrypted_file(file.name))
 
-        with tempfile.NamedTemporaryFile(suffix='.asc') as file:
-            file.write(b'\n\n\n')
-            file.write(b'-----BEGIN PGP MESSAGE-----\n')
-            file.write(b'\n\n\n')
+        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
+            file.write(b"\n\n\n")
+            file.write(b"-----BEGIN PGP MESSAGE-----\n")
+            file.write(b"\n\n\n")
             file.flush()
             self.assertTrue(encryption.is_encrypted_file(file.name))
 
 
 class TestLoadIncludesEncrypted(TestEncryptedBase):
-
     def test_include_encrypted(self):
         with test_utils.tempdir() as tmpdir:
-            test_utils.create_temporary_files(tmpdir, {
-                'apples.beancount': """
+            test_utils.create_temporary_files(
+                tmpdir,
+                {
+                    "apples.beancount": """
                   include "oranges.beancount.asc"
                   2014-01-01 open Assets:Apples
                 """,
-                'oranges.beancount': """
+                    "oranges.beancount": """
                   2014-01-02 open Assets:Oranges
-                """})
+                """,
+                },
+            )
 
             # Encrypt the oranges file and remove the unencrypted file.
-            with open(path.join(tmpdir, 'oranges.beancount')) as infile:
-                self.encrypt_as_file(infile.read(),
-                                     path.join(tmpdir, 'oranges.beancount.asc'))
-            os.remove(path.join(tmpdir, 'oranges.beancount'))
+            with open(path.join(tmpdir, "oranges.beancount")) as infile:
+                self.encrypt_as_file(
+                    infile.read(), path.join(tmpdir, "oranges.beancount.asc")
+                )
+            os.remove(path.join(tmpdir, "oranges.beancount"))
 
             # Load the top-level file which includes the encrypted file.
-            with test_utils.environ('GNUPGHOME', self.ringdir):
+            with test_utils.environ("GNUPGHOME", self.ringdir):
                 entries, errors, options_map = loader.load_file(
-                    path.join(tmpdir, 'apples.beancount'))
+                    path.join(tmpdir, "apples.beancount")
+                )
 
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-        self.assertTrue(entries[0].meta['filename'].endswith('/apples.beancount'))
-        self.assertTrue(entries[1].meta['filename'].endswith('/oranges.beancount.asc'))
+        self.assertTrue(entries[0].meta["filename"].endswith("/apples.beancount"))
+        self.assertTrue(entries[1].meta["filename"].endswith("/oranges.beancount.asc"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
