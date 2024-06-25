@@ -1,5 +1,5 @@
-"""Code used to automatically complete postings without positions.
-"""
+"""Code used to automatically complete postings without positions."""
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -26,7 +26,7 @@ from beancount.utils import defdict
 
 # An upper bound on the tolerance value, this is the maximum the tolerance
 # should ever be.
-MAXIMUM_TOLERANCE = D('0.5')
+MAXIMUM_TOLERANCE = D("0.5")
 
 
 # The maximum number of user-specified coefficient digits we should allow for a
@@ -49,9 +49,8 @@ def is_tolerance_user_specified(tolerance):
     return len(tolerance.as_tuple().digits) < MAX_TOLERANCE_DIGITS
 
 
-
 # An error from balancing the postings.
-BalanceError = collections.namedtuple('BalanceError', 'source message entry')
+BalanceError = collections.namedtuple("BalanceError", "source message entry")
 
 
 def has_nontrivial_balance(posting):
@@ -160,8 +159,12 @@ def infer_tolerances(postings, options_map, use_cost=None):
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
-            tolerances[currency] = max(tolerance,
-                                       tolerances.get(currency, -1024))
+
+            # Note that we take the max() and not the min() here because the
+            # tolerance has a dual purpose: it's used to infer the resolution
+            # for interpolation (where we might want the min()) and also for
+            # balance checks (where we favor the looser/larger tolerance).
+            tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
             if not use_cost:
                 continue
@@ -191,19 +194,19 @@ def infer_tolerances(postings, options_map, use_cost=None):
     for currency, tolerance in cost_tolerances.items():
         tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
-    default = tolerances.pop('*', ZERO)
+    default = tolerances.pop("*", ZERO)
     return defdict.ImmutableDictWithDefault(tolerances, default=default)
 
 
 # Meta-data field appended to automatically inserted postings.
 # (Note: A better name might have been '__interpolated__'.)
-AUTOMATIC_META = '__automatic__'
+AUTOMATIC_META = "__automatic__"
 
 # Meta-data field appended to postings inserted to absorb rounding error.
-AUTOMATIC_RESIDUAL = '__residual__'
+AUTOMATIC_RESIDUAL = "__residual__"
 
 # Meta-data field added for the tolerances inferred for this entry.
-AUTOMATIC_TOLERANCES = '__tolerances__'
+AUTOMATIC_TOLERANCES = "__tolerances__"
 
 
 def get_residual_postings(residual, account_rounding):
@@ -216,11 +219,11 @@ def get_residual_postings(residual, account_rounding):
     Returns:
       A list of new postings to be inserted to reduce the given residual.
     """
-    meta = {AUTOMATIC_META: True,
-            AUTOMATIC_RESIDUAL: True}
-    return [Posting(account_rounding, -position.units, position.cost, None, None,
-                    meta.copy())
-            for position in residual.get_positions()]
+    meta = {AUTOMATIC_META: True, AUTOMATIC_RESIDUAL: True}
+    return [
+        Posting(account_rounding, -position.units, position.cost, None, None, meta.copy())
+        for position in residual.get_positions()
+    ]
 
 
 def fill_residual_posting(entry, account_rounding):
@@ -310,8 +313,7 @@ def compute_entry_context(entries, context_entry, additional_accounts=None):
             break
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                if not any(posting.account == account
-                           for account in context_accounts):
+                if not any(posting.account == account for account in context_accounts):
                     continue
                 balance = context_before[posting.account]
                 balance.add_position(posting)

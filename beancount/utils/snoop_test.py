@@ -8,7 +8,6 @@ from beancount.utils import snoop
 
 
 class TestSnoop(unittest.TestCase):
-
     def test_snoop(self):
         history_len = 4
         snoo = snoop.Snoop(history_len)
@@ -24,7 +23,6 @@ class TestSnoop(unittest.TestCase):
         self.assertEqual(history_len, len(snoo.history))
 
     def test_snoop_regexp(self):
-        # pylint: disable=invalid-name
         MatchObject = type(re.match("a", "a"))
         if snoop.snooper(re.match("bro", "brother")):
             self.assertTrue(isinstance(snoop.snooper.value, MatchObject))
@@ -33,7 +31,7 @@ class TestSnoop(unittest.TestCase):
 
     def test_snoop_attribute(self):
         snoop.snooper(re.match("a(b+)a", "abbba"))
-        self.assertEqual('bbb', snoop.snooper.group(1))
+        self.assertEqual("bbb", snoop.snooper.group(1))
 
     def test_snoopify(self):
         original_match = re.match
@@ -46,12 +44,11 @@ class TestSnoop(unittest.TestCase):
 
 
 class TestSaver(unittest.TestCase):
-
     def test_saver(self):
         save = snoop.save
-        if save(re.match(r'(\d+)', 'bla277232bla')):
-            self.assertEqual('277232', save.value)
+        if save(re.match(r"(\d+)", "bla277232bla")):
+            self.assertEqual("277232", save.value)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

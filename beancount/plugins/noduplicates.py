@@ -1,11 +1,11 @@
-"""This plugin validates that there are no duplicate transactions.
-"""
+"""This plugin validates that there are no duplicate transactions."""
+
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import compare
 
-__plugins__ = ('validate_no_duplicates',)
+__plugins__ = ("validate_no_duplicates",)
 
 
 def validate_no_duplicates(entries, unused_options_map):

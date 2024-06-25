@@ -3,6 +3,7 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -65,25 +66,26 @@ class FileRegion(click.ParamType):
 
 
 class Group(click.Group):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.aliases = {}
 
     def command(self, *args, alias=None, **kwargs):
         wrap = click.Group.command(self, *args, **kwargs)
+
         def decorator(f):
             cmd = wrap(f)
             if alias:
                 self.aliases[alias] = cmd.name
             return cmd
+
         return decorator
 
     def get_command(self, ctx, cmd_name):
         # aliases
         name = self.aliases.get(cmd_name, cmd_name)
         # allow to use '_' or '-' in command names.
-        name = name.replace('_', '-')
+        name = name.replace("_", "-")
         return click.Group.get_command(self, ctx, name)
 
 
@@ -93,18 +95,21 @@ def doctor():
     pass
 
 
-@doctor.command(alias='dump-lexer')
-@click.argument('filename', type=ledger_path)
+@doctor.command(alias="dump-lexer")
+@click.argument("filename", type=ledger_path)
 def lex(filename):
     """Dump the lexer output for a Beancount syntax file."""
 
     for token, lineno, text, obj in lexer.lex_iter(filename):
-        sys.stdout.write('{:12} {:6d} {}\n'.format(
-            '(None)' if token is None else token, lineno, repr(text)))
+        sys.stdout.write(
+            "{:12} {:6d} {}\n".format(
+                "(None)" if token is None else token, lineno, repr(text)
+            )
+        )
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
+@click.argument("filename", type=ledger_path)
 def parse(filename):
     """Parse the a ledger in debug mode.
 
@@ -115,7 +120,7 @@ def parse(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
+@click.argument("filename", type=ledger_path)
 def roundtrip(filename):
     """Round-trip test on arbitrary ledger.
 
@@ -127,15 +132,15 @@ def roundtrip(filename):
     """
     round1_filename = round2_filename = None
     try:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+        logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
         logging.info("Read the entries")
         entries, errors, options_map = loader.load_file(filename)
         printer.print_errors(errors, file=sys.stderr)
 
         logging.info("Print them out to a file")
         basename, extension = os.path.splitext(filename)
-        round1_filename = ''.join([basename, '.roundtrip1', extension])
-        with open(round1_filename, 'w') as outfile:
+        round1_filename = "".join([basename, ".roundtrip1", extension])
+        with open(round1_filename, "w") as outfile:
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
@@ -150,30 +155,30 @@ def roundtrip(filename):
 
         # Print out the list of errors from parsing the results.
         if errors:
-            print(',----------------------------------------------------------------------')
+            print(",----------------------------------------------------------------------")
             printer.print_errors(errors, file=sys.stdout)
-            print('`----------------------------------------------------------------------')
+            print("`----------------------------------------------------------------------")
 
         logging.info("Print what you read to yet another file")
-        round2_filename = ''.join([basename, '.roundtrip2', extension])
-        with open(round2_filename, 'w') as outfile:
+        round2_filename = "".join([basename, ".roundtrip2", extension])
+        with open(round2_filename, "w") as outfile:
             printer.print_entries(entries_roundtrip, file=outfile)
 
         logging.info("Compare the original entries with the re-read ones")
         same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
         if same:
-            logging.info('Entries are the same. Congratulations.')
+            logging.info("Entries are the same. Congratulations.")
         else:
-            logging.error('Entries differ!')
+            logging.error("Entries differ!")
             print()
-            print('\n\nMissing from original:')
+            print("\n\nMissing from original:")
             for entry in entries:
                 print(entry)
                 print(compare.hash_entry(entry))
                 print(printer.format_entry(entry))
                 print()
 
-            print('\n\nMissing from round-trip:')
+            print("\n\nMissing from round-trip:")
             for entry in missing2:
                 print(entry)
                 print(compare.hash_entry(entry))
@@ -186,10 +191,10 @@ def roundtrip(filename):
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
-@click.argument('dirs',
-                type=click.Path(resolve_path=True, exists=True, file_okay=False),
-                nargs=-1)
+@click.argument("filename", type=ledger_path)
+@click.argument(
+    "dirs", type=click.Path(resolve_path=True, exists=True, file_okay=False), nargs=-1
+)
 def directories(filename, dirs):
     """Validate a directory hierarchy against the ledger's account names.
 
@@ -213,17 +218,17 @@ def list_options():
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
+@click.argument("filename", type=ledger_path)
 def print_options(filename):
     """List options parsed from a ledger."""
     _, __, options_map = loader.load_file(filename)
     for key, value in sorted(options_map.items()):
-        print('{}: {}'.format(key, value))
+        print("{}: {}".format(key, value))
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
-@click.argument('location', type=FileLocation())
+@click.argument("filename", type=ledger_path)
+@click.argument("location", type=FileLocation())
 def context(filename, location):
     """Describe transaction context.
 
@@ -240,17 +245,16 @@ def context(filename, location):
     # Load the input files.
     entries, errors, options_map = loader.load_file(filename)
 
-    str_context = render_file_context(entries, options_map,
-                                      search_filename, lineno)
+    str_context = render_file_context(entries, options_map, search_filename, lineno)
     sys.stdout.write(str_context)
 
 
-RenderError = collections.namedtuple('RenderError', 'source message entry')
+RenderError = collections.namedtuple("RenderError", "source message entry")
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
-@click.argument('location_spec', metavar='[LINK|TAG|LOCATION|REGION]')
+@click.argument("filename", type=ledger_path)
+@click.argument("location_spec", metavar="[LINK|TAG|LOCATION|REGION]")
 def linked(filename, location_spec):
     """List related transactions.
 
@@ -272,13 +276,13 @@ def linked(filename, location_spec):
 
     # Link name.
     if re.match(r"\^(.*)$", location_spec):
-        search_filename = options_map['filename']
+        search_filename = options_map["filename"]
         links = {location_spec[1:]}
         linked_entries = find_linked_entries(entries, links, False)
 
     # Tag name.
     elif re.match(r"#(.*)$", location_spec):
-        search_filename = options_map['filename']
+        search_filename = options_map["filename"]
         tag = location_spec[1:]
         linked_entries = find_tagged_entries(entries, tag)
 
@@ -305,9 +309,11 @@ def linked(filename, location_spec):
             else:
                 raise SystemExit("Invalid line number or link format for location.")
 
-        search_filename = (os.path.abspath(included_filename)
-                           if included_filename else
-                           options_map['filename'])
+        search_filename = (
+            os.path.abspath(included_filename)
+            if included_filename
+            else options_map["filename"]
+        )
         lineno = int(first_line)
         if last_line is None:
             # Find the closest entry.
@@ -316,34 +322,37 @@ def linked(filename, location_spec):
 
             # Find its links.
             if closest_entry is None:
-                raise SystemExit("No entry could be found before {}:{}".format(
-                    search_filename, lineno))
-            links = (closest_entry.links
-                     if isinstance(closest_entry, data.Transaction)
-                     else data.EMPTY_SET)
+                raise SystemExit(
+                    "No entry could be found before {}:{}".format(search_filename, lineno)
+                )
+            links = (
+                closest_entry.links
+                if isinstance(closest_entry, data.Transaction)
+                else data.EMPTY_SET
+            )
         else:
             # Find all the entries in the interval, following all links.
             last_lineno = int(last_line)
             links = set()
             selected_entries = []
             for entry in data.filter_txns(entries):
-                if (entry.meta['filename'] == search_filename and
-                    lineno <= entry.meta['lineno'] <= last_lineno):
+                if (
+                    entry.meta["filename"] == search_filename
+                    and lineno <= entry.meta["lineno"] <= last_lineno
+                ):
                     links.update(entry.links)
                     selected_entries.append(entry)
 
         # Get the linked entries, or just the closest one, if no links.
-        linked_entries = (find_linked_entries(entries, links, True)
-                          if links
-                          else selected_entries)
+        linked_entries = (
+            find_linked_entries(entries, links, True) if links else selected_entries
+        )
 
     render_mini_balances(linked_entries, options_map, None)
 
 
 def resolve_region_to_entries(
-    entries: List[data.Entries],
-    filename: str,
-    region: Tuple[str, int, int]
+    entries: List[data.Entries], filename: str, region: Tuple[str, int, int]
 ) -> List[data.Entries]:
     """Resolve a filename and region to a list of entries."""
 
@@ -356,17 +365,23 @@ def resolve_region_to_entries(
     region_entries = [
         entry
         for entry in data.filter_txns(entries)
-        if (entry.meta['filename'] == search_filename and
-            first_lineno <= entry.meta['lineno'] <= last_lineno)]
+        if (
+            entry.meta["filename"] == search_filename
+            and first_lineno <= entry.meta["lineno"] <= last_lineno
+        )
+    ]
 
     return region_entries
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
-@click.argument('region', type=FileRegion())
-@click.option('--conversion', type=click.Choice(['value', 'cost']),
-              help='Convert balances output to market value or cost.')
+@click.argument("filename", type=ledger_path)
+@click.argument("region", type=FileRegion())
+@click.option(
+    "--conversion",
+    type=click.Choice(["value", "cost"]),
+    help="Convert balances output to market value or cost.",
+)
 def region(filename, region, conversion):
     """Print out a list of transactions within REGION and compute balances.
 
@@ -377,7 +392,7 @@ def region(filename, region, conversion):
     """
     entries, errors, options_map = loader.load_file(filename)
     region_entries = resolve_region_to_entries(entries, filename, region)
-    price_map = prices.build_price_map(entries) if conversion == 'value' else None
+    price_map = prices.build_price_map(entries) if conversion == "value" else None
     render_mini_balances(region_entries, options_map, conversion, price_map)
 
 
@@ -393,13 +408,12 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
         converted to market value.
     """
     # Render linked entries (in date order) as errors (for Emacs).
-    errors = [RenderError(entry.meta, '', entry)
-              for entry in entries]
+    errors = [RenderError(entry.meta, "", entry) for entry in entries]
     printer.print_errors(errors)
 
     # Print out balances.
     real_root = realization.realize(entries)
-    dformat = options_map['dcontext'].build(alignment=Align.DOT, reserved=2)
+    dformat = options_map["dcontext"].build(alignment=Align.DOT, reserved=2)
 
     # TODO(blais): I always want to be able to convert at cost. We need
     # arguments capability.
@@ -409,7 +423,7 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
     # Insert one and update the realization. Add an update() method to the
     # realization, given a transaction.
     acctypes = options.get_account_types(options_map)
-    if conversion == 'value':
+    if conversion == "value":
         assert price_map is not None
 
         # Warning: Mutate the inventories in-place, converting them to market
@@ -422,12 +436,13 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
             balance_diff.add_inventory(balance_cost)
             balance_diff.add_inventory(-balance_value)
         if not balance_diff.is_empty():
-            account_unrealized = account.join(acctypes.income,
-                                              options_map["account_unrealized_gains"])
+            account_unrealized = account.join(
+                acctypes.income, options_map["account_unrealized_gains"]
+            )
             unrealized = realization.get_or_create(real_root, account_unrealized)
             unrealized.balance.add_inventory(balance_diff)
 
-    elif conversion == 'cost':
+    elif conversion == "cost":
         for real_account in realization.iter_children(real_root):
             real_account.balance = real_account.balance.reduce(convert.get_cost)
 
@@ -440,7 +455,7 @@ def render_mini_balances(entries, options_map, conversion=None, price_map=None):
             net_income.add_inventory(real_node.balance)
 
     print()
-    print('Net Income: {}'.format(-net_income))
+    print("Net Income: {}".format(-net_income))
 
 
 def find_linked_entries(entries, links, follow_links: bool):
@@ -454,21 +469,25 @@ def find_linked_entries(entries, links, follow_links: bool):
     """
     linked_entries = []
     if not follow_links:
-        linked_entries = [entry
-                          for entry in entries
-                          if (isinstance(entry, data.Transaction) and
-                              entry.links and
-                              entry.links & links)]
+        linked_entries = [
+            entry
+            for entry in entries
+            if (isinstance(entry, data.Transaction) and entry.links and entry.links & links)
+        ]
     else:
         links = set(links)
         linked_entries = []
         while True:
             num_linked = len(linked_entries)
-            linked_entries = [entry
-                              for entry in entries
-                              if (isinstance(entry, data.Transaction) and
-                                  entry.links and
-                                  entry.links & links)]
+            linked_entries = [
+                entry
+                for entry in entries
+                if (
+                    isinstance(entry, data.Transaction)
+                    and entry.links
+                    and entry.links & links
+                )
+            ]
             if len(linked_entries) == num_linked:
                 break
             for entry in linked_entries:
@@ -479,15 +498,15 @@ def find_linked_entries(entries, links, follow_links: bool):
 
 def find_tagged_entries(entries, tag):
     """Find all entries with the given tag."""
-    return [entry
-            for entry in entries
-            if (isinstance(entry, data.Transaction) and
-                entry.tags and
-                tag in entry.tags)]
+    return [
+        entry
+        for entry in entries
+        if (isinstance(entry, data.Transaction) and entry.tags and tag in entry.tags)
+    ]
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
+@click.argument("filename", type=ledger_path)
 def missing_open(filename):
     """Print Open directives missing in FILENAME.
 
@@ -502,26 +521,28 @@ def missing_open(filename):
     open_close_map = getters.get_account_open_close(entries)
 
     new_entries = []
-    for account, first_use_date in first_use_map.items():
-        if account not in open_close_map:
+    for account_, first_use_date in first_use_map.items():
+        if account_ not in open_close_map:
             new_entries.append(
-                data.Open(data.new_metadata(filename, 0), first_use_date, account,
-                          None, None))
+                data.Open(
+                    data.new_metadata(filename, 0), first_use_date, account_, None, None
+                )
+            )
 
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
 @doctor.command()
-@click.argument('filename', type=ledger_path)
+@click.argument("filename", type=ledger_path)
 def display_context(filename):
     """Print the precision inferred from the parsed numbers in the input file."""
     entries, errors, options_map = loader.load_file(filename)
-    dcontext = options_map['dcontext']
+    dcontext = options_map["dcontext"]
     sys.stdout.write(str(dcontext))
 
 
 main = doctor
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

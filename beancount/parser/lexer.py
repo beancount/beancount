@@ -1,5 +1,5 @@
-"""Beancount syntax lexer.
-"""
+"""Beancount syntax lexer."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -11,7 +11,7 @@ from beancount.core.data import new_metadata
 from beancount.parser import _parser
 
 
-LexerError = collections.namedtuple('LexerError', 'source message entry')
+LexerError = collections.namedtuple("LexerError", "source message entry")
 
 
 class LexBuilder:
@@ -23,14 +23,13 @@ class LexBuilder:
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, filename, lineno, message): # {0e31aeca3363}
+    def build_lexer_error(self, filename, lineno, message):  # {0e31aeca3363}
         """Build a lexer error and appends it to the list of pending errors.
 
         Args:
           message: The message of the error.
         """
-        self.errors.append(
-            LexerError(new_metadata(filename, lineno), str(message), None))
+        self.errors.append(LexerError(new_metadata(filename, lineno), str(message), None))
 
 
 def lex_iter(file, builder=None):
@@ -53,7 +52,7 @@ def lex_iter(file, builder=None):
         # that does not work for io.BytesIO despite it implementing the
         # readinto() method.
         if not isinstance(file, io.IOBase):
-            file = ctx.enter_context(open(file, 'rb'))
+            file = ctx.enter_context(open(file, "rb"))
         if builder is None:
             builder = LexBuilder()
         parser = _parser.Parser(builder)
@@ -69,6 +68,6 @@ def lex_iter_string(string, builder=None, **kwargs):
       An iterator, see ``lex_iter()`` for details.
     """
     if not isinstance(string, bytes):
-        string = string.encode('utf8')
+        string = string.encode("utf8")
     file = io.BytesIO(string)
     yield from lex_iter(file, builder=builder, **kwargs)

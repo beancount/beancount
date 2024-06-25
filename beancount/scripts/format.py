@@ -11,8 +11,9 @@ from beancount.core import amount
 from beancount.core import account
 from beancount.parser.version import VERSION
 
-NUMBER_RE = r'[-+]?\s*[\d,]+(?:\.\d*)?'
-PARENTHESIZED_BINARY_OP_RE = rf'\({NUMBER_RE}\s*[-+*/]\s*{NUMBER_RE}\)'
+NUMBER_RE = r"[-+]?\s*[\d,]+(?:\.\d*)?"
+PARENTHESIZED_BINARY_OP_RE = rf"\({NUMBER_RE}\s*[-+*/]\s*{NUMBER_RE}\)"
+
 
 def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):
     """Reformat Beancount input to align all the numbers at the same column.
@@ -39,8 +40,8 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     for line in contents.splitlines():
         match = regex.match(
             rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
-            rf'({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+'
-            rf'((?:{amount.CURRENCY_RE})\b.*)',
+            rf"({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+"
+            rf"((?:{amount.CURRENCY_RE})\b.*)",
             line,
         )
         if match:
@@ -60,15 +61,15 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
                 output.write(prefix)
             else:
                 num_of_spaces = currency_column - len(prefix) - len(number) - 4
-                spaces = ' ' * num_of_spaces
-                output.write(prefix + spaces + '  ' + number + ' ' + rest)
-            output.write('\n')
+                spaces = " " * num_of_spaces
+                output.write(prefix + spaces + "  " + number + " " + rest)
+            output.write("\n")
         return output.getvalue()
 
     # Compute the maximum widths.
-    filtered_pairs = [(prefix, number)
-                      for prefix, number, _ in match_pairs
-                      if number is not None]
+    filtered_pairs = [
+        (prefix, number) for prefix, number, _ in match_pairs if number is not None
+    ]
 
     if filtered_pairs:
         max_prefix_width = max(len(prefix) for prefix, _ in filtered_pairs)
@@ -84,9 +85,9 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
         max_num_width = num_width
 
     # Create a format that will admit the maximum width of all prefixes equally.
-    line_format = '{{:<{prefix_width}}}  {{:>{num_width}}} {{}}'.format(
-        prefix_width=max_prefix_width,
-        num_width=max_num_width)
+    line_format = "{{:<{prefix_width}}}  {{:>{num_width}}} {{}}".format(
+        prefix_width=max_prefix_width, num_width=max_num_width
+    )
 
     # Process each line to an output buffer.
     output = io.StringIO()
@@ -95,7 +96,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
             output.write(prefix)
         else:
             output.write(line_format.format(prefix.rstrip(), number, rest))
-        output.write('\n')
+        output.write("\n")
     formatted_contents = output.getvalue()
 
     # Ensure that the file before and after have only whitespace differences.
@@ -103,9 +104,9 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # so it's safe.
     # open('/tmp/before', 'w').write(regex.sub(r'[ \t]+', ' ', contents))
     # open('/tmp/after', 'w').write(regex.sub(r'[ \t]+', ' ', formatted_contents))
-    old_stripped = regex.sub(r'[ \t\n]+', ' ', contents.rstrip())
-    new_stripped = regex.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
-    assert (old_stripped == new_stripped), (old_stripped, new_stripped)
+    old_stripped = regex.sub(r"[ \t\n]+", " ", contents.rstrip())
+    new_stripped = regex.sub(r"[ \t\n]+", " ", formatted_contents.rstrip())
+    assert old_stripped == new_stripped, (old_stripped, new_stripped)
 
     return formatted_contents
 
@@ -123,8 +124,7 @@ def compute_most_frequent(iterable):
     frequencies = collections.Counter(iterable)
     if not frequencies:
         return None
-    counts = sorted((count, element)
-                    for element, count in frequencies.items())
+    counts = sorted((count, element) for element, count in frequencies.items())
     # Note: In case of a tie, this chooses the longest width.
     # We could eventually make this an option.
     return counts[-1][1]
@@ -140,13 +140,13 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
-    match_posting = regex.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
+    match_posting = regex.compile(r"([ \t]+)({}.*)".format(account.ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
-        for match in (match_posting(prefix)
-                      for prefix, _, _ in match_pairs)
-        if match is not None)
-    norm_format = ' ' * (width or 0) + '{}'
+        for match in (match_posting(prefix) for prefix, _, _ in match_pairs)
+        if match is not None
+    )
+    norm_format = " " * (width or 0) + "{}"
 
     # Make the necessary adjustments.
     adjusted_pairs = []
@@ -160,11 +160,11 @@ def normalize_indent_whitespace(match_pairs):
 
 
 @click.command()
-@click.argument('filename', type=click.File('r'))
-@click.option('--output', '-o', type=click.File('w'), default='-', help="Output file.")
-@click.option('--prefix-width', '-w', type=int, help="Force fixed prefix width.")
-@click.option('--num-width', '-W', type=int, help="Force fixed numbers width.")
-@click.option('--currency-column', '-c', type=int, help="Align curreencies to this column.")
+@click.argument("filename", type=click.File("r"))
+@click.option("--output", "-o", type=click.File("w"), default="-", help="Output file.")
+@click.option("--prefix-width", "-w", type=int, help="Force fixed prefix width.")
+@click.option("--num-width", "-W", type=int, help="Force fixed numbers width.")
+@click.option("--currency-column", "-c", type=int, help="Align curreencies to this column.")
 @click.version_option(message=VERSION)
 def main(filename, output, prefix_width, num_width, currency_column):
     """Automatically format a Beancount ledger.
@@ -185,8 +185,7 @@ def main(filename, output, prefix_width, num_width, currency_column):
     """
     contents = filename.read()
 
-    formatted_contents = align_beancount(
-        contents, prefix_width, num_width, currency_column)
+    formatted_contents = align_beancount(contents, prefix_width, num_width, currency_column)
 
     # Click opens files for writing in lazy mode. This prevents
     # truncating the input file untill it has been processed and
@@ -194,5 +193,5 @@ def main(filename, output, prefix_width, num_width, currency_column):
     output.write(formatted_contents)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

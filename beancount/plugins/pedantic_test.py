@@ -7,7 +7,6 @@ from beancount import loader
 
 
 class TestPedantic(unittest.TestCase):
-
     @loader.load_doc()
     def test_plugins_pedantic(self, entries, _, options_map):
         """
@@ -25,5 +24,5 @@ class TestPedantic(unittest.TestCase):
         """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

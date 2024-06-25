@@ -1,5 +1,5 @@
-"""File utilities.
-"""
+"""File utilities."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,9 +10,7 @@ import os
 import time
 
 
-def find_files(fords,
-               ignore_dirs=('.hg', '.svn', '.git'),
-               ignore_files=('.DS_Store',)):
+def find_files(fords, ignore_dirs=(".hg", ".svn", ".git"), ignore_files=(".DS_Store",)):
     """Enumerate the files under the given directories, stably.
 
     Invalid file or directory names will be logged to the error log.
@@ -49,12 +47,12 @@ def guess_file_format(filename, default=None):
       A string, the extension of the format, without a leading period.
     """
     if filename:
-        if filename.endswith('.txt') or filename.endswith('.text'):
-            format = 'text'
-        elif filename.endswith('.csv'):
-            format = 'csv'
-        elif filename.endswith('.html') or filename.endswith('.xhtml'):
-            format = 'html'
+        if filename.endswith(".txt") or filename.endswith(".text"):
+            format = "text"
+        elif filename.endswith(".csv"):
+            format = "csv"
+        elif filename.endswith(".html") or filename.endswith(".xhtml"):
+            format = "html"
         else:
             format = default
     else:
@@ -71,7 +69,7 @@ def path_greedy_split(filename):
       A pair of basename, extension (which includes the leading period).
     """
     basename = path.basename(filename)
-    index = basename.find('.')
+    index = basename.find(".")
     if index == -1:
         extension = None
     else:
@@ -90,11 +88,12 @@ def touch_file(filename, *otherfiles):
     # Note: You could set os.stat_float_times() but then the main function would
     # have to set that up as well. It doesn't help so much, however, since
     # filesystems tend to have low resolutions, e.g. one second.
-    orig_mtime_ns = max(os.stat(minfile).st_mtime_ns
-                        for minfile in (filename,) + otherfiles)
+    orig_mtime_ns = max(
+        os.stat(minfile).st_mtime_ns for minfile in (filename,) + otherfiles
+    )
     delay_secs = 0.05
     while True:
-        with open(filename, 'a'):
+        with open(filename, "a"):
             os.utime(filename)
         time.sleep(delay_secs)
         new_stat = os.stat(filename)

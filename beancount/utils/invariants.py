@@ -17,6 +17,7 @@ function.
       uninstrument_invariants(Inventory)
 
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -34,6 +35,7 @@ def invariant_check(method, prefun, postfun):
       An unbound method, decorated.
     """
     reentrant = []
+
     def new_method(self, *args, **kw):
         reentrant.append(None)
         if len(reentrant) == 1:
@@ -43,6 +45,7 @@ def invariant_check(method, prefun, postfun):
             postfun(self)
         reentrant.pop()
         return result
+
     return new_method
 
 
@@ -57,13 +60,12 @@ def instrument_invariants(klass, prefun, postfun):
     """
     instrumented = {}
     for attrname, object_ in klass.__dict__.items():
-        if attrname.startswith('_'):
+        if attrname.startswith("_"):
             continue
         if not isinstance(object_, types.FunctionType):
             continue
         instrumented[attrname] = object_
-        setattr(klass, attrname,
-                invariant_check(object_, prefun, postfun))
+        setattr(klass, attrname, invariant_check(object_, prefun, postfun))
     klass.__instrumented = instrumented
 
 
@@ -73,7 +75,7 @@ def uninstrument_invariants(klass):
     Args:
       klass: A class object, whose methods to be uninstrumented.
     """
-    instrumented = getattr(klass, '__instrumented', None)
+    instrumented = getattr(klass, "__instrumented", None)
     if instrumented:
         for attrname, object_ in instrumented.items():
             setattr(klass, attrname, object_)

@@ -1,11 +1,12 @@
-name: build
+name: wheels
 on:
   push:
-    tags: '*'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-
   wheels:
+    name: Build wheels
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -17,8 +18,10 @@ jobs:
             architecture: AMD64
           - os: windows
             architecture: x86
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
@@ -31,37 +34,52 @@ jobs:
         with:
           architecture: x86
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
-      - run: pipx run cibuildwheel==2.15.0
+
+      - run: pipx run cibuildwheel==2.19.1
         env:
+          # CIBW_BUILD: cp313-*
           CIBW_SKIP: pp* cp36-* cp37-* *-musllinux*
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: x86_64 aarch64
           CIBW_ARCHS_WINDOWS: ${{ matrix.architecture }}
-      - uses: actions/upload-artifact@v3
+
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}}
           path: wheelhouse/*.whl
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}}-${{ matrix.architecture }}}
+          path: wheelhouse/*.whl
+        if: runner.os == 'Windows'
 
   sdist:
+    name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: python -m pip install build
       - run: python -m build --sdist
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: source
           path: dist/*.tar.gz
 
   upload:
+    name: Upload wheels to PyPI
     needs:
       - wheels
       - sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: dist
+      - name: Display structure of downloaded files
+        run: find . -type f -ls
       - run: python -m pip install twine
-      - run: python -m twine upload dist/*
+      - run: python -m twine upload --skip-existing dist/*/*
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

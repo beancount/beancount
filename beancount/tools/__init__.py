@@ -8,5 +8,6 @@ distributed with Beancount and in order to maintain all the source code together
 they are put in this package and invokes from stubs under beancount/bin/, just
 like the other scripts.
 """
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"

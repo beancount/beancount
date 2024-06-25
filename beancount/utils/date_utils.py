@@ -1,5 +1,5 @@
-"""Parse the date from various formats.
-"""
+"""Parse the date from various formats."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -33,8 +33,7 @@ def render_ofx_date(dtime):
     Returns:
       A string, rendered to milliseconds.
     """
-    return '{}.{:03d}'.format(dtime.strftime('%Y%m%d%H%M%S'),
-                              int(dtime.microsecond / 1000))
+    return "{}.{:03d}".format(dtime.strftime("%Y%m%d%H%M%S"), int(dtime.microsecond / 1000))
 
 
 def next_month(date):
@@ -65,14 +64,14 @@ def intimezone(tz_value: str):
     Returns:
       A contextmanager in the given timezone locale.
     """
-    tz_old = os.environ.get('TZ', None)
-    os.environ['TZ'] = tz_value
+    tz_old = os.environ.get("TZ", None)
+    os.environ["TZ"] = tz_value
     time.tzset()
     try:
         yield
     finally:
         if tz_old is None:
-            del os.environ['TZ']
+            del os.environ["TZ"]
         else:
-            os.environ['TZ'] = tz_old
+            os.environ["TZ"] = tz_old
         time.tzset()

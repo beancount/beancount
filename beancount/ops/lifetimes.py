@@ -4,6 +4,7 @@ This script computes, for each commodity, which time intervals it is required at
 This can then be used to identify a list of dates at which we need to fetch prices
 in order to properly fill the price database.
 """
+
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -57,7 +58,8 @@ def get_commodity_lifetimes(entries):
         # occur very frequently.
         if commodities_changed:
             new_commodities = set(
-                itertools.chain(*(inv.currency_pairs() for inv in balances.values())))
+                itertools.chain(*(inv.currency_pairs() for inv in balances.values()))
+            )
             if new_commodities != commodities:
                 # The new global set of commodities has changed; update our
                 # the dictionary of intervals.
@@ -114,22 +116,17 @@ def trim_intervals(intervals, trim_start=None, trim_end=None):
     """
     new_intervals = []
     iter_intervals = iter(intervals)
-    if(trim_start is not None and
-       trim_end is not None and
-       trim_end < trim_start):
-        raise ValueError('Trim end date is before start date')
+    if trim_start is not None and trim_end is not None and trim_end < trim_start:
+        raise ValueError("Trim end date is before start date")
 
     for date_begin, date_end in iter_intervals:
-        if(trim_start is not None and
-           trim_start > date_begin):
+        if trim_start is not None and trim_start > date_begin:
             date_begin = trim_start
-        if(trim_end is not None):
-            if(date_end is None or
-               trim_end < date_end):
+        if trim_end is not None:
+            if date_end is None or trim_end < date_end:
                 date_end = trim_end
 
-        if(date_end is None or
-           date_begin <= date_end):
+        if date_end is None or date_begin <= date_end:
             new_intervals.append((date_begin, date_end))
     return new_intervals
 
@@ -143,8 +140,10 @@ def compress_lifetimes_days(lifetimes_map, num_days):
     Returns:
       A new dict of lifetimes map where some intervals may have been joined.
     """
-    return {currency_pair: compress_intervals_days(intervals, num_days)
-            for currency_pair, intervals in lifetimes_map.items()}
+    return {
+        currency_pair: compress_intervals_days(intervals, num_days)
+        for currency_pair, intervals in lifetimes_map.items()
+    }
 
 
 ONE_WEEK = datetime.timedelta(days=7)
@@ -208,7 +207,7 @@ def required_daily_prices(lifetimes_map, date_last, weekdays_only=False):
         for date_begin, date_end in intervals:
             # Find first Weekday starting on or before minimum date.
             date = date_begin
-            if(weekdays_only):
+            if weekdays_only:
                 diff_days = 4 - date_begin.weekday()
                 if diff_days < 0:
                     date += datetime.timedelta(days=diff_days)

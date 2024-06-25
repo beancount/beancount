@@ -8,7 +8,6 @@ from beancount.utils import bisect_key
 
 
 class TestBisectWithKey(unittest.TestCase):
-
     def test_bisect_left_with_key(self):
         second = lambda x: x[1]
 
@@ -35,12 +34,20 @@ class TestBisectWithKey(unittest.TestCase):
         self.assertEqual(index, 100)
 
     def test_bisect_repeats(self):
-        data = [('a', 0), ('b', 0), ('c', 1), ('d', 3),
-                ('e', 4), ('f', 4), ('g', 5), ('h', 6)]
+        data = [
+            ("a", 0),
+            ("b", 0),
+            ("c", 1),
+            ("d", 3),
+            ("e", 4),
+            ("f", 4),
+            ("g", 5),
+            ("h", 6),
+        ]
         index = bisect_key.bisect_left_with_key(data, 4, key=lambda x: x[1])
         self.assertEqual(index, 4)
-        self.assertEqual(data[index][0], 'e')
+        self.assertEqual(data[index][0], "e")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

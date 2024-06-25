@@ -34,8 +34,8 @@ TEST_INPUT = """
 
 """
 
-class TestCompare(unittest.TestCase):
 
+class TestCompare(unittest.TestCase):
     def test_hash_entries(self):
         previous_hashes = None
         for _ in range(64):
@@ -160,11 +160,15 @@ class TestCompare(unittest.TestCase):
             Expenses:Coffee         5 USD
             Assets:US:Cash
         """)
-        self.assertNotEqual(compare.hash_entry(entries[0], exclude_meta=False),
-                            compare.hash_entry(entries[1], exclude_meta=False))
-        self.assertEqual(compare.hash_entry(entries[0], exclude_meta=True),
-                         compare.hash_entry(entries[1], exclude_meta=True))
+        self.assertNotEqual(
+            compare.hash_entry(entries[0], exclude_meta=False),
+            compare.hash_entry(entries[1], exclude_meta=False),
+        )
+        self.assertEqual(
+            compare.hash_entry(entries[0], exclude_meta=True),
+            compare.hash_entry(entries[1], exclude_meta=True),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
