@@ -255,14 +255,14 @@ def ConvertDocx(filename: str) -> str:
     return os.linesep.join(lines_txt)
 
 
-def FindDocxFiles(root: str):
-    if path.isdir(root):
-        for root, _, files in os.walk(root):
+def FindDocxFiles(directory: str):
+    if path.isdir(directory):
+        for root, _, files in os.walk(directory):
             for filename in files:
                 if re.search(r".docx$", filename):
                     yield path.join(root, filename)
-    elif re.search(r".docx$", root):
-        yield root
+    elif re.search(r".docx$", directory):
+        yield directory
 
 
 def main():
