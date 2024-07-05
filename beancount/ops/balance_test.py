@@ -310,6 +310,10 @@ class TestBalance(unittest.TestCase):
         2013-05-10 balance Assets:Invest:Invalid   0 HOOL
         """
         self.assertEqual([balance.BalanceError], list(map(type, errors)))
+        # balance check shouldn't "eat" the balance entry.
+        self.assertEqual(len(entries), 3)
+        entry = entries[2]
+        self.assertTrue(isinstance(entry, balance.Balance))
 
 
 class TestBalancePrecision(unittest.TestCase):
