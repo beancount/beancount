@@ -108,6 +108,7 @@ def check(entries, options_map):
             # Check that the currency of the balance check is one of the allowed
             # currencies for that account.
             expected_amount = entry.amount
+            open = None
             try:
                 open, _ = open_close_map[entry.account]
             except KeyError:
@@ -118,7 +119,6 @@ def check(entries, options_map):
                         entry,
                     )
                 )
-                continue
 
             if (
                 expected_amount is not None
