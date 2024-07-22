@@ -61,19 +61,19 @@ Versions
 
 There are three versions
 
-- **Version 3** (`branch master
-  <http://github.com/beancount/beancount/tree/master>`_): The in-development
-  next version of Beancount since June 2020. This is unstable and you want to
-  use version 2 below. The scope of changes is described in `this document
-  <https://docs.google.com/document/d/1qPdNXaz5zuDQ8M9uoZFyyFis7hA0G55BEfhWhrVBsfc/>`_.
+- **Version 3** (`branch v3 <http://github.com/beancount/beancount/tree/v3>`_):
+  The current stable version of Beancount since June 2024. Use this. Note that
+  this version is trimmed down from v2 and most of the tools the v2 branch
+  included have been moved to their own independent projects on Github.
 
 - **Version 2** (`branch v2 <http://github.com/beancount/beancount/tree/v2>`_):
-  The current stable version of Beancount, in maintenance mode as of July 2020.
-  This was a complete rewrite of the first version, which introduced a number of
-  constraints and a new grammar and much more. Use this now.
+  The previous stable version of Beancount, in maintenance mode from 2020 until
+  2024 and now frozen and obsolete. This was a complete rewrite of the first
+  version, which introduced a number of constraints and a new grammar and much
+  more.
 
 - **Version 1** (`branch v1 <http://github.com/beancount/beancount/tree/v1>`_):
-  The original version of Beancount. Development on this version halted in 2013.
+w  The original version of Beancount. Development on this version halted in 2013.
   This initial version was intended to be similar to and partially compatible
   with Ledger. Do not use this.
 
