@@ -38,7 +38,7 @@ jobs:
       - run: pipx run cibuildwheel==2.19.1
         env:
           # CIBW_BUILD: cp313-*
-          CIBW_SKIP: pp* cp36-* cp37-* *-musllinux*
+          CIBW_SKIP: pp* *-musllinux*
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: x86_64 aarch64
           CIBW_ARCHS_WINDOWS: ${{ matrix.architecture }}

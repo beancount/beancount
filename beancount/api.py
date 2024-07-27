@@ -53,6 +53,7 @@ from .core.getters import get_accounts, get_account_open_close
 
 from .core.account_types import (
     get_account_type,
+    get_account_sort_key,
     is_account_type,
     is_balance_sheet_account,
     is_income_statement_account,

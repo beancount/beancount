@@ -215,7 +215,7 @@ constraints dep-constraints: build/beancount.deps
 
 # Run the linter on all source code.
 ruff lint:
-	ruff check .
+	NO_COLOR=1 ruff check .
 
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test
