@@ -283,6 +283,36 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
             self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_cost_in_transfer__ambiguous(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   -10 HOOL {}
+          Assets:Other      10 HOOL {}
+
+        ;; Ensure it works in either order
+        2015-10-02 *
+          Assets:Other      10 HOOL {}
+          Assets:Account   -10 HOOL {}
+        """
+        groups, errors = bf.categorize_by_currency(
+            entries[0], {"Assets:Account": I("10 HOOL {1.00 USD}")}
+        )
+        self.assertFalse(errors)
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
+
+        groups, errors = bf.categorize_by_currency(entries[0], {})
+        self.assertTrue(errors)
+        self.assertRegex(errors[0].message, "Failed to categorize posting")
+        self.assertEqual({}, indexes(groups))
+
+        groups, errors = bf.categorize_by_currency(
+            entries[1], {"Assets:Account": I("10 HOOL {1.00 USD}")}
+        )
+        self.assertFalse(errors)
+        self.assertEqual({"USD": {0, 1}}, indexes(groups))
+
+
+    @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__unambiguous(self, entries, _, options_map):
         """
         2015-10-02 *

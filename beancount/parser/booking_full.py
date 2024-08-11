@@ -367,8 +367,20 @@ def categorize_by_currency(entry, balances):
         groups[currency].append(refer)
 
     # Finally, try to resolve all the unknown legs using the inventory contents
-    # of each account.
-    unknown_leg_resolved_currencies = set()
+    # of each account.  We first identify the full set of cost currencies
+    # associated with the accounts, because if this is a singleton, we can use
+    # it as a default to cover the case of carrying cost currencies through
+    # transfers.  Written as function to local-scope `account_cost_currencies`.
+    def get_unique_cost_currency():
+        account_cost_currencies = set()
+        for refer in unknown:
+            posting = entry.postings[refer.index]
+            balance = balances.get(posting.account, inventory.Inventory())
+            account_cost_currencies.update(balance.cost_currencies())
+        if len(account_cost_currencies) == 1:
+            return account_cost_currencies.pop()
+        return None
+    unique_account_cost_currency = get_unique_cost_currency()
     for refer in unknown:
         (index, units_currency, cost_currency, price_currency) = refer
         posting = entry.postings[index]
@@ -382,26 +394,26 @@ def categorize_by_currency(entry, balances):
                 units_currency = balance_currencies.pop()
 
         if cost_currency is MISSING or price_currency is MISSING:
+            selected_balance_cost_currency = None
+
             balance_cost_currencies = balance.cost_currencies()
-            balance_cost_currency = None
             if len(balance_cost_currencies) == 1:
-                balance_cost_currency = balance_cost_currencies.pop()
-            elif len(unknown_leg_resolved_currencies) == 1:
-                # TODO: we might pick up non-cost currencies in this set; should
-                # we only add currencies from costs?
-                balance_cost_currency = next(iter(unknown_leg_resolved_currencies))
-            if balance_cost_currency is not None:
+                selected_balance_cost_currency = balance_cost_currencies.pop()
+
+            elif unique_account_cost_currency is not None:
+                selected_balance_cost_currency = unique_account_cost_currency
+
+            if selected_balance_cost_currency is not None:
                 if price_currency is MISSING:
-                    price_currency = balance_cost_currency
+                    price_currency = selected_balance_cost_currency
                 if cost_currency is MISSING:
-                    cost_currency = balance_cost_currency
+                    cost_currency = selected_balance_cost_currency
 
         refer = Refer(index, units_currency, cost_currency, price_currency)
         currency = get_bucket_currency(refer)
         if currency is not None:
             sortdict.setdefault(currency, index)
             groups[currency].append(refer)
-            unknown_leg_resolved_currencies.add(currency)
         else:
             errors.append(
                 CategorizationError(
