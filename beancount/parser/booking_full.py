@@ -590,7 +590,8 @@ def book_reductions(entry, group_postings, balances, methods):
     # augmenting postings against them.  For each unit found on original
     # reduction postings, we collect a list of booked reductions for that unit.
     #   p.units -> (p, List of booked reductions for p)
-    # TODO: this will break if we have multiple reductions for the same units
+    # Note this only works for equal/opposite units; multi-account or partial
+    # transfers are not supported.
     booked_reductions_by_units = {}
     aug_postings_to_match = []
 
@@ -688,7 +689,7 @@ def book_reductions(entry, group_postings, balances, methods):
                     balance.add_position(posting)
             else:
                 # This posting is an augmentation.
-
+                #
                 # Note that we do not convert the CostSpec instances to Cost
                 # instances, because we want to let the subsequent interpolation
                 # process able to interpolate either the cost per-unit or the
@@ -701,8 +702,7 @@ def book_reductions(entry, group_postings, balances, methods):
                     posting = posting._replace(cost=dated_costspec)
 
                 # Remember this augmentation so that after processing all
-                # postings, we can match the augmenting postings against the
-                # booked reductions.
+                # postings, we can match against the booked reductions.
                 aug_postings_to_match.append(posting)
 
                 # FIXME: Insert unique ids for trade tracking; right now this
