@@ -91,7 +91,6 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
-from beancount.parser.printer import format_entry
 
 
 def unique_label() -> str:
@@ -967,7 +966,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             cost = incomplete_posting.cost
             assert (
                 cost.currency == weight_currency
-            ), f"Internal error; residual currency {weight_currency} different than missing currency {cost.currency} in incomplete posting {format_entry(incomplete_posting)}."
+            ), f"Internal error; residual currency {weight_currency} different than missing currency {cost.currency} in incomplete posting."
             if units.number != ZERO:
                 number_per = (weight - (cost.number_total or ZERO)) / units.number
                 new_cost = cost._replace(number_per=number_per)
