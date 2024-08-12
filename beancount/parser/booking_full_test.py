@@ -3112,7 +3112,6 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
 
-
 class TestStrictWithSize(_BookingTestBase):
     @book_test(Booking.STRICT_WITH_SIZE)
     def test_strict_with_size_single(self, _, __):
@@ -3179,9 +3178,9 @@ class TestBookingApi(unittest.TestCase):
 
 # FIXME: TODO - Rewrite these tests. See average_test.py.
 class TestBook(unittest.TestCase):
-    def book_reductions(self, entries, currency="USD"):
+    def book_reductions(self, entries, currency="USD", method=Booking.STRICT):
         balances = collections.defaultdict(inventory.Inventory)
-        methods = collections.defaultdict(lambda: Booking.STRICT)
+        methods = collections.defaultdict(lambda: method)
         for entry in entries:
             (booked_postings, booked_errors) = bf.book_reductions(
                 entry, entry.postings, balances, methods
@@ -3507,6 +3506,36 @@ class TestBook(unittest.TestCase):
                 data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
             ],
             postings,
+        )
+
+    # These live here instead of as subclasses of _BookingTestBase because they
+    # touch multiple accounts.
+    @parser.parse_doc(allow_incomplete=True)
+    def test_transfer__simple(self, entries, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account1          1 HOOL {100.00 USD, 2010-01-01}
+          Assets:Account1          1 HOOL {120.00 USD, 2012-01-01}
+
+        2015-10-02 * #apply
+          Assets:Account1         -1 HOOL {}
+          Assets:Account2          1 HOOL {}
+        """
+
+        postings, balances = self.book_reductions(entries, method=Booking.FIFO)
+        self.assertEqual(
+            I("1 HOOL {120.00 USD, 2012-01-01}"), balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}"), balances["Assets:Account2"]
+        )
+
+        postings, balances = self.book_reductions(entries, method=Booking.LIFO)
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}"), balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            I("1 HOOL {120.00 USD, 2012-01-01}"), balances["Assets:Account2"]
         )
 
 
