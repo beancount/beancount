@@ -91,6 +91,7 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
+from beancount.parser.printer import format_entry
 
 
 def unique_label() -> str:
@@ -586,12 +587,12 @@ def book_reductions(entry, group_postings, balances, methods):
     booked_postings = []
 
     # Maintain a map of booked reduction info, so that we can later on match
-    # augmenting postings against them.  For an original reduction posting p,
-    # this maps:
+    # augmenting postings against them.  For each unit found on original
+    # reduction postings, we collect a list of booked reductions for that unit.
     #   p.units -> (p, List of booked reductions for p)
     # TODO: this will break if we have multiple reductions for the same units
-    # TODO: this only works if we book reductions before augmentations
     booked_reductions_by_units = {}
+    aug_postings_to_match = []
 
     for posting in group_postings:
         # Process a single posting.
@@ -686,39 +687,47 @@ def book_reductions(entry, group_postings, balances, methods):
                 for posting in reduction_postings:
                     balance.add_position(posting)
             else:
-                # This posting is an augmentation.  If it matches a booked
-                # reduction on another account, i.e., appears to be a transfer,
-                # then we copy the booked cost reductions to corresponding
-                # augmenting postings with those costs.
-                #
-                # Otherwise, we do not convert the CostSpec instances to Cost
+                # This posting is an augmentation.
+
+                # Note that we do not convert the CostSpec instances to Cost
                 # instances, because we want to let the subsequent interpolation
                 # process able to interpolate either the cost per-unit or the
                 # total cost, separately.
 
-                balancing_units = units._replace(number=-units.number)
-                if balancing_units in booked_reductions_by_units:
-                    reduction_postings = booked_reductions_by_units[balancing_units]
-                    for reduction_posting in reduction_postings:
-                        matched_augmenting_posting = reduction_posting._replace(
-                            units=-reduction_posting.units, account=account)
-                        booked_postings.append(matched_augmenting_posting)
+                # Put in the date of the parent Transaction if there is no
+                # explicit date specified on the spec.
+                if costspec.date is None:
+                    dated_costspec = costspec._replace(date=entry.date)
+                    posting = posting._replace(cost=dated_costspec)
 
-                else:
-                    # Put in the date of the parent Transaction if there is no
-                    # explicit date specified on the spec.
-                    if costspec.date is None:
-                        dated_costspec = costspec._replace(date=entry.date)
-                        posting = posting._replace(cost=dated_costspec)
+                # Remember this augmentation so that after processing all
+                # postings, we can match the augmenting postings against the
+                # booked reductions.
+                aug_postings_to_match.append(posting)
 
-                    # FIXME: Insert unique ids for trade tracking; right now this
-                    # creates ambiguous matches errors (and it shouldn't).
-                    # # Insert a unique label if there isn't one.
-                    # if posting.cost is not None and posting.cost.label is None:
-                    #     posting = posting._replace(
-                    #         cost=posting.cost._replace(label=unique_label()))
+                # FIXME: Insert unique ids for trade tracking; right now this
+                # creates ambiguous matches errors (and it shouldn't).
+                # # Insert a unique label if there isn't one.
+                # if posting.cost is not None and posting.cost.label is None:
+                #     posting = posting._replace(
+                #         cost=posting.cost._replace(label=unique_label()))
 
-                    booked_postings.append(posting)
+                booked_postings.append(posting)
+
+    # Check each augmenting posting and see if it matches a reduction on another
+    # account, i.e., appears to be a transfer.  If so, then we copy the booked
+    # cost reductions to corresponding augmenting postings with those costs.
+    for augmenting_posting in aug_postings_to_match:
+        units = augmenting_posting.units
+        account = augmenting_posting.account
+        balancing_units = units._replace(number=-units.number)
+        if balancing_units in booked_reductions_by_units:
+            reduction_postings = booked_reductions_by_units[balancing_units]
+            for reduction_posting in reduction_postings:
+                matched_augmenting_posting = reduction_posting._replace(
+                    units=-reduction_posting.units, account=account)
+                booked_postings.remove(augmenting_posting)
+                booked_postings.append(matched_augmenting_posting)
 
     return booked_postings, errors
 
@@ -962,7 +971,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             cost = incomplete_posting.cost
             assert (
                 cost.currency == weight_currency
-            ), "Internal error; residual currency different than missing currency."
+            ), f"Internal error; residual currency {weight_currency} different than missing currency {cost.currency} in incomplete posting {format_entry(incomplete_posting)}."
             if units.number != ZERO:
                 number_per = (weight - (cost.number_total or ZERO)) / units.number
                 new_cost = cost._replace(number_per=number_per)

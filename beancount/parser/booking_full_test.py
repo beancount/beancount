@@ -10,6 +10,8 @@ import re
 import io
 from unittest import mock
 
+import pytest
+
 from beancount.core.number import D
 from beancount.core.amount import A
 from beancount.core.number import MISSING
@@ -293,6 +295,12 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         2015-10-02 *
           Assets:Other      10 HOOL {}
           Assets:Account   -10 HOOL {}
+
+        ;; Ensure it works with multiple legs
+        2015-10-02 *
+          Assets:Account1    -10 HOOL {}
+          Assets:Account2    -10 HOOL {}
+          Assets:Other        20 HOOL {}
         """
         groups, errors = bf.categorize_by_currency(
             entries[0], {"Assets:Account": I("10 HOOL {1.00 USD}")}
@@ -310,6 +318,15 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         )
         self.assertFalse(errors)
         self.assertEqual({"USD": {0, 1}}, indexes(groups))
+
+        groups, errors = bf.categorize_by_currency(
+            entries[2], {
+                "Assets:Account1": I("10 HOOL {1.00 USD}"),
+                "Assets:Account2": I("10 HOOL {1.00 USD}")
+                }
+        )
+        self.assertFalse(errors)
+        self.assertEqual({"USD": {0, 1, 2}}, indexes(groups))
 
 
     @parser.parse_doc(allow_incomplete=True)
@@ -3508,16 +3525,17 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
-    # These live here instead of as subclasses of _BookingTestBase because they
-    # touch multiple accounts.
+    # These transfer tests live here instead of as subclasses of
+    # _BookingTestBase because they touch multiple accounts.
+
     @parser.parse_doc(allow_incomplete=True)
     def test_transfer__simple(self, entries, _, __):
         """
-        2015-10-01 * #ante
+        2015-10-01 *
           Assets:Account1          1 HOOL {100.00 USD, 2010-01-01}
           Assets:Account1          1 HOOL {120.00 USD, 2012-01-01}
 
-        2015-10-02 * #apply
+        2015-10-02 *
           Assets:Account1         -1 HOOL {}
           Assets:Account2          1 HOOL {}
         """
@@ -3537,6 +3555,97 @@ class TestBook(unittest.TestCase):
         self.assertEqual(
             I("1 HOOL {120.00 USD, 2012-01-01}"), balances["Assets:Account2"]
         )
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_transfer__augment_first(self, entries, _, __):
+        """
+        2015-10-01 *
+          Assets:Account1          1 HOOL {100.00 USD, 2010-01-01}
+          Assets:Account1          1 HOOL {120.00 USD, 2012-01-01}
+
+        2015-10-02 *
+          Assets:Account2          1 HOOL {}
+          Assets:Account1         -1 HOOL {}
+        """
+
+        postings, balances = self.book_reductions(entries, method=Booking.FIFO)
+        self.assertEqual(
+            I("1 HOOL {120.00 USD, 2012-01-01}"), balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}"), balances["Assets:Account2"]
+        )
+
+        postings, balances = self.book_reductions(entries, method=Booking.LIFO)
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}"), balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            I("1 HOOL {120.00 USD, 2012-01-01}"), balances["Assets:Account2"]
+        )
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_transfer__partial(self, entries, _, __):
+        """
+        2015-10-01 *
+          Assets:Account1          2 HOOL {100.00 USD, 2010-01-01}
+          Assets:Account1          2 HOOL {120.00 USD, 2012-01-01}
+
+        2015-10-02 *
+          Assets:Account1         -1 HOOL {}
+          Assets:Account2          1 HOOL {}
+        """
+
+        postings, balances = self.book_reductions(entries, method=Booking.FIFO)
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}, 2 HOOL {120.00 USD, 2012-01-01}"),
+            balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}"), balances["Assets:Account2"]
+        )
+
+    @parser.parse_doc(allow_incomplete=True)
+    @pytest.mark.xfail(reason="""This produces an assertion error: 
+      AssertionError: Internal error; residual currency USD different than
+      missing currency <class 'beancount.core.number.MISSING'>, """)
+    def test_transfer__multiple_reductions(self, entries, _, __):
+        """
+        2015-10-01 *
+          Assets:Account1          1 HOOL {100.00 USD, 2010-01-01}
+          Assets:Account2          1 HOOL {120.00 USD, 2012-01-01}
+
+        2015-10-02 *
+          Assets:Account1         -1 HOOL {}
+          Assets:Account2         -1 HOOL {}
+          Assets:Account3          2 HOOL {}
+        """
+
+        postings, balances = self.book_reductions(entries, method=Booking.FIFO)
+        self.assertEqual(
+            inventory.Inventory(), balances["Assets:Account1"]
+        )
+        self.assertEqual(
+            inventory.Inventory(), balances["Assets:Account2"]
+        )
+        self.assertEqual(
+            I("1 HOOL {100.00 USD, 2010-01-01}, 1 HOOL {120.00 USD, 2012-01-01}"),
+            balances["Assets:Account3"]
+        )
+
+    @parser.parse_doc(allow_incomplete=True)
+    @pytest.mark.xfail(reason="This is ambiguous; we should probably disallow transfers of this strcuture")
+    def test_transfer__multiple_augmentations(self, entries, _, __):
+        """
+        2015-10-01 *
+          Assets:Account1          1 HOOL {100.00 USD, 2010-01-01}
+          Assets:Account1          1 HOOL {120.00 USD, 2012-01-01}
+
+        2015-10-02 *
+          Assets:Account1         -2 HOOL {}
+          Assets:Account2          1 HOOL {}
+          Assets:Account3          1 HOOL {}
+        """
 
 
 if __name__ == "__main__":
