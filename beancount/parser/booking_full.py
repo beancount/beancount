@@ -84,7 +84,7 @@ from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
-from beancount.core.position import Position, to_string
+from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.parser import booking_method
