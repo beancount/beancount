@@ -579,21 +579,33 @@ def book_reductions(entry, group_postings, balances, methods):
     local_balances = {}
 
     empty = inventory.Inventory()
-    booked_postings = []
+    
+    # In order to support cost transfers, we must make two passes over the
+    # postings, first to collect reductions with their cost info and then to
+    # collect augmentations, pulling cost info from the reductions.  To do this,
+    # we use the following intermediate data structures:
 
-    # Maintain a map of booked reduction info, so that we can later on match
-    # augmenting postings against them.  For each unit found on original
-    # reduction postings, we collect a list of booked reductions for that unit.
-    #   p.units -> (p, List of booked reductions for p)
-    # Note this only works for equal/opposite units; multi-account or partial
-    # transfers are not supported.
-    booked_reductions_by_units = {}
-
-    # As we process postings, we'll save augmenting postings here to match and
-    # book in a second pass, after collecting all reductions.
+    # In the first pass, while primarily processing reductions, save the
+    # augmenting postings here.  They will be iterated over as the second pass.
+    # Note we have to retain the index of the original posting, so this contains
+    # (index, posting) tuples.
     augmenting_postings = []
 
-    for posting in group_postings:
+    # In the first pass, collect a map of booked reduction info, so that in the
+    # second pass, we can match augmenting postings against them.  For each unit
+    # found on original reduction postings, we collect a list of booked
+    # reductions for that unit.  Note this only works for equal/opposite units;
+    # multi-account or partial transfers are not supported.
+    booked_reductions_by_units = {}
+
+    # In both passes, collect booked postings in a dictionary indexed by their
+    # original index in the group_postings list.  This will allow us to collect
+    # first reductions, and then augmentations, and still return them in the
+    # original order.  (Order shouldn't matter, but it does in certain unit
+    # tests, and for the sake of minimal disruption, we respect it.)
+    booked_postings = {}
+
+    for (posting_idx, posting) in enumerate(group_postings):
         # Process a single posting.
         units = posting.units
         costspec = posting.cost
@@ -614,7 +626,7 @@ def book_reductions(entry, group_postings, balances, methods):
         # Check if this is a lot held at cost.
         if costspec is None or units.number is MISSING:
             # This posting is not held at cost; we do nothing.
-            booked_postings.append(posting)
+            booked_postings[posting_idx] = [posting]
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
@@ -673,7 +685,7 @@ def book_reductions(entry, group_postings, balances, methods):
                     return [], errors
 
                 # Add the reductions to the resulting list of booked postings.
-                booked_postings.extend(reduction_postings)
+                booked_postings[posting_idx] = reduction_postings
 
                 # Index the booked postings 
                 booked_reductions_by_units[units] = reduction_postings
@@ -690,7 +702,7 @@ def book_reductions(entry, group_postings, balances, methods):
                 # This posting is an augmentation.  Collect it for processing
                 # after we've processed all reductions and have all cost information
                 # available for transfer.
-                augmenting_postings.append(posting)
+                augmenting_postings.append((posting_idx, posting))
 
     # Process augmenting postings.
     #
@@ -698,7 +710,7 @@ def book_reductions(entry, group_postings, balances, methods):
     # instances, because we want to let the subsequent interpolation
     # process able to interpolate either the cost per-unit or the
     # total cost, separately.
-    for augmenting_posting in augmenting_postings:
+    for (posting_idx, augmenting_posting) in augmenting_postings:
         units = augmenting_posting.units
         costspec = augmenting_posting.cost
         account = augmenting_posting.account
@@ -709,10 +721,13 @@ def book_reductions(entry, group_postings, balances, methods):
         # corresponding augmenting postings with those costs.
         if balancing_units in booked_reductions_by_units:
             reduction_postings = booked_reductions_by_units[balancing_units]
+            matched_augmenting_postings = []
             for reduction_posting in reduction_postings:
                 matched_augmenting_posting = reduction_posting._replace(
                     units=-reduction_posting.units, account=account)
-                booked_postings.append(matched_augmenting_posting)
+                
+                matched_augmenting_postings.append(matched_augmenting_posting)
+            booked_postings[posting_idx] = matched_augmenting_postings
 
         else:
             # Put in the date of the parent Transaction if there is no
@@ -728,9 +743,13 @@ def book_reductions(entry, group_postings, balances, methods):
             #     posting = posting._replace(
             #         cost=posting.cost._replace(label=unique_label()))
 
-            booked_postings.append(augmenting_posting)
+            booked_postings[posting_idx] = [augmenting_posting]
 
-    return booked_postings, errors
+    result = []
+    for posting_idx in range(len(group_postings)):
+        result.extend(booked_postings[posting_idx])
+
+    return result, errors
 
 
 def compute_cost_number(costspec, units):
