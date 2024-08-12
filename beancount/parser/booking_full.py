@@ -719,7 +719,7 @@ def book_reductions(entry, group_postings, balances, methods):
             # explicit date specified on the spec.
             if costspec.date is None:
                 dated_costspec = costspec._replace(date=entry.date)
-                augmenting_posting = posting._replace(cost=dated_costspec)
+                augmenting_posting = augmenting_posting._replace(cost=dated_costspec)
 
             # FIXME: Insert unique ids for trade tracking; right now this
             # creates ambiguous matches errors (and it shouldn't).
