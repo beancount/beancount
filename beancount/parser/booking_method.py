@@ -196,9 +196,7 @@ def _booking_method_xifo(entry, posting, matches, key, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(
-        matches, key=lambda p: p.cost and getattr(p.cost, sortattr), reverse=reverse_order
-    ):
+    for match in sorted(matches, key=key, reverse=reverse_order):
         if remaining <= ZERO:
             break
 
