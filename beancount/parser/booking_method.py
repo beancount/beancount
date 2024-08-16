@@ -158,35 +158,78 @@ def booking_method_HIFO(entry, posting, matches):
                                 lambda m: m.cost and getattr(m.cost, "number"),
                                 reverse_order=True)
 
+def booking_method_LowIFO(entry, posting, matches):
+    """LowIFO booking method implementation.  Used internally in obscure cases
+    for transfers, see LTFO"""
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "number"),
+                                reverse_order=False)
+
 
 def booking_method_LTFO(entry, posting, matches):
-    """LTFO (least tax first out) booking method implementation.
+    """LTFO (least tax first out, ish) booking method implementation.
     
-    This will estimate the gains of each potential booking, and the tax
-    liability of each (using US short/long term capital gains rates), and
-    select the one with the lowest tax liability.  This includes prioritizing
-    booking losses over gains (i.e., tax loss harvesting)."""
+    This will attempt to minimize the tax liability of the sale by considering
+    both gain/loss and the long/short term holding period (including preferring
+    losses over gains, i.e. tax loss harvesting).  It will also use some
+    heuristics on transfers.  (TODO: What heuristics?)
 
-    # TODO: consider the ramifications of always prioritizing this, vs.
-    # a more global tax optimization analysis, since losses aren't always
-    # deductible
+    This is a bit special cased for crypto.
+    """
+    # US tax rules
+    lt_rate = Decimal("0.2")
+    st_rate = Decimal("0.4")
+    def lt_thresh(match: Position):
+        return match.cost.date.replace(year=match.cost.date.year + 1)
 
-    # TODO: provide a more configurable implementation to cover other tax
-    # regimes, as well as support customiziation based on user preferences.
+    # If we have a price on the posting, then we can compute the tax liability
+    # for each match and select the one with the lowest tax liability.
 
-    def us_tax_liability(match: Position):
-        """Compute the US tax liability (per unit) of a given match."""
-        gain_per_unit = posting.price.number - match.cost.number
-        lt_threshold = (match.cost.date.replace(year=match.cost.date.year + 1)
-                        + timedelta(days=1))
-        tax_rate = Decimal("0.2") if entry.date >= lt_threshold else Decimal("0.4")
+    if posting.price:
+        def us_tax_liability(match: Position):
+            """Compute the US tax liability (per unit) of a given match."""
+            gain_per_unit = posting.price.number - match.cost.number
+            lt_threshold = lt_thresh(match)
+            tax_rate = lt_rate if entry.date >= lt_threshold else st_rate
+            return gain_per_unit * tax_rate
 
-        # print(f"gain={gain_per_unit} rate={tax_rate} tax={gain_per_unit * tax_rate}")
-        return gain_per_unit * tax_rate
+        return _booking_method_xifo(entry, posting, matches,
+                                    us_tax_liability,
+                                    reverse_order=False)
 
-    return _booking_method_xifo(entry, posting, matches,
-                                us_tax_liability,
-                                reverse_order=False)
+    # If there's no price, it's probably a transfer rather than a sale.  The
+    # posting we get is the reduction (donating account).
+    #
+    # If the posting is on a wallet account, it's probably a transfer to a
+    # trading account in preparation for sale, so we would want to pick the
+    # lot with minimal tax liability.
+    #
+    # If the posting is on a trading account, then it's probably a transfer to a
+    # wallet and we want the inverse -- to stash away the lots least desirable
+    # to sell.
+    #
+    # Now, how do we estimate the tax liability without a price?  Well, if
+    # all matches have the same short/long term status, we can just use the
+    # cost basis (highest, or lowest, depending on the account).
+
+    sale_prep = "Wallet" in posting.account  # Total hack
+
+    def is_lt(match: Position):
+        return entry.date > lt_thresh(match)
+
+    if all(is_lt(m) for m in matches) or all(not is_lt(m) for m in matches):
+        if sale_prep:
+            return booking_method_HIFO(entry, posting, matches)
+        else:
+            return booking_method_LowIFO(entry, posting, matches)
+
+    # OK, this is the hard case, it's a transfer, we don't know the price,
+    # and we have a mix of long and short term lots.  For now, do the same
+    # as when there's no short/long mix.  TODO: be smarter?
+    if sale_prep:
+        return booking_method_HIFO(entry, posting, matches)
+    else:
+        return booking_method_LowIFO(entry, posting, matches)
 
 def _booking_method_xifo(entry, posting, matches, key, reverse_order):
     """FIFO and LIFO booking method implementations."""
