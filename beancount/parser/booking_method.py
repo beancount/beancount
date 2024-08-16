@@ -180,6 +180,8 @@ def booking_method_LTFO(entry, posting, matches):
         lt_threshold = (match.cost.date.replace(year=match.cost.date.year + 1)
                         + timedelta(days=1))
         tax_rate = Decimal("0.2") if entry.date >= lt_threshold else Decimal("0.4")
+
+        # print(f"gain={gain_per_unit} rate={tax_rate} tax={gain_per_unit * tax_rate}")
         return gain_per_unit * tax_rate
 
     return _booking_method_xifo(entry, posting, matches,
