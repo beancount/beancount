@@ -1,6 +1,7 @@
 """
 Tests for distribution.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,7 +11,6 @@ from beancount.core import distribution
 
 
 class TestDistributionBase(unittest.TestCase):
-
     def assertDist(self, dist, mode, min, max):
         self.assertEqual(mode, dist.mode())
         self.assertEqual(min, dist.min())
@@ -19,7 +19,6 @@ class TestDistributionBase(unittest.TestCase):
 
 
 class TestDistribution(TestDistributionBase):
-
     def test_distribution(self):
         dist = distribution.Distribution()
         self.assertEqual(True, dist.empty())
@@ -34,7 +33,6 @@ class TestDistribution(TestDistributionBase):
 
 
 class TestDistributionUpdateFrom(TestDistributionBase):
-
     def test_update_from(self):
         dist1 = distribution.Distribution()
         dist1.update(1)
@@ -55,5 +53,5 @@ class TestDistributionUpdateFrom(TestDistributionBase):
         self.assertDist(dist1, 3, 1, 4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

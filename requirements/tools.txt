@@ -1,9 +1,0 @@
-click>=7.0
-google-api-python-client>=1.8.2
-google_auth_oauthlib>=0.4.2
-httplib2>=0.10
-lxml>=3.0
-oauth2client>=4.0
-ply>=3.4
-python-dateutil>=2.6.0
-requests>=2.0

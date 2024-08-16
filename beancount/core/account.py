@@ -4,15 +4,18 @@ These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
 import os
+import unicodedata
+
 from os import path
 from typing import Any, Callable, Iterable, Iterator, List, Tuple
 
-from beancount.utils import regexp_utils
+import regex
 
 
 # Public type for accounts.
@@ -20,8 +23,8 @@ Account = str
 
 
 # Component separator for account names.
-# pylint: disable=invalid-name
-sep = ':'
+
+sep = ":"
 
 
 # Regular expression string that matches valid account name components.
@@ -29,16 +32,16 @@ sep = ':'
 #   Lu: Uppercase letters.
 #   L: All letters.
 #   Nd: Decimal numbers.
-ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
-ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
+ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
-ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
+ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 
 
 # A dummy object which stands for the account type. Values in custom directives
 # use this to disambiguate between string objects and account names.
-TYPE = '<AccountDummy>'
+TYPE = "<AccountDummy>"
 
 
 def is_valid(string: Account) -> bool:
@@ -50,8 +53,7 @@ def is_valid(string: Account) -> bool:
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return (isinstance(string, str) and
-            bool(re.match('{}$'.format(ACCOUNT_RE), string)))
+    return isinstance(string, str) and bool(regex.match("{}$".format(ACCOUNT_RE), string))
 
 
 def join(*components: Tuple[str]) -> Account:
@@ -104,7 +106,7 @@ def leaf(account_name: Account) -> Account:
     return account_name.split(sep)[-1] if account_name else None
 
 
-def sans_root(account_name: Account)-> Account:
+def sans_root(account_name: Account) -> Account:
     """Get the name of the account without the root.
 
     For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
@@ -142,7 +144,7 @@ def has_component(account_name: Account, component: str) -> bool:
       Boolean: true if the component is in the account. Note that a component
       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
-    return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
+    return bool(re.search("(^|:){}(:|$)".format(component), account_name))
 
 
 def commonprefix(accounts: Iterable[Account]) -> Account:
@@ -153,8 +155,7 @@ def commonprefix(accounts: Iterable[Account]) -> Account:
     Returns:
       A string, the common parent account. If none, returns an empty string.
     """
-    accounts_lists = [account_.split(sep)
-                      for account_ in accounts]
+    accounts_lists = [account_.split(sep) for account_ in accounts]
     # Note: the os.path.commonprefix() function just happens to work here.
     # Inspect its code, and even the special case of no common prefix
     # works well with str.join() below.
@@ -176,8 +177,13 @@ def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], Lis
     for root, dirs, files in os.walk(root_directory):
         dirs.sort()
         files.sort()
-        relroot = root[len(root_directory)+1:]
+        relroot = root[len(root_directory) + 1 :]
         account_name = relroot.replace(os.sep, sep)
+        # The regex module does not handle Unicode characters in decomposed
+        # form. Python uses the normal form for representing string. However,
+        # some filesystems use the canonical decomposition form.
+        # See https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+        account_name = unicodedata.normalize("NFKC", account_name)
         if is_valid(account_name):
             yield (root, account_name, dirs, files)
 
@@ -191,7 +197,7 @@ def parent_matcher(account_name: Account) -> Callable[[str], Any]:
       A callable, which, when called, will return true if the given account is a
       child of ``account_name``.
     """
-    return re.compile(r'{}($|{})'.format(re.escape(account_name), sep)).match
+    return re.compile(r"{}($|{})".format(re.escape(account_name), sep)).match
 
 
 def parents(account_name: Account) -> Iterator[Account]:
@@ -216,17 +222,18 @@ class AccountTransformer:
     Attributes:
       rsep: A character string, the new separator to use in link names.
     """
-    def __init__(self, rsep: str=None):
+
+    def __init__(self, rsep: str = None):
         self.rsep = rsep
 
     def render(self, account_name: Account) -> str:
         "Convert the account name to a transformed account name."
-        return (account_name
-                if self.rsep is None
-                else account_name.replace(sep, self.rsep))
+        return account_name if self.rsep is None else account_name.replace(sep, self.rsep)
 
     def parse(self, transformed_name: str) -> Account:
         "Convert the transform account name to an account name."
-        return (transformed_name
-                if self.rsep is None
-                else transformed_name.replace(self.rsep, sep))
+        return (
+            transformed_name
+            if self.rsep is None
+            else transformed_name.replace(self.rsep, sep)
+        )

@@ -11,7 +11,6 @@ from beancount import loader
 
 
 class TestBasicOpsLinks(unittest.TestCase):
-
     test_doc = textwrap.dedent("""
       2014-01-01 open Assets:Account1
       2014-01-01 open Assets:Account2
@@ -50,30 +49,51 @@ class TestBasicOpsLinks(unittest.TestCase):
 
     def test_group_entries_by_link(self):
         entries, _, __ = loader.load_string(self.test_doc)
-        entries = [entry._replace(meta=None, postings=None)
-                   for entry in entries
-                   if isinstance(entry, data.Transaction)]
+        entries = [
+            entry._replace(meta=None, postings=None)
+            for entry in entries
+            if isinstance(entry, data.Transaction)
+        ]
         link_groups = basicops.group_entries_by_link(entries)
         date = datetime.date(2014, 5, 10)
         self.assertEqual(
-            {'apple': [
-                data.Transaction(None, date, '*', None, 'B',
-                                 data.EMPTY_SET, {'apple'}, None),
-                data.Transaction(None, date, '*', None, 'D',
-                                 data.EMPTY_SET, {'apple', 'banana'},
-                                 None)],
-             'banana': [
-                 data.Transaction(None, date, '*', None, 'C',
-                                  data.EMPTY_SET, {'banana'},
-                                  None),
-                 data.Transaction(None, date, '*', None, 'D',
-                                  data.EMPTY_SET, {'apple', 'banana'},
-                                  None)]},
-            link_groups)
+            {
+                "apple": [
+                    data.Transaction(
+                        None, date, "*", None, "B", data.EMPTY_SET, {"apple"}, None
+                    ),
+                    data.Transaction(
+                        None,
+                        date,
+                        "*",
+                        None,
+                        "D",
+                        data.EMPTY_SET,
+                        {"apple", "banana"},
+                        None,
+                    ),
+                ],
+                "banana": [
+                    data.Transaction(
+                        None, date, "*", None, "C", data.EMPTY_SET, {"banana"}, None
+                    ),
+                    data.Transaction(
+                        None,
+                        date,
+                        "*",
+                        None,
+                        "D",
+                        data.EMPTY_SET,
+                        {"apple", "banana"},
+                        None,
+                    ),
+                ],
+            },
+            link_groups,
+        )
 
 
 class TestBasicOpsTags(unittest.TestCase):
-
     test_doc = textwrap.dedent("""
       2014-01-01 open Assets:Account1
       2014-01-01 open Assets:Account2
@@ -112,7 +132,6 @@ class TestBasicOpsTags(unittest.TestCase):
 
 
 class TestBasicOpsOther(unittest.TestCase):
-
     @loader.load_doc()
     def test_get_common_accounts(self, entries, _, __):
         """
@@ -139,17 +158,19 @@ class TestBasicOpsOther(unittest.TestCase):
 
         """
         entries = [entry for entry in entries if isinstance(entry, data.Transaction)]
-        self.assertEqual(set(),
-                         basicops.get_common_accounts([]))
-        self.assertEqual({'Assets:Account2', 'Assets:Account1'},
-                         basicops.get_common_accounts([entries[0]]))
-        self.assertEqual({'Assets:Account1'},
-                         basicops.get_common_accounts([entries[0], entries[1]]))
-        self.assertEqual({'Assets:Account2'},
-                         basicops.get_common_accounts([entries[0], entries[2]]))
-        self.assertEqual(set(),
-                         basicops.get_common_accounts([entries[0], entries[3]]))
+        self.assertEqual(set(), basicops.get_common_accounts([]))
+        self.assertEqual(
+            {"Assets:Account2", "Assets:Account1"},
+            basicops.get_common_accounts([entries[0]]),
+        )
+        self.assertEqual(
+            {"Assets:Account1"}, basicops.get_common_accounts([entries[0], entries[1]])
+        )
+        self.assertEqual(
+            {"Assets:Account2"}, basicops.get_common_accounts([entries[0], entries[2]])
+        )
+        self.assertEqual(set(), basicops.get_common_accounts([entries[0], entries[3]]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

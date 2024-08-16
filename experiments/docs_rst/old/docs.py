@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Utility functions to download and convert Google Docs.
-"""
+"""Utility functions to download and convert Google Docs."""
+
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -14,6 +14,8 @@ import shelve
 from os import path
 
 import httplib2
+
+# TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account
 
 
@@ -22,6 +24,7 @@ class Cache:
     "service.files()". This is useful when working remotely, to avoid
     downloading the same document multiple times.
     """
+
     def __init__(self, filename, delegate_factory):
         self._filename = filename
         self._delegate = None
@@ -38,7 +41,6 @@ class Cache:
         return Cache.Method(self, name)
 
     class Method:
-
         def __init__(self, cache, name):
             self._cache = cache
             self._name = name
@@ -59,7 +61,6 @@ class Cache:
             return Cache.ExecuteWrapper(value)
 
     class ExecuteWrapper:
-
         def __init__(self, return_value):
             self._return_value = return_value
 
@@ -77,12 +78,13 @@ def find_index_document(files):
     """
     query = "name = 'Beancount - Index'"
     listing = files.list(q=query).execute()
-    files = listing['files']
+    files = listing["files"]
     if len(files) != 1:
-        raise ValueError("Could not find the index file: "
-                         "{} files matched".format(len(files)))
+        raise ValueError(
+            "Could not find the index file: " "{} files matched".format(len(files))
+        )
     for file in files:
-        return file['id']
+        return file["id"]
 
 
 def enumerate_linked_documents(files, indexid):
@@ -94,9 +96,8 @@ def enumerate_linked_documents(files, indexid):
     Returns:
       A list of link strings.
     """
-    doc = files.export(fileId=indexid,
-                       mimeType='text/html').execute()
-    contents = doc.decode('utf8')
+    doc = files.export(fileId=indexid, mimeType="text/html").execute()
+    contents = doc.decode("utf8")
     docids = [indexid]
     for match in re.finditer('https?://docs.google.com/document/d/([^/";&]+)', contents):
         docid = match.group(1)
@@ -121,17 +122,16 @@ def download_docs(files, docids, outdir, extension):
     for index, docid in enumerate(docids, 1):
         # Get the document metadata.
         metadata = files.get(fileId=docid).execute()
-        name = metadata['name']
+        name = metadata["name"]
 
         # Retrieve to a file.
-        clean_name = re.sub('_-_', '-',
-                            re.sub('_+', '_',
-                                   re.sub('[^A-Za-z0-9=-]', '_', name)))
-        filename = path.join(outdir, '{}.{}'.format(clean_name, extension))
+        clean_name = re.sub(
+            "_-_", "-", re.sub("_+", "_", re.sub("[^A-Za-z0-9=-]", "_", name))
+        )
+        filename = path.join(outdir, "{}.{}".format(clean_name, extension))
         logging.info('Exporting "{}" ({}) to {}'.format(name, docid, filename))
-        with open(filename, 'wb') as outfile:
-            exported = files.export(fileId=docid,
-                                    mimeType=mime_type).execute()
+        with open(filename, "wb") as outfile:
+            exported = files.export(fileId=docid, mimeType=mime_type).execute()
             outfile.write(exported)
 
         # Check if the downloaded succeeded.
@@ -162,18 +162,18 @@ def collate_pdf_filenames(filenames, output_filename):
     Raises:
       IOError: If we could not produce the merged filename.
     """
-    command = ['pdftk'] + filenames + ['cat', 'output', output_filename]
+    command = ["pdftk"] + filenames + ["cat", "output", output_filename]
     try:
         pipe = subprocess.Popen(command, shell=False)
         pipe.communicate()
     except (FileNotFoundError, PermissionError) as exc:
-        raise SystemExit('pdftk is probably not installed: {}'.format(exc))
+        raise SystemExit("pdftk is probably not installed: {}".format(exc))
     if pipe.returncode != 0:
         raise IOError("Could not produce output '{}'".format(output_filename))
 
 
-SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
-                                 '.google-apis-service-account.json')
+SERVICE_ACCOUNT_FILE = path.join(os.environ["HOME"], ".google-apis-service-account.json")
+
 
 def get_auth_via_service_account(scopes):
     """Get an authenticated http object via a service account.
@@ -185,18 +185,21 @@ def get_auth_via_service_account(scopes):
       http client object, from which you can use the Google APIs.
     """
     credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
-        SERVICE_ACCOUNT_FILE, scopes)
+        SERVICE_ACCOUNT_FILE, scopes
+    )
     http = httplib2.Http()
     credentials.authorize(http)
     return credentials, http
 
 
 CONVERSION_MAP = {
-    'html': ('text/html', None),
-    'txt': ('text/plain', None),
-    'rtf': ('application/rtf', None),
-    'pdf': ('application/pdf', convert_pdf),
-    'odt': ('application/vnd.oasis.opendocument.text', None),
-    'docx': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-             None),
+    "html": ("text/html", None),
+    "txt": ("text/plain", None),
+    "rtf": ("application/rtf", None),
+    "pdf": ("application/pdf", convert_pdf),
+    "odt": ("application/vnd.oasis.opendocument.text", None),
+    "docx": (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        None,
+    ),
 }

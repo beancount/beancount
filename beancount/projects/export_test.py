@@ -10,15 +10,14 @@ from beancount.projects import export
 
 
 class TestExport(test_utils.TestCase):
-
     def test_export_basic(self):
         rootdir = test_utils.find_repository_root(__file__)
-        example_beancount = path.join(rootdir, 'examples', 'example.beancount')
+        example_beancount = path.join(rootdir, "examples", "example.beancount")
 
         runner = click.testing.CliRunner()
-        result = runner.invoke(export.main, [example_beancount, '-o', '-'])
+        result = runner.invoke(export.main, [example_beancount, "-o", "-"])
         self.assertEqual(0, result.exit_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

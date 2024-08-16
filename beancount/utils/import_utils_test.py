@@ -8,15 +8,14 @@ from beancount.utils import defdict
 
 
 class TestImportSymbol(unittest.TestCase):
-
     def test_import_symbol(self):
         with self.assertRaises(ImportError):
-            import_utils.import_symbol('beancount.nothing.data')
+            import_utils.import_symbol("beancount.nothing.data")
         with self.assertRaises((AttributeError, ModuleNotFoundError)):
-            import_utils.import_symbol('beancount.utils.i_dont_exist')
-        cls = import_utils.import_symbol('beancount.utils.defdict.DefaultDictWithKey')
+            import_utils.import_symbol("beancount.utils.i_dont_exist")
+        cls = import_utils.import_symbol("beancount.utils.defdict.DefaultDictWithKey")
         self.assertIs(defdict.DefaultDictWithKey, cls)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

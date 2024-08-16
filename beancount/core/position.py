@@ -2,6 +2,7 @@
 
 See types below for details.
 """
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -30,11 +31,15 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #   date: A datetime.date for the date that the lot was created at. There
 #      should always be a valid date.
 #   label: A string for the label of this lot, or None, if there is no label.
-Cost = NamedTuple('Cost', [
-    ('number', Decimal),
-    ('currency', str),
-    ('date', datetime.date),
-    ('label', Optional[str])])
+Cost = NamedTuple(
+    "Cost",
+    [
+        ("number", Decimal),
+        ("currency", str),
+        ("date", datetime.date),
+        ("label", Optional[str]),
+    ],
+)
 
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
@@ -51,14 +56,17 @@ Cost = NamedTuple('Cost', [
 #   label: A string for the label of this lot, or None if unspecified.
 #   merge: A boolean, true if this specification calls for averaging the units
 #      of this lot's currency, or False if unspecified.
-CostSpec = NamedTuple('CostSpec', [
-    ('number_per', Optional[Decimal]),
-    ('number_total', Optional[Decimal]),
-    ('currency', Optional[str]),
-    ('date', Optional[datetime.date]),
-    ('label', Optional[str]),
-    ('merge', Optional[bool])])
-
+CostSpec = NamedTuple(
+    "CostSpec",
+    [
+        ("number_per", Optional[Decimal]),
+        ("number_total", Optional[Decimal]),
+        ("currency", Optional[str]),
+        ("date", Optional[datetime.date]),
+        ("label", Optional[str]),
+        ("merge", Optional[bool]),
+    ],
+)
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -88,34 +96,34 @@ def cost_to_str(cost, dformat, detail=True):
         if isinstance(cost.number_per, Decimal):
             amountlist.append(dformat.format(cost.number_per))
         if isinstance(cost.number_total, Decimal):
-            amountlist.append('#')
+            amountlist.append("#")
             amountlist.append(dformat.format(cost.number_total))
         if isinstance(cost.currency, str):
             amountlist.append(cost.currency)
-        strlist.append(' '.join(amountlist))
+        strlist.append(" ".join(amountlist))
         if detail:
             if cost.date:
                 strlist.append(cost.date.isoformat())
             if cost.label:
                 strlist.append('"{}"'.format(cost.label))
             if cost.merge:
-                strlist.append('*')
+                strlist.append("*")
 
-    return ', '.join(strlist)
+    return ", ".join(strlist)
 
 
 # Lookup for ordering a list of currencies: we want the majors first, then the
 # cross-currencies, and then all the rest of the stuff a user might define
 # (shorter strings first).
 CURRENCY_ORDER = {
-    'USD': 0,
-    'EUR': 1,
-    'JPY': 2,
-    'CAD': 3,
-    'GBP': 4,
-    'AUD': 5,
-    'NZD': 6,
-    'CHF': 7,
+    "USD": 0,
+    "EUR": 1,
+    "JPY": 2,
+    "CAD": 3,
+    "GBP": 4,
+    "AUD": 5,
+    "NZD": 6,
+    "CHF": 7,
     # All the rest in alphabetical order...
 }
 
@@ -147,13 +155,12 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     """
     pos_str = pos.units.to_string(dformat)
     if pos.cost is not None:
-        pos_str = '{} {{{}}}'.format(pos_str, cost_to_str(pos.cost, dformat, detail))
+        pos_str = "{} {{{}}}".format(pos_str, cost_to_str(pos.cost, dformat, detail))
     return pos_str
 
 
-_Position = NamedTuple('_Position', [
-    ('units', Amount),
-    ('cost', Cost)])
+_Position = NamedTuple("_Position", [("units", Amount), ("cost", Cost)])
+
 
 class Position(_Position):
     """A 'Position' is a pair of units and optional cost.
@@ -170,10 +177,12 @@ class Position(_Position):
     cost_types = (Cost, CostSpec)
 
     def __new__(cls, units, cost=None):
-        assert isinstance(units, Amount), (
-            "Expected an Amount for units; received '{}'".format(units))
-        assert cost is None or isinstance(cost, Position.cost_types), (
-            "Expected a Cost for cost; received '{}'".format(cost))
+        assert isinstance(
+            units, Amount
+        ), "Expected an Amount for units; received '{}'".format(units)
+        assert cost is None or isinstance(
+            cost, Position.cost_types
+        ), "Expected a Cost for cost; received '{}'".format(cost)
         return _Position.__new__(cls, units, cost)
 
     def __hash__(self):
@@ -185,8 +194,7 @@ class Position(_Position):
         return hash((self.units, self.cost))
 
     def to_string(self, dformat=DEFAULT_FORMATTER, detail=True):
-        """Render the position to a string.See to_string() for details.
-        """
+        """Render the position to a string.See to_string() for details."""
         return to_string(self, dformat, detail)
 
     def __str__(self):
@@ -209,9 +217,11 @@ class Position(_Position):
         Returns:
           A boolean, true if the positions are equal.
         """
-        return (self.units.number == ZERO
-                if other is None
-                else (self.units == other.units and self.cost == other.cost))
+        return (
+            self.units.number == ZERO
+            if other is None
+            else (self.units == other.units and self.cost == other.cost)
+        )
 
     def sortkey(self):
         """Return a key to sort positions by. This key depends on the order of the
@@ -228,7 +238,7 @@ class Position(_Position):
             cost_currency = self.cost.currency
         else:
             cost_number = ZERO
-            cost_currency = ''
+            cost_currency = ""
 
         return (order_units, cost_number, cost_currency, self.units.number)
 
@@ -295,7 +305,7 @@ class Position(_Position):
         Returns:
           A boolean.
         """
-        return (self.units.number < ZERO and self.cost is not None)
+        return self.units.number < ZERO and self.cost is not None
 
     @staticmethod
     def from_string(string):
@@ -310,10 +320,11 @@ class Position(_Position):
           A new instance of Position.
         """
         match = re.match(
-            (r'\s*({})\s+({})'
-             r'(?:\s+{{([^}}]*)}})?'
-             r'\s*$').format(NUMBER_RE, CURRENCY_RE),
-            string)
+            (r"\s*({})\s+({})" r"(?:\s+{{([^}}]*)}})?" r"\s*$").format(
+                NUMBER_RE, CURRENCY_RE
+            ),
+            string,
+        )
         if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
 
@@ -327,14 +338,14 @@ class Position(_Position):
         label = None
         cost_expression = match.group(3)
         if match.group(3):
-            expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
+            expressions = [expr.strip() for expr in re.split("[,/]", cost_expression)]
             for expr in expressions:
-
                 # Match a compound number.
                 match = re.match(
-                    r'({NUMBER_RE})\s*(?:#\s*({NUMBER_RE}))?\s+({CURRENCY_RE})$'
-                    .format(NUMBER_RE=NUMBER_RE, CURRENCY_RE=CURRENCY_RE),
-                    expr
+                    r"({NUMBER_RE})\s*(?:#\s*({NUMBER_RE}))?\s+({CURRENCY_RE})$".format(
+                        NUMBER_RE=NUMBER_RE, CURRENCY_RE=CURRENCY_RE
+                    ),
+                    expr,
                 )
                 if match:
                     per_number, total_number, cost_currency = match.group(1, 2, 3)
@@ -348,7 +359,7 @@ class Position(_Position):
                     continue
 
                 # Match a date.
-                match = re.match(r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)$', expr)
+                match = re.match(r"(\d\d\d\d)[-/](\d\d)[-/](\d\d)$", expr)
                 if match:
                     date = datetime.date(*map(int, match.group(1, 2, 3)))
                     continue
@@ -360,7 +371,7 @@ class Position(_Position):
                     continue
 
                 # Match a merge-cost marker.
-                match = re.match(r'\*$', expr)
+                match = re.match(r"\*$", expr)
                 if match:
                     raise ValueError("Merge-code not supported in string constructor.")
 
@@ -381,11 +392,14 @@ class Position(_Position):
         Returns:
           A Position instance.
         """
-        assert cost_amount is None or isinstance(cost_amount, Amount), (
-            "Invalid type for cost: {}".format(cost_amount))
-        cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
-                if cost_amount else
-                None)
+        assert cost_amount is None or isinstance(
+            cost_amount, Amount
+        ), "Invalid type for cost: {}".format(cost_amount)
+        cost = (
+            Cost(cost_amount.number, cost_amount.currency, None, None)
+            if cost_amount
+            else None
+        )
         return Position(units, cost)
 
 

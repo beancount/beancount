@@ -13,10 +13,10 @@ class Dummy:
     def do_something(self):
         pass
 
-class TestInvariants(unittest.TestCase):
 
+class TestInvariants(unittest.TestCase):
     def setUp(self):
-        incr = lambda obj: setattr(obj, 'counter', obj.counter + 1)
+        incr = lambda obj: setattr(obj, "counter", obj.counter + 1)
         invariants.instrument_invariants(Dummy, incr, incr)
 
     def tearDown(self):
@@ -28,5 +28,5 @@ class TestInvariants(unittest.TestCase):
         self.assertEqual(2, dummy.counter)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

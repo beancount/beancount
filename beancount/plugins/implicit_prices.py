@@ -1,6 +1,7 @@
 """This plugin synthesizes Price directives for all Postings with a price or
 directive or if it is an augmenting posting, has a cost directive.
 """
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -11,10 +12,10 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import inventory
 
-__plugins__ = ('add_implicit_prices',)
+__plugins__ = ("add_implicit_prices",)
 
 
-ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'source message entry')
+ImplicitPriceError = collections.namedtuple("ImplicitPriceError", "source message entry")
 
 
 METADATA_FIELD = "__implicit_prices__"
@@ -64,32 +65,36 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     meta[METADATA_FIELD] = "from_price"
-                    price_entry = data.Price(meta, entry.date,
-                                             units.currency,
-                                             posting.price)
+                    price_entry = data.Price(
+                        meta, entry.date, units.currency, posting.price
+                    )
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 HOOL {564.20}
-                elif (cost is not None and
-                      booking != inventory.MatchResult.REDUCED):
+                elif cost is not None and booking != inventory.MatchResult.REDUCED:
                     # TODO(blais): What happens here if the account has no
                     # booking strategy? Do we end up inserting a price for the
                     # reducing leg?  Check.
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     meta[METADATA_FIELD] = "from_cost"
-                    price_entry = data.Price(meta, entry.date,
-                                             units.currency,
-                                             amount.Amount(cost.number, cost.currency))
+                    price_entry = data.Price(
+                        meta,
+                        entry.date,
+                        units.currency,
+                        amount.Amount(cost.number, cost.currency),
+                    )
                 else:
                     price_entry = None
 
                 if price_entry is not None:
-                    key = (price_entry.date,
-                           price_entry.currency,
-                           price_entry.amount.number,  # Ideally should be removed.
-                           price_entry.amount.currency)
+                    key = (
+                        price_entry.date,
+                        price_entry.currency,
+                        price_entry.amount.number,  # Ideally should be removed.
+                        price_entry.amount.currency,
+                    )
                     try:
                         new_price_entry_map[key]
 

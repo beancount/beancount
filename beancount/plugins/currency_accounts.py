@@ -28,6 +28,7 @@ WARNING: This is a prototype. Note the FIXMEs in the code below, which indicate
 some potential problems.
 
 """
+
 __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -42,11 +43,11 @@ from beancount.core import data
 from beancount.core import inventory
 
 
-__plugins__ = ('insert_currency_trading_postings',)
+__plugins__ = ("insert_currency_trading_postings",)
 
 
-META_PROCESSED = 'currency_accounts_processed'
-DEFAULT_BASE_ACCOUNT = 'Equity:CurrencyAccounts'
+META_PROCESSED = "currency_accounts_processed"
+DEFAULT_BASE_ACCOUNT = "Equity:CurrencyAccounts"
 
 
 def insert_currency_trading_postings(entries, options_map, config):
@@ -70,8 +71,7 @@ def insert_currency_trading_postings(entries, options_map, config):
         if isinstance(entry, Transaction):
             curmap, has_price = group_postings_by_weight_currency(entry)
             if has_price and len(curmap) > 1:
-                new_postings = get_neutralizing_postings(
-                    curmap, base_account, new_accounts)
+                new_postings = get_neutralizing_postings(curmap, base_account, new_accounts)
                 entry = entry._replace(postings=new_postings)
                 if META_PROCESSED:
                     entry.meta[META_PROCESSED] = True
@@ -79,9 +79,11 @@ def insert_currency_trading_postings(entries, options_map, config):
 
     earliest_date = entries[0].date
     open_entries = [
-        data.Open(data.new_metadata('<currency_accounts>', index),
-                  earliest_date, acc, None, None)
-        for index, acc in enumerate(sorted(new_accounts))]
+        data.Open(
+            data.new_metadata("<currency_accounts>", index), earliest_date, acc, None, None
+        )
+        for index, acc in enumerate(sorted(new_accounts))
+    ]
 
     return open_entries + new_entries, errors
 
@@ -150,7 +152,6 @@ def get_neutralizing_postings(curmap, base_account, new_accounts):
         amount = inv.get_only_position().units
         acc = account.join(base_account, currency)
         new_accounts.add(acc)
-        new_postings.append(
-            Posting(acc, -amount, None, None, None, None))
+        new_postings.append(Posting(acc, -amount, None, None, None, None))
 
     return new_postings

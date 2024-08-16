@@ -5,6 +5,7 @@ TODO: Convert all the documentation using Pandoc to its native format, and write
 a custom filter to make the native nicer, identify the code blocks, etc. and
 write it out to Markdown and others.
 """
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -18,32 +19,34 @@ import docs
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('extension', action='store',
-                        default='pdf', choices=list(docs.CONVERSION_MAP.keys()),
-                        help="The format of the desired output.")
+    parser.add_argument(
+        "extension",
+        action="store",
+        default="pdf",
+        choices=list(docs.CONVERSION_MAP.keys()),
+        help="The format of the desired output.",
+    )
 
-    #default_path = path.abspath(datetime.date.today().strftime('beancount.%Y-%m-%d.pdf'))
-    parser.add_argument('output', action='store',
-                        default=None,
-                        help="Where to write out the output files")
+    # default_path = path.abspath(datetime.date.today().strftime('beancount.%Y-%m-%d.pdf'))
+    parser.add_argument(
+        "output", action="store", default=None, help="Where to write out the output files"
+    )
 
-    parser.add_argument('--cache', action='store',
-                        help="Service cache, to work offline.")
+    parser.add_argument("--cache", action="store", help="Service cache, to work offline.")
 
     args = parser.parse_args()
 
     # Connect, with authentication.
     def get_service():
-        scopes = ['https://www.googleapis.com/auth/drive']
+        scopes = ["https://www.googleapis.com/auth/drive"]
         _, http = docs.get_auth_via_service_account(scopes)
-        service = discovery.build('drive', 'v3', http=http)
+        service = discovery.build("drive", "v3", http=http)
         return service.files()
-    files = (docs.Cache(args.cache, get_service)
-             if args.cache
-             else get_service())
+
+    files = docs.Cache(args.cache, get_service) if args.cache else get_service()
 
     # Get the ids of the documents listed in the index page.
     indexid = docs.find_index_document(files)
@@ -66,5 +69,5 @@ def main():
     logging.info("Output produced in {}".format(args.output))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

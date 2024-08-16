@@ -3,6 +3,7 @@
 This module contains some common basic operations on entries that are complex
 enough not to belong in core/data.py.
 """
+
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -20,9 +21,7 @@ def filter_tag(tag, entries):
       Every entry in 'entries' that tags to 'tag.
     """
     for entry in entries:
-        if (isinstance(entry, data.Transaction) and
-            entry.tags and
-            tag in entry.tags):
+        if isinstance(entry, data.Transaction) and entry.tags and tag in entry.tags:
             yield entry
 
 
@@ -35,8 +34,7 @@ def filter_link(link, entries):
       Every entry in 'entries' that links to 'link.
     """
     for entry in entries:
-        if (isinstance(entry, data.Transaction) and
-            entry.links and link in entry.links):
+        if isinstance(entry, data.Transaction) and entry.links and link in entry.links:
             yield entry
 
 

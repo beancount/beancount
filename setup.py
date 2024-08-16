@@ -2,18 +2,16 @@
 """
 Install script for beancount.
 """
+
 __copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
 from os import path
-import datetime
-import os
 import platform
 import re
 import runpy
 import subprocess
-import sys
 
 from setuptools import setup, find_packages, Extension
 
@@ -23,9 +21,7 @@ from setuptools import setup, find_packages, Extension
 # file to the PYTHONPATH directly because it contains a 'parser' module and that
 # overrides the stdlib 'parser' module which is used by setuptools, and causes a
 # subtle bug. That's why I import this utility directly from path).
-hashsrc = runpy.run_path(
-    path.join(path.dirname(__file__), "beancount/parser/hashsrc.py")
-)
+hashsrc = runpy.run_path(path.join(path.dirname(__file__), "beancount/parser/hashsrc.py"))
 hash_parser_source_files = hashsrc["hash_parser_source_files"]
 
 
@@ -85,17 +81,7 @@ else:
     vc_changeset, vc_timestamp = "", 0
 
 
-install_requires = [
-    # Testing support now uses the pytest module.
-    "pytest",
-    #
-    # Command line parsing.
-    "click",
-    #
-    # We use dateutil for timezone database definitions. See this
-    # article for context: https://assert.cc/posts/dateutil-preferred/
-    "python-dateutil",
-]
+install_requires = []
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
@@ -145,7 +131,14 @@ setup(
             extra_compile_args=get_cflags(),
         ),
     ],
-    install_requires=install_requires,
+    install_requires=[
+        # Command line parsing.
+        "click",
+        # Used to generate recurring events in beancounr.scripts.example.
+        "python-dateutil",
+        # Unicode character class aware regular expressions.
+        "regex",
+    ],
     entry_points={
         "console_scripts": [
             "bean-check = beancount.scripts.check:main",
@@ -155,7 +148,7 @@ setup(
             "treeify = beancount.tools.treeify:main",
         ]
     },
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )
 
 

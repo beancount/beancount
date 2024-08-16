@@ -1,5 +1,5 @@
-"""Support utilities for testing scripts.
-"""
+"""Support utilities for testing scripts."""
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -43,8 +43,7 @@ def find_repository_root(filename=None):
     if match:
         return match.group(1)
 
-    while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKG-INFO', 'COPYING')):
+    while not path.exists(path.join(filename, "pyproject.toml")):
         prev_filename = filename
         filename = path.dirname(filename)
         if prev_filename == filename:
@@ -69,12 +68,14 @@ def subprocess_env():
     """
     # Ensure we have locations to invoke our Python executable and our
     # runnable binaries in the test environment to run subprocesses.
-    binpath = ':'.join([
-        path.dirname(sys.executable),
-        path.join(find_repository_root(__file__), 'bin'),
-        os.environ.get('PATH', '').strip(':')]).strip(':')
-    return {'PATH': binpath,
-            'PYTHONPATH': find_python_lib()}
+    binpath = ":".join(
+        [
+            path.dirname(sys.executable),
+            path.join(find_repository_root(__file__), "bin"),
+            os.environ.get("PATH", "").strip(":"),
+        ]
+    ).strip(":")
+    return {"PATH": binpath, "PYTHONPATH": find_python_lib()}
 
 
 @contextlib.contextmanager
@@ -115,8 +116,8 @@ def create_temporary_files(root, contents_map):
         filename = path.join(root, relative_filename)
         os.makedirs(path.dirname(filename), exist_ok=True)
 
-        clean_contents = textwrap.dedent(contents.replace('{root}', root))
-        with open(filename, 'w') as f:
+        clean_contents = textwrap.dedent(contents.replace("{root}", root))
+        with open(filename, "w") as f:
             f.write(clean_contents)
 
 
@@ -131,7 +132,7 @@ def capture(*attributes):
       A StringIO string accumulator.
     """
     if not attributes:
-        attributes = 'stdout'
+        attributes = "stdout"
     elif len(attributes) == 1:
         attributes = attributes[0]
     return patch(sys, attributes, io.StringIO)
@@ -179,18 +180,19 @@ def docfile(function, **kwargs):
     Returns:
       The decorated function.
     """
-    contents = kwargs.pop('contents', None)
+    contents = kwargs.pop("contents", None)
 
     @functools.wraps(function)
     def new_function(self):
-        allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
+        allowed = ("buffering", "encoding", "newline", "dir", "prefix", "suffix")
         if any(key not in allowed for key in kwargs):
             raise ValueError("Invalid kwarg to docfile_extra")
-        with tempfile.NamedTemporaryFile('w', **kwargs) as file:
+        with tempfile.NamedTemporaryFile("w", **kwargs) as file:
             text = contents or function.__doc__
             file.write(textwrap.dedent(text))
             file.flush()
             return function(self, file.name)
+
     new_function.__doc__ = None
     return new_function
 
@@ -218,16 +220,15 @@ def search_words(words, line):
     """
     if isinstance(words, str):
         words = words.split()
-    return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
+    return re.search(".*".join(r"\b{}\b".format(word) for word in words), line)
 
 
 class TestTempdirMixin:
-
     def setUp(self):
         super().setUp()
         # Create a temporary directory.
         self.prefix = self.__class__.__name__
-        self.tempdir = tempfile.mkdtemp(prefix='{}.'.format(self.prefix))
+        self.tempdir = tempfile.mkdtemp(prefix="{}.".format(self.prefix))
 
     def tearDown(self):
         super().tearDown()
@@ -252,7 +253,7 @@ class TmpFilesTestBase(unittest.TestCase):
         shutil.rmtree(self.tempdir, ignore_errors=True)
 
     @staticmethod
-    def create_file_hierarchy(test_files, subdir='root'):
+    def create_file_hierarchy(test_files, subdir="root"):
         """A test utility that creates a hierarchy of files.
 
         Args:
@@ -269,18 +270,18 @@ class TmpFilesTestBase(unittest.TestCase):
         root = path.join(tempdir, subdir)
         for filename in test_files:
             abs_filename = path.join(tempdir, filename)
-            if filename.endswith('/'):
+            if filename.endswith("/"):
                 os.makedirs(abs_filename)
             else:
                 parent_dir = path.dirname(abs_filename)
                 if not path.exists(parent_dir):
                     os.makedirs(parent_dir)
-                with open(abs_filename, 'w'): pass
+                with open(abs_filename, "w"):
+                    pass
         return tempdir, root
 
 
 class TestCase(unittest.TestCase):
-
     def assertLines(self, text1, text2, message=None):
         """Compare the lines of text1 and text2, ignoring whitespace.
 
@@ -298,8 +299,8 @@ class TestCase(unittest.TestCase):
 
         # Compress all space longer than 4 spaces to exactly 4.
         # This affords us to be even looser.
-        lines1 = [re.sub('    [ \t]*', '    ', line) for line in lines1]
-        lines2 = [re.sub('    [ \t]*', '    ', line) for line in lines2]
+        lines1 = [re.sub("    [ \t]*", "    ", line) for line in lines1]
+        lines2 = [re.sub("    [ \t]*", "    ", line) for line in lines2]
         self.assertEqual(lines1, lines2, message)
 
     @contextlib.contextmanager
@@ -356,10 +357,12 @@ def make_failing_importer(*removed_module_names):
     Returns:
       A decorated test decorator.
     """
+
     def failing_import(name, *args, **kwargs):
         if name in removed_module_names:
             raise ImportError("Could not import {}".format(name))
         return builtins.__import__(name, *args, **kwargs)
+
     return failing_import
 
 
@@ -384,7 +387,8 @@ def environ(varname, newvalue):
 # This is an improvement onto what mock.call provides.
 # That has not the return value normally.
 # You can use this to build internal call interceptors.
-RCall = collections.namedtuple('RCall', 'args kwargs return_value')
+RCall = collections.namedtuple("RCall", "args kwargs return_value")
+
 
 def record(fun):
     """Decorates the function to intercept and record all calls and return values.
@@ -394,10 +398,12 @@ def record(fun):
     Returns:
       A wrapper function with a .calls attribute, a list of RCall instances.
     """
+
     @functools.wraps(fun)
     def wrapped(*args, **kw):
         return_value = fun(*args, **kw)
         wrapped.calls.append(RCall(args, kw, return_value))
         return return_value
+
     wrapped.calls = []
     return wrapped

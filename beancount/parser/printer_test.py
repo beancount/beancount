@@ -2,10 +2,12 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import io
+import os
 from datetime import date
 import unittest
 import re
 import textwrap
+import tempfile
 
 from beancount.parser import printer
 from beancount.parser import cmptest
@@ -15,10 +17,10 @@ from beancount.utils import test_utils
 from beancount import loader
 
 
-META = data.new_metadata('beancount/core/testing.beancount', 12345)
+META = data.new_metadata("beancount/core/testing.beancount", 12345)
+
 
 class TestPrinter(unittest.TestCase):
-
     def test_methods_coverage(self):
         for klass in data.ALL_DIRECTIVES:
             self.assertTrue(hasattr(printer.EntryPrinter, klass.__name__))
@@ -26,11 +28,11 @@ class TestPrinter(unittest.TestCase):
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
-        self.assertRegex(source_str, '12345')
-        self.assertRegex(source_str, META['filename'])
+        self.assertRegex(source_str, "12345")
+        self.assertRegex(source_str, META["filename"])
 
     def test_format_and_print_error(self):
-        entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
+        entry = data.Open(META, date(2014, 1, 15), "Assets:Bank:Checking", [], None)
         error = interpolate.BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
@@ -45,7 +47,6 @@ class TestPrinter(unittest.TestCase):
 
 
 class TestEntryPrinter(cmptest.TestCase):
-
     def assertRoundTrip(self, entries1, errors1):
         self.assertFalse(errors1)
 
@@ -69,6 +70,118 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
+
+    def assertRoundTripViaRealFile(self, entries1, errors1, test_write_source=True):
+        """
+        The same as assertRoundTrip, but the 1st time saves ledger in string
+        format to a real file as an opposite to io.StringIO().
+        This ensures, that when parsed back from file, entries will contain file
+        name and line number metadata.
+
+        Args:
+            test_write_source - if True, will test funtionality write_source,
+            which activates printing of the source file and line number for
+            every transaction
+        """
+        self.assertFalse(errors1)
+
+        # Not using context manager to make this test compatible with Windows
+        # Contex manager can be used as of python 3.12
+        # see https://github.com/python/cpython/issues/58451
+        # https://github.com/beancount/beancount/issues/222
+        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+
+        oss1.write('option "plugin_processing_mode" "raw"\n')
+        printer.print_entries(entries1, file=oss1)
+
+        oss1.close()
+
+        with open(oss1.name, "r") as file:
+            oss1_value = file.read()
+
+        # entries2 will contain information about filename and line number in
+        # metadata
+        entries2, errors, __ = loader.load_file(oss1.name)
+
+        self.assertEqualEntries(entries1, entries2)
+        self.assertFalse(errors)
+
+        oss2 = io.StringIO()
+        oss2.write('option "plugin_processing_mode" "raw"\n')
+
+        # converting entries2 to string now also with the commented out source
+        # information
+        printer.print_entries(entries2, file=oss2, write_source=test_write_source)
+        oss2_value = oss2.getvalue()
+        entries3, errors, __ = loader.load_string(oss2_value)
+
+        # testing, that qnt of '; source' subscrings  is equal to qnt of
+        # entries
+        if test_write_source:
+            self.assertEqual(oss2_value.count("; source"), len(entries3))
+
+        self.assertEqualEntries(entries1, entries3)
+        self.assertFalse(errors)
+
+        if test_write_source:
+            self.assertNotEqual(oss2_value, oss1_value)
+        else:
+            self.assertEqual(oss2.getvalue(), oss1_value)
+
+        # Finally deleting temporary file
+        os.unlink(oss1.name)
+
+    def test_write_source(self):
+        """
+        Targeted testing of the write_source, functionality which activates
+        printing of the source file and line number for every transaction in
+        a commented out form
+        """
+        ORIGINAL_LEDGER = textwrap.dedent("""\
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Cash
+        
+        2014-06-08 *
+          Assets:Account1       111.00 BEAN
+          Assets:Cash          -111.00 BEAN
+        """)
+
+        # note:this multistring contains some training white spaces
+        EXPECTED_OUTPUT_LEDGER_TEMPL = textwrap.dedent("""
+        ; source: __path_to_file__:1:      
+        2014-01-01 open Assets:Account1
+        
+        ; source: __path_to_file__:2:      
+        2014-01-01 open Assets:Cash
+        
+        ; source: __path_to_file__:4:      
+        2014-06-08 * 
+          Assets:Account1   111.00 BEAN
+          Assets:Cash      -111.00 BEAN
+        """)
+
+        # Not using context manager to make this test compatible with Windows
+        # Contex manager can be used as of python 3.12
+        # see https://github.com/python/cpython/issues/58451
+        # https://github.com/beancount/beancount/issues/222
+        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+        oss1.write(ORIGINAL_LEDGER)
+        oss1.close()
+        # entries2 will contain the file name and line number in metadata
+        entries2, errors, __ = loader.load_file(oss1.name)
+        self.assertFalse(errors)
+
+        expected_output_ledger = EXPECTED_OUTPUT_LEDGER_TEMPL.replace(
+            "__path_to_file__", oss1.name
+        )
+
+        # Print out those reparsed and parse them back in.
+        oss2 = io.StringIO()
+        # Getting original ledger but with the source location information
+        printer.print_entries(entries2, file=oss2, write_source=True)
+
+        self.maxDiff = 1000
+        self.assertEqual(expected_output_ledger, oss2.getvalue())
 
     @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
@@ -123,7 +236,12 @@ class TestEntryPrinter(cmptest.TestCase):
 
         2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        # TODO: This test fails on Windows for the entry with escaped symbols
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Balance(self, entries, errors, __):
@@ -131,7 +249,11 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-01 open Assets:Account1
         2014-06-08 balance Assets:Account1     0.00 USD
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_BalanceTolerance(self, entries, errors, __):
@@ -145,7 +267,11 @@ class TestEntryPrinter(cmptest.TestCase):
 
         2014-06-04 balance Assets:Account1     200.00 ~0.05 USD
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Note(self, entries, errors, __):
@@ -153,11 +279,14 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-01 open Assets:Account1
         2014-06-08 note Assets:Account1 "Note"
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
-        # pylint: disable=line-too-long
         """
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1
@@ -167,14 +296,22 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
         2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Query(self, entries, errors, __):
         """
         2014-06-08 query "cash" "SELECT sum(position) WHERE currency = 'USD'"
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Pad(self, entries, errors, __):
@@ -184,7 +321,11 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 pad Assets:Account1 Assets:Account2
         2014-10-01 balance Assets:Account1  1 USD
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Open(self, entries, errors, __):
@@ -194,7 +335,11 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 open Assets:Account3  USD,CAD,EUR
         2014-06-08 open Assets:Account4  HOOL   "NONE"
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Close(self, entries, errors, __):
@@ -202,7 +347,11 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-01-01 open  Assets:Account1
         2014-06-08 close Assets:Account1
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Price(self, entries, errors, __):
@@ -210,7 +359,11 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 price  BEAN   53.24 USD
         2014-06-08 price  USD   1.09 CAD
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     @loader.load_doc()
     def test_Event(self, entries, errors, __):
@@ -218,11 +371,15 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 event "location" "New York, NY, USA"
         2014-06-08 event "employer" "Four Square"
         """
-        self.assertRoundTrip(entries, errors)
+        with self.subTest("RoundTrip test via StringIO"):
+            self.assertRoundTrip(entries, errors)
+
+        with self.subTest("RoundTrip test via real file"):
+            self.assertRoundTripViaRealFile(entries, errors)
 
     def test_metadata(self):
-        meta = data.new_metadata('beancount/core/testing.beancount', 12345)
-        meta['something'] = r'a"\c'
+        meta = data.new_metadata("beancount/core/testing.beancount", 12345)
+        meta["something"] = r'a"\c'
         oss = io.StringIO()
         printer.EntryPrinter().write_metadata(meta, oss)
         self.assertEqual('  something: "a\\"\\\\c"\n', oss.getvalue())
@@ -238,14 +395,14 @@ def characterize_spaces(text):
     """
     lines = []
     for line in text.splitlines():
-        if re.match(r'\d\d\d\d-\d\d-\d\d open', line):
-            linecls = 'open'
-        elif re.match(r'\d\d\d\d-\d\d-\d\d price', line):
-            linecls = 'price'
-        elif re.match(r'\d\d\d\d-\d\d-\d\d', line):
-            linecls = 'txn'
-        elif re.match(r'[ \t]$', line):
-            linecls = 'empty'
+        if re.match(r"\d\d\d\d-\d\d-\d\d open", line):
+            linecls = "open"
+        elif re.match(r"\d\d\d\d-\d\d-\d\d price", line):
+            linecls = "price"
+        elif re.match(r"\d\d\d\d-\d\d-\d\d", line):
+            linecls = "txn"
+        elif re.match(r"[ \t]$", line):
+            linecls = "empty"
         else:
             linecls = None
         lines.append(linecls)
@@ -253,7 +410,6 @@ def characterize_spaces(text):
 
 
 class TestPrinterSpacing(unittest.TestCase):
-
     maxDiff = 8192
 
     def test_interline_spacing(self):
@@ -292,7 +448,6 @@ class TestPrinterSpacing(unittest.TestCase):
 
 
 class TestDisplayContext(test_utils.TestCase):
-
     maxDiff = 2048
 
     @loader.load_doc()
@@ -315,7 +470,7 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Cash       -4444.4444 FP4
           Assets:Cash     -55555.55555 FP5
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
 
@@ -342,29 +497,33 @@ class TestDisplayContext(test_utils.TestCase):
 
 
 class TestPrinterAlignment(test_utils.TestCase):
-
     maxDiff = None
 
     def test_align_position_strings(self):
-        aligned_strings, width = printer.align_position_strings([
-            '45 HOOL {504.30 USD}',
-            '4 HOOL {504.30 USD / 2014-11-11}',
-            '9.9505 USD',
-            '',
-            '-22473.32 CAD @ 1.10 USD',
-            'UNKNOWN',
-            '76400.203',
-        ])
+        aligned_strings, width = printer.align_position_strings(
+            [
+                "45 HOOL {504.30 USD}",
+                "4 HOOL {504.30 USD / 2014-11-11}",
+                "9.9505 USD",
+                "",
+                "-22473.32 CAD @ 1.10 USD",
+                "UNKNOWN",
+                "76400.203",
+            ]
+        )
         self.assertEqual(40, width)
-        self.assertEqual([
-            '       45 HOOL {504.30 USD}             ',
-            '        4 HOOL {504.30 USD / 2014-11-11}',
-            '   9.9505 USD                           ',
-            '                                        ',
-            '-22473.32 CAD @ 1.10 USD                ',
-            'UNKNOWN                                 ',
-            '76400.203                               ',
-            ], aligned_strings)
+        self.assertEqual(
+            [
+                "       45 HOOL {504.30 USD}             ",
+                "        4 HOOL {504.30 USD / 2014-11-11}",
+                "   9.9505 USD                           ",
+                "                                        ",
+                "-22473.32 CAD @ 1.10 USD                ",
+                "UNKNOWN                                 ",
+                "76400.203                               ",
+            ],
+            aligned_strings,
+        )
 
     @loader.load_doc()
     def test_align(self, entries, errors, options_map):
@@ -376,7 +535,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  9.9505 USD
           Expenses:Commissions  -20009.9505 USD
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
         expected_str = textwrap.dedent("""\
@@ -399,7 +558,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  9.9505 USD
           Expenses:Commissions  -20009.9505 USD
         """
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
         oss = io.StringIO()
         eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
         oss.write(eprinter(entries[1]))
@@ -425,7 +584,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
         self.assertFalse(errors)
-        dcontext = options_map['dcontext']
+        dcontext = options_map["dcontext"]
 
         # oss = io.StringIO()
         # printer.print_entries(entries, dcontext, render_weights=False, file=oss)
@@ -459,7 +618,6 @@ class TestPrinterAlignment(test_utils.TestCase):
 
 
 class TestPrinterMisc(test_utils.TestCase):
-
     @loader.load_doc(expect_errors=True)
     def test_no_valid_account(self, entries, errors, options_map):
         """
@@ -533,7 +691,7 @@ class TestPrinterMisc(test_utils.TestCase):
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
-        self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
+        self.assertRegex(oss.getvalue(), "0.0000000000000000000000001 DKK")
 
     def test_render_missing(self):
         # We want to make sure we never render with scientific notation.
@@ -564,8 +722,8 @@ class TestPrinterMisc(test_utils.TestCase):
         """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
-        self.assertIs(entries[-1].postings[-1].meta['foo'], None)
+        self.assertIs(entries[-1].postings[-1].meta["foo"], None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

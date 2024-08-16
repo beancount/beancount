@@ -1,6 +1,7 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -15,8 +16,8 @@ from beancount.core import account
 
 
 class GetAccounts:
-    """Accounts gatherer.
-    """
+    """Accounts gatherer."""
+
     def get_accounts_use_map(self, entries):
         """Gather the list of accounts from the list of entries.
 
@@ -49,8 +50,6 @@ class GetAccounts:
         """
         method = getattr(self, entry.__class__.__name__)
         return set(method(entry))
-
-    # pylint: disable=invalid-name
 
     def Transaction(_, entry):
         """Process a Transaction directive.
@@ -223,9 +222,7 @@ def get_leveln_parent_accounts(account_names, level, nrepeats=0):
         components = account.split(account_name)
         if level < len(components):
             leveldict[components[level]] += 1
-    levels = {level_
-              for level_, count in leveldict.items()
-              if count > nrepeats}
+    levels = {level_ for level_, count in leveldict.items() if count > nrepeats}
     return sorted(levels)
 
 
@@ -245,7 +242,9 @@ def get_dict_accounts(account_names):
             nested_dict = nested_dict.setdefault(component, OrderedDict())
         nested_dict[get_dict_accounts.ACCOUNT_LABEL] = True
     return leveldict
-get_dict_accounts.ACCOUNT_LABEL = '__root__'
+
+
+get_dict_accounts.ACCOUNT_LABEL = "__root__"
 
 
 def get_min_max_dates(entries, types=None):
@@ -355,10 +354,8 @@ def get_values_meta(name_to_entries_map, *meta_keys, default=None):
     for key, entry in name_to_entries_map.items():
         value_list = []
         for meta_key in meta_keys:
-            value_list.append(entry.meta.get(meta_key, default)
-                              if entry is not None
-                              else default)
-        value_map[key] = (value_list[0]
-                          if len(meta_keys) == 1
-                          else tuple(value_list))
+            value_list.append(
+                entry.meta.get(meta_key, default) if entry is not None else default
+            )
+        value_map[key] = value_list[0] if len(meta_keys) == 1 else tuple(value_list)
     return value_map

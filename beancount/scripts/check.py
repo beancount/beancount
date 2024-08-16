@@ -11,12 +11,13 @@ from beancount.ops import validation
 from beancount.utils import misc_utils
 from beancount.parser.version import VERSION
 
+
 @click.command()
-@click.argument('filename', type=click.Path())
-@click.option('--verbose', '-v', is_flag=True, help='Print timings.')
-@click.option('--no-cache', '-C', is_flag=True, help='Disable the cache.')
-@click.option('--cache-filename', type=click.Path(), help='Override the cache filename.')
-@click.option('--auto', '-a', is_flag=True, help='Implicitly enable auto-plugins.')
+@click.argument("filename", type=click.Path())
+@click.option("--verbose", "-v", is_flag=True, help="Print timings.")
+@click.option("--no-cache", "-C", is_flag=True, help="Disable the cache.")
+@click.option("--cache-filename", type=click.Path(), help="Override the cache filename.")
+@click.option("--auto", "-a", is_flag=True, help="Implicitly enable auto-plugins.")
 @click.version_option(message=VERSION)
 def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto: bool):
     """Parse, check and realize a beancount ledger.
@@ -36,13 +37,13 @@ def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto
             loader.PLUGINS_AUTO.extend(loader.DEFAULT_PLUGINS_AUTO)
 
         if verbose:
-            logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+            logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
         # Override loader caching setup.
         if not use_cache or cache_filename:
             loader.initialize(use_cache, cache_filename)
 
-        with misc_utils.log_time('beancount.loader (total)', logging.info):
+        with misc_utils.log_time("beancount.loader (total)", logging.info):
             # Load up the file, print errors, checking and validation
             # are invoked automatically.
             entries, errors, _ = loader.load_file(
@@ -50,7 +51,8 @@ def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto
                 log_timings=logging.info,
                 log_errors=sys.stderr,
                 # Force slow and hardcore validations, just for check.
-                extra_validations=validation.HARDCORE_VALIDATIONS)
+                extra_validations=validation.HARDCORE_VALIDATIONS,
+            )
     finally:
         if auto:
             # Remove auto plugins. This is not necessary when this
@@ -63,5 +65,5 @@ def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto
     sys.exit(1 if errors else 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

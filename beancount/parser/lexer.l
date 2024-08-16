@@ -173,10 +173,10 @@ NULL {
   *   underscore (_), dash (-), or quote (').
   * The pattern has to be kept in sync with beancount.core.amount.CURRENCY_RE.
   *
-  * In Beancount v3 (C++ version), a single character (e.g. "V" for Visa) is a
-  * valid currency. v2 uses the GNU flex scanner which does not have the
-  * lookahead capability required to make this possible but the v3 C++ scanner
-  * uses Genivia's RE-Flex which supports a lookahead and it will.
+  * Upper case letters are both valid currencies and valid flags. To
+  * kepe the lexer simple, these are lexed as their own token, see the
+  * rule for CAPITAL below. They are interpreted ad a flag or as a
+  * currency in the grammar.
   *
   * Example currencies:
   *   "AAPL" (stock)
@@ -230,9 +230,16 @@ NULL {
     yylval->character = yytext[0];
     return FLAG;
 }
-'[A-Z] {
-    yylval->character = yytext[1];
-    return FLAG;
+ /* The whitespace lookahead is not necessary to correctly parse valid
+  * ledgers, but it enables the lexer to throw an error sooner on
+  * invalid input. For example, without the lookahead, an invalid
+  * account name like "Assets:invalid" is tokenized into CAPITAL
+  * ('A'), KEY ('ssets:'), erorr ('invalid'). With the lookahead the
+  * lexer errors out immediately. The first form would be anyhow
+  * rejected by the grammar, but the latter seems preferable. */
+[A-Z]/[ \t\n] {
+    yylval->character = yytext[0];
+    return CAPITAL;
 }
 
  /* Keywords. */
