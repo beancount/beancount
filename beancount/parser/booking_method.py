@@ -372,6 +372,22 @@ def booking_method_AVERAGE(entry, posting, matches):
                     )
                     _insufficient = abs(posting.units.number) > abs(units.number)
 
+def booking_method_HIFO_XFER_AWARE(entry, posting, matches):
+    # If there's no price, it's probably a transfer rather than a sale.  The
+    # posting we get is the reduction (donating account).
+    #
+    # If the posting is on a wallet account, it's probably a transfer to a
+    # trading account in preparation for sale, so we would want to pick the
+    # lot with minimal tax liability.
+    #
+    # If the posting is on a trading account, then it's probably a transfer to a
+    # wallet and we want the inverse -- to stash away the lots least desirable
+    # to sell.
+    sale_prep = "Wallet" in posting.account  # Total hack
+    if sale_prep:
+        return booking_method_HIFO(entry, posting, matches)
+    else:
+        return booking_method_LowIFO(entry, posting, matches)
 
 _BOOKING_METHODS = {
     Booking.STRICT: booking_method_STRICT,
@@ -380,6 +396,7 @@ _BOOKING_METHODS = {
     Booking.LIFO: booking_method_LIFO,
     Booking.HIFO: booking_method_HIFO,
     Booking.LTFO: booking_method_LTFO,
+    Booking.HIFO_XFER_AWARE: booking_method_HIFO_XFER_AWARE,
     Booking.NONE: booking_method_NONE,
     Booking.AVERAGE: booking_method_AVERAGE,
 }

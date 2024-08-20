@@ -60,8 +60,11 @@ class Booking(enum.Enum):
     HIFO = "HIFO"
 
 
-    # Least tax first out
+    # Least tax first out, with transfer awareness
     LTFO = 'LTFO'
+
+    # HIFO with transfer awareness
+    HIFO_XFER_AWARE = 'HIFO_XFER_AWARE'
 
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
