@@ -59,13 +59,6 @@ class Booking(enum.Enum):
     # Highest-in first-out in the case of ambiguity.
     HIFO = "HIFO"
 
-
-    # Least tax first out, with transfer awareness
-    LTFO = 'LTFO'
-
-    # HIFO with transfer awareness
-    HIFO_XFER_AWARE = 'HIFO_XFER_AWARE'
-
     # Extension point for Magicbeans.
     MAGICBEANS = 'MAGICBEANS'
 

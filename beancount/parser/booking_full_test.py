@@ -1980,31 +1980,6 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           45 HOOL {114.00 USD, 2016-01-17}
         """
 
-    @book_test(Booking.LTFO)
-    def test_reduce__multiple_reductions_ltfo(self, _, __):
-        """
-        2016-01-01 * #ante
-          ;; Sell LT @ 140 USD = 60 USD * 20% = 12 USD tax ea
-          Assets:Account           50 HOOL {80.00 USD, 2016-01-01}
-          ;; Sell LT @ 140 USD = 20 USD * 20% = 4 USD tax ea
-          Assets:Account           50 HOOL {120.00 USD, 2016-01-01}
-          ;; Sell ST @ 140 USD = 25 USD * 40% = 10 USD tax ea
-          Assets:Account           50 HOOL {115.00 USD, 2017-01-01}
-
-        2017-03-01 * #apply
-          Assets:Account          -40 HOOL {} @ 140.00 USD
-          Assets:Account          -40 HOOL {} @ 140.00 USD
-
-        2017-03-01 * #booked
-          Assets:Account          -40 HOOL {120.00 USD, 2016-01-01} @ 140.00 USD
-          Assets:Account          -10 HOOL {120.00 USD, 2016-01-01} @ 140.00 USD
-          Assets:Account          -30 HOOL {115.00 USD, 2017-01-01} @ 140.00 USD
-
-        2016-01-01 * #ex
-          Assets:Account           50 HOOL {80.00 USD, 2016-01-01}
-          Assets:Account           20 HOOL {115.00 USD, 2017-01-01}
-        """
-
     @book_test(Booking.STRICT)
     def test_reduce__multiple_reductions__competing__with_error(self, _, __):
         """
