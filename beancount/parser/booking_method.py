@@ -12,7 +12,7 @@ from decimal import Decimal
 from beancount.core.number import ZERO
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
-from beancount.core.position import Cost, Position
+from beancount.core.position import Cost
 from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
@@ -298,28 +298,6 @@ def booking_method_AVERAGE(entry, posting, matches):
                         posting._replace(units=posting.units, cost=cost)
                     )
                     _insufficient = abs(posting.units.number) > abs(units.number)
-
-def booking_method_HIFO_XFER_AWARE(entry, posting, matches):
-    # If there's no price, it's probably a transfer rather than a sale.  The
-    # posting we get is the reduction (donating account).
-    #
-    # If the posting is on a wallet account, it's probably a transfer to a
-    # trading account in preparation for sale, so we would want to pick the
-    # lot with minimal tax liability.
-    #
-    # If the posting is on a trading account, then it's probably a transfer to a
-    # wallet and we want the inverse -- to stash away the lots least desirable
-    # to sell.
-    is_sale = posting.price is not None
-    sale_prep = "Wallet" in posting.account  # Total hack
-    if is_sale:
-        return booking_method_HIFO(entry, posting, matches)
-    elif entry.date.year < 2022:
-        return booking_method_HIFO(entry, posting, matches)
-    elif sale_prep:
-        return booking_method_HIFO(entry, posting, matches)
-    else:
-        return booking_method_LowIFO(entry, posting, matches)
 
 def booking_method_magicbeans_stub(entry, posting, matches):
     """Magicbeans booking method stub."""
