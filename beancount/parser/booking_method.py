@@ -394,6 +394,10 @@ def booking_method_HIFO_XFER_AWARE(entry, posting, matches):
     else:
         return booking_method_LowIFO(entry, posting, matches)
 
+def booking_method_magicbeans_stub(entry, posting, matches):
+    """Magicbeans booking method stub."""
+    raise NotImplementedError("Magicbeans booking method should be redefined by Magicbeans package")
+
 
 _BOOKING_METHODS = {
     Booking.STRICT: booking_method_STRICT,
@@ -405,4 +409,5 @@ _BOOKING_METHODS = {
     Booking.HIFO_XFER_AWARE: booking_method_HIFO_XFER_AWARE,
     Booking.NONE: booking_method_NONE,
     Booking.AVERAGE: booking_method_AVERAGE,
+    Booking.MAGICBEANS: booking_method_magicbeans_stub,  # Should be redefined by Magicbeans package
 }

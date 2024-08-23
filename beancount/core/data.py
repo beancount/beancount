@@ -66,6 +66,9 @@ class Booking(enum.Enum):
     # HIFO with transfer awareness
     HIFO_XFER_AWARE = 'HIFO_XFER_AWARE'
 
+    # Extension point for Magicbeans.
+    MAGICBEANS = 'MAGICBEANS'
+
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
