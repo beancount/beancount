@@ -383,11 +383,17 @@ def booking_method_HIFO_XFER_AWARE(entry, posting, matches):
     # If the posting is on a trading account, then it's probably a transfer to a
     # wallet and we want the inverse -- to stash away the lots least desirable
     # to sell.
+    is_sale = posting.price is not None
     sale_prep = "Wallet" in posting.account  # Total hack
-    if sale_prep:
+    if is_sale:
+        return booking_method_HIFO(entry, posting, matches)
+    elif entry.date.year < 2022:
+        return booking_method_HIFO(entry, posting, matches)
+    elif sale_prep:
         return booking_method_HIFO(entry, posting, matches)
     else:
         return booking_method_LowIFO(entry, posting, matches)
+
 
 _BOOKING_METHODS = {
     Booking.STRICT: booking_method_STRICT,
