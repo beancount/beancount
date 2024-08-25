@@ -59,6 +59,8 @@ class Booking(enum.Enum):
     # Highest-in first-out in the case of ambiguity.
     HIFO = "HIFO"
 
+    # Extension point for Magicbeans.
+    MAGICBEANS = 'MAGICBEANS'
 
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.

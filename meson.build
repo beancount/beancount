@@ -111,6 +111,90 @@ py.install_sources(
     preserve_path: true,
 )
 
+# tests
+py.install_sources('''
+    beancount/core/account_test.py
+    beancount/core/account_types_test.py
+    beancount/core/amount_test.py
+    beancount/core/compare_test.py
+    beancount/core/convert_test.py
+    beancount/core/data_test.py
+    beancount/core/display_context_test.py
+    beancount/core/distribution_test.py
+    beancount/core/flags_test.py
+    beancount/core/getters_test.py
+    beancount/core/interpolate_test.py
+    beancount/core/inventory_test.py
+    beancount/core/number_test.py
+    beancount/core/position_test.py
+    beancount/core/prices_test.py
+    beancount/core/realization_test.py
+    beancount/loader_test.py
+    beancount/ops/balance_test.py
+    beancount/ops/basicops_test.py
+    beancount/ops/compress_test.py
+    beancount/ops/documents_test.py
+    beancount/ops/find_prices_test.py
+    beancount/ops/lifetimes_test.py
+    beancount/ops/pad_test.py
+    beancount/ops/summarize_test.py
+    beancount/ops/validation_test.py
+    beancount/parser/booking_full_test.py
+    beancount/parser/booking_method_test.py
+    beancount/parser/booking_test.py
+    beancount/parser/cmptest_test.py
+    beancount/parser/context_test.py
+    beancount/parser/grammar_test.py
+    beancount/parser/hashsrc_test.py
+    beancount/parser/lexer_test.py
+    beancount/parser/options_test.py
+    beancount/parser/parser_test.py
+    beancount/parser/printer_test.py
+    beancount/parser/version_test.py
+    beancount/plugins/auto_accounts_test.py
+    beancount/plugins/auto_test.py
+    beancount/plugins/check_average_cost_test.py
+    beancount/plugins/check_closing_test.py
+    beancount/plugins/check_commodity_test.py
+    beancount/plugins/check_drained_test.py
+    beancount/plugins/close_tree_test.py
+    beancount/plugins/coherent_cost_test.py
+    beancount/plugins/commodity_attr_test.py
+    beancount/plugins/currency_accounts_test.py
+    beancount/plugins/implicit_prices_test.py
+    beancount/plugins/leafonly_test.py
+    beancount/plugins/noduplicates_test.py
+    beancount/plugins/nounused_test.py
+    beancount/plugins/onecommodity_test.py
+    beancount/plugins/pedantic_test.py
+    beancount/plugins/sellgains_test.py
+    beancount/plugins/unique_prices_test.py
+    beancount/projects/export_test.py
+    beancount/scripts/check_examples_test.py
+    beancount/scripts/check_test.py
+    beancount/scripts/deps_test.py
+    beancount/scripts/directories_test.py
+    beancount/scripts/doctor_test.py
+    beancount/scripts/example_test.py
+    beancount/scripts/format_test.py
+    beancount/tools/treeify_test.py
+    beancount/utils/bisect_key_test.py
+    beancount/utils/date_utils_test.py
+    beancount/utils/defdict_test.py
+    beancount/utils/encryption_test.py
+    beancount/utils/file_utils_test.py
+    beancount/utils/import_utils_test.py
+    beancount/utils/invariants_test.py
+    beancount/utils/memo_test.py
+    beancount/utils/misc_utils_test.py
+    beancount/utils/pager_test.py
+    beancount/utils/snoop_test.py
+    beancount/utils/table_test.py
+    beancount/utils/test_utils_test.py
+    '''.split(),
+    preserve_path: true,
+)
+
 parser_source_hash = run_command(
     [py, '-c', 'from hashsrc import hash_parser_source_files; print(hash_parser_source_files())'],
     env: {'PYTHONPATH': '@0@/beancount/parser/'.format(meson.current_source_dir())},

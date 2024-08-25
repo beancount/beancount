@@ -6,6 +6,7 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from datetime import timedelta
 from decimal import Decimal
 
 from beancount.core.number import ZERO
@@ -139,20 +140,25 @@ def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
 
 def booking_method_FIFO(entry, posting, matches):
     """FIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "date", False)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "date"),
+                                reverse_order=False)
 
 
 def booking_method_LIFO(entry, posting, matches):
     """LIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "date", True)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "date"),
+                                reverse_order=True)
 
 
 def booking_method_HIFO(entry, posting, matches):
     """HIFO booking method implementation."""
-    return _booking_method_xifo(entry, posting, matches, "number", True)
+    return _booking_method_xifo(entry, posting, matches,
+                                lambda m: m.cost and getattr(m.cost, "number"),
+                                reverse_order=True)
 
-
-def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
+def _booking_method_xifo(entry, posting, matches, key, reverse_order):
     """FIFO and LIFO booking method implementations."""
     booked_reductions = []
     booked_matches = []
@@ -162,9 +168,7 @@ def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
-    for match in sorted(
-        matches, key=lambda p: p.cost and getattr(p.cost, sortattr), reverse=reverse_order
-    ):
+    for match in sorted(matches, key=key, reverse=reverse_order):
         if remaining <= ZERO:
             break
 
@@ -295,6 +299,10 @@ def booking_method_AVERAGE(entry, posting, matches):
                     )
                     _insufficient = abs(posting.units.number) > abs(units.number)
 
+def booking_method_magicbeans_stub(entry, posting, matches):
+    """Magicbeans booking method stub."""
+    raise NotImplementedError("Magicbeans booking method should be redefined by Magicbeans package")
+
 
 _BOOKING_METHODS = {
     Booking.STRICT: booking_method_STRICT,
@@ -304,4 +312,5 @@ _BOOKING_METHODS = {
     Booking.HIFO: booking_method_HIFO,
     Booking.NONE: booking_method_NONE,
     Booking.AVERAGE: booking_method_AVERAGE,
+    Booking.MAGICBEANS: booking_method_magicbeans_stub,  # Should be redefined by Magicbeans package
 }

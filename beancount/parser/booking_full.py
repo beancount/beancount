@@ -579,18 +579,33 @@ def book_reductions(entry, group_postings, balances, methods):
     local_balances = {}
 
     empty = inventory.Inventory()
-    booked_postings = []
+    
+    # In order to support cost transfers, we must make two passes over the
+    # postings, first to collect reductions with their cost info and then to
+    # collect augmentations, pulling cost info from the reductions.  To do this,
+    # we use the following intermediate data structures:
 
-    # Maintain a map of booked reduction info, so that we can later on match
-    # augmenting postings against them.  For each unit found on original
-    # reduction postings, we collect a list of booked reductions for that unit.
-    #   p.units -> (p, List of booked reductions for p)
-    # Note this only works for equal/opposite units; multi-account or partial
-    # transfers are not supported.
+    # In the first pass, while primarily processing reductions, save the
+    # augmenting postings here.  They will be iterated over as the second pass.
+    # Note we have to retain the index of the original posting, so this contains
+    # (index, posting) tuples.
+    augmenting_postings = []
+
+    # In the first pass, collect a map of booked reduction info, so that in the
+    # second pass, we can match augmenting postings against them.  For each unit
+    # found on original reduction postings, we collect a list of booked
+    # reductions for that unit.  Note this only works for equal/opposite units;
+    # multi-account or partial transfers are not supported.
     booked_reductions_by_units = {}
-    aug_postings_to_match = []
 
-    for posting in group_postings:
+    # In both passes, collect booked postings in a dictionary indexed by their
+    # original index in the group_postings list.  This will allow us to collect
+    # first reductions, and then augmentations, and still return them in the
+    # original order.  (Order shouldn't matter, but it does in certain unit
+    # tests, and for the sake of minimal disruption, we respect it.)
+    booked_postings = {}
+
+    for (posting_idx, posting) in enumerate(group_postings):
         # Process a single posting.
         units = posting.units
         costspec = posting.cost
@@ -611,7 +626,7 @@ def book_reductions(entry, group_postings, balances, methods):
         # Check if this is a lot held at cost.
         if costspec is None or units.number is MISSING:
             # This posting is not held at cost; we do nothing.
-            booked_postings.append(posting)
+            booked_postings[posting_idx] = [posting]
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
@@ -670,7 +685,7 @@ def book_reductions(entry, group_postings, balances, methods):
                     return [], errors
 
                 # Add the reductions to the resulting list of booked postings.
-                booked_postings.extend(reduction_postings)
+                booked_postings[posting_idx] = reduction_postings
 
                 # Index the booked postings 
                 booked_reductions_by_units[units] = reduction_postings
@@ -682,49 +697,59 @@ def book_reductions(entry, group_postings, balances, methods):
                 # in order to be resolved properly.
                 for posting in reduction_postings:
                     balance.add_position(posting)
+
             else:
-                # This posting is an augmentation.
-                #
-                # Note that we do not convert the CostSpec instances to Cost
-                # instances, because we want to let the subsequent interpolation
-                # process able to interpolate either the cost per-unit or the
-                # total cost, separately.
+                # This posting is an augmentation.  Collect it for processing
+                # after we've processed all reductions and have all cost information
+                # available for transfer.
+                augmenting_postings.append((posting_idx, posting))
 
-                # Put in the date of the parent Transaction if there is no
-                # explicit date specified on the spec.
-                if costspec.date is None:
-                    dated_costspec = costspec._replace(date=entry.date)
-                    posting = posting._replace(cost=dated_costspec)
-
-                # Remember this augmentation so that after processing all
-                # postings, we can match against the booked reductions.
-                aug_postings_to_match.append(posting)
-
-                # FIXME: Insert unique ids for trade tracking; right now this
-                # creates ambiguous matches errors (and it shouldn't).
-                # # Insert a unique label if there isn't one.
-                # if posting.cost is not None and posting.cost.label is None:
-                #     posting = posting._replace(
-                #         cost=posting.cost._replace(label=unique_label()))
-
-                booked_postings.append(posting)
-
-    # Check each augmenting posting and see if it matches a reduction on another
-    # account, i.e., appears to be a transfer.  If so, then we copy the booked
-    # cost reductions to corresponding augmenting postings with those costs.
-    for augmenting_posting in aug_postings_to_match:
+    # Process augmenting postings.
+    #
+    # Note that we do not convert the CostSpec instances to Cost
+    # instances, because we want to let the subsequent interpolation
+    # process able to interpolate either the cost per-unit or the
+    # total cost, separately.
+    for (posting_idx, augmenting_posting) in augmenting_postings:
         units = augmenting_posting.units
+        costspec = augmenting_posting.cost
         account = augmenting_posting.account
         balancing_units = units._replace(number=-units.number)
+
+        # Check if it matches a reduction on another account, i.e., appears to
+        # be a transfer.  If so, then we copy the booked cost reductions to
+        # corresponding augmenting postings with those costs.
         if balancing_units in booked_reductions_by_units:
             reduction_postings = booked_reductions_by_units[balancing_units]
+            matched_augmenting_postings = []
             for reduction_posting in reduction_postings:
                 matched_augmenting_posting = reduction_posting._replace(
                     units=-reduction_posting.units, account=account)
-                booked_postings.remove(augmenting_posting)
-                booked_postings.append(matched_augmenting_posting)
+                
+                matched_augmenting_postings.append(matched_augmenting_posting)
+            booked_postings[posting_idx] = matched_augmenting_postings
 
-    return booked_postings, errors
+        else:
+            # Put in the date of the parent Transaction if there is no
+            # explicit date specified on the spec.
+            if costspec.date is None:
+                dated_costspec = costspec._replace(date=entry.date)
+                augmenting_posting = augmenting_posting._replace(cost=dated_costspec)
+
+            # FIXME: Insert unique ids for trade tracking; right now this
+            # creates ambiguous matches errors (and it shouldn't).
+            # # Insert a unique label if there isn't one.
+            # if posting.cost is not None and posting.cost.label is None:
+            #     posting = posting._replace(
+            #         cost=posting.cost._replace(label=unique_label()))
+
+            booked_postings[posting_idx] = [augmenting_posting]
+
+    result = []
+    for posting_idx in range(len(group_postings)):
+        result.extend(booked_postings[posting_idx])
+
+    return result, errors
 
 
 def compute_cost_number(costspec, units):
