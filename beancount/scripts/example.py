@@ -371,8 +371,7 @@ def get_minimum_balance(entries, account, currency):
     for _, balances in postings_for(entries, [account]):
         balance = balances[account]
         current = balance.get_currency_units(currency).number
-        if current < min_amount:
-            min_amount = current
+        min_amount = min(current, min_amount)
     return min_amount
 
 

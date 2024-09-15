@@ -248,8 +248,8 @@ def compute_table_widths(rows):
             if not isinstance(cell, str):
                 cell = str(cell)
             cell_len = len(cell)
-            if cell_len > column_widths[i]:
-                column_widths[i] = cell_len
+            column_widths[i] = max(cell_len, column_widths[i])
+
         if i + 1 != num_columns:
             raise IndexError("Invalid number of rows")
     return column_widths
