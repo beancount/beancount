@@ -155,7 +155,7 @@ def pad(entries, options_map):
                                 diff_position.cost,
                                 None,
                                 None,
-                                {},
+                                entry.meta,
                             )
                         )
                         neg_diff_position = -diff_position
@@ -166,7 +166,7 @@ def pad(entries, options_map):
                                 neg_diff_position.cost,
                                 None,
                                 None,
-                                {},
+                                entry.meta,
                             )
                         )
 
