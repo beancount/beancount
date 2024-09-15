@@ -24,6 +24,7 @@ from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.utils.bisect_key import bisect_left_with_key
+from beancount.utils.date_utils import parse_time
 
 # Type declarations.
 Account = str
@@ -705,18 +706,32 @@ def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
 SORT_ORDER = {Open: -2, Balance: -1, Document: 1, Close: 2}
 
 
-def entry_sortkey(entry: Directive) -> tuple[datetime.date, int, int]:
+DEFAULT_ENTRY_TIME = datetime.time(12, 0, 0, tzinfo=datetime.timezone.utc)
+
+def entry_sortkey(entry):
     """Sort-key for entries. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,
-    in order to balance linearly.
+    in order to balance linearly. We also sort by time if the entry has
+    a time field in the metadata.
 
     Args:
       entry: An entry instance.
     Returns:
-      A tuple of (date, integer, integer), that forms the sort key for the
-      entry.
+      A tuple of (date, integer, datetime.time, integer), that forms the
+      sort key for the entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
+    time_value = DEFAULT_ENTRY_TIME
+    if "time" in entry.meta:
+        time_value = parse_time(entry.meta["time"])
+
+    # We sort by time after the type to ensure Open, Close, and Document
+    # directives appear in the right order.
+    return (
+        entry.date,
+        SORT_ORDER.get(type(entry), 0),
+        time_value,
+        entry.meta["lineno"],
+    )
 
 
 def sorted(entries: Directives) -> Directives:
