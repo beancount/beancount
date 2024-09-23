@@ -21,6 +21,13 @@ beancount: TODO
     Let that be the default. Make DEFAULT some other name. V3 should include
     all the pedantry by default.
 
+** Reminders
+
+- It would be great to be able to file a reminder of payment directive, and
+  somehow for bean-check to warn you to file those when within a certain time
+  frame, e.g., 30 days.
+
+
 ** For API
 
 - Inventory: Add a function to discard by currency.
