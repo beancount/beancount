@@ -39,7 +39,6 @@ from beancount.core import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
-from beancount.utils import date_utils
 from beancount.parser.version import VERSION
 from beancount import loader
 
