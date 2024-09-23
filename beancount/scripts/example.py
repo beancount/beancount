@@ -17,6 +17,7 @@ import sys
 import textwrap
 
 from dateutil import rrule
+import dateutil.parser
 
 import click
 
@@ -1817,12 +1818,18 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     )
 
 
+def parse_date_liberally(string, parse_kwargs_dict=None):
+    if parse_kwargs_dict is None:
+        parse_kwargs_dict = {}
+    return dateutil.parser.parse(string, **parse_kwargs_dict).date()
+
+
 class LiberalDate(click.ParamType):
     name = "date"
 
     def convert(self, value, param, ctx):
         try:
-            date_utils.parse_date_liberally(value)
+            parse_date_liberally(value)
         except ValueError:
             self.fail("{!r} is not a valid date".format(value), param, ctx)
 
