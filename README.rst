@@ -73,7 +73,7 @@ There are three versions
   more.
 
 - **Version 1** (`branch v1 <http://github.com/beancount/beancount/tree/v1>`_):
-w  The original version of Beancount. Development on this version halted in 2013.
+  The original version of Beancount. Development on this version halted in 2013.
   This initial version was intended to be similar to and partially compatible
   with Ledger. Do not use this.
 
