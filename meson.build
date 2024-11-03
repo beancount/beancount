@@ -222,3 +222,15 @@ py.extension_module(
     install: true,
     subdir: 'beancount/parser',
 )
+
+if get_option('tests').enabled()
+    tokens_test = executable(
+        'tokens-test',
+        'beancount/parser/decimal.c',
+        'beancount/parser/tokens.c',
+        'beancount/parser/tokens_test.c',
+        dependencies: py.dependency(embed: true),
+        install: false,
+    )
+    test('tokens', tokens_test)
+endif
