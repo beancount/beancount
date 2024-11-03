@@ -17,20 +17,6 @@ jobs:
           bean-doctor --help
           bean-example --help
           bean-format --help
-  install-from-sources-oldstyle:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          # The oldest supported python version
-          python-version: 3.8
-      - run: python setup.py install
-      - run: |
-          bean-check --help
-          bean-doctor --help
-          bean-example --help
-          bean-format --help
   install-from-sdist:
     runs-on: ubuntu-latest
     steps:

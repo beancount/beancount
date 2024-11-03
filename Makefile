@@ -18,16 +18,13 @@ CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-func
 LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
 LDLIBS += $(shell $(PYCONFIG) --embed --libs)
 
+PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
+
 all: build
 
 # Clean everything up.
 clean:
-	rm -f core
 	rm -rf build
-	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
-	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
-	rm -f $(CROOT)/*.so
-	rm -f $(CROOT)/tokens_test
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 # Targets to generate and compile the C parser.
@@ -51,10 +48,10 @@ SOURCES =					\
 	$(CROOT)/tokens.h
 
 .PHONY: build
-build: $(SOURCES)
-	$(PYTHON) setup.py build_ext -i
-
-$(CROOT)/tokens_test: $(CROOT)/tokens_test.o $(CROOT)/tokens.o $(CROOT)/decimal.o
+build:
+	meson setup --reconfigure build/
+	ninja -C build/
+	cp build/_parser$(PYMODEXT) beancount/parser/
 
 .PHONY: ctest
 ctest: $(CROOT)/tokens_test
