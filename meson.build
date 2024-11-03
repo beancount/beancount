@@ -1,5 +1,8 @@
 project('beancount', 'c', version: files('beancount/VERSION'))
 
+bison = find_program('bison', version: '>=3.8.0')
+flex = find_program('flex', version: '>=2.6.4')
+
 py = import('python').find_installation(pure: false)
 
 py.install_sources(
@@ -212,13 +215,35 @@ if host_machine.system() == 'windows'
     add_project_arguments('-DYY_NO_UNISTD_H', language: 'c')
 endif
 
+flex_gen = generator(
+    flex,
+    output: ['@BASENAME@.c', '@BASENAME@.h'],
+    arguments: ['--outfile=@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@']
+)
+
+lexer_c = flex_gen.process(
+    'beancount/parser/lexer.l',
+    preserve_path_from: meson.current_source_dir(),
+)
+
+bison_gen = generator(
+    bison,
+    output: ['@BASENAME@.c', '@BASENAME@.h'],
+    arguments: ['--report=itemset', '--verbose', '-Wall', '-Werror', '-o', '@OUTPUT0@', '@INPUT@']
+)
+
+grammar_c = bison_gen.process(
+    'beancount/parser/grammar.y',
+    preserve_path_from: meson.current_source_dir(),
+)
+
 py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
-    'beancount/parser/lexer.c',
-    'beancount/parser/grammar.c',
     'beancount/parser/parser.c',
     'beancount/parser/tokens.c',
+    lexer_c,
+    grammar_c,
     install: true,
     subdir: 'beancount/parser',
 )
