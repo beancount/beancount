@@ -10,14 +10,6 @@ YACC = bison
 YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
 
-
-# Support PYTHON being the path to a python interpreter.
-PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
-PYCONFIG = "python$(PYVERSION)-config"
-CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
-LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
-LDLIBS += $(shell $(PYCONFIG) --embed --libs)
-
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
 
 all: build
@@ -37,25 +29,16 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 
 
-SOURCES =					\
-	$(CROOT)/decimal.c			\
-	$(CROOT)/decimal.h 			\
-	$(CROOT)/lexer.c			\
-	$(CROOT)/lexer.h			\
-	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h			\
-	$(CROOT)/macros.h			\
-	$(CROOT)/tokens.h
-
 .PHONY: build
 build:
-	meson setup --reconfigure build/
+	meson setup --reconfigure -Dtests=enabled build/
 	ninja -C build/
 	cp build/_parser$(PYMODEXT) beancount/parser/
 
 .PHONY: ctest
-ctest: $(CROOT)/tokens_test
-	$(CROOT)/tokens_test
+ctest:
+	meson setup --reconfigure -Dtests=enabled build/
+	meson test -C build/
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
