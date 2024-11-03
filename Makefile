@@ -5,29 +5,15 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= python3
-LEX = flex
-YACC = bison
-YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
 
 all: build
 
-# Clean everything up.
 clean:
 	rm -rf build
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
-
-# Targets to generate and compile the C parser.
-CROOT = beancount/parser
-
-$(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
-
-$(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
-	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-
 
 .PHONY: build
 build:
