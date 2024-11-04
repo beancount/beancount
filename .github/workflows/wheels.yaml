@@ -38,7 +38,7 @@ jobs:
         with:
           architecture: x86
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
-      - run: pipx run cibuildwheel==2.19.1
+      - run: pipx run cibuildwheel~=2.21.0
         env:
           CIBW_SKIP: pp* *-musllinux*
           CIBW_ARCHS: ${{ matrix.architecture }}
