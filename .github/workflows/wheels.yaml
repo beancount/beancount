@@ -24,6 +24,8 @@ jobs:
             architecture: AMD64
           - os: windows
             architecture: x86
+          - os: windows
+            architecture: ARM64
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
