@@ -1,22 +1,4 @@
-use crate::base::Amount;
-use pyo3::create_exception;
-use pyo3::prelude::*;
-
-pub fn register_child_module(parent_module: &Bound<'_, PyModule>) -> PyResult<()> {
-    let m = PyModule::new_bound(parent_module.py(), "_parser")?;
-    m.add("ParserError", m.py().get_type_bound::<ParserError>())?;
-
-    // m.add_class::<Transaction>()?;
-    m.add_class::<Amount>()?;
-
-    parent_module.add_submodule(&m)
-}
-
-create_exception!(
-    beancount.parser._parser,
-    ParserError,
-    pyo3::exceptions::PyException
-);
+use beancount_parser::{Balance, Price};
 
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
@@ -24,19 +6,19 @@ create_exception!(
 //     name: String,
 // }
 //
-// #[allow(missing_docs)]
-// #[derive(Debug, Clone, PartialEq)]
-// #[non_exhaustive]
-// pub enum DirectiveContent<Decimal> {
-//     Transaction(Transaction),
-//     Price(Price<Decimal>),
-//     Balance(Balance<Decimal>),
-//     Open(Open),
-//     Close(Close),
-//     Pad(Pad),
-//     Commodity(Currency),
-//     Event(Event),
-// }
+#[allow(missing_docs)]
+#[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
+pub enum DirectiveContent<Decimal> {
+    Transaction(Transaction),
+    Price(Price<Decimal>),
+    Balance(Balance<Decimal>),
+    Open(Open),
+    Close(Close),
+    Pad(Pad),
+    Commodity(Currency),
+    Event(Event),
+}
 //
 // #[pyclass(module = "beancount.parser._parser")]
 // #[derive(Debug, Clone, PartialEq)]
