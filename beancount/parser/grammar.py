@@ -9,6 +9,7 @@ import traceback
 from os import path
 from datetime import date
 from decimal import Decimal
+from typing import Any, NamedTuple
 
 import regex
 
@@ -39,11 +40,14 @@ from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
 
+class ParserError(NamedTuple):
+    source: dict[str, Any]
+    message: str
+    entry: Any
 
-ParserError = collections.namedtuple("ParserError", "source message entry")
+
 ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")
 DeprecatedError = collections.namedtuple("DeprecatedError", "source message entry")
-
 
 # Key-value pairs. This is used to hold meta-data attachments temporarily.
 #
@@ -69,7 +73,6 @@ ValueType = collections.namedtuple("ValueType", "value dtype")
 CompoundAmount = collections.namedtuple(
     "CompoundAmount", "number_per number_total currency"
 )
-
 
 # A unique token used to indicate a merge of the lots of an inventory.
 MERGE_COST = "***"
@@ -212,7 +215,7 @@ class Builder(lexer.LexBuilder):
         self.options["filename"] = filename
 
     def build_grammar_error(
-        self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
+            self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
     ):
         """Build a grammar error and appends it to the list of pending errors.
 
@@ -754,7 +757,7 @@ class Builder(lexer.LexBuilder):
         return Note(meta, date, account, comment, tags, links)
 
     def document(
-        self, filename, lineno, date, account, document_filename, tags_links, kvlist
+            self, filename, lineno, date, account, document_filename, tags_links, kvlist
     ):
         """Process a document directive.
 
@@ -887,11 +890,11 @@ class Builder(lexer.LexBuilder):
         # If both cost and price are specified, the currencies must match, or
         # that is an error.
         if (
-            cost is not None
-            and price is not None
-            and isinstance(cost.currency, str)
-            and isinstance(price.currency, str)
-            and cost.currency != price.currency
+                cost is not None
+                and price is not None
+                and isinstance(cost.currency, str)
+                and isinstance(price.currency, str)
+                and cost.currency != price.currency
         ):
             self.errors.append(
                 ParserError(
@@ -982,7 +985,7 @@ class Builder(lexer.LexBuilder):
         )
 
     def transaction(
-        self, filename, lineno, date, flag, txn_strings, tags_links, posting_or_kv_list
+            self, filename, lineno, date, flag, txn_strings, tags_links, posting_or_kv_list
     ):
         """Process a transaction directive.
 

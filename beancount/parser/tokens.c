@@ -74,7 +74,7 @@ ssize_t cunescape(const char* string, size_t len, int strict, char** ret) {
     /* The unescaped string can be at most as long as the escaped
      * string. Make sure we have space for the string terminator: it
      * is safer to handle NULL terminated strings. */
-    buffer = malloc(len + 1);
+    buffer = (char *)malloc(len + 1);
     if (!buffer) {
         return -ENOMEM;
     }

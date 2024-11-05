@@ -1,13 +1,11 @@
 [build-system]
-build-backend = "mesonpy"
-requires = [
-    "meson-python >= 0.14.0",
-    "meson >= 1.2.1",
-]
+requires = ["maturin>=1.7.4,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "beancount"
 description = "Command-line Double-Entry Accounting"
+version = "3.0.0"
 readme = { content-type = "text/x-rst", text = """
 A double-entry accounting system that uses text files as input.
 
@@ -29,7 +27,6 @@ dependencies = [
     "python-dateutil >=2.6.0",
     "regex >=2022.9.13",
 ]
-dynamic = ["version"]
 
 [project.scripts]
 bean-check = "beancount.scripts.check:main"
@@ -42,6 +39,10 @@ treeify = "beancount.tools.treeify:main"
 homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "beancount.__beancount"
 
 [tool.black]
 line-length = 92

@@ -41,12 +41,12 @@
 extern YY_DECL;
 
 /* Placeholder object for missing cost specifications. */
-PyObject* missing_obj;
+PyObject *missing_obj;
 
 typedef struct {
     PyObject_HEAD
     yyscan_t scanner;
-    PyObject* builder;
+    PyObject *builder;
 } Parser;
 
 PyDoc_STRVAR(parser_doc,
@@ -59,11 +59,8 @@ PyDoc_STRVAR(parser_doc,
              "used directly. See the beancount.parser moduel instead.");
 
 /* Allocate a new Parser instance. */
-static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-{
-    Parser* self;
-
-    self = (Parser*)type->tp_alloc(type, 0);
+static PyObject *parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+    Parser *self = (Parser *)PyObject_Malloc(sizeof(Parser));
     if (!self) {
         return NULL;
     }
@@ -75,7 +72,7 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     }
 
     self->builder = NULL;
-    return (PyObject*)self;
+    return (PyObject *)self;
 }
 
 /* Constructor for Parser instances.
@@ -83,10 +80,9 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
  * Args:
  *   builder: An instance of a Builder object.
 */
-static int parser_init(Parser* self, PyObject* args, PyObject* kwds)
-{
-    static char* kwlist[] = {"builder", "debug", NULL};
-    PyObject* builder;
+static int parser_init(Parser *self, PyObject *args, PyObject *kwds) {
+    static char *kwlist[] = {"builder", "debug", NULL};
+    PyObject *builder;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p", kwlist, &builder, &yydebug)) {
         return -1;
@@ -100,15 +96,14 @@ static int parser_init(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 /* Destructor. */
-static void parser_dealloc(Parser* self)
-{
+static void parser_dealloc(Parser *self) {
     /* Free the builder. */
     Py_XDECREF(self->builder);
 
     /* Finalize the scanner state. */
     yylex_free(self->scanner);
 
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    PyObject_Free(self);
 }
 
 PyDoc_STRVAR(parser_parse_doc,
@@ -121,11 +116,10 @@ PyDoc_STRVAR(parser_parse_doc,
              "object is used, if present. Parsing results are retrieved from the \n"
              "Builder object specified when the Parser object was instantiated.");
 
-static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
-{
-    static char* kwlist[] = {"file", "filename", "lineno", NULL};
-    PyObject* filename = NULL;
-    PyObject* file;
+static PyObject *parser_parse(Parser *self, PyObject *args, PyObject *kwds) {
+    static char *kwlist[] = {"file", "filename", "lineno", NULL};
+    PyObject *filename = NULL;
+    PyObject *file;
     int lineno = 1;
     int ret;
 
@@ -147,14 +141,10 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 
     /* Check for internal errors during parsing. */
     switch (ret) {
-    case 0:
-        Py_RETURN_NONE;
-    case 1:
-        return PyErr_Format(PyExc_RuntimeError, "Parser internal error");
-    case 2:
-        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
-    default:
-        return PyErr_Format(PyExc_ValueError, "Unexpected yyparse() return value: %d", ret);
+    case 0:Py_RETURN_NONE;
+    case 1:return PyErr_Format(PyExc_RuntimeError, "Parser internal error");
+    case 2:return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
+    default:return PyErr_Format(PyExc_ValueError, "Unexpected yyparse() return value: %d", ret);
     }
 }
 
@@ -167,11 +157,10 @@ PyDoc_STRVAR(parser_lex_doc,
              "None, the name attribute of the file object is used, if present. Return \n"
              "an iterable yielding (token name, string value, sematical value) tuples.");
 
-static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
-{
-    static char* kwlist[] = {"file", "filename", "lineno", NULL};
-    PyObject* filename = NULL;
-    PyObject* file;
+static PyObject *parser_lex(Parser *self, PyObject *args, PyObject *kwds) {
+    static char *kwlist[] = {"file", "filename", "lineno", NULL};
+    PyObject *filename = NULL;
+    PyObject *file;
     int lineno = 1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Oi", kwlist,
@@ -183,16 +172,15 @@ static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
     yylex_initialize(file, filename, lineno, missing_obj, self->scanner);
 
     Py_INCREF(self);
-    return (PyObject*)self;
+    return (PyObject *)self;
 }
 
 /* Implement iterator protocol on the Parser. */
-static PyObject* parser_iternext(Parser* self)
-{
+static PyObject *parser_iternext(Parser *self) {
     YYSTYPE yylval;
     YYLTYPE yylloc;
     int token;
-    PyObject* obj;
+    PyObject *obj;
 
     /* Ensure the scanner has been initialized. */
     if (!yyget_in(self->scanner)) {
@@ -214,11 +202,9 @@ static PyObject* parser_iternext(Parser* self)
     case NUMBER:
     case TAG:
     case LINK:
-    case KEY:
-        obj = yylval.pyobj;
+    case KEY:obj = yylval.pyobj;
         break;
-    default:
-        obj = Py_None;
+    default:obj = Py_None;
     }
 
     /* Yield a (token name, line, matched string, token value) tuple. */
@@ -236,56 +222,64 @@ static PyMethodDef parser_methods[] = {
     {NULL, NULL}
 };
 
-PyTypeObject Parser_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "_parser.Parser",                         /* tp_name*/
-    sizeof(Parser),                           /* tp_basicsize*/
-    0,                                        /* tp_itemsize*/
-    (destructor)parser_dealloc,               /* tp_dealloc*/
-    0,                                        /* tp_print*/
-    0,                                        /* tp_getattr*/
-    0,                                        /* tp_setattr*/
-    0,                                        /* tp_compare */
-    0,                                        /* tp_repr*/
-    0,                                        /* tp_as_number */
-    0,                                        /* tp_as_sequence */
-    0,                                        /* tp_as_mapping */
-    0,                                        /* tp_hash */
-    0,                                        /* tp_call */
-    0,                                        /* tp_str */
-    0,                                        /* tp_getattro */
-    0,                                        /* tp_setattro */
-    0,                                        /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-    parser_doc,                               /* tp_doc */
-    0,                                        /* tp_traverse */
-    0,                                        /* tp_clear */
-    0,                                        /* tp_richcompare */
-    0,                                        /* tp_weaklistoffset */
-    PyObject_SelfIter,                        /* tp_iter */
-    (iternextfunc)parser_iternext,            /* tp_iternext */
-    parser_methods,                           /* tp_methods */
-    0,                                        /* tp_members */
-    0,                                        /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    (initproc)parser_init,                    /* tp_init */
-    0,                                        /* tp_alloc */
-    parser_new,                               /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0,                                        /* tp_weaklist */
-    0,                                        /* tp_del */
-    0,                                        /* tp_version_tag */
-    0, /* tp_finalize */
+PyType_Spec Parser_Type_spec = {
+    .name = "_parser.Parser",
+    .basicsize=  sizeof(Parser),
+    .flags=Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 };
+
+static PyObject *Parser_Type;
+
+//static PyTypeObject Parser_Type = {
+//    .ob_base = PyVarObject_HEAD_INIT(NULL, 0)
+//    .tp_name= "_parser.Parser",                         /* tp_name*/
+//    .tp_basicsize =  sizeof(Parser),                           /* tp_basicsize*/
+//    0,                                        /* tp_itemsize*/
+//    (destructor)parser_dealloc,               /* tp_dealloc*/
+//    0,                                        /* tp_print*/
+//    0,                                        /* tp_getattr*/
+//    0,                                        /* tp_setattr*/
+//    0,                                        /* tp_compare */
+//    0,                                        /* tp_repr*/
+//    0,                                        /* tp_as_number */
+//    0,                                        /* tp_as_sequence */
+//    0,                                        /* tp_as_mapping */
+//    0,                                        /* tp_hash */
+//    0,                                        /* tp_call */
+//    0,                                        /* tp_str */
+//    0,                                        /* tp_getattro */
+//    0,                                        /* tp_setattro */
+//    0,                                        /* tp_as_buffer */
+//    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+//    parser_doc,                               /* tp_doc */
+//    0,                                        /* tp_traverse */
+//    0,                                        /* tp_clear */
+//    0,                                        /* tp_richcompare */
+//    0,                                        /* tp_weaklistoffset */
+//    PyObject_SelfIter,                        /* tp_iter */
+//    (iternextfunc)parser_iternext,            /* tp_iternext */
+//    parser_methods,                           /* tp_methods */
+//    0,                                        /* tp_members */
+//    0,                                        /* tp_getset */
+//    0,                                        /* tp_base */
+//    0,                                        /* tp_dict */
+//    0,                                        /* tp_descr_get */
+//    0,                                        /* tp_descr_set */
+//    0,                                        /* tp_dictoffset */
+//    (initproc)parser_init,                    /* tp_init */
+//    0,                                        /* tp_alloc */
+//    parser_new,                               /* tp_new */
+//    0,                                        /* tp_free */
+//    0,                                        /* tp_is_gc */
+//    0,                                        /* tp_bases */
+//    0,                                        /* tp_mro */
+//    0,                                        /* tp_cache */
+//    0,                                        /* tp_subclasses */
+//    0,                                        /* tp_weaklist */
+//    0,                                        /* tp_del */
+//    0,                                        /* tp_version_tag */
+//    0, /* tp_finalize */
+//};
 
 static PyMethodDef module_functions[] = {
     {NULL, NULL, 0, NULL}
@@ -303,13 +297,14 @@ static struct PyModuleDef moduledef = {
     NULL,                                 /* m_free */
 };
 
-PyMODINIT_FUNC PyInit__parser(void)
-{
-    PyObject* beancount_core_number;
-    PyObject* module;
-    PyObject* value;
+PyMODINIT_FUNC PyInit__parser(void) {
+    PyObject *beancount_core_number;
+    PyObject *module;
+    PyObject *value;
 
-    Py_INCREF(&Parser_Type);
+    Parser_Type = PyType_FromSpec(&Parser_Type_spec);
+
+    Py_INCREF(Parser_Type);
 
     module = PyModule_Create(&moduledef);
     if (!module) {
@@ -354,7 +349,7 @@ PyMODINIT_FUNC PyInit__parser(void)
         goto error;
     }
 
-    if (PyType_Ready(&Parser_Type) < 0) {
+    if (PyType_Ready((PyTypeObject *)&Parser_Type) < 0) {
         goto error;
     }
     if (PyModule_AddObject(module, "Parser", (PyObject *)&Parser_Type) < 0) {
@@ -363,7 +358,7 @@ PyMODINIT_FUNC PyInit__parser(void)
 
     return module;
 
-error:
+    error:
     Py_XDECREF(&Parser_Type);
     Py_XDECREF(module);
     return NULL;

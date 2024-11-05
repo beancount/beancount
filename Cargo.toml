@@ -1,0 +1,13 @@
+[package]
+name = "beancount"
+edition = "2021"
+
+[lib]
+name = "beancount"
+crate-type = ["cdylib"]
+
+[dependencies]
+beancount-parser = "2.2.1"
+pyo3 = { version = "0.22.5", features = ['extension-module', 'abi3-py39'] }
+rust_decimal = "1.36.0"
+rust_decimal_macros = "1.36.0"

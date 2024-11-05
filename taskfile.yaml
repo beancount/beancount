@@ -1,0 +1,81 @@
+version: 3
+
+tasks:
+  init: uv pip install -e '.[dev]'
+
+  lint:
+    - black .
+    - task: rust-fmt
+
+  rust-fmt:
+    internal: true
+    sources:
+      - ./src/*.rs
+    cmds:
+      - for: sources
+        cmd: rustfmt {{ .ITEM | toSlash }}
+
+  bump:
+    vars:
+      VERSION:
+        sh: yq '.project.version' pyproject.toml
+    cmds:
+      - git add pyproject.toml
+      - 'git commit -m "bump: {{.VERSION}}"'
+      - 'git tag "v{{.VERSION}}" -m "v{{.VERSION}}"'
+
+  dev:
+    deps:
+      - pyo3
+    sources:
+      - "*.py"
+      - "bencode_rs/**/*.py"
+      - "tests/**/*.py"
+      - 'src/**/*.rs'
+    cmds:
+      - python -m pytest -s -vv -x
+    #      - python leak.py
+    env:
+      "CARGO_INCREMENTAL": "1"
+      RUST_BACKTRACE: "full"
+
+
+  build:
+    cmds:
+      - cargo build
+      - cp target/debug/beancount.dll beancount/__beancount.pyd
+    env:
+      RUST_BACKTRACE: "1"
+      RUSTC_WRAPPER: sccache
+
+  build:optimize:
+    env:
+      "CARGO_INCREMENTAL": "1"
+      RUSTC_WRAPPER: sccache
+    sources:
+      - "*.py"
+      - "bencode_rs/**/*.py"
+      - "tests/**/*.py"
+      - 'src/**/*.rs'
+    generates:
+      - ./bencode_rs/_bencode.pyd
+    cmds:
+      # - cargo clippy --fix --allow-dirty --allow-staged
+      - maturin develop --release
+
+  test-o:
+    internal: true
+    deps:
+      - pyo3
+    sources:
+      - "**/*.rs"
+      - "**/*.py"
+    cmd: python -m pytest -v -s -x
+    env:
+      RUST_BACKTRACE: "1"
+
+  bench:base:
+    - pytest ./tests/bench.py --benchmark-save=base
+
+  bench:compare:
+    - pytest ./tests/bench.py --benchmark-compare --benchmark-columns='mean, min, max, median, stddev' --benchmark-group-by=func --benchmark-sort=mean
