@@ -1,7 +1,7 @@
 *.DS_Store
 *.a
 *.picklecache
-*.pyc
+*.py[cd]
 *.so
 *.swp
 *~
@@ -30,3 +30,4 @@ experiments/v3/arrow/*.arrow
 
 taskfile.yaml
 .task
+prof/
