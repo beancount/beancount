@@ -1,24 +1,22 @@
-use beancount_parser::{Balance, Price};
-
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
 // struct Parser {
 //     name: String,
 // }
 //
-#[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq)]
-#[non_exhaustive]
-pub enum DirectiveContent<Decimal> {
-    Transaction(Transaction),
-    Price(Price<Decimal>),
-    Balance(Balance<Decimal>),
-    Open(Open),
-    Close(Close),
-    Pad(Pad),
-    Commodity(Currency),
-    Event(Event),
-}
+// #[allow(missing_docs)]
+// #[derive(Debug, Clone, PartialEq)]
+// #[non_exhaustive]
+// pub enum DirectiveContent<Decimal> {
+//     Transaction(Transaction),
+//     Price(Price<Decimal>),
+//     Balance(Balance<Decimal>),
+//     Open(Open),
+//     Close(Close),
+//     Pad(Pad),
+//     Commodity(Currency),
+//     Event(Event),
+// }
 //
 // #[pyclass(module = "beancount.parser._parser")]
 // #[derive(Debug, Clone, PartialEq)]

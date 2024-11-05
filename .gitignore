@@ -2,6 +2,8 @@
 *.a
 *.picklecache
 *.py[cd]
+*.pyd
+taskfile.yaml
 *.so
 *.swp
 *~

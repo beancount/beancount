@@ -20,6 +20,12 @@ impl Decimal {
     }
 }
 
+impl PartialEq for Decimal {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
 impl Decimal {
     pub fn from_py(o: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(s) = o.downcast::<PyString>() {

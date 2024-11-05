@@ -1,10 +1,6 @@
 use crate::decimal::Decimal;
+use pyo3::types::PyAnyMethods;
 use pyo3::{pyclass, pymethods, Bound, PyAny, PyResult};
-use std::sync::Arc;
-
-#[pyclass]
-#[derive(Debug, Clone, PartialEq)]
-struct Currency(Arc<str>);
 
 #[pyclass]
 #[derive(Debug, Clone, PartialEq)]
@@ -14,16 +10,13 @@ pub struct Amount {
     pub number: Decimal,
     /// Currency
     #[pyo3(get)]
-    pub currency: Currency,
+    pub currency: String,
 }
 
 #[pymethods]
 impl Amount {
     #[new]
-    fn new(
-        value: &Bound<'_, PyAny>,
-        currency: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    fn new(value: &Bound<'_, PyAny>, currency: &Bound<'_, PyAny>) -> PyResult<Self> {
         return Ok(Amount {
             number: Decimal::from_py(value)?,
             currency: currency.extract()?,
@@ -31,12 +24,9 @@ impl Amount {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Account(String);
-
 #[derive(Debug, Clone, PartialEq)]
-pub struct Price<D> {
-    pub currency: Currency,
+pub struct Price {
+    pub currency: String,
     pub amount: Amount,
 }
 
