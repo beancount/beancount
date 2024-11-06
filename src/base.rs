@@ -1,6 +1,6 @@
 use crate::decimal::Decimal;
 use pyo3::prelude::*;
-use pyo3::types::{PyAnyMethods, PyDate, PyDict};
+use pyo3::types::{PyAnyMethods, PyDate, PyDict, PyString};
 use pyo3::{pyclass, pymethods, Bound, Py, PyAny, PyResult};
 use std::collections::HashMap;
 
@@ -119,20 +119,32 @@ impl Booking {
     }
 }
 
-//
+
+#[pyclass]
+pub struct Cost {
+    #[pyo3(get)]
+    pub meta: Py<PyDict>, // PyDict
+    #[pyo3(get)]
+    pub date: Py<PyDate>, // PyDate
+    #[pyo3(get)]
+    pub currency: Py<PyString>,
+    pub label: Option<Py<PyString>>,
+}
+
 // #[derive(Debug, Clone)]
 // #[non_exhaustive]
-// pub struct Posting {
-//     /// Transaction flag (`*` or `!` or `None` when absent)
-//     pub flag: Option<char>,
-//     /// Account modified by the posting
-//     pub account: Account,
-//     /// Amount being added to the account
-//     pub amount: Option<Amount>,
-//     /// Cost (content within `{` and `}`)
-//     pub cost: Option<Cost<Decimal>>,
-//     /// Price (`@` or `@@`) syntax
-//     pub price: Option<PostingPrice>,
-//     /// The metadata attached to the posting
-//     pub metadata: HashMap<Key, Value<Decimal>>,
-// }
+#[pyclass]
+pub struct Posting {
+    /// Transaction flag (`*` or `!` or `None` when absent)
+    pub flag: Option<char>,
+    /// Account modified by the posting
+    pub account: Py<PyString>,
+    /// Amount being added to the account
+    pub amount: Option<Amount>,
+    /// Cost (content within `{` and `}`)
+    pub cost: Option<Cost>,
+    /// Price (`@` or `@@`) syntax
+    pub price: Option<PostingPrice>,
+    /// The metadata attached to the posting
+    pub metadata: Metadata,
+}
