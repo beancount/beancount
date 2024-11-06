@@ -3012,8 +3012,6 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
     ret = length;
 
 #else
-    #define PyBUF_READ  0x100
-    #define PyBUF_WRITE 0x200
     /* This function could be optimized in two ways: avoiding to
      * allocate a new memory view object for every block read and
      * caching the lookup of the readinto method of the file
