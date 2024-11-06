@@ -1,19 +1,22 @@
-use crate::base::Amount;
 use pyo3::create_exception;
 use pyo3::prelude::*;
 
-mod parser;
 mod base;
 mod decimal;
+mod parser;
 
 #[pymodule]
 fn __beancount(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("ParserError", m.py().get_type_bound::<ParserError>())?;
 
-    // m.add_class::<Transaction>()?;
-    m.add_class::<Amount>()
+    m.add_class::<base::Booking>()?;
+    
+    m.add_class::<base::Price>()?;
+    m.add_class::<base::Amount>()?;
+    m.add_class::<base::PostingPrice>()?;
 
     // parser::register_child_module(m)
+    return Ok(());
 }
 
 create_exception!(

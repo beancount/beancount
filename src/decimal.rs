@@ -30,7 +30,8 @@ impl Decimal {
     pub fn from_py(o: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(s) = o.downcast::<PyString>() {
             return Ok(Decimal {
-                0: rust_decimal::Decimal::from_str(s.to_string().as_str()).or_else(|_| Err(PyValueError::new_err("Invalid decimal")))?,
+                0: rust_decimal::Decimal::from_str(s.to_string().as_str())
+                    .or_else(|_| Err(PyValueError::new_err("Invalid decimal")))?,
             });
         }
         if let Ok(s) = o.extract::<i64>() {
@@ -41,13 +42,15 @@ impl Decimal {
 
         if let Ok(s) = o.extract::<f64>() {
             return Ok(Decimal {
-                0: rust_decimal::Decimal::from_f64(s).ok_or_else(|| PyValueError::new_err("Invalid decimal"))?,
+                0: rust_decimal::Decimal::from_f64(s)
+                    .ok_or_else(|| PyValueError::new_err("Invalid decimal"))?,
             });
         }
 
         if let Ok(s) = o.extract::<f32>() {
             return Ok(Decimal {
-                0: rust_decimal::Decimal::from_f32(s).ok_or_else(|| PyValueError::new_err("Invalid decimal"))?,
+                0: rust_decimal::Decimal::from_f32(s)
+                    .ok_or_else(|| PyValueError::new_err("Invalid decimal"))?,
             });
         }
 

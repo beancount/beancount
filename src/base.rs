@@ -1,6 +1,10 @@
 use crate::decimal::Decimal;
-use pyo3::types::PyAnyMethods;
-use pyo3::{pyclass, pymethods, Bound, PyAny, PyResult};
+use pyo3::prelude::*;
+use pyo3::types::{PyAnyMethods, PyDate, PyDict};
+use pyo3::{pyclass, pymethods, Bound, Py, PyAny, PyResult};
+use std::collections::HashMap;
+
+type Metadata = HashMap<String, String>;
 
 #[pyclass]
 #[derive(Debug, Clone, PartialEq)]
@@ -24,20 +28,97 @@ impl Amount {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[pyclass]
 pub struct Price {
+    #[pyo3(get)]
+    pub meta: Py<PyDict>, // PyDict
+    #[pyo3(get)]
+    pub date: Py<PyDate>, // PyDate
+    #[pyo3(get)]
     pub currency: String,
+    #[pyo3(get)]
     pub amount: Amount,
 }
 
-//
-// #[derive(Debug, Clone)]
-// pub enum PostingPrice {
-//     /// Unit cost (`@`)
-//     Unit(Amount),
-//     /// Total cost (`@@`)
-//     Total(Amount),
-// }
+#[pymethods]
+impl Price {
+    #[new]
+    fn new(
+        meta: &Bound<'_, PyDict>,
+        date: &Bound<'_, PyDate>,
+        currency: String,
+        amount: Amount,
+    ) -> Self {
+        Price {
+            meta: meta.clone().unbind(),
+            date: date.clone().unbind(),
+            currency,
+            amount,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub enum PostingPrice {
+    /// Unit cost (`@`)
+    Unit(Amount),
+    /// Total cost (`@@`)
+    Total(Amount),
+}
+
+#[pyclass]
+#[derive(PartialEq)]
+pub enum Booking {
+    STRICT,
+    STRICT_WITH_SIZE,
+    None,
+    AVERAGE,
+    FIFO,
+    LIFO,
+    HIFO,
+}
+
+#[pymethods]
+impl Booking {
+    // make it behave like enum.Enum
+    #[getter]
+    fn name(&self) -> &str {
+        return self.__str__();
+    }
+
+    #[getter]
+    fn value(&self) -> &str {
+        return self.__str__();
+    }
+
+    // to support both `Booking.STRICT == Booking.STRICT` and `Booking.STRICT == "STRICT"`
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
+        if let Ok(s) = other.extract::<&str>() {
+            return s == self.__str__();
+        }
+
+        if let Ok(b) = other.downcast::<Self>() {
+            let other = &*b.borrow();
+            return self == other;
+        }
+
+        return false;
+    }
+
+    fn __str__(&self) -> &str {
+        match self {
+            Booking::STRICT => "STRICT",
+            Booking::STRICT_WITH_SIZE => "STRICT_WITH_SIZE",
+            Booking::None => "None",
+            Booking::AVERAGE => "AVERAGE",
+            Booking::FIFO => "FIFO",
+            Booking::LIFO => "LIFO",
+            Booking::HIFO => "HIFO",
+        }
+    }
+}
+
 //
 // #[derive(Debug, Clone)]
 // #[non_exhaustive]
