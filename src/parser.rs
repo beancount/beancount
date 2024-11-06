@@ -2,7 +2,6 @@ use crate::{base, ParserError};
 use beancount_parser::BeancountFile;
 use pyo3::prelude::*;
 use pyo3::types::{PyDate, PyDict, PyString};
-
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
 // struct Parser {
@@ -118,6 +117,36 @@ pub enum DirectiveContent {
     Commodity(base::Currency),
     // Event(base::Event),
 }
+
+impl DirectiveContent {
+    fn from_parser(py: Python<'_>, x: &beancount_parser::Directive<rust_decimal::Decimal>) -> PyResult<Self> {
+        return match &x.content {
+            // beancount_parser::DirectiveContent::Transaction(v) => {
+            //     DirectiveContent::Transaction(base::Posting {
+            //         flag: v.flag,
+            //         account: PyString::new_bound(v.payee.unwrap().to_string())?.unbind(),
+            //         amount: None,
+            //         cost: None,
+            //         price: None,
+            //         metadata: Default::default(),
+            //     })
+            // }
+            // beancount_parser::DirectiveContent::Price(_) => {}
+            // beancount_parser::DirectiveContent::Balance(_) => {}
+            // beancount_parser::DirectiveContent::Open(_) => {}
+            // beancount_parser::DirectiveContent::Close(_) => {}
+            // beancount_parser::DirectiveContent::Pad(_) => {}
+            beancount_parser::DirectiveContent::Commodity(v) => {
+                Ok(Self::Commodity(v.to_string()))
+            }
+            // beancount_parser::DirectiveContent::Event(_) => {}
+            _ => {
+                Ok(Self::Commodity(format!("{:?}", x.content)))
+            }
+        };
+    }
+}
+
 #[pyclass]
 #[derive(Debug)]
 pub struct Directive {
@@ -191,8 +220,8 @@ pub fn parse(py: Python<'_>, content: &str) -> PyResult<File> {
                                 x.date.month.into(),
                                 x.date.day.into(),
                             )?
-                            .unbind(),
-                            content: DirectiveContent::Commodity(format!("{:?}", x.content)),
+                                .unbind(),
+                            content: DirectiveContent::from_parser(py, x)?,
                             metadata: PyDict::new_bound(py).unbind(),
                             line_number: x.line_number,
                         },

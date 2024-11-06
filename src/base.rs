@@ -160,7 +160,7 @@ impl Cost {
 #[derive(Debug)]
 pub struct Posting {
     /// Transaction flag (`*` or `!` or `None` when absent)
-    pub flag: Option<u8>,
+    pub flag: Option<char>,
     /// Account modified by the posting
     pub account: Py<PyString>,
     /// Amount being added to the account
@@ -178,7 +178,7 @@ impl Posting {
     #[new]
     #[pyo3(signature = (flag, account, amount=None, cost=None, price=None, metadata=None))]
     fn new(
-        flag: Option<u8>,
+        flag: Option<char>,
         account: Py<PyString>,
         amount: Option<Amount>,
         cost: Option<&Bound<'_, Cost>>,
@@ -191,7 +191,7 @@ impl Posting {
             amount,
             cost: cost.map(|c| c.clone().unbind()),
             price,
-            metadata: metadata.unwrap_or(Metadata::new()),
+            metadata: metadata.unwrap_or_else(|| Metadata::new()),
         });
     }
 }
