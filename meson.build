@@ -2,6 +2,8 @@ project('beancount', 'c', version: files('beancount/VERSION'))
 
 bison = find_program('bison', version: '>=3.8.0')
 flex = find_program('flex', version: '>=2.6.4')
+cc = meson.get_compiler('c')
+libm = cc.find_library('m')
 
 py = import('python').find_installation(pure: false)
 
@@ -254,7 +256,7 @@ if get_option('tests').enabled()
         'beancount/parser/decimal.c',
         'beancount/parser/tokens.c',
         'beancount/parser/tokens_test.c',
-        dependencies: py.dependency(embed: true),
+        dependencies: [libm, py.dependency(embed: true)],
         install: false,
     )
     test('tokens', tokens_test)
