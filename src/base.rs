@@ -119,7 +119,6 @@ impl Booking {
     }
 }
 
-
 #[pyclass]
 pub struct Cost {
     #[pyo3(get)]
@@ -129,6 +128,25 @@ pub struct Cost {
     #[pyo3(get)]
     pub currency: Py<PyString>,
     pub label: Option<Py<PyString>>,
+}
+
+#[pymethods]
+impl Cost {
+    #[new]
+    #[pyo3(signature = (meta, date, currency, label=None))]
+    fn new(
+        meta: Py<PyDict>,
+        date: Py<PyDate>,
+        currency: Py<PyString>,
+        label: Option<Py<PyString>>,
+    ) -> PyResult<Self> {
+        return Ok(Cost {
+            meta,
+            date,
+            currency,
+            label,
+        });
+    }
 }
 
 // #[derive(Debug, Clone)]
@@ -142,9 +160,32 @@ pub struct Posting {
     /// Amount being added to the account
     pub amount: Option<Amount>,
     /// Cost (content within `{` and `}`)
-    pub cost: Option<Cost>,
+    pub cost: Option<Py<Cost>>,
     /// Price (`@` or `@@`) syntax
     pub price: Option<PostingPrice>,
     /// The metadata attached to the posting
     pub metadata: Metadata,
+}
+
+#[pymethods]
+impl Posting {
+    #[new]
+    #[pyo3(signature = (flag, account, amount=None, cost=None, price=None, metadata=None))]
+    fn new(
+        flag: Option<char>,
+        account: Py<PyString>,
+        amount: Option<Amount>,
+        cost: Option<&Bound<'_, Cost>>,
+        price: Option<PostingPrice>,
+        metadata: Option<Metadata>,
+    ) -> PyResult<Self> {
+        return Ok(Posting {
+            flag,
+            account,
+            amount,
+            cost: cost.map(|c| c.clone().unbind()),
+            price,
+            metadata: metadata.unwrap_or(Metadata::new()),
+        });
+    }
 }

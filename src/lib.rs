@@ -10,10 +10,14 @@ fn __beancount(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("ParserError", m.py().get_type_bound::<ParserError>())?;
 
     m.add_class::<base::Booking>()?;
-    
+
     m.add_class::<base::Price>()?;
     m.add_class::<base::Amount>()?;
     m.add_class::<base::PostingPrice>()?;
+
+    m.add_class::<base::Cost>()?;
+    m.add_class::<base::PostingPrice>()?;
+    m.add_class::<base::Posting>()?;
 
     // parser::register_child_module(m)
     return Ok(());

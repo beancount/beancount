@@ -1,6 +1,6 @@
+import datetime
 from decimal import Decimal
-import enum
-from typing import Optional
+from typing import Optional, Dict, Any
 
 Account = str
 Currency = str
@@ -41,7 +41,7 @@ class Amount:
     def __init__(self, number: Optional[str | int | float], currency: str) -> None: ...
 
 
-class Price(NamedTuple):
+class Price:
     """
     A price declaration directive. This establishes the price of a currency in
     terms of another currency as of the directive's date. A history of the prices
@@ -74,7 +74,22 @@ class Price(NamedTuple):
     ): ...
 
 
-class Pad(NamedTuple):
+class Cost:
+    number: Decimal
+    currency: str
+    date: datetime.date
+    label: Optional[str]
+
+    def __init__(
+            self,
+            number: Decimal,
+            currency: str,
+            date: datetime.date,
+            label: Optional[str],
+    ): ...
+
+
+class Pad:
     """
     A "pad this account with this other account" directive. This directive
     automatically inserts transactions that will make the next chronological
@@ -102,3 +117,17 @@ class Pad(NamedTuple):
             account: Account,
             source_account: Account,
     ): ...
+
+
+class PostingPrice:
+    unit: Amount
+    total: Amount
+
+
+class Posting:
+    flag: int
+    account: str
+    amount: Amount
+    cost: Cost
+    price: PostingPrice
+    meta: Meta
