@@ -7,6 +7,8 @@ use std::collections::HashMap;
 
 type Metadata = HashMap<String, String>;
 
+pub type Currency = String;
+
 #[pyclass]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Amount {
@@ -15,7 +17,7 @@ pub struct Amount {
     pub number: Decimal,
     /// Currency
     #[pyo3(get)]
-    pub currency: String,
+    pub currency: Currency,
 }
 
 #[pymethods]
@@ -36,7 +38,7 @@ pub struct Price {
     #[pyo3(get)]
     pub date: Py<PyDate>, // PyDate
     #[pyo3(get)]
-    pub currency: String,
+    pub currency: Currency,
     #[pyo3(get)]
     pub amount: Amount,
 }
@@ -129,7 +131,7 @@ pub struct Cost {
     #[pyo3(get)]
     pub date: Py<PyDate>, // PyDate
     #[pyo3(get)]
-    pub currency: Py<PyString>,
+    pub currency: Currency,
     pub label: Option<Py<PyString>>,
 }
 
@@ -140,13 +142,13 @@ impl Cost {
     fn new(
         meta: Py<PyDict>,
         date: Py<PyDate>,
-        currency: Py<PyString>,
+        currency: &Bound<'_, PyString>,
         label: Option<Py<PyString>>,
     ) -> PyResult<Self> {
         return Ok(Cost {
             meta,
             date,
-            currency,
+            currency: currency.extract()?,
             label,
         });
     }
@@ -155,6 +157,7 @@ impl Cost {
 // #[derive(Debug, Clone)]
 // #[non_exhaustive]
 #[pyclass]
+#[derive(Debug)]
 pub struct Posting {
     /// Transaction flag (`*` or `!` or `None` when absent)
     pub flag: Option<u8>,

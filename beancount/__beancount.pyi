@@ -5,7 +5,9 @@ from typing import Optional, Dict, Any
 
 class File:
     includes: list[str]
-    options:list[str]
+    options: list[str]
+    directives: list[Any]
+
 
 def parse(b: str) -> File: ...
 

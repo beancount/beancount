@@ -1,7 +1,8 @@
-use crate::ParserError;
+use crate::{base, ParserError};
 use beancount_parser::BeancountFile;
 use pyo3::prelude::*;
-use pyo3::types::PyString;
+use pyo3::types::{PyDate, PyDict, PyString};
+
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
 // struct Parser {
@@ -94,19 +95,65 @@ pub struct Opt {
 #[pymethods]
 impl Opt {
     fn __str__(&self, py: Python<'_>) -> String {
-        return format!("Option(name={:?}, value={:?}", self.name.to_str(py).unwrap(), self.value.to_str(py).unwrap());
+        return format!(
+            "Option(name={:?}, value={:?}",
+            self.name.to_str(py).unwrap(),
+            self.value.to_str(py).unwrap()
+        );
     }
 
     fn __repr__(&self, py: Python<'_>) -> String {
         return self.__str__(py);
     }
 }
+
+#[derive(Debug)]
+pub enum DirectiveContent {
+    Transaction(base::Posting),
+    Price(base::PostingPrice),
+    // Balance(base::Balance),
+    // Open(base::Open),
+    // Close(base::Close),
+    // Pad(base::Pad),
+    Commodity(base::Currency),
+    // Event(base::Event),
+}
+#[pyclass]
+#[derive(Debug)]
+pub struct Directive {
+    /// Date of the directive
+    pub date: Py<PyDate>,
+    /// Content of the directive that is specific to each directive type
+    pub content: DirectiveContent,
+    /// Metadata associated to the directive
+    pub metadata: Py<PyDict>,
+    /// Line number where the directive was found in the input file
+    pub line_number: u32,
+}
+
+#[pymethods]
+impl Directive {
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        return Ok(format!(
+            "Directive(date={:}, content={:?}, metadata={:}, line_number={:?})",
+            self.date.bind(py).repr()?.to_string(),
+            self.content,
+            self.metadata.bind(py).repr()?.to_string(),
+            self.line_number
+        ));
+    }
+}
+
 #[pyclass]
 pub struct File {
     #[pyo3(get)]
     pub includes: Vec<Py<PyString>>,
+
     #[pyo3(get)]
     pub options: Vec<Py<Opt>>,
+
+    #[pyo3(get)]
+    pub directives: Vec<Py<Directive>>,
 }
 
 #[pyfunction]
@@ -117,22 +164,52 @@ pub fn parse(py: Python<'_>, content: &str) -> PyResult<File> {
             // println!("includes: {:#?}", bean.includes);
             // println!("directives: {:#?}", bean.directives);
             println!("options: {:#?}", bean.options);
-            let options = bean.options.iter().map(|x| {
-                Py::new(py, Opt {
-                    name: PyString::new_bound(py, x.name.as_str()).unbind(),
-                    value: PyString::new_bound(py, x.value.as_str()).unbind(),
+            let options = bean
+                .options
+                .iter()
+                .map(|x| {
+                    Py::new(
+                        py,
+                        Opt {
+                            name: PyString::new_bound(py, x.name.as_str()).unbind(),
+                            value: PyString::new_bound(py, x.value.as_str()).unbind(),
+                        },
+                    )
                 })
-            }).collect::<Result<Vec<_>, PyErr>>()?;
+                .collect::<Result<Vec<_>, PyErr>>()?;
+
+            let directives = bean
+                .directives
+                .iter()
+                .map(|x| {
+                    Py::new(
+                        py,
+                        Directive {
+                            date: PyDate::new_bound(
+                                py,
+                                x.date.year.into(),
+                                x.date.month.into(),
+                                x.date.day.into(),
+                            )?
+                            .unbind(),
+                            content: DirectiveContent::Commodity(format!("{:?}", x.content)),
+                            metadata: PyDict::new_bound(py).unbind(),
+                            line_number: x.line_number,
+                        },
+                    )
+                })
+                .collect::<Result<Vec<_>, PyErr>>()?;
 
             Ok(File {
-                includes: bean.includes.iter().map(|x| {
-                    PyString::new_bound(py, x.to_str().unwrap()).unbind()
-                }).collect(),
+                includes: bean
+                    .includes
+                    .iter()
+                    .map(|x| PyString::new_bound(py, x.to_str().unwrap()).unbind())
+                    .collect(),
                 options,
+                directives,
             })
         }
-        Err(err) => {
-            Err(ParserError::new_err(err.to_string()))
-        }
+        Err(err) => Err(ParserError::new_err(err.to_string())),
     };
 }
