@@ -1,4 +1,5 @@
 use crate::decimal::Decimal;
+#[allow(unused_imports)]
 use pyo3::prelude::*;
 use pyo3::types::{PyAnyMethods, PyDate, PyDict, PyString};
 use pyo3::{pyclass, pymethods, Bound, Py, PyAny, PyResult};
@@ -67,10 +68,12 @@ pub enum PostingPrice {
     Total(Amount),
 }
 
+#[allow(deprecated)]
 #[pyclass]
 #[derive(PartialEq)]
 pub enum Booking {
     STRICT,
+    #[allow(non_camel_case_types)]
     STRICT_WITH_SIZE,
     None,
     AVERAGE,
@@ -154,7 +157,7 @@ impl Cost {
 #[pyclass]
 pub struct Posting {
     /// Transaction flag (`*` or `!` or `None` when absent)
-    pub flag: Option<char>,
+    pub flag: Option<u8>,
     /// Account modified by the posting
     pub account: Py<PyString>,
     /// Amount being added to the account
@@ -172,7 +175,7 @@ impl Posting {
     #[new]
     #[pyo3(signature = (flag, account, amount=None, cost=None, price=None, metadata=None))]
     fn new(
-        flag: Option<char>,
+        flag: Option<u8>,
         account: Py<PyString>,
         amount: Option<Amount>,
         cost: Option<&Bound<'_, Cost>>,

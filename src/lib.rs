@@ -18,6 +18,7 @@ fn __beancount(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<base::Cost>()?;
     m.add_class::<base::PostingPrice>()?;
     m.add_class::<base::Posting>()?;
+    m.add_function(wrap_pyfunction!(parser::parse, m)?)?;
 
     // parser::register_child_module(m)
     return Ok(());

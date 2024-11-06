@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::{Bound, PyAny, PyResult};
 use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Error;
 use std::str::FromStr;
 
 #[pyclass]
@@ -23,6 +24,14 @@ impl Decimal {
 impl PartialEq for Decimal {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
+    }
+}
+
+impl FromStr for Decimal {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self { 0: rust_decimal::Decimal::from_str(s)? })
     }
 }
 

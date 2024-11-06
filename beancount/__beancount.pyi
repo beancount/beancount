@@ -2,6 +2,14 @@ import datetime
 from decimal import Decimal
 from typing import Optional, Dict, Any
 
+
+class File:
+    includes: list[str]
+    options:list[str]
+
+def parse(b: str) -> File: ...
+
+
 Account = str
 Currency = str
 Meta = Dict[str, Any]
