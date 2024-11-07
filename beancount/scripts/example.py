@@ -56,7 +56,6 @@ ANNUAL_VACATION_DAYS = D("15")
 RENT_DIVISOR = D("50")
 RENT_INCREMENT = D("25")
 
-
 # A list of mock employers.
 EMPLOYERS = [
     ("Hooli", "1 Carloston Rd, Mountain Beer, CA"),
@@ -94,7 +93,6 @@ RESTAURANT_NARRATIONS = [
 GROCERIES_NAMES = ["Onion Market", "Good Moods Market", "Corner Deli", "Farmer Fresh"]
 
 HOME_NAME = "New Metropolis"
-
 
 TRIP_DESTINATIONS = {
     "los-angeles": [
@@ -136,7 +134,6 @@ TRIP_DESTINATIONS = {
         ("Starbucks", "Expenses:Food:Coffee", (6, 2)),
     ],
 }
-
 
 # Limits on allowed retirement contributions.
 RETIREMENT_LIMITS = {
@@ -367,7 +364,7 @@ def get_minimum_balance(entries, account, currency):
     Returns:
       A Decimal number, the minimum amount throughout the history of this account.
     """
-    min_amount = ZERO
+    min_amount = decimal.Decimal("0.001")
     for _, balances in postings_for(entries, [account]):
         balance = balances[account]
         current = balance.get_currency_units(currency).number
