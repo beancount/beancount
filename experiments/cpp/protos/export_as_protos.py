@@ -39,7 +39,7 @@ from beancount.cparser import options_pb2 as ob
 
 USE_PYEXT_API = True
 if USE_PYEXT_API:
-    from experiments.v3.protos import expose_protos as ep  # noqa: F401
+    from experiments.cpp.protos import expose_protos as ep  # noqa: F401
 else:
     from beancount.cparser import extmodule
 

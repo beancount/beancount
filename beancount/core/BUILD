@@ -13,6 +13,7 @@ package(default_visibility = [
     "//experiments/sharing:__pkg__",
     "//experiments/v3/protos:__pkg__",
     "//experiments/sql:__pkg__",
+    "//experiments/cpp/protos:__subpackages__",
 
     # Temporary access from C core and parser.
     "//beancount/ccore:__pkg__",

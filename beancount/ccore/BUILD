@@ -7,6 +7,9 @@ load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 package(default_visibility = [
     "//beancount:__subpackages__",
     "//experiments/v3:__subpackages__",
+    "//experiments/cpp/protos:__subpackages__",
+    "//experiments/cpp/decimal:__subpackages__",
+    "//experiments/cpp/pbpb:__subpackages__",
 ])
 
 cc_library(

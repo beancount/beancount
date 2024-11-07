@@ -20,7 +20,7 @@ py_binary(
         "//beancount:loader",
         #
         #"//beancount/cparser:extmodule",
-        ":expose_protos"
+        ":expose_protos",
    ],
 )
 
