@@ -1,0 +1,28 @@
+exclude: ^examples/.*\.output$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-case-conflict
+      - id: check-ast
+      - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: [ --fix=lf ]
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.22
+    hooks:
+      - id: validate-pyproject
+        additional_dependencies: [ "validate-pyproject-schema-store[all]" ]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.2
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format

@@ -5,63 +5,26 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= python3
-LEX = flex
-YACC = bison
-YFLAGS = --report=itemset --verbose -Wall -Werror
 GRAPHER = dot
 
-
-# Support PYTHON being the path to a python interpreter.
-PYVERSION = $(shell $(PYTHON) -c 'import platform; print(".".join(platform.python_version_tuple()[:2]))')
-PYCONFIG = "python$(PYVERSION)-config"
-CFLAGS += $(shell $(PYCONFIG) --cflags) -I$(PWD) -fPIE -UNDEBUG -Wno-unused-function -Wno-unused-variable
-LDFLAGS += $(shell $(PYCONFIG) --embed --ldflags)
-LDLIBS += $(shell $(PYCONFIG) --embed --libs)
+PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
 
 all: build
 
-# Clean everything up.
 clean:
-	rm -f core
 	rm -rf build
-	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
-	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
-	rm -f $(CROOT)/*.so
-	rm -f $(CROOT)/tokens_test
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
-# Targets to generate and compile the C parser.
-CROOT = beancount/parser
-
-$(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	$(YACC) $(YFLAGS) -o $(CROOT)/grammar.c $<
-
-$(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
-	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-
-
-SOURCES =					\
-	$(CROOT)/decimal.c			\
-	$(CROOT)/decimal.h 			\
-	$(CROOT)/lexer.c			\
-	$(CROOT)/lexer.h			\
-	$(CROOT)/grammar.c			\
-	$(CROOT)/grammar.h			\
-	$(CROOT)/macros.h			\
-	$(CROOT)/tokens.h
-
 .PHONY: build
-build: $(SOURCES)
-	$(PYTHON) setup.py build_ext -i
-
-$(CROOT)/tokens_test: $(CROOT)/tokens_test.o $(CROOT)/tokens.o $(CROOT)/decimal.o
+build:
+	meson setup --reconfigure -Dtests=enabled build/
+	ninja -C build/
+	cp build/_parser$(PYMODEXT) beancount/parser/
 
 .PHONY: ctest
-ctest: $(CROOT)/tokens_test
-	$(CROOT)/tokens_test
-
-build35: $(SOURCES)
-	python3.5 setup.py build_ext -i
+ctest:
+	meson setup --reconfigure -Dtests=enabled build/
+	meson test -C build/
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
@@ -135,14 +98,6 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-# Bake a release, upload the source.
-release:
-	rm -rf dist
-	python3 setup.py sdist bdist_wheel
-	python3.10 setup.py bdist_egg
-	python3.9 setup.py bdist_egg
-	twine upload dist/*.tar.gz dist/*.egg
-
 vtest vtests verbose-test verbose-tests:
 	$(PYTHON) -m pytest -v -s beancount examples
 
@@ -161,25 +116,10 @@ check:
 	bean-check $(INPUT)
 
 
-# Run the demo program.
-demo:
-	bin/bean-web --debug examples/demo.beancount
-
-
 # Generate the example file.
 EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
-
-
-# Run the web server.
-.PHONY: web
-web:
-	bean-web --debug $(INPUT)
-
-.PHONY: web-incognito
-web-incognito:
-	bean-web --incognito --debug $(INPUT)
 
 
 # Run the importer.
@@ -216,6 +156,7 @@ constraints dep-constraints: build/beancount.deps
 # Run the linter on all source code.
 ruff lint:
 	NO_COLOR=1 ruff check .
+	NO_COLOR=1 ruff format .
 
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test
