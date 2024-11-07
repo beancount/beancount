@@ -50,7 +50,7 @@ line-length = 92
 
 [tool.ruff]
 # Assume Python 3.12.
-target-version = "py312"
+target-version = "py38"
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
