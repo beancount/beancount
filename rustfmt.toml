@@ -1,5 +1,5 @@
 reorder_imports = true
-match_block_trailing_comma = true
+match_block_trailing_comma = false
 newline_style = 'Unix'
 use_field_init_shorthand = true
 

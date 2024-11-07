@@ -240,7 +240,7 @@ pub fn parse(py: Python<'_>, content: &str) -> PyResult<File> {
                 options,
                 directives,
             })
-        },
+        }
         Err(err) => Err(ParserError::new_err(err.to_string())),
     };
 }
