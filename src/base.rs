@@ -10,6 +10,16 @@ type Metadata = HashMap<String, String>;
 pub type Currency = String;
 
 #[pyclass]
+#[derive(Debug)]
+pub struct Open {
+    pub meta: Metadata,
+    pub date: Py<PyDate>,
+    pub account: Py<PyString>,
+    pub currencies: Vec<Currency>,
+    pub booking: Option<Vec<Currency>>,
+}
+
+#[pyclass]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Amount {
     /// The value (decimal) part
@@ -32,6 +42,7 @@ impl Amount {
 }
 
 #[pyclass]
+#[derive(Debug)]
 pub struct Price {
     #[pyo3(get)]
     pub meta: Py<PyDict>, // PyDict

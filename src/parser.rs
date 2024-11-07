@@ -1,7 +1,8 @@
 use crate::{base, ParserError};
 use beancount_parser::BeancountFile;
 use pyo3::prelude::*;
-use pyo3::types::{PyDate, PyDict, PyString};
+use pyo3::types::{PyDate, PyDateAccess, PyDict, PyString};
+use crate::parser::DirectiveContent::Price;
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
 // struct Parser {
@@ -109,7 +110,7 @@ impl Opt {
 #[derive(Debug)]
 pub enum DirectiveContent {
     Transaction(base::Posting),
-    Price(base::PostingPrice),
+    Price(base::Price),
     // Balance(base::Balance),
     // Open(base::Open),
     // Close(base::Close),
@@ -131,7 +132,9 @@ impl DirectiveContent {
             //         metadata: Default::default(),
             //     })
             // }
-            // beancount_parser::DirectiveContent::Price(_) => {}
+            // beancount_parser::DirectiveContent::Price(v) => {
+            // Ok(base::Price )
+            // }
             // beancount_parser::DirectiveContent::Balance(_) => {}
             // beancount_parser::DirectiveContent::Open(_) => {}
             // beancount_parser::DirectiveContent::Close(_) => {}
