@@ -13,19 +13,26 @@ jobs:
       matrix:
         include:
           - os: ubuntu
+            architecture: x86_64
+          - os: ubuntu
+            architecture: aarch64
           - os: macos
+            architecture: x86_64
+          - os: macos
+            architecture: arm64
           - os: windows
             architecture: AMD64
           - os: windows
             architecture: x86
-
+          - os: windows
+            architecture: ARM64
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.architecture == 'aarch64'
+
       - uses: bus1/cabuild/action/msdevshell@v1
         with:
           architecture: x64
@@ -35,24 +42,30 @@ jobs:
           architecture: x86
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
 
-      - run: pipx run cibuildwheel==2.19.1
+      - run: pipx run cibuildwheel~=2.21.0
         env:
-          # CIBW_BUILD: cp313-*
           CIBW_SKIP: pp* *-musllinux*
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_LINUX: x86_64 aarch64
-          CIBW_ARCHS_WINDOWS: ${{ matrix.architecture }}
+          CIBW_ARCHS: ${{ matrix.architecture }}
+          CIBW_BEFORE_ALL_LINUX: |
+            curl -sSfO https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz
+            tar xJf bison-3.8.2.tar.xz
+            cd bison-3.8.2 && ./configure && make && make install
+            curl -sSfLO https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz
+            tar xzf flex-2.6.4.tar.gz
+            cd flex-2.6.4 && ./configure && make && make install
+          CIBW_ENVIRONMENT_MACOS: |
+            PATH="/opt/homebrew/opt/bison/bin:$PATH"
+          CIBW_BEFORE_ALL_MACOS: |
+            brew install bison
+          CIBW_ENVIRONMENT_WINDOWS: |
+            PATH="$PATH;C:/msys64/usr/bin"
+          CIBW_BEFORE_ALL_WINDOWS: |
+            pacman --noconfirm -S bison flex
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}}
+          name: wheels-${{ matrix.os }}-${{ matrix.architecture }}
           path: wheelhouse/*.whl
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}}-${{ matrix.architecture }}}
-          path: wheelhouse/*.whl
-        if: runner.os == 'Windows'
 
   sdist:
     name: Build source distribution
@@ -67,7 +80,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
-    name: Upload wheels to PyPI
+    name: Upload to PyPI
     needs:
       - wheels
       - sdist
@@ -75,11 +88,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          merge-multiple: true
           path: dist
-      - name: Display structure of downloaded files
-        run: find . -type f -ls
       - run: python -m pip install twine
-      - run: python -m twine upload --skip-existing dist/*/*
+      - run: python -m twine upload --skip-existing dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

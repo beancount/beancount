@@ -156,17 +156,19 @@ class TestLexer(unittest.TestCase):
     @lex_tokens
     def test_lex_indent(self, tokens, errors):
         """\
+          ; comment
           2014-07-05 *
             Equity:Something
         """
         self.assertEqual(
             [
-                ("DATE", 1, b"2014-07-05", datetime.date(2014, 7, 5)),
-                ("ASTERISK", 1, b"*", None),
                 ("EOL", 2, b"\n", None),
-                ("INDENT", 2, b"  ", None),
-                ("ACCOUNT", 2, b"Equity:Something", "Equity:Something"),
+                ("DATE", 2, b"2014-07-05", datetime.date(2014, 7, 5)),
+                ("ASTERISK", 2, b"*", None),
                 ("EOL", 3, b"\n", None),
+                ("INDENT", 3, b"  ", None),
+                ("ACCOUNT", 3, b"Equity:Something", "Equity:Something"),
+                ("EOL", 4, b"\n", None),
             ],
             tokens,
         )

@@ -18,13 +18,26 @@ jobs:
           - '3.10'
           - '3.11'
           - '3.12'
+          - '3.13'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
+
+      - run: echo "C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+        if: runner.os == 'Windows'
+      - run: pacman --noconfirm -S bison flex
+        if: runner.os == 'Windows'
+
+      - run: brew install bison
+        if: runner.os == 'macOS'
+      - run: echo "/opt/homebrew/opt/bison/bin:$PATH" >> $GITHUB_PATH
+        if: runner.os == 'macOS'
+
       - run: python -m pip install meson-python ninja pytest
-      - run: python -m pip install --no-build-isolation -e .
+      - run: python -m pip install -v --no-build-isolation -Cbuild-dir=build -Csetup-args=-Dtests=enabled -e .
       - run: pytest beancount
         if: runner.os != 'Windows'
+      - run: meson test -C build/
