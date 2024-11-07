@@ -1,8 +1,8 @@
 use crate::{base, ParserError};
 use beancount_parser::BeancountFile;
 use pyo3::prelude::*;
-use pyo3::types::{PyDate, PyDateAccess, PyDict, PyString};
-use crate::parser::DirectiveContent::Price;
+use pyo3::types::{PyDate, PyDict, PyString};
+
 // #[pyclass(subclass, module = "beancount.parser._parser")]
 // #[derive(Clone, Debug)]
 // struct Parser {
@@ -120,7 +120,10 @@ pub enum DirectiveContent {
 }
 
 impl DirectiveContent {
-    fn from_parser(py: Python<'_>, x: &beancount_parser::Directive<rust_decimal::Decimal>) -> PyResult<Self> {
+    fn from_parser(
+        _py: Python<'_>,
+        x: &beancount_parser::Directive<rust_decimal::Decimal>,
+    ) -> PyResult<Self> {
         return match &x.content {
             // beancount_parser::DirectiveContent::Transaction(v) => {
             //     DirectiveContent::Transaction(base::Posting {
@@ -139,13 +142,9 @@ impl DirectiveContent {
             // beancount_parser::DirectiveContent::Open(_) => {}
             // beancount_parser::DirectiveContent::Close(_) => {}
             // beancount_parser::DirectiveContent::Pad(_) => {}
-            beancount_parser::DirectiveContent::Commodity(v) => {
-                Ok(Self::Commodity(v.to_string()))
-            }
+            beancount_parser::DirectiveContent::Commodity(v) => Ok(Self::Commodity(v.to_string())),
             // beancount_parser::DirectiveContent::Event(_) => {}
-            _ => {
-                Ok(Self::Commodity(format!("{:?}", x.content)))
-            }
+            _ => Ok(Self::Commodity(format!("{:?}", x.content))),
         };
     }
 }
@@ -223,7 +222,7 @@ pub fn parse(py: Python<'_>, content: &str) -> PyResult<File> {
                                 x.date.month.into(),
                                 x.date.day.into(),
                             )?
-                                .unbind(),
+                            .unbind(),
                             content: DirectiveContent::from_parser(py, x)?,
                             metadata: PyDict::new_bound(py).unbind(),
                             line_number: x.line_number,
@@ -241,7 +240,7 @@ pub fn parse(py: Python<'_>, content: &str) -> PyResult<File> {
                 options,
                 directives,
             })
-        }
+        },
         Err(err) => Err(ParserError::new_err(err.to_string())),
     };
 }

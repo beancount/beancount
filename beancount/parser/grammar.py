@@ -168,7 +168,7 @@ class Builder(lexer.LexBuilder):
             self.errors.append(
                 ParserError(
                     meta,
-                    ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
+                    "Unbalanced metadata key '{}'; leftover metadata '{}'".format(
                         key, ", ".join(value_list)
                     ),
                     None,
@@ -179,7 +179,7 @@ class Builder(lexer.LexBuilder):
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options["render_commas"])
 
-        return (self.get_entries(), self.errors, self.get_options())
+        return self.get_entries(), self.errors, self.get_options()
 
     def get_entries(self):
         """Return the accumulated entries.

@@ -5,7 +5,7 @@ use pyo3::types::{PyAnyMethods, PyDate, PyDict, PyString};
 use pyo3::{pyclass, pymethods, Bound, Py, PyAny, PyResult};
 use std::collections::HashMap;
 
-type Metadata = HashMap<String, String>;
+pub type Metadata = HashMap<String, String>;
 
 pub type Currency = String;
 
@@ -81,7 +81,6 @@ pub enum PostingPrice {
     Total(Amount),
 }
 
-#[allow(deprecated)]
 #[pyclass]
 #[derive(PartialEq)]
 pub enum Booking {

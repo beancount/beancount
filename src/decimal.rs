@@ -31,7 +31,9 @@ impl FromStr for Decimal {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self { 0: rust_decimal::Decimal::from_str(s)? })
+        Ok(Self {
+            0: rust_decimal::Decimal::from_str(s)?,
+        })
     }
 }
 
