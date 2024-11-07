@@ -140,7 +140,7 @@ class TestEntryPrinter(cmptest.TestCase):
         ORIGINAL_LEDGER = textwrap.dedent("""\
         2014-01-01 open Assets:Account1
         2014-01-01 open Assets:Cash
-        
+
         2014-06-08 *
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
@@ -148,14 +148,14 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # note:this multistring contains some training white spaces
         EXPECTED_OUTPUT_LEDGER_TEMPL = textwrap.dedent("""
-        ; source: __path_to_file__:1:      
+        ; source: __path_to_file__:1:
         2014-01-01 open Assets:Account1
-        
-        ; source: __path_to_file__:2:      
+
+        ; source: __path_to_file__:2:
         2014-01-01 open Assets:Cash
-        
-        ; source: __path_to_file__:4:      
-        2014-06-08 * 
+
+        ; source: __path_to_file__:4:
+        2014-06-08 *
           Assets:Account1   111.00 BEAN
           Assets:Cash      -111.00 BEAN
         """)

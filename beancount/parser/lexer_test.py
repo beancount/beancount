@@ -162,7 +162,7 @@ class TestLexer(unittest.TestCase):
         """
         self.assertEqual(
             [
-                ("EOL", 2, b'\n', None),
+                ("EOL", 2, b"\n", None),
                 ("DATE", 2, b"2014-07-05", datetime.date(2014, 7, 5)),
                 ("ASTERISK", 2, b"*", None),
                 ("EOL", 3, b"\n", None),
