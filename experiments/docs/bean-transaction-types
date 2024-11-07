@@ -7,13 +7,11 @@ ledger and identify all the types of transactions to discuss in the cookbook.
 __copyright__ = "Copyright (C) 2013-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 import collections
 import random
 
 from beancount.core import data
 from beancount.core import account
-from beancount.core import getters
 from beancount import loader
 from beancount.parser import printer
 from beancount.utils import misc_utils
@@ -34,7 +32,8 @@ def rename_accounts(entry, rename_map):
 
 
 def main():
-    import argparse, logging
+    import argparse
+    import logging
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -96,8 +95,8 @@ def main():
     # Print all renamed account names.
     print("* Account Names")
     print()
-    for account in sorted({account for accounts in groups.keys() for account in accounts}):
-        print(account)
+    for a in sorted({a for accounts in groups.keys() for a in accounts}):
+        print(a)
     print()
 
     # Print template transactions.
