@@ -8,7 +8,6 @@ repos:
       - id: check-yaml
       - id: check-merge-conflict
       - id: debug-statements
-      - id: trailing-whitespace
       - id: mixed-line-ending
         args: [ --fix=lf ]
       - id: end-of-file-fixer
