@@ -95,7 +95,9 @@ def main():
     # Print all renamed account names.
     print("* Account Names")
     print()
-    for _account in sorted({_account for accounts in groups.keys() for _account in accounts}):
+    for _account in sorted(
+        {_account for accounts in groups.keys() for _account in accounts}
+    ):
         print(_account)
     print()
 
@@ -111,7 +113,7 @@ def main():
         # for index in range(1, min(len(group_entries), opts.num_entries)+1):
         #    entry = group_entries[-index]
         for entry in random.sample(
-                group_entries, min(len(group_entries), opts.num_entries)
+            group_entries, min(len(group_entries), opts.num_entries)
         ):
             renamed_entry = rename_accounts(entry, rename_map)
             printer.print_entry(renamed_entry)
