@@ -143,16 +143,16 @@ def is_posting_incomplete(posting):
         return True
     price = posting.price
     if (
-            price is MISSING
-            or price is not None
-            and (price.number is MISSING or price.currency is MISSING)
+        price is MISSING
+        or price is not None
+        and (price.number is MISSING or price.currency is MISSING)
     ):
         return True
     cost = posting.cost
     if cost is not None and (
-            cost.number_per is MISSING
-            or cost.number_total is MISSING
-            or cost.currency is MISSING
+        cost.number_per is MISSING
+        or cost.number_total is MISSING
+        or cost.currency is MISSING
     ):
         return True
     return False
@@ -173,7 +173,7 @@ def is_entry_incomplete(entry):
 
 
 def parse_file(
-        file, report_filename=None, report_firstline=1, encoding=None, debug=False, **kw
+    file, report_filename=None, report_firstline=1, encoding=None, debug=False, **kw
 ):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
@@ -274,7 +274,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
             )
 
             if not allow_incomplete and any(
-                    is_entry_incomplete(entry) for entry in entries
+                is_entry_incomplete(entry) for entry in entries
             ):
                 self.fail("parse_doc() may not use interpolation.")
 

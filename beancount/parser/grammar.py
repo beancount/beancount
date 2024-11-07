@@ -40,6 +40,7 @@ from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
 
+
 class ParserError(NamedTuple):
     source: dict[str, Any]
     message: str
@@ -215,7 +216,7 @@ class Builder(lexer.LexBuilder):
         self.options["filename"] = filename
 
     def build_grammar_error(
-            self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
+        self, filename, lineno, exc_value, exc_type=None, exc_traceback=None
     ):
         """Build a grammar error and appends it to the list of pending errors.
 
@@ -757,7 +758,7 @@ class Builder(lexer.LexBuilder):
         return Note(meta, date, account, comment, tags, links)
 
     def document(
-            self, filename, lineno, date, account, document_filename, tags_links, kvlist
+        self, filename, lineno, date, account, document_filename, tags_links, kvlist
     ):
         """Process a document directive.
 
@@ -890,11 +891,11 @@ class Builder(lexer.LexBuilder):
         # If both cost and price are specified, the currencies must match, or
         # that is an error.
         if (
-                cost is not None
-                and price is not None
-                and isinstance(cost.currency, str)
-                and isinstance(price.currency, str)
-                and cost.currency != price.currency
+            cost is not None
+            and price is not None
+            and isinstance(cost.currency, str)
+            and isinstance(price.currency, str)
+            and cost.currency != price.currency
         ):
             self.errors.append(
                 ParserError(
@@ -985,7 +986,7 @@ class Builder(lexer.LexBuilder):
         )
 
     def transaction(
-            self, filename, lineno, date, flag, txn_strings, tags_links, posting_or_kv_list
+        self, filename, lineno, date, flag, txn_strings, tags_links, posting_or_kv_list
     ):
         """Process a transaction directive.
 

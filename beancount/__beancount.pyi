@@ -2,20 +2,16 @@ import datetime
 from decimal import Decimal
 from typing import Optional, Dict, Any
 
-
 class File:
     includes: list[str]
     options: list[str]
     directives: list[Any]
 
-
 def parse(b: str) -> File: ...
-
 
 Account = str
 Currency = str
 Meta = Dict[str, Any]
-
 
 # A set of valid booking method names for positions on accounts.
 # See http://furius.ca/beancount/doc/inventories for a full explanation.
@@ -43,13 +39,11 @@ class Booking:
     # Highest-in first-out in the case of ambiguity.
     HIFO = "HIFO"
 
-
 class Amount:
     number: Optional[Decimal]
     currency: str
 
     def __init__(self, number: Optional[str | int | float], currency: str) -> None: ...
-
 
 class Price:
     """
@@ -76,13 +70,12 @@ class Price:
     amount: Amount
 
     def __init__(
-            self,
-            meta: Meta,
-            date: datetime.date,
-            currency: Currency,
-            amount: Amount,
+        self,
+        meta: Meta,
+        date: datetime.date,
+        currency: Currency,
+        amount: Amount,
     ): ...
-
 
 class Cost:
     number: Decimal
@@ -91,13 +84,12 @@ class Cost:
     label: Optional[str]
 
     def __init__(
-            self,
-            number: Decimal,
-            currency: str,
-            date: datetime.date,
-            label: Optional[str],
+        self,
+        number: Decimal,
+        currency: str,
+        date: datetime.date,
+        label: Optional[str],
     ): ...
-
 
 class Pad:
     """
@@ -121,18 +113,16 @@ class Pad:
     source_account: Account
 
     def __init__(
-            self,
-            meta: Meta,
-            date: datetime.date,
-            account: Account,
-            source_account: Account,
+        self,
+        meta: Meta,
+        date: datetime.date,
+        account: Account,
+        source_account: Account,
     ): ...
-
 
 class PostingPrice:
     unit: Amount
     total: Amount
-
 
 class Posting:
     flag: int
