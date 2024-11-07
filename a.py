@@ -1,7 +1,5 @@
-import datetime
-from pprint import pprint
-
 import rich
+
 from beancount.__beancount import Booking, parse
 
 assert Booking.STRICT == Booking.STRICT, "a == a"
