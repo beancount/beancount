@@ -52,3 +52,4 @@ stats-postings:
     Render the number of postings for each account.
 ledger:
     Print out the entries in a format that can be parsed by Ledger.
+

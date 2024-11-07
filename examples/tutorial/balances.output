@@ -4,7 +4,7 @@ Assets:US:ETrade:GLD                              70.00 GLD
 Assets:US:ETrade:ITOT                             17.00 ITOT
 Assets:US:ETrade:VEA                              36.00 VEA
 Assets:US:ETrade:VHT                             294.00 VHT
-Assets:US:Federal:PreTax401k
+Assets:US:Federal:PreTax401k               
 Assets:US:Hoogle:Vacation                        337.26 VACHR
 Assets:US:Vanguard:Cash                           -0.02 USD
 Assets:US:Vanguard:RGAGX                         489.96 RGAGX
@@ -51,5 +51,5 @@ Income:US:Hoogle:GroupTermLife                -1,775.36 USD
 Income:US:Hoogle:Match401k                   -26,000.00 USD
 Income:US:Hoogle:Salary                     -336,922.74 USD
 Income:US:Hoogle:Vacation                       -337.26 VACHR
-Liabilities:AccountsPayable
+Liabilities:AccountsPayable                
 Liabilities:US:Chase:Slate                    -2,891.85 USD
