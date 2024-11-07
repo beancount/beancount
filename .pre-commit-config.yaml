@@ -1,4 +1,4 @@
-exclude: ^examples/.*$
+exclude: ^examples/.*\.output$
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
