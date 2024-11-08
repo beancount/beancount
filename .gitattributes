@@ -1,0 +1,7 @@
+etc/** export-ignore
+experiments/** export-ignore
+tools/** export-ignore
+index.html export-ignore
+style.css export-ignore
+.nginx.conf export-ignore
+Makefile export-ignore
