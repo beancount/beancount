@@ -2,11 +2,14 @@
 things that they reference, accounts, tags, links, currencies, etc.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from collections import defaultdict
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 from beancount.core.data import Transaction
 from beancount.core.data import Open
@@ -14,11 +17,16 @@ from beancount.core.data import Close
 from beancount.core.data import Commodity
 from beancount.core import account
 
+if TYPE_CHECKING:
+    from typing import Iterator
+
+    from beancount.core.data import Directives
+
 
 class GetAccounts:
     """Accounts gatherer."""
 
-    def get_accounts_use_map(self, entries):
+    def get_accounts_use_map(self, entries: Directives):
         """Gather the list of accounts from the list of entries.
 
         Args:
@@ -125,7 +133,7 @@ def get_accounts(entries):
     return accounts_last.keys()
 
 
-def get_entry_accounts(entry):
+def get_entry_accounts(entry: Directives) -> set[str]:
     """Gather all the accounts references by a single directive.
 
     Note: This should get replaced by a method on each directive eventually,
@@ -139,7 +147,7 @@ def get_entry_accounts(entry):
     return _GetAccounts.get_entry_accounts(entry)
 
 
-def get_account_components(entries):
+def get_account_components(entries: Directives) -> list[str]:
     """Gather all the account components available in the given directives.
 
     Args:
@@ -155,7 +163,7 @@ def get_account_components(entries):
     return sorted(components)
 
 
-def get_all_tags(entries):
+def get_all_tags(entries: Directives) -> list[str]:
     """Return a list of all the tags seen in the given entries.
 
     Args:
@@ -163,7 +171,7 @@ def get_all_tags(entries):
     Returns:
       A set of tag strings.
     """
-    all_tags = set()
+    all_tags: set[str] = set()
     for entry in entries:
         if not isinstance(entry, Transaction):
             continue
@@ -172,7 +180,7 @@ def get_all_tags(entries):
     return sorted(all_tags)
 
 
-def get_all_payees(entries):
+def get_all_payees(entries: Directives) -> list[str]:
     """Return a list of all the unique payees seen in the given entries.
 
     Args:
@@ -186,10 +194,10 @@ def get_all_payees(entries):
             continue
         all_payees.add(entry.payee)
     all_payees.discard(None)
-    return sorted(all_payees)
+    return sorted(all_payees)  # type: ignore[arg-type]
 
 
-def get_all_links(entries):
+def get_all_links(entries: Directives) -> list[str]:
     """Return a list of all the links seen in the given entries.
 
     Args:
@@ -197,7 +205,7 @@ def get_all_links(entries):
     Returns:
       A set of links strings.
     """
-    all_links = set()
+    all_links: set[str] = set()
     for entry in entries:
         if not isinstance(entry, Transaction):
             continue
@@ -274,7 +282,7 @@ def get_min_max_dates(entries, types=None):
     return (date_first, date_last)
 
 
-def get_active_years(entries):
+def get_active_years(entries: Directives) -> Iterator[int]:
     """Yield all the years that have at least one entry in them.
 
     Args:
