@@ -5,6 +5,8 @@ of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -13,7 +15,7 @@ import os
 import unicodedata
 
 from os import path
-from typing import Any, Callable, Iterable, Iterator, List, Tuple
+from typing import Any, Callable, Iterable, Iterator
 
 import regex
 
@@ -82,7 +84,7 @@ def is_valid(string: Account) -> bool:
     return isinstance(string, str) and bool(regex.fullmatch(ACCOUNT_RE, string))
 
 
-def join(*components: Tuple[str]) -> Account:
+def join(*components: str) -> Account:
     """Join the names with the account separator.
 
     Args:
@@ -93,7 +95,7 @@ def join(*components: Tuple[str]) -> Account:
     return sep.join(components)
 
 
-def split(account_name: Account) -> List[str]:
+def split(account_name: Account) -> list[str]:
     """Split an account's name into its components.
 
     Args:
@@ -104,7 +106,7 @@ def split(account_name: Account) -> List[str]:
     return account_name.split(sep)
 
 
-def parent(account_name: Account) -> Account:
+def parent(account_name: Account) -> Account | None:
     """Return the name of the parent account of the given account.
 
     Args:
@@ -120,7 +122,7 @@ def parent(account_name: Account) -> Account:
     return sep.join(components)
 
 
-def leaf(account_name: Account) -> Account:
+def leaf(account_name: Account) -> Account | None:
     """Get the name of the leaf of this account.
 
     Args:
@@ -132,7 +134,7 @@ def leaf(account_name: Account) -> Account:
     return account_name.split(sep)[-1] if account_name else None
 
 
-def sans_root(account_name: Account) -> Account:
+def sans_root(account_name: Account) -> Account | None:
     """Get the name of the account without the root.
 
     For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
@@ -189,7 +191,7 @@ def commonprefix(accounts: Iterable[Account]) -> Account:
     return sep.join(common_list)
 
 
-def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], List[str]]]:
+def walk(root_directory: Account) -> Iterator[tuple[str, Account, list[str], list[str]]]:
     """A version of os.walk() which yields directories that are valid account names.
 
     This only yields directories that are accounts... it skips the other ones.
@@ -234,9 +236,10 @@ def parents(account_name: Account) -> Iterator[Account]:
     Returns:
       A generator of account name strings.
     """
-    while account_name:
-        yield account_name
-        account_name = parent(account_name)
+    current_account: str | None = account_name
+    while current_account:
+        yield current_account
+        current_account = parent(current_account)
 
 
 class AccountTransformer:
@@ -249,7 +252,7 @@ class AccountTransformer:
       rsep: A character string, the new separator to use in link names.
     """
 
-    def __init__(self, rsep: str = None):
+    def __init__(self, rsep: str | None = None):
         self.rsep = rsep
 
     def render(self, account_name: Account) -> str:

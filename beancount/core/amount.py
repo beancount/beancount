@@ -7,6 +7,8 @@ currency:
 
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -46,7 +48,7 @@ class Amount(_Amount):
     valid_types_number = (Decimal, type, type(None))
     valid_types_currency = (str, type, type(None))
 
-    def __new__(cls, number, currency):
+    def __new__(cls, number: Decimal, currency: str):
         """Constructor from a number and currency.
 
         Args:
@@ -148,7 +150,7 @@ class Amount(_Amount):
 # okay.
 
 
-def sortkey(amount):
+def sortkey(amount: Amount) -> tuple[str, Decimal | None]:
     """A comparison function that sorts by currency first.
 
     Args:
@@ -159,7 +161,7 @@ def sortkey(amount):
     return (amount.currency, amount.number)
 
 
-def mul(amount, number):
+def mul(amount: Amount, number: Decimal) -> Amount:
     """Multiply the given amount by a number.
 
     Args:
@@ -177,7 +179,7 @@ def mul(amount, number):
     return Amount(amount.number * number, amount.currency)
 
 
-def div(amount, number):
+def div(amount: Amount, number: Decimal) -> Amount:
     """Divide the given amount by a number.
 
     Args:
@@ -195,7 +197,7 @@ def div(amount, number):
     return Amount(amount.number / number, amount.currency)
 
 
-def add(amount1, amount2):
+def add(amount1: Amount, amount2: Amount) -> Amount:
     """Add the given amounts with the same currency.
 
     Args:
@@ -218,7 +220,7 @@ def add(amount1, amount2):
     return Amount(amount1.number + amount2.number, amount1.currency)
 
 
-def sub(amount1, amount2):
+def sub(amount1: Amount, amount2: Amount) -> Amount:
     """Subtract the given amounts with the same currency.
 
     Args:
@@ -241,7 +243,7 @@ def sub(amount1, amount2):
     return Amount(amount1.number - amount2.number, amount1.currency)
 
 
-def abs(amount):
+def abs(amount: Amount) -> Amount:
     """Return the absolute value of the given amount.
 
     Args:
@@ -249,6 +251,9 @@ def abs(amount):
     Returns:
       An instance of Amount.
     """
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
     return amount if amount.number >= ZERO else Amount(-amount.number, amount.currency)
 
 

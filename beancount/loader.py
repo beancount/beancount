@@ -4,7 +4,7 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict, Tuple
 import collections
 import copy
 import functools
@@ -49,7 +49,7 @@ PLUGINS_PRE = [
 DEFAULT_PLUGINS_AUTO = [
     ("beancount.plugins.auto", None),
 ]
-PLUGINS_AUTO = []
+PLUGINS_AUTO: List[Tuple[str, Any]] = []
 
 PLUGINS_POST = [
     ("beancount.ops.pad", None),
@@ -57,7 +57,7 @@ PLUGINS_POST = [
 ]
 
 # A mapping of modules to warn about, to their renamed names.
-RENAMED_MODULES = {}
+RENAMED_MODULES: Dict[str, str] = {}
 
 
 # Filename pattern for the pickle-cache.

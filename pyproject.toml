@@ -43,6 +43,14 @@ homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 
+[[tool.mypy.overrides]]
+module = "beancount.projects.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "beancount.scripts.*"
+ignore_errors = true
+
 [tool.black]
 line-length = 92
 # Please note: We use 'ruff format' to autoformat buffers.

@@ -1,5 +1,7 @@
 """Basic data structures used to represent the Ledger entries."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -9,7 +11,7 @@ import enum
 import sys
 
 from decimal import Decimal
-from typing import Any, Dict, FrozenSet, List, NamedTuple, Optional, Set, Union
+from typing import Any, Iterator, NamedTuple, Union, overload, Dict, List
 
 from beancount.core.amount import Amount
 from beancount.core.number import D
@@ -29,7 +31,7 @@ Meta = Dict[str, Any]
 # An immutable constant for all empty sets. This is used to set links and tags
 # and ensure that they never has a None value. This makes some of the processing
 # code a bit simpler.
-EMPTY_SET = frozenset()
+EMPTY_SET: frozenset[str] = frozenset()
 
 
 # A set of valid booking method names for positions on accounts.
@@ -94,8 +96,8 @@ class Open(NamedTuple):
     meta: Meta
     date: datetime.date
     account: Account
-    currencies: List[Currency]
-    booking: Optional[Booking]
+    currencies: list[Currency]
+    booking: Booking | None
 
 
 class Close(NamedTuple):
@@ -182,8 +184,8 @@ class Balance(NamedTuple):
     date: datetime.date
     account: Account
     amount: Amount
-    tolerance: Optional[Decimal]
-    diff_amount: Optional[Amount]
+    tolerance: Decimal | None
+    diff_amount: Amount | None
 
 
 class Posting(NamedTuple):
@@ -212,11 +214,11 @@ class Posting(NamedTuple):
     """
 
     account: Account
-    units: Optional[Amount]
-    cost: Optional[Union[Cost, CostSpec]]
-    price: Optional[Amount]
-    flag: Optional[Flag]
-    meta: Optional[Meta]
+    units: Amount | None
+    cost: Cost | CostSpec | None
+    price: Amount | None
+    flag: Flag | None
+    meta: Meta | None
 
 
 class Transaction(NamedTuple):
@@ -245,11 +247,11 @@ class Transaction(NamedTuple):
     meta: Meta
     date: datetime.date
     flag: Flag
-    payee: Optional[str]
+    payee: str | None
     narration: str
-    tags: FrozenSet
-    links: FrozenSet
-    postings: List[Posting]
+    tags: frozenset[str]
+    links: frozenset[str]
+    postings: list[Posting]
 
 
 class TxnPosting(NamedTuple):
@@ -289,8 +291,8 @@ class Note(NamedTuple):
     date: datetime.date
     account: Account
     comment: str
-    tags: Optional[Set]
-    links: Optional[Set]
+    tags: frozenset[str] | None
+    links: frozenset[str] | None
 
 
 class Event(NamedTuple):
@@ -403,8 +405,8 @@ class Document(NamedTuple):
     date: datetime.date
     account: Account
     filename: str
-    tags: Optional[Set]
-    links: Optional[Set]
+    tags: frozenset[str] | None
+    links: frozenset[str] | None
 
 
 class Custom(NamedTuple):
@@ -428,7 +430,7 @@ class Custom(NamedTuple):
     meta: Meta
     date: datetime.date
     type: str
-    values: List
+    values: list[Any]
 
 
 # A list of all the valid directive types.
@@ -488,7 +490,7 @@ Directives = List[Directive]
 Options = Dict[str, Any]
 
 
-def new_metadata(filename, lineno, kvlist=None):
+def new_metadata(filename: str, lineno: int, kvlist: Meta | None = None) -> Meta:
     """Create a new metadata container from the filename and line number.
 
     Args:
@@ -504,7 +506,22 @@ def new_metadata(filename, lineno, kvlist=None):
     return meta
 
 
-def create_simple_posting(entry, account, number, currency):
+# Either both number and currency should be provided or both should be None
+@overload
+def create_simple_posting(
+    entry: Transaction, account: Account, number: Decimal | str, currency: str
+) -> Posting: ...
+
+
+@overload
+def create_simple_posting(
+    entry: Transaction, account: Account, number: None, currency: None
+) -> Posting: ...
+
+
+def create_simple_posting(
+    entry: Transaction, account: Account, number: Decimal | str | None, currency: str | None
+) -> Posting:
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
@@ -518,7 +535,7 @@ def create_simple_posting(entry, account, number, currency):
     """
     if isinstance(account, str):
         pass
-    if number is None:
+    if number is None or currency is None:
         units = None
     else:
         if not isinstance(number, Decimal):
@@ -531,9 +548,14 @@ def create_simple_posting(entry, account, number, currency):
 
 
 def create_simple_posting_with_cost(
-    entry, account, number, currency, cost_number, cost_currency
-):
-    """Create a simple posting on the entry, with just a number and currency (no cost).
+    entry: Transaction,
+    account: Account,
+    number: Decimal | str,
+    currency: str,
+    cost_number: Decimal | str,
+    cost_currency: str,
+) -> Posting:
+    """Create a simple posting on the entry, with a number and currency and cost.
 
     Args:
       entry: The entry instance to add the posting to.
@@ -550,7 +572,7 @@ def create_simple_posting_with_cost(
         pass
     if not isinstance(number, Decimal):
         number = D(number)
-    if cost_number and not isinstance(cost_number, Decimal):
+    if cost_number is not None and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
     units = Amount(number, currency)
     cost = Cost(cost_number, cost_currency, None, None)
@@ -563,7 +585,9 @@ def create_simple_posting_with_cost(
 NoneType = type(None)
 
 
-def sanity_check_types(entry, allow_none_for_tags_and_links=False):
+def sanity_check_types(
+    entry: Directive, allow_none_for_tags_and_links: bool = False
+) -> None:
     """Check that the entry and its postings has all correct data types.
 
     Args:
@@ -604,7 +628,7 @@ def sanity_check_types(entry, allow_none_for_tags_and_links=False):
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
 
-def posting_has_conversion(posting):
+def posting_has_conversion(posting: Posting) -> bool:
     """Return true if this position involves a conversion.
 
     A conversion is when there is a price attached to the amount but no cost.
@@ -618,7 +642,7 @@ def posting_has_conversion(posting):
     return posting.cost is None and posting.price is not None
 
 
-def transaction_has_conversion(transaction):
+def transaction_has_conversion(transaction: Transaction) -> bool:
     """Given a Transaction entry, return true if at least one of
     the postings has a price conversion (without an associated
     cost). These are the source of non-zero conversion balances.
@@ -638,7 +662,7 @@ def transaction_has_conversion(transaction):
     return False
 
 
-def get_entry(posting_or_entry):
+def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
     """Return the entry associated with the posting or entry.
 
     Args:
@@ -666,7 +690,7 @@ def get_entry(posting_or_entry):
 SORT_ORDER = {Open: -2, Balance: -1, Document: 1, Close: 2}
 
 
-def entry_sortkey(entry):
+def entry_sortkey(entry: Directive) -> tuple[datetime.date, int, int]:
     """Sort-key for entries. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,
     in order to balance linearly.
@@ -680,7 +704,7 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
-def sorted(entries):
+def sorted(entries: Directives) -> Directives:
     """A convenience to sort a list of entries, using entry_sortkey().
 
     Args:
@@ -691,7 +715,7 @@ def sorted(entries):
     return builtins.sorted(entries, key=entry_sortkey)
 
 
-def posting_sortkey(entry: Union[TxnPosting, Directive]):
+def posting_sortkey(entry: Directive | TxnPosting) -> tuple[datetime.date, int, int]:
     """Sort-key for entries or TxnPosting instances. We sort by date, except
     that checks should be placed in front of every list of entries of that same
     day, in order to balance linearly.
@@ -709,7 +733,7 @@ def posting_sortkey(entry: Union[TxnPosting, Directive]):
 
 
 # TODO(blais): Rename 'txns' to 'transactions' for clarity.
-def filter_txns(entries):
+def filter_txns(entries: Directives) -> Iterator[Transaction]:
     """A generator that yields only the Transaction instances.
 
     This is such an incredibly common operation that it deserves a terse
@@ -725,7 +749,7 @@ def filter_txns(entries):
             yield entry
 
 
-def has_entry_account_component(entry, component):
+def has_entry_account_component(entry: Directive, component: str) -> bool:
     """Return true if one of the entry's postings has an account component.
 
     Args:
@@ -741,7 +765,7 @@ def has_entry_account_component(entry, component):
     )
 
 
-def find_closest(entries, filename, lineno):
+def find_closest(entries: Directives, filename: str, lineno: int) -> Directive | None:
     """Find the closest entry from entries to (filename, lineno).
 
     Args:
@@ -767,7 +791,7 @@ def find_closest(entries, filename, lineno):
     return closest_entry
 
 
-def remove_account_postings(account, entries):
+def remove_account_postings(account: Account, entries: Directives) -> Directives:
     """Remove all postings with the given account.
 
     Args:
@@ -789,7 +813,9 @@ def remove_account_postings(account, entries):
     return new_entries
 
 
-def iter_entry_dates(entries, date_begin, date_end):
+def iter_entry_dates(
+    entries: Directives, date_begin: datetime.date, date_end: datetime.date
+) -> Iterator[Directive]:
     """Iterate over the entries in a date window.
 
     Args:

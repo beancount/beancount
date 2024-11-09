@@ -1,10 +1,28 @@
 """A version of bisect that accepts a custom key function, like the sorting ones do."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from typing import Callable, Sequence, TypeVar, overload
 
-def bisect_left_with_key(sequence, value, key=None):
+
+T = TypeVar("T")
+U = TypeVar("U")
+
+
+@overload
+def bisect_left_with_key(sequence: Sequence[T], value: T) -> int: ...
+
+
+@overload
+def bisect_left_with_key(sequence: Sequence[T], value: U, key: Callable[[T], U]) -> int: ...
+
+
+def bisect_left_with_key(
+    sequence: Sequence[T], value: U, key: Callable[[T], U] | None = None
+) -> int:
     """Find the last element before the given value in a sorted list.
 
     Args:
@@ -15,15 +33,17 @@ def bisect_left_with_key(sequence, value, key=None):
     Returns:
       Return the index. May return None.
     """
-    if key is None:
-        key = lambda x: x  # Identity.
+
+    # see overloads, if no key function is given, T = U
+    keyfunc: Callable[[T], U] = key if key is not None else lambda x: x  # type: ignore[assignment,return-value]
 
     lo = 0
     hi = len(sequence)
 
     while lo < hi:
         mid = (lo + hi) // 2
-        if key(sequence[mid]) < value:
+        # Python does not yet have a built-in way to add some "Comparable" bound to U
+        if keyfunc(sequence[mid]) < value:  # type: ignore[operator]
             lo = mid + 1
         else:
             hi = mid
