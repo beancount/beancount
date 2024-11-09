@@ -44,6 +44,32 @@ ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 TYPE = "<AccountDummy>"
 
 
+def is_valid_root(string: Account) -> bool:
+    """Return true if the given string is a valid root account name.
+    This just check for valid syntax.
+
+    Args:
+      string: A string, to be checked for account name pattern.
+    Returns:
+      A boolean, true if the string has the form of a root account's name.
+    """
+    return isinstance(string, str) and bool(regex.fullmatch(ACC_COMP_TYPE_RE, string))
+
+
+def is_valid_leaf(string: Account) -> bool:
+    """Return true if the given string is a valid leaf account name.
+    This just check for valid syntax.
+
+    Args:
+      string: A string, to be checked for account name pattern.
+    Returns:
+      A boolean, true if the string has the form of a leaf account's name.
+    """
+    return isinstance(string, str) and all(
+        regex.fullmatch(ACC_COMP_NAME_RE, p) for p in string.split(":")
+    )
+
+
 def is_valid(string: Account) -> bool:
     """Return true if the given string is a valid account name.
     This does not check for the root account types, just the general syntax.
