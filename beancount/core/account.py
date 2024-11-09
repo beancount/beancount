@@ -53,7 +53,7 @@ def is_valid(string: Account) -> bool:
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return isinstance(string, str) and bool(regex.match("{}$".format(ACCOUNT_RE), string))
+    return isinstance(string, str) and bool(regex.fullmatch(ACCOUNT_RE, string))
 
 
 def join(*components: Tuple[str]) -> Account:
