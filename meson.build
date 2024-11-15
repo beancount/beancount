@@ -2,8 +2,6 @@ project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>
 
 bison = find_program('bison', version: '>=3.8.0')
 flex = find_program('flex', version: '>=2.6.4')
-cc = meson.get_compiler('c')
-libm = cc.find_library('m')
 
 py = import('python').find_installation(pure: false)
 
@@ -251,6 +249,8 @@ py.extension_module(
 )
 
 if get_option('tests').enabled()
+    cc = meson.get_compiler('c')
+    libm = cc.find_library('m', required: false)
     tokens_test = executable(
         'tokens-test',
         'beancount/parser/decimal.c',
