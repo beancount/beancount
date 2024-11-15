@@ -37,7 +37,7 @@ jobs:
 
       - run: brew install bison
         if: runner.os == 'macOS'
-      - run: echo "/opt/homebrew/opt/bison/bin:$PATH" >> $GITHUB_PATH
+      - run: echo "/opt/homebrew/opt/bison/bin" >> $GITHUB_PATH
         if: runner.os == 'macOS'
 
       - run: python -m pip install meson-python ninja pytest
