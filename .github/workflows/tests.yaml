@@ -26,9 +26,13 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
-      - run: echo "C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      - run: echo "PATH=$env:Path;C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_ENV" -Append
         if: runner.os == 'Windows'
       - run: pacman --noconfirm -S bison flex
+        if: runner.os == 'Windows'
+      - uses: bus1/cabuild/action/msdevshell@v1
+        with:
+          architecture: x64
         if: runner.os == 'Windows'
 
       - run: brew install bison
