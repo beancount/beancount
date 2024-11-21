@@ -1,7 +1,7 @@
 project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>=1.1')
 
-bison = find_program('bison', version: '>=3.8.0')
-flex = find_program('flex', version: '>=2.6.4')
+bison = find_program('bison', 'win_bison', version: '>=3.8.0')
+flex = find_program('flex', 'win_flex', version: '>=2.6.4')
 
 py = import('python').find_installation(pure: false)
 
