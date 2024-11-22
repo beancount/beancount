@@ -75,3 +75,35 @@ def intimezone(tz_value: str):
         else:
             os.environ["TZ"] = tz_old
         time.tzset()
+
+
+def parse_time(time_str):
+    """Return a datetime.datetime object from a time string.
+
+    Args:
+      time_str: A string, the time to parse.
+    Returns:
+      A datetime.time object.
+    """
+    # Define possible formats with floating-point seconds and optional timezone
+    formats = ['%H:%M:%S.%f%z', '%H:%M:%S.%f', '%H:%M:%S%z', '%H:%M:%S']
+
+    has_timezone = '+' in time_str or '-' in time_str
+    has_fraction = '.' in time_str
+
+    if has_timezone and has_fraction:
+        fmt = formats[0]
+    elif has_fraction:
+        fmt = formats[1]
+    elif has_timezone:
+        fmt = formats[2]
+    else:
+        fmt = formats[3]
+
+    time = datetime.datetime.strptime(time_str, fmt).time()
+
+    # All time needs to have a timezone set for comparisons
+    if time.tzinfo is None:
+        time = time.replace(tzinfo=datetime.timezone.utc)
+
+    return time
