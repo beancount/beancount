@@ -230,7 +230,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
 
-        2014-06-10 * "Entry with escaped \\"symbols\\" \\ \\r \\n"
+        2014-06-10 * "Entry with escaped \\"quotes\\""
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
