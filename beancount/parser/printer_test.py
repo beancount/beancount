@@ -285,17 +285,36 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
-    @loader.load_doc()
-    def test_Document(self, entries, errors, __):
-        """
+    def test_Document(self):
+        # The beancount parser processes escaped characters in all strings,
+        # including the file path in the ``document`` directive.  Windows uses
+        # backslashes as file path separator character.  Unless these are
+        # escaped, the path separators are threated as the beginning of an
+        # escape sequence by the parser, producing the wrong result.
+        #
+        # The path separator characters can be escaped as double backslashes.
+        # However ``beancount.parser.print_entries()`` does not do that,
+        # breaking the round-trip test.  To change ``print_entries()`` to escape
+        # special characters would be an incompatible change.
+        #
+        # The solution could be to use a simple file name in the test, however,
+        # the beancount loader transforms all relative paths into absolute
+        # paths, introducing path separator characters.  Windows also accepts
+        # forward slashes as path separators, therefore, the solution is to
+        # craft the test to use absolute paths with forward slashes on all
+        # platforms.
+        path = os.path.join(os.path.dirname(__file__), "document.pdf").replace("\\", "/")
+
+        ledger = textwrap.dedent("""\
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1
-        2014-06-08 document Assets:Account1 "/path/to/document.pdf"
-        2014-06-08 document Assets:Account1 "path/to/document.csv"
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1 #tag2 ^link1 ^link2
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
-        """
+        2014-06-08 document Assets:Account1 "{path}"
+        2014-06-08 document Assets:Account1 "{path}" #tag1 #tag2 ^link1 ^link2
+        2014-06-08 document Assets:Account1 "{path}" #tag1
+        2014-06-08 document Assets:Account1 "{path}" ^link1
+        """).format(path=path)
+        entries, errors, __ = loader.load_string(ledger)
+
         with self.subTest("RoundTrip test via StringIO"):
             self.assertRoundTrip(entries, errors)
 
