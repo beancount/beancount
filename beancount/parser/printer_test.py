@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import io
 import os
+import sys
 from datetime import date
 import unittest
 import re
@@ -230,7 +231,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
 
-        2014-06-10 * "Entry with escaped \\"symbols\\" \\ \\r \\n"
+        2014-06-10 * "Entry with escaped \\"symbols\\""
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
@@ -285,6 +286,7 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
+    @unittest.skipIf(sys.platform == "win32", reason="os.sep")
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
         """

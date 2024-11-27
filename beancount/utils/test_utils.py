@@ -1,5 +1,7 @@
 """Support utilities for testing scripts."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -10,6 +12,7 @@ import functools
 import io
 import os
 import re
+import secrets
 import shutil
 import sys
 import tempfile
@@ -17,6 +20,7 @@ import textwrap
 import unittest
 
 from os import path
+from pathlib import Path
 
 import click.testing
 
@@ -170,28 +174,37 @@ def patch(obj, attributes, replacement_type):
         setattr(obj, attribute, saved_attr)
 
 
-def docfile(function, **kwargs):
+def docfile(
+    function,
+    contents: str | None = None,
+    prefix: str = "",
+    suffix: str = ".beancount",
+    encoding: str = "utf-8",
+):
     """A decorator that write the function's docstring to a temporary file
     and calls the decorated function with the temporary filename.  This is
     useful for writing tests.
 
     Args:
       function: A function to decorate.
+      contents: file content, default to function.__doc__
+      prefix: prefix of filename
+      suffix: suffix of filename
+      encoding: encoding of file content
     Returns:
       The decorated function.
     """
-    contents = kwargs.pop("contents", None)
 
     @functools.wraps(function)
     def new_function(self):
-        allowed = ("buffering", "encoding", "newline", "dir", "prefix", "suffix")
-        if any(key not in allowed for key in kwargs):
-            raise ValueError("Invalid kwarg to docfile_extra")
-        with tempfile.NamedTemporaryFile("w", **kwargs) as file:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file_path = Path(
+                temp_dir,
+                "{}{}{}".format(prefix, secrets.token_hex(4), suffix),
+            )
             text = contents or function.__doc__
-            file.write(textwrap.dedent(text))
-            file.flush()
-            return function(self, file.name)
+            temp_file_path.write_text(textwrap.dedent(text), encoding=encoding)
+            return function(self, str(temp_file_path))
 
     new_function.__doc__ = None
     return new_function
