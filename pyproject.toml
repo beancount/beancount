@@ -28,6 +28,7 @@ dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
     "regex >=2022.9.13",
+    'typing-extensions>=4.5',
 ]
 dynamic = ["version"]
 
