@@ -7,13 +7,13 @@ __license__ = "GNU GPLv2"
 
 import io
 import unittest
-import tempfile
 import textwrap
 import sys
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
+from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -82,18 +82,17 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_parse_filename(self):
-        with tempfile.NamedTemporaryFile("w", suffix=".beancount") as file:
-            file.write(self.INPUT)
-            file.flush()
-            entries, errors, _ = parser.parse_file(file.name)
+        with test_utils.temp_file(suffix=".beancount") as file:
+            file.write_text(self.INPUT, encoding="utf8")
+            entries, errors, _ = parser.parse_file(str(file))
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
     def test_parse_file(self):
-        with tempfile.TemporaryFile("w+b", suffix=".beancount") as file:
-            file.write(self.INPUT.encode("utf-8"))
-            file.seek(0)
-            entries, errors, _ = parser.parse_file(file)
+        with test_utils.temp_file(suffix=".beancount") as file:
+            file.write_text(self.INPUT, encoding="utf8")
+            with open(file, "rb") as obj:
+                entries, errors, _ = parser.parse_file(obj)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
