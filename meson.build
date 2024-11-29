@@ -83,7 +83,6 @@ py.install_sources(
     beancount/tools/treeify.py
     beancount/utils/__init__.py
     beancount/utils/bisect_key.py
-    beancount/utils/date_utils.py
     beancount/utils/defdict.py
     beancount/utils/encryption.py
     beancount/utils/file_utils.py
@@ -182,7 +181,6 @@ py.install_sources('''
     beancount/scripts/format_test.py
     beancount/tools/treeify_test.py
     beancount/utils/bisect_key_test.py
-    beancount/utils/date_utils_test.py
     beancount/utils/defdict_test.py
     beancount/utils/encryption_test.py
     beancount/utils/file_utils_test.py
