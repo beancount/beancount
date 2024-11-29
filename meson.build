@@ -92,7 +92,6 @@ py.install_sources(
     beancount/utils/memo.py
     beancount/utils/misc_utils.py
     beancount/utils/pager.py
-    beancount/utils/snoop.py
     beancount/utils/table.py
     beancount/utils/test_utils.py
     '''.split(),
@@ -191,7 +190,6 @@ py.install_sources('''
     beancount/utils/memo_test.py
     beancount/utils/misc_utils_test.py
     beancount/utils/pager_test.py
-    beancount/utils/snoop_test.py
     beancount/utils/table_test.py
     beancount/utils/test_utils_test.py
     '''.split(),
