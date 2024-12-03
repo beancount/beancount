@@ -286,7 +286,11 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
-    @unittest.skipIf(sys.platform == "win32", reason="os.sep")
+    @unittest.skipIf(
+        sys.platform == "win32",
+        reason="printer didn't escape backslash in document.filename, therefore generate invalid input to parser,"
+        "so assertRoundTrip will fail on win32 if filename contains any backslash",
+    )
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
         """
