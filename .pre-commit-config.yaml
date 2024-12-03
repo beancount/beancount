@@ -18,10 +18,13 @@ repos:
     rev: v0.22
     hooks:
       - id: validate-pyproject
-        additional_dependencies: [ "validate-pyproject-schema-store[all]" ]
+        # schema-store include schema for ruff config,
+        # need to match ruff hook version
+        additional_dependencies: [ "validate-pyproject-schema-store[all]==2024.11.25" ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.2
+    # when we update this version, need also update schema-store to match it.
+    rev: v0.8.1
     hooks:
       - id: ruff
         args: [ --fix ]
