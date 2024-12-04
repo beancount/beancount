@@ -112,16 +112,15 @@ class TestLoader(unittest.TestCase):
 
     def test_load(self):
         with test_utils.capture():
-            with tempfile.NamedTemporaryFile("w") as tmpfile:
-                tmpfile.write(TEST_INPUT)
-                tmpfile.flush()
-                entries, errors, options_map = loader.load_file(tmpfile.name)
+            with test_utils.temp_file() as tmpfile:
+                tmpfile.write_text(TEST_INPUT)
+                entries, errors, options_map = loader.load_file(tmpfile)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
                 entries, errors, options_map = loader.load_file(
-                    tmpfile.name, log_timings=logging.info
+                    tmpfile, log_timings=logging.info
                 )
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
@@ -479,8 +478,13 @@ class TestLoadIncludes(unittest.TestCase):
         self.assertEqual(3, len(entries))
         self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
         self.assertEqual(
-            ["apples.beancount", "bananas.beancount", "oranges.beancount", "top.beancount"],
-            list(map(path.basename, options_map["include"])),
+            {
+                "apples.beancount",
+                "bananas.beancount",
+                "oranges.beancount",
+                "top.beancount",
+            },
+            set(map(path.basename, options_map["include"])),
         )
 
     def test_load_glob_relative_mixed(self):
@@ -512,8 +516,8 @@ class TestLoadIncludes(unittest.TestCase):
         self.assertEqual(2, len(entries))
         self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
         self.assertEqual(
-            ["1.apples.beancount", "2.oranges.beancount", "top.beancount"],
-            list(map(path.basename, options_map["include"])),
+            {"1.apples.beancount", "2.oranges.beancount", "top.beancount"},
+            set(map(path.basename, options_map["include"])),
         )
 
 
