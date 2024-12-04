@@ -5,6 +5,7 @@ import unittest
 import io
 import os
 from os import path
+from pathlib import Path
 
 from beancount.utils import test_utils
 
@@ -38,12 +39,12 @@ class TestTestUtils(unittest.TestCase):
             )
 
             # Check the total list of files.
-            apples = path.join(tmp, "apples.beancount")
-            oranges = path.join(tmp, "fruits/oranges.beancount")
+            apples = Path(tmp, "apples.beancount")
+            oranges = Path(tmp, "fruits/oranges.beancount")
             self.assertEqual(
                 {apples, oranges},
                 set(
-                    path.join(root, filename)
+                    Path(root, filename)
                     for root, _, files in os.walk(tmp)
                     for filename in files
                 ),

@@ -12,7 +12,6 @@ import functools
 import io
 import os
 import re
-import secrets
 import shutil
 import sys
 import tempfile
@@ -21,6 +20,7 @@ import unittest
 
 from os import path
 from pathlib import Path
+from typing import Generator
 
 import click.testing
 
@@ -80,6 +80,20 @@ def subprocess_env():
         ]
     ).strip(":")
     return {"PATH": binpath, "PYTHONPATH": find_python_lib()}
+
+
+@contextlib.contextmanager
+def temp_file(prefix: str = "", suffix: str = ".txt") -> Generator[Path, None, None]:
+    """A context manager that return a filepath inside inside a temporary directory and
+    deletes this directory unconditionally once done.
+
+    This utils exists because `NamedTemporaryFile` can't be re-opened on win32.
+
+    Yields:
+      A string, the name of the temporary directory created.
+    """
+    with tempfile.TemporaryDirectory(prefix="beancount-test-tmpdir.") as p:
+        yield Path(p, prefix + "-temp_file-" + suffix)
 
 
 @contextlib.contextmanager
@@ -197,14 +211,11 @@ def docfile(
 
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file_path = Path(
-                temp_dir,
-                "{}{}{}".format(prefix, secrets.token_hex(4), suffix),
+        with temp_file(suffix=suffix, prefix=prefix) as file:
+            file.write_text(
+                textwrap.dedent(contents or function.__doc__), encoding=encoding
             )
-            text = contents or function.__doc__
-            temp_file_path.write_text(textwrap.dedent(text), encoding=encoding)
-            return function(self, str(temp_file_path))
+            return function(self, str(file))
 
     new_function.__doc__ = None
     return new_function
