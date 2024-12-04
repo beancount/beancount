@@ -44,5 +44,9 @@ jobs:
       - run: python -m pip install -v --no-build-isolation -Cbuild-dir=build -Csetup-args=-Dtests=enabled -e .
 
       - run: pytest beancount
+        if: runner.os != 'Windows'
+
+      - run: pytest beancount/ --ignore beancount/scripts/ --ignore beancount/loader_test.py
+        if: runner.os == 'Windows'
 
       - run: meson test -C build/
