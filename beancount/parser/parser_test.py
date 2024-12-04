@@ -7,15 +7,14 @@ __license__ = "GNU GPLv2"
 
 import io
 import unittest
-import tempfile
 import textwrap
 import sys
-from pathlib import Path
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser, _parser, lexer, grammar
 from beancount.loader import load_string
+from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -94,18 +93,16 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_parse_filename(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file_path = Path(temp_dir, "temp.beancount")
-            temp_file_path.write_bytes(self.INPUT.encode("utf-8"))
-            entries, errors, _ = parser.parse_file(str(temp_file_path))
+        with test_utils.temp_file(suffix=".beancount") as tmp_file:
+            tmp_file.write_bytes(self.INPUT.encode("utf-8"))
+            entries, errors, _ = parser.parse_file(str(tmp_file))
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
     def test_parse_file(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file_path = Path(temp_dir, "temp.beancount")
-            temp_file_path.write_bytes(self.INPUT.encode("utf-8"))
-            with temp_file_path.open("rb") as f:
+        with test_utils.temp_file(suffix=".beancount") as tmp_file:
+            tmp_file.write_bytes(self.INPUT.encode("utf-8"))
+            with tmp_file.open("rb") as f:
                 entries, errors, _ = parser.parse_file(f)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
