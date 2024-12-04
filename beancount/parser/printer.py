@@ -351,8 +351,8 @@ class EntryPrinter:
 
     def Document(self, entry: Document, oss):
         oss.write(
-            '{e.date} document {e.account} "{filename}"'.format(
-                e=entry, filename=entry.filename.replace("\\", r"\\")
+            "{e.date} document {e.account} {filename}".format(
+                e=entry, filename=misc_utils.quote_string(entry.filename)
             )
         )
         if entry.tags or entry.links:
