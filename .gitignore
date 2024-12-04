@@ -3,6 +3,7 @@
 *.picklecache
 *.pyc
 *.so
+*.pyd
 *.swp
 *~
 .cache
