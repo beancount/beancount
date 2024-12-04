@@ -45,8 +45,8 @@ class TestScriptCheckDirectories(unittest.TestCase):
 
         expected_error_accounts = set(
             """
-            Assets/Extra
-            Expenses/Restaurant/Sub
+            Assets:Extra
+            Expenses:Restaurant:Sub
         """.strip().split()
         )
         for error in errors:
