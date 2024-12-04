@@ -6,6 +6,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import os
 import textwrap
 import unittest
 from os import path
@@ -42,7 +43,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
               2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
-            """).replace("ROOT", self.root)
+            """).replace("ROOT", self.root.replace("\\", r"\\"))
             )
         entries, _, options_map = loader.load_file(input_filename)
 
@@ -61,7 +62,10 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
           option "plugin_processing_mode" "raw"
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-10 document Liabilities:US:Bank "ROOT/does-not-exist.pdf"
-        """).replace("ROOT", self.root)
+        """)
+            .replace("ROOT", self.root)
+            .replace("/", os.sep)
+            .replace("\\", r"\\")  # noop on POSIX
         )
         self.assertEqualEntries(
             expected_entries,
@@ -82,7 +86,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
               2014-01-01 open Assets:US:Bank:Checking
               2014-01-01 open Liabilities:US:Bank
 
-            """).replace("ROOT", self.root)
+            """).replace("ROOT", self.root.replace("\\", r"\\"))
             )
         entries, _, options_map = loader.load_file(input_filename)
         entries, errors = documents.process_documents(entries, options_map)
@@ -96,7 +100,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-01 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-01.savings.pdf"
           2014-07-10 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-10.something-else.pdf"
-        """).replace("ROOT", self.root)
+        """).replace("ROOT", self.root.replace("\\", r"\\"))
         )
 
         _, errors = documents.verify_document_files_exist(entries, options_map)
@@ -115,7 +119,9 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
         entry = entries1[0]
         self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(
-            entry.filename.endswith("Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf")
+            entry.filename.endswith(
+                "Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf".replace("/", os.sep)
+            )
         )
         self.assertEqual("Assets:US:Bank:Checking", entry.account)
         self.assertEqual(datetime.date(2014, 6, 8), entry.date)
@@ -123,7 +129,9 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
         entry = entries1[1]
         self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(
-            entry.filename.endswith("Assets/US/Bank/Savings/2014-07-01.savings.pdf")
+            entry.filename.endswith(
+                "Assets/US/Bank/Savings/2014-07-01.savings.pdf".replace("/", os.sep)
+            )
         )
         self.assertEqual("Assets:US:Bank:Savings", entry.account)
         self.assertEqual(datetime.date(2014, 7, 1), entry.date)
