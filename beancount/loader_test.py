@@ -8,6 +8,7 @@ import unittest
 import tempfile
 import textwrap
 import os
+from pathlib import Path
 from unittest import mock
 from os import path
 
@@ -431,6 +432,87 @@ class TestLoadIncludes(unittest.TestCase):
         self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
         self.assertEqual(
             ["apples.beancount", "bananas.beancount", "oranges.beancount"],
+            list(map(path.basename, options_map["include"])),
+        )
+
+    def test_load_glob_relative(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": 'include "./includes/*.beancount"',
+                    "includes/apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            ["apples.beancount", "bananas.beancount", "oranges.beancount", "top.beancount"],
+            list(map(path.basename, options_map["include"])),
+        )
+
+    def test_load_glob_relative_abs(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": 'include "{}"'.format(
+                        Path(tmp).joinpath("includes/*.beancount").resolve().as_posix()
+                    ),
+                    "includes/apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            ["apples.beancount", "bananas.beancount", "oranges.beancount", "top.beancount"],
+            list(map(path.basename, options_map["include"])),
+        )
+
+    def test_load_glob_relative_mixed(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": "\n".join(
+                        [
+                            'include "./includes/2.*.beancount"',
+                            'include "{}"'.format(
+                                Path(tmp)
+                                .joinpath("includes/1.*.beancount")
+                                .resolve()
+                                .as_posix()
+                            ),
+                        ]
+                    ),
+                    "includes/1.apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/2.oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/3.bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            ["1.apples.beancount", "2.oranges.beancount", "top.beancount"],
             list(map(path.basename, options_map["include"])),
         )
 

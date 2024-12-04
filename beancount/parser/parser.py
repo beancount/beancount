@@ -117,22 +117,16 @@ import inspect
 import textwrap
 import io
 import sys
+from pathlib import Path
 
-from beancount.parser import _parser
-from beancount.parser import grammar
+from beancount.__beancount import parse
+
 from beancount.parser import printer
-from beancount.parser import hashsrc
 from beancount.core import data
 from beancount.core.number import MISSING
-
 from beancount.parser.grammar import ParserError  # noqa: F401
 from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
 from beancount.parser.grammar import DeprecatedError  # noqa: F401
-
-
-# When importing the module, always check that the compiled source matched the
-# installed source.
-hashsrc.check_parser_source_files(_parser)
 
 
 def is_posting_incomplete(posting):
@@ -204,10 +198,10 @@ def parse_file(
         # readinto() method.
         elif not isinstance(file, io.IOBase):
             file = ctx.enter_context(open(file, "rb"))
-        builder = grammar.Builder()
-        parser = _parser.Parser(builder, debug=debug)
-        parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
-    return builder.finalize()
+        content = file.read()
+    Path("test.bean").write_bytes(content)
+    r = parse(content.decode())
+    return r.directives, [], r.options
 
 
 def parse_string(string, report_filename=None, dedent=False, **kw):

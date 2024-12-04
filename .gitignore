@@ -1,8 +1,11 @@
 *.DS_Store
 *.a
 *.picklecache
-*.pyc
+*.py[cd]
+*.pyd
+taskfile.yaml
 *.so
+*.pyd
 *.swp
 *~
 .cache
@@ -10,6 +13,7 @@
 .noseids
 .pytest_cache/*
 TAGS
+cmake-build-debug/
 bazel-*
 beancount.egg-info
 beancount/parser/grammar.output
@@ -21,3 +25,12 @@ examples/generated/*
 experiments/v3/arrow/*.feather
 experiments/v3/arrow/*.parquet
 experiments/v3/arrow/*.arrow
+
+
+# Added by cargo
+
+/target
+
+taskfile.yaml
+.task
+prof/

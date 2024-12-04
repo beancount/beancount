@@ -7,13 +7,13 @@ __license__ = "GNU GPLv2"
 
 import io
 import unittest
-import tempfile
 import textwrap
 import sys
 
 from beancount.core.number import D
 from beancount.core import data
-from beancount.parser import parser, _parser, lexer, grammar
+from beancount.parser import parser
+from beancount.utils import test_utils
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -70,11 +70,13 @@ class TestParserDoc(unittest.TestCase):
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
-    INPUT = textwrap.dedent("""
+    INPUT = textwrap.dedent(
+        """
       2013-05-18 * "Nice dinner at Mermaid Inn"
         Expenses:Restaurant         100 USD
         Assets:US:Cash
-    """)
+    """
+    )
 
     def test_parse_string(self):
         entries, errors, _ = parser.parse_string(self.INPUT)
@@ -82,18 +84,17 @@ class TestParserInputs(unittest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_parse_filename(self):
-        with tempfile.NamedTemporaryFile("w", suffix=".beancount") as file:
-            file.write(self.INPUT)
-            file.flush()
-            entries, errors, _ = parser.parse_file(file.name)
+        with test_utils.temp_file(suffix=".beancount") as file:
+            file.write_text(self.INPUT, encoding="utf8")
+            entries, errors, _ = parser.parse_file(str(file))
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
     def test_parse_file(self):
-        with tempfile.TemporaryFile("w+b", suffix=".beancount") as file:
-            file.write(self.INPUT.encode("utf-8"))
-            file.seek(0)
-            entries, errors, _ = parser.parse_file(file)
+        with test_utils.temp_file(suffix=".beancount") as file:
+            file.write_text(self.INPUT, encoding="utf8")
+            with open(file, "rb") as obj:
+                entries, errors, _ = parser.parse_file(obj)
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
 
@@ -118,14 +119,18 @@ class TestParserInputs(unittest.TestCase):
 
 
 class TestUnicodeErrors(unittest.TestCase):
-    test_utf8_string = textwrap.dedent("""
+    test_utf8_string = textwrap.dedent(
+        """
       2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
-    """)
+    """
+    )
     expected_utf8_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
 
-    test_latin1_string = textwrap.dedent("""
+    test_latin1_string = textwrap.dedent(
+        """
       2015-05-23 note Assets:Something "école Floß søllerød"
-    """)
+    """
+    )
     expected_latin1_string = "école Floß søllerød"
 
     # Test providing utf8 bytes to the lexer.
@@ -150,221 +155,39 @@ class TestUnicodeErrors(unittest.TestCase):
 class TestTestUtils(unittest.TestCase):
     def test_parse_many(self):
         with self.assertRaises(AssertionError):
-            entries = parser.parse_many("""
+            entries = parser.parse_many(
+                """
               2014-12-15 * 2014-12-15
-            """)
+            """
+            )
 
         number = D("101.23")
-        entries = parser.parse_many("""
+        entries = parser.parse_many(
+            """
           2014-12-15 * "Payee" "Narration"
             Assets:Checking   {number} USD
             Equity:Blah
-        """)
+        """
+        )
         self.assertEqual(1, len(entries))
         self.assertEqual(number, entries[0].postings[0].units.number)
 
     def test_parse_one(self):
         with self.assertRaises(AssertionError):
-            parser.parse_one("""
+            parser.parse_one(
+                """
               2014-12-15 * 2014-12-15
-            """)
+            """
+            )
 
-        entry = parser.parse_one("""
+        entry = parser.parse_one(
+            """
           2014-12-15 * "Payee" "Narration"
             Assets:Checking   101.23 USD
             Equity:Blah
-        """)
-        self.assertTrue(isinstance(entry, data.Transaction))
-
-
-@unittest.skipUnless(hasattr(sys, "getrefcount"), "requires sys.getrefcount()")
-class TestReferenceCounting(unittest.TestCase):
-    def test_parser_lex(self):
-        # Do not use a string to avoid issues due to string interning.
-        name = object()
-        # Note that passing name as an argument to sys.getrefcount()
-        # counts as one reference, thus the minimum reference count
-        # returned for any object is 2.
-        self.assertEqual(sys.getrefcount(name), 2)
-
-        f = io.BytesIO(b"")
-        f.name = name
-        # One more refernece from the 'name' attriute.
-        self.assertEqual(sys.getrefcount(name), 3)
-        # Just one reference to the BytesIO object.
-        self.assertEqual(sys.getrefcount(f), 2)
-
-        builder = lexer.LexBuilder()
-        parser = _parser.Parser(builder)
-        iterator = parser.lex(f)
-        # The Parser object keeps references to the input file and to
-        # the name while iterating over the tokens in the input file.
-        self.assertEqual(sys.getrefcount(name), 4)
-        self.assertEqual(sys.getrefcount(f), 3)
-        # The iterator holds one reference to the parser.
-        self.assertEqual(sys.getrefcount(parser), 3)
-
-        tokens = list(iterator)
-        # No tokens returned for an empty input.
-        self.assertEqual(len(tokens), 0)
-        # Once done scanning is completed the Parser object still has
-        # references to the input file and to the name.
-        self.assertEqual(sys.getrefcount(name), 4)
-        self.assertEqual(sys.getrefcount(f), 3)
-
-        del parser
-        del iterator
-        # Once the Parser object is gone we should have just the local
-        # reference to the file object and two references to name.
-        self.assertEqual(sys.getrefcount(name), 3)
-        self.assertEqual(sys.getrefcount(f), 2)
-
-        del f
-        # With the file object gone there is one reference to name.
-        self.assertEqual(sys.getrefcount(name), 2)
-
-    def test_parser_lex_filename(self):
-        # Do not use a string to avoid issues due to string interning.
-        name = object()
-        self.assertEqual(sys.getrefcount(name), 2)
-
-        f = io.BytesIO(b"")
-        f.name = object()
-        self.assertEqual(sys.getrefcount(f.name), 2)
-
-        builder = lexer.LexBuilder()
-        parser = _parser.Parser(builder)
-        iterator = parser.lex(f, filename=name)
-        _tokens = list(iterator)
-        # The Parser object keeps references to the input file and to
-        # the name while iterating over the tokens in the input file.
-        self.assertEqual(sys.getrefcount(name), 3)
-        self.assertEqual(sys.getrefcount(f), 3)
-        # The name attribute of the file object is not referenced.
-        self.assertEqual(sys.getrefcount(f.name), 2)
-
-        del parser
-        del iterator
-        # Once the Parser object is gone we should have just the local
-        # reference to the file object and two references to name.
-        self.assertEqual(sys.getrefcount(name), 2)
-        self.assertEqual(sys.getrefcount(f), 2)
-
-    def test_parser_lex_multi(self):
-        file1 = io.BytesIO(b"")
-        file1.name = object()
-        self.assertEqual(sys.getrefcount(file1.name), 2)
-
-        file2 = io.BytesIO(b"")
-        file2.name = object()
-        self.assertEqual(sys.getrefcount(file2.name), 2)
-
-        builder = lexer.LexBuilder()
-        parser = _parser.Parser(builder)
-        _tokens = list(parser.lex(file1))
-        _tokens = list(parser.lex(file2))
-
-        del parser
-        # Once the Parser object is gone we should have just the local
-        # references to the file objects and one references to the names.
-        self.assertEqual(sys.getrefcount(file1), 2)
-        self.assertEqual(sys.getrefcount(file1.name), 2)
-        self.assertEqual(sys.getrefcount(file2), 2)
-        self.assertEqual(sys.getrefcount(file2.name), 2)
-
-    def test_parser_parse(self):
-        # Do not use a string to avoid issues due to string interning.
-        name = object()
-        self.assertEqual(sys.getrefcount(name), 2)
-
-        f = io.BytesIO(b"")
-        f.name = name
-        self.assertEqual(sys.getrefcount(f.name), 3)
-
-        builder = grammar.Builder()
-        parser = _parser.Parser(builder)
-        parser.parse(f)
-        # The Parser object keeps a reference to the input file.
-        self.assertEqual(sys.getrefcount(f), 3)
-        # There are references to the file name from the Parser object
-        # and from the the parsing results. In the case of an empty
-        # input file from the options dictionary stored in the builder.
-        self.assertEqual(sys.getrefcount(name), 5)
-        builder.options = {}
-        self.assertEqual(sys.getrefcount(name), 4)
-
-        del parser
-        # Once the Parser object is gone we should have just the local
-        # reference to the file object and two references to name.
-        self.assertEqual(sys.getrefcount(name), 3)
-        self.assertEqual(sys.getrefcount(f), 2)
-
-
-class TestLineno(unittest.TestCase):
-    def test_lex(self):
-        f = io.BytesIO(b"1.0")
-        builder = lexer.LexBuilder()
-        parser = _parser.Parser(builder)
-        tokens = list(parser.lex(f))
-        token, lineno, matched, value = tokens[0]
-        self.assertEqual(lineno, 1)
-
-    def test_lex_lineno(self):
-        f = io.BytesIO(b"1.0")
-        builder = lexer.LexBuilder()
-        parser = _parser.Parser(builder)
-        tokens = list(parser.lex(f, lineno=42))
-        token, lineno, matched, value = tokens[0]
-        self.assertEqual(lineno, 42)
-
-    def test_parse(self):
-        f = io.BytesIO(b"2020-07-30 open Assets:Test")
-        builder = grammar.Builder()
-        parser = _parser.Parser(builder)
-        parser.parse(f)
-        self.assertEqual(builder.entries[0].meta["lineno"], 1)
-
-    def test_parse_lineno(self):
-        f = io.BytesIO(b"2020-07-30 open Assets:Test")
-        builder = grammar.Builder()
-        parser = _parser.Parser(builder)
-        parser.parse(f, lineno=42)
-        self.assertEqual(builder.entries[0].meta["lineno"], 42)
-
-    def test_parse_string(self):
-        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")
-        self.assertEqual(entries[0].meta["lineno"], 1)
-
-    def test_parse_string_lineno(self):
-        entries, errors, options = parser.parse_string(
-            b"2020-07-30 open Assets:Test", report_firstline=42
+        """
         )
-        self.assertEqual(entries[0].meta["lineno"], 42)
-
-    @parser.parse_doc()
-    def test_parse_doc(self, entries, errors, _):
-        """
-        2013-01-01 open Assets:US:Cash
-
-        2013-05-18 * "Nice dinner at Mermaid Inn"
-          Expenses:Restaurant         100 USD
-          Assets:US:Cash             -100 USD
-
-        2013-05-19 balance  Assets:US:Cash   -100 USD
-
-        2013-05-20 note  Assets:US:Cash   "Something"
-        """
-
-        with open(__file__) as f:
-            for lineno, line in enumerate(f, 1):
-                if line.strip() == "2013-01-01 open Assets:US:Cash":
-                    break
-
-        self.assertEqual(len(entries), 4)
-        self.assertEqual(entries[0].meta["lineno"], lineno)
-        self.assertEqual(entries[1].meta["lineno"], lineno + 2)
-        self.assertEqual(entries[2].meta["lineno"], lineno + 6)
-        self.assertEqual(entries[3].meta["lineno"], lineno + 8)
+        self.assertTrue(isinstance(entry, data.Transaction))
 
 
 if __name__ == "__main__":

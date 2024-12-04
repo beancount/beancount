@@ -42,6 +42,7 @@ from collections.abc import Iterable
 from decimal import Decimal
 import enum
 import re
+from types import NoneType
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -54,7 +55,7 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 
 
 # Enable this in tests to assert types being passed to Inventory.
-ASSERTS_TYPES = False
+ASSERTS_TYPES = True
 
 
 class MatchResult(enum.Enum):
@@ -268,7 +269,7 @@ class Inventory(dict):
                 )
             return next(iter(self))
 
-    def get_currency_units(self, currency):
+    def get_currency_units(self, currency) -> Amount:
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
 
@@ -461,7 +462,7 @@ class Inventory(dict):
                 position, "cost"
             ), "Invalid type for position: {}".format(position)
             assert isinstance(
-                position.cost, (type(None), Cost)
+                position.cost, (NoneType, Cost)
             ), "Invalid type for cost: {}".format(position.cost)
         return self.add_amount(position.units, position.cost)
 

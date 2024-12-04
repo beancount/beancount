@@ -7,7 +7,6 @@ import builtins
 import datetime
 import enum
 import sys
-
 from decimal import Decimal
 from typing import Any, Dict, FrozenSet, List, NamedTuple, Optional, Set, Union
 
@@ -17,7 +16,6 @@ from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
-
 
 # Type declarations.
 Account = str
@@ -677,7 +675,7 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
+    return entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"]
 
 
 def sorted(entries):

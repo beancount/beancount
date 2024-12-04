@@ -103,6 +103,9 @@ class TestEncryptedBase(unittest.TestCase):
             pass  # Ignore those, GPG agent sometimes causes this problem.
 
     def run_gpg(self, *args, **kw):
+        if os.name != "posix":
+            raise unittest.SkipTest("doesn't have gpg")
+
         command = (
             "gpg",
             "--batch",
@@ -155,26 +158,23 @@ class TestEncryptedFiles(TestEncryptedBase):
 
 class TestEncryptedFilesCheck(unittest.TestCase):
     def test_is_encrypted_file(self):
-        with tempfile.NamedTemporaryFile(suffix=".txt") as file:
-            file.write(b"\n")
-            file.flush()
-            self.assertFalse(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file() as file:
+            file.write_bytes(b"\n")
+            self.assertFalse(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".gpg") as file:
-            file.flush()
-            self.assertTrue(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".gpg") as file:
+            file.touch()
+            self.assertTrue(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
-            file.write(b"Anything else\n")
-            file.flush()
-            self.assertFalse(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".asc") as file:
+            file.write_bytes(b"Anything else\n")
+            self.assertFalse(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
-            file.write(b"\n\n\n")
-            file.write(b"-----BEGIN PGP MESSAGE-----\n")
-            file.write(b"\n\n\n")
-            file.flush()
-            self.assertTrue(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".asc") as file:
+            file.write_bytes(
+                b"\n\n\n" + b"-----BEGIN PGP MESSAGE-----\n" + b"\n\n\n",
+            )
+            self.assertTrue(encryption.is_encrypted_file(file))
 
 
 class TestLoadIncludesEncrypted(TestEncryptedBase):

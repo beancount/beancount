@@ -31,7 +31,6 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.utils import encryption
-from beancount.utils import file_utils
 
 
 OptionsMap = Any
@@ -467,21 +466,24 @@ def _parse_recursive(sources, log_timings, encoding=None):
             # Add includes to the list of sources to process. chdir() for glob,
             # which uses it indirectly.
             include_expanded = []
-            with file_utils.chdir(cwd):
-                for include_filename in src_options_map["include"]:
-                    matched_filenames = glob.glob(include_filename, recursive=True)
-                    if matched_filenames:
-                        include_expanded.extend(matched_filenames)
-                    else:
-                        parse_errors.append(
-                            LoadError(
-                                data.new_metadata("<load>", 0),
-                                'File glob "{}" does not match any files'.format(
-                                    include_filename
-                                ),
-                                None,
-                            )
+            for include_filename in src_options_map["include"]:
+                # TODO(trim21): use `glob.glob(root_dir=cwd)` after we drop py<3.10
+                search_path = include_filename
+                if not os.path.isabs(include_filename):
+                    search_path = os.path.join(cwd, include_filename)
+                matched_filenames = glob.glob(search_path, recursive=True)
+                if matched_filenames:
+                    include_expanded.extend(matched_filenames)
+                else:
+                    parse_errors.append(
+                        LoadError(
+                            data.new_metadata("<load>", 0),
+                            'File glob "{}" does not match any files'.format(
+                                include_filename
+                            ),
+                            None,
                         )
+                    )
             for include_filename in include_expanded:
                 if not path.isabs(include_filename):
                     include_filename = path.join(cwd, include_filename)

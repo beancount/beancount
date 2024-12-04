@@ -1,0 +1,67 @@
+Pair {
+    rule: file,
+    span: Span {
+        str: "\noption \"title\" \"Ed’s Personal Ledger\"\n",
+        start: 0,
+        end: 41,
+    },
+    inner: [
+        Pair {
+            rule: option,
+            span: Span {
+                str: "option \"title\" \"Ed’s Personal Ledger\"\n",
+                start: 1,
+                end: 41,
+            },
+            inner: [
+                Pair {
+                    rule: quoted_str,
+                    span: Span {
+                        str: "\"title\"",
+                        start: 8,
+                        end: 15,
+                    },
+                    inner: [
+                        Pair {
+                            rule: inner_quoted_str,
+                            span: Span {
+                                str: "title",
+                                start: 9,
+                                end: 14,
+                            },
+                            inner: [],
+                        },
+                    ],
+                },
+                Pair {
+                    rule: quoted_str,
+                    span: Span {
+                        str: "\"Ed’s Personal Ledger\"",
+                        start: 16,
+                        end: 40,
+                    },
+                    inner: [
+                        Pair {
+                            rule: inner_quoted_str,
+                            span: Span {
+                                str: "Ed’s Personal Ledger",
+                                start: 17,
+                                end: 39,
+                            },
+                            inner: [],
+                        },
+                    ],
+                },
+            ],
+        },
+        Pair {
+            rule: EOI,
+            span: Span {
+                str: "",
+                start: 41,
+                end: 41,
+            },
+            inner: [],
+        },
+    ],
+}

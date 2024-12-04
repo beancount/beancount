@@ -366,7 +366,7 @@ def get_price(price_map, base_quote, date=None):
     # Handle the degenerate case of a currency priced into its own.
     base, quote = base_quote
     if quote is None or base == quote:
-        return (None, ONE)
+        return None, ONE
 
     try:
         price_list = _lookup_price_and_inverse(price_map, base_quote)

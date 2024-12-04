@@ -28,7 +28,6 @@ from beancount.core import inventory
 from beancount.core import prices
 from beancount.core import realization
 from beancount.parser.context import render_file_context
-from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
@@ -100,12 +99,7 @@ def doctor():
 def lex(filename):
     """Dump the lexer output for a Beancount syntax file."""
 
-    for token, lineno, text, obj in lexer.lex_iter(filename):
-        sys.stdout.write(
-            "{:12} {:6d} {}\n".format(
-                "(None)" if token is None else token, lineno, repr(text)
-            )
-        )
+    raise NotImplementedError()
 
 
 @doctor.command()

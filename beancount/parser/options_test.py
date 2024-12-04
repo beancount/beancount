@@ -61,6 +61,26 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
 
+    @parser.parse_doc(expect_errors=True)
+    def test_custom_account_names__invalid_root(self, entries, errors, options_map):
+        """
+        option "name_assets" "Foo:Bar"
+        """
+        self.assertRegex(
+            errors[0].message,
+            "Error for option 'name_assets': Invalid root account name: 'Foo:Bar'",
+        )
+
+    @parser.parse_doc(expect_errors=True)
+    def test_custom_account_names__invalid_leaf(self, entries, errors, options_map):
+        """
+        option "account_previous_balances" "invalid"
+        """
+        self.assertRegex(
+            errors[0].message,
+            "Error for option 'account_previous_balances': Invalid leaf account name: 'invalid'",
+        )
+
     @parser.parse_doc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):
         """

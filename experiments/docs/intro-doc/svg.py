@@ -13,6 +13,7 @@ import re
 import textwrap
 from os import path
 
+from beancount.core.amount import A
 from beancount.core.number import D
 from beancount.core import amount
 
@@ -230,7 +231,8 @@ def draw_diagram(p, balance_groups, filename, scale_income=None):
         pr("<head>")
         pr('<style type="text/css">')
         pr(
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
 
           /* margin: 0px; */
           /* padding: 0px; */
@@ -242,7 +244,8 @@ def draw_diagram(p, balance_groups, filename, scale_income=None):
         /* div#top-level-svg { } */
         /* svg { border: thin solid blue; }*/
 
-        """)
+        """
+            )
         )
         pr("</style>")
         pr("</head>")
@@ -405,7 +408,7 @@ def draw_type(p, y_start, balances, pr, scale_income):
         acctype += ":"
 
         if scale_income is not None and acctype in ("Income:", "Expenses:"):
-            amt = amount.from_string(balance_amount)
+            amt = A(balance_amount)
             amt = amount.Amount(
                 (amt.number * scale_income).quantize(D("0.00")), amt.currency
             )

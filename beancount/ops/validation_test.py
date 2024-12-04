@@ -2,7 +2,9 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import os
 import re
+import tempfile
 import unittest
 
 from beancount.core import data
@@ -285,7 +287,7 @@ class TestValidateDocumentPaths(cmptest.TestCase):
                 meta,
                 date,
                 "Assets:Account1",
-                "/abs/path/to/something.pdf",
+                os.path.join(tempfile.gettempdir(), "something.pdf"),
                 data.EMPTY_SET,
                 data.EMPTY_SET,
             ),
@@ -310,7 +312,7 @@ class TestValidateDocumentPaths(cmptest.TestCase):
             ),
         ]
         errors = validation.validate_documents_paths(entries, {})
-        self.assertEqual(3, len(errors))
+        self.assertEqual(3, len(errors), errors)
         self.assertEqual({"Assets:Account2"}, set(error.entry.account for error in errors))
 
 

@@ -4,7 +4,6 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import contextlib
 import logging
 import os
 import time
@@ -18,6 +17,7 @@ def find_files(fords, ignore_dirs=(".hg", ".svn", ".git"), ignore_files=(".DS_St
     Args:
       fords: A list of strings, file or directory names.
       ignore_dirs: A list of strings, filenames or directories to be ignored.
+      ignore_files: a sequence of strings, filenames to be ignored
     Yields:
       Strings, full filenames from the given roots.
     """
@@ -43,6 +43,7 @@ def guess_file_format(filename, default=None):
 
     Args:
       filename: A string, the name of the file. This can be None.
+      default: default value if no known file extensions match.
     Returns:
       A string, the extension of the format, without a leading period.
     """
@@ -99,20 +100,3 @@ def touch_file(filename, *otherfiles):
         new_stat = os.stat(filename)
         if new_stat.st_mtime_ns > orig_mtime_ns:
             break
-
-
-@contextlib.contextmanager
-def chdir(directory):
-    """Temporarily chdir to the given directory.
-
-    Args:
-      directory: The directory to switch do.
-    Returns:
-      A context manager which restores the cwd after running.
-    """
-    cwd = os.getcwd()
-    os.chdir(directory)
-    try:
-        yield cwd
-    finally:
-        os.chdir(cwd)

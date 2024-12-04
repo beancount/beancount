@@ -26,18 +26,26 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
-      - run: echo "C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      - run: echo "PATH=$env:Path;C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_ENV" -Append
         if: runner.os == 'Windows'
       - run: pacman --noconfirm -S bison flex
+        if: runner.os == 'Windows'
+      - uses: bus1/cabuild/action/msdevshell@v1
+        with:
+          architecture: x64
         if: runner.os == 'Windows'
 
       - run: brew install bison
         if: runner.os == 'macOS'
-      - run: echo "/opt/homebrew/opt/bison/bin:$PATH" >> $GITHUB_PATH
+      - run: echo "/opt/homebrew/opt/bison/bin" >> $GITHUB_PATH
         if: runner.os == 'macOS'
 
       - run: python -m pip install meson-python ninja pytest
       - run: python -m pip install -v --no-build-isolation -Cbuild-dir=build -Csetup-args=-Dtests=enabled -e .
       - run: pytest beancount
         if: runner.os != 'Windows'
+
+      - run: pytest beancount/utils/ beancount/core/ beancount/ops/ beancount/parser/ beancount/projects/ beancount/tools/
+        if: runner.os == 'Windows'
+
       - run: meson test -C build/

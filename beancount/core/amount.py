@@ -10,136 +10,127 @@ currency:
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from beancount.__beancount import Amount
 import re
 
 from decimal import Decimal
-from typing import NamedTuple, Optional
 
-from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.number import D
 
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = "|".join(
-    [
-        r"[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b",
-        r"/[A-Z0-9\'\.\_\-]*[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?",
-    ]
-)
+CURRENCY_RE = r"[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b|/[A-Z0-9\'\.\_\-]*[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?"
 
 
-_Amount = NamedTuple("_Amount", [("number", Optional[Decimal]), ("currency", str)])
-
-
-class Amount(_Amount):
-    """An 'Amount' represents a number of a particular unit of something.
-
-    It's essentially a typed number, with corresponding manipulation operations
-    defined on it.
-    """
-
-    __slots__ = ()  # Prevent the creation of new attributes.
-
-    valid_types_number = (Decimal, type, type(None))
-    valid_types_currency = (str, type, type(None))
-
-    def __new__(cls, number, currency):
-        """Constructor from a number and currency.
-
-        Args:
-          number: A Decimal instance.
-          currency: A string, the currency symbol to use.
-        """
-        assert isinstance(number, Amount.valid_types_number), repr(number)
-        assert isinstance(currency, Amount.valid_types_currency), repr(currency)
-        return _Amount.__new__(cls, number, currency)
-
-    def to_string(self, dformat=DEFAULT_FORMATTER):
-        """Convert an Amount instance to a printable string.
-
-        Args:
-          dformat: An instance of DisplayFormatter.
-        Returns:
-          A formatted string of the quantized amount and symbol.
-        """
-        if isinstance(self.number, Decimal):
-            number_fmt = dformat.format(self.number, self.currency)
-        elif self.number is MISSING:
-            number_fmt = ""
-        else:
-            number_fmt = str(self.number)
-        return "{} {}".format(number_fmt, self.currency)
-
-    def __str__(self):
-        """Convert an Amount instance to a printable string with the defaults.
-
-        Returns:
-          A formatted string of the quantized amount and symbol.
-        """
-        return self.to_string()
-
-    __repr__ = __str__
-
-    def __bool__(self):
-        """Boolean predicate returns true if the number is non-zero.
-        Returns:
-          A boolean, true if non-zero number.
-        """
-        return self.number != ZERO
-
-    def __eq__(self, other):
-        """Equality predicate. Returns true if both number and currency are equal.
-        Returns:
-          A boolean.
-        """
-        if other is None:
-            return False
-        return (self.number, self.currency) == (other.number, other.currency)
-
-    def __lt__(self, other):
-        """Ordering comparison. This is used in the sorting key of positions.
-        Args:
-          other: An instance of Amount.
-        Returns:
-          True if this is less than the other Amount.
-        """
-        return sortkey(self) < sortkey(other)
-
-    def __hash__(self):
-        """A hashing function for amounts. The hash includes the currency.
-        Returns:
-          An integer, the hash for this amount.
-        """
-        return hash((self.number, self.currency))
-
-    def __neg__(self):
-        """Return the negative of this amount.
-        Returns:
-          A new instance of Amount, with the negative number of units.
-        """
-        return Amount(-self.number, self.currency)
-
-    @staticmethod
-    def from_string(string):
-        """Create an amount from a string.
-
-        This is a miniature parser used for building tests.
-
-        Args:
-          string: A string of <number> <currency>.
-        Returns:
-          A new instance of Amount.
-        """
-        match = re.match(
-            r"\s*([-+]?[0-9.]+)\s+({currency})".format(currency=CURRENCY_RE), string
-        )
-        if not match:
-            raise ValueError("Invalid string for amount: '{}'".format(string))
-        number, currency = match.group(1, 2)
-        return Amount(D(number), currency)
+#
+#
+# class Amount(_Amount):
+#     """An 'Amount' represents a number of a particular unit of something.
+#
+#     It's essentially a typed number, with corresponding manipulation operations
+#     defined on it.
+#     """
+#
+#     __slots__ = ()  # Prevent the creation of new attributes.
+#
+#     valid_types_number = (Decimal, type, type(None))
+#     valid_types_currency = (str, type, type(None))
+#
+#     def __new__(cls, number, currency):
+#         """Constructor from a number and currency.
+#
+#         Args:
+#           number: A Decimal instance.
+#           currency: A string, the currency symbol to use.
+#         """
+#         assert isinstance(number, Amount.valid_types_number), repr(number)
+#         assert isinstance(currency, Amount.valid_types_currency), repr(currency)
+#         return _Amount.__new__(cls, number, currency)
+#
+#     def to_string(self, dformat=DEFAULT_FORMATTER):
+#         """Convert an Amount instance to a printable string.
+#
+#         Args:
+#           dformat: An instance of DisplayFormatter.
+#         Returns:
+#           A formatted string of the quantized amount and symbol.
+#         """
+#         if isinstance(self.number, Decimal):
+#             number_fmt = dformat.format(self.number, self.currency)
+#         elif self.number is MISSING:
+#             number_fmt = ""
+#         else:
+#             number_fmt = str(self.number)
+#         return "{} {}".format(number_fmt, self.currency)
+#
+#     def __str__(self):
+#         """Convert an Amount instance to a printable string with the defaults.
+#
+#         Returns:
+#           A formatted string of the quantized amount and symbol.
+#         """
+#         return self.to_string()
+#
+#     __repr__ = __str__
+#
+#     def __bool__(self):
+#         """Boolean predicate returns true if the number is non-zero.
+#         Returns:
+#           A boolean, true if non-zero number.
+#         """
+#         return self.number != ZERO
+#
+#     def __eq__(self, other):
+#         """Equality predicate. Returns true if both number and currency are equal.
+#         Returns:
+#           A boolean.
+#         """
+#         if other is None:
+#             return False
+#         return (self.number, self.currency) == (other.number, other.currency)
+#
+#     def __lt__(self, other):
+#         """Ordering comparison. This is used in the sorting key of positions.
+#         Args:
+#           other: An instance of Amount.
+#         Returns:
+#           True if this is less than the other Amount.
+#         """
+#         return sortkey(self) < sortkey(other)
+#
+#     def __hash__(self):
+#         """A hashing function for amounts. The hash includes the currency.
+#         Returns:
+#           An integer, the hash for this amount.
+#         """
+#         return hash((self.number, self.currency))
+#
+#     def __neg__(self):
+#         """Return the negative of this amount.
+#         Returns:
+#           A new instance of Amount, with the negative number of units.
+#         """
+#         return Amount(-self.number, self.currency)
+#
+#     @staticmethod
+#     def from_string(string):
+#         """Create an amount from a string.
+#
+#         This is a miniature parser used for building tests.
+#
+#         Args:
+#           string: A string of <number> <currency>.
+#         Returns:
+#           A new instance of Amount.
+#         """
+#         match = re.match(
+#             r"\s*([-+]?[0-9.]+)\s+({currency})".format(currency=CURRENCY_RE), string
+#         )
+#         if not match:
+#             raise ValueError("Invalid string for amount: '{}'".format(string))
+#         number, currency = match.group(1, 2)
+#         return Amount(D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -252,4 +243,24 @@ def abs(amount):
     return amount if amount.number >= ZERO else Amount(-amount.number, amount.currency)
 
 
-A = from_string = Amount.from_string
+@staticmethod
+def from_string(string):
+    """Create an amount from a string.
+
+    This is a miniature parser used for building tests.
+
+    Args:
+      string: A string of <number> <currency>.
+    Returns:
+      A new instance of Amount.
+    """
+    match = re.match(
+        r"\s*([-+]?[0-9.]+)\s+({currency})".format(currency=CURRENCY_RE), string
+    )
+    if not match:
+        raise ValueError("Invalid string for amount: '{}'".format(string))
+    number, currency = match.group(1, 2)
+    return Amount(number, currency)
+
+
+A = from_string

@@ -9,9 +9,8 @@ __license__ = "GNU GPLv2"
 import copy
 import datetime
 import re
-
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from beancount.core.number import ZERO
 from beancount.core.number import NUMBER_RE
@@ -21,7 +20,7 @@ from beancount.core.amount import mul as amount_mul
 from beancount.core.amount import abs as amount_abs
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
-
+from beancount.__beancount import Cost, CostSpec
 
 # A variant of Amount that also includes a date and a label.
 #
@@ -31,15 +30,11 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #   date: A datetime.date for the date that the lot was created at. There
 #      should always be a valid date.
 #   label: A string for the label of this lot, or None, if there is no label.
-Cost = NamedTuple(
-    "Cost",
-    [
-        ("number", Decimal),
-        ("currency", str),
-        ("date", datetime.date),
-        ("label", Optional[str]),
-    ],
-)
+# class Cost:
+#     number: Decimal
+#     currency: str
+#     date: datetime.date
+#     label: Optional[str]
 
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
@@ -56,17 +51,13 @@ Cost = NamedTuple(
 #   label: A string for the label of this lot, or None if unspecified.
 #   merge: A boolean, true if this specification calls for averaging the units
 #      of this lot's currency, or False if unspecified.
-CostSpec = NamedTuple(
-    "CostSpec",
-    [
-        ("number_per", Optional[Decimal]),
-        ("number_total", Optional[Decimal]),
-        ("currency", Optional[str]),
-        ("date", Optional[datetime.date]),
-        ("label", Optional[str]),
-        ("merge", Optional[bool]),
-    ],
-)
+# class CostSpec:
+#     number_per: Optional[Decimal]
+#     number_total: Optional[Decimal]
+#     currency: Optional[str]
+#     date: Optional[datetime.date]
+#     label: Optional[str]
+#     merge: Optional[bool]
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -334,7 +325,7 @@ class Position(_Position):
         # Parse a cost expression.
         cost_number = None
         cost_currency = None
-        date = None
+        date = datetime.date(1, 1, 1)
         label = None
         cost_expression = match.group(3)
         if match.group(3):

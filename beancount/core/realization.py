@@ -25,16 +25,16 @@ import functools
 import io
 import operator
 
-from beancount.core.data import Transaction
-from beancount.core.data import Posting
+from beancount.__beancount import Transaction
+from beancount.__beancount import Posting
 from beancount.core.data import TxnPosting
-from beancount.core.data import Balance
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.data import Pad
-from beancount.core.data import Note
-from beancount.core.data import Document
-from beancount.core.data import Custom
+from beancount.__beancount import Balance
+from beancount.__beancount import Open
+from beancount.__beancount import Close
+from beancount.__beancount import Pad
+from beancount.__beancount import Note
+from beancount.__beancount import Document
+from beancount.__beancount import Custom
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data

@@ -1,0 +1,5 @@
+
+2022-09-18 * "Buy shares of STK4"
+  Assets:CC:Investment:Cash                  -1288.57 CCY
+  Assets:CC:Investment:STK4               18 STK4 {71.09 CCY}
+  Expenses:Financial:Commissions  8.95 CCY

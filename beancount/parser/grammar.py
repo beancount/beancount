@@ -9,6 +9,7 @@ import traceback
 from os import path
 from datetime import date
 from decimal import Decimal
+from typing import Any, NamedTuple
 
 import regex
 
@@ -34,16 +35,19 @@ from beancount.core.data import Posting
 from beancount.core.data import Booking
 from beancount.core.data import EMPTY_SET
 
-from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
 
 
-ParserError = collections.namedtuple("ParserError", "source message entry")
+class ParserError(NamedTuple):
+    source: dict[str, Any]
+    message: str
+    entry: Any
+
+
 ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")
 DeprecatedError = collections.namedtuple("DeprecatedError", "source message entry")
-
 
 # Key-value pairs. This is used to hold meta-data attachments temporarily.
 #
@@ -69,7 +73,6 @@ ValueType = collections.namedtuple("ValueType", "value dtype")
 CompoundAmount = collections.namedtuple(
     "CompoundAmount", "number_per number_total currency"
 )
-
 
 # A unique token used to indicate a merge of the lots of an inventory.
 MERGE_COST = "***"
@@ -107,13 +110,11 @@ def valid_account_regexp(options):
 TagsLinks = collections.namedtuple("TagsLinks", "tags links")
 
 
-class Builder(lexer.LexBuilder):
+class Builder:
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
     def __init__(self):
-        lexer.LexBuilder.__init__(self)
-
         # A stack of the current active tags.
         self.tags = []
 
@@ -164,7 +165,7 @@ class Builder(lexer.LexBuilder):
             self.errors.append(
                 ParserError(
                     meta,
-                    ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
+                    "Unbalanced metadata key '{}'; leftover metadata '{}'".format(
                         key, ", ".join(value_list)
                     ),
                     None,
@@ -175,7 +176,7 @@ class Builder(lexer.LexBuilder):
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options["render_commas"])
 
-        return (self.get_entries(), self.errors, self.get_options())
+        return self.get_entries(), self.errors, self.get_options()
 
     def get_entries(self):
         """Return the accumulated entries.

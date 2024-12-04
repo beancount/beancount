@@ -22,7 +22,6 @@ from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
 from beancount.core import position
-from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.parser import parser
@@ -51,11 +50,13 @@ def _gen_missing_combinations(template, args):
 
 class TestAllInterpolationCombinations(cmptest.TestCase):
     def test_all_currency_interpolations(self):
-        template = textwrap.dedent("""
+        template = textwrap.dedent(
+            """
           2015-10-02 *
             Assets:Account  {}
             Assets:Other
-        """)
+        """
+        )
         for pos_template, args in [
             ("100.00 {:3}", ["USD"]),
             ("100.00 {:3} @ 1.20 {:3}", ["USD", "CAD"]),
@@ -67,11 +68,13 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
                 self.assertFalse(errors)
 
     def test_all_interpolation_combinations(self):
-        template = textwrap.dedent("""
+        template = textwrap.dedent(
+            """
           2015-10-02 *
             Assets:Account  {}
             Assets:Other
-        """)
+        """
+        )
         for pos_template, args in [
             ("{:7} {:3}", ["100.00", "USD"]),
             ("{:7} {:3} @ {:7} {:3}", ["100.00", "USD", "1.20", "CAD"]),
@@ -1272,7 +1275,7 @@ class TestComputeCostNumber(unittest.TestCase):
             None,
             bf.compute_cost_number(
                 position.CostSpec(MISSING, D("1"), "USD", None, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1281,7 +1284,7 @@ class TestComputeCostNumber(unittest.TestCase):
             None,
             bf.compute_cost_number(
                 position.CostSpec(D("1"), MISSING, "USD", None, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1290,7 +1293,7 @@ class TestComputeCostNumber(unittest.TestCase):
             None,
             bf.compute_cost_number(
                 position.CostSpec(None, None, "USD", None, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1299,7 +1302,7 @@ class TestComputeCostNumber(unittest.TestCase):
             D("4"),
             bf.compute_cost_number(
                 position.CostSpec(None, D("48"), "USD", None, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1308,7 +1311,7 @@ class TestComputeCostNumber(unittest.TestCase):
             D("4"),
             bf.compute_cost_number(
                 position.CostSpec(D("4"), None, "USD", None, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1317,7 +1320,7 @@ class TestComputeCostNumber(unittest.TestCase):
             D("3.5"),
             bf.compute_cost_number(
                 position.CostSpec(D("3"), D("6"), "USD", self.date, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1326,7 +1329,7 @@ class TestComputeCostNumber(unittest.TestCase):
             D("3.5"),
             bf.compute_cost_number(
                 position.CostSpec(D("3"), D("6"), None, self.date, None, False),
-                amount.from_string("12 HOOL"),
+                A("12 HOOL"),
             ),
         )
 
@@ -1335,7 +1338,7 @@ class TestComputeCostNumber(unittest.TestCase):
             D("3.5"),
             bf.compute_cost_number(
                 position.CostSpec(D("3"), D("6"), None, self.date, None, False),
-                amount.from_string("-12 HOOL"),
+                A("-12 HOOL"),
             ),
         )
 
