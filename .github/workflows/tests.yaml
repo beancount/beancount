@@ -45,7 +45,7 @@ jobs:
       - run: pytest beancount
         if: runner.os != 'Windows'
 
-      - run: pytest beancount/utils/ beancount/core/ beancount/ops/ beancount/parser/ beancount/projects/ beancount/tools/
+      - run: pytest beancount/ --ignore beancount/scripts/
         if: runner.os == 'Windows'
 
       - run: meson test -C build/

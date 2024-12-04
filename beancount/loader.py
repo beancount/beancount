@@ -239,7 +239,7 @@ def pickle_cache_function(cache_getter, time_threshold, function):
 
         # Overwrite the cache file if the time it takes to compute it
         # justifies it.
-        if time_after - time_before > time_threshold:
+        if time_after - time_before >= time_threshold:
             try:
                 with open(cache_filename, "wb") as file:
                     pickle.dump(result, file)

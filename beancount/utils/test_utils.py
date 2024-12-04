@@ -134,7 +134,9 @@ def create_temporary_files(root, contents_map):
         filename = path.join(root, relative_filename)
         os.makedirs(path.dirname(filename), exist_ok=True)
 
-        clean_contents = textwrap.dedent(contents.replace("{root}", root))
+        clean_contents = textwrap.dedent(
+            contents.replace("{root}", root.replace("\\", r"\\"))
+        )
         with open(filename, "w") as f:
             f.write(clean_contents)
 
