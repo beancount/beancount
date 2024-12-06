@@ -31,7 +31,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     def test_process_documents(self):
         input_filename = path.join(self.root, "input.beancount")
-        with open(input_filename, "w") as f:
+        with open(input_filename, "w", encoding="utf-8") as f:
             f.write(
                 textwrap.dedent("""
 
@@ -76,7 +76,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
     def test_process_documents_trailing_slash(self):
         input_filename = path.join(self.root, "input.beancount")
-        with open(input_filename, "w") as f:
+        with open(input_filename, "w", encoding="utf-8") as f:
             f.write(
                 textwrap.dedent("""
 

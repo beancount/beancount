@@ -33,7 +33,7 @@ class TestFileUtilsFind(test_utils.TestTempdirMixin, test_utils.TestCase):
             if filename.endswith("/"):
                 os.makedirs(abs_filename)
             else:
-                open(abs_filename, "w").close()
+                open(abs_filename, "w", encoding="utf-8").close()
 
     def test_find_files(self):
         def walk(fords):

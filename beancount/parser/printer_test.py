@@ -89,14 +89,16 @@ class TestEntryPrinter(cmptest.TestCase):
         # Contex manager can be used as of python 3.12
         # see https://github.com/python/cpython/issues/58451
         # https://github.com/beancount/beancount/issues/222
-        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+        oss1 = tempfile.NamedTemporaryFile(
+            "w", suffix=".beancount", delete=False, encoding="utf-8"
+        )
 
         oss1.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries1, file=oss1)
 
         oss1.close()
 
-        with open(oss1.name, "r") as file:
+        with open(oss1.name, "r", encoding="utf-8") as file:
             oss1_value = file.read()
 
         # entries2 will contain information about filename and line number in
@@ -164,7 +166,9 @@ class TestEntryPrinter(cmptest.TestCase):
         # Contex manager can be used as of python 3.12
         # see https://github.com/python/cpython/issues/58451
         # https://github.com/beancount/beancount/issues/222
-        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+        oss1 = tempfile.NamedTemporaryFile(
+            "w", suffix=".beancount", delete=False, encoding="utf-8"
+        )
         oss1.write(ORIGINAL_LEDGER)
         oss1.close()
         # entries2 will contain the file name and line number in metadata

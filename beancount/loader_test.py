@@ -195,12 +195,12 @@ class TestLoadDoc(unittest.TestCase):
     def test_load_doc_plugin_auto_pythonpath(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ledger_fn = path.join(tmpdir, "my.beancount")
-            with open(ledger_fn, "w") as ledger_file:
+            with open(ledger_fn, "w", encoding="utf-8") as ledger_file:
                 ledger_file.write('option "insert_pythonpath" "TRUE"\n')
                 ledger_file.write('plugin "localplugin"\n')
 
             plugin_fn = path.join(tmpdir, "localplugin.py")
-            with open(plugin_fn, "w") as plugin_file:
+            with open(plugin_fn, "w", encoding="utf-8") as plugin_file:
                 plugin_file.write(
                     textwrap.dedent("""\
                   __plugins__ = ()
@@ -576,7 +576,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            with open(top_filename, "a") as file:
+            with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
@@ -586,7 +586,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            with open(top_filename, "a") as file:
+            with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
@@ -644,7 +644,7 @@ class TestLoadCache(unittest.TestCase):
             )
             filename = path.join(tmp, "apples.beancount")
             entries, errors, options_map = loader.load_file(filename)
-            with open(filename, "w"):
+            with open(filename, "w", encoding="utf-8"):
                 pass
             entries, errors, options_map = loader.load_file(filename)
             self.assertEqual(1, len(warn_mock.mock_calls))

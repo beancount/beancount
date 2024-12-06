@@ -13,10 +13,10 @@ from beancount.utils import test_utils
 class TestTestUtils(unittest.TestCase):
     def test_tempdir(self):
         with test_utils.tempdir() as tempdir:
-            with open(path.join(tempdir, "file1"), "w"):
+            with open(path.join(tempdir, "file1"), "w", encoding="utf-8"):
                 pass
             os.mkdir(path.join(tempdir, "directory"))
-            with open(path.join(tempdir, "directory", "file2"), "w"):
+            with open(path.join(tempdir, "directory", "file2"), "w", encoding="utf-8"):
                 pass
         self.assertFalse(path.exists(tempdir))
         self.assertFalse(path.exists(path.join(tempdir, "file1")))
@@ -51,13 +51,13 @@ class TestTestUtils(unittest.TestCase):
             )
 
             # Check the contents of apples (with replacement of root).
-            with open(apples) as f:
+            with open(apples, encoding="utf-8") as f:
                 apples_content = f.read()
             self.assertRegex(apples_content, "open Assets:Apples")
             self.assertNotRegex(apples_content, "{root}")
 
             # Check the contents of oranges.
-            with open(oranges) as f:
+            with open(oranges, encoding="utf-8") as f:
                 oranges_content = f.read()
             self.assertRegex(oranges_content, "open Assets:Oranges")
 
@@ -71,14 +71,14 @@ class TestTestUtils(unittest.TestCase):
     @test_utils.docfile
     def test_docfile(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             uuid = f.read()
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
 
     @test_utils.docfile_extra(suffix=".txt")
     def test_docfile_extra(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             uuid = f.read()
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
         self.assertTrue(".txt" in filename)

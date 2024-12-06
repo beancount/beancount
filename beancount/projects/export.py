@@ -26,6 +26,7 @@ Query Language query. However, BQL is not there yet.
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import sys
 from typing import NamedTuple, Tuple, List, Set, Any, Dict
 from decimal import Decimal
 import csv
@@ -252,6 +253,15 @@ def write_table(table: Table, outfile: str):
     writer.writerows(table.rows)
 
 
+# python 3.15 will make utf-8 mode enabled by default
+# so use a locale encoding for backward compatibility
+if sys.version_info < (3, 10):
+    # locale encoding is added in 3.10
+    OUTPUT_ENCODING = None
+else:
+    OUTPUT_ENCODING = "locale"
+
+
 @click.command(help=__doc__)
 @click.argument("filename")
 @click.option(
@@ -272,37 +282,37 @@ def write_table(table: Table, outfile: str):
 @click.option(
     "--output",
     "-o",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the final joined table to.",
 )
 @click.option(
     "--output_commodities",
     "-c",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the commodities table to.",
 )
 @click.option(
     "--output_accounts",
     "-a",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the accounts table to.",
 )
 @click.option(
     "--output_prices",
     "-p",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the prices table to.",
 )
 @click.option(
     "--output_rates",
     "-r",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the rates table to.",
 )
 @click.option(
     "--output_postings",
     "-m",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the postings table to.",
 )
 def main(

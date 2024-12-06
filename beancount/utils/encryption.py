@@ -3,6 +3,7 @@
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import contextlib
 import re
 import subprocess
 from os import path
@@ -33,10 +34,12 @@ def is_encrypted_file(filename):
     if ext == ".gpg":
         return True
     if ext == ".asc":
-        with open(filename) as encfile:
-            head = encfile.read(1024)
-            if re.search("--BEGIN PGP MESSAGE--", head):
-                return True
+        # python will still raise UnicodeDecodeError if file content is not in ascii encoding
+        with contextlib.suppress(UnicodeDecodeError):
+            with open(filename, encoding="ascii") as encfile:
+                head = encfile.read(1024)
+                if re.search("--BEGIN PGP MESSAGE--", head):
+                    return True
     return False
 
 

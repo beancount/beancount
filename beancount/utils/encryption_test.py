@@ -141,7 +141,7 @@ class TestEncryptedBase(unittest.TestCase):
             "--output=-",
             stdin=string.encode("utf8"),
         )
-        with open(encrypted_filename, "w") as encfile:
+        with open(encrypted_filename, "w", encoding="ascii") as encfile:
             encfile.write(out)
 
 
@@ -194,7 +194,7 @@ class TestLoadIncludesEncrypted(TestEncryptedBase):
             )
 
             # Encrypt the oranges file and remove the unencrypted file.
-            with open(path.join(tmpdir, "oranges.beancount")) as infile:
+            with open(path.join(tmpdir, "oranges.beancount"), encoding="utf-8") as infile:
                 self.encrypt_as_file(
                     infile.read(), path.join(tmpdir, "oranges.beancount.asc")
                 )

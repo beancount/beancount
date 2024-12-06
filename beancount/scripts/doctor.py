@@ -140,7 +140,7 @@ def roundtrip(filename):
         logging.info("Print them out to a file")
         basename, extension = os.path.splitext(filename)
         round1_filename = "".join([basename, ".roundtrip1", extension])
-        with open(round1_filename, "w") as outfile:
+        with open(round1_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
@@ -161,7 +161,7 @@ def roundtrip(filename):
 
         logging.info("Print what you read to yet another file")
         round2_filename = "".join([basename, ".roundtrip2", extension])
-        with open(round2_filename, "w") as outfile:
+        with open(round2_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries_roundtrip, file=outfile)
 
         logging.info("Compare the original entries with the re-read ones")
