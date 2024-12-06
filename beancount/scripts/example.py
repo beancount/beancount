@@ -1836,7 +1836,13 @@ class LiberalDate(click.ParamType):
 @click.option("--date-birth", type=LiberalDate(), help="Fictional date of birth.")
 @click.option("--seed", "-s", type=int, help="Random seed.")
 @click.option("--no-reformat", is_flag=True, help="Do not reformat the output.")
-@click.option("--output", "-o", type=click.File("w"), default="-", help="Output filename.")
+@click.option(
+    "--output",
+    "-o",
+    type=click.File("w", encoding="utf-8"),
+    default="-",
+    help="Output filename.",
+)
 @click.option("--verbose", "-v", type=bool, help="Produce logging output.")
 @click.version_option(message=VERSION)
 def main(date_begin, date_end, date_birth, seed, no_reformat, output, verbose):

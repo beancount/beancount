@@ -160,8 +160,14 @@ def normalize_indent_whitespace(match_pairs):
 
 
 @click.command()
-@click.argument("filename", type=click.File("r"))
-@click.option("--output", "-o", type=click.File("w"), default="-", help="Output file.")
+@click.argument("filename", type=click.File("r", encoding="utf-8"))
+@click.option(
+    "--output",
+    "-o",
+    type=click.File("w", encoding="utf-8"),
+    default="-",
+    help="Output file.",
+)
 @click.option("--prefix-width", "-w", type=int, help="Force fixed prefix width.")
 @click.option("--num-width", "-W", type=int, help="Force fixed numbers width.")
 @click.option("--currency-column", "-c", type=int, help="Align curreencies to this column.")

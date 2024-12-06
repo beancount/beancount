@@ -137,7 +137,7 @@ def create_temporary_files(root, contents_map):
         clean_contents = textwrap.dedent(
             contents.replace("{root}", root.replace("\\", r"\\"))
         )
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(clean_contents)
 
 
@@ -302,7 +302,7 @@ class TmpFilesTestBase(unittest.TestCase):
                 parent_dir = path.dirname(abs_filename)
                 if not path.exists(parent_dir):
                     os.makedirs(parent_dir)
-                with open(abs_filename, "w"):
+                with open(abs_filename, "w", encoding="utf-8"):
                     pass
         return tempdir, root
 

@@ -14,7 +14,7 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
 # Read in the VERSION number from package data.
 from os import path
 
-with open(path.join(path.dirname(__file__), "VERSION")) as version_file:
+with open(path.join(path.dirname(__file__), "VERSION"), encoding="utf-8") as version_file:
     __version__ = version_file.read().strip()
 
 

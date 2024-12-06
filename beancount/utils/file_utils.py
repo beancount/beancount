@@ -94,7 +94,7 @@ def touch_file(filename, *otherfiles):
     )
     delay_secs = 0.05
     while True:
-        with open(filename, "a"):
+        with open(filename, "a", encoding="utf-8"):
             os.utime(filename)
         time.sleep(delay_secs)
         new_stat = os.stat(filename)

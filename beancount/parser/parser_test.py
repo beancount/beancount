@@ -99,7 +99,9 @@ class TestParserInputs(unittest.TestCase):
     def test_parse_stdin(self):
         stdin = sys.stdin
         try:
-            sys.stdin = io.TextIOWrapper(io.BytesIO(self.INPUT.encode("utf-8")))
+            sys.stdin = io.TextIOWrapper(
+                io.BytesIO(self.INPUT.encode("utf-8")), encoding="utf-8"
+            )
             entries, errors, _ = parser.parse_file("-")
             self.assertEqual(1, len(entries))
             self.assertEqual(0, len(errors))
@@ -354,7 +356,7 @@ class TestLineno(unittest.TestCase):
         2013-05-20 note  Assets:US:Cash   "Something"
         """
 
-        with open(__file__) as f:
+        with open(__file__, encoding="utf-8") as f:
             for lineno, line in enumerate(f, 1):
                 if line.strip() == "2013-01-01 open Assets:US:Cash":
                     break
