@@ -101,7 +101,7 @@ yyscan_t yylex_free(yyscan_t scanner);
  * is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      PyObject* missing_obj, yyscan_t scanner);
+                      PyObject* missing_obj, yyscan_t _scanner);
 
 /**
  * Read from a io.IOBase Python object into a buffer.
