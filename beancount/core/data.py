@@ -702,7 +702,7 @@ def posting_sortkey(entry: Union[TxnPosting, Directive]):
       A tuple of (date, integer, integer), that forms the sort key for the
       TxnPosting or entry.
     """
-    assert isinstance(entry, (TxnPosting, Directive))
+    assert isinstance(entry, (TxnPosting,) + ALL_DIRECTIVES)
     if isinstance(entry, TxnPosting):
         entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
