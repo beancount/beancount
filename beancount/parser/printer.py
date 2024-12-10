@@ -21,6 +21,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import display_context
+from beancount.core.data import Document
 from beancount.utils import misc_utils
 
 
@@ -348,8 +349,12 @@ class EntryPrinter:
         oss.write("\n")
         self.write_metadata(entry.meta, oss)
 
-    def Document(self, entry, oss):
-        oss.write('{e.date} document {e.account} "{e.filename}"'.format(e=entry))
+    def Document(self, entry: Document, oss):
+        oss.write(
+            "{e.date} document {e.account} {filename}".format(
+                e=entry, filename=misc_utils.quote_string(entry.filename)
+            )
+        )
         if entry.tags or entry.links:
             oss.write(" ")
             for tag in sorted(entry.tags):
