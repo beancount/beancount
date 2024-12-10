@@ -691,17 +691,18 @@ def sorted(entries):
     return builtins.sorted(entries, key=entry_sortkey)
 
 
-def posting_sortkey(entry):
-    """Sort-key for entries or postings. We sort by date, except that checks
-    should be placed in front of every list of entries of that same day,
-    in order to balance linearly.
+def posting_sortkey(entry: Union[TxnPosting, Directive]):
+    """Sort-key for entries or TxnPosting instances. We sort by date, except
+    that checks should be placed in front of every list of entries of that same
+    day, in order to balance linearly.
 
     Args:
-      entry: A Posting or entry instance
+      entry: A TxnPosting or entry instance.
     Returns:
       A tuple of (date, integer, integer), that forms the sort key for the
-      posting or entry.
+      TxnPosting or entry.
     """
+    assert isinstance(entry, (TxnPosting, Directive))
     if isinstance(entry, TxnPosting):
         entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
