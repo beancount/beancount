@@ -136,7 +136,7 @@ class TestUnicodeErrors(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertFalse(errors)
         # Check that the lexer correctly parsed the UTF8 string.
-        self.assertEqual(self.expected_utf8_string, entries[0].comment)
+        self.assertEqual(entries[0].comment, "Δ")
 
     # Test providing latin1 bytes to the lexer when it is expecting utf8.
     def test_bytes_encoded_incorrect(self):
