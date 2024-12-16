@@ -9,6 +9,7 @@ py.install_sources(
     '''
     beancount/__init__.py
     beancount/VERSION
+    beancount/py.typed
     beancount/api.py
     beancount/core/__init__.py
     beancount/core/account.py
