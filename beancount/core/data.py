@@ -15,8 +15,10 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import NamedTuple
+from typing import Protocol
 from typing import Union
 from typing import overload
+from typing import runtime_checkable
 
 from beancount.core.account import has_component
 from beancount.core.amount import Amount
@@ -30,6 +32,18 @@ Account = str
 Currency = str
 Flag = str
 Meta = Dict[str, Any]
+
+
+@runtime_checkable
+class BeancountError(Protocol):
+    """Beancount errors are classes with these attributes."""
+
+    @property
+    def source(self) -> Meta: ...
+    @property
+    def message(self) -> str: ...
+    @property
+    def entry(self) -> Directive | None: ...
 
 
 # An immutable constant for all empty sets. This is used to set links and tags

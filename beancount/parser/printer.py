@@ -1,5 +1,7 @@
 """Conversion from internal data structures to text."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2014-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -430,8 +432,12 @@ def render_flag(inflag: Optional[str]) -> str:
 
 
 def format_entry(
-    entry, dcontext=None, render_weights=False, prefix=None, write_source=False
-):
+    entry: data.Directive,
+    dcontext: display_context.DisplayContext | None = None,
+    render_weights: bool = False,
+    prefix: str | None = None,
+    write_source: bool = False,
+) -> str:
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:

@@ -47,19 +47,19 @@ from beancount.parser import options
 class ParserError(NamedTuple):
     source: Meta
     message: str
-    entry: Any
+    entry: None = None
 
 
 class ParserSyntaxError(NamedTuple):
     source: Meta
     message: str
-    entry: Any
+    entry: None = None
 
 
 class DeprecatedError(NamedTuple):
     source: Meta
     message: str
-    entry: Any
+    entry: None = None
 
 
 class KeyValue(NamedTuple):
@@ -189,9 +189,7 @@ class Builder(lexer.LexBuilder):
         # If the user left some tags unbalanced, issue an error.
         for tag in self.tags:
             meta = new_metadata(self.options["filename"], 0)
-            self.errors.append(
-                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None)
-            )
+            self.errors.append(ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag)))
 
         # If the user left some metadata unpopped, issue an error.
         for key, value_list in self.meta.items():
@@ -202,7 +200,6 @@ class Builder(lexer.LexBuilder):
                     ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ", ".join(value_list)
                     ),
-                    None,
                 )
             )
 
@@ -267,7 +264,7 @@ class Builder(lexer.LexBuilder):
         else:
             message = str(exc_value)
         meta = new_metadata(filename, lineno)
-        self.errors.append(ParserSyntaxError(meta, message, None))
+        self.errors.append(ParserSyntaxError(meta, message))
 
     def account(self, filename, lineno, account):
         """Check account name validity.
@@ -280,7 +277,7 @@ class Builder(lexer.LexBuilder):
         if not self.account_regexp.match(account):
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Invalid account name: {}".format(account), None)
+                ParserError(meta, "Invalid account name: {}".format(account))
             )
         # Intern account names. This should reduces memory usage a
         # fair bit because these strings are repeated liberally.
@@ -296,7 +293,7 @@ class Builder(lexer.LexBuilder):
         if self.options["allow_pipe_separator"]:
             return
         meta = new_metadata(filename, lineno)
-        self.errors.append(ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+        self.errors.append(ParserSyntaxError(meta, "Pipe symbol is deprecated."))
 
     def pushtag(self, filename, lineno, tag):
         """Push a tag on the current set of tags.
@@ -319,7 +316,7 @@ class Builder(lexer.LexBuilder):
         except ValueError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None)
+                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag))
             )
 
     def pushmeta(self, filename, lineno, key_value):
@@ -347,9 +344,7 @@ class Builder(lexer.LexBuilder):
         except IndexError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(
-                    meta, "Attempting to pop absent metadata key: '{}'".format(key), None
-                )
+                ParserError(meta, "Attempting to pop absent metadata key: '{}'".format(key))
             )
 
     def option(self, filename, lineno, key, value):
@@ -363,13 +358,11 @@ class Builder(lexer.LexBuilder):
         """
         if key not in self.options:
             meta = new_metadata(filename, lineno)
-            self.errors.append(ParserError(meta, "Invalid option: '{}'".format(key), None))
+            self.errors.append(ParserError(meta, "Invalid option: '{}'".format(key)))
 
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Option '{}' may not be set".format(key), None)
-            )
+            self.errors.append(ParserError(meta, "Option '{}' may not be set".format(key)))
 
         else:
             option_descriptor = options.OPTIONS[key]
@@ -378,9 +371,7 @@ class Builder(lexer.LexBuilder):
             if option_descriptor.deprecated:
                 assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    DeprecatedError(meta, option_descriptor.deprecated, None)
-                )
+                self.errors.append(DeprecatedError(meta, option_descriptor.deprecated))
 
             # Rename the option if it has an alias.
             if option_descriptor.alias:
@@ -394,9 +385,7 @@ class Builder(lexer.LexBuilder):
                 except ValueError as exc:
                     meta = new_metadata(filename, lineno)
                     self.errors.append(
-                        ParserError(
-                            meta, "Error for option '{}': {}".format(key, exc), None
-                        )
+                        ParserError(meta, "Error for option '{}': {}".format(key, exc))
                     )
                     return
 
@@ -409,9 +398,7 @@ class Builder(lexer.LexBuilder):
                 # Set to a dict of values.
                 if not (isinstance(value, tuple) and len(value) == 2):
                     self.errors.append(
-                        ParserError(
-                            meta, "Error for option '{}': {}".format(key, value), None
-                        )
+                        ParserError(meta, "Error for option '{}': {}".format(key, value))
                     )
                     return
                 dict_key, dict_value = value
@@ -524,7 +511,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate cost: '{}'.".format(comp),
-                            None,
                         )
                     )
 
@@ -536,7 +522,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate date: '{}'.".format(comp),
-                            None,
                         )
                     )
 
@@ -547,7 +532,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Cost merging is not supported yet",
-                            None,
                         )
                     )
                 else:
@@ -555,7 +539,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate merge-cost spec",
-                            None,
                         )
                     )
 
@@ -590,7 +573,6 @@ class Builder(lexer.LexBuilder):
                                 "Per-unit cost may not be specified using total cost "
                                 "syntax: '{}'; ignoring per-unit cost"
                             ).format(compound_cost),
-                            None,
                         )
                     )
                     # Ignore per-unit number.
@@ -883,7 +865,6 @@ class Builder(lexer.LexBuilder):
                         "(see http://furius.ca/beancount/doc/bug-negative-prices "
                         "for workaround)"
                     ).format(price),
-                    None,
                 )
             )
             # Fix it and continue.
@@ -900,7 +881,6 @@ class Builder(lexer.LexBuilder):
                     ParserError(
                         meta,
                         ("Total price on a posting without units: {}.").format(price),
-                        None,
                     )
                 )
                 price = None
@@ -934,7 +914,6 @@ class Builder(lexer.LexBuilder):
                     "Cost and price currencies must match: {} != {}".format(
                         cost.currency, price.currency
                     ),
-                    None,
                 )
             )
 
@@ -994,7 +973,6 @@ class Builder(lexer.LexBuilder):
                 ParserError(
                     meta,
                     "Too many strings on transaction description: {}".format(txn_strings),
-                    None,
                 )
             )
             return None
@@ -1060,7 +1038,6 @@ class Builder(lexer.LexBuilder):
                                 meta,
                                 "Tags or links not allowed after first "
                                 + "Posting: {}".format(posting_or_kv),
-                                None,
                             )
                         )
                     else:
@@ -1078,7 +1055,6 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate metadata field on entry: {}".format(
                                         posting_or_kv
                                     ),
-                                    None,
                                 )
                             )
                     else:
@@ -1097,7 +1073,6 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate posting metadata field: {}".format(
                                         posting_or_kv
                                     ),
-                                    None,
                                 )
                             )
 

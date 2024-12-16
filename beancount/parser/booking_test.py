@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -94,7 +96,7 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
-    BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
+    BOOKMETH: dict[str, Booking] = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking.convert_lot_specs_to_lots(entries)

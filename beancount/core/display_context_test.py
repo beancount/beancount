@@ -20,7 +20,7 @@ def decimalize(number_list):
 
 
 class DisplayContextBaseTest(unittest.TestCase):
-    alignment = None
+    alignment: Align
 
     def assertFormatNumbers(self, number_strings, expected_fmt_numbers, **build_args):
         dcontext = display_context.DisplayContext()
