@@ -179,7 +179,7 @@ class Position(
         ), "Expected a Cost for cost; received '{}'".format(cost)
         return super().__new__(cls, units, cost)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Compute a hash for this position.
 
         Returns:
@@ -191,7 +191,7 @@ class Position(
         """Render the position to a string.See to_string() for details."""
         return to_string(self, dformat, detail)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string representation of the position.
 
         Returns:

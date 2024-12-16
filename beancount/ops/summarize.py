@@ -7,11 +7,15 @@ of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import datetime
+from typing import TYPE_CHECKING
+from typing import Callable
 
 from beancount.core import amount
 from beancount.core import convert
@@ -29,16 +33,23 @@ from beancount.core.number import ZERO
 from beancount.parser import options
 from beancount.utils import bisect_key
 
+if TYPE_CHECKING:
+    from beancount.core.account import Account
+    from beancount.core.account_types import AccountTypes
+    from beancount.core.data import Currency
+    from beancount.core.data import Directives
+    from beancount.loader import OptionsMap
+
 
 def open(
-    entries,
-    date,
-    account_types,
-    conversion_currency,
-    account_earnings,
-    account_opening,
-    account_conversions,
-):
+    entries: Directives,
+    date: datetime.date,
+    account_types: AccountTypes,
+    conversion_currency: Currency,
+    account_earnings: Account,
+    account_opening: Account,
+    account_conversions: Account,
+) -> tuple[Directives, int]:
     """Summarize entries before a date and transfer income/expenses to equity.
 
     This method essentially prepares a list of directives to contain only
@@ -99,7 +110,12 @@ def open(
     return entries, index
 
 
-def close(entries, date, conversion_currency, account_conversions):
+def close(
+    entries: Directives,
+    date: datetime.date,
+    conversion_currency: Currency,
+    account_conversions: Account,
+) -> tuple[Directives, int]:
     """Truncate entries that occur after a particular date and ensure balance.
 
     This method essentially removes entries after a date. It truncates the
@@ -145,7 +161,12 @@ def close(entries, date, conversion_currency, account_conversions):
 
 
 # TODO(blais): This needs to be renamed in v3. Long name. Not obvious enough.
-def clear(entries, date, account_types, account_earnings):
+def clear(
+    entries: Directives,
+    date: datetime.date,
+    account_types: AccountTypes,
+    account_earnings: Account,
+) -> tuple[Directives, int]:
     """Transfer income and expenses balances at the given date to the equity accounts.
 
     This method insert entries to zero out balances on income and expenses
@@ -177,7 +198,9 @@ def clear(entries, date, account_types, account_earnings):
     return new_entries, index
 
 
-def open_opt(entries, date, options_map):
+def open_opt(
+    entries: Directives, date: datetime.date, options_map: OptionsMap
+) -> tuple[Directives, int]:
     """Convenience function to open() using an options map."""
     account_types = options.get_account_types(options_map)
     previous_accounts = options.get_previous_accounts(options_map)
@@ -185,14 +208,18 @@ def open_opt(entries, date, options_map):
     return open(entries, date, account_types, conversion_currency, *previous_accounts)
 
 
-def close_opt(entries, date, options_map):
+def close_opt(
+    entries: Directives, date: datetime.date, options_map: OptionsMap
+) -> tuple[Directives, int]:
     """Convenience function to close() using an options map."""
     conversion_currency = options_map["conversion_currency"]
     current_accounts = options.get_current_accounts(options_map)
     return close(entries, date, conversion_currency, current_accounts[1])
 
 
-def clear_opt(entries, date, options_map):
+def clear_opt(
+    entries: Directives, date: datetime.date, options_map: OptionsMap
+) -> tuple[Directives, int]:
     """Convenience function to clear() using an options map."""
     account_types = options.get_account_types(options_map)
     current_accounts = options.get_current_accounts(options_map)
@@ -200,14 +227,14 @@ def clear_opt(entries, date, options_map):
 
 
 def clamp(
-    entries,
-    begin_date,
-    end_date,
-    account_types,
-    conversion_currency,
-    account_earnings,
-    account_opening,
-    account_conversions,
+    entries: Directives,
+    begin_date: datetime.date,
+    end_date: datetime.date,
+    account_types: AccountTypes,
+    conversion_currency: Currency,
+    account_earnings: Account,
+    account_opening: Account,
+    account_conversions: Account,
 ):
     """Filter entries to include only those during a specified time period.
 
@@ -269,7 +296,12 @@ def clamp(
     return entries, index
 
 
-def clamp_opt(entries, begin_date, end_date, options_map):
+def clamp_opt(
+    entries: Directives,
+    begin_date: datetime.date,
+    end_date: datetime.date,
+    options_map: OptionsMap,
+) -> tuple[Directives, int]:
     """Clamp by getting all the parameters from an options map.
 
     See clamp() for details.
@@ -299,7 +331,13 @@ def clamp_opt(entries, begin_date, end_date, options_map):
     )
 
 
-def cap(entries, account_types, conversion_currency, account_earnings, account_conversions):
+def cap(
+    entries: Directives,
+    account_types: AccountTypes,
+    conversion_currency: Currency,
+    account_earnings: Account,
+    account_conversions: Account,
+) -> Directives:
     """Transfer net income to equity and insert a final conversion entry.
 
     This is used to move and nullify balances from the income and expense
@@ -335,7 +373,7 @@ def cap(entries, account_types, conversion_currency, account_earnings, account_c
     return entries
 
 
-def cap_opt(entries, options_map):
+def cap_opt(entries: Directives, options_map: OptionsMap) -> Directives:
     """Close by getting all the parameters from an options map.
 
     See cap() for details.
@@ -352,7 +390,12 @@ def cap_opt(entries, options_map):
     return cap(entries, account_types, conversion_currency, *current_accounts)
 
 
-def transfer_balances(entries, date, account_pred, transfer_account):
+def transfer_balances(
+    entries: Directives,
+    date: datetime.date | None,
+    account_pred: Callable[[Account], bool],
+    transfer_account: Account,
+) -> Directives:
     """Synthesize transactions to transfer balances from some accounts at a given date.
 
     For all accounts that match the 'account_pred' predicate, create new entries
@@ -417,7 +460,9 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     return entries[:index] + transfer_entries + after_entries
 
 
-def summarize(entries, date, account_opening):
+def summarize(
+    entries: Directives, date: datetime.date, account_opening: Account
+) -> tuple[Directives, int]:
     """Summarize all entries before a date by replacing then with summarization entries.
 
     This function replaces the transactions up to (and not including) the given
@@ -474,7 +519,12 @@ def summarize(entries, date, account_opening):
     return (before_entries + after_entries), len(before_entries)
 
 
-def conversions(entries, conversion_account, conversion_currency, date=None):
+def conversions(
+    entries: Directives,
+    conversion_account: Account,
+    conversion_currency: Currency,
+    date: datetime.date | None = None,
+) -> Directives:
     """Insert a conversion entry at date 'date' at the given account.
 
     Args:
@@ -535,7 +585,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     return new_entries
 
 
-def truncate(entries, date):
+def truncate(entries: Directives, date: datetime.date) -> Directives:
     """Filter out all the entries at and after date. Returns a new list of entries.
 
     Args:
@@ -549,8 +599,14 @@ def truncate(entries, date):
 
 
 def create_entries_from_balances(
-    balances, date, source_account, direction, meta, flag, narration_template
-):
+    balances: dict[Account, inventory.Inventory],
+    date: datetime.date,
+    source_account: Account,
+    direction: bool,
+    meta: data.Meta,
+    flag: data.Flag,
+    narration_template: str,
+) -> Directives:
     """ "Create a list of entries from a dict of balances.
 
     This method creates a list of new entries to transfer the amounts in the
@@ -576,7 +632,7 @@ def create_entries_from_balances(
     Returns:
       A list of newly synthesizes Transaction entries.
     """
-    new_entries = []
+    new_entries: Directives = []
     for account, account_balance in sorted(balances.items()):
         # Don't create new entries where there is no balance.
         if account_balance.is_empty():
@@ -587,7 +643,7 @@ def create_entries_from_balances(
         if not direction:
             account_balance = -account_balance
 
-        postings = []
+        postings: list[data.Posting] = []
         new_entry = Transaction(
             meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings
         )
@@ -606,7 +662,11 @@ def create_entries_from_balances(
 
 # TODO(blais): Reconcile this with beancount.core.realization.realize() {2196104406ab}.
 # TODO(blais): This should be generalized to any type of key, i.e., provide a key func.
-def balance_by_account(entries, date=None, compress_unbooked=False):
+def balance_by_account(
+    entries: Directives,
+    date: datetime.date | None = None,
+    compress_unbooked: bool = False,
+) -> tuple[dict[Account, inventory.Inventory], int]:
     """Sum up the balance per account for all entries strictly before 'date'.
 
     Args:
@@ -626,7 +686,9 @@ def balance_by_account(entries, date=None, compress_unbooked=False):
       cutoff date, an index one beyond the last entry is returned.
 
     """
-    balances = collections.defaultdict(inventory.Inventory)
+    balances: dict[Account, inventory.Inventory] = collections.defaultdict(
+        inventory.Inventory
+    )
     for index, entry in enumerate(entries):
         if date and entry.date >= date:
             break
@@ -668,7 +730,7 @@ def balance_by_account(entries, date=None, compress_unbooked=False):
     return balances, index
 
 
-def get_open_entries(entries, date):
+def get_open_entries(entries: Directives, date: datetime.date) -> list[Open]:
     """Gather the list of active Open entries at date.
 
     This returns the list of Open entries that have not been closed at the given
@@ -681,7 +743,7 @@ def get_open_entries(entries, date):
     Returns:
       A list of Open directives.
     """
-    open_entries = {}
+    open_entries: dict[Account, tuple[int, Open]] = {}
     for index, entry in enumerate(entries):
         if date is not None and entry.date >= date:
             break

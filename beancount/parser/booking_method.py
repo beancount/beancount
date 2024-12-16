@@ -6,6 +6,7 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 from beancount.core import convert
@@ -18,6 +19,9 @@ from beancount.core.data import Directive
 from beancount.core.data import Meta
 from beancount.core.number import ZERO
 from beancount.core.position import Cost
+
+if TYPE_CHECKING:
+    from decimal import Decimal
 
 
 class AmbiguousMatchError(NamedTuple):

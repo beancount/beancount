@@ -269,7 +269,7 @@ class TmpFilesTestBase(unittest.TestCase):
 
     # The list of strings, documents to create.
     # Filenames ending with a '/' will be created as directories.
-    TEST_DOCUMENTS = None
+    TEST_DOCUMENTS: list[str]
 
     def setUp(self):
         self.tempdir, self.root = self.create_file_hierarchy(self.TEST_DOCUMENTS)

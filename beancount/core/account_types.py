@@ -14,10 +14,13 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 from beancount.core import account
-from beancount.core.account import Account
+
+if TYPE_CHECKING:
+    from beancount.core.account import Account
 
 
 class AccountTypes(NamedTuple):

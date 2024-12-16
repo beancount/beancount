@@ -18,15 +18,27 @@ from beancount.core.data import Open
 from beancount.core.data import Transaction
 
 if TYPE_CHECKING:
+    import datetime
+    from collections.abc import Set
+    from typing import Any
     from typing import Iterator
 
+    from beancount.core.data import Account
+    from beancount.core.data import Balance
+    from beancount.core.data import Currency
+    from beancount.core.data import Directive
     from beancount.core.data import Directives
+    from beancount.core.data import Document
+    from beancount.core.data import Note
+    from beancount.core.data import Pad
+
+    AccountsUseMap = tuple[dict[Account, datetime.date], dict[Account, datetime.date]]
 
 
 class GetAccounts:
     """Accounts gatherer."""
 
-    def get_accounts_use_map(self, entries: Directives):
+    def get_accounts_use_map(self, entries: Directives) -> AccountsUseMap:
         """Gather the list of accounts from the list of entries.
 
         Args:
@@ -45,7 +57,7 @@ class GetAccounts:
                 accounts_last[account_] = entry.date
         return accounts_first, accounts_last
 
-    def get_entry_accounts(self, entry):
+    def get_entry_accounts(self, entry: Directive) -> set[Account]:
         """Gather all the accounts references by a single directive.
 
         Note: This should get replaced by a method on each directive eventually,
@@ -59,7 +71,7 @@ class GetAccounts:
         method = getattr(self, entry.__class__.__name__)
         return set(method(entry))
 
-    def Transaction(_, entry):
+    def Transaction(_, entry: Transaction) -> Iterator[Account]:
         """Process a Transaction directive.
 
         Args:
@@ -70,7 +82,7 @@ class GetAccounts:
         for posting in entry.postings:
             yield posting.account
 
-    def Pad(_, entry):
+    def Pad(_, entry: Pad) -> tuple[Account, Account]:
         """Process a Pad directive.
 
         Args:
@@ -80,7 +92,7 @@ class GetAccounts:
         """
         return (entry.account, entry.source_account)
 
-    def _one(_, entry):
+    def _one(_, entry: Open | Close | Balance | Note | Document) -> tuple[Account]:
         """Process directives with a single account attribute.
 
         Args:
@@ -90,7 +102,7 @@ class GetAccounts:
         """
         return (entry.account,)
 
-    def _zero(_, entry):
+    def _zero(_, entry: Any) -> tuple:
         """Process directives with no accounts.
 
         Args:
@@ -109,7 +121,7 @@ class GetAccounts:
 _GetAccounts = GetAccounts()
 
 
-def get_accounts_use_map(entries):
+def get_accounts_use_map(entries: Directives) -> AccountsUseMap:
     """Gather all the accounts references by a list of directives.
 
     Args:
@@ -121,7 +133,7 @@ def get_accounts_use_map(entries):
     return _GetAccounts.get_accounts_use_map(entries)
 
 
-def get_accounts(entries):
+def get_accounts(entries: Directives) -> Set[str]:
     """Gather all the accounts references by a list of directives.
 
     Args:
@@ -133,7 +145,7 @@ def get_accounts(entries):
     return accounts_last.keys()
 
 
-def get_entry_accounts(entry: Directives) -> set[str]:
+def get_entry_accounts(entry: Directive) -> set[str]:
     """Gather all the accounts references by a single directive.
 
     Note: This should get replaced by a method on each directive eventually,
@@ -214,7 +226,7 @@ def get_all_links(entries: Directives) -> list[str]:
     return sorted(all_links)
 
 
-def get_leveln_parent_accounts(account_names, level, nrepeats=0):
+def get_leveln_parent_accounts(account_names: list[Account], level: int, nrepeats: int = 0):
     """Return a list of all the unique leaf names at level N in an account hierarchy.
 
     Args:
@@ -225,7 +237,7 @@ def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     Returns:
       A list of leaf node names.
     """
-    leveldict = defaultdict(int)
+    leveldict: dict[str, int] = defaultdict(int)
     for account_name in set(account_names):
         components = account.split(account_name)
         if level < len(components):
@@ -252,10 +264,12 @@ def get_dict_accounts(account_names):
     return leveldict
 
 
-get_dict_accounts.ACCOUNT_LABEL = "__root__"
+get_dict_accounts.ACCOUNT_LABEL = "__root__"  # type: ignore[attr-defined]
 
 
-def get_min_max_dates(entries, types=None):
+def get_min_max_dates(
+    entries: Directives, types: tuple[type[Any], ...] | None = None
+) -> tuple[datetime.date | None, datetime.date | None]:
     """Return the minimum and maximum dates in the list of entries.
 
     Args:
@@ -329,7 +343,7 @@ def get_account_open_close(entries):
     return dict(open_close_map)
 
 
-def get_commodity_directives(entries):
+def get_commodity_directives(entries: Directives) -> dict[Currency, Commodity]:
     """Create map of commodity names to Commodity entries.
 
     Args:

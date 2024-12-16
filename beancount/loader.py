@@ -1,5 +1,7 @@
 """Loader code. This is the main entry point to load up a file."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -21,11 +23,8 @@ import traceback
 import warnings
 from os import path
 from typing import Any
-from typing import Dict
-from typing import List
+from typing import Callable
 from typing import NamedTuple
-from typing import Optional
-from typing import Tuple
 
 from beancount.core import data
 from beancount.ops import validation
@@ -42,9 +41,9 @@ OptionsMap = Any
 class LoadError(NamedTuple):
     """Represents an error encountered during the loading process."""
 
-    source: str
+    source: data.Meta
     message: str
-    entry: Any
+    entry: None = None
 
 
 # List of default plugins to run.
@@ -57,7 +56,7 @@ PLUGINS_PRE = [
 DEFAULT_PLUGINS_AUTO = [
     ("beancount.plugins.auto", None),
 ]
-PLUGINS_AUTO: List[Tuple[str, Any]] = []
+PLUGINS_AUTO: list[tuple[str, Any]] = []
 
 PLUGINS_POST = [
     ("beancount.ops.pad", None),
@@ -65,7 +64,7 @@ PLUGINS_POST = [
 ]
 
 # A mapping of modules to warn about, to their renamed names.
-RENAMED_MODULES: Dict[str, str] = {}
+RENAMED_MODULES: dict[str, str] = {}
 
 
 # Filename pattern for the pickle-cache.
@@ -76,9 +75,20 @@ PICKLE_CACHE_FILENAME = ".{filename}.picklecache"
 PICKLE_CACHE_THRESHOLD = 1.0
 
 
+# Set (and potentially later overridden by initialize)
+_load_file: Callable[
+    [str, Any, list[Any] | None, str | None],
+    tuple[data.Directives, list[data.BeancountError], OptionsMap],
+]
+
+
 def load_file(
-    filename, log_timings=None, log_errors=None, extra_validations=None, encoding=None
-):
+    filename: str,
+    log_timings: Any = None,
+    log_errors: Any = None,
+    extra_validations: list[Any] | None = None,
+    encoding: str | None = None,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -115,13 +125,13 @@ def load_file(
 
 
 def load_encrypted_file(
-    filename,
-    log_timings=None,
-    log_errors=None,
-    extra_validations=None,
-    dedent=False,
-    encoding=None,
-):
+    filename: str,
+    log_timings: Any = None,
+    log_errors: Any = None,
+    extra_validations: list[Any] | None = None,
+    dedent: bool = False,
+    encoding: str | None = None,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Load an encrypted Beancount input file.
 
     Args:
@@ -147,7 +157,7 @@ def load_encrypted_file(
     )
 
 
-def _log_errors(errors, log_errors):
+def _log_errors(errors, log_errors) -> None:
     """Log errors, if 'log_errors' is set.
 
     Args:
@@ -181,7 +191,9 @@ def get_cache_filename(pattern: str, filename: str) -> str:
     return abs_pattern.format(filename=path.basename(filename))
 
 
-def pickle_cache_function(cache_getter, time_threshold, function):
+def pickle_cache_function(
+    cache_getter: Callable[[str], str], time_threshold: float, function
+):
     """Decorate a loader function to make it loads its result from a pickle cache.
 
     This considers the first argument as a top-level filename and assumes the
@@ -290,7 +302,7 @@ def _uncached_load_file(filename, *args, **kw):
     return _load([(filename, True)], *args, **kw)
 
 
-def needs_refresh(options_map):
+def needs_refresh(options_map: OptionsMap) -> bool:
     """Predicate that returns true if at least one of the input files may have changed.
 
     Args:
@@ -322,13 +334,13 @@ def compute_input_hash(filenames):
 
 
 def load_string(
-    string,
+    string: str,
     log_timings=None,
     log_errors=None,
-    extra_validations=None,
-    dedent=False,
-    encoding=None,
-):
+    extra_validations: list[Any] | None = None,
+    dedent: bool = False,
+    encoding: str | None = None,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -356,7 +368,9 @@ def load_string(
     return entries, errors, options_map
 
 
-def _parse_recursive(sources, log_timings, encoding=None):
+def _parse_recursive(
+    sources: list[tuple[str, bool]], log_timings: Any, encoding: str | None = None
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Parse Beancount input, run its transformations and validate it.
 
     Recursively parse a list of files or strings and their include files and
@@ -378,7 +392,8 @@ def _parse_recursive(sources, log_timings, encoding=None):
     assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
 
     # Current parse state.
-    entries, parse_errors = [], []
+    entries = []
+    parse_errors: list[data.BeancountError] = []
     options_map = None
     other_options_map = []
 
@@ -418,7 +433,6 @@ def _parse_recursive(sources, log_timings, encoding=None):
                         LoadError(
                             data.new_metadata("<load>", 0),
                             'Duplicate filename parsed: "{}"'.format(filename),
-                            None,
                         )
                     )
                     continue
@@ -429,7 +443,6 @@ def _parse_recursive(sources, log_timings, encoding=None):
                         LoadError(
                             data.new_metadata("<load>", 0),
                             'File "{}" does not exist'.format(filename),
-                            None,
                         )
                     )
                     continue
@@ -489,7 +502,6 @@ def _parse_recursive(sources, log_timings, encoding=None):
                             'File glob "{}" does not match any files'.format(
                                 include_filename
                             ),
-                            None,
                         )
                     )
             for include_filename in include_expanded:
@@ -512,7 +524,9 @@ def _parse_recursive(sources, log_timings, encoding=None):
     return entries, parse_errors, options_map
 
 
-def aggregate_options_map(options_map, other_options_map):
+def aggregate_options_map(
+    options_map: OptionsMap, other_options_map: list[OptionsMap]
+) -> OptionsMap:
     """Aggregate some of the attributes of options map.
 
     Args:
@@ -539,7 +553,12 @@ def aggregate_options_map(options_map, other_options_map):
     return options_map
 
 
-def _load(sources, log_timings, extra_validations, encoding):
+def _load(
+    sources: list[tuple[str, bool]],
+    log_timings: Any,
+    extra_validations: list[Any] | None,
+    encoding: str | None,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -610,7 +629,12 @@ def _load(sources, log_timings, extra_validations, encoding):
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map, log_timings):
+def run_transformations(
+    entries: data.Directives,
+    parse_errors: list[data.BeancountError],
+    options_map: OptionsMap,
+    log_timings: Any,
+) -> tuple[data.Directives, list[data.BeancountError]]:
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -664,7 +688,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                 LoadError(
                     data.new_metadata("<load>", 0),
                     'Error importing "{}": {}'.format(plugin_name, formatted_traceback),
-                    None,
                 )
             )
             continue
@@ -701,7 +724,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                             'Error applying plugin "{}": {}'.format(
                                 plugin_name, formatted_traceback
                             ),
-                            None,
                         )
                     )
                     continue
@@ -779,7 +801,7 @@ def load_doc(expect_errors=False):
     return decorator
 
 
-def initialize(use_cache: bool, cache_filename: Optional[str] = None):
+def initialize(use_cache: bool, cache_filename: str | None = None) -> None:
     """Initialize the loader."""
 
     # Unless an environment variable disables it, use the pickle load cache
