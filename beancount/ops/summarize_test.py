@@ -1248,13 +1248,20 @@ class TestBalanceByAccount(cmptest.TestCase):
         2001-01-01 open Equity:Opening-Balances
 
         2014-02-01 *
+          my_custom_id: "1"
           Assets:AccountA   10 USD
           Equity:Opening-Balances
 
         2014-03-01 *
+          my_custom_id: "2"
           Assets:AccountA   1 USD
           Assets:AccountB  12 USD
           Equity:Opening-Balances
+
+        2014-04-01 *
+          my_custom_id: "3"
+          Assets:AccountA  -1 USD
+          Assets:AccountB   1 USD
         """
         self.entries = entries
 
@@ -1264,9 +1271,9 @@ class TestBalanceByAccount(cmptest.TestCase):
         self.assertEqual(len(self.entries), index)
         self.assertEqual(
             {
-                "Assets:AccountA": inventory.from_string("11 USD"),
+                "Assets:AccountA": inventory.from_string("10 USD"),
                 "Equity:Opening-Balances": inventory.from_string("-23 USD"),
-                "Assets:AccountB": inventory.from_string("12 USD"),
+                "Assets:AccountB": inventory.from_string("13 USD"),
             },
             balances,
         )
@@ -1289,6 +1296,20 @@ class TestBalanceByAccount(cmptest.TestCase):
             {
                 "Assets:AccountA": inventory.from_string("10 USD"),
                 "Equity:Opening-Balances": inventory.from_string("-10 USD"),
+            },
+            balances,
+        )
+
+    def test_balance_by_account__stop_fn(self):
+        def id_3_or_more(entry):
+            return int(entry.meta.get("my_custom_id", 0)) >= 3
+        balances, index = summarize.balance_by_account(self.entries, stop_fn=id_3_or_more)
+        self.assertEqual(5, index)
+        self.assertEqual(
+            {
+                "Assets:AccountA": inventory.from_string("11 USD"),
+                "Equity:Opening-Balances": inventory.from_string("-23 USD"),
+                "Assets:AccountB": inventory.from_string("12 USD"),
             },
             balances,
         )

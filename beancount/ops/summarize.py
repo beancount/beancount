@@ -605,15 +605,18 @@ def create_entries_from_balances(
 
 
 # TODO(blais): Reconcile this with beancount.core.realization.realize() {2196104406ab}.
-# TODO(blais): This should be generalized to any type of key, i.e., provide a key func.
-def balance_by_account(entries, date=None, compress_unbooked=False):
-    """Sum up the balance per account for all entries strictly before 'date'.
+def balance_by_account(entries, date=None, stop_fn=None, compress_unbooked=False):
+    """Sum up the balance per account for all entries prior to some criteria.
 
     Args:
       entries: A list of directives.
       date: An optional datetime.date instance. If provided, stop accumulating
         on and after this date. This is useful for summarization before a
         specific date.
+      stop_fn: An optional function which takes an entry and returns a boolean.
+        If `date` is not provided, and `trigger_fn` is, it will be run on each
+        entry and accumulation will stop on the first entry for which the
+        function returns True (exclusive).
       compress_unbooked: For accounts that have a booking method of NONE,
         compress their positions into a single average position. This can be
         used when you export the full list of positions, because those accounts
@@ -628,8 +631,12 @@ def balance_by_account(entries, date=None, compress_unbooked=False):
     """
     balances = collections.defaultdict(inventory.Inventory)
     for index, entry in enumerate(entries):
-        if date and entry.date >= date:
-            break
+        if date:
+            if entry.date >= date:
+                break
+        elif stop_fn:
+            if stop_fn(entry):
+                break
 
         if isinstance(entry, Transaction):
             for posting in entry.postings:
