@@ -233,7 +233,7 @@ grammar_c = bison_gen.process(
     preserve_path_from: meson.current_source_dir(),
 )
 
-py.extension_module(
+parser = py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
     'beancount/parser/parser.c',
@@ -242,6 +242,28 @@ py.extension_module(
     grammar_c,
     install: true,
     subdir: 'beancount/parser',
+)
+
+# this is a extra ninja target for developer using old-style in-tree development.
+# it doesn't contribute to the building but developing.
+# A developer can do this to get save result like `python setup.py build_ext --inplace`
+# to copy binary extension back to source tree.
+#
+# ```shell
+# meson setup build
+# ninja -C build build_ext
+# ```
+custom_target(
+    'build extension and copy back to source tree',
+    input: parser,
+    output: 'build_ext',
+    depends: parser,
+    command: [
+        'cp',
+        parser.full_path(),
+        join_paths(meson.project_source_root(), 'beancount/parser/'),
+    ],
+    build_by_default: false,
 )
 
 if get_option('tests').enabled()
