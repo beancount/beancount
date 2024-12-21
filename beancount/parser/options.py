@@ -10,11 +10,11 @@ import io
 import re
 import textwrap
 
-from beancount.core.number import D
-from beancount.core import data
-from beancount.core import account_types
 from beancount.core import account
+from beancount.core import account_types
+from beancount.core import data
 from beancount.core import display_context
+from beancount.core.number import D
 
 
 def options_validate_processing_mode(value):

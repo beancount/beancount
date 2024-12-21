@@ -6,9 +6,8 @@ __license__ = "GNU GPLv2"
 import collections
 import hashlib
 
-from beancount.core.data import Price
 from beancount.core import data
-
+from beancount.core.data import Price
 
 CompareError = collections.namedtuple("CompareError", "source message entry")
 

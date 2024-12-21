@@ -8,15 +8,14 @@ __license__ = "GNU GPLv2"
 import collections
 from decimal import Decimal
 
-from beancount.core.number import ZERO
-from beancount.core.data import Booking
-from beancount.core.amount import Amount
-from beancount.core.position import Cost
-from beancount.core import flags
-from beancount.core import position
-from beancount.core import inventory
 from beancount.core import convert
-
+from beancount.core import flags
+from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import Amount
+from beancount.core.data import Booking
+from beancount.core.number import ZERO
+from beancount.core.position import Cost
 
 # An error raised if we failed to reduce the inventory balance unambiguously.
 AmbiguousMatchError = collections.namedtuple("AmbiguousMatchError", "source message entry")

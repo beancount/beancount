@@ -10,7 +10,6 @@ import io
 from beancount.core.data import new_metadata
 from beancount.parser import _parser
 
-
 LexerError = collections.namedtuple("LexerError", "source message entry")
 
 

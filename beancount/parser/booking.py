@@ -7,14 +7,13 @@ __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import MISSING
-from beancount.core.number import ZERO
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
 from beancount.parser import booking_full
-
 
 BookingError = collections.namedtuple("BookingError", "source message entry")
 

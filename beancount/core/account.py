@@ -10,15 +10,16 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 import os
+import re
 import unicodedata
-
 from os import path
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any
+from typing import Callable
+from typing import Iterable
+from typing import Iterator
 
 import regex
-
 
 # Public type for accounts.
 Account = str

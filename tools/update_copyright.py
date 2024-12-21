@@ -8,15 +8,14 @@ __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import logging
 import contextlib
 import datetime
+import logging
 import os
 import re
 import subprocess
 import unittest
 from os import path
-
 
 COPYRIGHT = '__copyright__ = "Copyright (C) {years}  Martin Blais"'
 LICENSE = '__license__ = "GNU GPLv2"'

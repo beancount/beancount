@@ -6,8 +6,8 @@ __license__ = "GNU GPLv2"
 import datetime
 import unittest
 
-from beancount.ops import find_prices
 from beancount import loader
+from beancount.ops import find_prices
 
 
 class TestFromFile(unittest.TestCase):

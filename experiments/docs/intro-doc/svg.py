@@ -6,15 +6,15 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import bisect
-import csv
 import collections
+import csv
 import random
 import re
 import textwrap
 from os import path
 
-from beancount.core.number import D
 from beancount.core import amount
+from beancount.core.number import D
 
 
 class Params:

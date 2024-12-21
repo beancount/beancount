@@ -7,12 +7,13 @@ the name of debugging.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import List, Tuple
 import collections
 import logging
 import os
 import re
 import sys
+from typing import List
+from typing import Tuple
 
 import click
 
@@ -22,19 +23,18 @@ from beancount.core import account_types
 from beancount.core import compare
 from beancount.core import convert
 from beancount.core import data
-from beancount.core.display_context import Align
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import prices
 from beancount.core import realization
-from beancount.parser.context import render_file_context
+from beancount.core.display_context import Align
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
+from beancount.parser.context import render_file_context
 from beancount.parser.version import VERSION
 from beancount.scripts.directories import validate_directories
-
 
 ledger_path = click.Path(resolve_path=True, exists=True)
 

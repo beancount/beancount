@@ -2,15 +2,14 @@ __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os
-import unittest
 import subprocess
 import tempfile
+import unittest
 from os import path
 
 from beancount import loader
 from beancount.utils import encryption
 from beancount.utils import test_utils
-
 
 TEST_PUBLIC_KEY = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----

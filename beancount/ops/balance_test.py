@@ -3,10 +3,11 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.ops import balance, validation
 from beancount import loader
+from beancount.core.amount import A
+from beancount.core.number import D
+from beancount.ops import balance
+from beancount.ops import validation
 
 
 class TestBalance(unittest.TestCase):

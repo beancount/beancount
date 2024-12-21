@@ -5,24 +5,22 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-
 from decimal import Decimal
 
-from beancount.core.number import D
+from beancount.core import convert
+from beancount.core import getters
+from beancount.core import inventory
+from beancount.core.amount import Amount
+from beancount.core.data import Posting
+from beancount.core.data import Transaction
+from beancount.core.inventory import Inventory
+from beancount.core.number import MISSING
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.amount import Amount
-from beancount.core.position import CostSpec
+from beancount.core.number import D
 from beancount.core.position import Cost
-from beancount.core.inventory import Inventory
-from beancount.core import inventory
-from beancount.core import convert
-from beancount.core.data import Transaction
-from beancount.core.data import Posting
-from beancount.core import getters
+from beancount.core.position import CostSpec
 from beancount.utils import defdict
-
 
 # An upper bound on the tolerance value, this is the maximum the tolerance
 # should ever be.

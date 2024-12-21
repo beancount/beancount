@@ -8,7 +8,6 @@ import argparse
 import shutil
 from os import path
 
-
 # Maintained by hand.
 FILE_PAIRS = [
     (

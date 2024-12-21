@@ -7,10 +7,10 @@ import re
 import tempfile
 import unittest
 
-from beancount.core import data
-from beancount.parser import cmptest
-from beancount.ops import validation
 from beancount import loader
+from beancount.core import data
+from beancount.ops import validation
+from beancount.parser import cmptest
 
 
 class TestValidateOpenClose(cmptest.TestCase):

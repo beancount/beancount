@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
-import unittest
 import pickle
+import unittest
 from unittest import mock
 
 from beancount.utils import defdict

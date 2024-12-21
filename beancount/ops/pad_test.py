@@ -2,19 +2,19 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import unittest
 import tempfile
-from os import path
 import textwrap
+import unittest
+from os import path
 
-from beancount.core.amount import A
-from beancount.core import inventory
-from beancount.core import data
-from beancount.core import realization
-from beancount.ops import pad
-from beancount.ops import balance
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.core import data
+from beancount.core import inventory
+from beancount.core import realization
+from beancount.core.amount import A
+from beancount.ops import balance
+from beancount.ops import pad
+from beancount.parser import cmptest
 
 
 class TestPadding(cmptest.TestCase):

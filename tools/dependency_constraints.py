@@ -14,7 +14,6 @@ import re
 import sys
 from os import path
 
-
 RULES = [
     ("ALLOW", "beancount/.*_test$", "beancount/loader"),
     ("ALLOW", "beancount/.*_test$", "beancount/utils"),

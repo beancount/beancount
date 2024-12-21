@@ -2,12 +2,11 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import tempfile
-from os import path
 import unittest
+from os import path
 
 from beancount.utils import test_utils
 from experiments.sql import sql
-
 
 ONE_OF_EACH_TYPE = """
 

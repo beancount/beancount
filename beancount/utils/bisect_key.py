@@ -5,8 +5,10 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import Callable, Sequence, TypeVar, overload
-
+from typing import Callable
+from typing import Sequence
+from typing import TypeVar
+from typing import overload
 
 T = TypeVar("T")
 U = TypeVar("U")

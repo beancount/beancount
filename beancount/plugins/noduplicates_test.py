@@ -3,10 +3,10 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
+from beancount import loader
 from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.plugins import noduplicates
-from beancount import loader
 
 
 class TestValidateDuplicates(cmptest.TestCase):

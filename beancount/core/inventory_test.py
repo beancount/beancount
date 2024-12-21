@@ -5,21 +5,20 @@ Unit tests for the Inventory class.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import copy
 import datetime
 import unittest
-import copy
 from datetime import date
 
-from beancount.core.number import D
-from beancount.core.amount import A
 from beancount.core import amount
-from beancount.core.position import Position
-from beancount.core.position import Cost
 from beancount.core import convert
-from beancount.core import position
-from beancount.utils import invariants
-
 from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import A
+from beancount.core.number import D
+from beancount.core.position import Cost
+from beancount.core.position import Position
+from beancount.utils import invariants
 
 Inventory = inventory.Inventory
 MatchResult = inventory.MatchResult

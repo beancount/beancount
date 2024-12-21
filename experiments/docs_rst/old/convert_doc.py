@@ -12,8 +12,8 @@ __license__ = "GNU GPLv2"
 import argparse
 import logging
 import os
-import tempfile
 import subprocess
+import tempfile
 from os import path
 
 from apiclient import discovery

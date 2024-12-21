@@ -12,8 +12,8 @@ __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core import getters
 from beancount.core import data
+from beancount.core import getters
 from beancount.core import realization
 
 __plugins__ = ("validate_leaf_only",)

@@ -10,7 +10,6 @@ import types
 import warnings
 from os import path
 
-
 # List of input source files we should check against.
 #
 # Note: Prefer not to include the generated source files because they will

@@ -3,10 +3,10 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 import datetime
-from os import path
+import re
 from collections import namedtuple
+from os import path
 
 from beancount.core import account
 from beancount.core import data

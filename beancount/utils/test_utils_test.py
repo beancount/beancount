@@ -1,9 +1,9 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import io
 import os
+import unittest
 from os import path
 from pathlib import Path
 

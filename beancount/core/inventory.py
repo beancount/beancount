@@ -38,20 +38,19 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from collections.abc import Iterable
-from decimal import Decimal
 import enum
 import re
+from collections.abc import Iterable
+from decimal import Decimal
 
+from beancount.core import convert
+from beancount.core.amount import Amount
+from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
-from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
-from beancount.core import convert
-from beancount.core.display_context import DEFAULT_FORMATTER
-
 
 # Enable this in tests to assert types being passed to Inventory.
 ASSERTS_TYPES = False

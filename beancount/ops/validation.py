@@ -11,20 +11,19 @@ trickled up to the user.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
 import collections
+from os import path
 
-from beancount.core.data import Open
-from beancount.core.data import Balance
-from beancount.core.data import Close
-from beancount.core.data import Transaction
-from beancount.core.data import Document
-from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import interpolate
+from beancount.core.data import Balance
+from beancount.core.data import Close
+from beancount.core.data import Document
+from beancount.core.data import Note
+from beancount.core.data import Open
+from beancount.core.data import Transaction
 from beancount.utils import misc_utils
-
 
 # An error from one of the checks.
 ValidationError = collections.namedtuple("ValidationError", "source message entry")

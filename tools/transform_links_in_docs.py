@@ -20,15 +20,22 @@ matching any entry are ignored.
 __copyright__ = "Copyright (C) 2020  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import List, Optional, Dict, Any, Mapping, Iterator, Callable, Tuple
 import argparse
-import json
 import functools
+import json
 import re
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import Tuple
 
 from googleapiclient import discovery
-from beancount.tools import gapis  # See http://github.com/blais/gapis
 
+from beancount.tools import gapis  # See http://github.com/blais/gapis
 
 Json = Mapping[str, "Json"]
 

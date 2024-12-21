@@ -25,21 +25,21 @@ import functools
 import io
 import operator
 
-from beancount.core.data import Transaction
-from beancount.core.data import Posting
-from beancount.core.data import TxnPosting
-from beancount.core.data import Balance
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.data import Pad
-from beancount.core.data import Note
-from beancount.core.data import Document
-from beancount.core.data import Custom
-from beancount.core import inventory
-from beancount.core import amount
-from beancount.core import data
 from beancount.core import account
+from beancount.core import amount
 from beancount.core import convert
+from beancount.core import data
+from beancount.core import inventory
+from beancount.core.data import Balance
+from beancount.core.data import Close
+from beancount.core.data import Custom
+from beancount.core.data import Document
+from beancount.core.data import Note
+from beancount.core.data import Open
+from beancount.core.data import Pad
+from beancount.core.data import Posting
+from beancount.core.data import Transaction
+from beancount.core.data import TxnPosting
 
 
 class RealAccount(dict):

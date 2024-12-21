@@ -2,12 +2,15 @@ __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import decimal
-from decimal import Decimal
 import random
 import unittest
+from decimal import Decimal
 
-from beancount.core.number import D, ZERO, round_to, same_sign
 from beancount.core import number
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.number import round_to
+from beancount.core.number import same_sign
 
 
 class TestDecimalPrecision(unittest.TestCase):

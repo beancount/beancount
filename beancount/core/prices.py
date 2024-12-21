@@ -11,15 +11,16 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from typing import Optional, Set
+from typing import Optional
+from typing import Set
 
+from beancount.core import data
+from beancount.core.data import Currency
+from beancount.core.data import Price
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.data import Price
-from beancount.core.data import Currency
-from beancount.core import data
-from beancount.utils import misc_utils
 from beancount.utils import bisect_key
+from beancount.utils import misc_utils
 
 
 def get_last_price_entries(entries, date):

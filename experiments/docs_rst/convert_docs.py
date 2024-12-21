@@ -5,13 +5,13 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import logging
-import zipfile
 import io
-import re
+import logging
 import os
-import threading
+import re
 import subprocess
+import threading
+import zipfile
 from os import path
 from typing import List
 from typing import Tuple

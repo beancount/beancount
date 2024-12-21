@@ -4,11 +4,11 @@ __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os
-from os import path
 import unittest
+from os import path
 
-from beancount.utils import test_utils
 from beancount.scripts import check
+from beancount.utils import test_utils
 
 
 def find_example_files():

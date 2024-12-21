@@ -3,8 +3,8 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.utils import import_utils
 from beancount.utils import defdict
+from beancount.utils import import_utils
 
 
 class TestImportSymbol(unittest.TestCase):

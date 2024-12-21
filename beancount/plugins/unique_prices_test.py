@@ -3,10 +3,10 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
+from beancount import loader
 from beancount.parser import cmptest
 from beancount.plugins import implicit_prices
 from beancount.plugins import unique_prices
-from beancount import loader
 
 
 class TestValidateAmbiguousPrices(cmptest.TestCase):

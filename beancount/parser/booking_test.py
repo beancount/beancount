@@ -7,10 +7,9 @@ import textwrap
 import unittest
 
 from beancount.core.data import Booking
-from beancount.parser import parser
-from beancount.parser import cmptest
 from beancount.parser import booking
-
+from beancount.parser import cmptest
+from beancount.parser import parser
 
 BookingTestError = collections.namedtuple("BookingTestError", "source message entry")
 

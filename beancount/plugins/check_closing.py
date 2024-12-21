@@ -37,9 +37,9 @@ __license__ = "GNU GPLv2"
 
 import datetime
 
-from beancount.core.number import ZERO
-from beancount.core import data
 from beancount.core import amount
+from beancount.core import data
+from beancount.core.number import ZERO
 
 __plugins__ = ("check_closing",)
 

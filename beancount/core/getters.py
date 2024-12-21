@@ -7,15 +7,15 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from collections import defaultdict
 from collections import OrderedDict
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from beancount.core.data import Transaction
-from beancount.core.data import Open
+from beancount.core import account
 from beancount.core.data import Close
 from beancount.core.data import Commodity
-from beancount.core import account
+from beancount.core.data import Open
+from beancount.core.data import Transaction
 
 if TYPE_CHECKING:
     from typing import Iterator

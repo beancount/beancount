@@ -16,32 +16,30 @@ import re
 import sys
 import textwrap
 
-from dateutil import rrule
-import dateutil.parser
-
 import click
+import dateutil.parser
+from dateutil import rrule
 
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.core.number import round_to
-from beancount.core.account import join
-from beancount.core import data
-from beancount.core import amount
-from beancount.core import inventory
-from beancount.core import realization
-from beancount.core import display_context
-from beancount.core import convert
-from beancount.parser import parser
-from beancount.parser import booking
-from beancount.parser import printer
-from beancount.ops import validation
-from beancount.core import prices
-from beancount.scripts import format
-from beancount.core import getters
-from beancount.utils import misc_utils
-from beancount.parser.version import VERSION
 from beancount import loader
-
+from beancount.core import amount
+from beancount.core import convert
+from beancount.core import data
+from beancount.core import display_context
+from beancount.core import getters
+from beancount.core import inventory
+from beancount.core import prices
+from beancount.core import realization
+from beancount.core.account import join
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.number import round_to
+from beancount.ops import validation
+from beancount.parser import booking
+from beancount.parser import parser
+from beancount.parser import printer
+from beancount.parser.version import VERSION
+from beancount.scripts import format
+from beancount.utils import misc_utils
 
 # Constants.
 ONE_DAY = datetime.timedelta(days=1)

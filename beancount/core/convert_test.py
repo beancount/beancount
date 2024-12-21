@@ -6,18 +6,18 @@ __license__ = "GNU GPLv2"
 import datetime
 import unittest
 
-from beancount.core.number import MISSING
-from beancount.core.number import D
+from beancount import loader
+from beancount.core import convert
+from beancount.core import data
+from beancount.core import inventory
+from beancount.core import prices
 from beancount.core.amount import A
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
+from beancount.core.number import MISSING
+from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import Position
-from beancount.core import convert
-from beancount.core import inventory
-from beancount.core import prices
-from beancount.core import data
-from beancount import loader
 
 
 def build_price_map_util(date_currency_price_tuples):

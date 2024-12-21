@@ -3,9 +3,9 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
+from beancount import loader
 from beancount.parser import cmptest
 from beancount.plugins import nounused
-from beancount import loader
 
 
 class TestValidateUnusedAccounts(cmptest.TestCase):
