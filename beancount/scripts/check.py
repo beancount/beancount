@@ -8,8 +8,8 @@ import click
 
 from beancount import loader
 from beancount.ops import validation
-from beancount.utils import misc_utils
 from beancount.parser.version import VERSION
+from beancount.utils import misc_utils
 
 
 @click.command()

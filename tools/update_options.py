@@ -9,12 +9,12 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import logging
-import re
 import os
+import re
 from os import path
 
-from apiclient import discovery
 import httplib2
+from apiclient import discovery
 from apiclient.http import MediaInMemoryUpload
 
 # TODO(blais, 2023-11-18): oauth2client is deprecated.

@@ -1,4 +1,5 @@
 import io
+
 from beancount.parser.grammar import Builder
 
 class Parser:

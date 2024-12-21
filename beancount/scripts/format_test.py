@@ -4,8 +4,8 @@ __license__ = "GNU GPLv2"
 import textwrap
 import unittest
 
-from beancount.utils import test_utils
 from beancount.scripts import format
+from beancount.utils import test_utils
 
 
 class TestScriptFormat(test_utils.ClickTestCase):

@@ -3,10 +3,10 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
 import logging
 import os
 import time
+from os import path
 
 
 def find_files(fords, ignore_dirs=(".hg", ".svn", ".git"), ignore_files=(".DS_Store",)):

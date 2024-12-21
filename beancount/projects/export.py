@@ -26,26 +26,31 @@ Query Language query. However, BQL is not there yet.
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import sys
-from typing import NamedTuple, Tuple, List, Set, Any, Dict
-from decimal import Decimal
 import csv
 import datetime
 import logging
 import re
+import sys
+from decimal import Decimal
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import NamedTuple
+from typing import Set
+from typing import Tuple
+
 import click
 
-from beancount.core.number import ONE
-from beancount.core.number import D
-from beancount.core import data
+from beancount import loader
 from beancount.core import account
 from beancount.core import account_types
+from beancount.core import data
 from beancount.core import getters
-from beancount.ops import summarize
 from beancount.core import prices
+from beancount.core.number import ONE
+from beancount.core.number import D
+from beancount.ops import summarize
 from beancount.parser import options
-from beancount import loader
-
 
 Header = List[str]
 Rows = List[List[Any]]

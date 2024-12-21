@@ -19,7 +19,6 @@ from collections import namedtuple
 from beancount.core import account
 from beancount.core.account import Account
 
-
 # A tuple that contains the names of the root accounts.
 # Attributes:
 #   assets: a str, the name of the prefix for the Asset subaccounts.

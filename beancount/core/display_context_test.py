@@ -5,8 +5,8 @@ import unittest
 from decimal import Decimal
 
 from beancount.core import display_context
-from beancount.core.display_context import Precision
 from beancount.core.display_context import Align
+from beancount.core.display_context import Precision
 
 
 def decimalize(number_list):

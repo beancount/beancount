@@ -4,13 +4,13 @@
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import hashlib
 import logging
 import os
-import subprocess
-import re
 import pickle
-import hashlib
+import re
 import shelve
+import subprocess
 from os import path
 
 import httplib2

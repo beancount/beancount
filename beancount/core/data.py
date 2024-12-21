@@ -9,17 +9,21 @@ import builtins
 import datetime
 import enum
 import sys
-
 from decimal import Decimal
-from typing import Any, Iterator, NamedTuple, Union, overload, Dict, List
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import NamedTuple
+from typing import Union
+from typing import overload
 
+from beancount.core.account import has_component
 from beancount.core.amount import Amount
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
-from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
-
 
 # Type declarations.
 Account = str

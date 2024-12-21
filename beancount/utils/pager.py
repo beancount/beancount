@@ -19,12 +19,11 @@ __license__ = "GNU GPLv2"
 
 import codecs
 import contextlib
-import os
-import sys
-import subprocess
 import io
 import logging
-
+import os
+import subprocess
+import sys
 
 # The default command to run for a pager, if the PAGER environment variable is not set.
 DEFAULT_PAGER = "more"

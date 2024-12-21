@@ -4,9 +4,9 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount import loader
-from beancount.plugins import sellgains
 from beancount.ops import validation
 from beancount.parser import printer
+from beancount.plugins import sellgains
 
 
 class TestSellGains(unittest.TestCase):

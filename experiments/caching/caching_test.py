@@ -1,8 +1,8 @@
-import unittest
 import argparse
 import tempfile
-from unittest import mock
+import unittest
 from os import path
+from unittest import mock
 
 from beancount.utils import caching
 

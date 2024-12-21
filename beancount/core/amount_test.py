@@ -3,10 +3,10 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import Amount
 from beancount.core import amount
 from beancount.core import display_context
+from beancount.core.amount import Amount
+from beancount.core.number import D
 
 
 class TestAmount(unittest.TestCase):

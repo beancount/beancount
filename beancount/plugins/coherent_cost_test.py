@@ -4,9 +4,9 @@ __license__ = "GNU GPLv2"
 import datetime
 import unittest
 
+from beancount import loader
 from beancount.parser import cmptest
 from beancount.plugins import coherent_cost
-from beancount import loader
 
 
 class TestValidateUnusedAccounts(cmptest.TestCase):

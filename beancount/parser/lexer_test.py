@@ -5,11 +5,11 @@ Tests for lexer.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from decimal import Decimal
 import datetime
 import functools
 import textwrap
 import unittest
+from decimal import Decimal
 
 from beancount.core.number import D
 from beancount.parser import lexer

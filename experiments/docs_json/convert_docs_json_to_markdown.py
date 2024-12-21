@@ -5,14 +5,14 @@ __copyright__ = "Copyright (C) 2019  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-from os import path
 import argparse
-import textwrap
 import collections
 import json
 import logging
 import os
 import re
+import textwrap
+from os import path
 
 
 def _get(obj, path):

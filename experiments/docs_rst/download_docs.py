@@ -12,20 +12,19 @@ __copyright__ = "Copyright (C) 2017-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-from os import path
 import argparse
 import json
 import logging
 import os
 import re
 import subprocess
-
+from os import path
 from typing import List
 
-import bs4
 import apiclient.errors
-from apiclient import discovery
+import bs4
 import httplib2
+from apiclient import discovery
 
 # TODO(blais, 2023-11-18): oauth2client is deprecated.
 from oauth2client import service_account

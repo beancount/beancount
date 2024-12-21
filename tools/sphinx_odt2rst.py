@@ -16,10 +16,9 @@ __license__ = "GNU GPLv2"
 import argparse
 import logging
 import shutil
-import tempfile
 import subprocess
+import tempfile
 from os import path
-
 
 OVERLAY_DOCS = {
     "Beancount-Motivation": "cookbook/cl_cookbook.rst",

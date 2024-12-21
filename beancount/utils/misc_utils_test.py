@@ -5,13 +5,13 @@ Tests for general utils.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
-from unittest import mock
-import time
-import textwrap
-import sys
-from collections import namedtuple
 import operator
+import sys
+import textwrap
+import time
+import unittest
+from collections import namedtuple
+from unittest import mock
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils

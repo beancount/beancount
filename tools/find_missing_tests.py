@@ -13,8 +13,8 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import os
-from os import path
 import re
+from os import path
 
 
 def find_missing_tests(source_dir):

@@ -6,39 +6,37 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import traceback
-from os import path
 from datetime import date
 from decimal import Decimal
+from os import path
 
 import regex
 
-from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.amount import Amount
-from beancount.core import display_context
-from beancount.core.position import CostSpec
-from beancount.core.data import Transaction
-from beancount.core.data import Balance
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.data import Commodity
-from beancount.core.data import Pad
-from beancount.core.data import Event
-from beancount.core.data import Query
-from beancount.core.data import Price
-from beancount.core.data import Note
-from beancount.core.data import Document
-from beancount.core.data import Custom
-from beancount.core.data import new_metadata
-from beancount.core.data import Posting
-from beancount.core.data import Booking
-from beancount.core.data import EMPTY_SET
-
-from beancount.parser import lexer
-from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
-
+from beancount.core import display_context
+from beancount.core.amount import Amount
+from beancount.core.data import EMPTY_SET
+from beancount.core.data import Balance
+from beancount.core.data import Booking
+from beancount.core.data import Close
+from beancount.core.data import Commodity
+from beancount.core.data import Custom
+from beancount.core.data import Document
+from beancount.core.data import Event
+from beancount.core.data import Note
+from beancount.core.data import Open
+from beancount.core.data import Pad
+from beancount.core.data import Posting
+from beancount.core.data import Price
+from beancount.core.data import Query
+from beancount.core.data import Transaction
+from beancount.core.data import new_metadata
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
+from beancount.core.position import CostSpec
+from beancount.parser import lexer
+from beancount.parser import options
 
 ParserError = collections.namedtuple("ParserError", "source message entry")
 ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")

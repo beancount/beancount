@@ -3,19 +3,18 @@ __license__ = "GNU GPLv2"
 
 import io
 import os
-from datetime import date
-import unittest
 import re
-import textwrap
 import tempfile
+import textwrap
+import unittest
+from datetime import date
 
-from beancount.parser import printer
-from beancount.parser import cmptest
+from beancount import loader
 from beancount.core import data
 from beancount.core import interpolate
+from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount.utils import test_utils
-from beancount import loader
-
 
 META = data.new_metadata("beancount/core/testing.beancount", 12345)
 

@@ -3,8 +3,8 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.parser import cmptest
 
 
 class TestCheckClosing(cmptest.TestCase):

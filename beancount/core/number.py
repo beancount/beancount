@@ -18,7 +18,6 @@ __license__ = "GNU GPLv2"
 import re
 from decimal import Decimal
 
-
 # Constants.
 ZERO = Decimal()
 HALF = Decimal("0.5")

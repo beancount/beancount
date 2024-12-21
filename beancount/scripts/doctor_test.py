@@ -5,13 +5,12 @@ import os
 import re
 import textwrap
 import unittest
-
 from os import path
 
 from beancount.parser import cmptest
-from beancount.utils import test_utils
-from beancount.scripts.doctor import doctor
 from beancount.scripts import directories_test
+from beancount.scripts.doctor import doctor
+from beancount.utils import test_utils
 
 
 class TestScriptDoctor(test_utils.ClickTestCase):

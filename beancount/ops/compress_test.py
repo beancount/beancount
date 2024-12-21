@@ -4,9 +4,9 @@ __license__ = "GNU GPLv2"
 import unittest
 
 from beancount import loader
-from beancount.parser import cmptest
 from beancount.core import data
 from beancount.ops import compress
+from beancount.parser import cmptest
 
 
 class TestMerge(cmptest.TestCase):

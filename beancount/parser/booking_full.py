@@ -76,21 +76,21 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import enum
-from decimal import Decimal
 import uuid
+from decimal import Decimal
 
+from beancount.core import interpolate
+from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import Amount
+from beancount.core.data import Booking
+from beancount.core.data import Transaction
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
-from beancount.core.data import Transaction
-from beancount.core.data import Booking
-from beancount.core.amount import Amount
-from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
+from beancount.core.position import Position
 from beancount.parser import booking_method
-from beancount.core import position
-from beancount.core import inventory
-from beancount.core import interpolate
 
 
 def unique_label() -> str:

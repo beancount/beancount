@@ -10,24 +10,24 @@ total amount of that account.
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import datetime
 import collections
+import datetime
 
-from beancount.core.number import ZERO
-from beancount.core.data import Transaction
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.account_types import is_income_statement_account
 from beancount.core import amount
-from beancount.core import inventory
+from beancount.core import convert
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import getters
 from beancount.core import interpolate
-from beancount.core import convert
+from beancount.core import inventory
 from beancount.core import prices
-from beancount.utils import bisect_key
+from beancount.core.account_types import is_income_statement_account
+from beancount.core.data import Close
+from beancount.core.data import Open
+from beancount.core.data import Transaction
+from beancount.core.number import ZERO
 from beancount.parser import options
+from beancount.utils import bisect_key
 
 
 def open(

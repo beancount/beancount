@@ -14,8 +14,8 @@ __license__ = "GNU GPLv2"
 import collections
 from decimal import Decimal
 
-from beancount.core.amount import Amount
 from beancount.core import data
+from beancount.core.amount import Amount
 
 
 def compress(entries, predicate):

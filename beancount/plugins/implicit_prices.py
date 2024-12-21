@@ -7,10 +7,10 @@ __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.data import Transaction
-from beancount.core import data
 from beancount.core import amount
+from beancount.core import data
 from beancount.core import inventory
+from beancount.core.data import Transaction
 
 __plugins__ = ("add_implicit_prices",)
 

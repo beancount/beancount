@@ -13,15 +13,14 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
-
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import NamedTuple
+from typing import Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
-from beancount.core.number import ZERO
 from beancount.core.number import MISSING
+from beancount.core.number import ZERO
 from beancount.core.number import D
-
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".

@@ -5,14 +5,14 @@ __license__ = "GNU GPLv2"
 
 import collections
 
+from beancount.core import account
+from beancount.core import amount
+from beancount.core import getters
+from beancount.core import realization
+from beancount.core.data import Balance
+from beancount.core.data import Transaction
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.data import Transaction
-from beancount.core.data import Balance
-from beancount.core import amount
-from beancount.core import account
-from beancount.core import realization
-from beancount.core import getters
 
 __plugins__ = ("check",)
 

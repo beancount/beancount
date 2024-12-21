@@ -13,14 +13,14 @@ import textwrap
 from decimal import Decimal
 from typing import Optional
 
-from beancount.core import position
-from beancount.core import convert
-from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import account
+from beancount.core import amount
+from beancount.core import convert
 from beancount.core import data
-from beancount.core import interpolate
 from beancount.core import display_context
+from beancount.core import interpolate
+from beancount.core import inventory
+from beancount.core import position
 from beancount.utils import misc_utils
 
 

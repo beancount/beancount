@@ -21,7 +21,6 @@ import collections
 import re
 import sys
 
-
 # Default regular expressions used for splitting.
 DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)" r"(:[A-Z][A-Za-z0-9-_']*)*"
 DEFAULT_DELIMITER = "[ \t]+"

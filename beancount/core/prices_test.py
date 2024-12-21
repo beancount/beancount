@@ -1,13 +1,13 @@
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import datetime
+import unittest
 
-from beancount.core.number import D
-from beancount.core import prices
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.core import prices
+from beancount.core.number import D
+from beancount.parser import cmptest
 
 
 class TestPriceEntries(cmptest.TestCase):

@@ -5,8 +5,8 @@ import unittest
 
 from beancount import loader
 from beancount.core import data
-from beancount.plugins import currency_accounts
 from beancount.parser import cmptest
+from beancount.plugins import currency_accounts
 
 
 class TestCurrencyTradingAccounts(cmptest.TestCase):

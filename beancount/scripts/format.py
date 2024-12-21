@@ -7,8 +7,8 @@ import io
 import click
 import regex
 
-from beancount.core import amount
 from beancount.core import account
+from beancount.core import amount
 from beancount.parser.version import VERSION
 
 NUMBER_RE = r"[-+]?\s*[\d,]+(?:\.\d*)?"

@@ -5,8 +5,6 @@ Generic utility packages and functions.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from collections import defaultdict
-from time import time
 import collections
 import contextlib
 import functools
@@ -14,6 +12,8 @@ import io
 import re
 import sys
 import warnings
+from collections import defaultdict
+from time import time
 
 
 def deprecated(message):

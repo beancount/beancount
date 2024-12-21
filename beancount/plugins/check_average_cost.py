@@ -15,12 +15,12 @@ __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import ZERO
-from beancount.core.number import D
-from beancount.core.data import Transaction
-from beancount.core.data import Booking
 from beancount.core import getters
 from beancount.core import inventory
+from beancount.core.data import Booking
+from beancount.core.data import Transaction
+from beancount.core.number import ZERO
+from beancount.core.number import D
 
 __plugins__ = ("validate_average_cost",)
 

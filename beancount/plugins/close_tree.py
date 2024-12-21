@@ -24,7 +24,8 @@ Beancount::
 """
 
 from beancount.core import data
-from beancount.core.data import Open, Close
+from beancount.core.data import Close
+from beancount.core.data import Open
 
 __plugins__ = ("close_tree",)
 

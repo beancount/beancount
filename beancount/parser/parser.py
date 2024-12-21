@@ -114,21 +114,19 @@ import codecs
 import contextlib
 import functools
 import inspect
-import textwrap
 import io
 import sys
+import textwrap
 
-from beancount.parser import _parser
-from beancount.parser import grammar
-from beancount.parser import printer
-from beancount.parser import hashsrc
 from beancount.core import data
 from beancount.core.number import MISSING
-
+from beancount.parser import _parser
+from beancount.parser import grammar
+from beancount.parser import hashsrc
+from beancount.parser import printer
+from beancount.parser.grammar import DeprecatedError  # noqa: F401
 from beancount.parser.grammar import ParserError  # noqa: F401
 from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
-from beancount.parser.grammar import DeprecatedError  # noqa: F401
-
 
 # When importing the module, always check that the compiled source matched the
 # installed source.

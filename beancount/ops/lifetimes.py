@@ -12,9 +12,8 @@ import collections
 import datetime
 import itertools
 
-from beancount.core import inventory
 from beancount.core import data
-
+from beancount.core import inventory
 
 ONEDAY = datetime.timedelta(days=1)
 

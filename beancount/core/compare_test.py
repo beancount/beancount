@@ -3,10 +3,9 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core import data
-from beancount.core import compare
 from beancount import loader
-
+from beancount.core import compare
+from beancount.core import data
 
 TEST_INPUT = """
 

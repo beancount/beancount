@@ -4,8 +4,8 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.parser import hashsrc
 from beancount.parser import _parser
+from beancount.parser import hashsrc
 
 
 class TestHashSource(unittest.TestCase):

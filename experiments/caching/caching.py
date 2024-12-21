@@ -23,7 +23,6 @@ import os
 import re
 from os import path
 
-
 # The default parent directory for all cache files.
 BEANCOUNT_DIR = os.environ.get("BEANCOUNT_DIR", path.expanduser("~/.beancount"))
 

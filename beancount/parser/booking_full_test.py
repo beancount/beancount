@@ -3,36 +3,35 @@ __license__ = "GNU GPLv2"
 
 import collections
 import datetime
-import textwrap
 import functools
-import unittest
-import re
 import io
+import re
+import textwrap
+import unittest
 from unittest import mock
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.number import MISSING
-from beancount.core.position import CostSpec
-from beancount.core.position import Cost
-from beancount.core.position import Position
-from beancount.core.inventory import from_string as I
-
-from beancount.utils import test_utils
-from beancount.core.data import Booking
-from beancount.core import inventory
-from beancount.core import position
+from beancount import loader
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
-from beancount.parser import parser
-from beancount.parser import printer
+from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import A
+from beancount.core.data import Booking
+from beancount.core.inventory import from_string as I
+from beancount.core.number import MISSING
+from beancount.core.number import D
+from beancount.core.position import Cost
+from beancount.core.position import CostSpec
+from beancount.core.position import Position
+from beancount.parser import booking
 from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
-from beancount.parser import booking
 from beancount.parser import cmptest
 from beancount.parser import options
-from beancount import loader
+from beancount.parser import parser
+from beancount.parser import printer
+from beancount.utils import test_utils
 
 
 def _gen_missing_combinations(template, args):

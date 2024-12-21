@@ -3,8 +3,6 @@
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
-from typing import Any, Optional, List, Dict, Tuple
 import collections
 import copy
 import functools
@@ -22,16 +20,21 @@ import textwrap
 import time
 import traceback
 import warnings
+from os import path
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
-from beancount.utils import misc_utils
 from beancount.core import data
-from beancount.parser import parser
+from beancount.ops import validation
 from beancount.parser import booking
 from beancount.parser import options
+from beancount.parser import parser
 from beancount.parser import printer
-from beancount.ops import validation
 from beancount.utils import encryption
-
+from beancount.utils import misc_utils
 
 OptionsMap = Any
 

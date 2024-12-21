@@ -6,13 +6,16 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import io
-import unittest
-import textwrap
 import sys
+import textwrap
+import unittest
 
-from beancount.core.number import D
 from beancount.core import data
-from beancount.parser import parser, _parser, lexer, grammar
+from beancount.core.number import D
+from beancount.parser import _parser
+from beancount.parser import grammar
+from beancount.parser import lexer
+from beancount.parser import parser
 from beancount.utils import test_utils
 
 

@@ -11,11 +11,11 @@ import textwrap
 import unittest
 from os import path
 
-from beancount.utils import test_utils
+from beancount import loader
 from beancount.core import data
 from beancount.ops import documents
 from beancount.parser import cmptest
-from beancount import loader
+from beancount.utils import test_utils
 
 
 class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):

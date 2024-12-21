@@ -1,9 +1,9 @@
 import unittest
 
-from beancount.plugins import close_tree
-from beancount.parser import options
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.parser import cmptest
+from beancount.parser import options
+from beancount.plugins import close_tree
 
 
 class TestCloseTree(cmptest.TestCase):

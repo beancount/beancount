@@ -3,14 +3,21 @@
 __copyright__ = "Copyright (C) 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from functools import partial
-from typing import List, Iterator
-from visidata import ItemColumn, Column, ColumnAttr, SubColumnAttr  # noqa: F401
-from visidata import VisiData, Sheet, Progress
-import beancount as bn
 import subprocess
-import visidata
+from functools import partial
+from typing import Iterator
+from typing import List
 
+import visidata
+from visidata import Column  # noqa: F401
+from visidata import ColumnAttr  # noqa: F401
+from visidata import ItemColumn  # noqa: F401
+from visidata import Progress  # noqa: F401
+from visidata import Sheet  # noqa: F401
+from visidata import SubColumnAttr  # noqa: F401
+from visidata import VisiData  # noqa: F401
+
+import beancount as bn
 
 # Note: guess_beancount is implicit in naming files with ext `.beancount`.
 

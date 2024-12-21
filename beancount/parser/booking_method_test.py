@@ -12,6 +12,5 @@ import unittest
 
 from beancount.parser import booking_method as bm  # noqa: F401
 
-
 if __name__ == "__main__":
     unittest.main()

@@ -2,20 +2,19 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import functools
-import logging
 import importlib
-import unittest
+import logging
+import os
 import tempfile
 import textwrap
-import os
+import unittest
+from os import path
 from pathlib import Path
 from unittest import mock
-from os import path
 
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
-
 
 TEST_INPUT = """
 

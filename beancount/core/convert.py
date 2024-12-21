@@ -24,11 +24,11 @@ __license__ = "GNU GPLv2"
 
 from decimal import Decimal
 
-from beancount.core.number import MISSING
+from beancount.core import prices
 from beancount.core.amount import Amount
+from beancount.core.number import MISSING
 from beancount.core.position import Cost
 from beancount.core.position import Position
-from beancount.core import prices
 
 
 def get_units(pos):
