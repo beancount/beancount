@@ -49,7 +49,11 @@ from beancount import loader
 
 Header = List[str]
 Rows = List[List[Any]]
-Table = NamedTuple("Table", [("header", Header), ("rows", Rows)])
+
+
+class Table(NamedTuple):
+    header: Header
+    rows: Rows
 
 
 def get_metamap_table(

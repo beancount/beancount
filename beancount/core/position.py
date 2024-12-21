@@ -23,50 +23,41 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# A variant of Amount that also includes a date and a label.
-#
-# Attributes:
-#   number: A Decimal, the per-unit cost.
-#   currency: A string, the cost currency.
-#   date: A datetime.date for the date that the lot was created at. There
-#      should always be a valid date.
-#   label: A string for the label of this lot, or None, if there is no label.
-Cost = NamedTuple(
-    "Cost",
-    [
-        ("number", Decimal),
-        ("currency", str),
-        ("date", datetime.date),
-        ("label", Optional[str]),
-    ],
-)
+class Cost(NamedTuple):
+    """A variant of Amount that also includes a date and a label."""
+
+    # the per-unit cost
+    number: Decimal
+    # the cost currency.
+    currency: str
+    # for the date that the lot was created at. There
+    #      should always be a valid date.
+    date: datetime.date
+    # A string for the label of this lot, or None, if there is no label.
+    label: Optional[str]
 
 
-# A stand-in for an "incomplete" Cost, that is, a container all the data that
-# was provided by the user in the input in order to resolve this lot to a
-# particular lot and produce an instance of Cost. Any of the fields of this
-# object may be left unspecified, in which case they take the special value
-# "NA" (see below), if the field was absent from the input.
-#
-# Attributes:
-#   number_per: A Decimal instance, the cost/price per unit, or None if unspecified.
-#   number_total: A Decimal instance, the total cost/price, or None if unspecified.
-#   currency: A string, the commodity of the amount, or None if unspecified.
-#   date: A datetime.date, or None if unspecified.
-#   label: A string for the label of this lot, or None if unspecified.
-#   merge: A boolean, true if this specification calls for averaging the units
-#      of this lot's currency, or False if unspecified.
-CostSpec = NamedTuple(
-    "CostSpec",
-    [
-        ("number_per", Optional[Decimal]),
-        ("number_total", Optional[Decimal]),
-        ("currency", Optional[str]),
-        ("date", Optional[datetime.date]),
-        ("label", Optional[str]),
-        ("merge", Optional[bool]),
-    ],
-)
+class CostSpec(NamedTuple):
+    """
+    A stand-in for an "incomplete" Cost, that is, a container all the data that
+    was provided by the user in the input in order to resolve this lot to a
+    particular lot and produce an instance of Cost. Any of the fields of this
+    object may be left unspecified, in which case they take the special value
+    "NA" (see below), if the field was absent from the input.
+    """
+
+    # A Decimal instance, the cost/price per unit, or None if unspecified.
+    number_per: Optional[Decimal]
+    # A Decimal instance, the total cost/price, or None if unspecified.
+    number_total: Optional[Decimal]
+    # A string, the commodity of the amount, or None if unspecified.
+    currency: Optional[str]
+    # A datetime.date, or None if unspecified.
+    date: Optional[datetime.date]
+    # A string for the label of this lot, or None if unspecified.
+    label: Optional[str]
+    # A boolean, true if this specification calls for averaging the units of this lot's currency, or  False if unspecified.
+    merge: Optional[bool]
 
 
 def cost_to_str(cost, dformat, detail=True):
