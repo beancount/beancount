@@ -6,6 +6,7 @@ See types below for details.
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from collections import namedtuple
 import copy
 import datetime
 import re
@@ -151,10 +152,7 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-_Position = NamedTuple("_Position", [("units", Amount), ("cost", Cost)])
-
-
-class Position(_Position):
+class Position(namedtuple("Position", ["units", "cost"])):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -162,6 +160,9 @@ class Position(_Position):
       units: An Amount, the number of units and its currency.
       cost: A Cost that represents the lot, or None.
     """
+
+    units: Amount
+    cost: Cost
 
     __slots__ = ()  # Prevent the creation of new attributes.
 
@@ -175,7 +176,7 @@ class Position(_Position):
         assert cost is None or isinstance(
             cost, Position.cost_types
         ), "Expected a Cost for cost; received '{}'".format(cost)
-        return _Position.__new__(cls, units, cost)
+        return super().__new__(cls, units, cost)
 
     def __hash__(self):
         """Compute a hash for this position.

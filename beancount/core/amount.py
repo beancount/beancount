@@ -12,10 +12,11 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from collections import namedtuple
 import re
 
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
@@ -33,15 +34,15 @@ CURRENCY_RE = "|".join(
 )
 
 
-_Amount = NamedTuple("_Amount", [("number", Optional[Decimal]), ("currency", str)])
-
-
-class Amount(_Amount):
+class Amount(namedtuple("Amount", ["number", "currency"])):
     """An 'Amount' represents a number of a particular unit of something.
 
     It's essentially a typed number, with corresponding manipulation operations
     defined on it.
     """
+
+    number: Optional[Decimal]
+    currency: str
 
     __slots__ = ()  # Prevent the creation of new attributes.
 
@@ -57,7 +58,7 @@ class Amount(_Amount):
         """
         assert isinstance(number, Amount.valid_types_number), repr(number)
         assert isinstance(currency, Amount.valid_types_currency), repr(currency)
-        return _Amount.__new__(cls, number, currency)
+        return super().__new__(cls, number, currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.
