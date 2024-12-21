@@ -30,8 +30,8 @@ class Cost(NamedTuple):
     number: Decimal
     # the cost currency.
     currency: str
-    # for the date that the lot was created at. There
-    #      should always be a valid date.
+    # for the date that the lot was created at.
+    # There should always be a valid date.
     date: datetime.date
     # A string for the label of this lot, or None, if there is no label.
     label: Optional[str]
@@ -56,7 +56,8 @@ class CostSpec(NamedTuple):
     date: Optional[datetime.date]
     # A string for the label of this lot, or None if unspecified.
     label: Optional[str]
-    # A boolean, true if this specification calls for averaging the units of this lot's currency, or  False if unspecified.
+    # True if this specification calls for averaging the units of this lot's currency,
+    # False if unspecified.
     merge: Optional[bool]
 
 
