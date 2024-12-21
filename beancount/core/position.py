@@ -3,6 +3,8 @@
 See types below for details.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -12,6 +14,7 @@ import re
 from decimal import Decimal
 from typing import NamedTuple
 from typing import Optional
+from typing import Union
 
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.amount import Amount
@@ -151,10 +154,9 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-_Position = NamedTuple("_Position", [("units", Amount), ("cost", Cost)])
-
-
-class Position(_Position):
+class Position(
+    NamedTuple("Position", [("units", Amount), ("cost", Optional[Union[Cost, CostSpec]])])
+):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -168,14 +170,14 @@ class Position(_Position):
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __new__(cls, units, cost=None):
+    def __new__(cls, units: Amount, cost: Cost | CostSpec | None = None):
         assert isinstance(
             units, Amount
         ), "Expected an Amount for units; received '{}'".format(units)
         assert cost is None or isinstance(
             cost, Position.cost_types
         ), "Expected a Cost for cost; received '{}'".format(cost)
-        return _Position.__new__(cls, units, cost)
+        return super().__new__(cls, units, cost)
 
     def __hash__(self):
         """Compute a hash for this position.
