@@ -5,6 +5,7 @@ Generic utility packages and functions.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import json
 from collections import defaultdict
 from time import time
 import collections
@@ -279,6 +280,12 @@ def compute_unique_clean_ids(strings):
         return None  # Could not find a unique mapping.
 
     return idmap
+
+
+def quote_string(string: str) -> str:
+    """quote a string with characters escaped"""
+    # we use same escaping rule
+    return json.dumps(string, ensure_ascii=False)
 
 
 def escape_string(string):
