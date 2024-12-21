@@ -19,10 +19,8 @@ from beancount.core import convert
 from beancount.core import position
 from beancount.utils import invariants
 
-try:
-    from beancount.core import inventory
-except ImportError:
-    from beancount.ccore import _core as inventory
+from beancount.core import inventory
+
 Inventory = inventory.Inventory
 MatchResult = inventory.MatchResult
 

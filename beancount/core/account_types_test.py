@@ -4,10 +4,7 @@ __license__ = "GNU GPLv2"
 import unittest
 import functools
 
-try:
-    from beancount.core import account_types
-except ImportError:
-    from beancount.ccore import _core as account_types
+from beancount.core import account_types
 
 
 class TestAccountTypes(unittest.TestCase):
