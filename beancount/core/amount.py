@@ -32,10 +32,7 @@ CURRENCY_RE = "|".join(
 )
 
 
-_Amount = NamedTuple("_Amount", [("number", Optional[Decimal]), ("currency", str)])
-
-
-class Amount(_Amount):
+class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", str)])):
     """An 'Amount' represents a number of a particular unit of something.
 
     It's essentially a typed number, with corresponding manipulation operations
@@ -56,7 +53,7 @@ class Amount(_Amount):
         """
         assert isinstance(number, Amount.valid_types_number), repr(number)
         assert isinstance(currency, Amount.valid_types_currency), repr(currency)
-        return _Amount.__new__(cls, number, currency)
+        return super().__new__(cls, number, currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.
