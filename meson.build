@@ -244,7 +244,7 @@ parser = py.extension_module(
     subdir: 'beancount/parser',
 )
 
-# this is a extra ninja target for developer using old-style in-tree development.
+# This is a extra ninja target for developer using old-style in-tree development.
 # it doesn't contribute to the building but developing.
 # A developer can do this to get save result like `python setup.py build_ext --inplace`
 # to copy binary extension back to source tree.
