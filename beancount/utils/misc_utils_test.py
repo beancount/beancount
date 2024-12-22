@@ -7,10 +7,8 @@ __license__ = "GNU GPLv2"
 
 import operator
 import sys
-import textwrap
 import time
 import unittest
-from collections import namedtuple
 from unittest import mock
 
 from beancount.utils import misc_utils
@@ -27,15 +25,6 @@ def raise_import_error(*args, **kw):
 
 
 class TestMiscUtils(unittest.TestCase):
-    @mock.patch("warnings.warn")
-    def test_deprecated(self, warn):
-        @misc_utils.deprecated("This is old!")
-        def func():
-            pass
-
-        func()
-        warn.assert_called_once()
-
     def test_log_time(self):
         with test_utils.capture() as stdout:
             with misc_utils.log_time("test-op", None):
@@ -47,42 +36,6 @@ class TestMiscUtils(unittest.TestCase):
                 time.sleep(0.1)
         self.assertRegex(stdout.getvalue(), "Operation")
         self.assertRegex(stdout.getvalue(), "Time")
-
-    def test_box(self):
-        with test_utils.capture() as stdout:
-            with misc_utils.box():
-                print("A")
-        self.assertEqual(
-            textwrap.dedent("""
-          ,----------------
-          A
-          `----------------
-        """),
-            stdout.getvalue(),
-        )
-
-        with test_utils.capture() as stdout:
-            with misc_utils.box("entries"):
-                print("A")
-        self.assertEqual(
-            textwrap.dedent("""
-          ,--------(entries)--------
-          A
-          `-------------------------
-        """),
-            stdout.getvalue(),
-        )
-
-    def test_swallow(self):
-        with misc_utils.swallow(ValueError):
-            pass
-
-        with misc_utils.swallow(ValueError):
-            raise ValueError("Should not trickle out")
-
-        with self.assertRaises(ValueError):
-            with misc_utils.swallow(IOError):
-                raise ValueError("Should not trickle out")
 
     def test_groupby(self):
         data = [("a", 1), ("b", 2), ("c", 3), ("d", 4)]
@@ -105,94 +58,8 @@ class TestMiscUtils(unittest.TestCase):
         data = [x() for x in [A, B, A, A, C, B, C, A]]
         self.assertEqual([A, A, A, A], list(map(type, misc_utils.filter_type(data, A))))
 
-    def test_longest(self):
-        data = [(1,), (2, 3, 4, 5), (2, 3)]
-        self.assertEqual((2, 3, 4, 5), misc_utils.longest(data))
-
     def test_skipiter(self):
         self.assertEqual([0, 3, 6, 9], list(misc_utils.skipiter(range(10), 3)))
-
-    def test_get_tuple_values(self):
-        Something = namedtuple("Something", "a b c d e")
-        SomethingElse = namedtuple("SomethingElse", "f g h")
-
-        class Dummy(str):
-            pass
-
-        ntuple = Something(1, 2, SomethingElse(Dummy("a"), None, 2), [Dummy("b"), "c"], 5)
-        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, Dummy))
-        self.assertEqual([Dummy("a"), Dummy("b")], list(values))
-
-    def test_replace_tuple_values(self):
-        Something = namedtuple("Something", "a b c d e")
-        SomethingElse = namedtuple("SomethingElse", "f g")
-
-        something = Something(
-            1, 2, "3", SomethingElse(10, "11"), [SomethingElse(100, "101")]
-        )
-        replacements = {"3": "3000", "101": "1010", "11": "1100"}
-        something_else = misc_utils.replace_namedtuple_values(
-            something, lambda x: isinstance(x, str), lambda x: replacements.get(x, x)
-        )
-
-        expected = Something(
-            a=1,
-            b=2,
-            c="3000",
-            d=SomethingElse(f=10, g="1100"),
-            e=[SomethingElse(f=100, g="1010")],
-        )
-        self.assertEqual(expected, something_else)
-
-    def test_compute_unique_clean_ids(self):
-        self.assertEqual(
-            {"a": "a", "b": "b", "c": "c"},
-            misc_utils.compute_unique_clean_ids(["a", "b", "c"]),
-        )
-
-        self.assertEqual(
-            {"a-b": "a-b", "a_b": "a b"},
-            misc_utils.compute_unique_clean_ids(["a b", "a-b"]),
-        )
-
-        self.assertEqual(
-            {"a_b": "a_b", "ab": "a b"}, misc_utils.compute_unique_clean_ids(["a b", "a_b"])
-        )
-
-    def test_idify(self):
-        self.assertEqual(
-            "A_great_movie_for_us.mp4", misc_utils.idify(" A great movie (for us) .mp4 ")
-        )
-        self.assertEqual("A____B.pdf", misc_utils.idify("A____B_._pdf"))
-
-    def test_map_namedtuple_attributes(self):
-        Test = namedtuple("Test", "a b c d")
-        test = Test(None, None, 1, 2)
-        new_test = misc_utils.map_namedtuple_attributes(
-            ("b", "d"), lambda num: num if num is None else num * 10, test
-        )
-        self.assertEqual(Test(None, None, 1, 20), new_test)
-
-    def test_staticvar(self):
-        @misc_utils.staticvar("a", 42)
-        def somevar():
-            return somevar.a
-
-        self.assertEqual(42, somevar())
-        self.assertEqual(42, somevar.a)
-
-    def test_first_paragraph(self):
-        docstring = textwrap.dedent("""\
-          Dump the lexer output for a Beancount syntax file.
-          Bla di blah.
-
-          Args:
-            filename: A string, the Beancount input filename.
-        """)
-        self.assertEqual(
-            "Dump the lexer output for a Beancount syntax file. Bla di blah.",
-            misc_utils.first_paragraph(docstring),
-        )
 
     def test_get_screen_width(self):
         max_width = misc_utils.get_screen_width()

@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import calendar
 import collections
+import contextlib
 import datetime
 import decimal
 import functools
@@ -1116,7 +1117,7 @@ def generate_balance_checks(entries, account, date_iter):
     balance_checks = []
     date_iter = iter(date_iter)
     next_date = next(date_iter)
-    with misc_utils.swallow(StopIteration):
+    with contextlib.suppress(StopIteration):
         for txn_posting, balance in postings_for(entries, [account], before=True):
             while txn_posting.txn.date >= next_date:
                 amount = balance[account].get_currency_units("CCY").number
