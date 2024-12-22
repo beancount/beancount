@@ -14,19 +14,21 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
-from collections import namedtuple
+from typing import NamedTuple
 
 from beancount.core import account
 from beancount.core.account import Account
 
-# A tuple that contains the names of the root accounts.
-# Attributes:
-#   assets: a str, the name of the prefix for the Asset subaccounts.
-#   liabilities: a str, the name of the prefix for the Liabilities subaccounts.
-#   equity: a str, the name of the prefix for the Equity subaccounts.
-#   income: a str, the name of the prefix for the Income subaccounts.
-#   expenses: a str, the name of the prefix for the Expenses subaccounts.
-AccountTypes = namedtuple("AccountTypes", "assets liabilities equity income expenses")
+
+class AccountTypes(NamedTuple):
+    """A tuple that contains the names of the root accounts."""
+
+    assets: str  # the name of the prefix for the Asset subaccounts.
+    liabilities: str  # the name of the prefix for the Liabilities subaccounts.
+    equity: str  # the name of the prefix for the Equity subaccounts.
+    income: str  # the name of the prefix for the Income subaccounts.
+    expenses: str  # the name of the prefix for the Expenses subaccounts.
+
 
 # Default values for root accounts.
 DEFAULT_ACCOUNT_TYPES = AccountTypes(

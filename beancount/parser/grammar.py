@@ -1,5 +1,7 @@
 """Builder for Beancount grammar."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -9,6 +11,8 @@ import traceback
 from datetime import date
 from decimal import Decimal
 from os import path
+from typing import Any
+from typing import NamedTuple
 
 import regex
 
@@ -24,6 +28,7 @@ from beancount.core.data import Commodity
 from beancount.core.data import Custom
 from beancount.core.data import Document
 from beancount.core.data import Event
+from beancount.core.data import Meta
 from beancount.core.data import Note
 from beancount.core.data import Open
 from beancount.core.data import Pad
@@ -38,35 +43,63 @@ from beancount.core.position import CostSpec
 from beancount.parser import lexer
 from beancount.parser import options
 
-ParserError = collections.namedtuple("ParserError", "source message entry")
-ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")
-DeprecatedError = collections.namedtuple("DeprecatedError", "source message entry")
+
+class ParserError(NamedTuple):
+    source: Meta
+    message: str
+    entry: Any
 
 
-# Key-value pairs. This is used to hold meta-data attachments temporarily.
-#
-# Attributes:
-#  key: A string, the name of the key.
-#  value: Any object.
-KeyValue = collections.namedtuple("KeyValue", "key value")
+class ParserSyntaxError(NamedTuple):
+    source: Meta
+    message: str
+    entry: Any
 
-# Value-type pairs. This is used to represent custom values where the concrete
-# datatypes aren't matching those which are found in the parser.
-#
-# Attributes:
-#  value: Any object.
-#  dtype: The datatype of the object.
-ValueType = collections.namedtuple("ValueType", "value dtype")
 
-# Convenience holding class for amounts with per-share and total value.
-#
-# Attributes:
-#   number_per: A Decimal instance, the cost/price per unit.
-#   number_total: A Decimal instance, the total cost/price.
-#   currency: A string, the commodity of the amount.
-CompoundAmount = collections.namedtuple(
-    "CompoundAmount", "number_per number_total currency"
-)
+class DeprecatedError(NamedTuple):
+    source: Meta
+    message: str
+    entry: Any
+
+
+class KeyValue(NamedTuple):
+    """Key-value pairs. This is used to hold meta-data attachments temporarily.
+
+    Attributes:
+      key: A string, the name of the key.
+      value: Any object.
+    """
+
+    key: str
+    value: Any
+
+
+class ValueType(NamedTuple):
+    """
+    Value-type pairs. This is used to represent custom values where the concrete
+    datatypes aren't matching those which are found in the parser.
+
+    Attributes:
+        value: Any object.
+        dtype: The datatype of the object.
+    """
+
+    value: Any
+    dtype: type
+
+
+class CompoundAmount(NamedTuple):
+    """Convenience holding class for amounts with per-share and total value.
+
+    Attributes:
+      number_per: A Decimal instance, the cost/price per unit.
+      number_total: A Decimal instance, the total cost/price.
+      currency: A string, the commodity of the amount.
+    """
+
+    number_per: Decimal
+    number_total: Decimal
+    currency: str
 
 
 # A unique token used to indicate a merge of the lots of an inventory.
@@ -94,15 +127,19 @@ def valid_account_regexp(options):
     )
 
 
-# A temporary data structure used during parsing to hold and accumulate the
-# fields being parsed on a transaction line. Because we want to be able to parse
-# these in arbitrary order, we have to accumulate the fields and then unpack
-# them intelligently in the transaction callback.
-#
-# Attributes:
-#  tags: a set object  of the tags to be applied to this transaction.
-#  links: a set of link strings to be applied to this transaction.
-TagsLinks = collections.namedtuple("TagsLinks", "tags links")
+class TagsLinks(NamedTuple):
+    """A temporary data structure used during parsing to hold and accumulate the
+    fields being parsed on a transaction line. Because we want to be able to parse
+    these in arbitrary order, we have to accumulate the fields and then unpack
+    them intelligently in the transaction callback.
+
+    Attributes:
+      tags: A set object  of the tags to be applied to this transaction.
+      links: A set of link strings to be applied to this transaction.
+    """
+
+    tags: set[str]
+    links: set[str]
 
 
 class Builder(lexer.LexBuilder):

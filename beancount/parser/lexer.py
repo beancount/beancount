@@ -3,14 +3,22 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import contextlib
 import io
+from typing import Any
+from typing import NamedTuple
 
+from beancount.core.data import Meta
 from beancount.core.data import new_metadata
 from beancount.parser import _parser
 
-LexerError = collections.namedtuple("LexerError", "source message entry")
+
+class LexerError(NamedTuple):
+    """A named tuple to represent lexer errors."""
+
+    source: Meta
+    message: str
+    entry: Any
 
 
 class LexBuilder:

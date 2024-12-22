@@ -3,7 +3,7 @@
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
+from typing import NamedTuple
 
 from beancount.core import account
 from beancount.core import amount
@@ -18,7 +18,12 @@ from beancount.utils import misc_utils
 __plugins__ = ("pad",)
 
 
-PadError = collections.namedtuple("PadError", "source message entry")
+class PadError(NamedTuple):
+    """Represents an error encountered during padding."""
+
+    source: data.Meta
+    message: str
+    entry: data.Pad
 
 
 def pad(entries, options_map):

@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import copy
 import functools
 import glob
@@ -24,6 +23,7 @@ from os import path
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import NamedTuple
 from typing import Optional
 from typing import Tuple
 
@@ -39,7 +39,12 @@ from beancount.utils import misc_utils
 OptionsMap = Any
 
 
-LoadError = collections.namedtuple("LoadError", "source message entry")
+class LoadError(NamedTuple):
+    """Represents an error encountered during the loading process."""
+
+    source: str
+    message: str
+    entry: Any
 
 
 # List of default plugins to run.
