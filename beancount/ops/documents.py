@@ -29,7 +29,7 @@ class DocumentError(NamedTuple):
 
     source: data.Meta
     message: str
-    entry: data.Document
+    entry: data.Document | None
 
 
 def process_documents(entries, options_map):
