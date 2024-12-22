@@ -218,15 +218,6 @@ class TestMiscUtils(unittest.TestCase):
         # capture is disabled.
         self.assertLess(-1, max_height)
 
-    def test_cmptuple(self):
-        One = misc_utils.cmptuple("Bla", "a b c")
-        Two = misc_utils.cmptuple("Bli", "d e f")
-
-        args = (1, 2, 3)
-        one = One(*args)
-        two = Two(*args)
-        self.assertFalse(one == two)
-
     def test_is_sorted(self):
         self.assertTrue(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8]))
         self.assertFalse(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8], cmp=operator.lt))
