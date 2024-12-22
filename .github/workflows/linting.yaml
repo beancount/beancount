@@ -2,6 +2,8 @@ name: linting
 on:
   - push
   - pull_request
+  - workflow_dispatch
+
 jobs:
   lint:
     runs-on: ubuntu-latest
