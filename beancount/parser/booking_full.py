@@ -70,20 +70,23 @@ that there are so few cases for which this would be useful that we won't bother
 improving on the algorithm above.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import copy
 import enum
-import uuid
 from decimal import Decimal
+from typing import NamedTuple
 
 from beancount.core import interpolate
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core.amount import Amount
 from beancount.core.data import Booking
+from beancount.core.data import Meta
 from beancount.core.data import Transaction
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
@@ -93,13 +96,13 @@ from beancount.core.position import Position
 from beancount.parser import booking_method
 
 
-def unique_label() -> str:
-    "Return a globally unique label for cost entries."
-    return str(uuid.uuid4())
-
-
 # An error of disallowed self-reduction.
-SelfReduxError = collections.namedtuple("SelfReduxError", "source message entry")
+class SelfReduxError(NamedTuple):
+    """An error of disallowed self-reduction."""
+
+    source: Meta
+    message: str
+    entry: Transaction
 
 
 def book(entries, options_map, methods, initial_balances=None):
@@ -232,8 +235,12 @@ def _book(entries, options_map, methods, initial_balances=None):
     return new_entries, errors, balances
 
 
-# An error raised if we failed to bucket a posting to a particular currency.
-CategorizationError = collections.namedtuple("CategorizationError", "source message entry")
+class CategorizationError(NamedTuple):
+    """An error raised if we failed to bucket a posting to a particular currency."""
+
+    source: Meta
+    message: str
+    entry: Transaction
 
 
 def get_bucket_currency(refer):
@@ -258,7 +265,13 @@ def get_bucket_currency(refer):
     return currency
 
 
-Refer = collections.namedtuple("Refer", "index units_currency cost_currency price_currency")
+class Refer(NamedTuple):
+    """A named tuple to hold currency references for a posting."""
+
+    index: int
+    units_currency: str | None
+    cost_currency: str | None
+    price_currency: str | None
 
 
 def categorize_by_currency(entry, balances):
@@ -496,8 +509,12 @@ def replace_currencies(postings, refer_groups):
     return new_groups
 
 
-# An error raised if we failed to reduce the inventory balance unambiguously.
-ReductionError = collections.namedtuple("ReductionError", "source message entry")
+class ReductionError(NamedTuple):
+    """An error raised if we failed to reduce the inventory balance unambiguously."""
+
+    source: Meta
+    message: str
+    entry: Transaction
 
 
 def has_self_reduction(postings, methods):
@@ -751,7 +768,12 @@ class MissingType(enum.Enum):
 
 
 # An error raised if we are not able to interpolate.
-InterpolationError = collections.namedtuple("InterpolationError", "source message entry")
+class InterpolationError(NamedTuple):
+    """An error raised if we are not able to interpolate."""
+
+    source: Meta
+    message: str
+    entry: Transaction
 
 
 def interpolate_group(postings, balances, currency, tolerances):

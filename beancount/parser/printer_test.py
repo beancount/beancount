@@ -8,10 +8,12 @@ import tempfile
 import textwrap
 import unittest
 from datetime import date
+from decimal import Decimal
 
 from beancount import loader
 from beancount.core import data
-from beancount.core import interpolate
+from beancount.core.amount import Amount
+from beancount.ops.balance import BalanceError
 from beancount.parser import cmptest
 from beancount.parser import printer
 from beancount.utils import test_utils
@@ -31,8 +33,15 @@ class TestPrinter(unittest.TestCase):
         self.assertRegex(source_str, META["filename"])
 
     def test_format_and_print_error(self):
-        entry = data.Open(META, date(2014, 1, 15), "Assets:Bank:Checking", [], None)
-        error = interpolate.BalanceError(META, "Example balance error", entry)
+        entry = data.Balance(
+            META,
+            date(2014, 1, 15),
+            "Assets:Bank:Checking",
+            Amount(Decimal("0"), "USD"),
+            None,
+            None,
+        )
+        error = BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 

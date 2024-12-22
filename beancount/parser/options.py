@@ -2,13 +2,17 @@
 Declaration of options and their default values.
 """
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import io
 import re
 import textwrap
+from typing import Any
+from typing import Callable
+from typing import NamedTuple
 
 from beancount.core import account
 from beancount.core import account_types
@@ -144,40 +148,51 @@ def options_validate_leaf_account(value):
     return value
 
 
-# List of option groups, with their description, option names and default
-# values.
-OptGroup = collections.namedtuple("OptGroup", "description options")
+class OptDesc(NamedTuple):
+    """An option description.
+
+    Attributes:
+      name: A string, the short name of the option, as used in the syntax.
+      default_value: The default value for the option. If an option may
+        show up multiple times, should be a list or a dict.
+      example_value: The value to be rendered in the documentation. Even if
+        the value may be specified multiple times, this should just be an
+        example string for the user to model itself on.
+      converter: A function object to be called to convert or validate the
+        option during parsing, or None, if no conversion is necessary. The
+        callable must either successfully return with the parsed value, or
+        raise a ValueError for the handler to report an error to the parser.
+      deprecated: A string, a message set if the option is deprecated. This is
+        used to issue suitable warnings when options aren't honored or about
+        not to be anymore.
+      alias: A string or None; if set, this option automatically gets
+        translated to this alias. This is present to support renaming of
+        option names.
+    """
+
+    name: str
+    default_value: Any
+    example_value: Any
+    converter: Callable | None
+    deprecated: str
+    alias: str | None
 
 
-# An option description.
-#
-# Attributes:
-#  name: A string, the short name of the option, as used in the syntax.
-#  default_value: The default value for the option. If an option may
-#    show up multiple times, should be a list or a dict.
-#  example_value: The value to be rendered in the documentation. Even if
-#    the value may be specified multiple times, this should just be an
-#    example string for the user to model itself on.
-#  converter: A function object to be called to convert or validate the
-#    option during parsing, or None, if no conversion is necessary. The
-#    callable must either successfully return with the parsed value, or
-#    raise a ValueError for the handler to report an error to the parser.
-#  deprecated: A string, a message set if the option is deprecated. This is
-#    used to issue suitable warnings when options aren't honored or about
-#    not to be anymore.
-#  alias: A string or None; if set, this option automatically gets
-#    translated to this alias. This is present to support renaming of
-#    option names.
-OptDesc = collections.namedtuple(
-    "OptDesc", "name default_value example_value converter deprecated alias"
-)
+class OptGroup(NamedTuple):
+    """List of option groups, with their description,
+    option names and default values.
+    """
+
+    description: str
+    options: list[OptDesc]
+
 
 UNSET = object()
 
 
 def Opt(
     name, default_value, example_value=UNSET, converter=None, deprecated=False, alias=None
-):
+) -> OptDesc:
     """Alternative constructor for OptDesc, with default values.
 
     Args:

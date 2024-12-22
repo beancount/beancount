@@ -11,8 +11,8 @@ trickled up to the user.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 from os import path
+from typing import NamedTuple
 
 from beancount.core import data
 from beancount.core import getters
@@ -25,8 +25,13 @@ from beancount.core.data import Open
 from beancount.core.data import Transaction
 from beancount.utils import misc_utils
 
-# An error from one of the checks.
-ValidationError = collections.namedtuple("ValidationError", "source message entry")
+
+class ValidationError(NamedTuple):
+    """An error from one of the checks."""
+
+    source: data.Meta
+    message: str
+    entry: data.Directive
 
 
 # Directive types that should be allowed after the account is closed.

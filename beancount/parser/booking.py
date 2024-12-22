@@ -6,6 +6,7 @@ __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+from typing import NamedTuple
 
 from beancount.core import amount
 from beancount.core import data
@@ -15,7 +16,11 @@ from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.parser import booking_full
 
-BookingError = collections.namedtuple("BookingError", "source message entry")
+
+class BookingError(NamedTuple):
+    source: data.Meta
+    message: str
+    entry: data.Transaction
 
 
 def book(incomplete_entries, options_map, initial_balances=None):

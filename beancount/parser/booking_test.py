@@ -5,13 +5,19 @@ import collections
 import re
 import textwrap
 import unittest
+from typing import Any
+from typing import NamedTuple
 
 from beancount.core.data import Booking
 from beancount.parser import booking
 from beancount.parser import cmptest
 from beancount.parser import parser
 
-BookingTestError = collections.namedtuple("BookingTestError", "source message entry")
+
+class BookingTestError(NamedTuple):
+    source: Any
+    message: Any
+    entry: Any
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):

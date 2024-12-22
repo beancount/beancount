@@ -3,19 +3,29 @@
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import hashlib
+from typing import NamedTuple
 
 from beancount.core import data
 from beancount.core.data import Price
 
-CompareError = collections.namedtuple("CompareError", "source message entry")
+
+class CompareError(NamedTuple):
+    """A named tuple to represent comparison errors."""
+
+    source: data.Meta
+    message: str
+    entry: data.Directive
+
 
 # A list of field names that are being ignored for persistence.
 IGNORED_FIELD_NAMES = {"meta", "diff_amount"}
 
 
-def stable_hash_namedtuple(objtuple, ignore=frozenset()):
+def stable_hash_namedtuple(
+    objtuple: NamedTuple,
+    ignore: frozenset = frozenset(),
+) -> str:
     """Hash the given namedtuple and its child fields.
 
     This iterates over all the members of objtuple, skipping the attributes from

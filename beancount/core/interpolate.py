@@ -6,11 +6,14 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 from decimal import Decimal
+from typing import NamedTuple
 
 from beancount.core import convert
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core.amount import Amount
+from beancount.core.data import Balance
+from beancount.core.data import Meta
 from beancount.core.data import Posting
 from beancount.core.data import Transaction
 from beancount.core.inventory import Inventory
@@ -32,6 +35,14 @@ MAXIMUM_TOLERANCE = D("0.5")
 MAX_TOLERANCE_DIGITS = 5
 
 
+class BalanceError(NamedTuple):
+    """An error from balancing the postings."""
+
+    source: Meta
+    message: str
+    entry: Balance
+
+
 def is_tolerance_user_specified(tolerance):
     """Return true if the given tolerance number was user-specified.
 
@@ -45,10 +56,6 @@ def is_tolerance_user_specified(tolerance):
       A boolean.
     """
     return len(tolerance.as_tuple().digits) < MAX_TOLERANCE_DIGITS
-
-
-# An error from balancing the postings.
-BalanceError = collections.namedtuple("BalanceError", "source message entry")
 
 
 def has_nontrivial_balance(posting):

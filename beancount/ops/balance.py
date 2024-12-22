@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 
 from beancount.core import account
 from beancount.core import amount
@@ -11,13 +10,11 @@ from beancount.core import getters
 from beancount.core import realization
 from beancount.core.data import Balance
 from beancount.core.data import Transaction
+from beancount.core.interpolate import BalanceError
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 
 __plugins__ = ("check",)
-
-
-BalanceError = collections.namedtuple("BalanceError", "source message entry")
 
 
 def get_balance_tolerance(balance_entry, options_map):
