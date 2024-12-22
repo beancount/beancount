@@ -22,3 +22,5 @@ examples/generated/*
 experiments/v3/arrow/*.feather
 experiments/v3/arrow/*.parquet
 experiments/v3/arrow/*.arrow
+.aider*
+.env
