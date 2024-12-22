@@ -18,10 +18,11 @@ from beancount.core.data import Booking
 from beancount.core.data import Directive
 from beancount.core.data import Meta
 from beancount.core.number import ZERO
-from beancount.core.position import Cost
 
 if TYPE_CHECKING:
     from decimal import Decimal
+
+    from beancount.core.position import Cost
 
 
 class AmbiguousMatchError(NamedTuple):
