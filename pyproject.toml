@@ -70,9 +70,6 @@ line-length = 92
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
 
 [tool.ruff]
-# Assume Python 3.12.
-target-version = "py38"
-
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
