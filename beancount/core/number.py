@@ -80,7 +80,7 @@ def round_to(number: Decimal, increment: Decimal) -> Decimal:
     Returns:
       A Decimal, the rounded number.
     """
-    return int((number / increment)) * increment
+    return int(number / increment) * increment
 
 
 def same_sign(number1: Decimal, number2: Decimal) -> bool:

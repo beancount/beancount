@@ -140,7 +140,7 @@ def pad(entries, options_map):
 
                         # Synthesize a new transaction entry for the difference.
                         narration = (
-                            "(Padding inserted for Balance of {} for " "difference {})"
+                            "(Padding inserted for Balance of {} for difference {})"
                         ).format(check_amount, diff_position)
                         new_entry = data.Transaction(
                             active_pad.meta.copy(),

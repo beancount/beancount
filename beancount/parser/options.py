@@ -191,7 +191,12 @@ UNSET = object()
 
 
 def Opt(
-    name, default_value, example_value=UNSET, converter=None, deprecated=False, alias=None
+    name: str,
+    default_value: Any,
+    example_value=UNSET,
+    converter=None,
+    deprecated: str = "",
+    alias=None,
 ) -> OptDesc:
     """Alternative constructor for OptDesc, with default values.
 
@@ -610,9 +615,7 @@ PUBLIC_OPTION_GROUPS = [
                 False,
                 "TRUE",
                 converter=options_validate_boolean,
-                deprecated=(
-                    "Allowing pipe separator temporary; " "this will go away eventually."
-                ),
+                deprecated="Allowing pipe separator temporary; this will go away eventually.",
             )
         ],
     ),
@@ -632,7 +635,7 @@ PUBLIC_OPTION_GROUPS = [
                 False,
                 "TRUE",
                 converter=options_validate_boolean,
-                deprecated=("Allowing None for tags and link " "will go away eventually."),
+                deprecated=("Allowing None for tags and link will go away eventually."),
             )
         ],
     ),

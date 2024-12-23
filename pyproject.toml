@@ -102,7 +102,7 @@ line-length = 92
 
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "PL", "PD", "I", "TC", "RUF022"]
+select = ["E", "F", "PL", "PD", "I", "TC", "RUF022", 'ISC001', 'UP034']
 ignore = [
     'E501',
     'E731',

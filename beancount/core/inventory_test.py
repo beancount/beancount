@@ -286,7 +286,7 @@ class TestInventory(unittest.TestCase):
                 None: I("3.41 CAD"),
                 "USD": I("101.20 USD"),
                 "EUR": inventory.Inventory(),
-                "HOOL": I("2.2 HOOL {532.43 USD}, " "2.3 HOOL {564.00 USD, 2015-07-14}"),
+                "HOOL": I("2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}"),
             },
             ccymap,
         )
@@ -302,7 +302,7 @@ class TestInventory(unittest.TestCase):
             {
                 "CAD": I("3.41 CAD"),
                 "USD": I("101.20 USD"),
-                "HOOL": I("2.2 HOOL {532.43 USD}, " "2.3 HOOL {564.00 USD, 2015-07-14}"),
+                "HOOL": I("2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}"),
             },
             ccymap,
         )
