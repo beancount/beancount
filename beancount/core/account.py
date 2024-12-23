@@ -14,6 +14,7 @@ import os
 import re
 import unicodedata
 from os import path
+from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Iterator
@@ -216,7 +217,7 @@ def walk(root_directory: str) -> Iterator[tuple[str, Account, list[str], list[st
             yield root, account_name, dirs, files
 
 
-def parent_matcher(account_name: Account) -> Callable[[Account], bool]:
+def parent_matcher(account_name: Account) -> Callable[[str], Any]:
     """Build a predicate that returns whether an account is under the given one.
 
     Args:
