@@ -14,7 +14,6 @@ import os
 import re
 import unicodedata
 from os import path
-from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Iterator
