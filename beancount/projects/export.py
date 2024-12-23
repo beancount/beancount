@@ -33,11 +33,7 @@ import re
 import sys
 from decimal import Decimal
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import NamedTuple
-from typing import Set
-from typing import Tuple
 
 import click
 
@@ -52,8 +48,8 @@ from beancount.core.number import D
 from beancount.ops import summarize
 from beancount.parser import options
 
-Header = List[str]
-Rows = List[List[Any]]
+Header = list[str]
+Rows = list[list[Any]]
 
 
 class Table(NamedTuple):
@@ -62,7 +58,7 @@ class Table(NamedTuple):
 
 
 def get_metamap_table(
-    metamap: Dict[str, data.Directive], attributes: List[str], getter
+    metamap: dict[str, data.Directive], attributes: list[str], getter
 ) -> Table:
     """Produce a Table of per-commodity attributes."""
     attrlist = attributes[1:]
@@ -75,7 +71,7 @@ def get_metamap_table(
     return Table(attributes, sorted(rows))
 
 
-def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table:
+def get_commodities_table(entries: data.Entries, attributes: list[str]) -> Table:
     """Produce a Table of per-commodity attributes."""
     commodities = getters.get_commodity_directives(entries)
     header = ["currency"] + attributes
@@ -84,7 +80,7 @@ def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table
     return table
 
 
-def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
+def get_accounts_table(entries: data.Entries, attributes: list[str]) -> Table:
     """Produce a Table of per-account attributes."""
     oc_map = getters.get_account_open_close(entries)
     accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
@@ -107,7 +103,7 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
     return get_metamap_table(accounts_map, header, getter), accounts_map
 
 
-def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
+def abbreviate_account(acc: str, accounts_map: dict[str, data.Open]):
     """Compute an abbreviated version of the account name."""
 
     # Get the root of the account by inspecting the "root: TRUE" attribute up
@@ -132,8 +128,8 @@ def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
 
 def get_postings_table(
     entries: data.Entries,
-    options_map: Dict,
-    accounts_map: Dict[str, data.Open],
+    options_map: dict,
+    accounts_map: dict[str, data.Open],
     threshold: Decimal = D("0.01"),
 ) -> Table:
     """Enumerate all the postings."""
@@ -190,7 +186,7 @@ def get_prices_table(entries: data.Entries, main_currency: str) -> Table:
 
 
 def get_rates_table(
-    entries: data.Entries, currencies: Set[str], main_currency: str
+    entries: data.Entries, currencies: set[str], main_currency: str
 ) -> Table:
     """Enumerate all the exchange rates."""
     price_map = prices.build_price_map(entries)
@@ -204,7 +200,7 @@ def get_rates_table(
     return Table(header, rows)
 
 
-def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Table:
+def join(main_table: Table, *col_tables: tuple[tuple[tuple[str], Table]]) -> Table:
     """Join a table with a number of other tables.
     col_tables is a tuple of (column, table) pairs."""
 
@@ -247,7 +243,7 @@ def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Tab
     return Table(new_header, rows)
 
 
-def reorder_columns(table: Table, new_headers: List[str]) -> Table:
+def reorder_columns(table: Table, new_headers: list[str]) -> Table:
     """Reorder the columns of a table to a desired new headers."""
     assert len(table.header) == len(new_headers)
     indexes = [table.header.index(header) for header in new_headers]

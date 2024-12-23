@@ -12,7 +12,6 @@ __license__ = "GNU GPLv2"
 
 import collections
 from typing import Optional
-from typing import Set
 
 from beancount.core import data
 from beancount.core.data import Currency
@@ -140,7 +139,7 @@ def project(
     orig_price_map: PriceMap,
     from_currency: Currency,
     to_currency: Currency,
-    base_currencies: Optional[Set[Currency]] = None,
+    base_currencies: Optional[set[Currency]] = None,
 ) -> PriceMap:
     """Project all prices with a quote currency to another quote currency.
 

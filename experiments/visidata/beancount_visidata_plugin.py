@@ -6,7 +6,6 @@ __license__ = "GNU GPLv2"
 import subprocess
 from functools import partial
 from typing import Iterator
-from typing import List
 
 import visidata
 from visidata import Column  # noqa: F401
@@ -27,7 +26,7 @@ def open_beancount(vd, p):
     return BeancountSheet(p.base_stem, source=p)
 
 
-def iter_postings(entries: List[bn.Directives]) -> Iterator[bn.TxnPosting]:
+def iter_postings(entries: list[bn.Directives]) -> Iterator[bn.TxnPosting]:
     """Iterate over all the postings data."""
     for entry in bn.filter_txns(entries):
         for posting in entry.postings:

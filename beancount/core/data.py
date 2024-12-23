@@ -11,9 +11,7 @@ import enum
 import sys
 from decimal import Decimal
 from typing import Any
-from typing import Dict
 from typing import Iterator
-from typing import List
 from typing import NamedTuple
 from typing import Protocol
 from typing import Union
@@ -31,7 +29,7 @@ from beancount.utils.bisect_key import bisect_left_with_key
 Account = str
 Currency = str
 Flag = str
-Meta = Dict[str, Any]
+Meta = dict[str, Any]
 
 
 @runtime_checkable
@@ -503,9 +501,9 @@ class dtypes:
 
 # Type for the list of entries and options map.
 # Note: In v3, make the terminology 'Entries' obsolete.
-Entries = List[Directive]
-Directives = List[Directive]
-Options = Dict[str, Any]
+Entries = list[Directive]
+Directives = list[Directive]
+Options = dict[str, Any]
 
 
 def new_metadata(filename: str, lineno: int, kvlist: Meta | None = None) -> Meta:

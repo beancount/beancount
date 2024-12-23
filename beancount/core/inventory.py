@@ -45,9 +45,7 @@ import re
 from collections.abc import Iterable
 from decimal import Decimal
 from typing import TYPE_CHECKING
-from typing import Dict
 from typing import Optional
-from typing import Tuple
 
 from beancount.core import convert
 from beancount.core.amount import Amount
@@ -80,7 +78,7 @@ class MatchResult(enum.Enum):
 
 # FIXME: You should disallow __getitem__, __delitem__ and __setitem__.
 # Move the dict inside the container.
-class Inventory(Dict[Tuple[str, Optional[Cost]], Position]):
+class Inventory(dict[tuple[str, Optional[Cost]], Position]):
     """An Inventory is a set of positions, indexed for efficiency."""
 
     def __init__(self, positions=None) -> None:

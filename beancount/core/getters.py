@@ -10,8 +10,6 @@ __license__ = "GNU GPLv2"
 from collections import OrderedDict
 from collections import defaultdict
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Tuple
 
 from beancount.core import account
 from beancount.core.data import Close
@@ -21,7 +19,6 @@ from beancount.core.data import Transaction
 
 if TYPE_CHECKING:
     import datetime
-    from collections.abc import Set
     from typing import Any
     from typing import Iterator
 
@@ -34,7 +31,7 @@ if TYPE_CHECKING:
     from beancount.core.data import Note
     from beancount.core.data import Pad
 
-    AccountsUseMap = Tuple[Dict[Account, datetime.date], Dict[Account, datetime.date]]
+    AccountsUseMap = tuple[dict[Account, datetime.date], dict[Account, datetime.date]]
 
 
 class GetAccounts:
@@ -135,7 +132,7 @@ def get_accounts_use_map(entries: Directives) -> AccountsUseMap:
     return _GetAccounts.get_accounts_use_map(entries)
 
 
-def get_accounts(entries: Directives) -> Set[str]:
+def get_accounts(entries: Directives) -> set[str]:
     """Gather all the accounts references by a list of directives.
 
     Args:
@@ -144,7 +141,7 @@ def get_accounts(entries: Directives) -> Set[str]:
       A set of account strings.
     """
     _, accounts_last = _GetAccounts.get_accounts_use_map(entries)
-    return accounts_last.keys()
+    return set(accounts_last.keys())
 
 
 def get_entry_accounts(entry: Directive) -> set[str]:

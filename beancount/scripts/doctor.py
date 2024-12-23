@@ -12,8 +12,6 @@ import logging
 import os
 import re
 import sys
-from typing import List
-from typing import Tuple
 
 import click
 
@@ -352,8 +350,8 @@ def linked(filename, location_spec):
 
 
 def resolve_region_to_entries(
-    entries: List[data.Entries], filename: str, region: Tuple[str, int, int]
-) -> List[data.Entries]:
+    entries: list[data.Entries], filename: str, region: tuple[str, int, int]
+) -> list[data.Entries]:
     """Resolve a filename and region to a list of entries."""
 
     search_filename, first_lineno, last_lineno = region

@@ -13,8 +13,6 @@ import subprocess
 import threading
 import zipfile
 from os import path
-from typing import List
-from typing import Tuple
 
 import bs4
 
@@ -54,7 +52,7 @@ def ConvertToRst(text: str, isbold: bool, isitalic: bool):
     return text
 
 
-def GetDocxBlocks(filename: str, convert: callable = None) -> List[str]:
+def GetDocxBlocks(filename: str, convert: callable = None) -> list[str]:
     """Get the list of blocks formatted with a fixed-width font
     from the docs file. Note that this will include short blocks
     which aren't necessarily blockquotes."""
@@ -95,7 +93,7 @@ def GetDocxBlocks(filename: str, convert: callable = None) -> List[str]:
     return blocks
 
 
-def GetMarkdownBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
+def GetMarkdownBlocks(lines: list[str]) -> list[tuple[int, int, str]]:
     """Get the list of blockquotes from the markdown file (and
     their positions)."""
     blocks = []
@@ -112,7 +110,7 @@ def GetMarkdownBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
     return blocks
 
 
-def GetRstBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
+def GetRstBlocks(lines: list[str]) -> list[tuple[int, int, str]]:
     """Get the list of blockquotes from the markdown file (and
     their positions)."""
 
@@ -151,7 +149,7 @@ def GetRstBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
     return blocks
 
 
-def ComputeKey(lines: List[str], remove_matching_stars: bool = True) -> str:
+def ComputeKey(lines: list[str], remove_matching_stars: bool = True) -> str:
     """Reduce a snippet to a comparable key."""
     newlines = []
     for line in lines:

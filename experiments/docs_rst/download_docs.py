@@ -19,7 +19,6 @@ import os
 import re
 import subprocess
 from os import path
-from typing import List
 
 import apiclient.errors
 import bs4
@@ -86,7 +85,7 @@ def get_docids_from_index(files: discovery.Resource):
 SERVICE_ACCOUNT_FILE = path.join(os.environ["HOME"], ".google-apis-service-account.json")
 
 
-def get_auth_via_service_account(scopes: List[str]):
+def get_auth_via_service_account(scopes: list[str]):
     """Get an authenticated http object via a service account.
 
     Args:

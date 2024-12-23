@@ -53,7 +53,7 @@ repository = "https://github.com/beancount/beancount"
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
 exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
 check_untyped_defs = false
-python_version = '3.8'
+python_version = '3.9'
 cache_dir = ".venv/.mypy_cache"
 
 [[tool.mypy.overrides]]
