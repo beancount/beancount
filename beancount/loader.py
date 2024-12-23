@@ -462,7 +462,7 @@ def _parse_recursive(
                 if encoding:
                     if isinstance(source, bytes):
                         source = source.decode(encoding)
-                    source = source.encode("ascii", "replace")
+                    source = source.encode("ascii", "replace")  # type: ignore[assignment]
 
                 # Parse a string buffer from memory.
                 with misc_utils.log_time(

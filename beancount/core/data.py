@@ -264,9 +264,9 @@ class Transaction(NamedTuple):
 
     meta: Meta
     date: datetime.date
-    flag: Flag
+    flag: Flag | None
     payee: str | None
-    narration: str
+    narration: str | None
     tags: frozenset[str]
     links: frozenset[str]
     postings: list[Posting]
@@ -593,14 +593,14 @@ def create_simple_posting_with_cost(
     if cost_number is not None and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
     units = Amount(number, currency)
-    cost = Cost(cost_number, cost_currency, None, None)
+    cost = Cost(cost_number, cost_currency, datetime.date(1, 1, 1), None)
     posting = Posting(account, units, cost, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
 
 
-NoneType = type(None)
+NoneType: type = type(None)
 
 
 def sanity_check_types(

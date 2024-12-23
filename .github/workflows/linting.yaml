@@ -27,3 +27,17 @@ jobs:
         with:
           python-version: '3.12'
       - uses: pre-commit/action@v3.0.1
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # pip doesn't support this
+      - uses: astral-sh/setup-uv@v4
+      - run: uv pip install -r ./pyproject.toml --extra types --system
+
+      - run: mypy .

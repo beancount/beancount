@@ -226,7 +226,8 @@ def parent_matcher(account_name: Account) -> Callable[[str], Any]:
       A callable, which, when called, will return true if the given account is a
       child of ``account_name``.
     """
-    return re.compile(r"{}($|{})".format(re.escape(account_name), sep)).match
+    pattern = re.compile(r"{}($|{})".format(re.escape(account_name), sep))
+    return lambda s: bool(pattern.match(s))
 
 
 def parents(account_name: Account) -> Iterator[Account]:

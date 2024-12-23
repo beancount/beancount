@@ -10,6 +10,8 @@ __license__ = "GNU GPLv2"
 from collections import OrderedDict
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Tuple
 
 from beancount.core import account
 from beancount.core.data import Close
@@ -32,7 +34,7 @@ if TYPE_CHECKING:
     from beancount.core.data import Note
     from beancount.core.data import Pad
 
-    AccountsUseMap = tuple[dict[Account, datetime.date], dict[Account, datetime.date]]
+    AccountsUseMap = Tuple[Dict[Account, datetime.date], Dict[Account, datetime.date]]
 
 
 class GetAccounts:

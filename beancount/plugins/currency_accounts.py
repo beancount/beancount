@@ -91,7 +91,7 @@ def group_postings_by_weight_currency(entry: Transaction):
     curmap = collections.defaultdict(list)
     has_price = False
     for posting in entry.postings:
-        currency = posting.units.currency
+        currency = posting.units.currency  # type:ignore[union-attr]
         if posting.cost:
             currency = posting.cost.currency
             if posting.price:
