@@ -22,6 +22,7 @@ import time
 import traceback
 import warnings
 from os import path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import NamedTuple
@@ -34,6 +35,9 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.utils import encryption
 from beancount.utils import misc_utils
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 OptionsMap = Any
 
@@ -83,7 +87,7 @@ _load_file: Callable[
 
 
 def load_file(
-    filename: str,
+    filename: str | Path,
     log_timings: Any = None,
     log_errors: Any = None,
     extra_validations: list[Any] | None = None,
@@ -125,7 +129,7 @@ def load_file(
 
 
 def load_encrypted_file(
-    filename: str,
+    filename: str | Path,
     log_timings: Any = None,
     log_errors: Any = None,
     extra_validations: list[Any] | None = None,
