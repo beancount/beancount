@@ -314,9 +314,7 @@ class Position(
           A new instance of Position.
         """
         match = re.match(
-            (r"\s*({})\s+({})" r"(?:\s+{{([^}}]*)}})?" r"\s*$").format(
-                NUMBER_RE, CURRENCY_RE
-            ),
+            r"\s*({})\s+({})(?:\s+{{([^}}]*)}})?\s*$".format(NUMBER_RE, CURRENCY_RE),
             string,
         )
         if not match:

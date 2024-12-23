@@ -81,7 +81,7 @@ def find_index_document(files):
     files = listing["files"]
     if len(files) != 1:
         raise ValueError(
-            "Could not find the index file: " "{} files matched".format(len(files))
+            "Could not find the index file: {} files matched".format(len(files))
         )
     for file in files:
         return file["id"]

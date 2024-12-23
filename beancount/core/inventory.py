@@ -270,7 +270,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
         if len(self) > 0:
             if len(self) > 1:
                 raise AssertionError(
-                    "Inventory has more than one expected " "position: {}".format(self)
+                    "Inventory has more than one expected position: {}".format(self)
                 )
             return next(iter(self))
 

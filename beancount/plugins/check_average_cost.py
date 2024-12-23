@@ -50,7 +50,7 @@ def validate_average_cost(entries, options_map, config_str=None):
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, float):
             raise RuntimeError(
-                "Invalid configuration for check_average_cost: " "must be a float"
+                "Invalid configuration for check_average_cost: must be a float"
             )
         tolerance = config_obj
     else:

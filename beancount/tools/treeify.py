@@ -22,7 +22,7 @@ import re
 import sys
 
 # Default regular expressions used for splitting.
-DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)" r"(:[A-Z][A-Za-z0-9-_']*)*"
+DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9-_']*)*"
 DEFAULT_DELIMITER = "[ \t]+"
 DEFAULT_SPLITTER = ":"
 
@@ -270,9 +270,7 @@ def _main():
         "--pattern",
         action="store",
         default=None,
-        help=(
-            "Pattern for repeatable components " '(default: "{}")'.format(DEFAULT_PATTERN)
-        ),
+        help=f'Pattern for repeatable components (default: "{DEFAULT_PATTERN}")',
     )
 
     parser.add_argument(

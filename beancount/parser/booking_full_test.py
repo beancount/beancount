@@ -395,7 +395,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         balances = {
             "Assets:Account": I(
-                "50 HOOL {115.00 USD, 2016-01-15}, " "50 HOOL {116.00 USD, 2016-01-16}"
+                "50 HOOL {115.00 USD, 2016-01-15}, 50 HOOL {116.00 USD, 2016-01-16}"
             )
         }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
@@ -411,7 +411,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         balances = {
             "Assets:Account": I(
-                "50 HOOL {100.00 USD, 2016-01-15}, " "50 HOOL { 50.00 CAD, 2016-01-15}"
+                "50 HOOL {100.00 USD, 2016-01-15}, 50 HOOL { 50.00 CAD, 2016-01-15}"
             )
         }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
@@ -2704,7 +2704,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
 
 
 @unittest.skip(
-    "Crossing is not supported yet. Handle this in the v3 C++ rewrite. " "{d3cbd78f1029}."
+    "Crossing is not supported yet. Handle this in the v3 C++ rewrite. {d3cbd78f1029}."
 )
 class TestBookCrossover(_BookingTestBase):
     """Test reducing + augmenting in a single leg.
@@ -3184,7 +3184,7 @@ class TestBook(unittest.TestCase):
         """
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
-            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {101.00 USD, 2015-10-01}"),
+            I("1 HOOL {100.00 USD, 2015-10-01}, 2 HOOL {101.00 USD, 2015-10-01}"),
             balances["Assets:Account1"],
         )
         self.assertPostingsEqual(
@@ -3215,7 +3215,7 @@ class TestBook(unittest.TestCase):
         """
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
-            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {100.00 CAD, 2015-10-01}"),
+            I("1 HOOL {100.00 USD, 2015-10-01}, 2 HOOL {100.00 CAD, 2015-10-01}"),
             balances["Assets:Account1"],
         )
         self.assertPostingsEqual(

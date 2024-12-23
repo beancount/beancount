@@ -53,9 +53,9 @@ class TestPriceEntries(cmptest.TestCase):
 class TestPriceMap(unittest.TestCase):
     def test_normalize_base_quote(self):
         self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("USD", "CAD")))
-        self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("USD/CAD")))
+        self.assertEqual(("USD", "CAD"), prices.normalize_base_quote("USD/CAD"))
         with self.assertRaises(AssertionError):
-            self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("HOOL/USD/CAD")))
+            self.assertEqual(("USD", "CAD"), prices.normalize_base_quote("HOOL/USD/CAD"))
 
     @loader.load_doc()
     def test_build_price_map(self, entries, _, __):
