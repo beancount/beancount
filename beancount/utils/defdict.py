@@ -7,19 +7,6 @@ adding this in eventually.
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
-
-
-class DefaultDictWithKey(collections.defaultdict):
-    """A version of defaultdict whose factory accepts the key as an argument.
-    Note: collections.defaultdict would be improved by supporting this directly,
-    this is a common occurrence.
-    """
-
-    def __missing__(self, key):
-        self[key] = value = self.default_factory(key)
-        return value
-
 
 NOTFOUND = object()
 

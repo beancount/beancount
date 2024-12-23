@@ -13,8 +13,8 @@ class TestImportSymbol(unittest.TestCase):
             import_utils.import_symbol("beancount.nothing.data")
         with self.assertRaises((AttributeError, ModuleNotFoundError)):
             import_utils.import_symbol("beancount.utils.i_dont_exist")
-        cls = import_utils.import_symbol("beancount.utils.defdict.DefaultDictWithKey")
-        self.assertIs(defdict.DefaultDictWithKey, cls)
+        cls = import_utils.import_symbol("beancount.utils.defdict.ImmutableDictWithDefault")
+        self.assertIs(defdict.ImmutableDictWithDefault, cls)
 
 
 if __name__ == "__main__":
