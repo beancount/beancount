@@ -16,7 +16,6 @@ from typing import NamedTuple
 from typing import Protocol
 from typing import Union
 from typing import overload
-from typing import runtime_checkable
 
 from beancount.core.account import has_component
 from beancount.core.amount import Amount
@@ -32,9 +31,8 @@ Flag = str
 Meta = dict[str, Any]
 
 
-@runtime_checkable
 class BeancountError(Protocol):
-    """Beancount errors are classes with these attributes."""
+    """Beancount errors are objects with these attributes"""
 
     @property
     def source(self) -> Meta: ...

@@ -12,7 +12,7 @@ from os import path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import pathlib
+    from pathlib import Path
 
 
 def is_gpg_installed() -> bool:
@@ -33,7 +33,7 @@ def is_gpg_installed() -> bool:
         return False
 
 
-def is_encrypted_file(filename: str | pathlib.Path) -> bool:
+def is_encrypted_file(filename: str | Path) -> bool:
     """Return true if the given filename contains an encrypted file.
 
     Args:
@@ -54,7 +54,7 @@ def is_encrypted_file(filename: str | pathlib.Path) -> bool:
     return False
 
 
-def read_encrypted_file(filename: str | pathlib.Path) -> str:
+def read_encrypted_file(filename: str | Path) -> str:
     """Decrypt and read an encrypted file without temporary storage.
 
     Args:
