@@ -268,7 +268,7 @@ def get_bucket_currency(refer):
 class Refer(NamedTuple):
     """A named tuple to hold currency references for a posting."""
 
-    index: int
+    index: int  # type: ignore[assignment]
     units_currency: str | None
     cost_currency: str | None
     price_currency: str | None

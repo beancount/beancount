@@ -24,6 +24,9 @@ if TYPE_CHECKING:
 
     from beancount.core.position import Cost
 
+if TYPE_CHECKING:
+    from decimal import Decimal
+
 
 class AmbiguousMatchError(NamedTuple):
     """An error raised if we failed to reduce the inventory balance unambiguously."""

@@ -192,7 +192,7 @@ def project(
         return orig_price_map
 
     # Avoid mutating the input map.
-    price_map = {key: list(value) for key, value in orig_price_map.items()}
+    price_map = PriceMap({key: list(value) for key, value in orig_price_map.items()})
 
     # Process the entire database (it's not indexed by quote currency).
     currency_pair = (from_currency, to_currency)
