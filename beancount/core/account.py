@@ -26,7 +26,6 @@ Account = str
 
 
 # Component separator for account names.
-
 sep = ":"
 
 
@@ -108,12 +107,12 @@ def split(account_name: Account) -> list[str]:
 
 
 def parent(account_name: Account) -> Account | None:
-    """Return the name of the parent account of the given account.
+    """Return the name of the parent account of the given account or None if at the root.
 
     Args:
       account_name: A string, the name of the account whose parent to return.
     Returns:
-      A string, the name of the parent account of this account.
+      A string, the name of the parent account of this account or None if at the root.
     """
     assert isinstance(account_name, str), account_name
     if not account_name:
@@ -143,14 +142,15 @@ def sans_root(account_name: Account) -> Account | None:
     Args:
       account_name: A string, the name of the account whose leaf name to return.
     Returns:
-      A string, the name of the non-root portion of this account name.
+      A string, the name of the non-root portion of this account name or None if
+      the account is empty.
     """
     assert isinstance(account_name, str)
     components = account_name.split(sep)[1:]
     return join(*components) if account_name else None
 
 
-def root(num_components: int, account_name: Account) -> str:
+def root(num_components: int, account_name: Account) -> Account:
     """Return the first few components of an account's name.
 
     Args:
@@ -192,7 +192,7 @@ def commonprefix(accounts: Iterable[Account]) -> Account:
     return sep.join(common_list)
 
 
-def walk(root_directory: Account) -> Iterator[tuple[str, Account, list[str], list[str]]]:
+def walk(root_directory: str) -> Iterator[tuple[str, Account, list[str], list[str]]]:
     """A version of os.walk() which yields directories that are valid account names.
 
     This only yields directories that are accounts... it skips the other ones.
@@ -214,10 +214,10 @@ def walk(root_directory: Account) -> Iterator[tuple[str, Account, list[str], lis
         # See https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
         account_name = unicodedata.normalize("NFKC", account_name)
         if is_valid(account_name):
-            yield (root, account_name, dirs, files)
+            yield root, account_name, dirs, files
 
 
-def parent_matcher(account_name: Account) -> Callable[[str], Any]:
+def parent_matcher(account_name: Account) -> Callable[[Account], bool]:
     """Build a predicate that returns whether an account is under the given one.
 
     Args:
