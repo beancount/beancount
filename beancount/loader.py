@@ -488,7 +488,7 @@ def _parse_recursive(
             # which uses it indirectly.
             include_expanded = []
             for include_filename in src_options_map["include"]:
-                # TODO(trim21): use `glob.glob(root_dir=cwd)` after we drop py<3.10
+                # TODO(trim21,py310): use `glob.glob(root_dir=cwd)` after we drop py<3.10
                 search_path = include_filename
                 if not os.path.isabs(include_filename):
                     search_path = os.path.join(cwd, include_filename)

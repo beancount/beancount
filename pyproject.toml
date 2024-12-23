@@ -23,7 +23,7 @@ authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
 license = { text = "GPL-2.0-only" }
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
@@ -53,7 +53,7 @@ repository = "https://github.com/beancount/beancount"
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
 exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
 check_untyped_defs = false
-python_version = '3.8'
+python_version = '3.9'
 cache_dir = ".venv/.mypy_cache"
 
 [[tool.mypy.overrides]]
@@ -70,9 +70,6 @@ line-length = 92
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
 
 [tool.ruff]
-# Assume Python 3.12.
-target-version = "py38"
-
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",

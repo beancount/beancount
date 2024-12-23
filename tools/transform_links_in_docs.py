@@ -30,7 +30,6 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Mapping
-from typing import Optional
 from typing import Tuple
 
 from googleapiclient import discovery
@@ -71,7 +70,7 @@ def iter_links(document: Json) -> List[Tuple[str, str]]:
                 yield (url, content, item)
 
 
-def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> List[Json]:
+def process_links(document: Json, func: Callable[[str, str], str | None]) -> List[Json]:
     """Find all the links and prepare updates.
     Outputs a list of batchUpdate requests to apply."""
     requests = []
@@ -93,7 +92,7 @@ def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> 
     return requests
 
 
-def propose_url(mapping: Dict[str, str], url: str, unused_content: str) -> Optional[str]:
+def propose_url(mapping: Dict[str, str], url: str, unused_content: str) -> str | None:
     """Process a URL, and optionally propose a replacement."""
     try:
         return mapping[url]
