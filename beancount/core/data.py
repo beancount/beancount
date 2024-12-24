@@ -618,7 +618,7 @@ def sanity_check_types(
     assert "lineno" in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
-        assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
+        assert isinstance(entry.flag, str), "Invalid flag type"
         assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
         assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
         set_types = (
