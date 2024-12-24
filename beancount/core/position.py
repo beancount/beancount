@@ -14,7 +14,6 @@ import re
 from decimal import Decimal
 from typing import NamedTuple
 from typing import Optional
-from typing import Union
 
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.amount import Amount
@@ -154,9 +153,7 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-class Position(
-    NamedTuple("Position", [("units", Amount), ("cost", Optional[Union[Cost, CostSpec]])])
-):
+class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost])])):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -170,7 +167,7 @@ class Position(
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __new__(cls, units: Amount, cost: Cost | CostSpec | None = None):
+    def __new__(cls, units: Amount, cost: Cost | None = None):
         assert isinstance(
             units, Amount
         ), "Expected an Amount for units; received '{}'".format(units)
