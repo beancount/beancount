@@ -260,7 +260,7 @@ class Transaction(NamedTuple):
 
     meta: Meta
     date: datetime.date
-    flag: Flag | None
+    flag: Flag
     payee: str | None
     narration: str | None
     tags: frozenset[str]
