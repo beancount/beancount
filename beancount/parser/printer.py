@@ -216,10 +216,9 @@ class EntryPrinter:
                 strings.append("^{}".format(link))
 
         oss.write(
-            "{e.date} {flag} {}".format(
+            "{e.date} {flag} {}\n".format(
                 " ".join(strings), e=entry, flag=render_flag(entry.flag)
-            ).rstrip()
-            + "\n"
+            )
         )
         self.write_metadata(entry.meta, oss)
 
