@@ -156,7 +156,6 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Cash          -111.00 BEAN
         """)
 
-        # note:this multistring contains some training white spaces
         EXPECTED_OUTPUT_LEDGER_TEMPL = textwrap.dedent("""
         ; source: __path_to_file__:1:
         2014-01-01 open Assets:Account1
@@ -185,15 +184,19 @@ class TestEntryPrinter(cmptest.TestCase):
 
         expected_output_ledger = EXPECTED_OUTPUT_LEDGER_TEMPL.replace(
             "__path_to_file__", oss1.name
-        )
+        ).splitlines()
 
-        # Print out those reparsed and parse them back in.
+        # Print ledger with the source location information.
         oss2 = io.StringIO()
-        # Getting original ledger but with the source location information
         printer.print_entries(entries2, file=oss2, write_source=True)
+        oss2.seek(0)
 
-        self.maxDiff = 1000
-        self.assertEqual(expected_output_ledger, oss2.getvalue())
+        # Get printed lines. Strip trailing whitespace to allow the
+        # expected output to do not contain trailing whitespace and
+        # appease linters.
+        printed = [line.rstrip() for line in oss2.readlines()]
+
+        self.assertEqual(expected_output_ledger, printed)
 
     @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
