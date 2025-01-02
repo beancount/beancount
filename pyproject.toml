@@ -23,7 +23,7 @@ authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
 license = { text = "GPL-2.0-only" }
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
