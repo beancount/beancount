@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import pickle
+import typing
 import unittest
 from datetime import date
 
@@ -432,6 +433,20 @@ class TestPickle(unittest.TestCase):
         pickled_str = pickle.dumps(txn1)
         txn2 = pickle.loads(pickled_str)
         self.assertEqual(txn1, txn2)
+
+
+class TestAnnotations(unittest.TestCase):
+    def test_directive_typed_named_tuples(self):
+        # While most typing annotations are consumed only by type
+        # checkers, a handful of them provide information that can be
+        # useful at runtime. For example, beanquery uses typing
+        # annotations for the fields of the named tuples holding
+        # ledger directive represenations derive table column types.
+        #
+        # Verify that these annotations can interpreted.
+        for cls in data.ALL_DIRECTIVES:
+            with self.subTest(cls=cls.__name__):
+                typing.get_type_hints(cls)
 
 
 if __name__ == "__main__":
