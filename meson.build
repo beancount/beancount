@@ -254,18 +254,22 @@ parser = py.extension_module(
 # meson setup build
 # ninja -C build build_ext
 # ```
-custom_target(
-    'build extension and copy back to source tree',
-    input: parser,
-    output: 'build_ext',
-    depends: parser,
-    command: [
-        'cp',
-        parser.full_path(),
-        join_paths(meson.project_source_root(), 'beancount/parser/'),
-    ],
-    build_by_default: false,
-)
+
+cp = find_program('cp', required: false)
+if cp.found()
+    custom_target(
+        'build extension and copy back to source tree',
+        input: parser,
+        output: 'build_ext',
+        depends: parser,
+        command: [
+            cp,
+            parser.full_path(),
+            join_paths(meson.project_source_root(), 'beancount/parser/'),
+        ],
+        build_by_default: false,
+    )
+endif
 
 if get_option('tests').enabled()
     cc = meson.get_compiler('c')
