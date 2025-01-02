@@ -245,24 +245,19 @@ parser = py.extension_module(
     subdir: 'beancount/parser',
 )
 
-# This is a extra ninja target for developer using old-style in-tree development.
-# it doesn't contribute to the building but developing.
-# A developer can do this to get save result like `python setup.py build_ext --inplace`
-# to copy binary extension back to source tree.
-#
-# ```shell
-# meson setup build
-# ninja -C build build_ext
-# ```
+# Support prehistoric development practices: use ``meson setup build;
+# ninja -C build build_ext`` to obtain the equivalent of ``python
+# setup.by build_ext --inplace``.
 custom_target(
-    'build extension and copy back to source tree',
+    'extension module in-place',
     input: parser,
     output: 'build_ext',
-    depends: parser,
     command: [
-        'cp',
-        parser.full_path(),
-        join_paths(meson.project_source_root(), 'beancount/parser/'),
+        py,
+        '-c',
+        'import shutil, sys; shutil.copy(sys.argv[1], sys.argv[2])',
+        '@INPUT@',
+        meson.project_source_root() / 'beancount/parser/',
     ],
     build_by_default: false,
 )
