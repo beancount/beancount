@@ -7,7 +7,7 @@ postings to non-leaf accounts. Some users may want to disallow this and
 enforce that only leaf accounts may have postings on them.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

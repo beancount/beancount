@@ -13,7 +13,7 @@ document in "Viewing" mode by default (and by that I mean "Viewing" as part of
 the /edit page).
 """
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016, 2019, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

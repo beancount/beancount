@@ -1,3 +1,6 @@
+__copyright__ = "Copyright (C) 2023-2024  Martin Blais"
+__license__ = "GNU GPLv2"
+
 import unittest
 
 from beancount import loader

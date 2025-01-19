@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2017, 2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from typing import Callable

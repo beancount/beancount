@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Utility functions to download and convert Google Docs."""
 
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import hashlib

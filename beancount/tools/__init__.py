@@ -9,5 +9,5 @@ they are put in this package and invokes from stubs under beancount/bin/, just
 like the other scripts.
 """
 
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2017, 2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"

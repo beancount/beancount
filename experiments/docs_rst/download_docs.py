@@ -8,7 +8,7 @@ the Google Docs to Markdown or some other text format the open source community
 finds most friendly.
 """
 
-__copyright__ = "Copyright (C) 2017-2018  Martin Blais"
+__copyright__ = "Copyright (C) 2017-2019, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

@@ -1,6 +1,6 @@
 """Table rendering."""
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

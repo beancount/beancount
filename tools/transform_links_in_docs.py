@@ -17,7 +17,7 @@ and replaces the links in the doc that have an entry in the mapping. Links not
 matching any entry are ignored.
 """
 
-__copyright__ = "Copyright (C) 2020  Martin Blais"
+__copyright__ = "Copyright (C) 2020-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

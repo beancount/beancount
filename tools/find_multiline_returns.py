@@ -4,7 +4,7 @@
 See: https://bitbucket.org/birkenfeld/sphinx-contrib/issues/111
 """
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

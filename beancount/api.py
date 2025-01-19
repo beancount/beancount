@@ -11,7 +11,7 @@ Note: This API may change over time, though we're not expecting to remove any
 symbols on the v3 branch.
 """
 
-__copyright__ = "Copyright (C) 2023-2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

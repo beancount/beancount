@@ -11,7 +11,7 @@ delimiter to detect the end of a column. You can customize the delimiter with an
 option.
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019, 2022-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 # IMPORTANT: This should be usable as a standalone script. Do not depend on Beancount.

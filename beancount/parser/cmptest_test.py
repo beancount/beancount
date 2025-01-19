@@ -2,7 +2,7 @@
 Tests for cmptest base test class.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime

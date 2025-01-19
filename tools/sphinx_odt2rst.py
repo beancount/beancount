@@ -10,7 +10,7 @@ Two methods are possible from a Google Drive download:
 
 """
 
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2017-2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

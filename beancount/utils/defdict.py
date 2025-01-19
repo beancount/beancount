@@ -4,7 +4,7 @@ Note: This really ought to be an enhancement to Python itself. I should bother
 adding this in eventually.
 """
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2018, 2020, 2022-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

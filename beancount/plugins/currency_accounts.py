@@ -29,7 +29,7 @@ some potential problems.
 
 """
 
-__copyright__ = "Copyright (C) 2019  Martin Blais"
+__copyright__ = "Copyright (C) 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

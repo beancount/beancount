@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2014-2018  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs

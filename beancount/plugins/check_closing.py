@@ -32,7 +32,7 @@ Would expand into the following two directives:
 Insert the closing line when you know you're closing the position.
 """
 
-__copyright__ = "Copyright (C) 2018  Martin Blais"
+__copyright__ = "Copyright (C) 2018, 2020-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime

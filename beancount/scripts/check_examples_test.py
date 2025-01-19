@@ -1,6 +1,6 @@
 """Just make sure that all the example files can be processed without errors."""
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019, 2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os

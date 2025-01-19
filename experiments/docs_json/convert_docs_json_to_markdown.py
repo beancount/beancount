@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convert Google Docs V1 API's JSON to Markdown."""
 
-__copyright__ = "Copyright (C) 2019  Martin Blais"
+__copyright__ = "Copyright (C) 2019-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

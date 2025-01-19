@@ -1,6 +1,6 @@
 """Tests for price finding routines."""
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime

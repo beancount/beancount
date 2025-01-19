@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """ """
 
+__copyright__ = "Copyright (C) 2013-2018, 2020, 2024  Martin Blais"
+__license__ = "GNU GPLv2"
+
+
 import json
 import os
 import re

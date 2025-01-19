@@ -6,7 +6,7 @@ through Pandoc and possibly other tools in order to produce the most faithful
 conversion to Markdown. Unfortunately, Google's Markdown export is insufficient.
 """
 
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a visual graph of transactions."""
 
-__copyright__ = "Copyright (C) 2016-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

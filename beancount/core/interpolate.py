@@ -1,6 +1,6 @@
 """Code used to automatically complete postings without positions."""
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
