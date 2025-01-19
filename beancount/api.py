@@ -1,7 +1,5 @@
 """V3 public API.
 
-!WARNING! THIS IS EXPERIMENTAL.
-
 The future of Beancount (v3) will bind the majority of public symbols on the
 root package, so that one can seamlessly use it like e.g., numpy, with
 
@@ -9,9 +7,8 @@ root package, so that one can seamlessly use it like e.g., numpy, with
 
    bn.load_file(...)
 
-WARNING: This is a prototype API. This is subject to change until the first v3
-release. Principle: Not all symbols are intended to be present here, only the
-most commonly used ones.
+Note: This API may change over time, though we're not expecting to remove any
+symbols on the v3 branch.
 """
 
 __copyright__ = "Copyright (C) 2023-2024  Martin Blais"
@@ -75,7 +72,8 @@ from .core.prices import get_price
 from .core.realization import RealAccount
 from .core.realization import realize
 
-# TODO(blais): We should return a namedtuple of all the contents, not the lists.
+# TODO(blais): We should return a namedtuple of all the contents, not the three
+# (entries, options, errors) lists.
 from .loader import load_doc
 from .loader import load_encrypted_file
 from .loader import load_file
