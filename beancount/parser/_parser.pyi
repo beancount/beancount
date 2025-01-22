@@ -1,0 +1,9 @@
+import io
+
+from beancount.parser import lexer
+
+class Parser:
+    def __init__(self, builder: lexer.LexBuilder, debug: bool = ...) -> None: ...
+    def parse(
+        self, file: io.IOBase, filename: str | None = ..., lineno: int = ...
+    ) -> None: ...

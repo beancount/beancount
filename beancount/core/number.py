@@ -10,13 +10,13 @@ About Decimal usage:
 
 """
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2015-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
 from decimal import Decimal
-from typing import List, Optional
-
 
 # Constants.
 ZERO = Decimal()
@@ -38,7 +38,7 @@ NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 _CLEAN_NUMBER_RE = re.compile("[, ]")
 
 
-def D(strord=None):
+def D(strord: Decimal | str | None = None) -> Decimal:
     """Convert a string into a Decimal object.
 
     This is used in parsing amounts from files in the importers. This is the
@@ -71,7 +71,7 @@ def D(strord=None):
         ) from exc
 
 
-def round_to(number, increment):
+def round_to(number: Decimal, increment: Decimal) -> Decimal:
     """Round a number *down* to a particular increment.
 
     Args:
@@ -80,10 +80,10 @@ def round_to(number, increment):
     Returns:
       A Decimal, the rounded number.
     """
-    return int((number / increment)) * increment
+    return int(number / increment) * increment
 
 
-def same_sign(number1, number2):
+def same_sign(number1: Decimal, number2: Decimal) -> bool:
     """Return true if both numbers have the same sign.
 
     Args:
@@ -98,15 +98,19 @@ def same_sign(number1, number2):
 def auto_quantized_exponent(number: Decimal, threshold: float) -> int:
     """Automatically infer the exponent that would be used below a given threshold."""
     dtuple = number.normalize().as_tuple()
-    norm = Decimal(dtuple._replace(sign=0, exponent=-len(dtuple.digits)))
+    norm = Decimal(
+        dtuple._replace(sign=0, exponent=-len(dtuple.digits))  # type: ignore[arg-type]
+    )
     low_threshold = threshold
     high_threshold = 1.0 - low_threshold
     while norm != ZERO:
         if not (low_threshold <= norm <= high_threshold):
             break
         ntuple = norm.scaleb(1).as_tuple()
-        norm = Decimal(ntuple._replace(digits=ntuple.digits[ntuple.exponent :]))
-    return dtuple.exponent - norm.as_tuple().exponent
+        norm = Decimal(
+            ntuple._replace(digits=ntuple.digits[ntuple.exponent :])  # type: ignore[arg-type, misc]
+        )
+    return dtuple.exponent - norm.as_tuple().exponent  # type: ignore[operator]
 
 
 def auto_quantize(number: Decimal, threshold: float) -> Decimal:
@@ -134,21 +138,18 @@ def auto_quantize(number: Decimal, threshold: float) -> Decimal:
 
 def num_fractional_digits(number: Decimal) -> int:
     """Return the number of fractional digits."""
-    return -number.as_tuple().exponent
+    return -number.as_tuple().exponent  # type: ignore[operator]
 
 
-def infer_quantum_from_list(
-    numbers: List[Decimal], threshold: float = 0.01
-) -> Optional[Decimal]:
+def infer_quantum_from_list(numbers: list[Decimal], threshold: float = 0.01) -> int:
     """Given a list of numbers from floats, infer the common quantization.
 
     For a series of numbers provided as floats, e.g., prices from a price
     source, we'd like to infer what the right quantization that should be used
     to avoid rounding errors above some threshold.
 
-
-    from the numbers. This simple algorithm auto-quantizes all the numbers and
-    quantizes all of them at the maximum precision that would result in rounding
+    This simple algorithm auto-quantizes all the numbers and quantizes all of
+    them at the maximum precision that would result in rounding
     under the threshold.
 
     Args:
@@ -157,8 +158,7 @@ def infer_quantum_from_list(
       threshold: A fraction, the maximum error to tolerate before stopping the
         search.
     Returns:
-      A decimal object to use with decimal.Decimal.quantize().
-
+      The precision to use to quantize all these decimals.
     """
     # Auto quantize all the numbers.
     qnumbers = [auto_quantize(num, threshold) for num in numbers]

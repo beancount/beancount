@@ -1,12 +1,12 @@
 """Unit tests for treeify tool."""
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import subprocess
-import unittest
+import sys
 import textwrap
-
+import unittest
 
 PROGRAM = __file__.replace("_test.py", ".py")
 DEBUG = 0
@@ -22,7 +22,7 @@ def treeify(string, options=None):
       The treeified string.
     """
     pipe = subprocess.Popen(
-        [PROGRAM] + (options or []),
+        [sys.executable, PROGRAM] + (options or []),
         shell=False,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
@@ -82,7 +82,7 @@ class TestTreeifyBase(unittest.TestCase):
             print("-(expected)-------------------------------")
             print(expected)
             print("------------------------------------------")
-        self.assertEqual(expected, output)
+        self.assertEqual(expected.splitlines(), output.splitlines())
         return output
 
 

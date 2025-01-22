@@ -1,11 +1,11 @@
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
 import unittest
 
-from beancount.parser import hashsrc
 from beancount.parser import _parser
+from beancount.parser import hashsrc
 
 
 class TestHashSource(unittest.TestCase):

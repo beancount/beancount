@@ -1,18 +1,16 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os
 import re
 import textwrap
-import tempfile
 import unittest
-
 from os import path
 
 from beancount.parser import cmptest
-from beancount.utils import test_utils
-from beancount.scripts.doctor import doctor
 from beancount.scripts import directories_test
+from beancount.scripts.doctor import doctor
+from beancount.utils import test_utils
 
 
 class TestScriptDoctor(test_utils.ClickTestCase):
@@ -106,10 +104,10 @@ class TestScriptCheckDirectories(
         )
         self.assertEqual(
             {
-                "Expenses/Restaurant/Sub",
+                "Expenses/Restaurant/Sub".replace("/", os.sep),
                 "Expenses:Restaurant:Sub",
                 "Assets:Extra",
-                "Assets/Extra",
+                "Assets/Extra".replace("/", os.sep),
             },
             clean_matches,
         )
@@ -189,7 +187,7 @@ class TestContext(cmptest.TestCase, test_utils.ClickTestCase):
         self.assertRegex(rv.stdout, "50.02")
 
     @test_utils.docfile
-    def test_context_multiple_files(self, filename):
+    def test_context_multiple_files(self, filename: str):
         """
         2013-01-01 open Expenses:Movie
         2013-01-01 open Assets:Cash
@@ -205,17 +203,17 @@ class TestContext(cmptest.TestCase, test_utils.ClickTestCase):
           Assets:Cash
         """
 
-        with tempfile.NamedTemporaryFile("w") as topfile:
-            topfile.write(
+        with test_utils.temp_file() as topfile:
+            topfile.write_text(
                 textwrap.dedent(
                     """
                 include "{}"
-            """.format(filename)
-                )
+            """.format(filename.replace("\\", r"\\"))
+                ),
+                encoding="utf8",
             )
-            topfile.flush()
             rv = self.run_with_args(
-                doctor, "context", topfile.name, "{}:6".format(filename)
+                doctor, "context", str(topfile), "{}:6".format(filename)
             )
             self.assertRegex(rv.stdout, "Location:")
             self.assertRegex(rv.stdout, "50.02")
@@ -247,27 +245,23 @@ class TestLinked(cmptest.TestCase, test_utils.ClickTestCase):
         rv = self.run_with_args(doctor, "linked", filename, "6")
         self.assertRegex(rv.stdout, "Apples")
         self.assertRegex(rv.stdout, "Oranges")
-        self.assertEqual(
-            2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
-        )
+        self.assertEqual(2, len(list(re.finditer(r"\.beancount:\d+:", rv.stdout))))
 
     @test_utils.docfile_extra(contents=test_string)
-    def test_linked_multiple_files(self, filename):
-        with tempfile.NamedTemporaryFile("w") as topfile:
-            topfile.write(
+    def test_linked_multiple_files(self, filename: str):
+        with test_utils.temp_file() as topfile:
+            topfile.write_text(
                 textwrap.dedent(
                     """
                 include "{}"
-            """.format(filename)
-                )
+            """.format(filename.replace("\\", r"\\"))
+                ),
+                encoding="utf8",
             )
-            topfile.flush()
-            rv = self.run_with_args(doctor, "linked", topfile.name, "{}:6".format(filename))
+            rv = self.run_with_args(doctor, "linked", str(topfile), "{}:6".format(filename))
             self.assertRegex(rv.stdout, "Apples")
             self.assertRegex(rv.stdout, "Oranges")
-            self.assertEqual(
-                2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
-            )
+            self.assertEqual(2, len(list(re.finditer(r"\.beancount:\d+:", rv.stdout))))
 
     @test_utils.docfile_extra(contents=test_string)
     def test_linked_explicit_link(self, filename):
@@ -275,7 +269,7 @@ class TestLinked(cmptest.TestCase, test_utils.ClickTestCase):
         self.assertRegex(rv.stdout, "Apples")
         self.assertRegex(rv.stdout, "Oranges")
         self.assertEqual(
-            2, len(list(re.finditer(r"/(tmp|var/folders)/.*:\d+:", rv.stdout)))
+            2, len(list(re.finditer(r"\.beancount:\d+:", rv.stdout))), rv.stdout
         )
 
 

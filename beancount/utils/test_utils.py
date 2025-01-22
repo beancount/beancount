@@ -1,6 +1,8 @@
 """Support utilities for testing scripts."""
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2008, 2013-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import builtins
@@ -15,8 +17,9 @@ import sys
 import tempfile
 import textwrap
 import unittest
-
 from os import path
+from pathlib import Path
+from typing import Generator
 
 import click.testing
 
@@ -79,6 +82,20 @@ def subprocess_env():
 
 
 @contextlib.contextmanager
+def temp_file(prefix: str = "", suffix: str = ".txt") -> Generator[Path, None, None]:
+    """A context manager that return a filepath inside inside a temporary directory and
+    deletes this directory unconditionally once done.
+
+    This utils exists because `NamedTemporaryFile` can't be re-opened on win32.
+
+    Yields:
+      A string, the name of the temporary directory created.
+    """
+    with tempfile.TemporaryDirectory(prefix="beancount-test-tmpdir.") as p:
+        yield Path(p, prefix + "-temp_file-" + suffix)
+
+
+@contextlib.contextmanager
 def tempdir(delete=True, **kw):
     """A context manager that creates a temporary directory and deletes its
     contents unconditionally once done.
@@ -116,8 +133,10 @@ def create_temporary_files(root, contents_map):
         filename = path.join(root, relative_filename)
         os.makedirs(path.dirname(filename), exist_ok=True)
 
-        clean_contents = textwrap.dedent(contents.replace("{root}", root))
-        with open(filename, "w") as f:
+        clean_contents = textwrap.dedent(
+            contents.replace("{root}", root.replace("\\", r"\\"))
+        )
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(clean_contents)
 
 
@@ -170,28 +189,34 @@ def patch(obj, attributes, replacement_type):
         setattr(obj, attribute, saved_attr)
 
 
-def docfile(function, **kwargs):
+def docfile(
+    function,
+    contents: str | None = None,
+    prefix: str = "",
+    suffix: str = ".beancount",
+    encoding: str = "utf-8",
+):
     """A decorator that write the function's docstring to a temporary file
     and calls the decorated function with the temporary filename.  This is
     useful for writing tests.
 
     Args:
       function: A function to decorate.
+      contents: file content, default to function.__doc__
+      prefix: prefix of filename
+      suffix: suffix of filename
+      encoding: encoding of file content
     Returns:
       The decorated function.
     """
-    contents = kwargs.pop("contents", None)
 
     @functools.wraps(function)
     def new_function(self):
-        allowed = ("buffering", "encoding", "newline", "dir", "prefix", "suffix")
-        if any(key not in allowed for key in kwargs):
-            raise ValueError("Invalid kwarg to docfile_extra")
-        with tempfile.NamedTemporaryFile("w", **kwargs) as file:
-            text = contents or function.__doc__
-            file.write(textwrap.dedent(text))
-            file.flush()
-            return function(self, file.name)
+        with temp_file(suffix=suffix, prefix=prefix) as file:
+            file.write_text(
+                textwrap.dedent(contents or function.__doc__), encoding=encoding
+            )
+            return function(self, str(file))
 
     new_function.__doc__ = None
     return new_function
@@ -244,7 +269,7 @@ class TmpFilesTestBase(unittest.TestCase):
 
     # The list of strings, documents to create.
     # Filenames ending with a '/' will be created as directories.
-    TEST_DOCUMENTS = None
+    TEST_DOCUMENTS: list[str]
 
     def setUp(self):
         self.tempdir, self.root = self.create_file_hierarchy(self.TEST_DOCUMENTS)
@@ -276,7 +301,7 @@ class TmpFilesTestBase(unittest.TestCase):
                 parent_dir = path.dirname(abs_filename)
                 if not path.exists(parent_dir):
                     os.makedirs(parent_dir)
-                with open(abs_filename, "w"):
+                with open(abs_filename, "w", encoding="utf-8"):
                     pass
         return tempdir, root
 

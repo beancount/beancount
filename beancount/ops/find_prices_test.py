@@ -1,13 +1,13 @@
 """Tests for price finding routines."""
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
 
-from beancount.ops import find_prices
 from beancount import loader
+from beancount.ops import find_prices
 
 
 class TestFromFile(unittest.TestCase):

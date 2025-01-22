@@ -1,20 +1,20 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019, 2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import unittest
 import tempfile
-from os import path
 import textwrap
+import unittest
+from os import path
 
-from beancount.core.amount import A
-from beancount.core import inventory
-from beancount.core import data
-from beancount.core import realization
-from beancount.ops import pad
-from beancount.ops import balance
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.core import data
+from beancount.core import inventory
+from beancount.core import realization
+from beancount.core.amount import A
+from beancount.ops import balance
+from beancount.ops import pad
+from beancount.parser import cmptest
 
 
 class TestPadding(cmptest.TestCase):
@@ -605,7 +605,7 @@ class TestPadding(cmptest.TestCase):
     def test_pad_plugin_modify(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ledger_fn = path.join(tmpdir, "my.beancount")
-            with open(ledger_fn, "w") as ledger_file:
+            with open(ledger_fn, "w", encoding="utf-8") as ledger_file:
                 ledger_file.write(
                     textwrap.dedent("""
                     option "insert_pythonpath" "True"
@@ -625,7 +625,7 @@ class TestPadding(cmptest.TestCase):
                 )
 
             plugin_fn = path.join(tmpdir, "plugin_temp.py")
-            with open(plugin_fn, "w") as plugin_file:
+            with open(plugin_fn, "w", encoding="utf-8") as plugin_file:
                 plugin_file.write(
                     textwrap.dedent("""
                     from beancount.core import data

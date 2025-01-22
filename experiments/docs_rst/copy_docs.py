@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """ """
 
-__copyright__ = "Copyright (C) 2018  Martin Blais"
+__copyright__ = "Copyright (C) 2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
 import shutil
 from os import path
-
 
 # Maintained by hand.
 FILE_PAIRS = [

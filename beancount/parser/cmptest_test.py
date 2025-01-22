@@ -2,7 +2,7 @@
 Tests for cmptest base test class.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
@@ -158,30 +158,30 @@ class TestTestCase(cmptest.TestCase):
         self.assertEqualEntries(self.ledger_text, entries)
 
         # Try out various modifications and ensure comparison fails.
-        mod_ledger_text, _ = re.subn(r" \* ", " ! ", self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r" \* ", " ! ", self.ledger_text, count=1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
         mod_ledger_text, _ = re.subn(
-            r"UNION MARKET", "WHOLE FOODS MARKET", self.ledger_text, 1
+            r"UNION MARKET", "WHOLE FOODS MARKET", self.ledger_text, count=1
         )
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r"2014-01-27", "2014-01-28", self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"2014-01-27", "2014-01-28", self.ledger_text, count=1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.65 USD", self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.65 USD", self.ledger_text, count=1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.64 CAD", self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r"73.64 USD", "73.64 CAD", self.ledger_text, count=1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
         mod_ledger_text, _ = re.subn(
-            r"Expenses:Food:Grocery", "Expenses:Food:Groceries", self.ledger_text, 1
+            r"Expenses:Food:Grocery", "Expenses:Food:Groceries", self.ledger_text, count=1
         )
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)

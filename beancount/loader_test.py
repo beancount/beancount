@@ -1,20 +1,20 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import functools
-import logging
 import importlib
-import unittest
+import logging
+import os
 import tempfile
 import textwrap
-import os
-from unittest import mock
+import unittest
 from os import path
+from pathlib import Path
+from unittest import mock
 
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
-
 
 TEST_INPUT = """
 
@@ -111,16 +111,15 @@ class TestLoader(unittest.TestCase):
 
     def test_load(self):
         with test_utils.capture():
-            with tempfile.NamedTemporaryFile("w") as tmpfile:
-                tmpfile.write(TEST_INPUT)
-                tmpfile.flush()
-                entries, errors, options_map = loader.load_file(tmpfile.name)
+            with test_utils.temp_file() as tmpfile:
+                tmpfile.write_text(TEST_INPUT)
+                entries, errors, options_map = loader.load_file(tmpfile)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
                 entries, errors, options_map = loader.load_file(
-                    tmpfile.name, log_timings=logging.info
+                    tmpfile, log_timings=logging.info
                 )
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
@@ -195,12 +194,12 @@ class TestLoadDoc(unittest.TestCase):
     def test_load_doc_plugin_auto_pythonpath(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ledger_fn = path.join(tmpdir, "my.beancount")
-            with open(ledger_fn, "w") as ledger_file:
+            with open(ledger_fn, "w", encoding="utf-8") as ledger_file:
                 ledger_file.write('option "insert_pythonpath" "TRUE"\n')
                 ledger_file.write('plugin "localplugin"\n')
 
             plugin_fn = path.join(tmpdir, "localplugin.py")
-            with open(plugin_fn, "w") as plugin_file:
+            with open(plugin_fn, "w", encoding="utf-8") as plugin_file:
                 plugin_file.write(
                     textwrap.dedent("""\
                   __plugins__ = ()
@@ -434,6 +433,92 @@ class TestLoadIncludes(unittest.TestCase):
             list(map(path.basename, options_map["include"])),
         )
 
+    def test_load_glob_relative(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": 'include "./includes/*.beancount"',
+                    "includes/apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            ["apples.beancount", "bananas.beancount", "oranges.beancount", "top.beancount"],
+            list(map(path.basename, options_map["include"])),
+        )
+
+    def test_load_glob_relative_abs(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": 'include "{}"'.format(
+                        Path(tmp).joinpath("includes/*.beancount").resolve().as_posix()
+                    ),
+                    "includes/apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            {
+                "apples.beancount",
+                "bananas.beancount",
+                "oranges.beancount",
+                "top.beancount",
+            },
+            set(map(path.basename, options_map["include"])),
+        )
+
+    def test_load_glob_relative_mixed(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "top.beancount": "\n".join(
+                        [
+                            'include "./includes/2.*.beancount"',
+                            'include "{}"'.format(
+                                Path(tmp)
+                                .joinpath("includes/1.*.beancount")
+                                .resolve()
+                                .as_posix()
+                            ),
+                        ]
+                    ),
+                    "includes/1.apples.beancount": "2014-01-01 open Assets:Apples",
+                    "includes/2.oranges.beancount": "2014-01-02 open Assets:Oranges",
+                    "includes/3.bananas.beancount": "2014-01-02 open Assets:Bananas",
+                },
+            )
+            entries, errors, options_map = loader.load_file(
+                os.path.join(tmp, "top.beancount")
+            )
+
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertTrue(all(path.isabs(filename) for filename in options_map["include"]))
+        self.assertEqual(
+            {"1.apples.beancount", "2.oranges.beancount", "top.beancount"},
+            set(map(path.basename, options_map["include"])),
+        )
+
 
 class TestLoadCache(unittest.TestCase):
     def setUp(self):
@@ -490,7 +575,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            with open(top_filename, "a") as file:
+            with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
@@ -500,7 +585,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            with open(top_filename, "a") as file:
+            with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
@@ -558,7 +643,7 @@ class TestLoadCache(unittest.TestCase):
             )
             filename = path.join(tmp, "apples.beancount")
             entries, errors, options_map = loader.load_file(filename)
-            with open(filename, "w"):
+            with open(filename, "w", encoding="utf-8"):
                 pass
             entries, errors, options_map = loader.load_file(filename)
             self.assertEqual(1, len(warn_mock.mock_calls))

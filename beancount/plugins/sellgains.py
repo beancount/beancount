@@ -57,18 +57,18 @@ income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
 
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import ZERO
-from beancount.core import data
+from beancount.core import account_types
 from beancount.core import amount
 from beancount.core import convert
-from beancount.core import inventory
-from beancount.core import account_types
+from beancount.core import data
 from beancount.core import interpolate
+from beancount.core import inventory
+from beancount.core.number import ZERO
 from beancount.parser import options
 
 __plugins__ = ("validate_sell_gains",)

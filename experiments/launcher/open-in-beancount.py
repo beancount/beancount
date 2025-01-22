@@ -18,14 +18,13 @@ How to install this on Ubuntu
 
 """
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import sys
 import subprocess
+import sys
 from urllib import parse
-
 
 # You can change the command you run here.
 LISP = r"""

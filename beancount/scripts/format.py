@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
@@ -7,8 +7,8 @@ import io
 import click
 import regex
 
-from beancount.core import amount
 from beancount.core import account
+from beancount.core import amount
 from beancount.parser.version import VERSION
 
 NUMBER_RE = r"[-+]?\s*[\d,]+(?:\.\d*)?"
@@ -160,8 +160,14 @@ def normalize_indent_whitespace(match_pairs):
 
 
 @click.command()
-@click.argument("filename", type=click.File("r"))
-@click.option("--output", "-o", type=click.File("w"), default="-", help="Output file.")
+@click.argument("filename", type=click.File("r", encoding="utf-8"))
+@click.option(
+    "--output",
+    "-o",
+    type=click.File("w", encoding="utf-8"),
+    default="-",
+    help="Output file.",
+)
 @click.option("--prefix-width", "-w", type=int, help="Force fixed prefix width.")
 @click.option("--num-width", "-W", type=int, help="Force fixed numbers width.")
 @click.option("--currency-column", "-c", type=int, help="Align curreencies to this column.")

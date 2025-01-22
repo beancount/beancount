@@ -23,13 +23,19 @@ authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
 license = { text = "GPL-2.0-only" }
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
     "regex >=2022.9.13",
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+types = [
+    "mypy==1.4.0",
+    "types-regex",
+]
 
 [project.scripts]
 bean-check = "beancount.scripts.check:main"
@@ -43,15 +49,27 @@ homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 
+[tool.mypy]
+mypy_path = '$MYPY_CONFIG_FILE_DIR'
+exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
+check_untyped_defs = false
+python_version = '3.9'
+cache_dir = ".venv/.mypy_cache"
+
+[[tool.mypy.overrides]]
+module = "beancount.projects.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "beancount.scripts.*"
+ignore_errors = true
+
 [tool.black]
 line-length = 92
 # Please note: We use 'ruff format' to autoformat buffers.
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
 
 [tool.ruff]
-# Assume Python 3.12.
-target-version = "py38"
-
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
@@ -81,7 +99,7 @@ line-length = 92
 
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "PL", "PD"]
+select = ["E", "F", "PL", "PD", "I", "TC", "RUF022", 'ISC001', 'UP034']
 ignore = [
     'E501',
     'E731',
@@ -93,17 +111,20 @@ ignore = [
     'PLR2004',
     'PLR5501',
     'PLW0603',
-    'PLW2901'
+    'PLW2901',
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+fixable = ["ALL"]
 unfixable = []
 
 per-file-ignores = { }
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+force-single-line = true
 
 [tool.ruff.lint.mccabe]
 

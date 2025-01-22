@@ -1,6 +1,6 @@
 """Flag constants."""
 
-__copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2017, 2020-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

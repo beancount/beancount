@@ -19,16 +19,16 @@ Function named ``get_*()`` are used to compute values from postings to their pri
 Functions named ``convert_*()`` are used to convert postings and amounts to any currency.
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from decimal import Decimal
 
-from beancount.core.number import MISSING
+from beancount.core import prices
 from beancount.core.amount import Amount
+from beancount.core.number import MISSING
 from beancount.core.position import Cost
 from beancount.core.position import Position
-from beancount.core import prices
 
 
 def get_units(pos):
@@ -112,7 +112,7 @@ def get_value(pos, price_map, date=None, output_date_prices=None):
     Note that if the position is not held at cost, this does not convert
     anything, even if a price is available in the 'price_map'. We don't specify
     a target currency here. If you're attempting to make such a conversion, see
-    ``convert_*()`` functions below. However, is the object is a posting and it
+    ``convert_*()`` functions below. However, if the object is a posting and it
     has a price, we will use that price to infer the target currency and those
     will be converted.
 

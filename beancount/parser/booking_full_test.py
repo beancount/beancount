@@ -1,38 +1,39 @@
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2015-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import datetime
-import textwrap
 import functools
-import unittest
-import re
 import io
+import re
+import textwrap
+import unittest
 from unittest import mock
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.number import MISSING
-from beancount.core.position import CostSpec
-from beancount.core.position import Cost
-from beancount.core.position import Position
-from beancount.core.inventory import from_string as I
-
-from beancount.utils import test_utils
-from beancount.core.data import Booking
-from beancount.core import inventory
-from beancount.core import position
+from beancount import loader
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
-from beancount.parser import parser
-from beancount.parser import printer
+from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import A
+from beancount.core.data import Booking
+from beancount.core.inventory import from_string as I
+from beancount.core.number import MISSING
+from beancount.core.number import D
+from beancount.core.position import Cost
+from beancount.core.position import CostSpec
+from beancount.core.position import Position
+from beancount.parser import booking
 from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
-from beancount.parser import booking
 from beancount.parser import cmptest
 from beancount.parser import options
-from beancount import loader
+from beancount.parser import parser
+from beancount.parser import printer
+from beancount.utils import test_utils
 
 
 def _gen_missing_combinations(template, args):
@@ -394,7 +395,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         balances = {
             "Assets:Account": I(
-                "50 HOOL {115.00 USD, 2016-01-15}, " "50 HOOL {116.00 USD, 2016-01-16}"
+                "50 HOOL {115.00 USD, 2016-01-15}, 50 HOOL {116.00 USD, 2016-01-16}"
             )
         }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
@@ -410,7 +411,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         balances = {
             "Assets:Account": I(
-                "50 HOOL {100.00 USD, 2016-01-15}, " "50 HOOL { 50.00 CAD, 2016-01-15}"
+                "50 HOOL {100.00 USD, 2016-01-15}, 50 HOOL { 50.00 CAD, 2016-01-15}"
             )
         }
         groups, errors = bf.categorize_by_currency(entries[0], balances)
@@ -2055,7 +2056,7 @@ class TestBookReductions(_BookingTestBase):
 
 
 class TestHasSelfReductions(cmptest.TestCase):
-    BM = collections.defaultdict(lambda: Booking.STRICT)
+    BM: dict[str, Booking] = collections.defaultdict(lambda: Booking.STRICT)
 
     @loader.load_doc()
     def test_has_self_reductions__simple(self, entries, _, __):
@@ -2703,7 +2704,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
 
 
 @unittest.skip(
-    "Crossing is not supported yet. Handle this in the v3 C++ rewrite. " "{d3cbd78f1029}."
+    "Crossing is not supported yet. Handle this in the v3 C++ rewrite. {d3cbd78f1029}."
 )
 class TestBookCrossover(_BookingTestBase):
     """Test reducing + augmenting in a single leg.
@@ -3183,7 +3184,7 @@ class TestBook(unittest.TestCase):
         """
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
-            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {101.00 USD, 2015-10-01}"),
+            I("1 HOOL {100.00 USD, 2015-10-01}, 2 HOOL {101.00 USD, 2015-10-01}"),
             balances["Assets:Account1"],
         )
         self.assertPostingsEqual(
@@ -3214,7 +3215,7 @@ class TestBook(unittest.TestCase):
         """
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
-            I("1 HOOL {100.00 USD, 2015-10-01}, " "2 HOOL {100.00 CAD, 2015-10-01}"),
+            I("1 HOOL {100.00 USD, 2015-10-01}, 2 HOOL {100.00 CAD, 2015-10-01}"),
             balances["Assets:Account1"],
         )
         self.assertPostingsEqual(

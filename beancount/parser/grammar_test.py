@@ -2,30 +2,30 @@
 Tests for grammar parser.
 """
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import unittest
 import inspect
-import textwrap
 import re
+import textwrap
+import unittest
 from decimal import Decimal
 from unittest import mock
 
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.amount import from_string as A
-from beancount.core.amount import Amount
-from beancount.core.position import CostSpec
-from beancount.parser import grammar
-from beancount.parser import parser
-from beancount.parser import lexer
-from beancount.core import data
 from beancount.core import amount
-from beancount.utils import test_utils
+from beancount.core import data
+from beancount.core.amount import Amount
+from beancount.core.amount import from_string as A
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.position import CostSpec
 from beancount.parser import cmptest
+from beancount.parser import grammar
+from beancount.parser import lexer
+from beancount.parser import parser
+from beancount.utils import test_utils
 
 
 def check_list(test, objlist, explist):

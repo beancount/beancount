@@ -1,25 +1,24 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
 import textwrap
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.amount import ZERO
-from beancount.core.data import create_simple_posting as P
-from beancount.core.data import create_simple_posting_with_cost as PCost
-from beancount.core import interpolate
+from beancount import loader
+from beancount.core import convert
 from beancount.core import data
+from beancount.core import interpolate
 from beancount.core import inventory
 from beancount.core import position
-from beancount.core import convert
-from beancount.parser import parser
+from beancount.core.amount import ZERO
+from beancount.core.amount import A
+from beancount.core.data import create_simple_posting as P
+from beancount.core.data import create_simple_posting_with_cost as PCost
+from beancount.core.number import D
 from beancount.parser import cmptest
+from beancount.parser import parser
 from beancount.utils import defdict
-from beancount import loader
-
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {

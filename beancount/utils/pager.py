@@ -14,17 +14,16 @@ triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
 import contextlib
-import os
-import sys
-import subprocess
 import io
 import logging
-
+import os
+import subprocess
+import sys
 
 # The default command to run for a pager, if the PAGER environment variable is not set.
 DEFAULT_PAGER = "more"

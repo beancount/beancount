@@ -1,14 +1,13 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import datetime
+import unittest
 from collections import OrderedDict
 
-from beancount.core import getters
-from beancount.core import data
 from beancount import loader
-
+from beancount.core import data
+from beancount.core import getters
 
 TEST_INPUT = """
 

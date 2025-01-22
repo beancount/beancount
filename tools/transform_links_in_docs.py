@@ -17,23 +17,27 @@ and replaces the links in the doc that have an entry in the mapping. Links not
 matching any entry are ignored.
 """
 
-__copyright__ = "Copyright (C) 2020  Martin Blais"
+__copyright__ = "Copyright (C) 2020-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import List, Optional, Dict, Any, Mapping, Iterator, Callable, Tuple
 import argparse
-import json
 import functools
+import json
 import re
+from typing import Any
+from typing import Callable
+from typing import Iterator
+from typing import Mapping
+from typing import Optional
 
 from googleapiclient import discovery
-from beancount.tools import gapis  # See http://github.com/blais/gapis
 
+from beancount.tools import gapis  # See http://github.com/blais/gapis
 
 Json = Mapping[str, "Json"]
 
 
-def find_links(obj: Any, find_key: str) -> Iterator[List[Json]]:
+def find_links(obj: Any, find_key: str) -> Iterator[list[Json]]:
     """Enumerate all the links found.
     Returns a path of object, from leaf to parents to root."""
     if isinstance(obj, dict):
@@ -51,7 +55,7 @@ def find_links(obj: Any, find_key: str) -> Iterator[List[Json]]:
                 yield found
 
 
-def iter_links(document: Json) -> List[Tuple[str, str]]:
+def iter_links(document: Json) -> list[tuple[str, str]]:
     """Find all the links and return them."""
     for jpath in find_links(document, "link"):
         for item in jpath:
@@ -64,7 +68,7 @@ def iter_links(document: Json) -> List[Tuple[str, str]]:
                 yield (url, content, item)
 
 
-def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> List[Json]:
+def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> list[Json]:
     """Find all the links and prepare updates.
     Outputs a list of batchUpdate requests to apply."""
     requests = []
@@ -86,7 +90,7 @@ def process_links(document: Json, func: Callable[[str, str], Optional[str]]) -> 
     return requests
 
 
-def propose_url(mapping: Dict[str, str], url: str, unused_content: str) -> Optional[str]:
+def propose_url(mapping: dict[str, str], url: str, unused_content: str) -> Optional[str]:
     """Process a URL, and optionally propose a replacement."""
     try:
         return mapping[url]
@@ -94,7 +98,7 @@ def propose_url(mapping: Dict[str, str], url: str, unused_content: str) -> Optio
         pass
 
 
-def transform_links(service, docid: str, mapping: Dict[str, str], dry_run: bool):
+def transform_links(service, docid: str, mapping: dict[str, str], dry_run: bool):
     """Run the link transformation."""
 
     # Get the document.

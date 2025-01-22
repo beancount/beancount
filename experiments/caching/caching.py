@@ -16,13 +16,12 @@ default under a single directory. In particular, this is used for:
     extraction and once for filing.
 """
 
-__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os
 import re
 from os import path
-
 
 # The default parent directory for all cache files.
 BEANCOUNT_DIR = os.environ.get("BEANCOUNT_DIR", path.expanduser("~/.beancount"))

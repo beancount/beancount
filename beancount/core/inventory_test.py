@@ -2,27 +2,24 @@
 Unit tests for the Inventory class.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import copy
 import datetime
 import unittest
-import copy
 from datetime import date
 
-from beancount.core.number import D
-from beancount.core.amount import A
 from beancount.core import amount
-from beancount.core.position import Position
-from beancount.core.position import Cost
 from beancount.core import convert
+from beancount.core import inventory
 from beancount.core import position
+from beancount.core.amount import A
+from beancount.core.number import D
+from beancount.core.position import Cost
+from beancount.core.position import Position
 from beancount.utils import invariants
 
-try:
-    from beancount.core import inventory
-except ImportError:
-    from beancount.ccore import _core as inventory
 Inventory = inventory.Inventory
 MatchResult = inventory.MatchResult
 
@@ -289,7 +286,7 @@ class TestInventory(unittest.TestCase):
                 None: I("3.41 CAD"),
                 "USD": I("101.20 USD"),
                 "EUR": inventory.Inventory(),
-                "HOOL": I("2.2 HOOL {532.43 USD}, " "2.3 HOOL {564.00 USD, 2015-07-14}"),
+                "HOOL": I("2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}"),
             },
             ccymap,
         )
@@ -305,7 +302,7 @@ class TestInventory(unittest.TestCase):
             {
                 "CAD": I("3.41 CAD"),
                 "USD": I("101.20 USD"),
-                "HOOL": I("2.2 HOOL {532.43 USD}, " "2.3 HOOL {564.00 USD, 2015-07-14}"),
+                "HOOL": I("2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}"),
             },
             ccymap,
         )

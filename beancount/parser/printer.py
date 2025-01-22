@@ -1,6 +1,8 @@
 """Conversion from internal data structures to text."""
 
-__copyright__ = "Copyright (C) 2014-2018  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2014-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
@@ -13,14 +15,14 @@ import textwrap
 from decimal import Decimal
 from typing import Optional
 
-from beancount.core import position
-from beancount.core import convert
-from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import account
+from beancount.core import amount
+from beancount.core import convert
 from beancount.core import data
-from beancount.core import interpolate
 from beancount.core import display_context
+from beancount.core import interpolate
+from beancount.core import inventory
+from beancount.core import position
 from beancount.utils import misc_utils
 
 
@@ -430,8 +432,12 @@ def render_flag(inflag: Optional[str]) -> str:
 
 
 def format_entry(
-    entry, dcontext=None, render_weights=False, prefix=None, write_source=False
-):
+    entry: data.Directive,
+    dcontext: display_context.DisplayContext | None = None,
+    render_weights: bool = False,
+    prefix: str | None = None,
+    write_source: bool = False,
+) -> str:
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
@@ -533,7 +539,7 @@ def render_source(meta):
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return "{}:{:8}".format(meta["filename"], "{}:".format(meta["lineno"]))
+    return "{}:{}".format(meta["filename"], "{}:".format(meta["lineno"]))
 
 
 def format_error(error):

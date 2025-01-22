@@ -10,17 +10,17 @@ unmatching bookings without checks. (Note the contrived context here: Ideally
 the "NONE" booking method would simply not exist.)
 """
 
-__copyright__ = "Copyright (C) 2018  Martin Blais"
+__copyright__ = "Copyright (C) 2018-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import ZERO
-from beancount.core.number import D
-from beancount.core.data import Transaction
-from beancount.core.data import Booking
 from beancount.core import getters
 from beancount.core import inventory
+from beancount.core.data import Booking
+from beancount.core.data import Transaction
+from beancount.core.number import ZERO
+from beancount.core.number import D
 
 __plugins__ = ("validate_average_cost",)
 
@@ -50,7 +50,7 @@ def validate_average_cost(entries, options_map, config_str=None):
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, float):
             raise RuntimeError(
-                "Invalid configuration for check_average_cost: " "must be a float"
+                "Invalid configuration for check_average_cost: must be a float"
             )
         tolerance = config_obj
     else:

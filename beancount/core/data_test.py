@@ -1,14 +1,13 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from datetime import date
-import unittest
-import pickle
 import datetime
+import pickle
+import unittest
+from datetime import date
 
-from beancount.core.amount import A
 from beancount.core import data
-
+from beancount.core.amount import A
 
 META = data.new_metadata("beancount/core/testing.beancount", 12345)
 FLAG = "*"

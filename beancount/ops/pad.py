@@ -1,24 +1,29 @@
 """Automatic padding of gaps between entries."""
 
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
+from typing import NamedTuple
 
 from beancount.core import account
 from beancount.core import amount
-from beancount.core import inventory
 from beancount.core import data
-from beancount.core import position
 from beancount.core import flags
+from beancount.core import inventory
+from beancount.core import position
 from beancount.core import realization
-from beancount.utils import misc_utils
 from beancount.ops import balance
+from beancount.utils import misc_utils
 
 __plugins__ = ("pad",)
 
 
-PadError = collections.namedtuple("PadError", "source message entry")
+class PadError(NamedTuple):
+    """Represents an error encountered during padding."""
+
+    source: data.Meta
+    message: str
+    entry: data.Pad
 
 
 def pad(entries, options_map):
@@ -135,7 +140,7 @@ def pad(entries, options_map):
 
                         # Synthesize a new transaction entry for the difference.
                         narration = (
-                            "(Padding inserted for Balance of {} for " "difference {})"
+                            "(Padding inserted for Balance of {} for difference {})"
                         ).format(check_amount, diff_position)
                         new_entry = data.Transaction(
                             active_pad.meta.copy(),

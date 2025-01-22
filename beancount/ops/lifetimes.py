@@ -5,16 +5,15 @@ This can then be used to identify a list of dates at which we need to fetch pric
 in order to properly fill the price database.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import datetime
 import itertools
 
-from beancount.core import inventory
 from beancount.core import data
-
+from beancount.core import inventory
 
 ONEDAY = datetime.timedelta(days=1)
 

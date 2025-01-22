@@ -1,9 +1,7 @@
-project('beancount', 'c', version: files('beancount/VERSION'))
+project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>=1.1')
 
-bison = find_program('bison', version: '>=3.8.0')
-flex = find_program('flex', version: '>=2.6.4')
-cc = meson.get_compiler('c')
-libm = cc.find_library('m')
+bison = find_program('bison', 'win_bison', version: '>=3.8.0')
+flex = find_program('flex', 'win_flex', version: '>=2.6.4')
 
 py = import('python').find_installation(pure: false)
 
@@ -11,6 +9,7 @@ py.install_sources(
     '''
     beancount/__init__.py
     beancount/VERSION
+    beancount/py.typed
     beancount/api.py
     beancount/core/__init__.py
     beancount/core/account.py
@@ -85,7 +84,6 @@ py.install_sources(
     beancount/tools/treeify.py
     beancount/utils/__init__.py
     beancount/utils/bisect_key.py
-    beancount/utils/date_utils.py
     beancount/utils/defdict.py
     beancount/utils/encryption.py
     beancount/utils/file_utils.py
@@ -94,7 +92,6 @@ py.install_sources(
     beancount/utils/memo.py
     beancount/utils/misc_utils.py
     beancount/utils/pager.py
-    beancount/utils/snoop.py
     beancount/utils/table.py
     beancount/utils/test_utils.py
     '''.split(),
@@ -184,7 +181,6 @@ py.install_sources('''
     beancount/scripts/format_test.py
     beancount/tools/treeify_test.py
     beancount/utils/bisect_key_test.py
-    beancount/utils/date_utils_test.py
     beancount/utils/defdict_test.py
     beancount/utils/encryption_test.py
     beancount/utils/file_utils_test.py
@@ -193,7 +189,6 @@ py.install_sources('''
     beancount/utils/memo_test.py
     beancount/utils/misc_utils_test.py
     beancount/utils/pager_test.py
-    beancount/utils/snoop_test.py
     beancount/utils/table_test.py
     beancount/utils/test_utils_test.py
     '''.split(),
@@ -239,7 +234,7 @@ grammar_c = bison_gen.process(
     preserve_path_from: meson.current_source_dir(),
 )
 
-py.extension_module(
+parser = py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
     'beancount/parser/parser.c',
@@ -250,7 +245,26 @@ py.extension_module(
     subdir: 'beancount/parser',
 )
 
+# Support prehistoric development practices: use ``meson setup build;
+# ninja -C build build_ext`` to obtain the equivalent of ``python
+# setup.by build_ext --inplace``.
+custom_target(
+    'extension module in-place',
+    input: parser,
+    output: 'build_ext',
+    command: [
+        py,
+        '-c',
+        'import shutil, sys; shutil.copy(sys.argv[1], sys.argv[2])',
+        '@INPUT@',
+        meson.project_source_root() / 'beancount/parser/',
+    ],
+    build_by_default: false,
+)
+
 if get_option('tests').enabled()
+    cc = meson.get_compiler('c')
+    libm = cc.find_library('m', required: false)
     tokens_test = executable(
         'tokens-test',
         'beancount/parser/decimal.c',

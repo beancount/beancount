@@ -1,22 +1,34 @@
 """Comparison helpers for data objects."""
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import hashlib
+from typing import Any
+from typing import NamedTuple
 
-from beancount.core.data import Price
 from beancount.core import data
+from beancount.core.data import Price
 
 
-CompareError = collections.namedtuple("CompareError", "source message entry")
+class CompareError(NamedTuple):
+    """A named tuple to represent comparison errors."""
+
+    source: data.Meta
+    message: str
+    entry: data.Directive
+
 
 # A list of field names that are being ignored for persistence.
 IGNORED_FIELD_NAMES = {"meta", "diff_amount"}
 
 
-def stable_hash_namedtuple(objtuple, ignore=frozenset()):
+def stable_hash_namedtuple(
+    objtuple: NamedTuple,
+    ignore: frozenset[str] | set[str] = frozenset(),
+) -> str:
     """Hash the given namedtuple and its child fields.
 
     This iterates over all the members of objtuple, skipping the attributes from
@@ -39,7 +51,7 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
             subhashes = []
             for element in attr_value:
                 if isinstance(element, tuple):
-                    subhashes.append(stable_hash_namedtuple(element, ignore))
+                    subhashes.append(stable_hash_namedtuple(element, ignore))  # type: ignore[arg-type]
                 else:
                     md5 = hashlib.md5()
                     md5.update(str(element).encode())
@@ -51,7 +63,7 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     return hashobj.hexdigest()
 
 
-def hash_entry(entry, exclude_meta=False):
+def hash_entry(entry: data.Directive, exclude_meta: bool = False) -> str:
     """Compute the stable hash of a single entry.
 
     Args:
@@ -70,7 +82,9 @@ def hash_entry(entry, exclude_meta=False):
     )
 
 
-def hash_entries(entries, exclude_meta=False):
+def hash_entries(
+    entries: data.Directives, exclude_meta: bool = False
+) -> tuple[dict[str, data.Directive], list[Any]]:
     """Compute unique hashes of each of the entries and return a map of them.
 
     This is used for comparisons between sets of entries.
@@ -86,7 +100,7 @@ def hash_entries(entries, exclude_meta=False):
       A dict of hash-value to entry (for all entries) and a list of errors.
       Errors are created when duplicate entries are found.
     """
-    entry_hash_dict = {}
+    entry_hash_dict: dict[str, data.Directive] = {}
     errors = []
     num_legal_duplicates = 0
     for entry in entries:
@@ -119,7 +133,9 @@ def hash_entries(entries, exclude_meta=False):
     return entry_hash_dict, errors
 
 
-def compare_entries(entries1, entries2):
+def compare_entries(
+    entries1: data.Directives, entries2: data.Directives
+) -> tuple[bool, data.Directives, data.Directives]:
     """Compare two lists of entries. This is used for testing.
 
     The entries are compared with disregard for their file location.
@@ -152,7 +168,9 @@ def compare_entries(entries1, entries2):
     return (same, missing1, missing2)
 
 
-def includes_entries(subset_entries, entries):
+def includes_entries(
+    subset_entries: data.Directives, entries: data.Directives
+) -> tuple[bool, data.Directives]:
     """Check if a list of entries is included in another list.
 
     Args:
@@ -177,7 +195,9 @@ def includes_entries(subset_entries, entries):
     return (includes, missing)
 
 
-def excludes_entries(subset_entries, entries):
+def excludes_entries(
+    subset_entries: data.Directives, entries: data.Directives
+) -> tuple[bool, data.Directives]:
     """Check that a list of entries does not appear in another list.
 
     Args:

@@ -11,7 +11,7 @@ delimiter to detect the end of a column. You can customize the delimiter with an
 option.
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019, 2022-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 # IMPORTANT: This should be usable as a standalone script. Do not depend on Beancount.
@@ -21,9 +21,8 @@ import collections
 import re
 import sys
 
-
 # Default regular expressions used for splitting.
-DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)" r"(:[A-Z][A-Za-z0-9-_']*)*"
+DEFAULT_PATTERN = r"(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9-_']*)*"
 DEFAULT_DELIMITER = "[ \t]+"
 DEFAULT_SPLITTER = ":"
 
@@ -271,9 +270,7 @@ def _main():
         "--pattern",
         action="store",
         default=None,
-        help=(
-            "Pattern for repeatable components " '(default: "{}")'.format(DEFAULT_PATTERN)
-        ),
+        help=f'Pattern for repeatable components (default: "{DEFAULT_PATTERN}")',
     )
 
     parser.add_argument(
@@ -342,8 +339,8 @@ def _main():
         args.split = LOOSE_SPLITTER
 
     # Open input and output files.
-    input_file = open(args.input, "r") if args.input else sys.stdin
-    output_file = open(args.output, "w") if args.output else sys.stdout
+    input_file = open(args.input, "r", encoding="utf-8") if args.input else sys.stdin
+    output_file = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
     lines = list(input_file)
 
     # Find a column in the file. If not found, this will return None.

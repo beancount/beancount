@@ -107,27 +107,33 @@ See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and
 corresponding expected values.
 """
 
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2018, 2020-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
 import contextlib
 import functools
 import inspect
-import textwrap
 import io
 import sys
+import textwrap
+from typing import TYPE_CHECKING
+from typing import Any
 
-from beancount.parser import _parser
-from beancount.parser import grammar
-from beancount.parser import printer
-from beancount.parser import hashsrc
 from beancount.core import data
 from beancount.core.number import MISSING
-
+from beancount.parser import _parser
+from beancount.parser import grammar
+from beancount.parser import hashsrc
+from beancount.parser import printer
+from beancount.parser.grammar import DeprecatedError  # noqa: F401
 from beancount.parser.grammar import ParserError  # noqa: F401
 from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
-from beancount.parser.grammar import DeprecatedError  # noqa: F401
+
+if TYPE_CHECKING:
+    from beancount.loader import OptionsMap
 
 
 # When importing the module, always check that the compiled source matched the
@@ -135,7 +141,7 @@ from beancount.parser.grammar import DeprecatedError  # noqa: F401
 hashsrc.check_parser_source_files(_parser)
 
 
-def is_posting_incomplete(posting):
+def is_posting_incomplete(posting) -> bool:
     """Detect the presence of any elided amounts in a Posting.
 
     If any of the possible amounts are missing, this returns True.
@@ -165,7 +171,7 @@ def is_posting_incomplete(posting):
     return False
 
 
-def is_entry_incomplete(entry):
+def is_entry_incomplete(entry: data.Directive) -> bool:
     """Detect the presence of elided amounts in Transactions.
 
     Args:
@@ -180,8 +186,13 @@ def is_entry_incomplete(entry):
 
 
 def parse_file(
-    file, report_filename=None, report_firstline=1, encoding=None, debug=False, **kw
-):
+    file: str | io.IOBase,
+    report_filename: str | None = None,
+    report_firstline: int = 1,
+    encoding: str | None = None,
+    debug: bool = False,
+    **kw: Any,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -198,19 +209,26 @@ def parse_file(
         raise ValueError("Only UTF-8 encoded files are supported.")
     with contextlib.ExitStack() as ctx:
         if file == "-":
-            file = sys.stdin.buffer
+            file_io: io.IOBase = sys.stdin.buffer  # type: ignore[assignment]
         # It would be more appropriate here to check for io.RawIOBase but
         # that does not work for io.BytesIO despite it implementing the
         # readinto() method.
         elif not isinstance(file, io.IOBase):
-            file = ctx.enter_context(open(file, "rb"))
+            file_io = ctx.enter_context(open(file, "rb"))
+        else:
+            file_io = file
         builder = grammar.Builder()
         parser = _parser.Parser(builder, debug=debug)
-        parser.parse(file, filename=report_filename, lineno=report_firstline, **kw)
+        parser.parse(file_io, filename=report_filename, lineno=report_firstline, **kw)
     return builder.finalize()
 
 
-def parse_string(string, report_filename=None, dedent=False, **kw):
+def parse_string(
+    string: str | bytes = "",
+    report_filename: str | None = None,
+    dedent: bool = False,
+    **kw: Any,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -224,13 +242,12 @@ def parse_string(string, report_filename=None, dedent=False, **kw):
     Return:
       Same as the output of parse_file().
     """
-    if dedent:
+    if dedent and isinstance(string, str):
         string = textwrap.dedent(string)
-    if isinstance(string, str):
-        string = string.encode("utf8")
+    as_bytes = string.encode("utf8") if isinstance(string, str) else string
     if report_filename is None:
         report_filename = "<string>"
-    file = io.BytesIO(string)
+    file = io.BytesIO(as_bytes)
     return parse_file(file, report_filename=report_filename, **kw)
 
 
@@ -299,7 +316,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
     return decorator
 
 
-def parse_many(string, level=0):
+def parse_many(string: str, level: int = 0) -> data.Directives:
     """Parse a string with a snippet of Beancount input and replace vars from caller.
 
     Args:
@@ -322,7 +339,7 @@ def parse_many(string, level=0):
     return entries
 
 
-def parse_one(string):
+def parse_one(string: str) -> data.Directive:
     """Parse a string with single Beancount directive and replace vars from caller.
 
     Args:

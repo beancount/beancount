@@ -1,18 +1,25 @@
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2015-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import re
 import textwrap
 import unittest
+from typing import Any
+from typing import NamedTuple
 
 from beancount.core.data import Booking
-from beancount.parser import parser
-from beancount.parser import cmptest
 from beancount.parser import booking
+from beancount.parser import cmptest
+from beancount.parser import parser
 
 
-BookingTestError = collections.namedtuple("BookingTestError", "source message entry")
+class BookingTestError(NamedTuple):
+    source: Any
+    message: Any
+    entry: Any
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):
@@ -89,7 +96,7 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
-    BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
+    BOOKMETH: dict[str, Booking] = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking.convert_lot_specs_to_lots(entries)

@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 from decimal import Decimal
 
 from beancount.core import display_context
-from beancount.core.display_context import Precision
 from beancount.core.display_context import Align
+from beancount.core.display_context import Precision
 
 
 def decimalize(number_list):
@@ -20,7 +20,7 @@ def decimalize(number_list):
 
 
 class DisplayContextBaseTest(unittest.TestCase):
-    alignment = None
+    alignment: Align
 
     def assertFormatNumbers(self, number_strings, expected_fmt_numbers, **build_args):
         dcontext = display_context.DisplayContext()

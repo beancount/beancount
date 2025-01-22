@@ -8,5 +8,5 @@ installed via a --plugin option, or one-offs to answer questions on the
 mailing-list.
 """
 
-__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016-2017, 2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"

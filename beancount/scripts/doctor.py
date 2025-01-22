@@ -4,10 +4,9 @@ This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import List, Tuple
 import collections
 import logging
 import os
@@ -22,19 +21,18 @@ from beancount.core import account_types
 from beancount.core import compare
 from beancount.core import convert
 from beancount.core import data
-from beancount.core.display_context import Align
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import prices
 from beancount.core import realization
-from beancount.parser.context import render_file_context
+from beancount.core.display_context import Align
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
+from beancount.parser.context import render_file_context
 from beancount.parser.version import VERSION
 from beancount.scripts.directories import validate_directories
-
 
 ledger_path = click.Path(resolve_path=True, exists=True)
 
@@ -140,7 +138,7 @@ def roundtrip(filename):
         logging.info("Print them out to a file")
         basename, extension = os.path.splitext(filename)
         round1_filename = "".join([basename, ".roundtrip1", extension])
-        with open(round1_filename, "w") as outfile:
+        with open(round1_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
@@ -161,7 +159,7 @@ def roundtrip(filename):
 
         logging.info("Print what you read to yet another file")
         round2_filename = "".join([basename, ".roundtrip2", extension])
-        with open(round2_filename, "w") as outfile:
+        with open(round2_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries_roundtrip, file=outfile)
 
         logging.info("Compare the original entries with the re-read ones")
@@ -352,8 +350,8 @@ def linked(filename, location_spec):
 
 
 def resolve_region_to_entries(
-    entries: List[data.Entries], filename: str, region: Tuple[str, int, int]
-) -> List[data.Entries]:
+    entries: list[data.Entries], filename: str, region: tuple[str, int, int]
+) -> list[data.Entries]:
     """Resolve a filename and region to a list of entries."""
 
     search_filename, first_lineno, last_lineno = region

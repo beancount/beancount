@@ -1,13 +1,10 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import functools
+import unittest
 
-try:
-    from beancount.core import account_types
-except ImportError:
-    from beancount.ccore import _core as account_types
+from beancount.core import account_types
 
 
 class TestAccountTypes(unittest.TestCase):

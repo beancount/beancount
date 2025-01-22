@@ -1,6 +1,6 @@
 """Utilities for importing symbols programmatically."""
 
-__copyright__ = "Copyright (C) 2018  Martin Blais"
+__copyright__ = "Copyright (C) 2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import importlib

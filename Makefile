@@ -158,6 +158,9 @@ ruff lint:
 	NO_COLOR=1 ruff check .
 	NO_COLOR=1 ruff format .
 
+mypy typecheck:
+	NO_COLOR=1 mypy .
+
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test
 

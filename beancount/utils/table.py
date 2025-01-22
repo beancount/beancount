@@ -1,13 +1,12 @@
 """Table rendering."""
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import csv
 import collections
+import csv
 import io
 import itertools
-
 
 # An unrendered table data structure. This is a table-like report data
 # structure--a two-dimensional array of cells--that is used as an intermediate

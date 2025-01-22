@@ -7,19 +7,19 @@ created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from typing import Optional, Set
+from typing import Optional
 
+from beancount.core import data
+from beancount.core.data import Currency
+from beancount.core.data import Price
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.data import Price
-from beancount.core.data import Currency
-from beancount.core import data
-from beancount.utils import misc_utils
 from beancount.utils import bisect_key
+from beancount.utils import misc_utils
 
 
 def get_last_price_entries(entries, date):
@@ -139,7 +139,7 @@ def project(
     orig_price_map: PriceMap,
     from_currency: Currency,
     to_currency: Currency,
-    base_currencies: Optional[Set[Currency]] = None,
+    base_currencies: Optional[set[Currency]] = None,
 ) -> PriceMap:
     """Project all prices with a quote currency to another quote currency.
 
@@ -191,7 +191,7 @@ def project(
         return orig_price_map
 
     # Avoid mutating the input map.
-    price_map = {key: list(value) for key, value in orig_price_map.items()}
+    price_map = PriceMap({key: list(value) for key, value in orig_price_map.items()})
 
     # Process the entire database (it's not indexed by quote currency).
     currency_pair = (from_currency, to_currency)

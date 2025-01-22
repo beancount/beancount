@@ -2,24 +2,38 @@
 This code is used by the full booking algorithm.
 """
 
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 from decimal import Decimal
+from typing import TYPE_CHECKING
+from typing import NamedTuple
 
-from beancount.core.number import ZERO
-from beancount.core.data import Booking
-from beancount.core.amount import Amount
-from beancount.core.position import Cost
-from beancount.core import flags
-from beancount.core import position
-from beancount.core import inventory
 from beancount.core import convert
+from beancount.core import flags
+from beancount.core import inventory
+from beancount.core import position
+from beancount.core.amount import Amount
+from beancount.core.data import Booking
+from beancount.core.data import Directive
+from beancount.core.data import Meta
+from beancount.core.number import ZERO
+
+if TYPE_CHECKING:
+    from decimal import Decimal
+
+    from beancount.core.position import Cost
+
+if TYPE_CHECKING:
+    from decimal import Decimal
 
 
-# An error raised if we failed to reduce the inventory balance unambiguously.
-AmbiguousMatchError = collections.namedtuple("AmbiguousMatchError", "source message entry")
+class AmbiguousMatchError(NamedTuple):
+    """An error raised if we failed to reduce the inventory balance unambiguously."""
+
+    source: Meta
+    message: str
+    entry: Directive
 
 
 def handle_ambiguous_matches(entry, posting, matches, method):

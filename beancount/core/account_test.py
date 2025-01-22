@@ -1,13 +1,11 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
+import os
 import types
+import unittest
 
-try:
-    from beancount.core import account
-except ImportError:
-    from beancount.ccore import _core as account
+from beancount.core import account
 from beancount.utils import test_utils
 
 
@@ -127,7 +125,7 @@ class TestWalk(test_utils.TmpFilesTestBase):
 
     def test_walk(self):
         actual_data = [
-            (root[len(self.root) :], account_, dirs, files)
+            (root[len(self.root) :].replace(os.sep, "/"), account_, dirs, files)
             for root, account_, dirs, files in account.walk(self.root)
         ]
 
