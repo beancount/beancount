@@ -28,6 +28,7 @@ from beancount.core import prices
 from beancount.core.amount import Amount
 from beancount.core.number import MISSING
 from beancount.core.position import Cost
+from beancount.core.position import CostSpec
 from beancount.core.position import Position
 
 
@@ -88,6 +89,9 @@ def get_weight(pos):
     # It the object has a cost, use that as the weight, to balance.
     if isinstance(cost, Cost) and isinstance(cost.number, Decimal):
         weight = Amount(cost.number * pos.units.number, cost.currency)
+    # CostSpec is also an acceptable source of cost
+    elif isinstance(cost, CostSpec) and isinstance(cost.number_per, Decimal):
+        weight = Amount(cost.number_per * pos.units.number, cost.currency)
     else:
         # Otherwise use the postings.
         weight = units
