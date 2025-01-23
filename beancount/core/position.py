@@ -28,13 +28,16 @@ from beancount.core.number import D
 class Cost(NamedTuple):
     """A variant of Amount that also includes a date and a label."""
 
-    # the per-unit cost
+    # The per-unit cost.
     number: Decimal
-    # the cost currency.
+
+    # The cost currency.
     currency: str
-    # for the date that the lot was created at.
+
+    # For the date that the lot was created at.
     # There should always be a valid date.
     date: datetime.date
+
     # A string for the label of this lot, or None, if there is no label.
     label: Optional[str]
 

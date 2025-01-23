@@ -37,6 +37,13 @@ def build_price_map_util(date_currency_price_tuples):
     )
 
 
+def create_some_test_transaction() -> data.Transaction:
+    meta = data.new_metadata("___test__", 0)
+    return data.Transaction(
+        meta, datetime.date(2017, 12, 16), "?", None, "", data.EMPTY_SET, data.EMPTY_SET, []
+    )
+
+
 class TestPositionConversions(unittest.TestCase):
     """Test conversions to units, cost, weight and market-value for Position objects."""
 
@@ -108,7 +115,8 @@ class TestPositionConversions(unittest.TestCase):
         self.assertEqual(A("94.95 CAD"), convert.get_weight(posting))
 
         # Entry with cost, without price.
-        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
+        txn = create_some_test_transaction()
+        posting = PCost(txn, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
         self.assertEqual(A("84.40 EUR"), convert.get_weight(posting))
 
         # Entry with cost, and with price (the price should be ignored).

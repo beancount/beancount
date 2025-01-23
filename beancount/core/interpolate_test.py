@@ -29,6 +29,13 @@ OPTIONS_MAP = {
 }
 
 
+def create_some_test_transaction() -> data.Transaction:
+    meta = data.new_metadata("___test__", 0)
+    return data.Transaction(
+        meta, datetime.date(2017, 12, 16), "?", None, "", data.EMPTY_SET, data.EMPTY_SET, []
+    )
+
+
 class TestBalance(cmptest.TestCase):
     def test_has_nontrivial_balance(self):
         # Entry without cost, without price.
@@ -40,7 +47,8 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, without price.
-        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
+        txn = create_some_test_transaction()
+        posting = PCost(txn, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, and with price (the price should be ignored).
