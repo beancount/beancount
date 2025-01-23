@@ -193,7 +193,7 @@ def commonprefix(accounts: Iterable[Account]) -> Account:
 
 
 def walk(
-    root_directory: str, followlinks: bool = False
+    root_directory: str, followlinks: bool = True
 ) -> Iterator[tuple[str, Account, list[str], list[str]]]:
     """A version of os.walk() which yields directories that are valid account names.
 
@@ -202,6 +202,7 @@ def walk(
 
     Args:
       root_directory: A string, the name of the root of the hierarchy to be walked.
+      followlinks: A boolean, whether os.walk() will follow links.
     Yields:
       Tuples of (root, account-name, dirs, files), similar to os.walk().
     """
