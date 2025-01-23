@@ -590,7 +590,7 @@ def create_simple_posting_with_cost(
     if cost_number is not None and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
     units = Amount(number, currency)
-    cost = Cost(cost_number, cost_currency, datetime.date(1, 1, 1), None)
+    cost = CostSpec(cost_number, None, cost_currency, None, None, None)
     posting = Posting(account, units, cost, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
