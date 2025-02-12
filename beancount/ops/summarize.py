@@ -509,9 +509,7 @@ def summarize(
     open_entries = get_open_entries(entries, date)
 
     # Compute entries before the date and preserve the entries after the date.
-    before_entries = sorted(
-        open_entries + price_entries + summarizing_entries, key=data.entry_sortkey
-    )
+    before_entries = data.sorted(open_entries + price_entries + summarizing_entries)
     after_entries = entries[index:]
 
     # Return a new list of entries and the index that points after the entries

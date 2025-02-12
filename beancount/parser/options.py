@@ -148,6 +148,27 @@ def options_validate_leaf_account(value):
     return value
 
 
+def options_validate_timezone(value):
+    """
+    Validate a timezone string.
+
+    Args:
+      value: A string representing the timezone.
+
+    Returns:
+      The timezone string if valid.
+
+    Raises:
+      ValueError: If the timezone string is not recognized.
+    """
+    from zoneinfo import ZoneInfo
+    try:
+        ZoneInfo(value)
+        return value
+    except Exception:
+        raise ValueError("Invalid timezone: " + value)
+
+
 class OptDesc(NamedTuple):
     """An option description.
 
@@ -645,6 +666,19 @@ PUBLIC_OPTION_GROUPS = [
       the PYTHONPATH.
     """,
         [Opt("insert_pythonpath", False, "TRUE", converter=options_validate_boolean)],
+    ),
+    OptGroup(
+        """
+      The default timezone to use for dates without timezone information.
+    """,
+        [
+            Opt(
+                "default_timezone",
+                "America/New_York",
+                "America/New_York",
+                converter=options_validate_timezone,
+            )
+        ],
     ),
 ]
 

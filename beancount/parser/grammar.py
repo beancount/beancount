@@ -215,7 +215,9 @@ class Builder(lexer.LexBuilder):
         Returns:
           A list of sorted directives.
         """
-        return sorted(self.entries, key=data.entry_sortkey)
+        from zoneinfo import ZoneInfo
+        tz_info = ZoneInfo(self.options["default_timezone"])
+        return sorted(self.entries, key=lambda entry: data.entry_sortkey(entry, tz_info))
 
     def get_options(self):
         """Return the final options map.
