@@ -160,7 +160,7 @@ def normalize_indent_whitespace(match_pairs):
 
 
 @click.command()
-@click.argument("filename", type=click.File("r", encoding="utf-8"))
+@click.argument("filenames", nargs=-1, type=click.File("r", encoding="utf-8"))
 @click.option(
     "--output",
     "-o",
@@ -171,8 +171,9 @@ def normalize_indent_whitespace(match_pairs):
 @click.option("--prefix-width", "-w", type=int, help="Force fixed prefix width.")
 @click.option("--num-width", "-W", type=int, help="Force fixed numbers width.")
 @click.option("--currency-column", "-c", type=int, help="Align curreencies to this column.")
+@click.option("--in-place", "-i", is_flag=True, help="Edit files in place.")
 @click.version_option(message=VERSION)
-def main(filename, output, prefix_width, num_width, currency_column):
+def main(filenames, output, prefix_width, num_width, currency_column, in_place):
     """Automatically format a Beancount ledger.
 
     This reformats at beancount or ledger input file so that the
@@ -189,14 +190,58 @@ def main(filename, output, prefix_width, num_width, currency_column):
     uses regular expressions and text manipulations to do its work.
 
     """
-    contents = filename.read()
+    if len(filenames) == 1 and not in_place:
+        contents = filenames[0].read()
 
-    formatted_contents = align_beancount(contents, prefix_width, num_width, currency_column)
+        formatted_contents = align_beancount(
+            contents, prefix_width, num_width, currency_column
+        )
 
-    # Click opens files for writing in lazy mode. This prevents
-    # truncating the input file untill it has been processed and
-    # validated, avoid data loss in case of errors.
-    output.write(formatted_contents)
+        # Click opens files for writing in lazy mode. This prevents
+        # truncating the input file untill it has been processed and
+        # validated, avoid data loss in case of errors.
+        output.write(formatted_contents)
+    elif len(filenames) > 1 and not in_place and output:
+        ctx = click.get_current_context()
+        click.echo(ctx.command.get_usage(ctx), err=True)
+        click.echo(
+            f"Try {ctx.command_path} {ctx.command.get_help_option_names(ctx)[0]} for help.",
+            err=True,
+        )
+        click.echo(
+            "\nError: Output option can only be used with a single FILENAME. Try in-place option instead.",
+            err=True,
+        )
+        ctx.exit(2)
+    elif len(filenames) >= 1 and in_place:
+        for file in filenames:
+            filename = file.name
+            contents = file.read()
+            formatted_contents = align_beancount(
+                contents, prefix_width, num_width, currency_column
+            )
+            file.close()
+
+            file = open(filename, mode="w", encoding="utf-8")
+            file.write(formatted_contents)
+    elif not filenames:
+        ctx = click.get_current_context()
+        click.echo(ctx.command.get_usage(ctx), err=True)
+        click.echo(
+            f"Try {ctx.command_path} {ctx.command.get_help_option_names(ctx)[0]} for help.",
+            err=True,
+        )
+        click.echo("\nError: At least one FILENAME is required.", err=True)
+        ctx.exit(2)
+    else:
+        ctx = click.get_current_context()
+        click.echo(ctx.command.get_usage(ctx), err=True)
+        click.echo(
+            f"Try {ctx.command_path} {ctx.command.get_help_option_names(ctx)[0]} for help.",
+            err=True,
+        )
+        click.echo("\nError: Invalid combination of arguments and options", err=True)
+        ctx.exit(2)
 
 
 if __name__ == "__main__":
