@@ -1,7 +1,9 @@
-project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>=1.1')
+project('beancount', 'c', 'cpp', version: files('beancount/VERSION'), meson_version: '>=1.1')
+
+reflex_dep = dependency('reflex', version: '>=5.1.0')
 
 bison = find_program('bison', 'win_bison', version: '>=3.8.0')
-flex = find_program('flex', 'win_flex', version: '>=2.6.4')
+reflex = find_program('reflex', version: '>=5.1.0')
 
 py = import('python').find_installation(pure: false)
 
@@ -212,13 +214,13 @@ if host_machine.system() == 'windows'
     add_project_arguments('-DYY_NO_UNISTD_H', language: 'c')
 endif
 
-flex_gen = generator(
-    flex,
-    output: ['@BASENAME@.c', '@BASENAME@.h'],
-    arguments: ['--outfile=@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@']
+reflex_gen = generator(
+    reflex,
+    output: ['@BASENAME@.cpp', '@BASENAME@.h'],
+    arguments: ['--flex', '--unicode', '--full', '--header-file=@OUTPUT1@', '-o', '@OUTPUT0@', '@INPUT@']
 )
 
-lexer_c = flex_gen.process(
+lexer_cc = reflex_gen.process(
     'beancount/parser/lexer.l',
     preserve_path_from: meson.current_source_dir(),
 )
@@ -239,8 +241,9 @@ parser = py.extension_module(
     'beancount/parser/decimal.c',
     'beancount/parser/parser.c',
     'beancount/parser/tokens.c',
-    lexer_c,
+    lexer_cc,
     grammar_c,
+    dependencies: reflex_dep,
     install: true,
     subdir: 'beancount/parser',
 )
