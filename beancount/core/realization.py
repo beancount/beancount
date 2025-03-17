@@ -136,18 +136,11 @@ def iter_children(real_account, leaf_only=False):
       Instances of RealAccount, beginning with this account. The order is
       undetermined.
     """
-    if leaf_only:
-        if len(real_account) == 0:
-            yield real_account
-        else:
-            for key, real_child in sorted(real_account.items()):
-                for real_subchild in iter_children(real_child, leaf_only):
-                    yield real_subchild
-    else:
+    if not leaf_only or len(real_account) == 0:
         yield real_account
-        for key, real_child in sorted(real_account.items()):
-            for real_subchild in iter_children(real_child):
-                yield real_subchild
+    
+    for _, real_child in sorted(real_account.items()):
+        yield from iter_children(real_child, leaf_only)
 
 
 def get(real_account, account_name, default=None):
