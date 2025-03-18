@@ -138,7 +138,7 @@ def iter_children(real_account, leaf_only=False):
     """
     if not leaf_only or len(real_account) == 0:
         yield real_account
-    
+
     for _, real_child in sorted(real_account.items()):
         yield from iter_children(real_child, leaf_only)
 
@@ -425,9 +425,9 @@ def iterate_with_balance(txn_postings):
             entry = txn_posting
 
         if entry.date != prev_date:
-            assert (
-                prev_date is None or entry.date > prev_date
-            ), "Invalid date order for postings: {} > {}".format(prev_date, entry.date)
+            assert prev_date is None or entry.date > prev_date, (
+                "Invalid date order for postings: {} > {}".format(prev_date, entry.date)
+            )
             prev_date = entry.date
 
             # Flush the dated entries.

@@ -276,9 +276,7 @@ class TestInventory(unittest.TestCase):
 
     def test_segregate_units(self):
         inv = I(
-            "2.2 HOOL {532.43 USD}, "
-            "2.3 HOOL {564.00 USD, 2015-07-14}, "
-            "3.41 CAD, 101.20 USD"
+            "2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD"
         )
         ccymap = inv.segregate_units(["HOOL", "USD", "EUR"])
         self.assertEqual(
@@ -293,9 +291,7 @@ class TestInventory(unittest.TestCase):
 
     def test_split(self):
         inv = I(
-            "2.2 HOOL {532.43 USD}, "
-            "2.3 HOOL {564.00 USD, 2015-07-14}, "
-            "3.41 CAD, 101.20 USD"
+            "2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD"
         )
         ccymap = inv.split()
         self.assertEqual(

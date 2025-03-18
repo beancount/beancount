@@ -1530,9 +1530,9 @@ class _BookingTestBase(unittest.TestCase):
         # Check that the 'apply' entry has a single posting only.
         # assert len(entry_apply.postings) == 1, (
         #     "Internal error: 'apply' entry has more than one posting")
-        assert (
-            len(set(posting.account for posting in entry_apply.postings)) == 1
-        ), "Accounts don't match for 'apply' entry"
+        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
+            "Accounts don't match for 'apply' entry"
+        )
         account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 
@@ -3246,10 +3246,7 @@ class TestBook(unittest.TestCase):
         """
         postings, balances = self.book_reductions(entries)
         self.assertEqual(
-            I(
-                "1 HOOL {100.00 USD, 2015-10-01}, "
-                '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'
-            ),
+            I('1 HOOL {100.00 USD, 2015-10-01}, 2 HOOL {100.00 USD, 2015-10-01, "lot1"}'),
             balances["Assets:Account1"],
         )
         self.assertPostingsEqual(

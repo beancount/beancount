@@ -156,7 +156,7 @@ constraints dep-constraints: build/beancount.deps
 # Run the linter on all source code.
 ruff lint:
 	NO_COLOR=1 uv tool run ruff check .
-	#NO_COLOR=1 uv tool run ruff format .
+	NO_COLOR=1 uv tool run ruff format .
 
 mypy typecheck:
 	NO_COLOR=1 mypy .

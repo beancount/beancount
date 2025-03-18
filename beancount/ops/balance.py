@@ -161,8 +161,7 @@ def check(entries, options_map):
                     BalanceError(
                         entry.meta,
                         (
-                            "Balance failed for '{}': "
-                            "expected {} != accumulated {} ({} {})"
+                            "Balance failed for '{}': expected {} != accumulated {} ({} {})"
                         ).format(
                             entry.account,
                             expected_amount,

@@ -109,9 +109,9 @@ def is_balance_sheet_account(account_name: Account, account_types: AccountTypes)
       A boolean, true if the account is a balance sheet account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(
-        account_types, AccountTypes
-    ), "Account types has invalid type: {}".format(account_types)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types)
+    )
     account_type = get_account_type(account_name)
     return account_type in (
         account_types.assets,
@@ -131,9 +131,9 @@ def is_income_statement_account(account_name: Account, account_types: AccountTyp
       A boolean, true if the account is an income statement account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(
-        account_types, AccountTypes
-    ), "Account types has invalid type: {}".format(account_types)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types)
+    )
     account_type = get_account_type(account_name)
     return account_type in (account_types.income, account_types.expenses)
 
@@ -148,9 +148,9 @@ def is_equity_account(account_name: Account, account_types: AccountTypes) -> boo
       A boolean, true if the account is an equity account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(
-        account_types, AccountTypes
-    ), "Account types has invalid type: {}".format(account_types)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types)
+    )
     account_type = get_account_type(account_name)
     return account_type == account_types.equity
 
@@ -168,9 +168,9 @@ def is_inverted_account(account_name: Account, account_types: AccountTypes) -> b
       A boolean, true if the account has an inverted sign.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    assert isinstance(
-        account_types, AccountTypes
-    ), "Account types has invalid type: {}".format(account_types)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types)
+    )
     account_type = get_account_type(account_name)
     return account_type in (
         account_types.liabilities,

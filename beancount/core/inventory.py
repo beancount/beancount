@@ -417,9 +417,9 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
             assert isinstance(units, Amount), "Internal error: {!r} (type: {})".format(
                 units, type(units).__name__
             )
-            assert cost is None or isinstance(
-                cost, Cost
-            ), "Internal error: {!r} (type: {})".format(cost, type(cost).__name__)
+            assert cost is None or isinstance(cost, Cost), (
+                "Internal error: {!r} (type: {})".format(cost, type(cost).__name__)
+            )
 
         # Find the position.
         key = (units.currency, cost)
@@ -467,12 +467,12 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
           hints at how the lot was booked to this inventory.
         """
         if ASSERTS_TYPES:
-            assert hasattr(position, "units") and hasattr(
-                position, "cost"
-            ), "Invalid type for position: {}".format(position)
-            assert isinstance(
-                position.cost, (type(None), Cost)
-            ), "Invalid type for cost: {}".format(position.cost)
+            assert hasattr(position, "units") and hasattr(position, "cost"), (
+                "Invalid type for position: {}".format(position)
+            )
+            assert isinstance(position.cost, (type(None), Cost)), (
+                "Invalid type for cost: {}".format(position.cost)
+            )
         return self.add_amount(
             # Ignore the type errors, units could be None or cost a CostSpec
             position.units,  # type: ignore[arg-type]

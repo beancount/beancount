@@ -327,8 +327,7 @@ class EntryPrinter:
 
         oss.write(
             (
-                "{e.date} balance {e.account:47} {amount} {tolerance}{currency}"
-                "{comment}\n"
+                "{e.date} balance {e.account:47} {amount} {tolerance}{currency}{comment}\n"
             ).format(
                 e=entry,
                 amount=number_str,
