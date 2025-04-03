@@ -294,7 +294,10 @@ class EntryPrinter:
             position_str = ""
 
         if posting.price is not None:
-            position_str += " @ {}".format(posting.price.to_string(self.dformat_max))
+            if isinstance(posting.price, amount.TotalAmount):
+                position_str += " @@ {}".format(posting.price.total.to_string(self.dformat_max))
+            else:
+                position_str += " @ {}".format(posting.price.to_string(self.dformat_max))
 
         return flag_account, position_str, weight_str
 

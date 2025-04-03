@@ -12,6 +12,7 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import builtins
 import re
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -147,6 +148,23 @@ class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", s
         number, currency = match.group(1, 2)
         return Amount(D(number), currency)
 
+class TotalAmount(Amount):
+    total: Amount
+
+    def __new__(cls, units: Amount, total_price: Amount):
+        assert isinstance(units.number, Decimal), (
+            "units amount's number is not a Decimal instance: {}".format(units.number)
+        )
+
+        assert isinstance(total_price.number, Decimal), (
+            "total_price amount's number is not a Decimal instance: {}".format(total_price.number)
+        )
+
+        share_price = ZERO if units.number == ZERO else total_price.number / builtins.abs(units.number)
+        return super().__new__(cls, share_price, total_price.currency)
+
+    def __init__(self, units: Amount, total_price: Amount):
+        self.total = total_price
 
 # Note: We don't implement operators on Amount here in favour of the more
 # explicit functional style. This should all be LISP anyhow. I like dumb data

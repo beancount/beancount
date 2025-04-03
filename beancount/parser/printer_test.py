@@ -249,6 +249,10 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
+        2014-06-10 * "Entry with total price"
+          Assets:Account1      -111.00 BEAN @@ 50.12 USD
+          Assets:Cash            50.12 USD
+
         2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
         with self.subTest("RoundTrip test via StringIO"):
