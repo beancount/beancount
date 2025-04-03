@@ -16,6 +16,7 @@ from unittest import mock
 from beancount.core import amount
 from beancount.core import data
 from beancount.core.amount import Amount
+from beancount.core.amount import TotalAmount
 from beancount.core.amount import from_string as A
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
@@ -1332,7 +1333,9 @@ class TestTotalsAndSigns(unittest.TestCase):
           Assets:Investments:Cash  -2000.00 USD
         """
         posting = entries[0].postings[0]
+        self.assertIsInstance(posting.price, TotalAmount)
         self.assertEqual(amount.from_string("200 USD"), posting.price)
+        self.assertEqual(amount.from_string("2000.00 USD"), posting.price.total)
         self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
@@ -1343,7 +1346,9 @@ class TestTotalsAndSigns(unittest.TestCase):
           Assets:Investments:Cash  20000.00 USD
         """
         posting = entries[0].postings[0]
+        self.assertIsInstance(posting.price, TotalAmount)
         self.assertEqual(amount.from_string("200 USD"), posting.price)
+        self.assertEqual(amount.from_string("2000.00 USD"), posting.price.total)
         self.assertEqual(None, posting.cost)
 
     @parser.parse_doc(expect_errors=True)

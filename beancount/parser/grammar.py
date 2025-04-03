@@ -20,6 +20,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount.core import display_context
 from beancount.core.amount import Amount
+from beancount.core.amount import TotalAmount
 from beancount.core.data import EMPTY_SET
 from beancount.core.data import Balance
 from beancount.core.data import Booking
@@ -884,13 +885,8 @@ class Builder(lexer.LexBuilder):
                     )
                 )
                 price = None
-            else:
-                price_number = price.number
-                if price_number is not MISSING:
-                    price_number = (
-                        ZERO if units.number == ZERO else price_number / abs(units.number)
-                    )
-                    price = Amount(price_number, price.currency)
+            elif price.number is not MISSING:
+                price = TotalAmount(units, price)
 
         # Note: Allow zero prices because we need them for round-trips for
         # conversion entries.
