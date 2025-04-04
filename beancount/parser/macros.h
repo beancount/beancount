@@ -1,6 +1,16 @@
 #ifndef BEANCOUNT_PARSER_MACROS_H
 #define BEANCOUNT_PARSER_MACROS_H
 
+
+#ifdef __cplusplus
+#define C_BEGIN_DECLS extern "C" {
+#define C_END_DECLS }
+#else
+#define C_BEGIN_DECLS
+#define C_END_DECLS
+#endif
+
+
 #define STRINGIFY(x) XSTRINGIFY(x)
 /* Prepend the empty string to work around MSVC bug for which an empty
  * define results in no string rather than in the empty string. */
