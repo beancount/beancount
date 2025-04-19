@@ -48,6 +48,7 @@ treeify = "beancount.tools.treeify:main"
 homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
+donations = "https://www.paypal.com/paypalme/misislavski"
 
 [tool.mypy]
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
