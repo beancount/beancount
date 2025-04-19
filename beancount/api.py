@@ -82,6 +82,22 @@ from .parser.printer import format_entry
 from .parser.printer import print_entries
 from .parser.printer import print_entry
 
+# All the basic types are present on bn.dtypes but they're also on the root API
+# import as well.
+Open = dtypes.Open
+Close = dtypes.Close
+Commodity = dtypes.Commodity
+Pad = dtypes.Pad
+Balance = dtypes.Balance
+Transaction = dtypes.Transaction
+Note = dtypes.Note
+Event = dtypes.Event
+Query = dtypes.Query
+Price = dtypes.Price
+Document = dtypes.Document
+Custom = dtypes.Custom
+
+
 __all__ = [
     "FLAG_CONVERSIONS",
     "FLAG_MERGING",
@@ -93,21 +109,33 @@ __all__ = [
     "ZERO",
     "Account",
     "Amount",
+    "Balance",
     "Booking",
+    "Close",
+    "Commodity",
     "Cost",
     "CostSpec",
     "Currency",
+    "Custom",
     "D",
     "Directive",
     "Directives",
+    "Document",
+    "Event",
     "Flag",
     "Inventory",
     "Meta",
+    "Note",
+    "Open",
     "Options",
+    "Pad",
     "Position",
     "Posting",
+    "Price",
     "PriceMap",
+    "Query",
     "RealAccount",
+    "Transaction",
     "TxnPosting",
     "account",
     "amount",
