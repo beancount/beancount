@@ -23,8 +23,13 @@ Beancount::
     plugin "beancount.plugins.close_tree"
 """
 
+__copyright__ = "Copyright (C) 2023-2024  Martin Blais"
+__license__ = "GNU GPLv2"
+
+
 from beancount.core import data
-from beancount.core.data import Open, Close
+from beancount.core.data import Close
+from beancount.core.data import Open
 
 __plugins__ = ("close_tree",)
 

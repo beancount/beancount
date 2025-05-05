@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Utility functions to download and convert Google Docs."""
 
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import hashlib
 import logging
 import os
-import subprocess
-import re
 import pickle
-import hashlib
+import re
 import shelve
+import subprocess
 from os import path
 
 import httplib2
@@ -81,7 +81,7 @@ def find_index_document(files):
     files = listing["files"]
     if len(files) != 1:
         raise ValueError(
-            "Could not find the index file: " "{} files matched".format(len(files))
+            "Could not find the index file: {} files matched".format(len(files))
         )
     for file in files:
         return file["id"]

@@ -3,70 +3,64 @@
 See types below for details.
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
 import datetime
 import re
-
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import NamedTuple
+from typing import Optional
 
-from beancount.core.number import ZERO
-from beancount.core.number import NUMBER_RE
-from beancount.core.number import D
-from beancount.core.amount import Amount
-from beancount.core.amount import mul as amount_mul
-from beancount.core.amount import abs as amount_abs
 from beancount.core.amount import CURRENCY_RE
+from beancount.core.amount import Amount
+from beancount.core.amount import abs as amount_abs
+from beancount.core.amount import mul as amount_mul
 from beancount.core.display_context import DEFAULT_FORMATTER
+from beancount.core.number import NUMBER_RE
+from beancount.core.number import ZERO
+from beancount.core.number import D
 
 
-# A variant of Amount that also includes a date and a label.
-#
-# Attributes:
-#   number: A Decimal, the per-unit cost.
-#   currency: A string, the cost currency.
-#   date: A datetime.date for the date that the lot was created at. There
-#      should always be a valid date.
-#   label: A string for the label of this lot, or None, if there is no label.
-Cost = NamedTuple(
-    "Cost",
-    [
-        ("number", Decimal),
-        ("currency", str),
-        ("date", datetime.date),
-        ("label", Optional[str]),
-    ],
-)
+class Cost(NamedTuple):
+    """A variant of Amount that also includes a date and a label."""
+
+    # the per-unit cost
+    number: Decimal
+    # the cost currency.
+    currency: str
+    # for the date that the lot was created at.
+    # There should always be a valid date.
+    date: datetime.date
+    # A string for the label of this lot, or None, if there is no label.
+    label: Optional[str]
 
 
-# A stand-in for an "incomplete" Cost, that is, a container all the data that
-# was provided by the user in the input in order to resolve this lot to a
-# particular lot and produce an instance of Cost. Any of the fields of this
-# object may be left unspecified, in which case they take the special value
-# "NA" (see below), if the field was absent from the input.
-#
-# Attributes:
-#   number_per: A Decimal instance, the cost/price per unit, or None if unspecified.
-#   number_total: A Decimal instance, the total cost/price, or None if unspecified.
-#   currency: A string, the commodity of the amount, or None if unspecified.
-#   date: A datetime.date, or None if unspecified.
-#   label: A string for the label of this lot, or None if unspecified.
-#   merge: A boolean, true if this specification calls for averaging the units
-#      of this lot's currency, or False if unspecified.
-CostSpec = NamedTuple(
-    "CostSpec",
-    [
-        ("number_per", Optional[Decimal]),
-        ("number_total", Optional[Decimal]),
-        ("currency", Optional[str]),
-        ("date", Optional[datetime.date]),
-        ("label", Optional[str]),
-        ("merge", Optional[bool]),
-    ],
-)
+class CostSpec(NamedTuple):
+    """
+    A stand-in for an "incomplete" Cost, that is, a container all the data that
+    was provided by the user in the input in order to resolve this lot to a
+    particular lot and produce an instance of Cost. Any of the fields of this
+    object may be left unspecified, in which case they take the special value
+    "NA" (see below), if the field was absent from the input.
+    """
+
+    # A Decimal instance, the cost/price per unit, or None if unspecified.
+    number_per: Optional[Decimal]
+    # A Decimal instance, the total cost/price, or None if unspecified.
+    number_total: Optional[Decimal]
+    # A string, the commodity of the amount, or None if unspecified.
+    currency: Optional[str]
+    # A datetime.date, or None if unspecified.
+    date: Optional[datetime.date]
+    # A string for the label of this lot, or None if unspecified.
+    label: Optional[str]
+    # True if this specification calls for averaging the units of this lot's currency,
+    # False if unspecified.
+    merge: Optional[bool]
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -159,10 +153,7 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-_Position = NamedTuple("_Position", [("units", Amount), ("cost", Cost)])
-
-
-class Position(_Position):
+class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost])])):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -176,16 +167,16 @@ class Position(_Position):
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __new__(cls, units, cost=None):
+    def __new__(cls, units: Amount, cost: Cost | None = None):
         assert isinstance(
             units, Amount
         ), "Expected an Amount for units; received '{}'".format(units)
         assert cost is None or isinstance(
             cost, Position.cost_types
         ), "Expected a Cost for cost; received '{}'".format(cost)
-        return _Position.__new__(cls, units, cost)
+        return super().__new__(cls, units, cost)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Compute a hash for this position.
 
         Returns:
@@ -197,7 +188,7 @@ class Position(_Position):
         """Render the position to a string.See to_string() for details."""
         return to_string(self, dformat, detail)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string representation of the position.
 
         Returns:
@@ -320,9 +311,7 @@ class Position(_Position):
           A new instance of Position.
         """
         match = re.match(
-            (r"\s*({})\s+({})" r"(?:\s+{{([^}}]*)}})?" r"\s*$").format(
-                NUMBER_RE, CURRENCY_RE
-            ),
+            r"\s*({})\s+({})(?:\s+{{([^}}]*)}})?\s*$".format(NUMBER_RE, CURRENCY_RE),
             string,
         )
         if not match:

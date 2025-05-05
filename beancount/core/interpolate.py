@@ -1,28 +1,29 @@
 """Code used to automatically complete postings without positions."""
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import copy
-
 from decimal import Decimal
+from typing import NamedTuple
 
-from beancount.core.number import D
+from beancount.core import convert
+from beancount.core import getters
+from beancount.core import inventory
+from beancount.core.amount import Amount
+from beancount.core.data import Balance
+from beancount.core.data import Meta
+from beancount.core.data import Posting
+from beancount.core.data import Transaction
+from beancount.core.inventory import Inventory
+from beancount.core.number import MISSING
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.amount import Amount
-from beancount.core.position import CostSpec
+from beancount.core.number import D
 from beancount.core.position import Cost
-from beancount.core.inventory import Inventory
-from beancount.core import inventory
-from beancount.core import convert
-from beancount.core.data import Transaction
-from beancount.core.data import Posting
-from beancount.core import getters
+from beancount.core.position import CostSpec
 from beancount.utils import defdict
-
 
 # An upper bound on the tolerance value, this is the maximum the tolerance
 # should ever be.
@@ -32,6 +33,14 @@ MAXIMUM_TOLERANCE = D("0.5")
 # The maximum number of user-specified coefficient digits we should allow for a
 # tolerance setting.
 MAX_TOLERANCE_DIGITS = 5
+
+
+class BalanceError(NamedTuple):
+    """An error from balancing the postings."""
+
+    source: Meta
+    message: str
+    entry: Balance
 
 
 def is_tolerance_user_specified(tolerance):
@@ -47,10 +56,6 @@ def is_tolerance_user_specified(tolerance):
       A boolean.
     """
     return len(tolerance.as_tuple().digits) < MAX_TOLERANCE_DIGITS
-
-
-# An error from balancing the postings.
-BalanceError = collections.namedtuple("BalanceError", "source message entry")
 
 
 def has_nontrivial_balance(posting):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Extract the error types output from pylint."""
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import collections
 import re
-import argparse
 
 
 def main():

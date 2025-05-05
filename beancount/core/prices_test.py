@@ -1,13 +1,13 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import datetime
+import unittest
 
-from beancount.core.number import D
-from beancount.core import prices
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.core import prices
+from beancount.core.number import D
+from beancount.parser import cmptest
 
 
 class TestPriceEntries(cmptest.TestCase):
@@ -53,9 +53,9 @@ class TestPriceEntries(cmptest.TestCase):
 class TestPriceMap(unittest.TestCase):
     def test_normalize_base_quote(self):
         self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("USD", "CAD")))
-        self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("USD/CAD")))
+        self.assertEqual(("USD", "CAD"), prices.normalize_base_quote("USD/CAD"))
         with self.assertRaises(AssertionError):
-            self.assertEqual(("USD", "CAD"), prices.normalize_base_quote(("HOOL/USD/CAD")))
+            self.assertEqual(("USD", "CAD"), prices.normalize_base_quote("HOOL/USD/CAD"))
 
     @loader.load_doc()
     def test_build_price_map(self, entries, _, __):

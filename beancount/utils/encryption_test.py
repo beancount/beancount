@@ -1,16 +1,15 @@
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os
-import unittest
 import subprocess
 import tempfile
+import unittest
 from os import path
 
 from beancount import loader
 from beancount.utils import encryption
 from beancount.utils import test_utils
-
 
 TEST_PUBLIC_KEY = """
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -103,6 +102,9 @@ class TestEncryptedBase(unittest.TestCase):
             pass  # Ignore those, GPG agent sometimes causes this problem.
 
     def run_gpg(self, *args, **kw):
+        if os.name != "posix":
+            raise unittest.SkipTest("doesn't have gpg")
+
         command = (
             "gpg",
             "--batch",
@@ -138,7 +140,7 @@ class TestEncryptedBase(unittest.TestCase):
             "--output=-",
             stdin=string.encode("utf8"),
         )
-        with open(encrypted_filename, "w") as encfile:
+        with open(encrypted_filename, "w", encoding="ascii") as encfile:
             encfile.write(out)
 
 
@@ -155,26 +157,23 @@ class TestEncryptedFiles(TestEncryptedBase):
 
 class TestEncryptedFilesCheck(unittest.TestCase):
     def test_is_encrypted_file(self):
-        with tempfile.NamedTemporaryFile(suffix=".txt") as file:
-            file.write(b"\n")
-            file.flush()
-            self.assertFalse(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file() as file:
+            file.write_bytes(b"\n")
+            self.assertFalse(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".gpg") as file:
-            file.flush()
-            self.assertTrue(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".gpg") as file:
+            file.touch()
+            self.assertTrue(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
-            file.write(b"Anything else\n")
-            file.flush()
-            self.assertFalse(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".asc") as file:
+            file.write_bytes(b"Anything else\n")
+            self.assertFalse(encryption.is_encrypted_file(file))
 
-        with tempfile.NamedTemporaryFile(suffix=".asc") as file:
-            file.write(b"\n\n\n")
-            file.write(b"-----BEGIN PGP MESSAGE-----\n")
-            file.write(b"\n\n\n")
-            file.flush()
-            self.assertTrue(encryption.is_encrypted_file(file.name))
+        with test_utils.temp_file(suffix=".asc") as file:
+            file.write_bytes(
+                b"\n\n\n" + b"-----BEGIN PGP MESSAGE-----\n" + b"\n\n\n",
+            )
+            self.assertTrue(encryption.is_encrypted_file(file))
 
 
 class TestLoadIncludesEncrypted(TestEncryptedBase):
@@ -194,7 +193,7 @@ class TestLoadIncludesEncrypted(TestEncryptedBase):
             )
 
             # Encrypt the oranges file and remove the unencrypted file.
-            with open(path.join(tmpdir, "oranges.beancount")) as infile:
+            with open(path.join(tmpdir, "oranges.beancount"), encoding="utf-8") as infile:
                 self.encrypt_as_file(
                     infile.read(), path.join(tmpdir, "oranges.beancount.asc")
                 )

@@ -6,7 +6,7 @@ a custom filter to make the native nicer, identify the code blocks, etc. and
 write it out to Markdown and others.
 """
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

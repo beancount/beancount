@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
 
+from beancount import loader
 from beancount.parser import cmptest
 from beancount.plugins import coherent_cost
-from beancount import loader
 
 
 class TestValidateUnusedAccounts(cmptest.TestCase):

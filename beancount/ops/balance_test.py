@@ -1,12 +1,13 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.ops import balance, validation
 from beancount import loader
+from beancount.core.amount import A
+from beancount.core.number import D
+from beancount.ops import balance
+from beancount.ops import validation
 
 
 class TestBalance(unittest.TestCase):

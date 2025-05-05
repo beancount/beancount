@@ -8,13 +8,13 @@ and to ensure that the entire software suite is covered by appropriate
 testing code.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
 import os
-from os import path
 import re
+from os import path
 
 
 def find_missing_tests(source_dir):

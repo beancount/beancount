@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import Amount
 from beancount.core import amount
 from beancount.core import display_context
+from beancount.core.amount import Amount
+from beancount.core.number import D
 
 
 class TestAmount(unittest.TestCase):

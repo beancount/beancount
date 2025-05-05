@@ -1,14 +1,14 @@
 """Memoization utilities."""
 
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import shelve
-import threading
-import hashlib
 import datetime
 import functools
+import hashlib
 import io
+import shelve
+import threading
 
 
 def now():

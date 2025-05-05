@@ -8,14 +8,14 @@ entries to monthly ones made sense. This is the code that was used to carry this
 out.
 """
 
-__copyright__ = "Copyright (C) 2013, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2017, 2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 from decimal import Decimal
 
-from beancount.core.amount import Amount
 from beancount.core import data
+from beancount.core.amount import Amount
 
 
 def compress(entries, predicate):

@@ -7,11 +7,12 @@ categories.
 __copyright__ = "Copyright (C) 2018  Adrián Medraño Calvo"
 __license__ = "GNU GPLv2"
 
+import argparse
 import sys
 import unicodedata
-import argparse
-from itertools import count, groupby
 from collections import defaultdict
+from itertools import count
+from itertools import groupby
 
 
 def list_chunks(l, n):

@@ -1,8 +1,9 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import calendar
 import collections
+import contextlib
 import datetime
 import decimal
 import functools
@@ -16,32 +17,30 @@ import re
 import sys
 import textwrap
 
-from dateutil import rrule
-import dateutil.parser
-
 import click
+import dateutil.parser
+from dateutil import rrule
 
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.core.number import round_to
-from beancount.core.account import join
-from beancount.core import data
-from beancount.core import amount
-from beancount.core import inventory
-from beancount.core import realization
-from beancount.core import display_context
-from beancount.core import convert
-from beancount.parser import parser
-from beancount.parser import booking
-from beancount.parser import printer
-from beancount.ops import validation
-from beancount.core import prices
-from beancount.scripts import format
-from beancount.core import getters
-from beancount.utils import misc_utils
-from beancount.parser.version import VERSION
 from beancount import loader
-
+from beancount.core import amount
+from beancount.core import convert
+from beancount.core import data
+from beancount.core import display_context
+from beancount.core import getters
+from beancount.core import inventory
+from beancount.core import prices
+from beancount.core import realization
+from beancount.core.account import join
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.number import round_to
+from beancount.ops import validation
+from beancount.parser import booking
+from beancount.parser import parser
+from beancount.parser import printer
+from beancount.parser.version import VERSION
+from beancount.scripts import format
+from beancount.utils import misc_utils
 
 # Constants.
 ONE_DAY = datetime.timedelta(days=1)
@@ -55,7 +54,6 @@ ANNUAL_VACATION_DAYS = D("15")
 # Divisor of the annual salary to estimate the rent.
 RENT_DIVISOR = D("50")
 RENT_INCREMENT = D("25")
-
 
 # A list of mock employers.
 EMPLOYERS = [
@@ -94,7 +92,6 @@ RESTAURANT_NARRATIONS = [
 GROCERIES_NAMES = ["Onion Market", "Good Moods Market", "Corner Deli", "Farmer Fresh"]
 
 HOME_NAME = "New Metropolis"
-
 
 TRIP_DESTINATIONS = {
     "los-angeles": [
@@ -136,7 +133,6 @@ TRIP_DESTINATIONS = {
         ("Starbucks", "Expenses:Food:Coffee", (6, 2)),
     ],
 }
-
 
 # Limits on allowed retirement contributions.
 RETIREMENT_LIMITS = {
@@ -367,7 +363,7 @@ def get_minimum_balance(entries, account, currency):
     Returns:
       A Decimal number, the minimum amount throughout the history of this account.
     """
-    min_amount = ZERO
+    min_amount = decimal.Decimal("0.001")
     for _, balances in postings_for(entries, [account]):
         balance = balances[account]
         current = balance.get_currency_units(currency).number
@@ -1121,7 +1117,7 @@ def generate_balance_checks(entries, account, date_iter):
     balance_checks = []
     date_iter = iter(date_iter)
     next_date = next(date_iter)
-    with misc_utils.swallow(StopIteration):
+    with contextlib.suppress(StopIteration):
         for txn_posting, balance in postings_for(entries, [account], before=True):
             while txn_posting.txn.date >= next_date:
                 amount = balance[account].get_currency_units("CCY").number
@@ -1839,7 +1835,13 @@ class LiberalDate(click.ParamType):
 @click.option("--date-birth", type=LiberalDate(), help="Fictional date of birth.")
 @click.option("--seed", "-s", type=int, help="Random seed.")
 @click.option("--no-reformat", is_flag=True, help="Do not reformat the output.")
-@click.option("--output", "-o", type=click.File("w"), default="-", help="Output filename.")
+@click.option(
+    "--output",
+    "-o",
+    type=click.File("w", encoding="utf-8"),
+    default="-",
+    help="Output filename.",
+)
 @click.option("--verbose", "-v", type=bool, help="Produce logging output.")
 @click.version_option(message=VERSION)
 def main(date_begin, date_end, date_birth, seed, no_reformat, output, verbose):

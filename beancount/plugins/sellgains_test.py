@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
 from beancount import loader
-from beancount.plugins import sellgains
 from beancount.ops import validation
 from beancount.parser import printer
+from beancount.plugins import sellgains
 
 
 class TestSellGains(unittest.TestCase):

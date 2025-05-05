@@ -2,21 +2,21 @@
 particular entry is applied.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
 import functools
 import io
+from os import path
 
 from beancount.core import compare
-from beancount.core import data
-from beancount.core import inventory
-from beancount.core import interpolate
-from beancount.core import getters
 from beancount.core import convert
-from beancount.parser import printer
+from beancount.core import data
+from beancount.core import getters
+from beancount.core import interpolate
+from beancount.core import inventory
 from beancount.parser import parser
+from beancount.parser import printer
 
 
 def render_file_context(entries, options_map, filename, lineno):

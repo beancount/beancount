@@ -29,19 +29,17 @@ some potential problems.
 
 """
 
-__copyright__ = "Copyright (C) 2019  Martin Blais"
+__copyright__ = "Copyright (C) 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-
-from beancount.core.data import Posting
-from beancount.core.data import Transaction
 
 from beancount.core import account
 from beancount.core import convert
 from beancount.core import data
 from beancount.core import inventory
-
+from beancount.core.data import Posting
+from beancount.core.data import Transaction
 
 __plugins__ = ("insert_currency_trading_postings",)
 
@@ -93,7 +91,7 @@ def group_postings_by_weight_currency(entry: Transaction):
     curmap = collections.defaultdict(list)
     has_price = False
     for posting in entry.postings:
-        currency = posting.units.currency
+        currency = posting.units.currency  # type:ignore[union-attr]
         if posting.cost:
             currency = posting.cost.currency
             if posting.price:

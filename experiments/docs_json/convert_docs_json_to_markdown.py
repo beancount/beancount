@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Convert Google Docs V1 API's JSON to Markdown."""
 
-__copyright__ = "Copyright (C) 2019  Martin Blais"
+__copyright__ = "Copyright (C) 2019-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-from os import path
 import argparse
-import textwrap
 import collections
 import json
 import logging
 import os
 import re
+import textwrap
+from os import path
 
 
 def _get(obj, path):

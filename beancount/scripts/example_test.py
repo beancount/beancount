@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016-2017, 2019, 2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.utils import test_utils
-from beancount.scripts import example
-from beancount.ops import validation
 from beancount import loader
+from beancount.ops import validation
+from beancount.scripts import example
+from beancount.utils import test_utils
 
 
 class TestScriptExample(test_utils.ClickTestCase):

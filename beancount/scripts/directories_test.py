@@ -1,11 +1,11 @@
-__copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import os
+import shutil
 import tempfile
 import unittest
-import os
 from os import path
-import shutil
 
 from beancount.scripts import directories
 
@@ -45,8 +45,8 @@ class TestScriptCheckDirectories(unittest.TestCase):
 
         expected_error_accounts = set(
             """
-            Assets/Extra
-            Expenses/Restaurant/Sub
+            Assets:Extra
+            Expenses:Restaurant:Sub
         """.strip().split()
         )
         for error in errors:

@@ -1,13 +1,13 @@
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.core.number import D
+from beancount import loader
 from beancount.core import data
+from beancount.core.number import D
 from beancount.parser import cmptest
 from beancount.plugins import implicit_prices
-from beancount import loader
 
 
 class TestImplicitPrices(cmptest.TestCase):

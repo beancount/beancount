@@ -1,21 +1,20 @@
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018, 2020-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import sqlite3 as dbapi
-import logging
-import sys
-import os
 import itertools
-
-from os import path
+import logging
+import os
+import sqlite3 as dbapi
+import sys
 from decimal import Decimal
+from os import path
 
 import click
 
 from beancount import loader
 from beancount.core import data
-from beancount.utils import misc_utils
 from beancount.parser.version import VERSION
+from beancount.utils import misc_utils
 
 
 def output_common(connection, unused_entries):

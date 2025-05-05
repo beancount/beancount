@@ -4,19 +4,18 @@
 hg log --template '{date|isodate} {desc}\n' beancount/core/inventory.py
 """
 
-__copyright__ = "Copyright (C) 2016-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import logging
 import contextlib
 import datetime
+import logging
 import os
 import re
 import subprocess
 import unittest
 from os import path
-
 
 COPYRIGHT = '__copyright__ = "Copyright (C) {years}  Martin Blais"'
 LICENSE = '__license__ = "GNU GPLv2"'
@@ -33,11 +32,11 @@ def find_files(rootdir, regexp_files, ignore_dirs):
                 yield path.join(root, filename)
 
 
-def find_existing_copyright(lines):
+def find_existing_copyright(lines: list[str]) -> tuple[int | None, int | None, int | None]:
     """Find the line numbers for an existing copyright.
 
     Returns:
-      Two integers, one for the copyright line and one for the license
+      Three integers, one for the copyright line and one for the license
       line. If the patterns aren't found return None instead of the line number.
     """
     indexes = []
@@ -67,7 +66,7 @@ def find_start(lines):
     return len(contents[:start].splitlines())
 
 
-def get_change_years(filename, cwd):
+def get_change_years_hg(filename: str, cwd: str) -> list[int]:
     """Find the relevant years where there was a change."""
     log_lines = subprocess.check_output(
         ["hg", "log", "--template", "{date|isodate}\n", filename], cwd=cwd
@@ -76,6 +75,30 @@ def get_change_years(filename, cwd):
     for line in log_lines.decode("utf8").splitlines():
         log_years.add(int(re.match("([0-9]{4})-", line).group(1)))
     return sorted(log_years)
+
+
+def get_change_years_git(filename: str, cwd: str) -> list[int]:
+    """Extracts the years in which changes were made to a specific file."""
+    try:
+        # Get the commit history for the file
+        git_log_output = subprocess.check_output(
+            ["git", "log", "--pretty=format:%ci", "--follow", filename], text=True, cwd=cwd
+        )
+
+        # Extract the commit dates from the output
+        commit_dates = git_log_output.splitlines()
+
+        # Extract the years from the dates
+        years = set()
+        for date in commit_dates:
+            year = int(date.split()[0].split("-")[0])
+            years.add(year)
+
+        return sorted(years)
+
+    except subprocess.CalledProcessError:
+        logging.error(f"Error: Unable to get Git log for {filename}")
+        return []
 
 
 def compress_years(years):
@@ -142,19 +165,25 @@ def get_copyright(filename, prev_line, cwd):
     """Get the copyright string."""
 
     historical_years = parse_years_from_copyright(prev_line)
-    change_years = get_change_years(filename, cwd)
+    change_years = get_change_years_git(filename, cwd)
     combined_years = sorted(set(historical_years) | set(change_years))
 
     years_str = format_years(compress_years(combined_years))
     return COPYRIGHT.format(years=years_str)
 
 
-def process(filename, contents):
+def process(filename: str, contents: str):
     """Process the copyright on a single file, return the modified contents."""
     logging.info("Processing {:60}".format(filename))
 
     lines = contents.splitlines()
     copyright_index, license_index, author_index = find_existing_copyright(lines)
+    if copyright_index is None:
+        logging.error(f"Copyright not found in {filename}")
+    if license_index is None:
+        logging.error(f"License not found in {filename}")
+    if copyright_index is None or license_index is None:
+        return
 
     # Update copyright and license lines.
     for index, updated_line in [
@@ -162,7 +191,10 @@ def process(filename, contents):
             copyright_index,
             get_copyright(filename, lines[copyright_index], cwd=path.dirname(filename)),
         ),
-        (license_index, LICENSE),
+        (
+            license_index,
+            LICENSE,
+        ),
     ]:
         if index is None:
             logging.error("Line not found in file: {}".format(updated_line))
@@ -205,6 +237,8 @@ def main():
             continue
 
         new_contents = process(filename, contents)
+        if new_contents is None:
+            continue
 
         if args.dry_run:
             continue

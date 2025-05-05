@@ -2,14 +2,14 @@
 Test various options.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.parser import parser
-from beancount.parser import options
 from beancount.core import account_types
+from beancount.parser import options
+from beancount.parser import parser
 
 
 class TestOptions(unittest.TestCase):
@@ -60,6 +60,26 @@ class TestAccountTypeOptions(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
+
+    @parser.parse_doc(expect_errors=True)
+    def test_custom_account_names__invalid_root(self, entries, errors, options_map):
+        """
+        option "name_assets" "Foo:Bar"
+        """
+        self.assertRegex(
+            errors[0].message,
+            "Error for option 'name_assets': Invalid root account name: 'Foo:Bar'",
+        )
+
+    @parser.parse_doc(expect_errors=True)
+    def test_custom_account_names__invalid_leaf(self, entries, errors, options_map):
+        """
+        option "account_previous_balances" "invalid"
+        """
+        self.assertRegex(
+            errors[0].message,
+            "Error for option 'account_previous_balances': Invalid leaf account name: 'invalid'",
+        )
 
     @parser.parse_doc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):

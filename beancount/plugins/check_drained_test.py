@@ -1,10 +1,10 @@
-__copyright__ = "Copyright (C) 2022  Martin Blais"
+__copyright__ = "Copyright (C) 2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
-from beancount.parser import cmptest
 from beancount import loader
+from beancount.parser import cmptest
 
 
 class TestCheckCloseEmpty(cmptest.TestCase):

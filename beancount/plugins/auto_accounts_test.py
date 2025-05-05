@@ -1,11 +1,11 @@
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
 
+from beancount import loader
 from beancount.parser import cmptest
 from beancount.plugins import auto_accounts
-from beancount import loader
 
 
 class TestAutoInsertOpen(cmptest.TestCase):

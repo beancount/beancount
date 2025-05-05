@@ -5,7 +5,7 @@ We generate the dependency order with snakefood.
 In this script, we ensure that the expected set of dependencies aren't violated.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
@@ -13,7 +13,6 @@ import logging
 import re
 import sys
 from os import path
-
 
 RULES = [
     ("ALLOW", "beancount/.*_test$", "beancount/loader"),

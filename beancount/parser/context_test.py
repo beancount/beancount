@@ -1,12 +1,12 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2019-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import textwrap
 import unittest
 
-from beancount.utils import test_utils
-from beancount.parser import context
 from beancount import loader
+from beancount.parser import context
+from beancount.utils import test_utils
 
 
 class TestContext(test_utils.TestCase):

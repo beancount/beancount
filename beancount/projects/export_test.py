@@ -1,12 +1,13 @@
-__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016, 2018-2019, 2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
 import unittest
+from os import path
+
 import click.testing
 
-from beancount.utils import test_utils
 from beancount.projects import export
+from beancount.utils import test_utils
 
 
 class TestExport(test_utils.TestCase):

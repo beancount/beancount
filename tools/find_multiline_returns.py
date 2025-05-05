@@ -4,17 +4,16 @@
 See: https://bitbucket.org/birkenfeld/sphinx-contrib/issues/111
 """
 
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
+import io
 import logging
 import os
 import re
-import io
 import textwrap
 from os import path
-
 
 ROOT = path.join(path.dirname(path.dirname(__file__)), "beancount")
 

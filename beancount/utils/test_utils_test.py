@@ -1,10 +1,11 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2019, 2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import unittest
 import io
 import os
+import unittest
 from os import path
+from pathlib import Path
 
 from beancount.utils import test_utils
 
@@ -12,10 +13,10 @@ from beancount.utils import test_utils
 class TestTestUtils(unittest.TestCase):
     def test_tempdir(self):
         with test_utils.tempdir() as tempdir:
-            with open(path.join(tempdir, "file1"), "w"):
+            with open(path.join(tempdir, "file1"), "w", encoding="utf-8"):
                 pass
             os.mkdir(path.join(tempdir, "directory"))
-            with open(path.join(tempdir, "directory", "file2"), "w"):
+            with open(path.join(tempdir, "directory", "file2"), "w", encoding="utf-8"):
                 pass
         self.assertFalse(path.exists(tempdir))
         self.assertFalse(path.exists(path.join(tempdir, "file1")))
@@ -38,25 +39,25 @@ class TestTestUtils(unittest.TestCase):
             )
 
             # Check the total list of files.
-            apples = path.join(tmp, "apples.beancount")
-            oranges = path.join(tmp, "fruits/oranges.beancount")
+            apples = Path(tmp, "apples.beancount")
+            oranges = Path(tmp, "fruits/oranges.beancount")
             self.assertEqual(
                 {apples, oranges},
                 set(
-                    path.join(root, filename)
+                    Path(root, filename)
                     for root, _, files in os.walk(tmp)
                     for filename in files
                 ),
             )
 
             # Check the contents of apples (with replacement of root).
-            with open(apples) as f:
+            with open(apples, encoding="utf-8") as f:
                 apples_content = f.read()
             self.assertRegex(apples_content, "open Assets:Apples")
             self.assertNotRegex(apples_content, "{root}")
 
             # Check the contents of oranges.
-            with open(oranges) as f:
+            with open(oranges, encoding="utf-8") as f:
                 oranges_content = f.read()
             self.assertRegex(oranges_content, "open Assets:Oranges")
 
@@ -70,14 +71,14 @@ class TestTestUtils(unittest.TestCase):
     @test_utils.docfile
     def test_docfile(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             uuid = f.read()
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
 
     @test_utils.docfile_extra(suffix=".txt")
     def test_docfile_extra(self, filename):
         "7f9034b1-51e7-420c-ac6b-945b5c594ebf"
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             uuid = f.read()
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf", uuid)
         self.assertTrue(".txt" in filename)

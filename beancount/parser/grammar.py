@@ -1,74 +1,105 @@
 """Builder for Beancount grammar."""
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
 import copy
 import traceback
-from os import path
 from datetime import date
 from decimal import Decimal
+from os import path
+from typing import Any
+from typing import NamedTuple
 
 import regex
 
-from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.amount import Amount
-from beancount.core import display_context
-from beancount.core.position import CostSpec
-from beancount.core.data import Transaction
-from beancount.core.data import Balance
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.data import Commodity
-from beancount.core.data import Pad
-from beancount.core.data import Event
-from beancount.core.data import Query
-from beancount.core.data import Price
-from beancount.core.data import Note
-from beancount.core.data import Document
-from beancount.core.data import Custom
-from beancount.core.data import new_metadata
-from beancount.core.data import Posting
-from beancount.core.data import Booking
-from beancount.core.data import EMPTY_SET
-
-from beancount.parser import lexer
-from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
+from beancount.core import display_context
+from beancount.core.amount import Amount
+from beancount.core.data import EMPTY_SET
+from beancount.core.data import Balance
+from beancount.core.data import Booking
+from beancount.core.data import Close
+from beancount.core.data import Commodity
+from beancount.core.data import Custom
+from beancount.core.data import Document
+from beancount.core.data import Event
+from beancount.core.data import Meta
+from beancount.core.data import Note
+from beancount.core.data import Open
+from beancount.core.data import Pad
+from beancount.core.data import Posting
+from beancount.core.data import Price
+from beancount.core.data import Query
+from beancount.core.data import Transaction
+from beancount.core.data import new_metadata
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
+from beancount.core.position import CostSpec
+from beancount.parser import lexer
+from beancount.parser import options
 
 
-ParserError = collections.namedtuple("ParserError", "source message entry")
-ParserSyntaxError = collections.namedtuple("ParserSyntaxError", "source message entry")
-DeprecatedError = collections.namedtuple("DeprecatedError", "source message entry")
+class ParserError(NamedTuple):
+    source: Meta
+    message: str
+    entry: None = None
 
 
-# Key-value pairs. This is used to hold meta-data attachments temporarily.
-#
-# Attributes:
-#  key: A string, the name of the key.
-#  value: Any object.
-KeyValue = collections.namedtuple("KeyValue", "key value")
+class ParserSyntaxError(NamedTuple):
+    source: Meta
+    message: str
+    entry: None = None
 
-# Value-type pairs. This is used to represent custom values where the concrete
-# datatypes aren't matching those which are found in the parser.
-#
-# Attributes:
-#  value: Any object.
-#  dtype: The datatype of the object.
-ValueType = collections.namedtuple("ValueType", "value dtype")
 
-# Convenience holding class for amounts with per-share and total value.
-#
-# Attributes:
-#   number_per: A Decimal instance, the cost/price per unit.
-#   number_total: A Decimal instance, the total cost/price.
-#   currency: A string, the commodity of the amount.
-CompoundAmount = collections.namedtuple(
-    "CompoundAmount", "number_per number_total currency"
-)
+class DeprecatedError(NamedTuple):
+    source: Meta
+    message: str
+    entry: None = None
+
+
+class KeyValue(NamedTuple):
+    """Key-value pairs. This is used to hold meta-data attachments temporarily.
+
+    Attributes:
+      key: A string, the name of the key.
+      value: Any object.
+    """
+
+    key: str
+    value: Any
+
+
+class ValueType(NamedTuple):
+    """
+    Value-type pairs. This is used to represent custom values where the concrete
+    datatypes aren't matching those which are found in the parser.
+
+    Attributes:
+        value: Any object.
+        dtype: The datatype of the object.
+    """
+
+    value: Any
+    dtype: type
+
+
+class CompoundAmount(NamedTuple):
+    """Convenience holding class for amounts with per-share and total value.
+
+    Attributes:
+      number_per: A Decimal instance, the cost/price per unit.
+      number_total: A Decimal instance, the total cost/price.
+      currency: A string, the commodity of the amount.
+    """
+
+    number_per: Decimal
+    number_total: Decimal
+    currency: str
 
 
 # A unique token used to indicate a merge of the lots of an inventory.
@@ -96,15 +127,19 @@ def valid_account_regexp(options):
     )
 
 
-# A temporary data structure used during parsing to hold and accumulate the
-# fields being parsed on a transaction line. Because we want to be able to parse
-# these in arbitrary order, we have to accumulate the fields and then unpack
-# them intelligently in the transaction callback.
-#
-# Attributes:
-#  tags: a set object  of the tags to be applied to this transaction.
-#  links: a set of link strings to be applied to this transaction.
-TagsLinks = collections.namedtuple("TagsLinks", "tags links")
+class TagsLinks(NamedTuple):
+    """A temporary data structure used during parsing to hold and accumulate the
+    fields being parsed on a transaction line. Because we want to be able to parse
+    these in arbitrary order, we have to accumulate the fields and then unpack
+    them intelligently in the transaction callback.
+
+    Attributes:
+      tags: A set object  of the tags to be applied to this transaction.
+      links: A set of link strings to be applied to this transaction.
+    """
+
+    tags: set[str]
+    links: set[str]
 
 
 class Builder(lexer.LexBuilder):
@@ -154,9 +189,7 @@ class Builder(lexer.LexBuilder):
         # If the user left some tags unbalanced, issue an error.
         for tag in self.tags:
             meta = new_metadata(self.options["filename"], 0)
-            self.errors.append(
-                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None)
-            )
+            self.errors.append(ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag)))
 
         # If the user left some metadata unpopped, issue an error.
         for key, value_list in self.meta.items():
@@ -167,7 +200,6 @@ class Builder(lexer.LexBuilder):
                     ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ", ".join(value_list)
                     ),
-                    None,
                 )
             )
 
@@ -232,7 +264,7 @@ class Builder(lexer.LexBuilder):
         else:
             message = str(exc_value)
         meta = new_metadata(filename, lineno)
-        self.errors.append(ParserSyntaxError(meta, message, None))
+        self.errors.append(ParserSyntaxError(meta, message))
 
     def account(self, filename, lineno, account):
         """Check account name validity.
@@ -245,7 +277,7 @@ class Builder(lexer.LexBuilder):
         if not self.account_regexp.match(account):
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Invalid account name: {}".format(account), None)
+                ParserError(meta, "Invalid account name: {}".format(account))
             )
         # Intern account names. This should reduces memory usage a
         # fair bit because these strings are repeated liberally.
@@ -261,7 +293,7 @@ class Builder(lexer.LexBuilder):
         if self.options["allow_pipe_separator"]:
             return
         meta = new_metadata(filename, lineno)
-        self.errors.append(ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+        self.errors.append(ParserSyntaxError(meta, "Pipe symbol is deprecated."))
 
     def pushtag(self, filename, lineno, tag):
         """Push a tag on the current set of tags.
@@ -284,7 +316,7 @@ class Builder(lexer.LexBuilder):
         except ValueError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None)
+                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag))
             )
 
     def pushmeta(self, filename, lineno, key_value):
@@ -312,9 +344,7 @@ class Builder(lexer.LexBuilder):
         except IndexError:
             meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(
-                    meta, "Attempting to pop absent metadata key: '{}'".format(key), None
-                )
+                ParserError(meta, "Attempting to pop absent metadata key: '{}'".format(key))
             )
 
     def option(self, filename, lineno, key, value):
@@ -328,13 +358,11 @@ class Builder(lexer.LexBuilder):
         """
         if key not in self.options:
             meta = new_metadata(filename, lineno)
-            self.errors.append(ParserError(meta, "Invalid option: '{}'".format(key), None))
+            self.errors.append(ParserError(meta, "Invalid option: '{}'".format(key)))
 
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(meta, "Option '{}' may not be set".format(key), None)
-            )
+            self.errors.append(ParserError(meta, "Option '{}' may not be set".format(key)))
 
         else:
             option_descriptor = options.OPTIONS[key]
@@ -343,9 +371,7 @@ class Builder(lexer.LexBuilder):
             if option_descriptor.deprecated:
                 assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    DeprecatedError(meta, option_descriptor.deprecated, None)
-                )
+                self.errors.append(DeprecatedError(meta, option_descriptor.deprecated))
 
             # Rename the option if it has an alias.
             if option_descriptor.alias:
@@ -359,9 +385,7 @@ class Builder(lexer.LexBuilder):
                 except ValueError as exc:
                     meta = new_metadata(filename, lineno)
                     self.errors.append(
-                        ParserError(
-                            meta, "Error for option '{}': {}".format(key, exc), None
-                        )
+                        ParserError(meta, "Error for option '{}': {}".format(key, exc))
                     )
                     return
 
@@ -374,9 +398,7 @@ class Builder(lexer.LexBuilder):
                 # Set to a dict of values.
                 if not (isinstance(value, tuple) and len(value) == 2):
                     self.errors.append(
-                        ParserError(
-                            meta, "Error for option '{}': {}".format(key, value), None
-                        )
+                        ParserError(meta, "Error for option '{}': {}".format(key, value))
                     )
                     return
                 dict_key, dict_value = value
@@ -489,7 +511,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate cost: '{}'.".format(comp),
-                            None,
                         )
                     )
 
@@ -501,7 +522,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate date: '{}'.".format(comp),
-                            None,
                         )
                     )
 
@@ -512,7 +532,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Cost merging is not supported yet",
-                            None,
                         )
                     )
                 else:
@@ -520,7 +539,6 @@ class Builder(lexer.LexBuilder):
                         ParserError(
                             new_metadata(filename, lineno),
                             "Duplicate merge-cost spec",
-                            None,
                         )
                     )
 
@@ -555,7 +573,6 @@ class Builder(lexer.LexBuilder):
                                 "Per-unit cost may not be specified using total cost "
                                 "syntax: '{}'; ignoring per-unit cost"
                             ).format(compound_cost),
-                            None,
                         )
                     )
                     # Ignore per-unit number.
@@ -848,7 +865,6 @@ class Builder(lexer.LexBuilder):
                         "(see http://furius.ca/beancount/doc/bug-negative-prices "
                         "for workaround)"
                     ).format(price),
-                    None,
                 )
             )
             # Fix it and continue.
@@ -865,7 +881,6 @@ class Builder(lexer.LexBuilder):
                     ParserError(
                         meta,
                         ("Total price on a posting without units: {}.").format(price),
-                        None,
                     )
                 )
                 price = None
@@ -899,7 +914,6 @@ class Builder(lexer.LexBuilder):
                     "Cost and price currencies must match: {} != {}".format(
                         cost.currency, price.currency
                     ),
-                    None,
                 )
             )
 
@@ -959,7 +973,6 @@ class Builder(lexer.LexBuilder):
                 ParserError(
                     meta,
                     "Too many strings on transaction description: {}".format(txn_strings),
-                    None,
                 )
             )
             return None
@@ -1025,7 +1038,6 @@ class Builder(lexer.LexBuilder):
                                 meta,
                                 "Tags or links not allowed after first "
                                 + "Posting: {}".format(posting_or_kv),
-                                None,
                             )
                         )
                     else:
@@ -1043,7 +1055,6 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate metadata field on entry: {}".format(
                                         posting_or_kv
                                     ),
-                                    None,
                                 )
                             )
                     else:
@@ -1062,7 +1073,6 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate posting metadata field: {}".format(
                                         posting_or_kv
                                     ),
-                                    None,
                                 )
                             )
 

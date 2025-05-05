@@ -2,27 +2,27 @@
 Unit tests for summarization.
 """
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-from datetime import date
-import datetime
 import collections
+import datetime
 import re
 import unittest
+from datetime import date
 
-from beancount.core import inventory
+from beancount import loader
+from beancount.core import convert
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.core import convert
+from beancount.core import inventory
 from beancount.ops import summarize
-from beancount.parser import printer
-from beancount.parser import options
 from beancount.parser import cmptest
+from beancount.parser import options
+from beancount.parser import printer
 from beancount.utils import misc_utils
-from beancount import loader
 
 
 class TestOpenClose(cmptest.TestCase):

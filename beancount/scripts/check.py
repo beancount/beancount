@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2018, 2020-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import logging
@@ -8,8 +8,8 @@ import click
 
 from beancount import loader
 from beancount.ops import validation
-from beancount.utils import misc_utils
 from beancount.parser.version import VERSION
+from beancount.utils import misc_utils
 
 
 @click.command()

@@ -5,25 +5,27 @@ of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
 
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 import os
+import re
 import unicodedata
-
 from os import path
-from typing import Any, Callable, Iterable, Iterator, List, Tuple
+from typing import Any
+from typing import Callable
+from typing import Iterable
+from typing import Iterator
 
 import regex
-
 
 # Public type for accounts.
 Account = str
 
 
 # Component separator for account names.
-
 sep = ":"
 
 
@@ -44,6 +46,32 @@ ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 TYPE = "<AccountDummy>"
 
 
+def is_valid_root(string: Account) -> bool:
+    """Return true if the given string is a valid root account name.
+    This just check for valid syntax.
+
+    Args:
+      string: A string, to be checked for account name pattern.
+    Returns:
+      A boolean, true if the string has the form of a root account's name.
+    """
+    return isinstance(string, str) and bool(regex.fullmatch(ACC_COMP_TYPE_RE, string))
+
+
+def is_valid_leaf(string: Account) -> bool:
+    """Return true if the given string is a valid leaf account name.
+    This just check for valid syntax.
+
+    Args:
+      string: A string, to be checked for account name pattern.
+    Returns:
+      A boolean, true if the string has the form of a leaf account's name.
+    """
+    return isinstance(string, str) and all(
+        regex.fullmatch(ACC_COMP_NAME_RE, p) for p in string.split(":")
+    )
+
+
 def is_valid(string: Account) -> bool:
     """Return true if the given string is a valid account name.
     This does not check for the root account types, just the general syntax.
@@ -53,10 +81,10 @@ def is_valid(string: Account) -> bool:
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return isinstance(string, str) and bool(regex.match("{}$".format(ACCOUNT_RE), string))
+    return isinstance(string, str) and bool(regex.fullmatch(ACCOUNT_RE, string))
 
 
-def join(*components: Tuple[str]) -> Account:
+def join(*components: str) -> Account:
     """Join the names with the account separator.
 
     Args:
@@ -67,7 +95,7 @@ def join(*components: Tuple[str]) -> Account:
     return sep.join(components)
 
 
-def split(account_name: Account) -> List[str]:
+def split(account_name: Account) -> list[str]:
     """Split an account's name into its components.
 
     Args:
@@ -78,13 +106,13 @@ def split(account_name: Account) -> List[str]:
     return account_name.split(sep)
 
 
-def parent(account_name: Account) -> Account:
-    """Return the name of the parent account of the given account.
+def parent(account_name: Account) -> Account | None:
+    """Return the name of the parent account of the given account or None if at the root.
 
     Args:
       account_name: A string, the name of the account whose parent to return.
     Returns:
-      A string, the name of the parent account of this account.
+      A string, the name of the parent account of this account or None if at the root.
     """
     assert isinstance(account_name, str), account_name
     if not account_name:
@@ -94,7 +122,7 @@ def parent(account_name: Account) -> Account:
     return sep.join(components)
 
 
-def leaf(account_name: Account) -> Account:
+def leaf(account_name: Account) -> Account | None:
     """Get the name of the leaf of this account.
 
     Args:
@@ -106,7 +134,7 @@ def leaf(account_name: Account) -> Account:
     return account_name.split(sep)[-1] if account_name else None
 
 
-def sans_root(account_name: Account) -> Account:
+def sans_root(account_name: Account) -> Account | None:
     """Get the name of the account without the root.
 
     For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
@@ -114,14 +142,15 @@ def sans_root(account_name: Account) -> Account:
     Args:
       account_name: A string, the name of the account whose leaf name to return.
     Returns:
-      A string, the name of the non-root portion of this account name.
+      A string, the name of the non-root portion of this account name or None if
+      the account is empty.
     """
     assert isinstance(account_name, str)
     components = account_name.split(sep)[1:]
     return join(*components) if account_name else None
 
 
-def root(num_components: int, account_name: Account) -> str:
+def root(num_components: int, account_name: Account) -> Account:
     """Return the first few components of an account's name.
 
     Args:
@@ -163,7 +192,9 @@ def commonprefix(accounts: Iterable[Account]) -> Account:
     return sep.join(common_list)
 
 
-def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], List[str]]]:
+def walk(
+    root_directory: str, followlinks: bool = False
+) -> Iterator[tuple[str, Account, list[str], list[str]]]:
     """A version of os.walk() which yields directories that are valid account names.
 
     This only yields directories that are accounts... it skips the other ones.
@@ -174,7 +205,7 @@ def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], Lis
     Yields:
       Tuples of (root, account-name, dirs, files), similar to os.walk().
     """
-    for root, dirs, files in os.walk(root_directory):
+    for root, dirs, files in os.walk(root_directory, followlinks=followlinks):
         dirs.sort()
         files.sort()
         relroot = root[len(root_directory) + 1 :]
@@ -185,7 +216,7 @@ def walk(root_directory: Account) -> Iterator[Tuple[str, Account, List[str], Lis
         # See https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
         account_name = unicodedata.normalize("NFKC", account_name)
         if is_valid(account_name):
-            yield (root, account_name, dirs, files)
+            yield root, account_name, dirs, files
 
 
 def parent_matcher(account_name: Account) -> Callable[[str], Any]:
@@ -197,7 +228,8 @@ def parent_matcher(account_name: Account) -> Callable[[str], Any]:
       A callable, which, when called, will return true if the given account is a
       child of ``account_name``.
     """
-    return re.compile(r"{}($|{})".format(re.escape(account_name), sep)).match
+    pattern = re.compile(r"{}($|{})".format(re.escape(account_name), sep))
+    return lambda s: bool(pattern.match(s))
 
 
 def parents(account_name: Account) -> Iterator[Account]:
@@ -208,9 +240,10 @@ def parents(account_name: Account) -> Iterator[Account]:
     Returns:
       A generator of account name strings.
     """
-    while account_name:
-        yield account_name
-        account_name = parent(account_name)
+    current_account: str | None = account_name
+    while current_account:
+        yield current_account
+        current_account = parent(current_account)
 
 
 class AccountTransformer:
@@ -223,7 +256,7 @@ class AccountTransformer:
       rsep: A character string, the new separator to use in link names.
     """
 
-    def __init__(self, rsep: str = None):
+    def __init__(self, rsep: str | None = None):
         self.rsep = rsep
 
     def render(self, account_name: Account) -> str:

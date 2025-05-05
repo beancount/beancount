@@ -1,12 +1,14 @@
 """Everything that relates to creating the Document directives."""
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2018, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 import datetime
+import re
 from os import path
-from collections import namedtuple
+from typing import NamedTuple
 
 from beancount.core import account
 from beancount.core import data
@@ -16,7 +18,18 @@ __plugins__ = ("process_documents", "verify_document_files_exist")
 
 
 # An error from trying to find the documents.
-DocumentError = namedtuple("DocumentError", "source message entry")
+class DocumentError(NamedTuple):
+    """Error encountered during document processing.
+
+    Attributes:
+        source: Source metadata for the error
+        message: Error message string
+        entry: The related entry that caused the error
+    """
+
+    source: data.Meta
+    message: str
+    entry: data.Document | None
 
 
 def process_documents(entries, options_map):

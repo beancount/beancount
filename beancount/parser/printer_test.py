@@ -1,21 +1,22 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import io
 import os
-from datetime import date
-import unittest
 import re
-import textwrap
 import tempfile
+import textwrap
+import unittest
+from datetime import date
+from decimal import Decimal
 
-from beancount.parser import printer
-from beancount.parser import cmptest
-from beancount.core import data
-from beancount.core import interpolate
-from beancount.utils import test_utils
 from beancount import loader
-
+from beancount.core import data
+from beancount.core.amount import Amount
+from beancount.ops.balance import BalanceError
+from beancount.parser import cmptest
+from beancount.parser import printer
+from beancount.utils import test_utils
 
 META = data.new_metadata("beancount/core/testing.beancount", 12345)
 
@@ -32,8 +33,15 @@ class TestPrinter(unittest.TestCase):
         self.assertRegex(source_str, META["filename"])
 
     def test_format_and_print_error(self):
-        entry = data.Open(META, date(2014, 1, 15), "Assets:Bank:Checking", [], None)
-        error = interpolate.BalanceError(META, "Example balance error", entry)
+        entry = data.Balance(
+            META,
+            date(2014, 1, 15),
+            "Assets:Bank:Checking",
+            Amount(Decimal("0"), "USD"),
+            None,
+            None,
+        )
+        error = BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 
@@ -89,14 +97,16 @@ class TestEntryPrinter(cmptest.TestCase):
         # Contex manager can be used as of python 3.12
         # see https://github.com/python/cpython/issues/58451
         # https://github.com/beancount/beancount/issues/222
-        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+        oss1 = tempfile.NamedTemporaryFile(
+            "w", suffix=".beancount", delete=False, encoding="utf-8"
+        )
 
         oss1.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries1, file=oss1)
 
         oss1.close()
 
-        with open(oss1.name, "r") as file:
+        with open(oss1.name, "r", encoding="utf-8") as file:
             oss1_value = file.read()
 
         # entries2 will contain information about filename and line number in
@@ -140,22 +150,21 @@ class TestEntryPrinter(cmptest.TestCase):
         ORIGINAL_LEDGER = textwrap.dedent("""\
         2014-01-01 open Assets:Account1
         2014-01-01 open Assets:Cash
-        
+
         2014-06-08 *
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
         """)
 
-        # note:this multistring contains some training white spaces
         EXPECTED_OUTPUT_LEDGER_TEMPL = textwrap.dedent("""
-        ; source: __path_to_file__:1:      
+        ; source: __path_to_file__:1:
         2014-01-01 open Assets:Account1
-        
-        ; source: __path_to_file__:2:      
+
+        ; source: __path_to_file__:2:
         2014-01-01 open Assets:Cash
-        
-        ; source: __path_to_file__:4:      
-        2014-06-08 * 
+
+        ; source: __path_to_file__:4:
+        2014-06-08 *
           Assets:Account1   111.00 BEAN
           Assets:Cash      -111.00 BEAN
         """)
@@ -164,7 +173,9 @@ class TestEntryPrinter(cmptest.TestCase):
         # Contex manager can be used as of python 3.12
         # see https://github.com/python/cpython/issues/58451
         # https://github.com/beancount/beancount/issues/222
-        oss1 = tempfile.NamedTemporaryFile("w", suffix=".beancount", delete=False)
+        oss1 = tempfile.NamedTemporaryFile(
+            "w", suffix=".beancount", delete=False, encoding="utf-8"
+        )
         oss1.write(ORIGINAL_LEDGER)
         oss1.close()
         # entries2 will contain the file name and line number in metadata
@@ -173,15 +184,19 @@ class TestEntryPrinter(cmptest.TestCase):
 
         expected_output_ledger = EXPECTED_OUTPUT_LEDGER_TEMPL.replace(
             "__path_to_file__", oss1.name
-        )
+        ).splitlines()
 
-        # Print out those reparsed and parse them back in.
+        # Print ledger with the source location information.
         oss2 = io.StringIO()
-        # Getting original ledger but with the source location information
         printer.print_entries(entries2, file=oss2, write_source=True)
+        oss2.seek(0)
 
-        self.maxDiff = 1000
-        self.assertEqual(expected_output_ledger, oss2.getvalue())
+        # Get printed lines. Strip trailing whitespace to allow the
+        # expected output to do not contain trailing whitespace and
+        # appease linters.
+        printed = [line.rstrip() for line in oss2.readlines()]
+
+        self.assertEqual(expected_output_ledger, printed)
 
     @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
@@ -230,7 +245,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
 
-        2014-06-10 * "Entry with escaped \\"symbols\\" \\ \\r \\n"
+        2014-06-10 * "Entry with escaped \\"quotes\\""
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
@@ -285,17 +300,36 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
-    @loader.load_doc()
-    def test_Document(self, entries, errors, __):
-        """
+    def test_Document(self):
+        # The beancount parser processes escaped characters in all strings,
+        # including the file path in the ``document`` directive.  Windows uses
+        # backslashes as file path separator character.  Unless these are
+        # escaped, the path separators are threated as the beginning of an
+        # escape sequence by the parser, producing the wrong result.
+        #
+        # The path separator characters can be escaped as double backslashes.
+        # However ``beancount.parser.print_entries()`` does not do that,
+        # breaking the round-trip test.  To change ``print_entries()`` to escape
+        # special characters would be an incompatible change.
+        #
+        # The solution could be to use a simple file name in the test, however,
+        # the beancount loader transforms all relative paths into absolute
+        # paths, introducing path separator characters.  Windows also accepts
+        # forward slashes as path separators, therefore, the solution is to
+        # craft the test to use absolute paths with forward slashes on all
+        # platforms.
+        path = os.path.join(os.path.dirname(__file__), "document.pdf").replace("\\", "/")
+
+        ledger = textwrap.dedent("""\
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1
-        2014-06-08 document Assets:Account1 "/path/to/document.pdf"
-        2014-06-08 document Assets:Account1 "path/to/document.csv"
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1 #tag2 ^link1 ^link2
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
-        2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
-        """
+        2014-06-08 document Assets:Account1 "{path}"
+        2014-06-08 document Assets:Account1 "{path}" #tag1 #tag2 ^link1 ^link2
+        2014-06-08 document Assets:Account1 "{path}" #tag1
+        2014-06-08 document Assets:Account1 "{path}" ^link1
+        """).format(path=path)
+        entries, errors, __ = loader.load_string(ledger)
+
         with self.subTest("RoundTrip test via StringIO"):
             self.assertRoundTrip(entries, errors)
 

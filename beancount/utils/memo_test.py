@@ -1,10 +1,10 @@
-__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import unittest
-import tempfile
 import io
+import tempfile
+import unittest
 from os import path
 from unittest import mock
 

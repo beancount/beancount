@@ -23,36 +23,42 @@ Query Language query. However, BQL is not there yet.
 
 """
 
-__copyright__ = "Copyright (C) 2018  Martin Blais"
+__copyright__ = "Copyright (C) 2018, 2020-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from typing import NamedTuple, Tuple, List, Set, Any, Dict
-from decimal import Decimal
 import csv
 import datetime
 import logging
 import re
+import sys
+from decimal import Decimal
+from typing import Any
+from typing import NamedTuple
+
 import click
 
-from beancount.core.number import ONE
-from beancount.core.number import D
-from beancount.core import data
+from beancount import loader
 from beancount.core import account
 from beancount.core import account_types
+from beancount.core import data
 from beancount.core import getters
-from beancount.ops import summarize
 from beancount.core import prices
+from beancount.core.number import ONE
+from beancount.core.number import D
+from beancount.ops import summarize
 from beancount.parser import options
-from beancount import loader
+
+Header = list[str]
+Rows = list[list[Any]]
 
 
-Header = List[str]
-Rows = List[List[Any]]
-Table = NamedTuple("Table", [("header", Header), ("rows", Rows)])
+class Table(NamedTuple):
+    header: Header
+    rows: Rows
 
 
 def get_metamap_table(
-    metamap: Dict[str, data.Directive], attributes: List[str], getter
+    metamap: dict[str, data.Directive], attributes: list[str], getter
 ) -> Table:
     """Produce a Table of per-commodity attributes."""
     attrlist = attributes[1:]
@@ -65,7 +71,7 @@ def get_metamap_table(
     return Table(attributes, sorted(rows))
 
 
-def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table:
+def get_commodities_table(entries: data.Entries, attributes: list[str]) -> Table:
     """Produce a Table of per-commodity attributes."""
     commodities = getters.get_commodity_directives(entries)
     header = ["currency"] + attributes
@@ -74,7 +80,7 @@ def get_commodities_table(entries: data.Entries, attributes: List[str]) -> Table
     return table
 
 
-def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
+def get_accounts_table(entries: data.Entries, attributes: list[str]) -> Table:
     """Produce a Table of per-account attributes."""
     oc_map = getters.get_account_open_close(entries)
     accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
@@ -97,7 +103,7 @@ def get_accounts_table(entries: data.Entries, attributes: List[str]) -> Table:
     return get_metamap_table(accounts_map, header, getter), accounts_map
 
 
-def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
+def abbreviate_account(acc: str, accounts_map: dict[str, data.Open]):
     """Compute an abbreviated version of the account name."""
 
     # Get the root of the account by inspecting the "root: TRUE" attribute up
@@ -122,8 +128,8 @@ def abbreviate_account(acc: str, accounts_map: Dict[str, data.Open]):
 
 def get_postings_table(
     entries: data.Entries,
-    options_map: Dict,
-    accounts_map: Dict[str, data.Open],
+    options_map: dict,
+    accounts_map: dict[str, data.Open],
     threshold: Decimal = D("0.01"),
 ) -> Table:
     """Enumerate all the postings."""
@@ -180,7 +186,7 @@ def get_prices_table(entries: data.Entries, main_currency: str) -> Table:
 
 
 def get_rates_table(
-    entries: data.Entries, currencies: Set[str], main_currency: str
+    entries: data.Entries, currencies: set[str], main_currency: str
 ) -> Table:
     """Enumerate all the exchange rates."""
     price_map = prices.build_price_map(entries)
@@ -194,7 +200,7 @@ def get_rates_table(
     return Table(header, rows)
 
 
-def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Table:
+def join(main_table: Table, *col_tables: tuple[tuple[tuple[str], Table]]) -> Table:
     """Join a table with a number of other tables.
     col_tables is a tuple of (column, table) pairs."""
 
@@ -237,7 +243,7 @@ def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Tab
     return Table(new_header, rows)
 
 
-def reorder_columns(table: Table, new_headers: List[str]) -> Table:
+def reorder_columns(table: Table, new_headers: list[str]) -> Table:
     """Reorder the columns of a table to a desired new headers."""
     assert len(table.header) == len(new_headers)
     indexes = [table.header.index(header) for header in new_headers]
@@ -250,6 +256,15 @@ def write_table(table: Table, outfile: str):
     writer = csv.writer(outfile)
     writer.writerow(table.header)
     writer.writerows(table.rows)
+
+
+# python 3.15 will make utf-8 mode enabled by default
+# so use a locale encoding for backward compatibility
+if sys.version_info < (3, 10):
+    # locale encoding is added in 3.10
+    OUTPUT_ENCODING = None
+else:
+    OUTPUT_ENCODING = "locale"
 
 
 @click.command(help=__doc__)
@@ -272,37 +287,37 @@ def write_table(table: Table, outfile: str):
 @click.option(
     "--output",
     "-o",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the final joined table to.",
 )
 @click.option(
     "--output_commodities",
     "-c",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the commodities table to.",
 )
 @click.option(
     "--output_accounts",
     "-a",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the accounts table to.",
 )
 @click.option(
     "--output_prices",
     "-p",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the prices table to.",
 )
 @click.option(
     "--output_rates",
     "-r",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the rates table to.",
 )
 @click.option(
     "--output_postings",
     "-m",
-    type=click.File("w"),
+    type=click.File("w", encoding=OUTPUT_ENCODING),
     help="CSV filename to write out the postings table to.",
 )
 def main(

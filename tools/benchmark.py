@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Estimate and compare the performance of a list of revisions."""
 
-__copyright__ = "Copyright (C) 2020  Martin Blais"
+__copyright__ = "Copyright (C) 2020, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

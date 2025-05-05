@@ -4,17 +4,17 @@ For example, the options documentation is a Google Doc. It can be generated from
 the source code and updated automatically using this script.
 """
 
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2020-2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
 import logging
-import re
 import os
+import re
 from os import path
 
-from apiclient import discovery
 import httplib2
+from apiclient import discovery
 from apiclient.http import MediaInMemoryUpload
 
 # TODO(blais, 2023-11-18): oauth2client is deprecated.

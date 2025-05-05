@@ -1,6 +1,6 @@
 """Unit tests for realizations."""
 
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
@@ -8,17 +8,17 @@ import datetime
 import operator
 import unittest
 
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.realization import RealAccount
-from beancount.core import realization
+from beancount import loader
+from beancount.core import account_types
 from beancount.core import data
+from beancount.core import display_context
 from beancount.core import inventory
 from beancount.core import position
-from beancount.core import account_types
-from beancount.core import display_context
+from beancount.core import realization
+from beancount.core.amount import A
+from beancount.core.number import D
+from beancount.core.realization import RealAccount
 from beancount.utils import test_utils
-from beancount import loader
 
 
 def create_simple_account():

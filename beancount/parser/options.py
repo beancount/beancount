@@ -2,19 +2,23 @@
 Declaration of options and their default values.
 """
 
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2021, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import io
 import re
 import textwrap
+from typing import Any
+from typing import Callable
+from typing import NamedTuple
 
-from beancount.core.number import D
-from beancount.core import data
-from beancount.core import account_types
 from beancount.core import account
+from beancount.core import account_types
+from beancount.core import data
 from beancount.core import display_context
+from beancount.core.number import D
 
 
 def options_validate_processing_mode(value):
@@ -114,40 +118,86 @@ def options_validate_booking_method(value):
         raise ValueError(str(exc)) from exc
 
 
-# List of option groups, with their description, option names and default
-# values.
-OptGroup = collections.namedtuple("OptGroup", "description options")
+def options_validate_root_account(value):
+    """Validate a root account name.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The root account name, if the validation succedes.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    if not account.is_valid_root(value):
+        raise ValueError(f"Invalid root account name: {value!r}")
+    return value
 
 
-# An option description.
-#
-# Attributes:
-#  name: A string, the short name of the option, as used in the syntax.
-#  default_value: The default value for the option. If an option may
-#    show up multiple times, should be a list or a dict.
-#  example_value: The value to be rendered in the documentation. Even if
-#    the value may be specified multiple times, this should just be an
-#    example string for the user to model itself on.
-#  converter: A function object to be called to convert or validate the
-#    option during parsing, or None, if no conversion is necessary. The
-#    callable must either successfully return with the parsed value, or
-#    raise a ValueError for the handler to report an error to the parser.
-#  deprecated: A string, a message set if the option is deprecated. This is
-#    used to issue suitable warnings when options aren't honored or about
-#    not to be anymore.
-#  alias: A string or None; if set, this option automatically gets
-#    translated to this alias. This is present to support renaming of
-#    option names.
-OptDesc = collections.namedtuple(
-    "OptDesc", "name default_value example_value converter deprecated alias"
-)
+def options_validate_leaf_account(value):
+    """Validate a leaf account name.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The leaf account name, if the validation succedes.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    if not account.is_valid_leaf(value):
+        raise ValueError(f"Invalid leaf account name: {value!r}")
+    return value
+
+
+class OptDesc(NamedTuple):
+    """An option description.
+
+    Attributes:
+      name: A string, the short name of the option, as used in the syntax.
+      default_value: The default value for the option. If an option may
+        show up multiple times, should be a list or a dict.
+      example_value: The value to be rendered in the documentation. Even if
+        the value may be specified multiple times, this should just be an
+        example string for the user to model itself on.
+      converter: A function object to be called to convert or validate the
+        option during parsing, or None, if no conversion is necessary. The
+        callable must either successfully return with the parsed value, or
+        raise a ValueError for the handler to report an error to the parser.
+      deprecated: A string, a message set if the option is deprecated. This is
+        used to issue suitable warnings when options aren't honored or about
+        not to be anymore.
+      alias: A string or None; if set, this option automatically gets
+        translated to this alias. This is present to support renaming of
+        option names.
+    """
+
+    name: str
+    default_value: Any
+    example_value: Any
+    converter: Callable | None
+    deprecated: str
+    alias: str | None
+
+
+class OptGroup(NamedTuple):
+    """List of option groups, with their description,
+    option names and default values.
+    """
+
+    description: str
+    options: list[OptDesc]
+
 
 UNSET = object()
 
 
 def Opt(
-    name, default_value, example_value=UNSET, converter=None, deprecated=False, alias=None
-):
+    name: str,
+    default_value: Any,
+    example_value=UNSET,
+    converter=None,
+    deprecated: str = "",
+    alias=None,
+) -> OptDesc:
     """Alternative constructor for OptDesc, with default values.
 
     Args:
@@ -269,11 +319,15 @@ PUBLIC_OPTION_GROUPS = [
       recognizes account names.
     """,
         [
-            Opt("name_assets", _TYPES.assets),
-            Opt("name_liabilities", _TYPES.liabilities),
-            Opt("name_equity", _TYPES.equity),
-            Opt("name_income", _TYPES.income),
-            Opt("name_expenses", _TYPES.expenses),
+            Opt("name_assets", _TYPES.assets, converter=options_validate_root_account),
+            Opt(
+                "name_liabilities",
+                _TYPES.liabilities,
+                converter=options_validate_root_account,
+            ),
+            Opt("name_equity", _TYPES.equity, converter=options_validate_root_account),
+            Opt("name_income", _TYPES.income, converter=options_validate_root_account),
+            Opt("name_expenses", _TYPES.expenses, converter=options_validate_root_account),
         ],
     ),
     OptGroup(
@@ -281,7 +335,13 @@ PUBLIC_OPTION_GROUPS = [
       Leaf name of the equity account used for summarizing previous transactions
       into opening balances.
     """,
-        [Opt("account_previous_balances", "Opening-Balances")],
+        [
+            Opt(
+                "account_previous_balances",
+                "Opening-Balances",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     OptGroup(
         """
@@ -289,7 +349,13 @@ PUBLIC_OPTION_GROUPS = [
       earnings from income and expenses accrued before the beginning of the
       exercise into the balance sheet.
     """,
-        [Opt("account_previous_earnings", "Earnings:Previous")],
+        [
+            Opt(
+                "account_previous_earnings",
+                "Earnings:Previous",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     OptGroup(
         """
@@ -298,7 +364,13 @@ PUBLIC_OPTION_GROUPS = [
       will essentially "fixup" the basic accounting equation due to the errors
       that priced conversions introduce.
     """,
-        [Opt("account_previous_conversions", "Conversions:Previous")],
+        [
+            Opt(
+                "account_previous_conversions",
+                "Conversions:Previous",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     OptGroup(
         """
@@ -306,7 +378,13 @@ PUBLIC_OPTION_GROUPS = [
       earnings from income and expenses accrued during the current exercise into
       the balance sheet. This is most often called "Net Income".
     """,
-        [Opt("account_current_earnings", "Earnings:Current")],
+        [
+            Opt(
+                "account_current_earnings",
+                "Earnings:Current",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     # This common option can be used by reporting systems and is ignored by
     # Beancount itself.
@@ -315,7 +393,13 @@ PUBLIC_OPTION_GROUPS = [
       Leaf name of the equity account used for inserting conversions that will
       zero out remaining amounts due to transfers during the exercise period.
     """,
-        [Opt("account_current_conversions", "Conversions:Current")],
+        [
+            Opt(
+                "account_current_conversions",
+                "Conversions:Current",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     # This common option can be used by reporting systems and is ignored by
     # Beancount itself.
@@ -328,7 +412,14 @@ PUBLIC_OPTION_GROUPS = [
       balance on the sheet. This has no effect on behavior, other than providing
       a configurable account name for such postings to occur.
     """,
-        [Opt("account_unrealized_gains", "Earnings:Unrealized", "Earnings:Unrealized")],
+        [
+            Opt(
+                "account_unrealized_gains",
+                "Earnings:Unrealized",
+                "Earnings:Unrealized",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     OptGroup(
         """
@@ -337,7 +428,14 @@ PUBLIC_OPTION_GROUPS = [
       an account name will automatically enable the addition of postings on all
       transactions that have a residual amount.
     """,
-        [Opt("account_rounding", None, "Rounding")],
+        [
+            Opt(
+                "account_rounding",
+                None,
+                "Rounding",
+                converter=options_validate_leaf_account,
+            )
+        ],
     ),
     OptGroup(
         """
@@ -517,9 +615,7 @@ PUBLIC_OPTION_GROUPS = [
                 False,
                 "TRUE",
                 converter=options_validate_boolean,
-                deprecated=(
-                    "Allowing pipe separator temporary; " "this will go away eventually."
-                ),
+                deprecated="Allowing pipe separator temporary; this will go away eventually.",
             )
         ],
     ),
@@ -539,7 +635,7 @@ PUBLIC_OPTION_GROUPS = [
                 False,
                 "TRUE",
                 converter=options_validate_boolean,
-                deprecated=("Allowing None for tags and link " "will go away eventually."),
+                deprecated=("Allowing None for tags and link will go away eventually."),
             )
         ],
     ),

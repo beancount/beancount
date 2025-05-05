@@ -2,27 +2,26 @@
 Unit tests for the Position class.
 """
 
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2019, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import datetime
-import unittest
 import copy
+import datetime
 import random
+import unittest
 from datetime import date
 
-from beancount.core import position
 from beancount.core import convert
-from beancount.core.position import Cost
-from beancount.core.position import Position
-from beancount.core.position import from_string
-from beancount.core.position import from_amounts
-
-from beancount.core.number import ZERO
-from beancount.core.number import D
+from beancount.core import display_context
+from beancount.core import position
 from beancount.core.amount import A
 from beancount.core.amount import Amount
-from beancount.core import display_context
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.position import Cost
+from beancount.core.position import Position
+from beancount.core.position import from_amounts
+from beancount.core.position import from_string
 
 
 class TestCost(unittest.TestCase):

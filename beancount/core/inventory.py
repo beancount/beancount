@@ -34,24 +34,30 @@ specific date. You do these conversions using the reduce() method:
 
 """
 
-__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+from __future__ import annotations
+
+__copyright__ = "Copyright (C) 2013-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from collections.abc import Iterable
-from decimal import Decimal
 import enum
 import re
+from collections.abc import Iterable
+from decimal import Decimal
+from typing import TYPE_CHECKING
+from typing import Optional
 
+from beancount.core import convert
+from beancount.core.amount import Amount
+from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
-from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
-from beancount.core import convert
-from beancount.core.display_context import DEFAULT_FORMATTER
 
+if TYPE_CHECKING:
+    from beancount.core import data
 
 # Enable this in tests to assert types being passed to Inventory.
 ASSERTS_TYPES = False
@@ -72,10 +78,10 @@ class MatchResult(enum.Enum):
 
 # FIXME: You should disallow __getitem__, __delitem__ and __setitem__.
 # Move the dict inside the container.
-class Inventory(dict):
+class Inventory(dict[tuple[str, Optional[Cost]], Position]):
     """An Inventory is a set of positions, indexed for efficiency."""
 
-    def __init__(self, positions=None):
+    def __init__(self, positions=None) -> None:
         """Create a new inventory using a list of existing positions.
 
         Args:
@@ -264,7 +270,7 @@ class Inventory(dict):
         if len(self) > 0:
             if len(self) > 1:
                 raise AssertionError(
-                    "Inventory has more than one expected " "position: {}".format(self)
+                    "Inventory has more than one expected position: {}".format(self)
                 )
             return next(iter(self))
 
@@ -390,7 +396,9 @@ class Inventory(dict):
     # Methods to build an Inventory instance.
     #
 
-    def add_amount(self, units, cost=None):
+    def add_amount(
+        self, units: Amount, cost: Cost | None = None
+    ) -> tuple[Position | None, MatchResult]:
         """Add to this inventory using amount and cost. This adds with strict lot
         matching, that is, no partial matches are done on the arguments to the
         keys of the inventory.
@@ -423,12 +431,12 @@ class Inventory(dict):
             # Check if reducing.
             booking = (
                 MatchResult.REDUCED
-                if not same_sign(pos.units.number, units.number)
+                if not same_sign(pos.units.number, units.number)  # type: ignore[arg-type]
                 else MatchResult.AUGMENTED
             )
 
             # Compute the new number of units.
-            number = pos.units.number + units.number
+            number = pos.units.number + units.number  # type: ignore[operator]
             if number == ZERO:
                 # If empty, delete the position.
                 del self[key]
@@ -445,7 +453,9 @@ class Inventory(dict):
 
         return pos, booking
 
-    def add_position(self, position):
+    def add_position(
+        self, position: Position | data.Posting
+    ) -> tuple[Position | None, MatchResult]:
         """Add using a position (with strict lot matching).
         Return True if this position was booked against and reduced another.
 
@@ -463,7 +473,11 @@ class Inventory(dict):
             assert isinstance(
                 position.cost, (type(None), Cost)
             ), "Invalid type for cost: {}".format(position.cost)
-        return self.add_amount(position.units, position.cost)
+        return self.add_amount(
+            # Ignore the type errors, units could be None or cost a CostSpec
+            position.units,  # type: ignore[arg-type]
+            position.cost,  # type: ignore[arg-type]
+        )
 
     def add_inventory(self, other):
         """Add all the positions of another Inventory instance to this one.
@@ -499,7 +513,7 @@ class Inventory(dict):
     __iadd__ = add_inventory
 
     @staticmethod
-    def from_string(string):
+    def from_string(string: str) -> Inventory:
         """Create an Inventory from a string. This is useful for writing tests.
 
         Args:
@@ -522,13 +536,13 @@ class Inventory(dict):
 from_string = Inventory.from_string
 
 
-def check_invariants(inv):
+def check_invariants(inv: Inventory) -> None:
     """Check the invariants of the Inventory.
 
     Args:
       inventory: An instance of Inventory.
     Returns:
-      True if the invariants are respected.
+      If the invariants are respected, otherwise throws an AssertionError.
     """
     # Check that all the keys are unique.
     lots = set((pos.units.currency, pos.cost) for pos in inv)
