@@ -93,18 +93,16 @@ class Align(enum.Enum):
 
 
 class _CurrencyContext:
-    """A container of information for a single currency.
+    """Precision data for a single currency from a population of numbers.
 
-    This object accumulates aggregate information about numbers that is then
-    used by the DisplayContext to manufacture appropriate Formatter
-    objects.
+    This object accumulates aggregate precision data about numbers that is then
+    used by the DisplayContext to manufacture appropriate Formatter objects.
 
     Attributes:
       has_sign: A boolean, true if at least one of the numbers has a negative or
         explicit positive sign.
       integer_max: The maximum number of digits for the integer part.
       fractional_dist: A frequency distribution of fractionals seen in the input file.
-
     """
 
     def __init__(self) -> None:
@@ -188,6 +186,85 @@ class _CurrencyContext:
             raise ValueError("Unknown precision: {}".format(precision))
 
 
+class _FixedPrecisionContext:
+    """Fixed precision data for a single currency. Sign and max integer are still learned.
+
+    This object stores fixed precision data about numbers for a single currency.
+    This is used by the DisplayContext to manufacture appropriate Formatter
+    objects.
+
+    Attributes:
+      has_sign: A boolean, true if at least one of the numbers has a negative or
+        explicit positive sign.
+      integer_max: The maximum number of digits for the integer part.
+      fractional_digits: An integer, the precision for both MOST_COMMON and MAXIMUM.
+    """
+
+    def __init__(self, fractional_digits: int) -> None:
+        self.has_sign = False
+        self.integer_max = 1
+        self.fractional_digits: int = fractional_digits
+
+    def __str__(self) -> str:
+        fmt = (
+            "sign={:<2}  integer_max={:<2}  "
+            "fractional_common={:<2}  fractional_max={:<2}  "
+            '"{}" "{}"'
+        )
+
+        example = ""
+        if self.has_sign:
+            example += "-"
+        example += "0" * self.integer_max
+
+        example_common = example
+        fractional_common = self.get_fractional(Precision.MOST_COMMON)
+        if fractional_common is None:
+            example_common = example + ".*"
+        elif fractional_common > 0:
+            example_common = example + "." + ("0" * fractional_common)
+
+        example_max = example
+        fractional_max = self.get_fractional(Precision.MAXIMUM)
+        if fractional_max is None:
+            example_max = example + ".*"
+        elif fractional_max > 0:
+            example_max = example + "." + ("0" * fractional_max)
+
+        return fmt.format(
+            int(self.has_sign),
+            self.integer_max,
+            self.fractional_digits,
+            self.fractional_digits,
+            example_common,
+            example_max,
+        )
+
+    def update(self, number: Decimal) -> None:
+        # Note: Please do care for the performance of this routine. This is run
+        # on a large set of numbers, possibly even during parsing. Consider
+        # reimplementing this in C, after profiling.
+
+        if number is None:
+            return
+
+        # Update the signs.
+        num_tuple = number.as_tuple()
+        if num_tuple.sign:
+            self.has_sign = True
+
+        # Update the maximum number of integral digits.
+        integer_digits = len(num_tuple.digits) + num_tuple.exponent  # type: ignore[operator]
+        self.integer_max = max(self.integer_max, integer_digits)
+
+    def update_from(self, other: _CurrencyContext) -> None:
+        self.has_sign = self.has_sign or other.has_sign
+        self.integer_max = max(self.integer_max, other.integer_max)
+
+    def get_fractional(self, precision: Precision) -> int | None:
+        return self.fractional_digits
+
+
 class DisplayContext:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
@@ -230,6 +307,9 @@ class DisplayContext:
         """
         for currency, ccontext in other.ccontexts.items():
             self.ccontexts[currency].update_from(ccontext)
+
+    def set_fixed_precision(self, currency: Currency, fractional_digits: int) -> None:
+        self.ccontexts[currency] = _FixedPrecisionContext(fractional_digits)
 
     def quantize(
         self,
