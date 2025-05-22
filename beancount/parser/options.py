@@ -82,7 +82,7 @@ def options_validate_tolerance_map(value):
     """
     # Process the setting of a key-value, whereby the value is a Decimal
     # representation.
-    match = re.match("(.*):(.*)", value)
+    match = re.match(r"(.*):([\d\.]+)", value)
     if not match:
         raise ValueError("Invalid value '{}'".format(value))
     currency, tolerance_str = match.groups()
@@ -445,6 +445,40 @@ PUBLIC_OPTION_GROUPS = [
       language.
     """,
         [Opt("conversion_currency", "NOTHING")],
+    ),
+    OptGroup(
+        """ Mappings of currency to a fixed display precision used when
+      rendering its numbers.
+
+      The syntax is similar to that of the `inferred_tolerance_default`. The
+      values must be strings in the following format:
+        <currency>:<example>
+      for example, 'USD:0.01'. This would make USD render with two fractional
+      digits, always, regardless of the numbers present in the ledge.
+
+      By default, the display precision is normally inferred from statistics
+      derived from the population of numbers seen in the ledger. However this
+      led to a lot of confusion, and this option allows the setting of the
+      number of fractional digits explicitly. If you like control, this is the
+      recommended method. (If you have a well burnished ledger already, it is
+      highly likely that the most common numbers present in your file already
+      set this right and that inference infers the correct precision
+      automatically; you can use `bean-doctor display-contenxt` to verify this).
+
+      Note that although the precision is fixed, the width of the displayed
+      numbers is still learned from the numbers in the input fie.
+
+      For detailed documentation about how tolerances are handled, see this doc:
+      http://furius.ca/beancount/doc/tolerances
+    """,
+        [
+            Opt(
+                "display_precision",
+                {},
+                "CHF:0.01",
+                converter=options_validate_tolerance_map,
+            )
+        ],
     ),
     OptGroup(
         """

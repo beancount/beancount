@@ -207,6 +207,11 @@ class Builder(lexer.LexBuilder):
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options["render_commas"])
 
+        # Set the fixed precisions.
+        for currency, example_number in sorted(self.options["display_precision"].items()):
+            num_tuple = example_number.as_tuple()
+            self.dcontext.set_fixed_precision(currency, -num_tuple.exponent)
+
         return (self.get_entries(), self.errors, self.get_options())
 
     def get_entries(self):
