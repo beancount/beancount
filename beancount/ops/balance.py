@@ -37,7 +37,7 @@ def get_balance_tolerance(balance_entry, options_map):
             # Pad because the user creates these and the rounding of those
             # balances may often be further off than those used within a single
             # transaction.
-            tolerance = options_map["inferred_tolerance_multiplier"] * 2
+            tolerance = options_map["tolerance_multiplier"] * 2
             tolerance = ONE.scaleb(expo) * tolerance
         else:
             tolerance = ZERO

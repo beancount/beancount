@@ -17,10 +17,10 @@ from beancount.core.data import Meta
 from beancount.core.data import Posting
 from beancount.core.data import Transaction
 from beancount.core.inventory import Inventory
-from beancount.core.number import D
 from beancount.core.number import MISSING
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
+from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.utils import defdict
@@ -127,7 +127,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
     So the tolerance for USD in this case is max(0.005, 0.03096) = 0.03096. Prices
     contribute similarly to the maximum tolerance allowed.
 
-    Note that 'M' above is the inferred_tolerance_multiplier and its default
+    Note that 'M' above is the `tolerance_multiplier` and its default
     value is 0.5.
 
     Args:
@@ -144,7 +144,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
     if use_cost is None:
         use_cost = options_map["infer_tolerance_from_cost"]
 
-    inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
+    tolerance_multiplier = options_map["tolerance_multiplier"]
 
     # Initialize the default tolerances to just the ones seen in this
     # transaction.
@@ -177,7 +177,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         expo = units.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
-            tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
+            tolerance = ONE.scaleb(expo) * tolerance_multiplier
 
             # Note that we take the max() and not the min() here because the
             # tolerance has a dual purpose: it's used to infer the resolution
@@ -361,9 +361,9 @@ def quantize_with_tolerance(tolerances, currency, number):
     tolerance = tolerances.get(currency)
     if tolerance:
         # TODO(blais): "2" is used here but really it ought to be the reciprocal
-        # of the "inferred_tolerance_multiplier" value. The better fix would be
-        # to apply the multiplier late elsewhere, and to just not apply the
-        # multiplier here.
+        # of the "tolerance_multiplier" value. The better fix would be to apply
+        # the multiplier late elsewhere, and to just not apply the multiplier
+        # here.
         quantum = (tolerance * 2).normalize()
 
         # If the tolerance is a neat number provided by the user,

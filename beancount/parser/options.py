@@ -532,7 +532,31 @@ PUBLIC_OPTION_GROUPS = [
       For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """,
-        [Opt("inferred_tolerance_multiplier", D("0.5"), "1.1", converter=D)],
+        [
+            Opt(
+                "tolerance_multiplier",
+                D("0.5"),
+                "0.5",
+                converter=D,
+            )
+        ],
+    ),
+    OptGroup(
+        """
+      This option is deprecated; it has been renaemd to the more
+      "tolerance_multiplier" because it is used to convert precision numbers
+      like '0.01' to a tolerance by multiplying them by this value.
+    """,
+        [
+            Opt(
+                "inferred_tolerance_multiplier",
+                D("0.5"),
+                "0.5",
+                converter=D,
+                deprecated="Renamed to 'tolerance_multiplier'.",
+                alias="tolerance_multiplier",
+            )
+        ],
     ),
     OptGroup(
         """
@@ -544,7 +568,7 @@ PUBLIC_OPTION_GROUPS = [
 
       For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
       attached to it, it implies a tolerance of 0.001 x 45.00 * M = 0.045 USD
-      (where M is the inferred_tolerance_multiplier) and this is added to the
+      (where M is the tolerance_multiplier) and this is added to the
       mix to enlarge the tolerance allowed for units of USD on that transaction.
       All the normally inferred tolerances (see
       http://furius.ca/beancount/doc/tolerances) are still taken into account.

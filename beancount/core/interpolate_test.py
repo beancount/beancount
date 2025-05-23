@@ -23,7 +23,7 @@ from beancount.utils import defdict
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {
     "inferred_tolerance_default": {},
-    "inferred_tolerance_multiplier": D("0.5"),
+    "tolerance_multiplier": D("0.5"),
     "account_rounding": None,
     "infer_tolerance_from_cost": False,
 }
@@ -442,7 +442,7 @@ class TestInferTolerances(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_tolerances__multiplier(self, entries, errors, options_map):
         """
-        option "inferred_tolerance_multiplier" "1.1"
+        option "tolerance_multiplier" "1.1"
 
         1970-01-01 open Assets:B1
         1970-01-01 open Assets:B2
