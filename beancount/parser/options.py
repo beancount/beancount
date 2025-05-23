@@ -447,11 +447,11 @@ PUBLIC_OPTION_GROUPS = [
         [Opt("conversion_currency", "NOTHING")],
     ),
     OptGroup(
-        """ Mappings of currency to a fixed display precision used when
-      rendering its numbers.
+        """ Mappings of currency to a fixed display precision, used when
+      rendering amount numbers for that currency.
 
       The syntax is similar to that of the `inferred_tolerance_default`. The
-      values must be strings in the following format:
+      values must be example strings in the following format:
         <currency>:<example>
       for example, 'USD:0.01'. This would make USD render with two fractional
       digits, always, regardless of the numbers present in the ledge.
@@ -505,7 +505,7 @@ PUBLIC_OPTION_GROUPS = [
             Opt(
                 "inferred_tolerance_default",
                 {},
-                "CHF:0.01",
+                "CHF:0.005",
                 converter=options_validate_tolerance_map,
             )
         ],
