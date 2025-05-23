@@ -17,10 +17,10 @@ from beancount.core.data import Meta
 from beancount.core.data import Posting
 from beancount.core.data import Transaction
 from beancount.core.inventory import Inventory
+from beancount.core.number import D
 from beancount.core.number import MISSING
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
-from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.utils import defdict
@@ -117,7 +117,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     The tolerance for units of USD will calculated as the MAXIMUM of:
 
-      0.01 * M = 0.005 (from the 1150.00 USD leg)
+      0.01 * M = 0.005 (0.01 is inferred from the 1150.00 USD leg)
 
       The sum of
         0.001 * M x 30.96 = 0.01548 +
@@ -146,8 +146,22 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
+    # Initialize the default tolerances to just the ones seen in this
+    # transaction.
     default_tolerances = options_map["inferred_tolerance_default"]
-    tolerances = default_tolerances.copy()
+    seen_currencies = set()
+    for posting in postings:
+        if posting.units not in {None, MISSING}:
+            seen_currencies.add(posting.units.currency)
+        if posting.cost:
+            seen_currencies.add(posting.cost.currency)
+        if posting.price:
+            seen_currencies.add(posting.price.currency)
+    tolerances = {
+        currency: tol
+        for currency, tol in default_tolerances.items()
+        if currency == "*" or currency in seen_currencies
+    }
 
     cost_tolerances = collections.defaultdict(D)
     for posting in postings:
@@ -346,6 +360,10 @@ def quantize_with_tolerance(tolerances, currency, number):
     # Applying rounding to the default tolerance, if there is one.
     tolerance = tolerances.get(currency)
     if tolerance:
+        # TODO(blais): "2" is used here but really it ought to be the reciprocal
+        # of the "inferred_tolerance_multiplier" value. The better fix would be
+        # to apply the multiplier late elsewhere, and to just not apply the
+        # multiplier here.
         quantum = (tolerance * 2).normalize()
 
         # If the tolerance is a neat number provided by the user,
