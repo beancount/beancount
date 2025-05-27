@@ -62,7 +62,9 @@ def process_documents(entries, options_map):
 
     # Merge the two lists of entries and errors. Keep the entries sorted.
     entries.extend(autodoc_entries)
-    entries.sort(key=data.entry_sortkey)
+    from zoneinfo import ZoneInfo
+    tz_info = ZoneInfo(options_map["default_timezone"])
+    entries.sort(key=lambda entry: data.entry_sortkey(entry, tz_info))
 
     return (entries, autodoc_errors)
 
