@@ -175,25 +175,25 @@ class TestDisplayContextRight(DisplayContextBaseTest):
         )
 
     def test_right_sign(self):
-        self.assertFormatNumbers(["7409.01", "0.1"], ["7409.01", "   0.10"])
+        self.assertFormatNumbers(["7409.01", "0.1"], [" 7409.01", "    0.10"])
 
         self.assertFormatNumbers(["-7409.01", "0.1"], ["-7409.01", "    0.10"])
 
     def test_right_integer(self):
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000"],
-            ["    1", "   20", "  300", " 4000", "50000"],
+            ["     1", "    20", "   300", "  4000", " 50000"],
         )
 
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000", "0.001"],
             [
-                "    1.000",
-                "   20.000",
-                "  300.000",
-                " 4000.000",
-                "50000.000",
-                "    0.001",
+                "     1.000",
+                "    20.000",
+                "   300.000",
+                "  4000.000",
+                " 50000.000",
+                "     0.001",
             ],
             precision=Precision.MAXIMUM,
         )
@@ -201,19 +201,20 @@ class TestDisplayContextRight(DisplayContextBaseTest):
     def test_right_integer_commas(self):
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000"],
-            ["     1", "    20", "   300", " 4,000", "50,000"],
+            ["      1", "     20", "    300", "  4,000", " 50,000"],
             commas=True,
         )
 
     def test_right_fractional(self):
         self.assertFormatNumbers(
-            ["4000", "0.01", "0.02", "0.0002"], ["4000.00", "   0.01", "   0.02", "   0.00"]
+            ["4000", "0.01", "0.02", "0.0002"],
+            [" 4000.00", "    0.01", "    0.02", "    0.00"],
         )
 
     def test_right_fractional_commas(self):
         self.assertFormatNumbers(
             ["4000", "0.01", "0.02", "0.0002"],
-            ["4,000.00", "    0.01", "    0.02", "    0.00"],
+            [" 4,000.00", "     0.01", "     0.02", "     0.00"],
             commas=True,
         )
 
@@ -224,7 +225,7 @@ class TestDisplayContextDot(DisplayContextBaseTest):
     def test_dot_uninitialized(self):
         self.assertFormatNumbers(
             ["1.2345", "764", "-7409.01", "0.00000125"],
-            ["1.23450000", "764.00000000", "-7409.01000000", "0.00000125"],
+            [" 1.23450000", " 764.00000000", "-7409.01000000", " 0.00000125"],
             noinit=True,
         )
 
@@ -253,25 +254,25 @@ class TestDisplayContextDot(DisplayContextBaseTest):
         )
 
     def test_dot_sign(self):
-        self.assertFormatNumbers([("7409.01", "USD"), "0.1"], ["7409.01", "   0.1 "])
+        self.assertFormatNumbers([("7409.01", "USD"), "0.1"], [" 7409.01", "    0.1 "])
         self.assertFormatNumbers([("-7409.01", "USD"), "0.1"], ["-7409.01", "    0.1 "])
 
     def test_dot_integer(self):
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000"],
-            ["    1", "   20", "  300", " 4000", "50000"],
+            ["     1", "    20", "   300", "  4000", " 50000"],
         )
 
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000", "0.001", ("0.1", "USD")],
             [
-                "    1.000",
-                "   20.000",
-                "  300.000",
-                " 4000.000",
-                "50000.000",
-                "    0.001",
-                "    0.1  ",
+                "     1.000",
+                "    20.000",
+                "   300.000",
+                "  4000.000",
+                " 50000.000",
+                "     0.001",
+                "     0.1  ",
             ],
             precision=Precision.MAXIMUM,
         )
@@ -279,20 +280,20 @@ class TestDisplayContextDot(DisplayContextBaseTest):
     def test_dot_integer_commas(self):
         self.assertFormatNumbers(
             ["1", "20", "300", "4000", "50000"],
-            ["     1", "    20", "   300", " 4,000", "50,000"],
+            ["      1", "     20", "    300", "  4,000", " 50,000"],
             commas=True,
         )
 
     def test_dot_fractional(self):
         self.assertFormatNumbers(
             [("4000", "USD"), "0.01", "0.02", "0.0002"],
-            ["4000   ", "   0.01", "   0.02", "   0.00"],
+            [" 4000   ", "    0.01", "    0.02", "    0.00"],
         )
 
     def test_dot_fractional_commas(self):
         self.assertFormatNumbers(
             [("4000", "USD"), "0.01", "0.02", "0.0002"],
-            ["4,000   ", "    0.01", "    0.02", "    0.00"],
+            [" 4,000   ", "     0.01", "     0.02", "     0.00"],
             commas=True,
         )
 
@@ -312,7 +313,7 @@ class TestFixedContext(unittest.TestCase):
     def test_init(self):
         # Test with a specific fractional_digits
         fcontext = _FixedPrecisionContext(2)
-        self.assertFalse(fcontext.has_sign)
+        self.assertTrue(fcontext.has_sign)  # Because unconditional
         self.assertEqual(fcontext.integer_max, 1)
         self.assertEqual(fcontext.fractional_digits, 2)
 
@@ -324,7 +325,7 @@ class TestFixedContext(unittest.TestCase):
 
         # Test with positive number, integer_max update
         fcontext.update(Decimal("123.45"))
-        self.assertFalse(fcontext.has_sign)
+        self.assertTrue(fcontext.has_sign)  # Because unconditional
         self.assertEqual(fcontext.integer_max, 3)  # 123 has 3 integer digits
         self.assertEqual(fcontext.fractional_digits, 2)  # Should remain fixed
 
@@ -395,7 +396,7 @@ class TestFixedContext(unittest.TestCase):
         fcontext = _FixedPrecisionContext(2)
         self.assertRegex(
             str(fcontext),
-            r"sign=0\s+integer_max=1\s+fractional_common=2\s+fractional_max=2\s+\"0.00\"\s+\"0.00\"",
+            r"sign=1\s+integer_max=1\s+fractional_common=2\s+fractional_max=2\s+\"-0.00\"\s+\"-0.00\"",
         )
 
         fcontext.update(Decimal("-12345.67"))
@@ -409,7 +410,7 @@ class TestFixedContext(unittest.TestCase):
         fcontext_high_prec.update(Decimal("0.00000001"))
         self.assertRegex(
             str(fcontext_high_prec),
-            r"sign=0\s+integer_max=1\s+fractional_common=8\s+fractional_max=8\s+\"0.00000000\"\s+\"0.00000000\"",
+            r"sign=1\s+integer_max=1\s+fractional_common=8\s+fractional_max=8\s+\"-0.00000000\"\s+\"-0.00000000\"",
         )
 
 
