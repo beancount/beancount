@@ -165,6 +165,15 @@ class _ContextBase:
         self.has_sign = self.has_sign or other.has_sign
         self.integer_max = max(self.integer_max, other.integer_max)
 
+    def get_fractional_digits_common(self) -> int:
+        raise NotImplementedError
+
+    def get_fractional_digits_max(self) -> int:
+        raise NotImplementedError
+
+    def get_fractional(self, precision: Precision) -> int | None:
+        raise NotImplementedError
+
 
 class _CurrencyContext(_ContextBase):
     """Precision data for a single currency from a population of numbers.
