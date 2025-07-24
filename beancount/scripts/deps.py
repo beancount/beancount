@@ -7,7 +7,6 @@ __copyright__ = "Copyright (C) 2014-2021, 2023-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import sys
-import types
 
 
 def list_dependencies(file=sys.stderr):
@@ -40,7 +39,6 @@ def check_dependencies():
     """
     return [
         check_python(),
-        check_cdecimal(),
         check_import("dateutil"),
     ]
 
@@ -57,40 +55,6 @@ def check_python():
         ".".join(map(str, sys.version_info[:3])),
         sys.version_info[:2] >= (3, 7),
     )
-
-
-def is_fast_decimal(decimal_module):
-    "Return true if a fast C decimal implementation is installed."
-    return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
-
-
-def check_cdecimal():
-    """Check that Python 3.3 or above is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    # Note: this code mirrors and should be kept in-sync with that at the top of
-    # beancount.core.number.
-
-    # Try the built-in installation.
-    import decimal
-
-    if is_fast_decimal(decimal):
-        return ("cdecimal", "{} (built-in)".format(decimal.__version__), True)
-
-    # Try an explicitly installed version.
-    try:
-        import cdecimal
-
-        if is_fast_decimal(cdecimal):
-            return ("cdecimal", getattr(cdecimal, "__version__", "OKAY"), True)
-    except ImportError:
-        pass
-
-    # Not found.
-    return ("cdecimal", None, False)
 
 
 def check_python_magic():
@@ -152,7 +116,7 @@ def check_import(package_name, min_version=None, module_name=None):
     return (package_name, version, is_sufficient)
 
 
-def parse_version(version_str: str) -> str:
+def parse_version(version_str: str) -> list[int]:
     """Parse the version string into a comparable tuple."""
     return [int(v) for v in version_str.split(".")]
 
