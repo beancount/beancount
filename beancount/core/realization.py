@@ -42,7 +42,7 @@ from beancount.core.data import Transaction
 from beancount.core.data import TxnPosting
 
 
-class RealAccount(dict):
+class RealAccount(dict): # noqa: PLW1641
     """A realized account, inserted in a tree, that contains the list of realized entries.
 
     Attributes:

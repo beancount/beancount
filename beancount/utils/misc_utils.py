@@ -121,7 +121,7 @@ def import_curses():
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
 
-    import curses
+    import curses  # noqa: PLC0415
 
     return curses
 
