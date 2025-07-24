@@ -350,8 +350,8 @@ def linked(filename, location_spec):
 
 
 def resolve_region_to_entries(
-    entries: list[data.Entries], filename: str, region: tuple[str, int, int]
-) -> list[data.Entries]:
+    entries: data.Entries, filename: str, region: tuple[str, int, int]
+) -> data.Entries:
     """Resolve a filename and region to a list of entries."""
 
     search_filename, first_lineno, last_lineno = region
@@ -360,7 +360,7 @@ def resolve_region_to_entries(
 
     # Find all the entries in the region. (To be clear, this isn't like the
     # 'linked' command, none of the links are followed.)
-    region_entries = [
+    region_entries: data.Entries = [
         entry
         for entry in data.filter_txns(entries)
         if (
@@ -380,7 +380,7 @@ def resolve_region_to_entries(
     type=click.Choice(["value", "cost"]),
     help="Convert balances output to market value or cost.",
 )
-def region(filename, region, conversion):
+def region(filename, region, conversion) -> None:
     """Print out a list of transactions within REGION and compute balances.
 
     The REGION argument is either a stard:end line numbers tuple or a

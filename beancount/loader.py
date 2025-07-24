@@ -88,7 +88,7 @@ _load_file: Callable[
 
 def load_file(
     filename: str | Path,
-    log_timings: Any = None,
+    log_timings: Callable[[str], None] | None = None,
     log_errors: Any = None,
     extra_validations: list[Any] | None = None,
     encoding: str | None = None,

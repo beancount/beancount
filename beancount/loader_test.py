@@ -109,7 +109,7 @@ class TestLoader(unittest.TestCase):
         )
         self.assertEqual(0, len(trans_errors))
 
-    def test_load(self):
+    def test_load(self) -> None:
         with test_utils.capture():
             with test_utils.temp_file() as tmpfile:
                 tmpfile.write_text(TEST_INPUT)

@@ -61,10 +61,6 @@ cache_dir = ".venv/.mypy_cache"
 module = "beancount.projects.*"
 ignore_errors = true
 
-[[tool.mypy.overrides]]
-module = "beancount.scripts.*"
-ignore_errors = true
-
 [tool.black]
 line-length = 92
 # Please note: We use 'ruff format' to autoformat buffers.
