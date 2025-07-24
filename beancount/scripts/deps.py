@@ -70,7 +70,7 @@ def check_python_magic():
       check_dependencies().
     """
     try:
-        import magic
+        import magic # noqa: PLC0415, I001
 
         # Check that python-magic and not filemagic is installed.
         if not hasattr(magic, "from_file"):
