@@ -159,7 +159,7 @@ ruff lint:
 	NO_COLOR=1 uv tool run ruff format .
 
 mypy typecheck:
-	NO_COLOR=1 mypy .
+	NO_COLOR=1 uv run --with mypy --with types-python-dateutil --with types-regex mypy .
 
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test
