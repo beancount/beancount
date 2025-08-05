@@ -257,7 +257,9 @@ class DisplayContext:
     """
 
     def __init__(self) -> None:
-        self.ccontexts: dict[Currency, _ContextBase] = collections.defaultdict(_CurrencyContext)
+        self.ccontexts: dict[Currency, _ContextBase] = collections.defaultdict(
+            _CurrencyContext
+        )
         self.ccontexts["__default__"] = _CurrencyContext()
         self.commas = False
 

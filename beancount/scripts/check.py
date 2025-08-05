@@ -19,7 +19,9 @@ from beancount.utils import misc_utils
 @click.option("--cache-filename", type=click.Path(), help="Override the cache filename.")
 @click.option("--auto", "-a", is_flag=True, help="Implicitly enable auto-plugins.")
 @click.version_option(message=VERSION)
-def main(filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto: bool) -> None:
+def main(
+    filename: str, verbose: bool, no_cache: bool, cache_filename: str, auto: bool
+) -> None:
     """Parse, check and realize a beancount ledger.
 
     This also measures the time it takes to run all these steps.
