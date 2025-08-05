@@ -70,7 +70,6 @@ import io
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from beancount.core import distribution
 
@@ -162,7 +161,7 @@ class _ContextBase:
         integer_digits = len(num_tuple.digits) + num_tuple.exponent  # type: ignore[operator]
         self.integer_max = max(self.integer_max, integer_digits)
 
-    def update_from(self, other: _ContextBase) -> None:
+    def update_from(self, other: _CurrencyContext) -> None:
         self.has_sign = self.has_sign or other.has_sign
         self.integer_max = max(self.integer_max, other.integer_max)
 
@@ -204,10 +203,9 @@ class _CurrencyContext(_ContextBase):
         num_tuple = number.as_tuple()
         self.fractional_dist.update(-num_tuple.exponent)  # type: ignore[operator]
 
-    def update_from(self, other: _ContextBase) -> None:
+    def update_from(self, other: _CurrencyContext) -> None:
         super().update_from(other)
-        other_ = cast("_CurrencyContext", other)
-        self.fractional_dist.update_from(other_.fractional_dist)
+        self.fractional_dist.update_from(other.fractional_dist)
 
     def get_fractional(self, precision: Precision) -> int | None:
         """
