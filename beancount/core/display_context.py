@@ -259,7 +259,7 @@ class DisplayContext:
     """
 
     def __init__(self) -> None:
-        self.ccontexts: dict[str, _ContextBase] = collections.defaultdict(_CurrencyContext)
+        self.ccontexts: dict[Currency, _ContextBase] = collections.defaultdict(_CurrencyContext)
         self.ccontexts["__default__"] = _CurrencyContext()
         self.commas = False
 
@@ -290,7 +290,12 @@ class DisplayContext:
           other: Another DisplayContext.
         """
         for currency, ccontext in other.ccontexts.items():
-            self.ccontexts[currency].update_from(ccontext)
+            if isinstance(ccontext, _CurrencyContext):
+                self.ccontexts[currency].update_from(ccontext)
+            elif isinstance(ccontext, _FixedPrecisionContext):
+                self.set_fixed_precision(currency, ccontext.fractional_digits)
+            else:
+                pass
 
     def set_fixed_precision(self, currency: Currency, fractional_digits: int) -> None:
         self.ccontexts[currency] = _FixedPrecisionContext(fractional_digits)
