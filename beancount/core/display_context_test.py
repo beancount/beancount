@@ -128,6 +128,7 @@ class TestDisplayContext(DisplayContextBaseTest):
 
         dcontext2.set_fixed_precision("A", 1)
         dcontext.update_from(dcontext2)
+        self.assertIsInstance(dcontext.ccontexts["A"], _FixedPrecisionContext)
 
 
 class TestDisplayContextNatural(DisplayContextBaseTest):
