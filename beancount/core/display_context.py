@@ -206,7 +206,7 @@ class _CurrencyContext(_ContextBase):
 
     def update_from(self, other: _ContextBase) -> None:
         super().update_from(other)
-        other_ = cast(_CurrencyContext, other)
+        other_ = cast("_CurrencyContext", other)
         self.fractional_dist.update_from(other_.fractional_dist)
 
     def get_fractional(self, precision: Precision) -> int | None:
