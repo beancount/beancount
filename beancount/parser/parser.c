@@ -11,8 +11,6 @@
 #include "beancount/parser/lexer.h"
 #include "beancount/parser/tokens.h"
 
-extern YY_DECL;
-
 /* Placeholder object for missing cost specifications. */
 PyObject* missing_obj;
 
@@ -167,12 +165,6 @@ static PyObject* parser_iternext(Parser* self)
     int token;
     PyObject* obj;
 
-    /* Ensure the scanner has been initialized. */
-    if (!yyget_in(self->scanner)) {
-        PyErr_SetString(PyExc_ValueError, "Parser not initialized");
-        return NULL;
-    }
-
     /* Get one token. */
     token = yylex(&yylval, &yylloc, self->scanner, self->builder);
     if (PyErr_Occurred() || token == 0) {
@@ -197,7 +189,7 @@ static PyObject* parser_iternext(Parser* self)
     /* Yield a (token name, line, matched string, token value) tuple. */
     return Py_BuildValue("(siy#O)",
                          token_to_string(token),
-                         yylloc.first_line,
+                         yylloc.last_line,
                          yyget_text(self->scanner),
                          (Py_ssize_t)yyget_leng(self->scanner),
                          obj);
