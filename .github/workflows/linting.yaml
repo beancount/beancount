@@ -28,4 +28,4 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv pip install -r ./pyproject.toml --extra types --system
 
-      - run: mypy .
+      - run: uv run --with mypy --with types-python-dateutil --with types-regex mypy .
