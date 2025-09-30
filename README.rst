@@ -26,18 +26,18 @@ reports from them, and provides a web interface.
 Documentation
 =============
 
-Documentation can be read at:
+Documentation can be found at:
 
   https://beancount.github.io/docs/
 
 Documentation authoring happens on Google Docs, where you can contribute by
-requesting access or commenting on individual documents. An index of all source
-documents is available here:
+requesting access or commenting on individual documents. 
+An index of all source documents is available here:
 
   http://furius.ca/beancount/doc/index
 
 There's a `mailing-list dedicated to Beancount
-<https://groups.google.com/forum/#!forum/beancount>`_, please post questions
+<https://groups.google.com/forum/#!forum/beancount>`_. Please post questions
 there, so others can share in the responses. More general discussions about
 command-line accounting also occur on the `Ledger mailing-list
 <https://groups.google.com/forum/#!forum/ledger-cli>`_ so you might be
@@ -51,7 +51,7 @@ You can obtain the source code from the official Git repository on Github:
 
   | https://github.com/beancount/beancount/
 
-See the `Installing Beancount`__ document for more details.
+See `Installing Beancount`__ for more details.
 
 __ http://furius.ca/beancount/doc/install
 
