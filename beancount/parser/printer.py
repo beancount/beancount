@@ -321,7 +321,7 @@ class EntryPrinter:
 
         # Render optional tolerance.
         tolerance = ""
-        if entry.tolerance:
+        if entry.tolerance is not None:
             tolerance_fmt = self.dformat.format(entry.tolerance, entry.amount.currency)
             tolerance = "~ {tolerance} ".format(tolerance=tolerance_fmt)
 
