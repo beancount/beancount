@@ -281,6 +281,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Cash          -199.95 USD
 
         2014-06-04 balance Assets:Account1     200.00 ~0.05 USD
+        2014-06-05 balance Assets:Account1     199.95 ~0 USD
         """
         with self.subTest("RoundTrip test via StringIO"):
             self.assertRoundTrip(entries, errors)
