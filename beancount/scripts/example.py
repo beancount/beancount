@@ -1824,7 +1824,7 @@ class LiberalDate(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            parse_date_liberally(value)
+            return parse_date_liberally(value)
         except ValueError:
             self.fail("{!r} is not a valid date".format(value), param, ctx)
 
