@@ -14,10 +14,6 @@
 typedef SSIZE_T ssize_t;
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Dispatch to token values build functions.
  *
@@ -28,8 +24,8 @@ extern "C" {
  */
 #define TOKEN(name, ...)                                                \
     (                                                                   \
-        yylval->pyobj = EXPAND(build_##name(__VA_ARGS__)),              \
-        yylval->pyobj ? name : build_EXCEPTION(yylloc, builder)         \
+        yylval.pyobj = EXPAND(build_##name(__VA_ARGS__)),               \
+        yylval.pyobj ? name : build_EXCEPTION(yylloc, builder)          \
     )
 
 #define build_STR(_ptr, _len) PyUnicode_FromStringAndSize(_ptr, _len)
@@ -45,6 +41,7 @@ extern "C" {
 #define build_ACCOUNT(_str) PyUnicode_InternFromString(_str)
 #define build_EXCEPTION(_loc, _builder) ( build_lexer_error_from_exception(_loc, _builder), YYerror )
 
+C_BEGIN_DECLS
 
 /**
  * Validate number string representation and remove commas.
@@ -105,6 +102,7 @@ void parse_date_from_string(const char* string, int* year, int* month, int* day)
 PyObject* pydate_from_civil_day(int year, int month, int day);
 
 
+
 /**
  * Convert an ASCII string to a PyDate object.
  *
@@ -128,8 +126,6 @@ PyObject* pydate_from_cstring(const char* string);
  */
 void initialize_datetime();
 
-#ifdef __cplusplus
-}
-#endif
+C_END_DECLS
 
 #endif /* BEANCOUNT_TOKENS_H */
