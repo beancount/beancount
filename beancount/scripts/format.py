@@ -43,6 +43,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
             rf"({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+"
             rf"((?:{amount.CURRENCY_RE})\b.*)",
             line,
+            regex.V1,
         )
         if match:
             prefix, number, rest = match.groups()
@@ -140,7 +141,9 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
-    match_posting = regex.compile(r"([ \t]+)({}.*)".format(account.ACCOUNT_RE)).match
+    match_posting = regex.compile(
+        r"([ \t]+)({}.*)".format(account.ACCOUNT_RE), regex.V1
+    ).match
     width = compute_most_frequent(
         len(match.group(1))
         for match in (match_posting(prefix) for prefix, _, _ in match_pairs)
