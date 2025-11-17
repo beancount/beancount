@@ -204,6 +204,14 @@ def required_daily_prices(lifetimes_map, date_last, weekdays_only=False):
         if currency_pair[1] is None:
             continue
         for date_begin, date_end in intervals:
+            # Skip invalid date intervals where date_begin >= date_end to prevent
+            # generating redundant price records, particularly for positions closed on Fridays.
+            # When closing a position on Friday, date_begin and date_end could be equal,
+            # and the weekday adjustment code would keep the date as Friday, resulting
+            # in duplicate Friday records in the price requirements.
+            if date_begin >= date_end:
+                continue
+
             # Find first Weekday starting on or before minimum date.
             date = date_begin
             if weekdays_only:
