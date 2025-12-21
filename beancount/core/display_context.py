@@ -322,9 +322,12 @@ class DisplayContext:
             # Allow precision for numbers as large as 1 billion in addition to
             # the required number of fractional digits.
             #
-            # TODO(blais): Review this to assess performance impact, and whether
-            # we could fold this outside a calling loop.
-            ctx.prec = num_fractional_digits + 9
+            # TODO(blais, 2020-11-25): Review this to assess performance impact,
+            # and whether we could fold this outside a calling loop.
+            # NOTE(blais, 2025-12-21): Not sure what the context was, but this
+            # prevents computation on very large numbers. Consider removing this
+            # or rewriting.
+            ctx.prec = num_fractional_digits + 12
             return number.quantize(qdigit)
 
     def build(
