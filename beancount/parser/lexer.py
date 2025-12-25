@@ -55,7 +55,7 @@ def lex_iter(file, builder=None):
       All the tokens in the input file as ``(token, lineno, text,
       value)`` tuples where ``token`` is a string representing the
       token kind, ``lineno`` is the line number in the input file
-      where the token was matched, ``mathed`` is a bytes object
+      where the token was matched, ``matched`` is a bytes object
       containing the exact text matched, and ``value`` is the semantic
       value of the token or None.
     """

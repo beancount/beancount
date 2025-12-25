@@ -176,11 +176,11 @@ def normalize_indent_whitespace(match_pairs):
 def main(filenames, output, prefix_width, num_width, currency_column, in_place):
     """Automatically format a Beancount ledger.
 
-    This reformats a Beancount or ledger input file so that the
+    This reformats a beancount or ledger input file so that the
     amounts in the postings are all aligned to the same column.
 
     If the alignment is not specified with the --currency-column
-    option, it is determined automatically from the maximum lenght of
+    option, it is determined automatically from the maximum length of
     the account names and of the numerical part of the transaction
     amounts in the input file. The automatically determined widths can
     be overridden with the --prefix-width and --num-width options

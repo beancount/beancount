@@ -33,7 +33,7 @@ def stable_hash_namedtuple(
 
     This iterates over all the members of objtuple, skipping the attributes from
     the 'ignore' set, and computes a unique hash string code. If the elements
-    are lists or sets, sorts them for stability.
+    are lists or sets, it sorts them for stability.
 
     Args:
       objtuple: A tuple object or other.
@@ -138,7 +138,7 @@ def compare_entries(
 ) -> tuple[bool, data.Directives, data.Directives]:
     """Compare two lists of entries. This is used for testing.
 
-    The entries are compared with disregard for their file location.
+    The entries are compared disregarding their file location.
 
     Args:
       entries1: A list of directives of any type.

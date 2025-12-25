@@ -58,7 +58,7 @@ class Booking(enum.Enum):
 
     # Strict booking method, but disambiguate further with sizes. Reject
     # ambiguous matches with an error but if a lot matches the size exactly,
-    # accept it the oldest.
+    # accept the oldest.
     STRICT_WITH_SIZE = "STRICT_WITH_SIZE"
 
     # Disable matching and accept the creation of mixed inventories.
@@ -103,8 +103,8 @@ class Open(NamedTuple):
         currencies may be stored in this account.
       booking: A Booking enum, the booking method to use to disambiguate
         postings to this account (when zero or more than one postings match the
-        specification), or None if not specified. In practice, this attribute will
-        be should be left unspecified (None) in the vast majority of cases. See
+        specification), or None if not specified. In practice, this attribute
+        should be left unspecified (None) in the vast majority of cases. See
         Booking below for a selection of valid methods.
     """
 
@@ -133,7 +133,7 @@ class Close(NamedTuple):
 class Commodity(NamedTuple):
     """
     An optional commodity declaration directive. Commodities generally do not need
-    to be declared, but they may, and this is mainly created as intended to be
+    to be declared, but they may, and this is created mainly to be
     used to attach meta-data on a commodity name. Whenever a plugin needs
     per-commodity meta-data, you would define such a commodity directive. Another
     use is to define a commodity that isn't otherwise (yet) used anywhere in an
@@ -156,7 +156,7 @@ class Pad(NamedTuple):
     """
     A "pad this account with this other account" directive. This directive
     automatically inserts transactions that will make the next chronological
-    balance directive succeeds. It can be used to fill in missing date ranges of
+    balance directive succeed. It can be used to fill in missing date ranges of
     transactions, as a convenience. You don't have to use this, it's sugar coating
     in case you need it, while you're entering past history into your Ledger.
 
@@ -214,7 +214,7 @@ class Posting(NamedTuple):
       account: A string, the account that is modified by this posting.
       units: An Amount, the units of the position, or None if it is to be
         inferred from the other postings in the transaction.
-      cost: A Cost or CostSpec instances, the units of the position.
+      cost: A Cost or CostSpec instance, the cost of the position.
       price: An Amount, the price at which the position took place, or
         None, where not relevant. Providing a price member to a posting
         automatically adds a price in the prices database at the date of the
@@ -248,7 +248,7 @@ class Transaction(NamedTuple):
       flag: A single-character string or None. This user-specified string
         represents some custom/user-defined state of the transaction. You can use
         this for various purposes. Otherwise common, pre-defined flags are defined
-        under beancount.core.flags, to flags transactions that are automatically
+        under beancount.core.flags, to flag transactions that are automatically
         generated.
       payee: A free-form string that identifies the payee, or None, if absent.
       narration: A free-form string that provides a description for the transaction.
@@ -320,7 +320,7 @@ class Event(NamedTuple):
     each country or state, create a "location" event and whenever you travel, add
     an event directive to indicate its new value. You should be able to write
     simple scripts against those in order to compute if you were present somewhere
-    for a particular number of days. Here's an illustrative example usage, in
+    for a particular number of days. Here's an illustrative example usage: in
     order to maintain your health insurance coverage in Canada, you need to be
     present in the country for 183 days or more, excluding trips of less than 30
     days. There is a similar test to be done in the US by aliens to figure out if
@@ -351,7 +351,7 @@ class Query(NamedTuple):
     """
     A named query declaration. This directive is used to create pre-canned queries
     that can then be automatically run or made available to the shell, or perhaps be
-    rendered as part of a web interface. The purpose of this routine is to define
+    rendered as part of a web interface. The purpose of this directive is to define
     useful queries for the context of the particular given Beancount input file.
 
     Attributes:
@@ -373,7 +373,7 @@ class Price(NamedTuple):
     """
     A price declaration directive. This establishes the price of a currency in
     terms of another currency as of the directive's date. A history of the prices
-    for each currency pairs is built and can be queried within the bookkeeping
+    for each currency pair is built and can be queried within the bookkeeping
     system. Note that because Beancount does not store any data at time-of-day
     resolution, it makes no sense to have multiple price directives at the same
     date. (Beancount will not attempt to solve this problem; this is beyond the
@@ -403,7 +403,7 @@ class Document(NamedTuple):
     much more convenient to provide Beancount with a root directory to search for
     filenames in a hierarchy mirroring the chart of accounts, filenames which
     should match the following dated format: "YYYY-MM-DD.*". See options for
-    detail. Beancount will automatically create these documents directives based
+    detail. Beancount will automatically create these document directives based
     on the file hierarchy, and you can get them by parsing the list of entries.
 
     Attributes:
@@ -429,7 +429,7 @@ class Custom(NamedTuple):
     A custom directive. This directive can be used to implement new experimental
     dated features in the Beancount file. This is meant as an intermediate measure
     to be used when you would need to implement a new directive in a plugin. These
-    directives will be parsed liberally... any list of tokens are supported. All
+    directives will be parsed liberally... any list of tokens is supported. All
     that is required is some unique name for them that acts as a "type". These
     directives are included in the stream and a plugin should be able to gather
     them.
@@ -603,7 +603,7 @@ NoneType: type = type(None)
 def sanity_check_types(
     entry: Directive, allow_none_for_tags_and_links: bool = False
 ) -> None:
-    """Check that the entry and its postings has all correct data types.
+    """Check that the entry and its postings have all correct data types.
 
     Args:
       entry: An instance of one of the entries to be checked.
@@ -683,7 +683,7 @@ def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
     Args:
       entry: A TxnPosting or entry instance
     Returns:
-      A datetime instance.
+      The entry itself.
     """
     return (
         posting_or_entry.txn

@@ -15,7 +15,7 @@ we're specifically avoiding to create an import dependency on
 beancount.core.data in order to keep this module isolatable, but it works on
 postings due to duck-typing.
 
-Function named ``get_*()`` are used to compute values from postings to their price currency.
+Functions named ``get_*()`` are used to compute values from postings to their price currency.
 Functions named ``convert_*()`` are used to convert postings and amounts to any currency.
 """
 

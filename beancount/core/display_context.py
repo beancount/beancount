@@ -103,9 +103,9 @@ class _ContextBase:
     """
 
     def __init__(self) -> None:
-        # Note: has_sign should always be assume when formatting numbers; you
+        # Note: has_sign should always be assumed when formatting numbers; you
         # never know if a new number may require a sign even though one was
-        # never witnessed. So we now we harcode to True. (Note to self: remove
+        # never witnessed. So we now hardcode to True. (Note to self: remove
         # this later.)
         self.has_sign = True
         self.integer_max = 1

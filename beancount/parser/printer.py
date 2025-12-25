@@ -27,7 +27,7 @@ from beancount.utils import misc_utils
 
 
 def align_position_strings(strings):
-    """A helper used to align rendered amounts positions to their first currency
+    """A helper used to align rendered amount positions to their first currency
     character (an uppercase letter). This class accepts a list of rendered
     positions and calculates the necessary width to render them stacked in a
     column so that the first currency word aligns. It does not go beyond that
@@ -424,7 +424,7 @@ class EntryPrinter:
 
 
 def render_flag(inflag: Optional[str]) -> str:
-    """Render a flag, which can be None, a symbol of a character to a string."""
+    """Render a flag, which can be None, a symbol or a character to a string."""
     if not inflag:
         return ""
     return inflag
@@ -466,7 +466,7 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None, write_sou
       file: An optional file object to write the entries to.
       write_source: If true a source file and line number will be written for
         each entry in a format interpretable as a message location for Emacs,
-        VSCode or other editors. This is usefull for "debugging" purposes,
+        VSCode or other editors. This is useful for "debugging" purposes,
         especially in a multi-file setup
     """
     # TODO(blais): DO remove this now, it's a huge annoyance not to be able to
@@ -496,7 +496,7 @@ def print_entries(
       prefix: User-specific prefix for custom indentation (for Fava).
       write_source: If true a source file and line number will be written for
         each entry in a format interpretable as a message location for Emacs,
-        VSCode or other editors. This is usefull for "debugging" peurposes,
+        VSCode or other editors. This is useful for "debugging" purposes,
         especially in a multi-file setup
     """
     assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
@@ -530,7 +530,7 @@ def print_entries(
 # format_location().
 def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
-    Emacs and align and rendered nicely.
+    Emacs and aligned and rendered nicely.
 
     Args:
       meta: A dict with the metadata.
@@ -542,10 +542,10 @@ def render_source(meta):
 
 
 def format_error(error):
-    """Given an error objects, return a formatted string for it.
+    """Given an error object, return a formatted string for it.
 
     Args:
-      error: a namedtuple objects representing an error. It has to have an
+      error: a namedtuple object representing an error. It has to have an
         'entry' attribute that may be either a single directive object or a
         list of directive objects.
     Returns:

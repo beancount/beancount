@@ -89,7 +89,7 @@ class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", s
     def __bool__(self) -> bool:
         """Boolean predicate returns true if the number is non-zero.
         Returns:
-          A boolean, true if non-zero number.
+          A boolean, true if the number is non-zero.
         """
         return self.number != ZERO
 
@@ -172,7 +172,7 @@ def mul(amount: Amount, number: Decimal) -> Amount:
       amount: An instance of Amount.
       number: A decimal number.
     Returns:
-      An Amount, with the same currency, but with 'number' times units.
+      An Amount, with the same currency, but with 'number' times the units.
     """
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number)
@@ -208,7 +208,7 @@ def add(amount1: Amount, amount2: Amount) -> Amount:
       amount1: An instance of Amount.
       amount2: An instance of Amount.
     Returns:
-      An instance of Amount, with the sum the two amount's numbers, in the same
+      An instance of Amount, with the sum of the two amount's numbers, in the same
       currency.
     """
     assert isinstance(amount1.number, Decimal), (

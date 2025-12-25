@@ -454,7 +454,7 @@ PUBLIC_OPTION_GROUPS = [
       values must be example strings in the following format:
         <currency>:<example>
       for example, 'USD:0.01'. This would make USD render with two fractional
-      digits, always, regardless of the numbers present in the ledge.
+      digits, always, regardless of the numbers present in the ledger.
 
       By default, the display precision is normally inferred from statistics
       derived from the population of numbers seen in the ledger. However this
@@ -463,10 +463,10 @@ PUBLIC_OPTION_GROUPS = [
       recommended method. (If you have a well burnished ledger already, it is
       highly likely that the most common numbers present in your file already
       set this right and that inference infers the correct precision
-      automatically; you can use `bean-doctor display-contenxt` to verify this).
+      automatically; you can use `bean-doctor display-context` to verify this).
 
       Note that although the precision is fixed, the width of the displayed
-      numbers is still learned from the numbers in the input fie.
+      numbers is still learned from the numbers in the input file.
 
       For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
@@ -496,7 +496,7 @@ PUBLIC_OPTION_GROUPS = [
       is zero. As a special case, this value, that is, the fallback value used
       for all currencies without an explicit default can be overridden using the
       '*' currency, like this:  '*:0.5'. Used by itself, this last example sets
-      the fallabck tolerance as '0.5' for all currencies.
+      the fallback tolerance as '0.5' for all currencies.
 
       For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
@@ -518,7 +518,7 @@ PUBLIC_OPTION_GROUPS = [
       'inferred_tolerance_default' option, the tolerance is inferred from the
       numbers in the input file. For example, if a transaction has posting with
       a value like '32.424 CAD', the tolerance for CAD will be inferred to be
-      0.001 times some multiplier. This is the muliplier value.
+      0.001 times some multiplier. This is the multiplier value.
 
       We normally assume that the institution we're reproducing this posting
       from applies rounding, and so the default value for the multiplier is
@@ -543,7 +543,7 @@ PUBLIC_OPTION_GROUPS = [
     ),
     OptGroup(
         """
-      This option is deprecated; it has been renaemd to the more
+      This option is deprecated; it has been renamed to the more
       "tolerance_multiplier" because it is used to convert precision numbers
       like '0.01' to a tolerance by multiplying them by this value.
     """,
@@ -662,7 +662,7 @@ PUBLIC_OPTION_GROUPS = [
     ),
     OptGroup(
         """
-      Support the pipe (|) symbol to for transaction separator.
+      Support the pipe (|) symbol for transaction separator.
 
       This is only provided as a temporary stopgap to ease transition, and will
       be removed eventually. This is why this option is marked as deprecated.
@@ -673,7 +673,7 @@ PUBLIC_OPTION_GROUPS = [
                 False,
                 "TRUE",
                 converter=options_validate_boolean,
-                deprecated="Allowing pipe separator temporary; this will go away eventually.",
+                deprecated="Allowing pipe separator temporarily; this will go away eventually.",
             )
         ],
     ),
@@ -681,8 +681,8 @@ PUBLIC_OPTION_GROUPS = [
         """
       Allow plugins to produce a None object for the 'tags' and 'links'
       attributes of a Transaction instance. By default, without this, those
-      attributes are now ensured to be a Set type, and an empty frozenset()
-      instance if there are no values
+      attributes are now ensured to be a set type, and an empty frozenset()
+      instance if there are no values.
 
       This is only provided as a temporary mechanism to allow you some time to
       port your plugins code.

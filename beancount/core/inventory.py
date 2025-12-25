@@ -23,7 +23,7 @@ simply leave the 'cost' as None. This is the case for most of the transactions.
 
 = Conversions =
 
-If it often desired to convert this inventory into an equivalent position for
+It is often desired to convert this inventory into an equivalent position for
 its cost, or to just flatten all the positions with the same currency and count
 the number of units, or to compute the market value for the inventory at a
 specific date. You do these conversions using the reduce() method:
@@ -112,7 +112,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
 
         Args:
           dformat: An instance of DisplayFormatter.
-          parents: A boolean, true if we should surround the results by parentheses.
+          parens: A boolean, true if we should surround the results by parentheses.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
@@ -275,7 +275,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
             return next(iter(self))
 
     def get_currency_units(self, currency):
-        """Fetch the total amount across all the position in the given currency.
+        """Fetch the total amount across all the positions in the given currency.
         This may sum multiple lots in the same currency denomination.
 
         Args:

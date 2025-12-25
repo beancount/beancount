@@ -90,7 +90,7 @@ def join(*components: str) -> Account:
     Args:
       *components: Strings, the components of an account name.
     Returns:
-      A string, joined in a single account name.
+      A string, joined into a single account name.
     """
     return sep.join(components)
 
@@ -140,7 +140,7 @@ def sans_root(account_name: Account) -> Account | None:
     For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
 
     Args:
-      account_name: A string, the name of the account whose leaf name to return.
+      account_name: A string, the name of the account to return the non-root portion of.
     Returns:
       A string, the name of the non-root portion of this account name or None if
       the account is empty.
@@ -163,14 +163,14 @@ def root(num_components: int, account_name: Account) -> Account:
 
 
 def has_component(account_name: Account, component: str) -> bool:
-    """Return true if one of the account contains a given component.
+    """Return true if the account contains a given component.
 
     Args:
       account_name: A string, an account name.
       component: A string, a component of an account name. For instance,
         ``Food`` in ``Expenses:Food:Restaurant``. All components are considered.
     Returns:
-      Boolean: true if the component is in the account. Note that a component
+      A boolean: true if the component is in the account. Note that a component
       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
     return bool(re.search("(^|:){}(:|$)".format(component), account_name))
@@ -198,7 +198,7 @@ def walk(
     """A version of os.walk() which yields directories that are valid account names.
 
     This only yields directories that are accounts... it skips the other ones.
-    For convenience, it also yields you the account's name.
+    For convenience, it also yields the account's name.
 
     Args:
       root_directory: A string, the name of the root of the hierarchy to be walked.
@@ -265,7 +265,7 @@ class AccountTransformer:
         return account_name if self.rsep is None else account_name.replace(sep, self.rsep)
 
     def parse(self, transformed_name: str) -> Account:
-        "Convert the transform account name to an account name."
+        "Convert the transformed account name to an account name."
         return (
             transformed_name
             if self.rsep is None
