@@ -583,7 +583,7 @@ def generate_tax_accounts(year, date_max):
 
     """)
 
-    return [entry for entry in entries if entry.date < date_max]
+    return [entry for entry in entries if entry.date <= date_max]
 
 
 def generate_retirement_employer_match(entries, account_invest, account_income):
