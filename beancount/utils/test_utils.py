@@ -89,7 +89,7 @@ def temp_file(prefix: str = "", suffix: str = ".txt") -> Generator[Path, None, N
     This utils exists because `NamedTemporaryFile` can't be re-opened on win32.
 
     Yields:
-      A string, the name of the temporary directory created.
+      A Path object representing the temporary file created.
     """
     with tempfile.TemporaryDirectory(prefix="beancount-test-tmpdir.") as p:
         yield Path(p, prefix + "-temp_file-" + suffix)
@@ -334,6 +334,8 @@ class TestCase(unittest.TestCase):
 
         Args:
           expected_text: A string, the text that should have been printed to stdout.
+        Yields:
+          A StringIO object capturing the output.
         Raises:
           AssertionError: If the text differs.
         """

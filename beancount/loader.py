@@ -311,7 +311,6 @@ def needs_refresh(options_map: OptionsMap) -> bool:
 
     Args:
       options_map: An options dict as per the parser.
-      mtime: A modified time, to check if it covers the include files in the options_map.
     Returns:
       A boolean, true if the input is obsoleted by changes in the input files.
     """
@@ -326,6 +325,8 @@ def compute_input_hash(filenames):
 
     Args:
       filenames: A list of input files. Order is not relevant.
+    Returns:
+      A hexadecimal MD5 hash string of the input files' metadata.
     """
     md5 = hashlib.md5()
     for filename in sorted(filenames):
@@ -538,6 +539,8 @@ def aggregate_options_map(
         Note: This value is mutated in-place.
       other_options_map: A list of other options maps, some of whose values
         we'd like to see aggregated.
+    Returns:
+      A new aggregated options map.
     """
     options_map = copy.copy(options_map)
 
@@ -744,7 +747,7 @@ def combine_plugins(*plugin_modules):
 
     This is used to create plugins of plugins.
     Args:
-      *plugins_modules: A sequence of module objects.
+      *plugin_modules: A sequence of module objects.
     Returns:
       A list that can be assigned to the new module's __plugins__ attribute.
     """
@@ -806,7 +809,12 @@ def load_doc(expect_errors=False):
 
 
 def initialize(use_cache: bool, cache_filename: str | None = None) -> None:
-    """Initialize the loader."""
+    """Initialize the loader.
+
+    Args:
+      use_cache: Whether to use the pickle load cache.
+      cache_filename: Optional override for the cache filename pattern.
+    """
 
     # Unless an environment variable disables it, use the pickle load cache
     # automatically. Note that this works across all Python programs running the

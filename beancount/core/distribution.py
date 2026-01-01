@@ -51,7 +51,7 @@ class Distribution:
         return value
 
     def max(self):
-        """Return the minimum value seen in the distribution.
+        """Return the maximum value seen in the distribution.
 
         Returns:
           An element of the value type, or None, if the distribution was empty.

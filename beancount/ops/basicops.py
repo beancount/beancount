@@ -17,6 +17,7 @@ def filter_tag(tag, entries):
 
     Args:
       tag: A string, the tag we are interested in.
+      entries: A list of directives.
     Yields:
       Every entry in 'entries' that tags to 'tag.
     """
@@ -30,6 +31,7 @@ def filter_link(link, entries):
 
     Args:
       link: A string, the link we are interested in.
+      entries: A list of directives.
     Yields:
       Every entry in 'entries' that links to 'link.
     """

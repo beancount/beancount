@@ -238,8 +238,8 @@ def parents(account_name: Account) -> Iterator[Account]:
 
     Args:
       account_name: The name of the account we want to start iterating from.
-    Returns:
-      A generator of account name strings.
+    Yields:
+      Account name strings.
     """
     current_account: str | None = account_name
     while current_account:

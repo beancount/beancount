@@ -257,7 +257,7 @@ def merge_postings(entries, accounts):
     Args:
       entries: A list of directives.
       accounts: A list of account strings to get the balances for.
-    Yields:
+    Returns:
       A list of TxnPosting's for all the accounts, in sorted order.
     """
     real_root = realization.realize(entries)
@@ -308,9 +308,10 @@ def iter_dates_with_balance(date_begin, date_end, entries, accounts):
     """Iterate over dates, including the balances of the postings iterator.
 
     Args:
-      postings_iter: An iterator of postings as per postings_for().
       date_begin: The start date.
       date_end: The end date.
+      entries: A list of directives.
+      accounts: A list of account strings.
     Yields:
       Pairs of (data, balances) objects, with
         date: A datetime.date instance
@@ -1516,8 +1517,11 @@ def contextualize_file(contents, employer):
 
     Args:
       contents: A string, the generic file contents.
+      employer: A string, the name of the employer.
     Returns:
-      A string, the contextualized version.
+      A pair of
+        A string, the contextualized version.
+        A dict, the replacements made.
     """
     replacements = {
         "CC": "US",

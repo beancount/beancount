@@ -257,7 +257,7 @@ def validate_currency_constraints(entries, options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
     Returns:
       A list of new errors, if any were found.
     """
@@ -309,7 +309,7 @@ def validate_documents_paths(entries, options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
     Returns:
       A list of new errors, if any were found.
     """
@@ -330,7 +330,7 @@ def validate_data_types(entries, options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
     Returns:
       A list of new errors, if any were found.
     """
@@ -353,7 +353,7 @@ def validate_check_transaction_balances(entries, options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
     Returns:
       A list of new errors, if any were found.
     """

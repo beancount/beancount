@@ -16,7 +16,11 @@ if TYPE_CHECKING:
 
 
 def is_gpg_installed() -> bool:
-    """Return true if GPG 1.4.x or 2.x are installed, which is what we use and support."""
+    """Return true if GPG 1.4.x or 2.x are installed, which is what we use and support.
+
+    Returns:
+      A boolean, true if GPG is installed.
+    """
     try:
         pipe = subprocess.Popen(
             ["gpg", "--version"],

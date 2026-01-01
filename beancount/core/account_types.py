@@ -62,6 +62,7 @@ def get_account_sort_key(
 
     Args:
       account_types: An instance of AccountTypes, a tuple of account type names.
+      account_name: A string, the name of the account to be sorted.
     Returns:
       An object to use as the 'key' argument to the sort function.
     """

@@ -117,7 +117,13 @@ def check_import(package_name, min_version=None, module_name=None):
 
 
 def parse_version(version_str: str) -> list[int]:
-    """Parse the version string into a comparable tuple."""
+    """Parse the version string into a comparable tuple.
+
+    Args:
+      version_str: A string representing the version.
+    Returns:
+      A list of integers representing the version components.
+    """
     return [int(v) for v in version_str.split(".")]
 
 

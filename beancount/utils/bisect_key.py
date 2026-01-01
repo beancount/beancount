@@ -62,7 +62,7 @@ def bisect_right_with_key(a, x, key, lo=0, hi=None):
       lo: The smallest index to search.
       hi: The largest index to search.
     Returns:
-      As in bisect.bisect_right, an element from list 'a'.
+      As in bisect.bisect_right, an insertion point which is an index.
     """
 
     if lo < 0:

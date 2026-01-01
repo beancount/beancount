@@ -37,15 +37,13 @@ def handle_ambiguous_matches(entry, posting, matches, method):
         attempting to match.
       matches: A list of matching Position instances from the ante-inventory.
         Those positions are known to already match the 'posting' spec.
-      methods: A mapping of account name to their corresponding booking
-        method.
+      method: The booking method to use to disambiguate.
     Returns:
       A triple of
         booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
+        booked_matches: A list of matching positions that were used to reduce.
         errors: A list of errors to be generated.
-        insufficient: A boolean, true if we could not find enough matches to
-        cover the entire position.
     """
     assert isinstance(method, Booking), "Invalid type: {}".format(method)
     assert matches, "Internal error: Invalid call with no matches"
@@ -73,7 +71,16 @@ def handle_ambiguous_matches(entry, posting, matches, method):
 
 
 def booking_method_STRICT(entry, posting, matches):
-    """Strict booking method. This method fails if there are ambiguous matches."""
+    """Strict booking method. This method fails if there are ambiguous matches.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     booked_reductions = []
     booked_matches = []
     errors = []
@@ -120,6 +127,14 @@ def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
     This booking method applies the same algorithm as the STRICT method, but if
     only one of the ambiguous lots matches the desired size, select that one
     automatically.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
     """
     (booked_reductions, booked_matches, errors, insufficient) = booking_method_STRICT(
         entry, posting, matches
@@ -144,22 +159,60 @@ def booking_method_STRICT_WITH_SIZE(entry, posting, matches):
 
 
 def booking_method_FIFO(entry, posting, matches):
-    """FIFO booking method implementation."""
+    """FIFO booking method implementation.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     return _booking_method_xifo(entry, posting, matches, "date", False)
 
 
 def booking_method_LIFO(entry, posting, matches):
-    """LIFO booking method implementation."""
+    """LIFO booking method implementation.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     return _booking_method_xifo(entry, posting, matches, "date", True)
 
 
 def booking_method_HIFO(entry, posting, matches):
-    """HIFO booking method implementation."""
+    """HIFO booking method implementation.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     return _booking_method_xifo(entry, posting, matches, "number", True)
 
 
 def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
-    """FIFO and LIFO booking method implementations."""
+    """FIFO and LIFO booking method implementations.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+      sortattr: A string, the attribute of Cost to sort by.
+      reverse_order: A boolean, whether to reverse the sort order.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     booked_reductions = []
     booked_matches = []
     errors = []
@@ -195,7 +248,16 @@ def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
 
 
 def booking_method_NONE(entry, posting, matches):
-    """NONE booking method implementation."""
+    """NONE booking method implementation.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, insufficient).
+    """
 
     # This never needs to match against any existing positions... we
     # disregard the matches, there's never any error. Note that this never
@@ -213,7 +275,16 @@ def booking_method_NONE(entry, posting, matches):
 
 
 def booking_method_AVERAGE(entry, posting, matches):
-    """AVERAGE booking method implementation."""
+    """AVERAGE booking method implementation.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+    Returns:
+      A tuple of (booked_reductions, booked_matches, errors, insufficient).
+    """
     booked_reductions = []
     booked_matches = []
     errors = [AmbiguousMatchError(entry.meta, "AVERAGE method is not supported", entry)]

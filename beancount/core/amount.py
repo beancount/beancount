@@ -95,6 +95,9 @@ class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", s
 
     def __eq__(self, other):
         """Equality predicate. Returns true if both number and currency are equal.
+
+        Args:
+          other: Another instance of Amount.
         Returns:
           A boolean.
         """

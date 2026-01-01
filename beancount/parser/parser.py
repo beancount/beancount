@@ -147,7 +147,7 @@ def is_posting_incomplete(posting) -> bool:
     If any of the possible amounts are missing, this returns True.
 
     Args:
-      entries: A directive.
+      posting: A posting instance.
     Returns:
       A boolean, true if there are some missing portions of any postings found.
     """
@@ -175,7 +175,7 @@ def is_entry_incomplete(entry: data.Directive) -> bool:
     """Detect the presence of elided amounts in Transactions.
 
     Args:
-      entries: A directive.
+      entry: A directive.
     Returns:
       A boolean, true if there are some missing portions of any postings found.
     """
@@ -198,7 +198,11 @@ def parse_file(
 
     Args:
       file: file object or path to the file to be parsed.
-      kw: a dict of keywords to be applied to the C parser.
+      report_filename: A string, the name of the file to use in the error reports.
+      report_firstline: An integer, the line number of the first line of the file.
+      encoding: A string, the encoding to use for the file.
+      debug: A boolean, true if the parser should output debug information.
+      **kw: a dict of keywords to be applied to the C parser.
     Returns:
       A tuple of (
         list of entries parsed in the file,
@@ -239,7 +243,7 @@ def parse_string(
         parsed entries.
       dedent: Whether to run textwrap.dedent() on the string before parsing.
       **kw: See parse.c.
-    Return:
+    Returns:
       Same as the output of parse_file().
     """
     if dedent and isinstance(string, str):
@@ -346,7 +350,7 @@ def parse_one(string: str) -> data.Directive:
       string: A string with some Beancount input.
       level: The number of extra stacks to ignore.
     Returns:
-      A list of entries.
+      A single directive.
     Raises:
       AssertionError: If there are any errors.
     """

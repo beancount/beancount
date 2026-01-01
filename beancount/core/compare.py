@@ -40,6 +40,8 @@ def stable_hash_namedtuple(
       ignore: A set of strings, attribute names to be skipped in
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
+    Returns:
+      A hexadecimal string representing the stable hash.
 
     """
     # Note: this routine is slow and would stand to be implemented in C.

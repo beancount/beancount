@@ -146,6 +146,7 @@ class EntryPrinter:
         Args:
           meta: A dict that contains the metadata for this directive.
           oss: A file object to write to.
+          prefix: An optional string to use as indentation prefix for the metadata.
         """
         if meta is None:
             return
@@ -424,7 +425,13 @@ class EntryPrinter:
 
 
 def render_flag(inflag: Optional[str]) -> str:
-    """Render a flag, which can be None, a symbol or a character to a string."""
+    """Render a flag, which can be None, a symbol or a character to a string.
+
+    Args:
+      inflag: A string representing the flag, or None.
+    Returns:
+      A string representing the flag, or an empty string if None was provided.
+    """
     if not inflag:
         return ""
     return inflag
@@ -443,6 +450,7 @@ def format_entry(
       entry: An entry instance.
       dcontext: An instance of DisplayContext used to format the numbers.
       render_weights: A boolean, true to render the weights for debugging.
+      prefix: An optional string to use as indentation prefix for the entry.
       write_source: If true a source file and line number will be written for
         each entry in a format interpretable as a message location for Emacs,
         VSCode or other editors. As this is for

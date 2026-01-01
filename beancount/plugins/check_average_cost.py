@@ -40,7 +40,7 @@ def validate_average_cost(entries, options_map, config_str=None):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
       config_str: The configuration as a string version of a float.
     Returns:
       A list of new errors, if any were found.

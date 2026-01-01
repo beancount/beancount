@@ -85,7 +85,7 @@ def compress_intervals_days(intervals, num_days):
       num_days: An integer, the number of unused days to require for intervals
         to be distinct, to allow a gap.
     Returns:
-      A new dict of lifetimes map where some intervals may have been joined.
+      A new list of date pairs where some intervals may have been joined.
     """
     ignore_interval = datetime.timedelta(days=num_days)
     new_intervals = []

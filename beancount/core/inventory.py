@@ -240,7 +240,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
         return set(currency for currency, _ in self.keys())
 
     def cost_currencies(self):
-        """Return the list of unit currencies held in this inventory.
+        """Return the set of unit currencies held in this inventory.
 
         Returns:
           A set of currency strings.
@@ -338,6 +338,9 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
 
         See functions in beancount.core.convert.
 
+        Args:
+          reducer: A function that accepts a Position and returns an Amount.
+          *args: Additional arguments to be passed to the reducer function.
         Returns:
           An instance of Inventory.
         """
@@ -457,12 +460,11 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
         self, position: Position | data.Posting
     ) -> tuple[Position | None, MatchResult]:
         """Add using a position (with strict lot matching).
-        Return True if this position was booked against and reduced another.
 
         Args:
           position: The Posting or Position to add to this inventory.
         Returns:
-          A pair of (position, booking) where 'position' is the position that
+          A pair of (position, matched) where 'position' is the position that
           that was modified, and where 'matched' is a MatchResult enum that
           hints at how the lot was booked to this inventory.
         """
@@ -540,7 +542,7 @@ def check_invariants(inv: Inventory) -> None:
     """Check the invariants of the Inventory.
 
     Args:
-      inventory: An instance of Inventory.
+      inv: An instance of Inventory.
     Returns:
       If the invariants are respected, otherwise throws an AssertionError.
     """

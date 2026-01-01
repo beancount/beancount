@@ -53,7 +53,7 @@ def insert_currency_trading_postings(entries, options_map, config):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
       config: The base account name for currency trading accounts.
     Returns:
       A list of new errors, if any were found.

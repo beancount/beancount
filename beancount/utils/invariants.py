@@ -56,7 +56,7 @@ def instrument_invariants(klass, prefun, postfun):
     Args:
       klass: A class object, whose methods to be instrumented.
       prefun: A function that checks invariants pre-call.
-      postfun: A function that checks invariants pre-call.
+      postfun: A function that checks invariants post-call.
     """
     instrumented = {}
     for attrname, object_ in klass.__dict__.items():

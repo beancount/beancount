@@ -289,7 +289,7 @@ class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost
         Args:
           scalar: A Decimal.
         Returns:
-          An instance of Inventory.
+          An instance of Position.
         """
         return Position(amount_mul(self.units, scalar), self.cost)
 
@@ -379,7 +379,7 @@ class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost
         """Create a position from an amount and a cost.
 
         Args:
-          amount: An amount, that represents the number of units and the lot currency.
+          units: An amount, that represents the number of units and the lot currency.
           cost_amount: If not None, represents the cost amount.
         Returns:
           A Position instance.

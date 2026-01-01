@@ -346,6 +346,8 @@ class DisplayContext:
             by the context will be used.
           reserved: An integer, the number of extra digits to be allocated in
             the maximum width calculations.
+        Returns:
+          A DisplayFormatter instance.
         """
         if commas is None:
             commas = self.commas

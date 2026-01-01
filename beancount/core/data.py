@@ -651,7 +651,7 @@ def posting_has_conversion(posting: Posting) -> bool:
 
     Args:
       posting: an instance of Posting
-    Return:
+    Returns:
       A boolean, true if this posting has a price conversion.
     """
     return posting.cost is None and posting.price is not None
@@ -681,7 +681,7 @@ def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
     """Return the entry associated with the posting or entry.
 
     Args:
-      entry: A TxnPosting or entry instance
+      posting_or_entry: A TxnPosting or entry instance
     Returns:
       The entry itself.
     """
@@ -812,7 +812,7 @@ def remove_account_postings(account: Account, entries: Directives) -> Directives
     Args:
       account: A string, the account name whose postings we want to remove.
     Returns:
-      A list of entries without the rounding postings.
+      A list of entries without the postings for the given account.
     """
     new_entries = []
     for entry in entries:

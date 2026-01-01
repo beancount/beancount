@@ -198,6 +198,7 @@ def contains(real_account, account_name):
     """True if the given account node contains the subaccount name.
 
     Args:
+      real_account: An instance of RealAccount.
       account_name: A string, the name of a direct or indirect subaccount of
         this node.
     Returns:
@@ -668,7 +669,7 @@ def compute_postings_balance(txn_postings):
     """Compute the balance of a list of Postings's or TxnPosting's positions.
 
     Args:
-      postings: A list of Posting instances and other directives (which are
+      txn_postings: A list of Posting instances and other directives (which are
         skipped).
     Returns:
       An Inventory.

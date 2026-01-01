@@ -352,7 +352,15 @@ def linked(filename, location_spec):
 def resolve_region_to_entries(
     entries: data.Entries, filename: str, region: tuple[str, int, int]
 ) -> data.Entries:
-    """Resolve a filename and region to a list of entries."""
+    """Resolve a filename and region to a list of entries.
+
+    Args:
+      entries: A list of entries.
+      filename: The top-level filename.
+      region: A tuple of (filename, start_line, end_line).
+    Returns:
+      A list of entries in the given region.
+    """
 
     search_filename, first_lineno, last_lineno = region
     if search_filename is None:

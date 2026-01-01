@@ -317,6 +317,9 @@ def get_latest_price(price_map, base_quote):
     Args:
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
         number) tuples, as created by build_price_map.
+      base_quote: A pair of strings, the base currency to lookup, and the quote
+        currency to lookup, which expresses which units the base currency is
+        denominated in. This may also just be a string, with a '/' separator.
     Returns:
       A pair of (date, number), where 'date' is a datetime.date instance and
       'number' is a Decimal of the price, or rate, at that date. The date is the

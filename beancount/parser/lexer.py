@@ -76,8 +76,9 @@ def lex_iter_string(string, builder=None, **kwargs):
 
     Args:
       string: a str or bytes, the contents of the ledger to be parsed.
-    Returns:
-      An iterator, see ``lex_iter()`` for details.
+    Yields:
+      All the tokens in the input file as ``(token, lineno, text,
+      value)`` tuples.
     """
     if not isinstance(string, bytes):
         string = string.encode("utf8")

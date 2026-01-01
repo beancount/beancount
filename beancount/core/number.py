@@ -96,7 +96,14 @@ def same_sign(number1: Decimal, number2: Decimal) -> bool:
 
 
 def auto_quantized_exponent(number: Decimal, threshold: float) -> int:
-    """Automatically infer the exponent that would be used below a given threshold."""
+    """Automatically infer the exponent that would be used below a given threshold.
+
+    Args:
+      number: A Decimal instance to infer from.
+      threshold: A float threshold for quantization.
+    Returns:
+      An integer, the inferred exponent.
+    """
     dtuple = number.normalize().as_tuple()
     norm = Decimal(
         dtuple._replace(sign=0, exponent=-len(dtuple.digits))  # type: ignore[arg-type]
@@ -126,6 +133,11 @@ def auto_quantize(number: Decimal, threshold: float) -> Decimal:
       134.3300018310547 134.33
       253.920200000000000000000000000000 253.9202
 
+    Args:
+      number: A Decimal instance to quantize.
+      threshold: A float threshold for quantization.
+    Returns:
+      A new Decimal instance, quantized.
     """
     exponent = auto_quantized_exponent(number, threshold)
     if exponent != number.as_tuple().exponent:
@@ -137,7 +149,13 @@ def auto_quantize(number: Decimal, threshold: float) -> Decimal:
 
 
 def num_fractional_digits(number: Decimal) -> int:
-    """Return the number of fractional digits."""
+    """Return the number of fractional digits.
+
+    Args:
+      number: A Decimal instance.
+    Returns:
+      An integer, the number of fractional digits.
+    """
     return -number.as_tuple().exponent  # type: ignore[operator]
 
 
@@ -153,7 +171,7 @@ def infer_quantum_from_list(numbers: list[Decimal], threshold: float = 0.01) -> 
     under the threshold.
 
     Args:
-      prices: A list of float or Decimal prices to infer from. If floats are
+      numbers: A list of float or Decimal prices to infer from. If floats are
         provided, conversion is done naively.
       threshold: A fraction, the maximum error to tolerate before stopping the
         search.

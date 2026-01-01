@@ -110,7 +110,18 @@ def book(entries, options_map, methods, initial_balances=None):
     See the internal implementation _book() for details.
     This method only stripes some of the return values.
 
-    See _book() for arguments and return values.
+    Args:
+      entries: A list of directives, with some postings possibly left
+        with incomplete amounts as produced by the parser.
+      options_map: An options dict as produced by the parser.
+      methods: A mapping of account name to their corresponding booking
+        method.
+      initial_balances: A dict of (account, inventory) pairs to start booking from.
+        This is useful when attempting to book on top of an existing state.
+    Returns:
+      A pair of
+        entries: A list of interpolated entries with all their postings completed.
+        errors: New errors produced during interpolation.
     """
     entries, errors, _ = _book(entries, options_map, methods, initial_balances)
     return entries, errors
@@ -120,7 +131,7 @@ def _book(entries, options_map, methods, initial_balances=None):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
-      incomplete_entries: A list of directives, with some postings possibly left
+      entries: A list of directives, with some postings possibly left
         with incomplete amounts as produced by the parser.
       options_map: An options dict as produced by the parser.
       methods: A mapping of account name to their corresponding booking
@@ -301,7 +312,7 @@ def categorize_by_currency(entry, balances):
          we use that one.
 
     Args:
-      postings: A list of incomplete postings to categorize.
+      entry: A transaction whose incomplete postings to categorize.
       balances: A dict of currency to inventory contents before the transaction is
         applied.
     Returns:

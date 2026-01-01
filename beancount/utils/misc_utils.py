@@ -100,7 +100,7 @@ def escape_string(string):
 
     Args:
       string: Any string.
-    Returns.
+    Returns:
       The input string, with offending characters replaced.
     """
     return string.replace("\\", r"\\").replace('"', r"\"")

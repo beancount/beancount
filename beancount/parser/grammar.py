@@ -241,6 +241,8 @@ class Builder(lexer.LexBuilder):
         """Start rule stores the final result here.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           entries: A list of entries to store.
         """
         if entries:
@@ -256,7 +258,7 @@ class Builder(lexer.LexBuilder):
         Args:
           filename: The current filename
           lineno: The current line number
-          excvalue: The exception value, or a str, the message of the error.
+          exc_value: The exception value, or a str, the message of the error.
           exc_type: An exception type, if an exception occurred.
           exc_traceback: A traceback object.
         """
@@ -275,6 +277,8 @@ class Builder(lexer.LexBuilder):
         """Check account name validity.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           account: a str, the account name.
         Returns:
           A string, the account name.
@@ -306,6 +310,8 @@ class Builder(lexer.LexBuilder):
         Note that this does not need to be stack ordered.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           tag: A string, a tag to be added.
         """
         self.tags.append(tag)
@@ -314,6 +320,8 @@ class Builder(lexer.LexBuilder):
         """Pop a tag off the current set of stacks.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           tag: A string, a tag to be removed from the current set of tags.
         """
         try:
@@ -328,6 +336,8 @@ class Builder(lexer.LexBuilder):
         """Set a metadata field on the current key-value pairs to be added to transactions.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           key_value: A KeyValue instance, to be added to the dict of metadata.
         """
         key, value = key_value
@@ -337,6 +347,8 @@ class Builder(lexer.LexBuilder):
         """Removed a key off the current set of stacks.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           key: A string, a key to be removed from the meta dict.
         """
         try:
@@ -450,6 +462,8 @@ class Builder(lexer.LexBuilder):
         """Process an amount grammar rule.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           number: a Decimal instance, the number of the amount.
           currency: a currency object (a str, really, see CURRENCY above)
         Returns:
@@ -464,6 +478,8 @@ class Builder(lexer.LexBuilder):
         """Process an amount grammar rule.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           number_per: a Decimal instance, the number of the cost per share.
           number_total: a Decimal instance, the number of the cost over all shares.
           currency: a currency object (a str, really, see CURRENCY above)
@@ -488,6 +504,8 @@ class Builder(lexer.LexBuilder):
         """Process a cost_spec grammar rule.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           cost_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
           is_total: Assume only the total cost is specified; reject the <number> # <number>
@@ -596,6 +614,8 @@ class Builder(lexer.LexBuilder):
         """Handle a recursive list grammar rule, generically.
 
         Args:
+          filename: The name of the file being processed.
+          lineno: The current line number.
           object_list: the current list of objects.
           new_object: the new object to be added.
         Returns:
@@ -658,7 +678,7 @@ class Builder(lexer.LexBuilder):
         return Close(meta, date, account)
 
     def commodity(self, filename, lineno, date, currency, kvlist):
-        """Process a close directive.
+        """Process a commodity directive.
 
         Args:
           filename: The current filename.
@@ -667,7 +687,7 @@ class Builder(lexer.LexBuilder):
           currency: A string, the commodity being declared.
           kvlist: a list of KeyValue instances.
         Returns:
-          A new Close object.
+          A new Commodity object.
         """
         meta = new_metadata(filename, lineno, kvlist)
         return Commodity(meta, date, currency)
@@ -727,7 +747,7 @@ class Builder(lexer.LexBuilder):
         return Event(meta, date, event_type, description)
 
     def query(self, filename, lineno, date, query_name, query_string, kvlist):
-        """Process a document directive.
+        """Process a query directive.
 
         Args:
           filename: the current filename.
@@ -767,6 +787,7 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to attach the note to.
           comment: A str, the note's comments contents.
+          tags_links: A TagsLinks instance of tags and links to apply.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Note object.
@@ -819,7 +840,10 @@ class Builder(lexer.LexBuilder):
         """Create a custom value object, along with its type.
 
         Args:
+          filename: The current filename.
+          lineno: The current line number.
           value: One of the accepted custom values.
+          dtype: The datatype of the object.
         Returns:
           A pair of (value, dtype) where 'dtype' is the datatype is that of the
           value.
@@ -829,14 +853,13 @@ class Builder(lexer.LexBuilder):
         return ValueType(value, dtype)
 
     def key_value(self, filename, lineno, key, value):
-        """Process a document directive.
+        """Process a metadata key-value pair.
 
         Args:
-          filename: The current filename.
+          filename: The name of the file being processed.
           lineno: The current line number.
-          date: A datetime object.
-          account: A string, the account the document relates to.
-          document_filename: A str, the name of the document file.
+          key: A string, the metadata key.
+          value: The metadata value.
         Returns:
           A new KeyValue object.
         """

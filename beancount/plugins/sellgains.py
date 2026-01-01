@@ -87,7 +87,7 @@ def validate_sell_gains(entries, options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: An options map.
+      options_map: An options map.
     Returns:
       A list of new errors, if any were found.
     """

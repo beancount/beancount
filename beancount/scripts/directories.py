@@ -19,7 +19,7 @@ def validate_directory(accounts, document_dir):
     account name declared in the given list.
 
     Args:
-      account: A set or dict of account names.
+      accounts: A set or dict of account names.
       document_dir: A string, the root directory to walk and validate.
     Returns:
       An errors for each invalid directory name found.
