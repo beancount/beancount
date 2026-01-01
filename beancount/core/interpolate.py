@@ -115,7 +115,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
           Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
           Assets:Investments:Cash -1150.00 USD
 
-    The tolerance for units of USD will calculated as the MAXIMUM of:
+    The tolerance for units of USD will be calculated as the MAXIMUM of:
 
       0.01 * M = 0.005 (0.01 is inferred from the 1150.00 USD leg)
 
@@ -299,7 +299,7 @@ def compute_entries_balance(entries, prefix=None, date=None):
 
 
 def compute_entry_context(entries, context_entry, additional_accounts=None):
-    """Compute the balances of all accounts referenced by entry up to entry.
+    """Compute the balances of all accounts referenced by the entry up to entry.
 
     This provides the inventory of the accounts to which the entry is to be
     applied, before and after.

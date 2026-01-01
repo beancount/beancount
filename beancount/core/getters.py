@@ -57,7 +57,7 @@ class GetAccounts:
         return accounts_first, accounts_last
 
     def get_entry_accounts(self, entry: Directive) -> set[Account]:
-        """Gather all the accounts references by a single directive.
+        """Gather all the accounts referenced by a single directive.
 
         Note: This should get replaced by a method on each directive eventually,
         that would be the clean way to do this.
@@ -121,7 +121,7 @@ _GetAccounts = GetAccounts()
 
 
 def get_accounts_use_map(entries: Directives) -> AccountsUseMap:
-    """Gather all the accounts references by a list of directives.
+    """Gather all the accounts referenced by a list of directives.
 
     Args:
       entries: A list of directive instances.
@@ -133,7 +133,7 @@ def get_accounts_use_map(entries: Directives) -> AccountsUseMap:
 
 
 def get_accounts(entries: Directives) -> set[str]:
-    """Gather all the accounts references by a list of directives.
+    """Gather all the accounts referenced by a list of directives.
 
     Args:
       entries: A list of directive instances.
@@ -145,7 +145,7 @@ def get_accounts(entries: Directives) -> set[str]:
 
 
 def get_entry_accounts(entry: Directive) -> set[str]:
-    """Gather all the accounts references by a single directive.
+    """Gather all the accounts referenced by a single directive.
 
     Note: This should get replaced by a method on each directive eventually,
     that would be the clean way to do this.
@@ -231,7 +231,7 @@ def get_leveln_parent_accounts(account_names: list[Account], level: int, nrepeat
     Args:
       account_names: A list of account names (strings)
       level: The level to cross-cut. 0 is for root accounts.
-      nrepeats: A minimum number of times a leaf is required to be present in the
+      nrepeats: A minimum number of times a leaf is required to be present in
         the list of unique account names in order to be returned by this function.
     Returns:
       A list of leaf node names.
@@ -247,7 +247,7 @@ def get_leveln_parent_accounts(account_names: list[Account], level: int, nrepeat
 
 def get_dict_accounts(account_names):
     """Return a nested dict of all the unique leaf names.
-    account names are labelled with LABEL=True
+    Account names are labelled with LABEL=True
 
     Args:
       account_names: An iterable of account names (strings)

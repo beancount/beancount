@@ -2,9 +2,9 @@
 
 This is where we keep the global account types value and definition.
 
-Note that it's unfortunate that we're using globals and side-effect here, but
+Note that it's unfortunate that we're using globals and side-effects here, but
 this is the best solution in the short-term, the account types are used
-in too many places to pass around that state everywhere. Maybe we change
+in too many places to pass around that state everywhere. Maybe we will change
 this later on.
 """
 
@@ -46,7 +46,7 @@ def get_account_type(account_name: Account) -> str:
     returns the root account of the corresponding account name.
 
     Args:
-      account_name: A string, the name of the account whose type is to return.
+      account_name: A string, the name of the account whose type is to be returned.
     Returns:
       A string, the type of the account in 'account_name'.
 
@@ -69,10 +69,7 @@ def get_account_sort_key(
 
 
 def is_account_type(account_type: str, account_name: Account) -> bool:
-    """Return the type of this account's name.
-
-    Warning: No check is made on the validity of the account type. This merely
-    returns the root account of the corresponding account name.
+    """Return true if the account is of the given type.
 
     Args:
       account_type: A string, the prefix type of the account.
@@ -92,7 +89,7 @@ def is_root_account(account_name: Account) -> bool:
     Args:
       account_name: A string, the name of the account to check for.
     Returns:
-      A boolean, true if the account is root account.
+      A boolean, true if the account is a root account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     return bool(account_name) and bool(re.match(r"([A-Z][A-Za-z0-9\-]+)$", account_name))

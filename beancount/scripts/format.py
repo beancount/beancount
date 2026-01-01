@@ -29,7 +29,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
       currency_column: An integer, the column at which to align the currencies.
         If given, this overrides the other options.
     Returns:
-      A string, reformatted Beancount input with all the number aligned.
+      A string, reformatted Beancount input with all the numbers aligned.
       No other changes than whitespace changes should be present between that
       return value and the input contents.
 
@@ -50,7 +50,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
         else:
             match_pairs.append((line, None, None))
 
-    # Normalize whitespace before lines that has some indent and an account
+    # Normalize whitespace before lines that have some indent and an account
     # name.
     norm_match_pairs = normalize_indent_whitespace(match_pairs)
 
@@ -131,7 +131,7 @@ def compute_most_frequent(iterable):
 
 
 def normalize_indent_whitespace(match_pairs):
-    """Normalize whitespace before lines that has some indent and an account name.
+    """Normalize whitespace before lines that have some indent and an account name.
 
     Args:
       match_pairs: A list of (prefix, number, rest) tuples.
@@ -170,17 +170,17 @@ def normalize_indent_whitespace(match_pairs):
 )
 @click.option("--prefix-width", "-w", type=int, help="Force fixed prefix width.")
 @click.option("--num-width", "-W", type=int, help="Force fixed numbers width.")
-@click.option("--currency-column", "-c", type=int, help="Align curreencies to this column.")
+@click.option("--currency-column", "-c", type=int, help="Align currencies to this column.")
 @click.option("--in-place", "-i", is_flag=True, help="Edit files in place.")
 @click.version_option(message=VERSION)
 def main(filenames, output, prefix_width, num_width, currency_column, in_place):
     """Automatically format a Beancount ledger.
 
-    This reformats at beancount or ledger input file so that the
+    This reformats a beancount or ledger input file so that the
     amounts in the postings are all aligned to the same column.
 
     If the alignment is not specified with the --currency-column
-    option, it is determined automatically from the maximum lenght of
+    option, it is determined automatically from the maximum length of
     the account names and of the numerical part of the transaction
     amounts in the input file. The automatically determined widths can
     be overridden with the --prefix-width and --num-width options
@@ -198,7 +198,7 @@ def main(filenames, output, prefix_width, num_width, currency_column, in_place):
         )
 
         # Click opens files for writing in lazy mode. This prevents
-        # truncating the input file untill it has been processed and
+        # truncating the input file until it has been processed and
         # validated, avoid data loss in case of errors.
         output.write(formatted_contents)
     elif len(filenames) > 1 and not in_place and output:

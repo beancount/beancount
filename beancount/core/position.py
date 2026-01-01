@@ -188,7 +188,7 @@ class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost
         return hash((self.units, self.cost))
 
     def to_string(self, dformat=DEFAULT_FORMATTER, detail=True):
-        """Render the position to a string.See to_string() for details."""
+        """Render the position to a string. See to_string() for details."""
         return to_string(self, dformat, detail)
 
     def __str__(self) -> str:

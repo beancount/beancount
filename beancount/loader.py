@@ -198,7 +198,7 @@ def get_cache_filename(pattern: str, filename: str) -> str:
 def pickle_cache_function(
     cache_getter: Callable[[str], str], time_threshold: float, function
 ):
-    """Decorate a loader function to make it loads its result from a pickle cache.
+    """Decorate a loader function to make it load its result from a pickle cache.
 
     This considers the first argument as a top-level filename and assumes the
     function to be cached returns an (entries, errors, options_map) triple. We

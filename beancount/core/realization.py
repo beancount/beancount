@@ -47,7 +47,7 @@ class RealAccount(dict):  # noqa: PLW1641
 
     Attributes:
       account: A string, the full name of the corresponding account.
-      postings: A list of postings associated with this accounting (does not
+      txn_postings: A list of postings associated with this accounting (does not
         include the postings of children accounts).
       balance: The final balance of the list of postings associated with this account.
     """
@@ -522,7 +522,7 @@ def index_key(sequence, value, key, cmp):
 
 
 def dump(root_account):
-    """Convert a RealAccount node to a line of lines.
+    """Convert a RealAccount node to a list of lines.
 
     Note: this is not meant to be used to produce text reports; the reporting
     code should produce an intermediate object that contains the structure of

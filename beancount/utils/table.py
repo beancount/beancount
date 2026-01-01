@@ -33,7 +33,7 @@ def attribute_to_title(fieldname):
 
 
 def create_table(rows, field_spec=None):
-    """Convert a list of tuples to an table report object.
+    """Convert a list of tuples to a table report object.
 
     Args:
       rows: A list of tuples.

@@ -67,7 +67,7 @@ def subprocess_env():
     """Return a dict to use as environment for running subprocesses.
 
     Returns:
-      A string, the root directory.
+      A dict, the environment.
     """
     # Ensure we have locations to invoke our Python executable and our
     # runnable binaries in the test environment to run subprocesses.
@@ -83,7 +83,7 @@ def subprocess_env():
 
 @contextlib.contextmanager
 def temp_file(prefix: str = "", suffix: str = ".txt") -> Generator[Path, None, None]:
-    """A context manager that return a filepath inside inside a temporary directory and
+    """A context manager that returns a filepath inside a temporary directory and
     deletes this directory unconditionally once done.
 
     This utils exists because `NamedTemporaryFile` can't be re-opened on win32.
@@ -196,7 +196,7 @@ def docfile(
     suffix: str = ".beancount",
     encoding: str = "utf-8",
 ):
-    """A decorator that write the function's docstring to a temporary file
+    """A decorator that writes the function's docstring to a temporary file
     and calls the decorated function with the temporary filename.  This is
     useful for writing tests.
 
@@ -370,7 +370,7 @@ def skipIfRaises(*exc_types):
 
 
 def make_failing_importer(*removed_module_names):
-    """Make an importer that raise an ImportError for some modules.
+    """Make an importer that raises an ImportError for some modules.
 
     Use it like this:
 

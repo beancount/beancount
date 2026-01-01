@@ -157,7 +157,7 @@ def project(
     Please note that:
 
     - Even if the target pair has existing entries, projection will still be
-      applied. For example, is there exist some (HOOL, CAD) prices, the
+      applied. For example, if there exist some (HOOL, CAD) prices, the
       projection in the example above will still insert some new price points to
       it.
 

@@ -109,7 +109,7 @@ def lex(filename):
 @doctor.command()
 @click.argument("filename", type=ledger_path)
 def parse(filename):
-    """Parse the a ledger in debug mode.
+    """Parse a ledger in debug mode.
 
     Run the parser on ledger FILENAME with debug mode active.
 
@@ -261,10 +261,10 @@ def linked(filename, location_spec):
     transaction in REGION.
 
     The LINK and TAG arguments must include the leading ^ or #
-    charaters. The LOCATION argument is either a line number or a
+    characters. The LOCATION argument is either a line number or a
     filename:lineno tuple to indicate a location in a ledger file
     included from the main input file. The REGION argument is either a
-    stard:end line numbers tuple or a filename:start:end triplet to
+    start:end line numbers tuple or a filename:start:end triplet to
     indicate a region in a ledger file included from the main input
     file.
 
@@ -383,7 +383,7 @@ def resolve_region_to_entries(
 def region(filename, region, conversion) -> None:
     """Print out a list of transactions within REGION and compute balances.
 
-    The REGION argument is either a stard:end line numbers tuple or a
+    The REGION argument is either a start:end line numbers tuple or a
     filename:start:end triplet to indicate a region in a ledger file
     included from the main input file.
 

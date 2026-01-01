@@ -1,4 +1,4 @@
-"""This plugin synthesizes Price directives for all Postings with a price or
+"""This plugin synthesizes Price directives for all Postings with a price
 directive or if it is an augmenting posting, has a cost directive.
 """
 

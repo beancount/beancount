@@ -1,4 +1,4 @@
-"""Insert a balance check for zero before balance sheets accounts are closed.
+"""Insert a balance check for zero before balance sheet accounts are closed.
 
 For balance sheet accounts with a Close directive (Assets, Liabilities &
 Equity), insert Balance directives just after its closing date, for all the

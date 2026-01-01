@@ -24,7 +24,7 @@ Beancount to automatically compute the missing numbers (if possible).
 
 Missing components will be set to the special value
 "beancount.core.number.MISSING" until inventory booking and number interpolation
-has been completed. The "MISSING" value should never appear in completed, loaded
+have been completed. The "MISSING" value should never appear in completed, loaded
 transaction postings.
 
 For instance, all of the units may be missing:
@@ -340,7 +340,7 @@ def parse_many(string: str, level: int = 0) -> data.Directives:
 
 
 def parse_one(string: str) -> data.Directive:
-    """Parse a string with single Beancount directive and replace vars from caller.
+    """Parse a string with a single Beancount directive and replace vars from caller.
 
     Args:
       string: A string with some Beancount input.

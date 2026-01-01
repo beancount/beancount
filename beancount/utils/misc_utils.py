@@ -171,7 +171,7 @@ def uniquify(iterable, keyfunc=None, last=False):
     Args:
       iterable: An iterable sequence.
       keyfunc: A function that extracts from the elements the sort key
-        to use and uniquify on. If left unspecified, the identify function
+        to use and uniquify on. If left unspecified, the identity function
         is used and the uniquification occurs on the elements themselves.
       last: A boolean, True if we should keep the last item of the same keys.
         Otherwise keep the first.
@@ -209,7 +209,7 @@ def sorted_uniquify(iterable, keyfunc=None, last=False):
     Args:
       iterable: An iterable sequence.
       keyfunc: A function that extracts from the elements the sort key
-        to use and uniquify on. If left unspecified, the identify function
+        to use and uniquify on. If left unspecified, the identity function
         is used and the uniquification occurs on the elements themselves.
       last: A boolean, True if we should keep the last item of the same keys.
         Otherwise keep the first.
