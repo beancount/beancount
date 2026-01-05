@@ -12,7 +12,11 @@ from typing import NamedTuple
 
 from beancount.core.data import Meta
 from beancount.core.data import new_metadata
-from beancount.parser import _parser
+
+try:  # Prefer the Rust parser; lexer support remains C-only.
+  from beancount.parser import _parser  # type: ignore
+except ImportError:  # pragma: no cover - triggered when C extension is absent
+  _parser = None
 
 if TYPE_CHECKING:
     from beancount.core.data import BeancountError
@@ -64,9 +68,11 @@ def lex_iter(file, builder=None):
         # that does not work for io.BytesIO despite it implementing the
         # readinto() method.
         if not isinstance(file, io.IOBase):
-            file = ctx.enter_context(open(file, "rb"))
+          file = ctx.enter_context(open(file, "rb"))
         if builder is None:
-            builder = LexBuilder()
+          builder = LexBuilder()
+        if _parser is None:
+          raise RuntimeError("lex_iter requires the legacy C parser backend.")
         parser = _parser.Parser(builder)
         yield from parser.lex(file)
 

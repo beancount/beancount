@@ -7,7 +7,6 @@ import datetime
 import re
 
 import beancount
-from beancount.parser import _parser
 
 
 def compute_version_string(version, changeset, timestamp):
@@ -41,8 +40,4 @@ def compute_version_string(version, changeset, timestamp):
     return version
 
 
-VERSION = compute_version_string(
-    beancount.__version__,
-    getattr(_parser, "__vc_changeset__", None),
-    getattr(_parser, "__vc_timestamp__", 0),
-)
+VERSION = "dev"

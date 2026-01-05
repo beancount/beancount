@@ -124,9 +124,8 @@ from typing import Any
 
 from beancount.core import data
 from beancount.core.number import MISSING
-from beancount.parser import _parser
+from beancount.parser import _rust
 from beancount.parser import grammar
-from beancount.parser import hashsrc
 from beancount.parser import printer
 from beancount.parser.grammar import DeprecatedError  # noqa: F401
 from beancount.parser.grammar import ParserError  # noqa: F401
@@ -134,11 +133,6 @@ from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
 
 if TYPE_CHECKING:
     from beancount.loader import OptionsMap
-
-
-# When importing the module, always check that the compiled source matched the
-# installed source.
-hashsrc.check_parser_source_files(_parser)
 
 
 def is_posting_incomplete(posting) -> bool:
@@ -185,74 +179,128 @@ def is_entry_incomplete(entry: data.Directive) -> bool:
     return False
 
 
-def parse_file(
-    file: str | io.IOBase,
-    report_filename: str | None = None,
-    report_firstline: int = 1,
-    encoding: str | None = None,
-    debug: bool = False,
-    **kw: Any,
-) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
-    """Parse a beancount input file and return Ledger with the list of
-    transactions and tree of accounts.
+def _normalize_filename(file: Any, report_filename: str | None) -> str:
+  if report_filename is not None:
+    return report_filename
+  if file == "-":
+    return "<stdin>"
+  if isinstance(file, str):
+    return file
+  name = getattr(file, "name", None)
+  if name:
+    return str(name)
+  return "<string>"
 
-    Args:
-      file: file object or path to the file to be parsed.
-      report_filename: A string, the name of the file to use in the error reports.
-      report_firstline: An integer, the line number of the first line of the file.
-      encoding: A string, the encoding to use for the file.
-      debug: A boolean, true if the parser should output debug information.
-      **kw: a dict of keywords to be applied to the C parser.
-    Returns:
-      A tuple of (
-        list of entries parsed in the file,
-        list of errors that were encountered during parsing, and
-        a dict of the option values that were parsed from the file.)
-    """
-    if encoding is not None and codecs.lookup(encoding).name != "utf-8":
-        raise ValueError("Only UTF-8 encoded files are supported.")
-    with contextlib.ExitStack() as ctx:
-        if file == "-":
-            file_io: io.IOBase = sys.stdin.buffer  # type: ignore[assignment]
-        # It would be more appropriate here to check for io.RawIOBase but
-        # that does not work for io.BytesIO despite it implementing the
-        # readinto() method.
-        elif not isinstance(file, io.IOBase):
-            file_io = ctx.enter_context(open(file, "rb"))
-        else:
-            file_io = file
-        builder = grammar.Builder()
-        parser = _parser.Parser(builder, debug=debug)
-        parser.parse(file_io, filename=report_filename, lineno=report_firstline, **kw)
-    return builder.finalize()
+
+def _as_text(value: str | bytes | None):
+  if value is None:
+    return "", None
+  if isinstance(value, bytes):
+    try:
+      return value.decode("utf8"), None
+    except UnicodeDecodeError as exc:  # pragma: no cover - exercised via parser tests
+      return None, exc
+  if isinstance(value, str):
+    return value, None
+  return str(value), None
+
+
+def _decode_error(filename: str, lineno: int, exc: UnicodeDecodeError):
+  meta = data.new_metadata(filename, lineno)
+  message = f"{exc.__class__.__name__}: {exc}"
+  error = grammar.ParserError(meta, message)
+  return [], [error], _rust.build_options_map(filename)
+
+
+def _parse_with_rust(text: str, filename: str, report_firstline: int):
+  prefix = "\n" * (report_firstline - 1) if report_firstline > 1 else ""
+  return _rust.parse_string(filename, f"{prefix}{text}")
+
+
+def parse_file(
+  file: str | io.IOBase,
+  report_filename: str | None = None,
+  report_firstline: int = 1,
+  encoding: str | None = None,
+  debug: bool = False,
+  **kw: Any,
+) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
+  """Parse a beancount input file and return Ledger with the list of
+  transactions and tree of accounts.
+
+  Args:
+    file: file object or path to the file to be parsed.
+    report_filename: A string, the name of the file to use in the error reports.
+    report_firstline: An integer, the line number of the first line of the file.
+    encoding: A string, the encoding to use for the file.
+    debug: A boolean, true if the parser should output debug information.
+    **kw: retained for API compatibility; ignored by the Rust parser.
+  Returns:
+    A tuple of (
+    list of entries parsed in the file,
+    list of errors that were encountered during parsing, and
+    a dict of the option values that were parsed from the file.)
+  """
+  if encoding is not None and codecs.lookup(encoding).name != "utf-8":
+    raise ValueError("Only UTF-8 encoded files are supported.")
+
+  filename = _normalize_filename(file, report_filename)
+  with contextlib.ExitStack() as ctx:
+    if file == "-":
+      file_io: io.IOBase = sys.stdin.buffer  # type: ignore[assignment]
+    elif not isinstance(file, io.IOBase):
+      file_io = ctx.enter_context(open(file, "rb"))
+    else:
+      file_io = file
+    raw = file_io.read()
+
+  text, decode_error = _as_text(raw)
+  if decode_error:
+    return _decode_error(filename, report_firstline, decode_error)
+
+  # The Rust parser does not expose a debug mode yet, but we keep the
+  # argument for API compatibility.
+  _ = debug
+  _ = kw
+
+  return _parse_with_rust(text, filename, report_firstline)
 
 
 def parse_string(
     string: str | bytes = "",
     report_filename: str | None = None,
     dedent: bool = False,
+    report_firstline: int = 1,
     **kw: Any,
 ) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
-    """Parse a beancount input file and return Ledger with the list of
+    """Parse a beancount input string and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      string: A string, the contents to be parsed instead of a file's.
+      string: A string or bytes, the contents to be parsed.
       report_filename: A string, the source filename from which this string
         has been extracted, if any. This is stored in the metadata of the
         parsed entries.
       dedent: Whether to run textwrap.dedent() on the string before parsing.
-      **kw: See parse.c.
+      report_firstline: An integer, the line number of the first line of the string.
+      **kw: retained for API compatibility; ignored by the Rust parser.
     Returns:
       Same as the output of parse_file().
     """
-    if dedent and isinstance(string, str):
-        string = textwrap.dedent(string)
-    as_bytes = string.encode("utf8") if isinstance(string, str) else string
-    if report_filename is None:
-        report_filename = "<string>"
-    file = io.BytesIO(as_bytes)
-    return parse_file(file, report_filename=report_filename, **kw)
+    filename = report_filename or "<string>"
+
+    if string is None:
+        string = ""
+
+    if isinstance(string, bytes):
+        text, decode_error = _as_text(string)
+        if decode_error:
+            return _decode_error(filename, report_firstline, decode_error)
+    else:
+        text = textwrap.dedent(string) if dedent else string
+
+    _ = kw
+    return _parse_with_rust(text, filename, report_firstline)
 
 
 def parse_doc(expect_errors=False, allow_incomplete=False):

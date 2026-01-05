@@ -1,0 +1,22 @@
+[package]
+name = "beancount-parser"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Core beancount parser logic."
+
+[dependencies]
+# tree-sitter-beancount = { git = "https://github.com/trim21/tree-sitter-beancount", branch = "wasm", default-features = false }
+# tree-sitter-beancount = { path = "C:/Users/trim21/projects/tree-sitter-beancount/", default-features = false }
+tree-sitter-beancount = "2.4.2"
+tree-sitter = { version = "0.26.3" }
+ropey = '1.6.1'
+anyhow = "1.0.100"
+serde_json = "1"
+
+
+[dev-dependencies]
+similar = { version = "2.7.0", features = ["unicode"] }

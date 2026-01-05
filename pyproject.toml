@@ -1,9 +1,8 @@
 [build-system]
-build-backend = "mesonpy"
 requires = [
-    "meson-python >= 0.14.0",
-    "meson >= 1.2.1",
+    "maturin>=1,<2",
 ]
+build-backend = "maturin"
 
 [project]
 name = "beancount"
@@ -49,6 +48,12 @@ homepage = "https://beancount.github.io/"
 documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 donations = "https://www.paypal.com/paypalme/misislavski"
+
+[tool.maturin]
+manifest-path = "crates/beancount-parser-py/Cargo.toml"
+module-name = "beancount.parser._parser_rust"
+bindings = "pyo3"
+strip = true
 
 [tool.mypy]
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
