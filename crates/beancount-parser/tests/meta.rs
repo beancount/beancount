@@ -40,4 +40,3 @@ fn meta_is_attached_to_each_directive() -> Result<()> {
 
   Ok(())
 }
-

@@ -279,6 +279,11 @@ fn convert_transaction(py: Python<'_>, txn: &ast::Transaction<'_>) -> PyResult<P
         .as_deref()
         .map(|p| PyString::new(py, p).unbind().into())
         .unwrap_or_else(|| py.None());
+    let narration = txn
+        .narration
+        .as_deref()
+        .map(|n| PyString::new(py, n).unbind().into())
+        .unwrap_or_else(|| py.None());
 
     let tags = PyFrozenSet::new(py, txn.tags.iter().copied())?;
     let links = PyFrozenSet::new(py, txn.links.iter().copied())?;
@@ -297,7 +302,7 @@ fn convert_transaction(py: Python<'_>, txn: &ast::Transaction<'_>) -> PyResult<P
             date,
             flag,
             payee,
-            txn.narration.as_str(),
+            narration,
             tags,
             links,
             postings,

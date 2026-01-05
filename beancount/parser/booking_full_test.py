@@ -1530,9 +1530,9 @@ class _BookingTestBase(unittest.TestCase):
         # Check that the 'apply' entry has a single posting only.
         # assert len(entry_apply.postings) == 1, (
         #     "Internal error: 'apply' entry has more than one posting")
-        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
-            "Accounts don't match for 'apply' entry"
-        )
+        assert (
+            len(set(posting.account for posting in entry_apply.postings)) == 1
+        ), "Accounts don't match for 'apply' entry"
         account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 

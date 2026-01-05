@@ -113,7 +113,7 @@ pub struct Transaction<'a> {
   /// Transaction flag/token (e.g. `*`, `!`) when present.
   pub txn: Option<&'a str>,
   pub payee: Option<String>,
-  pub narration: String,
+  pub narration: Option<String>,
   pub tags_links: Option<&'a str>,
   pub tags: Vec<&'a str>,
   pub links: Vec<&'a str>,

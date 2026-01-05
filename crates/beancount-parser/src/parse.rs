@@ -630,8 +630,9 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
     let narration_raw = field_text(node, "narration", source);
 
     let (payee_raw, narration_raw) = match (payee_raw, narration_raw) {
-        (p, Some(n)) => (p, n),
-        // Heuristic: take string children. If there are 2, assume payee+narration; if 1, narration only.
+        // If grammar provided fields, use them (even if narration missing).
+        (p @ Some(_), n) | (p @ None, n @ Some(_)) => (p, n),
+        // Heuristic: take string children. If there are 2, assume payee+narration; if 1, narration only; if none, allow missing narration.
         (None, None) => {
             let mut cursor = node.walk();
             let mut strings = node
@@ -641,22 +642,20 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
             let first = strings.next();
             let second = strings.next();
             match (first, second) {
-                (Some(n), None) => (None, n),
-                (Some(p), Some(n)) => (Some(p), n),
-                _ => return Err(parse_error(node, filename, "missing narration")),
+                (Some(n), None) => (None, Some(n)),
+                (Some(p), Some(n)) => (Some(p), Some(n)),
+                (None, None) => (None, None),
+                _ => return Err(parse_error(node, filename, "invalid transaction description")),
             }
-        }
-        (p, None) => {
-            // payee without narration isn't valid; treat as parse error.
-            let _ = p;
-            return Err(parse_error(node, filename, "missing narration"));
         }
     };
 
     let payee = payee_raw
         .map(|raw| parse_string_value(node, raw, filename))
         .transpose()?;
-    let narration = parse_string_value(node, narration_raw, filename)?;
+    let narration = narration_raw
+        .map(|raw| parse_string_value(node, raw, filename))
+        .transpose()?;
 
     let mut tags_links_lines = Vec::new();
     let mut comments = Vec::new();

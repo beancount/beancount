@@ -177,6 +177,7 @@ class TestTestUtils(unittest.TestCase):
         """)
         self.assertTrue(isinstance(entry, data.Transaction))
 
+
 class TestLineno(unittest.TestCase):
     def test_parse_string(self):
         entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")

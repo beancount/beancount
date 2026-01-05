@@ -1,4 +1,7 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 __all__ = ["build_options_map", "load_file", "parse_string", "py_date"]
 

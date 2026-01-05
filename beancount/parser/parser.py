@@ -180,90 +180,90 @@ def is_entry_incomplete(entry: data.Directive) -> bool:
 
 
 def _normalize_filename(file: Any, report_filename: str | None) -> str:
-  if report_filename is not None:
-    return report_filename
-  if file == "-":
-    return "<stdin>"
-  if isinstance(file, str):
-    return file
-  name = getattr(file, "name", None)
-  if name:
-    return str(name)
-  return "<string>"
+    if report_filename is not None:
+        return report_filename
+    if file == "-":
+        return "<stdin>"
+    if isinstance(file, str):
+        return file
+    name = getattr(file, "name", None)
+    if name:
+        return str(name)
+    return "<string>"
 
 
 def _as_text(value: str | bytes | None):
-  if value is None:
-    return "", None
-  if isinstance(value, bytes):
-    try:
-      return value.decode("utf8"), None
-    except UnicodeDecodeError as exc:  # pragma: no cover - exercised via parser tests
-      return None, exc
-  if isinstance(value, str):
-    return value, None
-  return str(value), None
+    if value is None:
+        return "", None
+    if isinstance(value, bytes):
+        try:
+            return value.decode("utf8"), None
+        except UnicodeDecodeError as exc:  # pragma: no cover - exercised via parser tests
+            return None, exc
+    if isinstance(value, str):
+        return value, None
+    return str(value), None
 
 
 def _decode_error(filename: str, lineno: int, exc: UnicodeDecodeError):
-  meta = data.new_metadata(filename, lineno)
-  message = f"{exc.__class__.__name__}: {exc}"
-  error = grammar.ParserError(meta, message)
-  return [], [error], _rust.build_options_map(filename)
+    meta = data.new_metadata(filename, lineno)
+    message = f"{exc.__class__.__name__}: {exc}"
+    error = grammar.ParserError(meta, message)
+    return [], [error], _rust.build_options_map(filename)
 
 
 def _parse_with_rust(text: str, filename: str, report_firstline: int):
-  prefix = "\n" * (report_firstline - 1) if report_firstline > 1 else ""
-  return _rust.parse_string(filename, f"{prefix}{text}")
+    prefix = "\n" * (report_firstline - 1) if report_firstline > 1 else ""
+    return _rust.parse_string(f"{prefix}{text}", filename)
 
 
 def parse_file(
-  file: str | io.IOBase,
-  report_filename: str | None = None,
-  report_firstline: int = 1,
-  encoding: str | None = None,
-  debug: bool = False,
-  **kw: Any,
+    file: str | io.IOBase,
+    report_filename: str | None = None,
+    report_firstline: int = 1,
+    encoding: str | None = None,
+    debug: bool = False,
+    **kw: Any,
 ) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
-  """Parse a beancount input file and return Ledger with the list of
-  transactions and tree of accounts.
+    """Parse a beancount input file and return Ledger with the list of
+    transactions and tree of accounts.
 
-  Args:
-    file: file object or path to the file to be parsed.
-    report_filename: A string, the name of the file to use in the error reports.
-    report_firstline: An integer, the line number of the first line of the file.
-    encoding: A string, the encoding to use for the file.
-    debug: A boolean, true if the parser should output debug information.
-    **kw: retained for API compatibility; ignored by the Rust parser.
-  Returns:
-    A tuple of (
-    list of entries parsed in the file,
-    list of errors that were encountered during parsing, and
-    a dict of the option values that were parsed from the file.)
-  """
-  if encoding is not None and codecs.lookup(encoding).name != "utf-8":
-    raise ValueError("Only UTF-8 encoded files are supported.")
+    Args:
+      file: file object or path to the file to be parsed.
+      report_filename: A string, the name of the file to use in the error reports.
+      report_firstline: An integer, the line number of the first line of the file.
+      encoding: A string, the encoding to use for the file.
+      debug: A boolean, true if the parser should output debug information.
+      **kw: retained for API compatibility; ignored by the Rust parser.
+    Returns:
+      A tuple of (
+      list of entries parsed in the file,
+      list of errors that were encountered during parsing, and
+      a dict of the option values that were parsed from the file.)
+    """
+    if encoding is not None and codecs.lookup(encoding).name != "utf-8":
+        raise ValueError("Only UTF-8 encoded files are supported.")
 
-  filename = _normalize_filename(file, report_filename)
-  with contextlib.ExitStack() as ctx:
-    if file == "-":
-      file_io: io.IOBase = sys.stdin.buffer  # type: ignore[assignment]
-    elif not isinstance(file, io.IOBase):
-      file_io = ctx.enter_context(open(file, "rb"))
-    else:
-      file_io = file
-    raw = file_io.read()
+    filename = _normalize_filename(file, report_filename)
+    with contextlib.ExitStack() as ctx:
+        if file == "-":
+            file_io: io.IOBase = sys.stdin.buffer  # type: ignore[assignment]
+        elif not isinstance(file, io.IOBase):
+            file_io = ctx.enter_context(open(file, "rb"))
+        else:
+            file_io = file
+        raw = file_io.read()
 
-  text, decode_error = _as_text(raw)
-  if decode_error:
-    return _decode_error(filename, report_firstline, decode_error)
+    text, decode_error = _as_text(raw)
+    if decode_error:
+        return _decode_error(filename, report_firstline, decode_error)
 
-  # The Rust parser does not expose a debug mode yet, but we keep the
-  # argument for API compatibility.
-  _ = debug
-  _ = kw
+    # The Rust parser does not expose a debug mode yet, but we keep the
+    # argument for API compatibility.
+    _ = debug
+    _ = kw
 
-  return _parse_with_rust(text, filename, report_firstline)
+    return _parse_with_rust(text, filename, report_firstline)
 
 
 def parse_string(
@@ -299,7 +299,6 @@ def parse_string(
     else:
         text = textwrap.dedent(string) if dedent else string
 
-    _ = kw
     return _parse_with_rust(text, filename, report_firstline)
 
 

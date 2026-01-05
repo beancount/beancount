@@ -291,7 +291,9 @@ impl<'a> FormatterContext<'a> {
     if let Some(payee) = &txn.payee {
       header_parts.push(payee.trim().to_string());
     }
-    header_parts.push(txn.narration.trim().to_string());
+    if let Some(narr) = &txn.narration {
+      header_parts.push(narr.trim().to_string());
+    }
     if let Some(tags) = &txn.tags_links {
       header_parts.push(tags.trim().to_string());
     }
