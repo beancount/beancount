@@ -175,7 +175,9 @@ class EntryPrinter:
                         # attached directly and not coming from the parser.
                         value_str = str(value)
                     else:
-                        raise ValueError("Unexpected value: '{!r}'".format(value))
+                        raise ValueError(
+                            "Unexpected value: key={}, value='{!r}'".format(key, value)
+                        )
                 if value_str is not None:
                     oss.write("{}{}: {}\n".format(prefix, key, value_str))
 

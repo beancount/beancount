@@ -152,13 +152,30 @@ pub struct KeyValue<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CostAmount<'a> {
+  pub per: Option<&'a str>,
+  pub total: Option<&'a str>,
+  pub currency: Option<&'a str>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CostSpec<'a> {
+  pub raw: &'a str,
+  pub amount: Option<CostAmount<'a>>,
+  pub date: Option<&'a str>,
+  pub label: Option<String>,
+  pub merge: bool,
+  pub is_total: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Posting<'a> {
   pub meta: Meta,
   pub span: Span,
   pub opt_flag: Option<&'a str>,
   pub account: &'a str,
   pub amount: Option<Amount<'a>>,
-  pub cost_spec: Option<&'a str>,
+  pub cost_spec: Option<CostSpec<'a>>,
   pub price_operator: Option<&'a str>,
   pub price_annotation: Option<Amount<'a>>,
   pub comment: Option<&'a str>,

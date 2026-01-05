@@ -128,8 +128,11 @@ from beancount.parser import _rust
 from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.parser.grammar import DeprecatedError  # noqa: F401
-from beancount.parser.grammar import ParserError  # noqa: F401
+from beancount.parser.grammar import ParserError as GrammarParserError  # noqa: F401
 from beancount.parser.grammar import ParserSyntaxError  # noqa: F401
+
+# The Rust parser exports a ParserError that satisfies beancount.core.data.BeancountError.
+# ParserError = _rust.ParserError
 
 if TYPE_CHECKING:
     from beancount.loader import OptionsMap

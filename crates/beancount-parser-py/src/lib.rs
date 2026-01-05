@@ -3,11 +3,11 @@ use beancount_parser::ast;
 use beancount_parser::ast::Directive;
 use beancount_parser::parse_str;
 use chrono::{Datelike, NaiveDate};
-use pyo3::BoundObject;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyString};
+use pyo3::BoundObject;
 
 #[pymodule]
 fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -16,7 +16,24 @@ fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_string, m)?)?;
     m.add_function(wrap_pyfunction!(build_options_map, m)?)?;
     m.add_function(wrap_pyfunction!(py_date, m)?)?;
+    m.add_class::<PyParserError>()?;
     Ok(())
+}
+
+/// Parser error exposed to Python. Matches `beancount.core.data.BeancountError` protocol.
+#[pyclass(module = "beancount.parser.parser", name = "ParserError", get_all, set_all)]
+struct PyParserError {
+    pub source: Py<PyAny>,
+    pub message: String,
+    pub entry: Option<Py<PyAny>>,
+}
+
+#[pymethods]
+impl PyParserError {
+    #[new]
+    fn new(source: Py<PyAny>, message: String, entry: Option<Py<PyAny>>) -> Self {
+        Self { source, message, entry }
+    }
 }
 
 /// Global cache for imported modules and classes so we don't look them up repeatedly.
@@ -40,8 +57,10 @@ struct DataCache {
     note_cls: Py<PyAny>,
     document_cls: Py<PyAny>,
     custom_cls: Py<PyAny>,
+    cost_spec_cls: Py<PyAny>,
     options_defaults: Py<PyAny>,
-    parser_error_cls: Py<PyAny>,
+    missing: Py<PyAny>,
+    zero: Py<PyAny>,
 }
 
 impl DataCache {
@@ -49,8 +68,12 @@ impl DataCache {
         let data_mod = py.import("beancount.core.data")?;
         let number_mod = py.import("beancount.core.number")?;
         let amount_mod = py.import("beancount.core.amount")?;
+        let position_mod = py.import("beancount.core.position")?;
         let options_mod = py.import("beancount.parser.options")?;
-        let grammar_mod = py.import("beancount.parser.grammar")?;
+
+        let missing = number_mod.getattr("MISSING")?.unbind();
+        let zero = number_mod.getattr("ZERO")?.unbind();
+        let cost_spec_cls = position_mod.getattr("CostSpec")?.unbind();
 
         Ok(Self {
             new_metadata: data_mod.getattr("new_metadata")?.unbind(),
@@ -70,8 +93,10 @@ impl DataCache {
             custom_cls: data_mod.getattr("Custom")?.unbind(),
             number_mod: number_mod.into(),
             amount_mod: amount_mod.into(),
+            cost_spec_cls,
             options_defaults: options_mod.getattr("OPTIONS_DEFAULTS")?.unbind(),
-            parser_error_cls: grammar_mod.getattr("ParserError")?.unbind(),
+            missing,
+            zero,
         })
     }
 }
@@ -83,7 +108,7 @@ fn cache(py: Python<'_>) -> PyResult<&'static DataCache> {
 /// Expose the Rust parser to Python, matching `beancount.loader.load_file`.
 
 #[pyfunction]
-fn load_file(py: Python<'_>, filename: &str) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
+pub fn load_file(py: Python<'_>, filename: &str) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
     let content = std::fs::read_to_string(filename)
         .map_err(|err| PyValueError::new_err(format!("failed to read {}: {}", filename, err)))?;
     parse_source(py, filename, &content)
@@ -91,7 +116,7 @@ fn load_file(py: Python<'_>, filename: &str) -> PyResult<(Py<PyAny>, Py<PyAny>, 
 
 #[pyfunction]
 #[pyo3(signature = (content, filename = "<memory>"))]
-fn parse_string(
+pub fn parse_string(
     py: Python<'_>,
     content: &str,
     filename: Option<&str>,
@@ -126,8 +151,12 @@ fn build_parser_error(py: Python<'_>, err: ParseError) -> PyResult<Py<PyAny>> {
     let meta = cache
         .new_metadata
         .call1(py, (err.filename.clone(), err.line, kv))?;
-    let parser_error_cls = cache.parser_error_cls.as_ref();
-    parser_error_cls.call1(py, (meta, err.message))
+    let py_err = PyParserError {
+        source: meta.clone_ref(py),
+        message: err.message,
+        entry: None,
+    };
+    Py::new(py, py_err).map(|e| e.into())
 }
 
 fn unquote(text: &str) -> String {
@@ -202,7 +231,7 @@ fn make_metadata(
     } else {
         PyDict::new(py)
     };
-    kv.set_item("column", meta.column)?;
+    // kv.set_item("column", meta.column)?;
     Ok(new_metadata.call1(py, (meta.filename.clone(), meta.line, kv))?)
 }
 
@@ -310,15 +339,72 @@ fn convert_transaction(py: Python<'_>, txn: &ast::Transaction<'_>) -> PyResult<P
     )?)
 }
 
+fn cost_spec_to_py(
+    py: Python<'_>,
+    cache: &DataCache,
+    cost_spec: &ast::CostSpec<'_>,
+) -> PyResult<Py<PyAny>> {
+    let d_fn = cache.number_mod.getattr(py, "D")?;
+
+    let mut number_per: Py<PyAny> = cache.missing.clone_ref(py);
+    let mut number_total: Py<PyAny> = py.None();
+    let mut currency: Py<PyAny> = cache.missing.clone_ref(py);
+
+    if let Some(amount) = &cost_spec.amount {
+        if let Some(curr) = amount.currency {
+            currency = PyString::new(py, curr).unbind().into();
+        }
+
+        if cost_spec.is_total {
+            if let Some(total_raw) = amount.total {
+                number_total = d_fn.call1(py, (total_raw.trim(),))?;
+                number_per = cache.zero.clone_ref(py);
+            } else if let Some(per_raw) = amount.per {
+                number_total = d_fn.call1(py, (per_raw.trim(),))?;
+                number_per = cache.zero.clone_ref(py);
+            }
+        } else {
+            if let Some(per_raw) = amount.per {
+                number_per = d_fn.call1(py, (per_raw.trim(),))?;
+            }
+            if let Some(total_raw) = amount.total {
+                number_total = d_fn.call1(py, (total_raw.trim(),))?;
+            }
+        }
+    }
+
+    let date = cost_spec
+        .date
+        .map(|d| py_date(py, d))
+        .transpose()?
+        .unwrap_or_else(|| py.None());
+    let label = cost_spec
+        .label
+        .as_deref()
+        .map(|l| PyString::new(py, l).unbind().into())
+        .unwrap_or_else(|| py.None());
+
+    cache
+        .cost_spec_cls
+        .call1(py, (number_per, number_total, currency, date, label, cost_spec.merge))
+}
+
 fn convert_posting(py: Python<'_>, posting: &ast::Posting<'_>) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.posting_cls;
+    let meta = make_metadata(py, &posting.meta, None)?;
     let units = posting
         .amount
         .as_ref()
         .map(|amount| amount_to_py(py, cache, amount))
         .transpose()?;
     let units = units.unwrap_or_else(|| py.None());
+    let cost = posting
+        .cost_spec
+        .as_ref()
+        .map(|cost| cost_spec_to_py(py, cache, cost))
+        .transpose()?;
+    let cost = cost.unwrap_or_else(|| py.None());
     let price = posting
         .price_annotation
         .as_ref()
@@ -332,7 +418,7 @@ fn convert_posting(py: Python<'_>, posting: &ast::Posting<'_>) -> PyResult<Py<Py
 
     Ok(cls.call1(
         py,
-        (posting.account, units, py.None(), price, flag, py.None()),
+        (posting.account, units, cost, price, flag, meta),
     )?)
 }
 

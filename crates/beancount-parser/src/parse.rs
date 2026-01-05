@@ -540,6 +540,67 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
     })
 }
 
+fn parse_compound_amount<'a>(node: Node, source: &'a str) -> CostAmount<'a> {
+    CostAmount {
+        per: field_text(node, "per", source).map(|t| t.trim()),
+        total: field_text(node, "total", source).map(|t| t.trim()),
+        currency: field_text(node, "currency", source).map(|t| t.trim()),
+    }
+}
+
+fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<CostSpec<'a>> {
+    let raw = slice(node, source);
+    let is_total = raw.trim_start().starts_with("{{");
+
+    let mut amount = None;
+    let mut date = None;
+    let mut label = None;
+    let mut merge = false;
+
+    if let Some(list_node) = node.child_by_field_name("cost_comp_list") {
+        let mut cursor = list_node.walk();
+        for comp in list_node.named_children(&mut cursor) {
+            let comp_text = slice(comp, source).trim();
+            if comp_text == "*" {
+                merge = true;
+                continue;
+            }
+
+            let mut inner = comp.walk();
+            if let Some(child) = comp.named_children(&mut inner).next() {
+                match child.kind() {
+                    "compound_amount" if amount.is_none() => {
+                        amount = Some(parse_compound_amount(child, source));
+                    }
+                    "date" if date.is_none() => {
+                        date = Some(slice(child, source));
+                    }
+                    "string" if label.is_none() => {
+                        label = Some(parse_string_value(child, slice(child, source), filename)?);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let mut tokens = list_node.walk();
+        for child in list_node.children(&mut tokens) {
+            if child.kind() == "*" || child.kind() == "asterisk" {
+                merge = true;
+            }
+        }
+    }
+
+    Ok(CostSpec {
+        raw,
+        amount,
+        date,
+        label,
+        merge,
+        is_total,
+    })
+}
+
 fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Posting<'a>> {
     let amount_raw = field_text(node, "amount", source).or_else(|| {
         let mut cursor = node.walk();
@@ -562,13 +623,18 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
         .map(|raw| parse_amount_value(raw, node, filename))
         .transpose()?;
 
+    let cost_spec = node
+        .child_by_field_name("cost_spec")
+        .map(|cost_node| parse_cost_spec(cost_node, source, filename))
+        .transpose()?;
+
     Ok(Posting {
         meta: meta(node, filename),
         span: span(node),
         opt_flag: field_text(node, "optflag", source),
         account: required_field_text(node, "account", source, filename)?,
         amount,
-        cost_spec: field_text(node, "cost_spec", source),
+        cost_spec,
         price_operator,
         price_annotation,
         comment: field_text(node, "comment", source),
