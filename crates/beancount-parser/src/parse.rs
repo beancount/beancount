@@ -1,5 +1,6 @@
 use smallvec::SmallVec;
 use tree_sitter::Node;
+use tree_sitter_beancount::NodeKind;
 
 use crate::ast::*;
 
@@ -69,7 +70,7 @@ fn collect_key_values<'a>(
     let mut key_values: SmallVec<[KeyValue<'a>; 4]> = SmallVec::new();
 
     for child in node.named_children(&mut cursor) {
-        if child.kind() == "key_value" {
+        if child == NodeKind::KeyValue {
             key_values.push(parse_key_value(child, source, filename)?);
         }
     }
@@ -135,7 +136,8 @@ pub fn parse_directives<'a>(
 ) -> Result<Vec<Directive<'a>>> {
     // The grammar's root rule name is `file`. If callers pass a different node
     // (e.g. a single directive node), return a structured error.
-    if root.kind() != "file" {
+    let root_kind: NodeKind = root.kind().into();
+    if root_kind != NodeKind::File {
         let p = root.start_position();
         return Err(ParseError {
             filename,
@@ -152,37 +154,37 @@ pub fn parse_directives<'a>(
 }
 
 fn parse_top_level<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
-    match node.kind() {
+    match node.kind().into() {
         // entries
-        "open" => parse_open(node, source, filename),
-        "close" => parse_close(node, source, filename),
-        "balance" => parse_balance(node, source, filename),
-        "pad" => parse_pad(node, source, filename),
-        "transaction" => parse_transaction(node, source, filename),
-        "document" => parse_document(node, source, filename),
-        "note" => parse_note(node, source, filename),
-        "event" => parse_event(node, source, filename),
-        "price" => parse_price(node, source, filename),
-        "commodity" => parse_commodity(node, source, filename),
-        "query" => parse_query(node, source, filename),
-        "custom" => parse_custom(node, source, filename),
+        NodeKind::Open => parse_open(node, source, filename),
+        NodeKind::Close => parse_close(node, source, filename),
+        NodeKind::Balance => parse_balance(node, source, filename),
+        NodeKind::Pad => parse_pad(node, source, filename),
+        NodeKind::Transaction => parse_transaction(node, source, filename),
+        NodeKind::Document => parse_document(node, source, filename),
+        NodeKind::Note => parse_note(node, source, filename),
+        NodeKind::Event => parse_event(node, source, filename),
+        NodeKind::Price => parse_price(node, source, filename),
+        NodeKind::Commodity => parse_commodity(node, source, filename),
+        NodeKind::Query => parse_query(node, source, filename),
+        NodeKind::Custom => parse_custom(node, source, filename),
 
         // directives
-        "option" => parse_option(node, source, filename),
-        "include" => parse_include(node, source, filename),
-        "plugin" => parse_plugin(node, source, filename),
-        "pushtag" => parse_pushtag(node, source, filename),
-        "poptag" => parse_poptag(node, source, filename),
-        "pushmeta" => parse_pushmeta(node, source, filename),
-        "popmeta" => parse_popmeta(node, source, filename),
+        NodeKind::Option => parse_option(node, source, filename),
+        NodeKind::Include => parse_include(node, source, filename),
+        NodeKind::Plugin => parse_plugin(node, source, filename),
+        NodeKind::Pushtag => parse_pushtag(node, source, filename),
+        NodeKind::Poptag => parse_poptag(node, source, filename),
+        NodeKind::Pushmeta => parse_pushmeta(node, source, filename),
+        NodeKind::Popmeta => parse_popmeta(node, source, filename),
 
         // Known non-directive top-level nodes.
-        "section" | "comment" => Ok(raw(node, source, filename)),
+        NodeKind::Section | NodeKind::Comment => Ok(raw(node, source, filename)),
 
-        other => Err(parse_error(
+        _ => Err(parse_error(
             node,
             filename,
-            format!("unknown directive node kind `{}`", other),
+            format!("unknown directive node kind `{}`", node.kind()),
         )),
     }
 }
@@ -209,7 +211,7 @@ fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
     let mut cursor = node.walk();
     let currencies = node
         .named_children(&mut cursor)
-        .filter(|child| child.kind() == "currency")
+        .filter(|child| *child == NodeKind::Currency)
         .map(|child| slice(child, source))
         .collect();
 
@@ -391,15 +393,19 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     let mut cursor = node.walk();
     let values = node
         .named_children(&mut cursor)
-        .filter(|n| n.kind() == "custom_value")
+        .filter(|n| *n == NodeKind::CustomValue)
         .map(|n| {
-            let kind = match n.child(0).map(|c| c.kind()) {
-                Some("string") => CustomValueKind::String,
-                Some("date") => CustomValueKind::Date,
-                Some("bool") => CustomValueKind::Bool,
-                Some("amount") => CustomValueKind::Amount,
-                Some("number_expr") => CustomValueKind::Number,
-                Some("account") => CustomValueKind::Account,
+            let kind = match n.child(0).map(|c| NodeKind::from(c.kind())) {
+                Some(NodeKind::String) => CustomValueKind::String,
+                Some(NodeKind::Date) => CustomValueKind::Date,
+                Some(NodeKind::Bool) => CustomValueKind::Bool,
+                Some(NodeKind::Amount) => CustomValueKind::Amount,
+                Some(NodeKind::Account) => CustomValueKind::Account,
+                Some(k)
+                    if matches!(k, NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number) =>
+                {
+                    CustomValueKind::Number
+                }
                 _ => CustomValueKind::String,
             };
 
@@ -436,7 +442,7 @@ fn parse_include<'a>(node: Node, source: &'a str, meta_filename: &str) -> Result
     let mut cursor = node.walk();
     let filename = node
         .named_children(&mut cursor)
-        .find(|n| n.kind() == "string")
+        .find(|n| *n == NodeKind::String)
         .map(|n| slice(n, source))
         .ok_or_else(|| parse_error(node, meta_filename, "missing string"))?;
 
@@ -452,7 +458,7 @@ fn parse_plugin<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     let mut cursor = node.walk();
     let mut strings = node
         .named_children(&mut cursor)
-        .filter(|n| n.kind() == "string")
+        .filter(|n| *n == NodeKind::String)
         .map(|n| slice(n, source));
 
     let name = strings
@@ -472,7 +478,7 @@ fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     let mut cursor = node.walk();
     let tag = node
         .named_children(&mut cursor)
-        .find(|n| n.kind() == "tag")
+        .find(|n| *n == NodeKind::Tag)
         .map(|n| slice(n, source))
         .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
 
@@ -487,7 +493,7 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     let mut cursor = node.walk();
     let tag = node
         .named_children(&mut cursor)
-        .find(|n| n.kind() == "tag")
+        .find(|n| n == NodeKind::Tag)
         .map(|n| slice(n, source))
         .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
 
@@ -512,7 +518,7 @@ fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     let mut cursor = node.walk();
     let key = node
         .named_children(&mut cursor)
-        .find(|n| n.kind() == "key")
+        .find(|n| *n == NodeKind::Key)
         .map(|n| slice(n, source))
         .ok_or_else(|| parse_error(node, filename, "missing key"))?;
 
@@ -529,13 +535,13 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
     let mut value = None;
 
     for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "key" => key = Some(slice(child, source)),
-            "value" => {
+        match NodeKind::from(child.kind()) {
+            NodeKind::Key => key = Some(slice(child, source)),
+            NodeKind::Value => {
                 let mut inner = child.walk();
                 let string_child = child
                     .named_children(&mut inner)
-                    .find(|n| n.kind() == "string");
+                    .find(|n| *n == NodeKind::String);
 
                 let parsed = if let Some(str_node) = string_child {
                     KeyValueValue::String(slice(str_node, source))
@@ -651,14 +657,14 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
     let amount_raw = field_text(node, "amount", source).or_else(|| {
         let mut cursor = node.walk();
         node.named_children(&mut cursor)
-            .find(|n| n.kind() == "incomplete_amount")
+            .find(|n| *n == NodeKind::IncompleteAmount)
             .map(|n| slice(n, source))
     });
 
     let price_operator = {
         let mut cursor = node.walk();
         node.named_children(&mut cursor)
-            .find(|n| matches!(n.kind(), "at" | "atat"))
+            .find(|n| *n == NodeKind::At || *n == NodeKind::Atat)
             .map(|n| slice(n, source))
     };
 
@@ -712,7 +718,7 @@ fn parse_balance_amount<'a>(
         .next()
         .ok_or_else(|| parse_error(amount_node, filename, "missing currency"))?;
 
-    let (tolerance_node, currency_node) = if second_child.kind() == "currency" {
+    let (tolerance_node, currency_node) = if second_child == NodeKind::Currency {
         (None, second_child)
     } else {
         let currency_node = named_children
@@ -721,7 +727,7 @@ fn parse_balance_amount<'a>(
         (Some(second_child), currency_node)
     };
 
-    if currency_node.kind() != "currency" {
+    if currency_node != NodeKind::Currency {
         return Err(parse_error(
             currency_node,
             filename,
@@ -770,7 +776,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
         .or_else(|| {
             let mut cursor = node.walk();
             node.named_children(&mut cursor)
-                .find(|n| n.kind() == "date")
+                .find(|n| *n == NodeKind::Date)
                 .map(|n| slice(n, source))
         })
         .ok_or_else(|| parse_error(node, filename, "missing date"))?;
@@ -780,7 +786,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
         .or_else(|| {
             let mut cursor = node.walk();
             node.named_children(&mut cursor)
-                .find(|n| n.kind() == "txn")
+                .find(|n| *n == NodeKind::Txn)
                 .map(|n| slice(n, source))
         });
 
@@ -795,7 +801,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
             let mut cursor = node.walk();
             let mut strings = node
                 .named_children(&mut cursor)
-                .filter(|n| n.kind() == "string")
+                .filter(|n| *n == NodeKind::String)
                 .map(|n| slice(n, source));
             let first = strings.next();
             let second = strings.next();
@@ -825,11 +831,11 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
     {
         let mut cursor = node.walk();
         for child in node.named_children(&mut cursor) {
-            match child.kind() {
-                "tags_links" => tags_links_lines.push(slice(child, source)),
-                "comment" => comments.push(slice(child, source)),
-                "key_value" => key_values.push(parse_key_value(child, source, filename)?),
-                "posting" => postings.push(parse_posting(child, source, filename)?),
+            match child.kind().into() {
+                NodeKind::TagsLinks => tags_links_lines.push(slice(child, source)),
+                NodeKind::Comment => comments.push(slice(child, source)),
+                NodeKind::KeyValue => key_values.push(parse_key_value(child, source, filename)?),
+                NodeKind::Posting => postings.push(parse_posting(child, source, filename)?),
                 _ => {}
             }
         }
