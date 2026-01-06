@@ -28,8 +28,8 @@ pub(crate) enum CoreDirective {
     Plugin(Plugin),
     Pushtag(TagDirective),
     Poptag(TagDirective),
-    Pushmeta(Pushmeta),
-    Popmeta(Popmeta),
+    Pushmeta(PushMeta),
+    Popmeta(PopMeta),
     Raw(Raw),
 }
 
@@ -230,14 +230,14 @@ pub(crate) struct TagDirective {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Pushmeta {
+pub(crate) struct PushMeta {
     pub meta: ast::Meta,
     pub span: ast::Span,
     pub key_value: String,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Popmeta {
+pub(crate) struct PopMeta {
     pub meta: ast::Meta,
     pub span: ast::Span,
     pub key: String,
@@ -324,8 +324,8 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
                 Ok(CoreDirective::Pushtag(TagDirective::try_from(tag)?))
             }
             ast::Directive::Poptag(tag) => Ok(CoreDirective::Poptag(TagDirective::try_from(tag)?)),
-            ast::Directive::Pushmeta(pm) => Ok(CoreDirective::Pushmeta(Pushmeta::try_from(pm)?)),
-            ast::Directive::Popmeta(pm) => Ok(CoreDirective::Popmeta(Popmeta::try_from(pm)?)),
+            ast::Directive::Pushmeta(pm) => Ok(CoreDirective::Pushmeta(PushMeta::try_from(pm)?)),
+            ast::Directive::Popmeta(pm) => Ok(CoreDirective::Popmeta(PopMeta::try_from(pm)?)),
             ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from(raw)?)),
         }
     }
@@ -634,10 +634,10 @@ impl<'a> TryFrom<ast::TagDirective<'a>> for TagDirective {
     }
 }
 
-impl<'a> TryFrom<ast::Pushmeta<'a>> for Pushmeta {
+impl<'a> TryFrom<ast::PushMeta<'a>> for PushMeta {
     type Error = ParseError;
 
-    fn try_from(pm: ast::Pushmeta<'a>) -> Result<Self, Self::Error> {
+    fn try_from(pm: ast::PushMeta<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
             meta: pm.meta,
             span: pm.span,
@@ -646,10 +646,10 @@ impl<'a> TryFrom<ast::Pushmeta<'a>> for Pushmeta {
     }
 }
 
-impl<'a> TryFrom<ast::Popmeta<'a>> for Popmeta {
+impl<'a> TryFrom<ast::PopMeta<'a>> for PopMeta {
     type Error = ParseError;
 
-    fn try_from(pm: ast::Popmeta<'a>) -> Result<Self, Self::Error> {
+    fn try_from(pm: ast::PopMeta<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
             meta: pm.meta,
             span: pm.span,

@@ -47,8 +47,8 @@ pub enum Directive<'a> {
     Plugin(Plugin<'a>),
     Pushtag(TagDirective<'a>),
     Poptag(TagDirective<'a>),
-    Pushmeta(Pushmeta<'a>),
-    Popmeta(Popmeta<'a>),
+    Pushmeta(PushMeta<'a>),
+    Popmeta(PopMeta<'a>),
 
     /// Any entry/directive we don't parse yet.
     Raw(Raw<'a>),
@@ -312,14 +312,14 @@ pub struct TagDirective<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Pushmeta<'a> {
+pub struct PushMeta<'a> {
     pub meta: Meta,
     pub span: Span,
     pub key_value: &'a str,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Popmeta<'a> {
+pub struct PopMeta<'a> {
     pub meta: Meta,
     pub span: Span,
     pub key: &'a str,

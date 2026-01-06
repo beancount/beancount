@@ -499,7 +499,7 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
 }
 
 fn parse_pushmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
-    Ok(Directive::Pushmeta(Pushmeta {
+    Ok(Directive::Pushmeta(PushMeta {
         meta: meta(node, filename),
         span: span(node),
         key_value: first_named_child_text(node, source)
@@ -516,7 +516,7 @@ fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
         .map(|n| slice(n, source))
         .ok_or_else(|| parse_error(node, filename, "missing key"))?;
 
-    Ok(Directive::Popmeta(Popmeta {
+    Ok(Directive::Popmeta(PopMeta {
         meta: meta(node, filename),
         span: span(node),
         key,

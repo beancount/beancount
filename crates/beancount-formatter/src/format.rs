@@ -207,7 +207,7 @@ fn format_poptag(writer: &mut Writer, d: &ast::TagDirective<'_>) {
     writer.write_str(&line);
 }
 
-fn format_pushmeta(writer: &mut Writer, d: &ast::Pushmeta<'_>) {
+fn format_pushmeta(writer: &mut Writer, d: &ast::PushMeta<'_>) {
     let line = join_parts([
         Some("pushmeta".to_string()),
         Some(normalize_key_value(d.key_value)),
@@ -215,7 +215,7 @@ fn format_pushmeta(writer: &mut Writer, d: &ast::Pushmeta<'_>) {
     writer.write_str(&line);
 }
 
-fn format_popmeta(writer: &mut Writer, d: &ast::Popmeta<'_>) {
+fn format_popmeta(writer: &mut Writer, d: &ast::PopMeta<'_>) {
     let line = join_parts([
         Some("popmeta".to_string()),
         Some(format!("{}:", to_part(d.key))),
