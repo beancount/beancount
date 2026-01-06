@@ -132,3 +132,12 @@ force-single-line = true
 
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "rich>=14.2.0",
+]

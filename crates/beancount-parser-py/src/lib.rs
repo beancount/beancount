@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 mod core;
 
 use crate::core as bcore;
