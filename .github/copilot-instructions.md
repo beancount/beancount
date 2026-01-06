@@ -8,8 +8,8 @@ It's based on a tree-sitter parser that generated from `./grammar.js`, `./gramme
 
 crates:
 
-- `./crates/beancount-parser/`: the parser that parse string into tree-sitter Node and convert them to our internal AST and core data type.
-- `./crates/beancount-parser-py/`: this create convert core types to beancount.core python types defined in the python file `beancount/core/data.py`. you do not add any rust tests to this crate because it require a linkage to python to run these tests. if you want to test this crate, write test code in python.
+- `./crates/beancount-parser/`: the parser that parse string into tree-sitter Node and convert them to our internal AST and core data type, which is called `CoreDirective`.
+- `./crates/beancount-parser-py/`: this create convert `CoreDirective` to beancount.core python types defined in the python file `beancount/core/data.py`. you do not add any rust tests to this crate because it require a linkage to python to run these tests. if you want to test this crate, write test code in python.
 
 ## Something need to notice:
 

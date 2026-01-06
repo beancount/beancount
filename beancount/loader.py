@@ -5,8 +5,6 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2013-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import rich
-
 import copy
 import functools
 import glob

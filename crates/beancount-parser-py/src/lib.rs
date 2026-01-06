@@ -16,6 +16,7 @@ use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyBool, PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
 use rust_decimal::Decimal;
+use std::collections::HashMap;
 use std::str::FromStr;
 
 #[pymodule]
@@ -69,6 +70,11 @@ impl PyParserError {
 /// Global cache for imported modules and classes so we don't look them up repeatedly.
 static DATA_CACHE: PyOnceLock<DataCache> = PyOnceLock::new();
 
+struct OptionDescriptor {
+    alias: Option<String>,
+    converter: Option<Py<PyAny>>,
+}
+
 struct DataCache {
     number_mod: Py<PyAny>,
     amount_mod: Py<PyAny>,
@@ -92,6 +98,7 @@ struct DataCache {
     account_type_token: Py<PyAny>,
     options_defaults: Py<PyAny>,
     options_defs: Py<PyAny>,
+    option_descriptors: HashMap<String, OptionDescriptor>,
     read_only_options: Py<PyAny>,
     missing: Py<PyAny>,
     zero: Py<PyAny>,
@@ -110,6 +117,8 @@ impl DataCache {
         let missing = number_mod.getattr("MISSING")?.unbind();
         let zero = number_mod.getattr("ZERO")?.unbind();
         let cost_spec_cls = position_mod.getattr("CostSpec")?.unbind();
+        let options_defs = options_mod.getattr("OPTIONS")?.unbind();
+        let option_descriptors = parse_option_descriptors(py, &options_defs)?;
 
         Ok(Self {
             new_metadata: data_mod.getattr("new_metadata")?.unbind(),
@@ -133,7 +142,8 @@ impl DataCache {
             value_type_cls: grammar_mod.getattr("ValueType")?.unbind(),
             account_type_token: account_mod.getattr("TYPE")?.unbind(),
             options_defaults: options_mod.getattr("OPTIONS_DEFAULTS")?.unbind(),
-            options_defs: options_mod.getattr("OPTIONS")?.unbind(),
+            options_defs,
+            option_descriptors,
             read_only_options: options_mod.getattr("READ_ONLY_OPTIONS")?.unbind(),
             missing,
             zero,
@@ -143,6 +153,27 @@ impl DataCache {
 
 fn cache(py: Python<'_>) -> PyResult<&'static DataCache> {
     DATA_CACHE.get_or_try_init(py, || DataCache::init(py))
+}
+
+fn parse_option_descriptors(
+    py: Python<'_>,
+    options_defs: &Py<PyAny>,
+) -> PyResult<HashMap<String, OptionDescriptor>> {
+    let mut parsed = HashMap::new();
+    let options_defs = options_defs.bind(py).cast::<PyDict>()?;
+    for (key_obj, desc_any) in options_defs.iter() {
+        let name = key_obj.extract::<String>()?;
+        let alias = desc_any.getattr("alias")?.extract::<Option<String>>()?;
+        let converter_obj = desc_any.getattr("converter")?;
+        let converter = if converter_obj.is_none() {
+            None
+        } else {
+            Some(converter_obj.unbind())
+        };
+        parsed.insert(name, OptionDescriptor { alias, converter });
+    }
+
+    Ok(parsed)
 }
 
 /// Expose the Rust parser to Python, matching `beancount.loader.load_file`.
@@ -184,14 +215,34 @@ fn default_options_map(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
     Ok(copied)
 }
 
+fn build_parser_error_from_meta(
+    py: Python<'_>,
+    meta: &ast::Meta,
+    message: String,
+) -> PyResult<Py<PyAny>> {
+    let cache = cache(py)?;
+    let kv = PyDict::new(py);
+    kv.set_item("column", meta.column)?;
+    let source = cache
+        .new_metadata
+        .call1(py, (meta.filename.clone(), meta.line, kv))?;
+    let py_err = PyParserError {
+        source: source.clone_ref(py),
+        message,
+        entry: None,
+    };
+    Py::new(py, py_err).map(|e| e.into())
+}
+
 fn apply_options(
     py: Python<'_>,
     options_map: &Bound<'_, PyDict>,
     options: &[bcore::OptionDirective],
-) -> PyResult<()> {
+) -> PyResult<Vec<Py<PyAny>>> {
     let cache = cache(py)?;
-    let options_defs = cache.options_defs.bind(py).cast::<PyDict>()?;
+    let option_descriptors = &cache.option_descriptors;
     let read_only_options = cache.read_only_options.bind(py);
+    let mut option_errors: Vec<Py<PyAny>> = Vec::new();
 
     for opt in options {
         let mut key = opt.key.clone();
@@ -200,18 +251,25 @@ fn apply_options(
             .into_bound(py)
             .into_any();
 
-        if let Some(desc_any) = options_defs.get_item(&key)? {
-            // Handle aliasing.
-            if let Ok(alias) = desc_any.getattr("alias")?.extract::<Option<String>>() {
-                if let Some(alias) = alias {
-                    key = alias;
-                }
+        if let Some(desc) = option_descriptors.get(key.as_str()) {
+            if let Some(alias) = &desc.alias {
+                key = alias.clone();
             }
 
-            // Run converter if provided.
-            if let Ok(converter) = desc_any.getattr("converter") {
-                if !converter.is_none() {
-                    value = converter.call1((value,))?;
+            if let Some(converter) = desc.converter.as_ref() {
+                match converter.bind(py).call1((value,)) {
+                    Ok(converted) => value = converted,
+                    Err(err) => {
+                        let message = err.value(py).str()?;
+                        let message = message.to_string_lossy().into_owned();
+                        let message = format!("Error for option '{}': {}", key, message);
+                        option_errors.push(build_parser_error_from_meta(
+                            py,
+                            &opt.meta,
+                            message,
+                        )?);
+                        continue;
+                    }
                 }
             }
         }
@@ -248,7 +306,7 @@ fn apply_options(
         options_map.set_item(&key, value)?;
     }
 
-    Ok(())
+    Ok(option_errors)
 }
 
 fn build_parser_error(py: Python<'_>, err: ParseError) -> PyResult<Py<PyAny>> {
@@ -800,7 +858,7 @@ fn parse_source(
             Ok(normalized) => {
                 let (includes, filtered, options, plugins) = partition_directives(normalized);
                 options_map.set_item("include", PyList::new(py, &includes)?)?;
-                apply_options(py, &options_map, &options)?;
+                let option_errors = apply_options(py, &options_map, &options)?;
                 if !plugins.is_empty() {
                     let plugin_list_obj = options_map
                         .get_item("plugin")?
@@ -822,12 +880,12 @@ fn parse_source(
                 }
                 let dcontext = options_map.get_item("dcontext")?.unwrap();
                 let entries = convert_directives(py, filtered, &dcontext)?;
-                let errors: Py<PyAny> = PyList::empty(py).unbind().into();
+                let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
                 Ok((entries, errors, options_map.unbind().into()))
             }
             Err(err) => {
                 options_map.set_item("include", PyList::empty(py))?;
-                apply_options(py, &options_map, &[])?;
+                let _ = apply_options(py, &options_map, &[])?;
                 let errors = PyList::new(py, [build_parser_error(py, err)?])?
                     .unbind()
                     .into();
@@ -837,7 +895,7 @@ fn parse_source(
         },
         Err(err) => {
             options_map.set_item("include", PyList::empty(py))?;
-            apply_options(py, &options_map, &[])?;
+            let _ = apply_options(py, &options_map, &[])?;
             let errors = PyList::new(py, [build_parser_error(py, err)?])?
                 .unbind()
                 .into();

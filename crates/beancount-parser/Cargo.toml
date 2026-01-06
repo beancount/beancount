@@ -8,6 +8,9 @@ repository.workspace = true
 homepage.workspace = true
 description = "Core beancount parser logic."
 
+[lib]
+crate-type = ["lib"]
+
 [dependencies]
 # tree-sitter-beancount = { git = "https://github.com/trim21/tree-sitter-beancount", branch = "wasm", default-features = false }
 # tree-sitter-beancount = { path = "C:/Users/trim21/projects/tree-sitter-beancount/", default-features = false }

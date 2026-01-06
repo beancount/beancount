@@ -8,6 +8,9 @@ repository.workspace = true
 homepage.workspace = true
 description = "Core beancount formatter logic."
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 beancount-parser = { path = "../beancount-parser/" }
 serde = { version = "1.0.228", features = ["derive"] }
