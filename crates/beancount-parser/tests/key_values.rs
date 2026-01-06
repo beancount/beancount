@@ -20,7 +20,7 @@ fn collects_key_values_on_note_and_document() {
     Directive::Note(note) => {
       assert_eq!(note.key_values.len(), 2);
       assert_eq!(note.key_values[0].key, "key");
-      assert_eq!(note.key_values[0].value, beancount_parser::ast::KeyValueValue::String("value".to_string()));
+      assert_eq!(note.key_values[0].value, beancount_parser::ast::KeyValueValue::String("value"));
       assert_eq!(note.key_values[1].key, "num");
       assert_eq!(note.key_values[1].value, beancount_parser::ast::KeyValueValue::Raw("42"));
     }
@@ -31,7 +31,7 @@ fn collects_key_values_on_note_and_document() {
     Directive::Document(doc) => {
       assert_eq!(doc.key_values.len(), 1);
       assert_eq!(doc.key_values[0].key, "desc");
-      assert_eq!(doc.key_values[0].value, beancount_parser::ast::KeyValueValue::String("receipt".to_string()));
+      assert_eq!(doc.key_values[0].value, beancount_parser::ast::KeyValueValue::String("receipt"));
     }
     other => panic!("expected document, got {other:?}"),
   }

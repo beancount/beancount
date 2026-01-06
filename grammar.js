@@ -39,7 +39,6 @@ module.exports = grammar({
         ),
 
         _nl: _ => choice('\n', '\r'),
-        _eol: $ => choice('\n', '\r', $._eof),
         _any: $ => /[^\r\n]*/,
 
 

@@ -32,9 +32,9 @@ fn parses_transaction_with_inline_link_and_postings() {
     assert_eq!(txn.narration.as_deref(), Some("Buying coffee"));
     assert_eq!(txn.tags_links, Some("^ee89ada94a39"));
     assert!(txn.tags.is_empty());
-    assert_eq!(txn.links, vec!["ee89ada94a39"]);
+    assert_eq!(txn.links.to_vec(), vec!["ee89ada94a39"]);
     assert_eq!(txn.comment, None);
-    assert_eq!(txn.tags_links_lines, vec!["^ee89ada94a39"]);
+    assert_eq!(txn.tags_links_lines.to_vec(), vec!["^ee89ada94a39"]);
     assert!(txn.comments.is_empty());
     assert!(txn.key_values.is_empty());
 
@@ -93,7 +93,7 @@ fn parses_and_sorts_tags_and_links() {
 
     assert_eq!(txn.payee.as_deref(), Some("Payee"));
     assert_eq!(txn.narration.as_deref(), Some("Narr"));
-    assert_eq!(txn.tags, vec!["a", "b"]);
-    assert_eq!(txn.links, vec!["a", "z"]);
-    assert_eq!(txn.tags_links_lines, vec!["#b ^z #a ^a #b"]);
+    assert_eq!(txn.tags.to_vec(), vec!["a", "b"]);
+    assert_eq!(txn.links.to_vec(), vec!["a", "z"]);
+    assert_eq!(txn.tags_links_lines.to_vec(), vec!["#b ^z #a ^a #b"]);
 }

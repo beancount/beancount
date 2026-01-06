@@ -1,3 +1,4 @@
+use std::ffi::CString;
 use std::path::PathBuf;
 
 use beancount_parser_py::parse_string;
@@ -11,7 +12,8 @@ fn add_project_root_to_sys_path(py: Python<'_>) -> PyResult<()> {
         .map(PathBuf::from)
         .expect("project root");
     let code = format!("import sys; sys.path.insert(0, r\"{}\")", root.to_string_lossy());
-    py.run(&code, None, None)
+    let code_cstr = CString::new(code).expect("code cstr");
+    py.run(code_cstr.as_c_str(), None, None)
 }
 
 #[test]
@@ -33,10 +35,12 @@ fn parses_cost_spec_into_costspec() {
         .join("\n");
 
         let (entries, errors, _opts) = parse_string(py, &input, Some("<memory>"))?;
-        let errors: Bound<'_, PyList> = errors.bind(py).downcast_into()?;
+        let errors = errors.into_bound(py);
+        let errors: Bound<'_, PyList> = errors.downcast_into()?;
         assert_eq!(errors.len(), 0);
 
-        let entries: Bound<'_, PyList> = entries.bind(py).downcast_into()?;
+        let entries = entries.into_bound(py);
+        let entries: Bound<'_, PyList> = entries.downcast_into()?;
         assert_eq!(entries.len(), 2);
 
         let txn1 = entries.get_item(0)?;

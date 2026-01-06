@@ -793,7 +793,6 @@ def load_doc(expect_errors=False):
             if expect_errors is not None:
                 if expect_errors is False and errors:
                     oss = io.StringIO()
-                    rich.print(errors)
                     printer.print_errors(errors, file=oss)
                     self.fail("Unexpected errors found:\n{}".format(oss.getvalue()))
                 elif expect_errors is True and not errors:

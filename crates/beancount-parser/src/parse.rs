@@ -1,5 +1,5 @@
+use smallvec::SmallVec;
 use tree_sitter::Node;
-use serde_json::from_str as parse_json;
 
 use crate::ast::*;
 
@@ -53,21 +53,16 @@ fn span(node: Node) -> Span {
 }
 
 /// Split a basic amount string (`"NUMBER CURRENCY"`) into its components.
-pub fn parse_amount_tokens<'a>(raw: &'a str) -> Option<(&'a str, &'a str)> {
+pub fn parse_amount_tokens(raw: &str) -> Option<(&str, &str)> {
     let mut parts = raw.split_whitespace();
     let number = parts.next()?;
     let currency = parts.next()?;
     Some((number, currency))
 }
 
-fn parse_string_value(node: Node, raw: &str, filename: &str) -> Result<String> {
-    parse_json::<String>(raw)
-        .map_err(|err| parse_error(node, filename, format!("invalid string: {}", err)))
-}
-
-fn collect_key_values<'a>(node: Node, source: &'a str, filename: &str) -> Result<Vec<KeyValue<'a>>> {
+fn collect_key_values<'a>(node: Node, source: &'a str, filename: &str) -> Result<SmallVec<[KeyValue<'a>; 4]>> {
     let mut cursor = node.walk();
-    let mut key_values = Vec::new();
+    let mut key_values: SmallVec<[KeyValue<'a>; 4]> = SmallVec::new();
 
     for child in node.named_children(&mut cursor) {
         if child.kind() == "key_value" {
@@ -78,12 +73,12 @@ fn collect_key_values<'a>(node: Node, source: &'a str, filename: &str) -> Result
     Ok(key_values)
 }
 
-fn parse_tags_links<'a, I>(groups: I) -> (Vec<&'a str>, Vec<&'a str>)
+fn parse_tags_links<'a, I>(groups: I) -> (SmallVec<[&'a str; 2]>, SmallVec<[&'a str; 2]>)
 where
     I: IntoIterator<Item = &'a str>,
 {
-    let mut tags = Vec::new();
-    let mut links = Vec::new();
+    let mut tags: SmallVec<[&'a str; 2]> = SmallVec::new();
+    let mut links: SmallVec<[&'a str; 2]> = SmallVec::new();
 
     for group in groups {
         for token in group.split_whitespace() {
@@ -222,11 +217,11 @@ fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
     }))
 }
 
-fn parse_currencies_from_text<'a>(text: &'a str) -> Vec<&'a str> {
+fn parse_currencies_from_text<'a>(text: &'a str) -> SmallVec<[&'a str; 8]> {
     // Currency token regex in grammar:
     // [A-Z]([A-Z0-9\'\._\-]{0,22}[A-Z0-9])?
     // Here we do a best-effort scan that matches the common case.
-    let mut out = Vec::new();
+    let mut out: SmallVec<[&'a str; 8]> = SmallVec::new();
     let bytes = text.as_bytes();
     let mut i = 0;
 
@@ -363,7 +358,7 @@ fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
     let tags_links = field_text(node, "tags_links", source);
     let (tags, links) = tags_links
         .map(|group| parse_tags_links([group]))
-        .unwrap_or_else(|| (Vec::new(), Vec::new()));
+        .unwrap_or_else(|| (SmallVec::new(), SmallVec::new()));
 
     Ok(Directive::Document(Document {
         meta: meta(node, filename),
@@ -386,8 +381,23 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     let values = node
         .named_children(&mut cursor)
         .filter(|n| n.kind() == "custom_value")
-        .map(|n| slice(n, source))
-        .collect::<Vec<_>>();
+        .map(|n| {
+            let kind = match n.child(0).map(|c| c.kind()) {
+                Some("string") => CustomValueKind::String,
+                Some("date") => CustomValueKind::Date,
+                Some("bool") => CustomValueKind::Bool,
+                Some("amount") => CustomValueKind::Amount,
+                Some("number_expr") => CustomValueKind::Number,
+                Some("account") => CustomValueKind::Account,
+                _ => CustomValueKind::String,
+            };
+
+            CustomValue {
+                raw: slice(n, source),
+                kind,
+            }
+        })
+        .collect::<SmallVec<[CustomValue<'a>; 2]>>();
 
     Ok(Directive::Custom(Custom {
         meta: meta(node, filename),
@@ -517,11 +527,7 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
                     .find(|n| n.kind() == "string");
 
                 let parsed = if let Some(str_node) = string_child {
-                    KeyValueValue::String(parse_string_value(
-                        str_node,
-                        slice(str_node, source),
-                        filename,
-                    )?)
+                    KeyValueValue::String(slice(str_node, source))
                 } else {
                     KeyValueValue::Raw(slice(child, source))
                 };
@@ -548,7 +554,7 @@ fn parse_compound_amount<'a>(node: Node, source: &'a str) -> CostAmount<'a> {
     }
 }
 
-fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<CostSpec<'a>> {
+fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<CostSpec<'a>> {
     let raw = slice(node, source);
     let is_total = raw.trim_start().starts_with("{{");
 
@@ -566,20 +572,17 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
                 continue;
             }
 
-            let mut inner = comp.walk();
-            if let Some(child) = comp.named_children(&mut inner).next() {
-                match child.kind() {
-                    "compound_amount" if amount.is_none() => {
-                        amount = Some(parse_compound_amount(child, source));
-                    }
-                    "date" if date.is_none() => {
-                        date = Some(slice(child, source));
-                    }
-                    "string" if label.is_none() => {
-                        label = Some(parse_string_value(child, slice(child, source), filename)?);
-                    }
-                    _ => {}
+            match comp.kind() {
+                "compound_amount" if amount.is_none() => {
+                    amount = Some(parse_compound_amount(comp, source));
                 }
+                "date" if date.is_none() => {
+                    date = Some(slice(comp, source));
+                }
+                "string" if label.is_none() => {
+                    label = Some(slice(comp, source));
+                }
+                _ => {}
             }
         }
 
@@ -716,17 +719,13 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
         }
     };
 
-    let payee = payee_raw
-        .map(|raw| parse_string_value(node, raw, filename))
-        .transpose()?;
-    let narration = narration_raw
-        .map(|raw| parse_string_value(node, raw, filename))
-        .transpose()?;
+    let payee = payee_raw;
+    let narration = narration_raw;
 
-    let mut tags_links_lines = Vec::new();
-    let mut comments = Vec::new();
-    let mut key_values = Vec::new();
-    let mut postings = Vec::new();
+    let mut tags_links_lines: SmallVec<[&'a str; 8]> = SmallVec::new();
+    let mut comments: SmallVec<[&'a str; 8]> = SmallVec::new();
+    let mut key_values: SmallVec<[KeyValue<'a>; 4]> = SmallVec::new();
+    let mut postings: SmallVec<[Posting<'a>; 4]> = SmallVec::new();
 
     {
         let mut cursor = node.walk();

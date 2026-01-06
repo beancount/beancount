@@ -1,3 +1,4 @@
+use smallvec::SmallVec;
 /// Byte offsets in the original source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span {
@@ -67,10 +68,10 @@ pub struct Open<'a> {
   pub span: Span,
   pub date: &'a str,
   pub account: &'a str,
-  pub currencies: Vec<&'a str>,
+  pub currencies: SmallVec<[&'a str; 8]>,
   pub opt_booking: Option<&'a str>,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -80,7 +81,7 @@ pub struct Close<'a> {
   pub date: &'a str,
   pub account: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -91,7 +92,7 @@ pub struct Balance<'a> {
   pub account: &'a str,
   pub amount: Amount<'a>,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -102,7 +103,7 @@ pub struct Pad<'a> {
   pub account: &'a str,
   pub from_account: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -112,33 +113,28 @@ pub struct Transaction<'a> {
   pub date: &'a str,
   /// Transaction flag/token (e.g. `*`, `!`) when present.
   pub txn: Option<&'a str>,
-  pub payee: Option<String>,
-  pub narration: Option<String>,
+  pub payee: Option<&'a str>,
+  pub narration: Option<&'a str>,
   pub tags_links: Option<&'a str>,
-  pub tags: Vec<&'a str>,
-  pub links: Vec<&'a str>,
+  pub tags: SmallVec<[&'a str; 2]>,
+  pub links: SmallVec<[&'a str; 2]>,
   pub comment: Option<&'a str>,
-  /// All tag/link groups attached to the transaction (inline and indented lines).
-  pub tags_links_lines: Vec<&'a str>,
-  /// All comments attached to the transaction (inline and indented lines).
-  pub comments: Vec<&'a str>,
-  /// Metadata key/value lines attached to the transaction.
-  pub key_values: Vec<KeyValue<'a>>,
-  /// Postings within the transaction, in source order.
-  pub postings: Vec<Posting<'a>>,
+  pub tags_links_lines: SmallVec<[&'a str; 8]>,
+  pub comments: SmallVec<[&'a str; 8]>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
+  pub postings: SmallVec<[Posting<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyValueValue<'a> {
-  String(String),
+  String(&'a str),
   Raw(&'a str),
 }
 
 impl<'a> KeyValueValue<'a> {
-  pub fn as_str(&'a self) -> std::borrow::Cow<'a, str> {
+  pub fn as_str(&self) -> std::borrow::Cow<'a, str> {
     match self {
-      KeyValueValue::String(s) => std::borrow::Cow::Owned(s.clone()),
-      KeyValueValue::Raw(r) => std::borrow::Cow::Borrowed(r),
+      KeyValueValue::String(s) | KeyValueValue::Raw(s) => std::borrow::Cow::Borrowed(*s),
     }
   }
 }
@@ -163,7 +159,7 @@ pub struct CostSpec<'a> {
   pub raw: &'a str,
   pub amount: Option<CostAmount<'a>>,
   pub date: Option<&'a str>,
-  pub label: Option<String>,
+  pub label: Option<&'a str>,
   pub merge: bool,
   pub is_total: bool,
 }
@@ -188,7 +184,7 @@ pub struct Commodity<'a> {
   pub date: &'a str,
   pub currency: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -199,7 +195,7 @@ pub struct Price<'a> {
   pub currency: &'a str,
   pub amount: Amount<'a>,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -210,7 +206,7 @@ pub struct Event<'a> {
   pub event_type: &'a str,
   pub desc: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -221,7 +217,7 @@ pub struct Query<'a> {
   pub name: &'a str,
   pub query: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -232,7 +228,7 @@ pub struct Note<'a> {
   pub account: &'a str,
   pub note: &'a str,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -243,10 +239,10 @@ pub struct Document<'a> {
   pub account: &'a str,
   pub filename: &'a str,
   pub tags_links: Option<&'a str>,
-  pub tags: Vec<&'a str>,
-  pub links: Vec<&'a str>,
+  pub tags: SmallVec<[&'a str; 2]>,
+  pub links: SmallVec<[&'a str; 2]>,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -255,9 +251,25 @@ pub struct Custom<'a> {
   pub span: Span,
   pub date: &'a str,
   pub name: &'a str,
-  pub values: Vec<&'a str>,
+  pub values: SmallVec<[CustomValue<'a>; 2]>,
   pub comment: Option<&'a str>,
-  pub key_values: Vec<KeyValue<'a>>,
+  pub key_values: SmallVec<[KeyValue<'a>; 4]>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CustomValueKind {
+  String,
+  Date,
+  Bool,
+  Amount,
+  Number,
+  Account,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CustomValue<'a> {
+  pub raw: &'a str,
+  pub kind: CustomValueKind,
 }
 
 /// Parsed amount token with number and currency captured separately.

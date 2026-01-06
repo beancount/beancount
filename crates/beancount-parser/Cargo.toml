@@ -16,6 +16,7 @@ tree-sitter = { version = "0.26.3" }
 ropey = '1.6.1'
 anyhow = "1.0.100"
 serde_json = "1"
+smallvec = "1.13"
 
 
 [dev-dependencies]

@@ -70,6 +70,7 @@ dependencies = [
  "ropey",
  "serde_json",
  "similar",
+ "smallvec",
  "tree-sitter",
  "tree-sitter-beancount",
 ]
@@ -83,11 +84,13 @@ dependencies = [
  "lazy_static",
  "pest_derive",
  "pyo3",
+ "pyo3-build-config",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",
  "serde_json",
  "similar",
+ "smallvec",
 ]
 
 [[package]]

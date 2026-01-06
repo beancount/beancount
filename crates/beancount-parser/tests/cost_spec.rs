@@ -1,4 +1,4 @@
-use beancount_parser::{ast::{Directive, Span}, parse_str};
+use beancount_parser::{ast::Directive, parse_str};
 
 #[test]
 fn parses_posting_cost_spec() {

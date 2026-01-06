@@ -11,6 +11,7 @@ description = "Core beancount formatter logic."
 [dependencies]
 beancount-parser = { path = "../beancount-parser/" }
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1"
 chrono = "0.4.38"
 pyo3 = { version = "0.27.2", features = [
   'abi3-py310',
@@ -22,7 +23,10 @@ rust_decimal = "1.36.0"
 rust_decimal_macros = "1.36.0"
 pest_derive = "2.7.14"
 lazy_static = "1.5.0"
+smallvec = "1.13"
 
 [dev-dependencies]
-serde_json = "1"
 similar = { version = "2.7.0", features = ["unicode"] }
+
+[build-dependencies]
+pyo3-build-config = "0.27.2"

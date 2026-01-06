@@ -151,7 +151,7 @@ fn format_custom(writer: &mut Writer, d: &ast::Custom<'_>, config: &Configuratio
     if d.values.is_empty() {
       None
     } else {
-      Some(d.values.iter().map(|v| v.trim()).collect::<Vec<_>>().join(" "))
+      Some(d.values.iter().map(|v| v.raw.trim()).collect::<Vec<_>>().join(" "))
     },
   ]);
   if let Some(comment) = &d.comment {
@@ -194,7 +194,7 @@ fn format_poptag(writer: &mut Writer, d: &ast::TagDirective<'_>) {
 }
 
 fn format_pushmeta(writer: &mut Writer, d: &ast::Pushmeta<'_>) {
-  let line = join_parts([Some("pushmeta".to_string()), Some(normalize_key_value(&d.key_value))]);
+  let line = join_parts([Some("pushmeta".to_string()), Some(normalize_key_value(d.key_value))]);
   writer.write_str(&line);
 }
 
@@ -323,12 +323,12 @@ impl<'a> FormatterContext<'a> {
       }
 
       for (posting, &line_idx) in txn.postings.iter().zip(posting_line_indices.iter()) {
-        let flag = posting.opt_flag.as_deref().map(str::trim);
+        let flag = posting.opt_flag.map(str::trim);
         let account = posting.account.trim();
         let trailing = if let Some(amount) = posting.amount.as_ref() {
           let mut parts = vec![format!("{} {}", compact_ws(amount.number), amount.currency)];
-          if let Some(cost) = posting.cost_spec {
-            parts.push(compact_ws(cost));
+          if let Some(cost) = posting.cost_spec.as_ref() {
+            parts.push(compact_ws(cost.raw));
           }
           if let Some(price_op) = posting.price_operator {
             parts.push(price_op.trim().to_string());

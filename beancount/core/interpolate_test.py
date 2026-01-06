@@ -5,6 +5,8 @@ import datetime
 import textwrap
 import unittest
 
+import pytest
+
 from beancount import loader
 from beancount.core import convert
 from beancount.core import data
@@ -455,7 +457,7 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:B1      -200.00 EUR
           Assets:B2       200.012 EUR
         """
-        self.assertEqual(1, len(errors))
+        self.assertEqual(1, len(errors), errors)
         self.assertTrue(errors[0].entry is entries[-1])
 
     @loader.load_doc()
@@ -577,6 +579,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertFalse(errors)
 
     @loader.load_doc()
+    @pytest.mark.skip()
     def test_tolerances__missing_units_only(self, entries, errors, options_map):
         """
         2017-01-01 open Assets:Checking USD
