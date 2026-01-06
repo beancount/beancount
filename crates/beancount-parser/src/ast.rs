@@ -145,7 +145,7 @@ pub struct KeyValue<'a> {
     pub meta: Meta,
     pub span: Span,
     pub key: &'a str,
-    pub value: KeyValueValue<'a>,
+    pub value: Option<KeyValueValue<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

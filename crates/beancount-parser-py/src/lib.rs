@@ -61,7 +61,7 @@ impl PyParserError {
         };
 
         Ok(format!(
-            "ParserError(source={}, message={}, entry={})",
+            "ParserError(source={}, message={:?}, entry={})",
             source_repr, self.message, entry_repr
         ))
     }
@@ -186,20 +186,20 @@ pub fn load_file(py: Python<'_>, filename: &str) -> PyResult<(Py<PyAny>, Py<PyAn
 }
 
 #[pyfunction]
-#[pyo3(signature = (content, filename = "<memory>"))]
+#[pyo3(signature = (content, filename = "<string>"))]
 pub fn parse_string(
     py: Python<'_>,
     content: &str,
     filename: Option<&str>,
 ) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
-    let filename = filename.unwrap_or("<memory>");
+    let filename = filename.unwrap_or("<string>");
     parse_source(py, filename, content)
 }
 
 #[pyfunction]
-#[pyo3(signature = (filename = "<memory>"))]
+#[pyo3(signature = (filename = "<string>"))]
 fn build_options_map(py: Python<'_>, filename: Option<&str>) -> PyResult<Py<PyAny>> {
-    let filename = filename.unwrap_or("<memory>");
+    let filename = filename.unwrap_or("<string>");
     let options = default_options_map(py)?;
     options.set_item("filename", filename)?;
     options.set_item("include", PyList::new(py, [filename])?)?;
@@ -263,11 +263,7 @@ fn apply_options(
                         let message = err.value(py).str()?;
                         let message = message.to_string_lossy().into_owned();
                         let message = format!("Error for option '{}': {}", key, message);
-                        option_errors.push(build_parser_error_from_meta(
-                            py,
-                            &opt.meta,
-                            message,
-                        )?);
+                        option_errors.push(build_parser_error_from_meta(py, &opt.meta, message)?);
                         continue;
                     }
                 }
@@ -307,6 +303,40 @@ fn apply_options(
     }
 
     Ok(option_errors)
+}
+
+fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>) -> PyResult<()> {
+    let dcontext = options_map
+        .get_item("dcontext")?
+        .ok_or_else(|| PyValueError::new_err("dcontext option missing from defaults"))?;
+
+    if let Some(render_commas) = options_map.get_item("render_commas")? {
+        let render_commas: bool = render_commas.extract()?;
+        dcontext.call_method1("set_commas", (render_commas,))?;
+    }
+
+    if let Some(display_precision) = options_map.get_item("display_precision")? {
+        if display_precision.is_instance_of::<PyDict>() {
+            let display_precision = display_precision.cast::<PyDict>()?;
+            let mut items: Vec<(String, Py<PyAny>)> = Vec::new();
+            for (currency_obj, example) in display_precision {
+                let currency: String = currency_obj.extract()?;
+                items.push((currency, example.unbind()));
+            }
+
+            items.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
+            for (currency, example) in items {
+                let example = example.bind(py);
+                let tuple = example.call_method0("as_tuple")?;
+                let exponent: i32 = tuple.getattr("exponent")?.extract()?;
+                let precision = -exponent;
+                dcontext.call_method1("set_fixed_precision", (currency.as_str(), precision))?;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn build_parser_error(py: Python<'_>, err: ParseError) -> PyResult<Py<PyAny>> {
@@ -414,8 +444,11 @@ fn meta_extra<'py>(
     let kv = PyDict::new(py);
     for item in key_values {
         match &item.value {
-            bcore::KeyValueValue::String(s) => kv.set_item(item.key.as_str(), s.as_str())?,
-            bcore::KeyValueValue::Raw(v) => kv.set_item(item.key.as_str(), v.as_str())?,
+            None => kv.set_item(item.key.as_str(), py.None())?,
+            Some(v) => match v {
+                bcore::KeyValueValue::String(s) => kv.set_item(item.key.as_str(), s.as_str())?,
+                bcore::KeyValueValue::Raw(v) => kv.set_item(item.key.as_str(), v.as_str())?,
+            },
         }
     }
 
@@ -878,6 +911,7 @@ fn parse_source(
                         plugin_list.append(tuple)?;
                     }
                 }
+                apply_display_context_options(py, &options_map)?;
                 let dcontext = options_map.get_item("dcontext")?.unwrap();
                 let entries = convert_directives(py, filtered, &dcontext)?;
                 let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
@@ -886,6 +920,7 @@ fn parse_source(
             Err(err) => {
                 options_map.set_item("include", PyList::empty(py))?;
                 let _ = apply_options(py, &options_map, &[])?;
+                apply_display_context_options(py, &options_map)?;
                 let errors = PyList::new(py, [build_parser_error(py, err)?])?
                     .unbind()
                     .into();
@@ -896,6 +931,7 @@ fn parse_source(
         Err(err) => {
             options_map.set_item("include", PyList::empty(py))?;
             let _ = apply_options(py, &options_map, &[])?;
+            apply_display_context_options(py, &options_map)?;
             let errors = PyList::new(py, [build_parser_error(py, err)?])?
                 .unbind()
                 .into();

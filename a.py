@@ -1,20 +1,11 @@
-from textwrap import dedent
-
+from beancount.loader import load_string
 import rich
 
-from beancount.core.position import CostSpec
-from beancount.parser import printer
-from beancount.parser.parser import parse_string
-
-TEST_INPUT = """
-2014-01-01 open  Assets:Account3    USD,HOOL
+raw = """
+2019-02-28 txn "Test"
+    Assets:A                       10.00 USD
+    Assets:B                      -10.00 USD
+    a: 1
 """
 
-
-entries, errors, options = parse_string(TEST_INPUT)
-
-printer.print_entries(entries)
-
-rich.print(entries[0])
-print(errors)
-# print(options)
+rich.print(load_string(raw))

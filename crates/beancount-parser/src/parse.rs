@@ -553,7 +553,7 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
         meta: meta(node, filename),
         span: span(node),
         key: key.ok_or_else(|| parse_error(node, filename, "missing key"))?,
-        value: value.ok_or_else(|| parse_error(node, filename, "missing value"))?,
+        value: value,
     })
 }
 

@@ -248,7 +248,7 @@ pub(crate) struct KeyValue {
     pub meta: ast::Meta,
     pub span: ast::Span,
     pub key: String,
-    pub value: KeyValueValue,
+    pub value: Option<KeyValueValue>,
 }
 
 #[derive(Debug, Clone)]
@@ -348,8 +348,9 @@ impl<'a> TryFrom<ast::Open<'a>> for Open {
     type Error = ParseError;
 
     fn try_from(open: ast::Open<'a>) -> Result<Self, Self::Error> {
+        let meta = open.meta.clone();
         Ok(Self {
-            meta: open.meta,
+            meta: meta.clone(),
             span: open.span,
             date: open.date.to_string(),
             account: open.account.to_string(),
@@ -358,7 +359,10 @@ impl<'a> TryFrom<ast::Open<'a>> for Open {
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
-            opt_booking: open.opt_booking.map(ToString::to_string),
+            opt_booking: open
+                .opt_booking
+                .map(|booking| unquote_json(booking, &meta, "booking method"))
+                .transpose()?,
             comment: open.comment.map(ToString::to_string),
             key_values: open
                 .key_values
@@ -658,12 +662,15 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
     type Error = ParseError;
 
     fn try_from(kv: ast::KeyValue<'a>) -> Result<Self, Self::Error> {
-        let value = match kv.value {
-            ast::KeyValueValue::String(raw) => {
-                KeyValueValue::String(unquote_json(raw, &kv.meta, "metadata value")?)
-            }
-            ast::KeyValueValue::Raw(raw) => KeyValueValue::Raw(raw.to_string()),
-        };
+        let value = kv
+            .value
+            .map(|v| match v {
+                ast::KeyValueValue::String(raw) => {
+                    unquote_json(raw, &kv.meta, "metadata value").map(KeyValueValue::String)
+                }
+                ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
+            })
+            .transpose()?;
 
         Ok(Self {
             meta: kv.meta,
