@@ -11,7 +11,10 @@ fn add_project_root_to_sys_path(py: Python<'_>) -> PyResult<()> {
         .and_then(|p| p.parent())
         .map(PathBuf::from)
         .expect("project root");
-    let code = format!("import sys; sys.path.insert(0, r\"{}\")", root.to_string_lossy());
+    let code = format!(
+        "import sys; sys.path.insert(0, r\"{}\")",
+        root.to_string_lossy()
+    );
     let code_cstr = CString::new(code).expect("code cstr");
     py.run(code_cstr.as_c_str(), None, None)
 }

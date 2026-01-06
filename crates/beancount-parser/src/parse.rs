@@ -60,7 +60,11 @@ pub fn parse_amount_tokens(raw: &str) -> Option<(&str, &str)> {
     Some((number, currency))
 }
 
-fn collect_key_values<'a>(node: Node, source: &'a str, filename: &str) -> Result<SmallVec<[KeyValue<'a>; 4]>> {
+fn collect_key_values<'a>(
+    node: Node,
+    source: &'a str,
+    filename: &str,
+) -> Result<SmallVec<[KeyValue<'a>; 4]>> {
     let mut cursor = node.walk();
     let mut key_values: SmallVec<[KeyValue<'a>; 4]> = SmallVec::new();
 
@@ -119,7 +123,9 @@ fn required_field_text<'a>(
 
 fn first_named_child_text<'a>(node: Node, source: &'a str) -> Option<&'a str> {
     let mut cursor = node.walk();
-    node.named_children(&mut cursor).next().map(|n| slice(n, source))
+    node.named_children(&mut cursor)
+        .next()
+        .map(|n| slice(n, source))
 }
 
 pub fn parse_directives<'a>(
@@ -198,12 +204,14 @@ fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
     let comment = field_text(node, "comment", source);
     let key_values = collect_key_values(node, source, filename)?;
 
-    // NOTE: `currency` is a token, so it is not a named node in this grammar.
-    // To avoid losing it, we parse currencies from the raw text of the field.
+    // NOTE: `currency` is a token. We walk the children to collect every
+    // occurrence to correctly support multiple currencies (e.g. "USD,HOOL").
+    let mut cursor = node.walk();
     let currencies = node
-        .child_by_field_name("currencies")
-        .map(|curr_node| parse_currencies_from_text(slice(curr_node, source)))
-        .unwrap_or_default();
+        .named_children(&mut cursor)
+        .filter(|child| child.kind() == "currency")
+        .map(|child| slice(child, source))
+        .collect();
 
     Ok(Directive::Open(Open {
         meta: meta(node, filename),
@@ -272,12 +280,15 @@ fn parse_close<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direct
 }
 
 fn parse_balance<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+    let parsed_amount = parse_balance_amount(node, source, filename)?;
+
     Ok(Directive::Balance(Balance {
         meta: meta(node, filename),
         span: span(node),
         date: required_field_text(node, "date", source, filename)?,
         account: required_field_text(node, "account", source, filename)?,
-        amount: parse_amount_from_node(node, source, filename)?,
+        amount: parsed_amount.amount,
+        tolerance: parsed_amount.tolerance,
         comment: field_text(node, "comment", source),
         key_values: collect_key_values(node, source, filename)?,
     }))
@@ -564,15 +575,20 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<C
     let mut merge = false;
 
     if let Some(list_node) = node.child_by_field_name("cost_comp_list") {
-        let mut cursor = list_node.walk();
-        for comp in list_node.named_children(&mut cursor) {
-            let comp_text = slice(comp, source).trim();
-            if comp_text == "*" {
+        let mut stack = vec![list_node];
+
+        while let Some(comp) = stack.pop() {
+            let kind = comp.kind();
+            if kind == "," {
+                continue;
+            }
+
+            if kind == "*" || kind == "asterisk" {
                 merge = true;
                 continue;
             }
 
-            match comp.kind() {
+            match kind {
                 "compound_amount" if amount.is_none() => {
                     amount = Some(parse_compound_amount(comp, source));
                 }
@@ -584,12 +600,39 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<C
                 }
                 _ => {}
             }
-        }
 
-        let mut tokens = list_node.walk();
-        for child in list_node.children(&mut tokens) {
-            if child.kind() == "*" || child.kind() == "asterisk" {
-                merge = true;
+            let mut inner = comp.walk();
+            for child in comp.children(&mut inner) {
+                stack.push(child);
+            }
+        }
+    }
+
+    // Fallback: if the parser failed to attach a date token under the cost
+    // components (e.g. because the leaf is unnamed), attempt a lightweight
+    // scan of the raw text to extract an ISO date literal.
+    if date.is_none() {
+        let bytes = raw.as_bytes();
+        for i in 0..bytes.len() {
+            if i + 10 > bytes.len() {
+                break;
+            }
+            let slice = &raw[i..i + 10];
+            let b = slice.as_bytes();
+            let is_digit = |c: u8| c.is_ascii_digit();
+            let looks_like_date = matches!(b.get(4), Some(b'-'))
+                && matches!(b.get(7), Some(b'-'))
+                && matches!(b.get(0), Some(c) if *c == b'1' || *c == b'2')
+                && b.get(1).map_or(false, |c| is_digit(*c))
+                && b.get(2).map_or(false, |c| is_digit(*c))
+                && b.get(3).map_or(false, |c| is_digit(*c))
+                && b.get(5).map_or(false, |c| is_digit(*c))
+                && b.get(6).map_or(false, |c| is_digit(*c))
+                && b.get(8).map_or(false, |c| is_digit(*c))
+                && b.get(9).map_or(false, |c| is_digit(*c));
+            if looks_like_date {
+                date = Some(slice);
+                break;
             }
         }
     }
@@ -644,11 +687,57 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
     })
 }
 
-fn parse_amount_from_node<'a>(node: Node, source: &'a str, filename: &str) -> Result<Amount<'a>> {
-    let raw = field_text(node, "amount", source)
-        .or_else(|| first_named_child_text(node, source))
+struct ParsedBalanceAmount<'a> {
+    amount: Amount<'a>,
+    tolerance: Option<&'a str>,
+}
+
+fn parse_balance_amount<'a>(
+    node: Node,
+    source: &'a str,
+    filename: &str,
+) -> Result<ParsedBalanceAmount<'a>> {
+    let amount_node = node
+        .child_by_field_name("amount")
         .ok_or_else(|| parse_error(node, filename, "missing amount"))?;
-    parse_amount_value(raw, node, filename)
+
+    let mut cursor = amount_node.walk();
+    let mut named_children = amount_node.named_children(&mut cursor);
+
+    let number_node = named_children
+        .next()
+        .ok_or_else(|| parse_error(amount_node, filename, "missing amount number"))?;
+
+    let second_child = named_children
+        .next()
+        .ok_or_else(|| parse_error(amount_node, filename, "missing currency"))?;
+
+    let (tolerance_node, currency_node) = if second_child.kind() == "currency" {
+        (None, second_child)
+    } else {
+        let currency_node = named_children
+            .next()
+            .ok_or_else(|| parse_error(amount_node, filename, "missing currency"))?;
+        (Some(second_child), currency_node)
+    };
+
+    if currency_node.kind() != "currency" {
+        return Err(parse_error(
+            currency_node,
+            filename,
+            "invalid amount currency",
+        ));
+    }
+
+    let amount_raw = slice(amount_node, source);
+    let amount = Amount {
+        raw: amount_raw,
+        number: slice(number_node, source).trim(),
+        currency: slice(currency_node, source),
+    };
+    let tolerance = tolerance_node.map(|n| slice(n, source).trim());
+
+    Ok(ParsedBalanceAmount { amount, tolerance })
 }
 
 fn parse_amount_field<'a>(
@@ -661,13 +750,13 @@ fn parse_amount_field<'a>(
     parse_amount_value(raw, node, filename)
 }
 
-fn parse_amount_value<'a>(
-    raw: &'a str,
-    node: Node,
-    filename: &str,
-) -> Result<Amount<'a>> {
+fn parse_amount_value<'a>(raw: &'a str, node: Node, filename: &str) -> Result<Amount<'a>> {
     if let Some((number, currency)) = parse_amount_tokens(raw) {
-        Ok(Amount { raw, number, currency })
+        Ok(Amount {
+            raw,
+            number,
+            currency,
+        })
     } else {
         Err(parse_error(node, filename, "invalid amount"))
     }
@@ -714,7 +803,13 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
                 (Some(n), None) => (None, Some(n)),
                 (Some(p), Some(n)) => (Some(p), Some(n)),
                 (None, None) => (None, None),
-                _ => return Err(parse_error(node, filename, "invalid transaction description")),
+                _ => {
+                    return Err(parse_error(
+                        node,
+                        filename,
+                        "invalid transaction description",
+                    ));
+                }
             }
         }
     };

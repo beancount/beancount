@@ -2,18 +2,18 @@ mod core;
 
 use crate::core as bcore;
 
-use beancount_parser::ParseError;
-use beancount_parser::ast;
 use bcore::CoreDirective;
 use bcore::normalize_directives;
+use beancount_parser::ParseError;
+use beancount_parser::ast;
 use beancount_parser::parse_amount_tokens;
 use beancount_parser::parse_str;
 use chrono::{Datelike, NaiveDate};
+use pyo3::BoundObject;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyBool, PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
-use pyo3::BoundObject;
 use rust_decimal::Decimal;
 use std::str::FromStr;
 
@@ -28,7 +28,6 @@ fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-
 /// Parser error exposed to Python. Matches beancount.core.data.BeancountError protocol.
 #[pyclass(module = "beancount.parser.parser", name = "ParserError", get_all)]
 struct PyParserError {
@@ -41,7 +40,11 @@ struct PyParserError {
 impl PyParserError {
     #[new]
     fn new(source: Py<PyAny>, message: String, entry: Option<Py<PyAny>>) -> Self {
-        Self { source, message, entry }
+        Self {
+            source,
+            message,
+            entry,
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -87,6 +90,8 @@ struct DataCache {
     value_type_cls: Py<PyAny>,
     account_type_token: Py<PyAny>,
     options_defaults: Py<PyAny>,
+    options_defs: Py<PyAny>,
+    read_only_options: Py<PyAny>,
     missing: Py<PyAny>,
     zero: Py<PyAny>,
 }
@@ -127,6 +132,8 @@ impl DataCache {
             value_type_cls: grammar_mod.getattr("ValueType")?.unbind(),
             account_type_token: account_mod.getattr("TYPE")?.unbind(),
             options_defaults: options_mod.getattr("OPTIONS_DEFAULTS")?.unbind(),
+            options_defs: options_mod.getattr("OPTIONS")?.unbind(),
+            read_only_options: options_mod.getattr("READ_ONLY_OPTIONS")?.unbind(),
             missing,
             zero,
         })
@@ -176,39 +183,68 @@ fn default_options_map(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
     Ok(copied)
 }
 
-fn apply_options(py: Python<'_>, options_map: &Bound<'_, PyDict>, options: &[bcore::OptionDirective]) -> PyResult<()> {
+fn apply_options(
+    py: Python<'_>,
+    options_map: &Bound<'_, PyDict>,
+    options: &[bcore::OptionDirective],
+) -> PyResult<()> {
     let cache = cache(py)?;
+    let options_defs = cache.options_defs.bind(py).cast::<PyDict>()?;
+    let read_only_options = cache.read_only_options.bind(py);
 
     for opt in options {
-        let key = &opt.key;
-        let value = &opt.value;
+        let mut key = opt.key.clone();
+        let mut value: Bound<'_, PyAny> = PyString::new(py, opt.value.as_str())
+            .unbind()
+            .into_bound(py)
+            .into_any();
 
-        match key.as_str() {
-            "infer_tolerance_from_cost" => {
-                let val = matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on");
-                options_map.set_item(key, val)?;
+        if let Some(desc_any) = options_defs.get_item(&key)? {
+            // Handle aliasing.
+            if let Ok(alias) = desc_any.getattr("alias")?.extract::<Option<String>>() {
+                if let Some(alias) = alias {
+                    key = alias;
+                }
             }
-            "operating_currency" => {
-                let raw = options_map
-                    .get_item("operating_currency")?
-                    .ok_or_else(|| PyValueError::new_err("operating_currency not initialized as list"))?;
-                let list = raw.cast::<PyList>()?;
-                let py_str = PyString::new(py, value);
-                list.append(py_str)?;
+
+            // Run converter if provided.
+            if let Ok(converter) = desc_any.getattr("converter") {
+                if !converter.is_none() {
+                    value = converter.call1((value,))?;
+                }
             }
-            "insert_pythonpath" => {
-                let val = matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on");
-                options_map.set_item(key, val)?;
-            }
-            "plugin_processing_mode" => {
-                options_map.set_item(key, PyString::new(py, value))?;
-            }
-            "tolerance_multiplier" | "inferred_tolerance_multiplier" => {
-                let decimal = py_decimal(py, cache, value)?;
-                options_map.set_item("tolerance_multiplier", decimal)?;
-            }
-            _ => {}
         }
+
+        // Skip read-only options (the grammar would have rejected them earlier).
+        if read_only_options
+            .call_method1("__contains__", (&key,))?
+            .extract::<bool>()?
+        {
+            continue;
+        }
+
+        if let Some(current) = options_map.get_item(&key)? {
+            if current.is_instance_of::<PyList>() {
+                current.cast::<PyList>()?.append(value)?;
+                continue;
+            }
+
+            if current.is_instance_of::<PyDict>() {
+                let tuple = value.cast::<PyTuple>()?;
+                if tuple.len() != 2 {
+                    return Err(PyValueError::new_err(format!(
+                        "option '{}' expects a (key, value) tuple",
+                        key
+                    )));
+                }
+                let k = tuple.get_item(0)?;
+                let v = tuple.get_item(1)?;
+                current.cast::<PyDict>()?.set_item(k, v)?;
+                continue;
+            }
+        }
+
+        options_map.set_item(&key, value)?;
     }
 
     Ok(())
@@ -258,7 +294,11 @@ fn partition_directives(
     (includes, filtered, options, plugins)
 }
 
-fn convert_directives(py: Python<'_>, directives: Vec<CoreDirective>, dcontext: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+fn convert_directives(
+    py: Python<'_>,
+    directives: Vec<CoreDirective>,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
     let entries: Vec<Py<PyAny>> = directives
         .iter()
         .filter_map(|directive| convert_directive(py, directive, dcontext).transpose())
@@ -266,7 +306,11 @@ fn convert_directives(py: Python<'_>, directives: Vec<CoreDirective>, dcontext: 
     Ok(PyList::new(py, entries)?.unbind().into())
 }
 
-fn convert_directive(py: Python<'_>, directive: &CoreDirective, dcontext: &Bound<'_, PyAny>) -> PyResult<Option<Py<PyAny>>> {
+fn convert_directive(
+    py: Python<'_>,
+    directive: &CoreDirective,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Option<Py<PyAny>>> {
     match directive {
         CoreDirective::Open(open) => convert_open(py, open).map(Some),
         CoreDirective::Transaction(txn) => convert_transaction(py, txn, dcontext).map(Some),
@@ -300,7 +344,10 @@ fn make_metadata(
     new_metadata.call1(py, (meta.filename.clone(), meta.line, kv))
 }
 
-fn meta_extra<'py>(py: Python<'py>, key_values: &[bcore::KeyValue]) -> PyResult<Option<Bound<'py, PyDict>>> {
+fn meta_extra<'py>(
+    py: Python<'py>,
+    key_values: &[bcore::KeyValue],
+) -> PyResult<Option<Bound<'py, PyDict>>> {
     if key_values.is_empty() {
         return Ok(None);
     }
@@ -337,7 +384,11 @@ fn convert_close(py: Python<'_>, close: &bcore::Close) -> PyResult<Py<PyAny>> {
     cls.call1(py, (meta, date, close.account.as_str()))
 }
 
-fn convert_balance(py: Python<'_>, balance: &bcore::Balance, dcontext: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+fn convert_balance(
+    py: Python<'_>,
+    balance: &bcore::Balance,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.balance_cls;
     let meta = make_metadata(py, &balance.meta, meta_extra(py, &balance.key_values)?)?;
@@ -350,9 +401,20 @@ fn convert_balance(py: Python<'_>, balance: &bcore::Balance, dcontext: &Bound<'_
         Some(balance.amount.currency.as_str()),
     )?;
     let amount = amount_to_py(py, cache, &balance.amount)?;
+    let tolerance = match balance.tolerance.as_deref() {
+        Some(raw) => py_decimal(py, cache, raw)?,
+        None => py.None(),
+    };
     cls.call1(
         py,
-        (meta, date, balance.account.as_str(), amount, py.None(), py.None()),
+        (
+            meta,
+            date,
+            balance.account.as_str(),
+            amount,
+            tolerance,
+            py.None(),
+        ),
     )
 }
 
@@ -361,10 +423,17 @@ fn convert_pad(py: Python<'_>, pad: &bcore::Pad) -> PyResult<Py<PyAny>> {
     let cls = &cache.pad_cls;
     let meta = make_metadata(py, &pad.meta, meta_extra(py, &pad.key_values)?)?;
     let date = py_date(py, pad.date.as_str())?;
-    cls.call1(py, (meta, date, pad.account.as_str(), pad.from_account.as_str()))
+    cls.call1(
+        py,
+        (meta, date, pad.account.as_str(), pad.from_account.as_str()),
+    )
 }
 
-fn convert_transaction(py: Python<'_>, txn: &bcore::Transaction, dcontext: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+fn convert_transaction(
+    py: Python<'_>,
+    txn: &bcore::Transaction,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.transaction_cls;
 
@@ -399,16 +468,7 @@ fn convert_transaction(py: Python<'_>, txn: &bcore::Transaction, dcontext: &Boun
 
     cls.call1(
         py,
-        (
-            meta,
-            date,
-            flag,
-            payee,
-            narration,
-            tags,
-            links,
-            postings,
-        ),
+        (meta, date, flag, payee, narration, tags, links, postings),
     )
 }
 
@@ -456,12 +516,24 @@ fn cost_spec_to_py(
         .map(|l| PyString::new(py, l).unbind().into())
         .unwrap_or_else(|| py.None());
 
-    cache
-        .cost_spec_cls
-        .call1(py, (number_per, number_total, currency, date, label, cost_spec.merge))
+    cache.cost_spec_cls.call1(
+        py,
+        (
+            number_per,
+            number_total,
+            currency,
+            date,
+            label,
+            cost_spec.merge,
+        ),
+    )
 }
 
-fn convert_posting(py: Python<'_>, posting: &bcore::Posting, dcontext: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+fn convert_posting(
+    py: Python<'_>,
+    posting: &bcore::Posting,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.posting_cls;
     let meta = make_metadata(py, &posting.meta, None)?;
@@ -484,7 +556,9 @@ fn convert_posting(py: Python<'_>, posting: &bcore::Posting, dcontext: &Bound<'_
         .cost_spec
         .as_ref()
         .map(|cost| {
-            if let Some(amount) = &cost.amount && let Some(curr) = amount.currency.as_deref() {
+            if let Some(amount) = &cost.amount
+                && let Some(curr) = amount.currency.as_deref()
+            {
                 if let Some(per) = amount.per.as_deref() {
                     update_dcontext(py, cache, dcontext, per, Some(curr))?;
                 }
@@ -552,7 +626,11 @@ fn convert_commodity(py: Python<'_>, commodity: &bcore::Commodity) -> PyResult<P
     cls.call1(py, (meta, date, commodity.currency.as_str()))
 }
 
-fn convert_price(py: Python<'_>, price: &bcore::Price, dcontext: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
+fn convert_price(
+    py: Python<'_>,
+    price: &bcore::Price,
+    dcontext: &Bound<'_, PyAny>,
+) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.price_cls;
     let meta = make_metadata(py, &price.meta, meta_extra(py, &price.key_values)?)?;
@@ -587,7 +665,10 @@ fn convert_event(py: Python<'_>, event: &bcore::Event) -> PyResult<Py<PyAny>> {
     let cls = &cache.event_cls;
     let meta = make_metadata(py, &event.meta, meta_extra(py, &event.key_values)?)?;
     let date = py_date(py, event.date.as_str())?;
-    cls.call1(py, (meta, date, event.event_type.as_str(), event.desc.as_str()))
+    cls.call1(
+        py,
+        (meta, date, event.event_type.as_str(), event.desc.as_str()),
+    )
 }
 
 fn convert_query(py: Python<'_>, query: &bcore::Query) -> PyResult<Py<PyAny>> {
@@ -650,7 +731,11 @@ fn convert_custom(py: Python<'_>, custom: &bcore::Custom) -> PyResult<Py<PyAny>>
     cls.call1(py, (meta, date, custom.name.as_str(), values))
 }
 
-fn convert_custom_value(py: Python<'_>, cache: &DataCache, value: &bcore::CustomValue) -> PyResult<Py<PyAny>> {
+fn convert_custom_value(
+    py: Python<'_>,
+    cache: &DataCache,
+    value: &bcore::CustomValue,
+) -> PyResult<Py<PyAny>> {
     let (py_value, dtype): (Py<PyAny>, Py<PyAny>) = match value.kind {
         ast::CustomValueKind::String => {
             let raw = value.string.as_deref().unwrap_or(value.raw.as_str());
@@ -674,7 +759,8 @@ fn convert_custom_value(py: Python<'_>, cache: &DataCache, value: &bcore::Custom
             let raw = value.raw.trim();
             let (number, currency) = parse_amount_tokens(raw)
                 .ok_or_else(|| PyValueError::new_err(format!("invalid amount `{}`", raw)))?;
-            let amount = amount_from_number_and_currency(py, cache, number.trim(), currency.trim())?;
+            let amount =
+                amount_from_number_and_currency(py, cache, number.trim(), currency.trim())?;
             let dtype = amount.bind(py).get_type().unbind().into();
             (amount, dtype)
         }
@@ -717,7 +803,9 @@ fn parse_source(
                 if !plugins.is_empty() {
                     let plugin_list_obj = options_map
                         .get_item("plugin")?
-                        .ok_or_else(|| PyValueError::new_err("plugin option missing from defaults"))?
+                        .ok_or_else(|| {
+                            PyValueError::new_err("plugin option missing from defaults")
+                        })?
                         .unbind();
                     let plugin_list = plugin_list_obj.bind(py).cast::<PyList>()?;
                     for plugin in plugins {
@@ -774,15 +862,19 @@ fn py_decimal(py: Python<'_>, cache: &DataCache, number: &str) -> PyResult<Py<Py
     cache.number_mod.getattr(py, "D")?.call1(py, (number,))
 }
 
-fn py_amount(py: Python<'_>, cache: &DataCache, number: Py<PyAny>, currency: &str) -> PyResult<Py<PyAny>> {
-    cache.amount_mod.getattr(py, "Amount")?.call1(py, (number, currency))
-}
-
-fn amount_to_py(
+fn py_amount(
     py: Python<'_>,
     cache: &DataCache,
-    amount: &bcore::Amount,
+    number: Py<PyAny>,
+    currency: &str,
 ) -> PyResult<Py<PyAny>> {
+    cache
+        .amount_mod
+        .getattr(py, "Amount")?
+        .call1(py, (number, currency))
+}
+
+fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &bcore::Amount) -> PyResult<Py<PyAny>> {
     let d = py_decimal(py, cache, amount.number.as_str())?;
     py_amount(py, cache, d, amount.currency.as_str())
 }

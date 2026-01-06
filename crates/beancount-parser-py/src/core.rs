@@ -1,4 +1,4 @@
-use beancount_parser::{ast, ParseError};
+use beancount_parser::{ParseError, ast};
 use serde_json::from_str as parse_json;
 use smallvec::SmallVec;
 use std::convert::TryFrom;
@@ -70,6 +70,7 @@ pub(crate) struct Balance {
     pub date: String,
     pub account: String,
     pub amount: Amount,
+    pub tolerance: Option<String>,
     pub comment: Option<String>,
     pub key_values: SmallKeyValues,
 }
@@ -280,7 +281,9 @@ pub(crate) struct Amount {
     pub currency: String,
 }
 
-pub(crate) fn normalize_directives<'a>(directives: Vec<ast::Directive<'a>>) -> Result<Vec<CoreDirective>, ParseError> {
+pub(crate) fn normalize_directives<'a>(
+    directives: Vec<ast::Directive<'a>>,
+) -> Result<Vec<CoreDirective>, ParseError> {
     directives
         .into_iter()
         .map(CoreDirective::try_from)
@@ -294,20 +297,32 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
         match directive {
             ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from(open)?)),
             ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from(close)?)),
-            ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from(balance)?)),
+            ast::Directive::Balance(balance) => {
+                Ok(CoreDirective::Balance(Balance::try_from(balance)?))
+            }
             ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from(pad)?)),
-            ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(Transaction::try_from(txn)?)),
-            ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from(cmdty)?)),
+            ast::Directive::Transaction(txn) => {
+                Ok(CoreDirective::Transaction(Transaction::try_from(txn)?))
+            }
+            ast::Directive::Commodity(cmdty) => {
+                Ok(CoreDirective::Commodity(Commodity::try_from(cmdty)?))
+            }
             ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from(price)?)),
             ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from(event)?)),
             ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from(query)?)),
             ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from(note)?)),
             ast::Directive::Document(doc) => Ok(CoreDirective::Document(Document::try_from(doc)?)),
             ast::Directive::Custom(custom) => Ok(CoreDirective::Custom(Custom::try_from(custom)?)),
-            ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from(opt)?)),
-            ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from(include)?)),
+            ast::Directive::Option(opt) => {
+                Ok(CoreDirective::Option(OptionDirective::try_from(opt)?))
+            }
+            ast::Directive::Include(include) => {
+                Ok(CoreDirective::Include(Include::try_from(include)?))
+            }
             ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from(plugin)?)),
-            ast::Directive::Pushtag(tag) => Ok(CoreDirective::Pushtag(TagDirective::try_from(tag)?)),
+            ast::Directive::Pushtag(tag) => {
+                Ok(CoreDirective::Pushtag(TagDirective::try_from(tag)?))
+            }
             ast::Directive::Poptag(tag) => Ok(CoreDirective::Poptag(TagDirective::try_from(tag)?)),
             ast::Directive::Pushmeta(pm) => Ok(CoreDirective::Pushmeta(Pushmeta::try_from(pm)?)),
             ast::Directive::Popmeta(pm) => Ok(CoreDirective::Popmeta(Popmeta::try_from(pm)?)),
@@ -338,10 +353,18 @@ impl<'a> TryFrom<ast::Open<'a>> for Open {
             span: open.span,
             date: open.date.to_string(),
             account: open.account.to_string(),
-            currencies: open.currencies.into_iter().map(ToString::to_string).collect(),
+            currencies: open
+                .currencies
+                .into_iter()
+                .map(ToString::to_string)
+                .collect(),
             opt_booking: open.opt_booking.map(ToString::to_string),
             comment: open.comment.map(ToString::to_string),
-            key_values: open.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: open
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -356,7 +379,11 @@ impl<'a> TryFrom<ast::Close<'a>> for Close {
             date: close.date.to_string(),
             account: close.account.to_string(),
             comment: close.comment.map(ToString::to_string),
-            key_values: close.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: close
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -371,8 +398,13 @@ impl<'a> TryFrom<ast::Balance<'a>> for Balance {
             date: balance.date.to_string(),
             account: balance.account.to_string(),
             amount: Amount::try_from(balance.amount)?,
+            tolerance: balance.tolerance.map(ToString::to_string),
             comment: balance.comment.map(ToString::to_string),
-            key_values: balance.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: balance
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -388,7 +420,11 @@ impl<'a> TryFrom<ast::Pad<'a>> for Pad {
             account: pad.account.to_string(),
             from_account: pad.from_account.to_string(),
             comment: pad.comment.map(ToString::to_string),
-            key_values: pad.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: pad
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -403,7 +439,11 @@ impl<'a> TryFrom<ast::Commodity<'a>> for Commodity {
             date: cmdty.date.to_string(),
             currency: cmdty.currency.to_string(),
             comment: cmdty.comment.map(ToString::to_string),
-            key_values: cmdty.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: cmdty
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -419,7 +459,11 @@ impl<'a> TryFrom<ast::Price<'a>> for Price {
             currency: price.currency.to_string(),
             amount: Amount::try_from(price.amount)?,
             comment: price.comment.map(ToString::to_string),
-            key_values: price.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: price
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -435,7 +479,11 @@ impl<'a> TryFrom<ast::Event<'a>> for Event {
             event_type: event.event_type.to_string(),
             desc: unquote_json(event.desc, &event.meta, "event description")?,
             comment: event.comment.map(ToString::to_string),
-            key_values: event.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: event
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -451,7 +499,11 @@ impl<'a> TryFrom<ast::Query<'a>> for Query {
             name: query.name.to_string(),
             query: unquote_json(query.query, &query.meta, "query")?,
             comment: query.comment.map(ToString::to_string),
-            key_values: query.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: query
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -467,7 +519,11 @@ impl<'a> TryFrom<ast::Note<'a>> for Note {
             account: note.account.to_string(),
             note: unquote_json(note.note, &note.meta, "note")?,
             comment: note.comment.map(ToString::to_string),
-            key_values: note.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: note
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -487,7 +543,11 @@ impl<'a> TryFrom<ast::Document<'a>> for Document {
             tags: doc.tags.into_iter().map(ToString::to_string).collect(),
             links: doc.links.into_iter().map(ToString::to_string).collect(),
             comment: doc.comment.map(ToString::to_string),
-            key_values: doc.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: doc
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -507,7 +567,11 @@ impl<'a> TryFrom<ast::Custom<'a>> for Custom {
                 .map(|v| CustomValue::try_from((v, &custom.meta)))
                 .collect::<Result<_, _>>()?,
             comment: custom.comment.map(ToString::to_string),
-            key_values: custom.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
+            key_values: custom
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -595,7 +659,9 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
 
     fn try_from(kv: ast::KeyValue<'a>) -> Result<Self, Self::Error> {
         let value = match kv.value {
-            ast::KeyValueValue::String(raw) => KeyValueValue::String(unquote_json(raw, &kv.meta, "metadata value")?),
+            ast::KeyValueValue::String(raw) => {
+                KeyValueValue::String(unquote_json(raw, &kv.meta, "metadata value")?)
+            }
             ast::KeyValueValue::Raw(raw) => KeyValueValue::Raw(raw.to_string()),
         };
 
@@ -684,8 +750,16 @@ impl<'a> TryFrom<ast::Transaction<'a>> for Transaction {
             narration,
             tags: txn.tags.into_iter().map(ToString::to_string).collect(),
             links: txn.links.into_iter().map(ToString::to_string).collect(),
-            key_values: txn.key_values.into_iter().map(KeyValue::try_from).collect::<Result<_, _>>()?,
-            postings: txn.postings.into_iter().map(Posting::try_from).collect::<Result<_, _>>()?,
+            key_values: txn
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
+            postings: txn
+                .postings
+                .into_iter()
+                .map(Posting::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
