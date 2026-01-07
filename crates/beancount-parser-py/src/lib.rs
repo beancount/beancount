@@ -315,8 +315,8 @@ fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>
         dcontext.call_method1("set_commas", (render_commas,))?;
     }
 
-    if let Some(display_precision) = options_map.get_item("display_precision")? {
-        if display_precision.is_instance_of::<PyDict>() {
+    if let Some(display_precision) = options_map.get_item("display_precision")?
+        && display_precision.is_instance_of::<PyDict>() {
             let display_precision = display_precision.cast::<PyDict>()?;
             let mut items: Vec<(String, Py<PyAny>)> = Vec::new();
             for (currency_obj, example) in display_precision {
@@ -334,7 +334,6 @@ fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>
                 dcontext.call_method1("set_fixed_precision", (currency.as_str(), precision))?;
             }
         }
-    }
 
     Ok(())
 }
@@ -653,8 +652,8 @@ fn convert_posting(
         .cost_spec
         .as_ref()
         .map(|cost| {
-            if let Some(amount) = &cost.amount {
-                if let Some(curr) = amount.currency.as_deref() {
+            if let Some(amount) = &cost.amount
+                && let Some(curr) = amount.currency.as_deref() {
                     if let Some(per) = amount.per.as_ref() {
                         update_dcontext(py, cache, dcontext, per, Some(curr))?;
                     }
@@ -662,7 +661,6 @@ fn convert_posting(
                         update_dcontext(py, cache, dcontext, total, Some(curr))?;
                     }
                 }
-            }
             cost_spec_to_py(py, cache, cost)
         })
         .transpose()?;

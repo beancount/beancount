@@ -221,9 +221,7 @@ fn collect_directives<'a>(
             for child in node.named_children(&mut cursor) {
                 match child.kind().into() {
                     NodeKind::Headline => continue,
-                    NodeKind::Section => {
-                        collect_directives(child, source, filename, directives)?
-                    }
+                    NodeKind::Section => collect_directives(child, source, filename, directives)?,
                     _ => directives.push(parse_top_level(child, source, filename)?),
                 }
             }
@@ -656,7 +654,7 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
         meta: meta(node, filename),
         span: span(node),
         key: key.ok_or_else(|| parse_error(node, filename, "missing key"))?,
-        value: value,
+        value,
     })
 }
 
@@ -735,14 +733,14 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
             let is_digit = |c: u8| c.is_ascii_digit();
             let looks_like_date = matches!(b.get(4), Some(b'-'))
                 && matches!(b.get(7), Some(b'-'))
-                && matches!(b.get(0), Some(c) if *c == b'1' || *c == b'2')
-                && b.get(1).map_or(false, |c| is_digit(*c))
-                && b.get(2).map_or(false, |c| is_digit(*c))
-                && b.get(3).map_or(false, |c| is_digit(*c))
-                && b.get(5).map_or(false, |c| is_digit(*c))
-                && b.get(6).map_or(false, |c| is_digit(*c))
-                && b.get(8).map_or(false, |c| is_digit(*c))
-                && b.get(9).map_or(false, |c| is_digit(*c));
+                && matches!(b.first(), Some(c) if *c == b'1' || *c == b'2')
+                && b.get(1).is_some_and(|c| is_digit(*c))
+                && b.get(2).is_some_and(|c| is_digit(*c))
+                && b.get(3).is_some_and(|c| is_digit(*c))
+                && b.get(5).is_some_and(|c| is_digit(*c))
+                && b.get(6).is_some_and(|c| is_digit(*c))
+                && b.get(8).is_some_and(|c| is_digit(*c))
+                && b.get(9).is_some_and(|c| is_digit(*c));
             if looks_like_date {
                 date = Some(slice);
                 break;
@@ -906,12 +904,11 @@ fn parse_amount_node<'a>(amount_node: Node, source: &'a str, filename: &str) -> 
         .transpose()?;
     let mut currency = currency_node.map(|n| slice(n, source));
 
-    if number.is_none() && currency.is_none() {
-        if let Some((num, curr)) = parse_amount_tokens(raw) {
+    if number.is_none() && currency.is_none()
+        && let Some((num, curr)) = parse_amount_tokens(raw) {
             number = Some(NumberExpr::Literal(num));
             currency = Some(curr);
         }
-    }
 
     let number = number.unwrap_or(NumberExpr::Missing);
     let currency = currency;

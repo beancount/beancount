@@ -729,8 +729,9 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
         let value = kv
             .value
             .map(|v| match v {
-                ast::KeyValueValue::String(raw) => unquote_json(raw, &kv.meta, "metadata value")
-                    .map(KeyValueValue::String),
+                ast::KeyValueValue::String(raw) => {
+                    unquote_json(raw, &kv.meta, "metadata value").map(KeyValueValue::String)
+                }
                 ast::KeyValueValue::UnquotedString(raw) => {
                     Ok(KeyValueValue::UnquotedString(raw.to_string()))
                 }

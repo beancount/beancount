@@ -16,6 +16,18 @@ jobs:
       - run: pip install ruff
       - run: make lint
 
+  rust-lints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+      - name: Cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
   mypy:
     runs-on: ubuntu-latest
     steps:
