@@ -1,25 +1,23 @@
 [package]
 name = "beancount-parser"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-description = "Core beancount parser logic."
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Core beancount parsing logic."
 
 [lib]
 crate-type = ["lib"]
 
 [dependencies]
 beancount-tree-sitter = { path = "../beancount-tree-sitter" }
-# tree-sitter-beancount = { path = "C:/Users/trim21/projects/tree-sitter-beancount/", default-features = false }
-# tree-sitter-beancount = "2.4.2"
-tree-sitter = { version = "0.26.3" }
+tree-sitter = { workspace = true }
 ropey = '1.6.1'
 anyhow = "1.0.100"
-serde_json = "1"
-smallvec = "1.13"
+serde_json = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
-similar = { version = "2.7.0", features = ["unicode"] }
+similar = { workspace = true }

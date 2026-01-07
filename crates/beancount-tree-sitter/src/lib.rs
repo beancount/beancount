@@ -22,7 +22,7 @@ use tree_sitter::Language;
 // Re-export tree-sitter for user convenience
 pub use tree_sitter;
 
-extern "C" {
+unsafe extern "C" {
     fn tree_sitter_beancount() -> Language;
 }
 

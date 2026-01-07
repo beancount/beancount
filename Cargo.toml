@@ -7,11 +7,15 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Trim21 <trim21.me@gmail.com>"]
 homepage = "https://github.com/trim21/beancount"
-license = "MIT"
+license = "GPL-2.0-only"
 repository = "https://github.com/trim21/beancount"
 description = "Beancount"
 
 [workspace.dependencies]
+smallvec = "1.13"
+serde_json = "1"
+tree-sitter = "0.26.3"
+similar = { version = "2.7.0", features = ["unicode"] }
 
 [profile.release]
 opt-level = 3
