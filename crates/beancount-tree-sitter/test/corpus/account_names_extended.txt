@@ -1,0 +1,115 @@
+========================
+account names with numbers
+========================
+
+2023-01-01 open Assets:Bank:Account123
+2023-01-01 open Liabilities:Loan:2023Mortgage
+2023-01-01 open Expenses:Tax:1040Forms
+2023-01-01 open Income:Job:401K
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names with dashes
+========================
+
+2023-01-01 open Assets:Bank:Wells-Fargo
+2023-01-01 open Expenses:Utilities:Cell-Phone
+2023-01-01 open Income:Side-Hustle
+2023-01-01 open Liabilities:Credit-Card
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names deep hierarchy
+========================
+
+2023-01-01 open Assets:US:Bank:Checking:Primary:Main:Daily
+2023-01-01 open Expenses:Home:Utilities:Electric:Monthly:Base:Rate
+2023-01-01 open Income:Job:Tech:Company:Salary:Base:Annual
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names unicode latin
+========================
+
+2023-01-01 open Assets:Banque:Crédit
+2023-01-01 open Expenses:Café:Español
+2023-01-01 open Income:Résumé:Français
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names japanese
+========================
+
+2023-01-01 open Assets:銀行:東京:普通預金
+2023-01-01 open Expenses:食費:レストラン:寿司
+2023-01-01 open Income:給料:会社:基本給
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names korean
+========================
+
+2023-01-01 open Assets:은행:국민:저축계좌
+2023-01-01 open Expenses:음식:한식:김치찌개
+2023-01-01 open Income:급여:직장:기본급
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)
+
+========================
+account names mixed
+========================
+
+2023-01-01 open Assets:US:BankOf中国:Checking123
+2023-01-01 open Expenses:Food:Café-한국식:Lunch
+2023-01-01 open Income:Job:Tech-会社:Salary2023
+
+---
+
+(file
+    (open (date) (account))
+    (open (date) (account))
+    (open (date) (account))
+)

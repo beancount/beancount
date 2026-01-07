@@ -1,0 +1,34 @@
+==============
+push pop meta
+==============
+
+pushmeta location: "Lausanne, Switzerland"
+
+2015-06-07 * "Something"
+    Assets:Something   1 USD
+    Assets:Something  -1 USD
+
+popmeta location:
+
+---
+
+(file
+    (pushmeta
+        (key_value (key) (value (string)))
+    )
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+    (popmeta (key))
+)
+

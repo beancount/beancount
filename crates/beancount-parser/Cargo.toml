@@ -12,7 +12,7 @@ description = "Core beancount parser logic."
 crate-type = ["lib"]
 
 [dependencies]
-tree-sitter-beancount = { git = "https://github.com/trim21/tree-sitter-beancount", branch = "fix/account" }
+beancount-tree-sitter = { path = "../beancount-tree-sitter" }
 # tree-sitter-beancount = { path = "C:/Users/trim21/projects/tree-sitter-beancount/", default-features = false }
 # tree-sitter-beancount = "2.4.2"
 tree-sitter = { version = "0.26.3" }

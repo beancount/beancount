@@ -1,0 +1,145 @@
+==================
+transaction flag !
+==================
+
+2013-05-18 ! "Needs review"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+==================
+transaction flag %
+==================
+
+2013-05-18 % "Budgeted"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+==================
+transaction flag P
+==================
+
+2013-05-18 P "Projected"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+==================
+transaction flag &
+==================
+
+2013-05-18 & "Custom flag"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+transaction flag no desc
+========================
+
+2013-05-18 !
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+    )
+)
+
+============================
+transaction flag with payee
+============================
+
+2013-05-18 ! "Payee" "Description"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn (flag))
+        (payee)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)

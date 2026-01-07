@@ -1,0 +1,23 @@
+==================
+push tag
+==================
+
+pushtag #sampleTag
+
+---
+
+(file
+    (pushtag (tag))
+)
+
+================
+pop tag
+================
+
+poptag #sampleTag
+
+---
+
+(file
+    (poptag (tag))
+)

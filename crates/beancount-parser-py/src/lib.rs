@@ -10,12 +10,11 @@ use beancount_parser::ParseError;
 use beancount_parser::ast;
 use beancount_parser::parse_amount_tokens;
 use beancount_parser::parse_str;
-use chrono::{Datelike, NaiveDate};
-use pyo3::BoundObject;
+use pyo3::IntoPyObject;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyBool, PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
+use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -77,14 +76,12 @@ struct OptionDescriptor {
 }
 
 struct DataCache {
-    // beancount.core.number module.
-    number_mod: Py<PyAny>,
-    // beancount.core.amount module.
-    amount_mod: Py<PyAny>,
+    //
+    py_true: Py<PyAny>,
+    py_false: Py<PyAny>,
+
     // copy.deepcopy function.
     deepcopy_fn: Py<PyAny>,
-    // beancount.core.number.D constructor.
-    number_d_ctor: Py<PyAny>,
     // beancount.core.amount.Amount constructor.
     amount_ctor: Py<PyAny>,
     // beancount.core.data.new_metadata callable.
@@ -121,6 +118,8 @@ struct DataCache {
     cost_spec_cls: Py<PyAny>,
     // beancount.parser.grammar.ValueType class.
     value_type_cls: Py<PyAny>,
+    // Python bool type object.
+    bool_type: Py<PyAny>,
     // beancount.core.account.TYPE token.
     account_type_token: Py<PyAny>,
     // beancount.parser.options.OPTIONS_DEFAULTS mapping.
@@ -140,6 +139,7 @@ struct DataCache {
 impl DataCache {
     fn init(py: Python<'_>) -> PyResult<Self> {
         let data_mod = py.import("beancount.core.data")?;
+        let builtins_mod = py.import("builtins")?;
         let number_mod = py.import("beancount.core.number")?;
         let amount_mod = py.import("beancount.core.amount")?;
         let account_mod = py.import("beancount.core.account")?;
@@ -148,16 +148,19 @@ impl DataCache {
         let grammar_mod = py.import("beancount.parser.grammar")?;
         let copy_mod = py.import("copy")?;
 
+        let bool_type: Py<PyAny> = builtins_mod.getattr("bool")?.unbind();
+
         let missing = number_mod.getattr("MISSING")?.unbind();
         let zero = number_mod.getattr("ZERO")?.unbind();
         let cost_spec_cls = position_mod.getattr("CostSpec")?.unbind();
         let options_defs = options_mod.getattr("OPTIONS")?.unbind();
         let option_descriptors = parse_option_descriptors(py, &options_defs)?;
         let deepcopy_fn = copy_mod.getattr("deepcopy")?.unbind();
-        let number_d_ctor = number_mod.getattr("D")?.unbind();
         let amount_ctor = amount_mod.getattr("Amount")?.unbind();
 
         Ok(Self {
+            py_true: builtins_mod.getattr("True")?.unbind(),
+            py_false: builtins_mod.getattr("False")?.unbind(),
             new_metadata: data_mod.getattr("new_metadata")?.unbind(),
             booking_enum: data_mod.getattr("Booking")?.unbind(),
             open_cls: data_mod.getattr("Open")?.unbind(),
@@ -173,10 +176,7 @@ impl DataCache {
             note_cls: data_mod.getattr("Note")?.unbind(),
             document_cls: data_mod.getattr("Document")?.unbind(),
             custom_cls: data_mod.getattr("Custom")?.unbind(),
-            number_d_ctor,
             amount_ctor,
-            number_mod: number_mod.into(),
-            amount_mod: amount_mod.into(),
             deepcopy_fn,
             cost_spec_cls,
             value_type_cls: grammar_mod.getattr("ValueType")?.unbind(),
@@ -185,6 +185,7 @@ impl DataCache {
             options_defs,
             option_descriptors,
             read_only_options: options_mod.getattr("READ_ONLY_OPTIONS")?.unbind(),
+            bool_type,
             missing,
             zero,
         })
@@ -889,9 +890,12 @@ fn convert_custom_value(
         }
         ast::CustomValueKind::Bool => {
             let normalized = value.raw.eq_ignore_ascii_case("TRUE");
-            let py_bool_bound = PyBool::new(py, normalized);
-            let dtype = py_bool_bound.get_type().unbind().into();
-            let py_bool: Py<PyAny> = py_bool_bound.unbind().into();
+            let py_bool: Py<PyAny> = if normalized {
+                cache.py_true.clone_ref(py)
+            } else {
+                cache.py_false.clone_ref(py)
+            };
+            let dtype = cache.bool_type.clone_ref(py);
             (py_bool, dtype)
         }
         ast::CustomValueKind::Amount => {
@@ -930,58 +934,11 @@ fn parse_source(
     filename: &str,
     content: &str,
 ) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
-    // Tree-sitter grammar expects a trailing newline; ensure we feed one by
-    // copying the input into an owned string and appending '\n' when missing.
-    let mut owned_content = content.to_owned();
-    if !owned_content.ends_with('\n') {
-        owned_content.push('\n');
-    }
-
     let options_map = default_options_map(py)?;
     options_map.set_item("filename", filename)?;
 
-    match parse_str(&owned_content, filename) {
-        Ok(directives) => match normalize_directives(directives) {
-            Ok(normalized) => {
-                let (includes, filtered, options, plugins) = partition_directives(normalized);
-                options_map.set_item("include", PyList::new(py, &includes)?)?;
-                let option_errors = apply_options(py, &options_map, &options)?;
-                if !plugins.is_empty() {
-                    let plugin_list_obj = options_map
-                        .get_item("plugin")?
-                        .ok_or_else(|| {
-                            PyValueError::new_err("plugin option missing from defaults")
-                        })?
-                        .unbind();
-                    let plugin_list = plugin_list_obj.bind(py).cast::<PyList>()?;
-                    for plugin in plugins {
-                        let name = PyString::new(py, &plugin.name).unbind().into();
-                        let config = plugin
-                            .config
-                            .as_deref()
-                            .map(|c| PyString::new(py, c).unbind().into())
-                            .unwrap_or_else(|| py.None());
-                        let tuple = PyTuple::new(py, [name, config])?;
-                        plugin_list.append(tuple)?;
-                    }
-                }
-                apply_display_context_options(py, &options_map)?;
-                let dcontext = options_map.get_item("dcontext")?.unwrap();
-                let entries = convert_directives(py, filtered, &dcontext)?;
-                let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
-                Ok((entries, errors, options_map.unbind().into()))
-            }
-            Err(err) => {
-                options_map.set_item("include", PyList::empty(py))?;
-                let _ = apply_options(py, &options_map, &[])?;
-                apply_display_context_options(py, &options_map)?;
-                let errors = PyList::new(py, [build_parser_error(py, err)?])?
-                    .unbind()
-                    .into();
-                let entries: Py<PyAny> = PyList::empty(py).unbind().into();
-                Ok((entries, errors, options_map.unbind().into()))
-            }
-        },
+    let directives = match parse_str(content, filename) {
+        Ok(directives) => directives,
         Err(err) => {
             options_map.set_item("include", PyList::empty(py))?;
             let _ = apply_options(py, &options_map, &[])?;
@@ -990,20 +947,83 @@ fn parse_source(
                 .unbind()
                 .into();
             let entries: Py<PyAny> = PyList::empty(py).unbind().into();
-            Ok((entries, errors, options_map.unbind().into()))
+            return Ok((entries, errors, options_map.unbind().into()));
+        }
+    };
+
+    let normalized = match normalize_directives(directives) {
+        Ok(normalized) => normalized,
+        Err(err) => {
+            options_map.set_item("include", PyList::empty(py))?;
+            let _ = apply_options(py, &options_map, &[])?;
+            apply_display_context_options(py, &options_map)?;
+            let errors = PyList::new(py, [build_parser_error(py, err)?])?
+                .unbind()
+                .into();
+            let entries: Py<PyAny> = PyList::empty(py).unbind().into();
+            return Ok((entries, errors, options_map.unbind().into()));
+        }
+    };
+
+    let (includes, filtered, options, plugins) = partition_directives(normalized);
+    options_map.set_item("include", PyList::new(py, &includes)?)?;
+    let option_errors = apply_options(py, &options_map, &options)?;
+
+    if !plugins.is_empty() {
+        let plugin_list_obj = options_map
+            .get_item("plugin")?
+            .ok_or_else(|| PyValueError::new_err("plugin option missing from defaults"))?
+            .unbind();
+        let plugin_list = plugin_list_obj.bind(py).cast::<PyList>()?;
+        for plugin in plugins {
+            let name = PyString::new(py, &plugin.name).unbind().into();
+            let config = plugin
+                .config
+                .as_deref()
+                .map(|c| PyString::new(py, c).unbind().into())
+                .unwrap_or_else(|| py.None());
+            let tuple = PyTuple::new(py, [name, config])?;
+            plugin_list.append(tuple)?;
         }
     }
+
+    apply_display_context_options(py, &options_map)?;
+    let dcontext = options_map.get_item("dcontext")?.unwrap();
+    let entries = convert_directives(py, filtered, &dcontext)?;
+    let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
+    Ok((entries, errors, options_map.unbind().into()))
 }
 
 /// Convert `YYYY-MM-DD` text to `datetime.date`.
 #[pyfunction]
 fn py_date(py: Python<'_>, date: &str) -> PyResult<Py<PyAny>> {
-    let parsed = NaiveDate::parse_from_str(date.trim(), "%Y-%m-%d")
-        .map_err(|err| PyValueError::new_err(format!("invalid date `{}`: {}", date, err)))?;
-    let pydate: Py<PyAny> =
-        PyDate::new(py, parsed.year(), parsed.month() as u8, parsed.day() as u8)?
-            .unbind()
-            .into();
+    let trimmed = date.trim();
+    // Fast manual parse: expect YYYY-MM-DD, all ASCII digits except separators.
+    if trimmed.len() != 10
+        || trimmed.as_bytes()[4] != b'-'
+        || trimmed.as_bytes()[7] != b'-'
+        || !trimmed
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .all(|(i, b)| (i == 4 || i == 7) || b.is_ascii_digit())
+    {
+        return Err(PyValueError::new_err(format!("invalid date `{}`", date)));
+    }
+
+    let year = trimmed[0..4]
+        .parse::<i32>()
+        .map_err(|err| PyValueError::new_err(format!("invalid year `{}`: {}", date, err)))?;
+    let month = trimmed[5..7]
+        .parse::<u8>()
+        .map_err(|err| PyValueError::new_err(format!("invalid month `{}`: {}", date, err)))?;
+    let day = trimmed[8..10]
+        .parse::<u8>()
+        .map_err(|err| PyValueError::new_err(format!("invalid day `{}`: {}", date, err)))?;
+
+    let pydate: Py<PyAny> = PyDate::new(py, year, month as u8, day as u8)?
+        .unbind()
+        .into();
     Ok(pydate)
 }
 
@@ -1159,11 +1179,20 @@ fn contains_expression_ops(num: &str) -> bool {
         || chars.any(|c| matches!(c, '+' | '-'))
 }
 
+fn parse_decimal_literal(raw: &str) -> PyResult<Decimal> {
+    let cleaned: String = raw.chars().filter(|c| *c != ',' && *c != ' ').collect();
+    if cleaned.trim().is_empty() {
+        return Ok(Decimal::ZERO);
+    }
+
+    Decimal::from_str(cleaned.trim())
+        .map_err(|err| PyValueError::new_err(format!("invalid number `{}`: {}", raw, err)))
+}
+
 fn number_expr_to_decimal(num: &bcore::NumberExpr) -> PyResult<Decimal> {
     match num {
         bcore::NumberExpr::Missing => Err(PyValueError::new_err("missing number expression")),
-        bcore::NumberExpr::Literal(raw) => Decimal::from_str(raw.trim())
-            .map_err(|err| PyValueError::new_err(format!("invalid number `{}`: {}", raw, err))),
+        bcore::NumberExpr::Literal(raw) => parse_decimal_literal(raw),
         bcore::NumberExpr::Binary { left, op, right } => {
             let lhs = number_expr_to_decimal(left)?;
             let rhs = number_expr_to_decimal(right)?;
@@ -1178,14 +1207,6 @@ fn number_expr_to_decimal(num: &bcore::NumberExpr) -> PyResult<Decimal> {
     }
 }
 
-fn number_expr_to_decimal_string(num: &bcore::NumberExpr) -> PyResult<String> {
-    match num {
-        bcore::NumberExpr::Missing => Ok(String::new()),
-        bcore::NumberExpr::Literal(raw) => Ok(raw.trim().to_string()),
-        _ => Ok(number_expr_to_decimal(num)?.to_string()),
-    }
-}
-
 fn py_decimal(
     py: Python<'_>,
     cache: &DataCache,
@@ -1194,11 +1215,9 @@ fn py_decimal(
     if matches!(number, bcore::NumberExpr::Missing) {
         return Ok(cache.missing.clone_ref(py));
     }
-    let parsed = number_expr_to_decimal_string(number)?;
-
-    cache
-        .number_d_ctor
-        .call1(py, (parsed.as_str(),))
+    let parsed = number_expr_to_decimal(number)?;
+    let py_decimal = parsed.into_pyobject(py)?;
+    Ok(py_decimal.unbind().into())
 }
 
 fn py_amount(
@@ -1207,9 +1226,7 @@ fn py_amount(
     number: Py<PyAny>,
     currency: Py<PyAny>,
 ) -> PyResult<Py<PyAny>> {
-    cache
-        .amount_ctor
-        .call1(py, (number, currency))
+    cache.amount_ctor.call1(py, (number, currency))
 }
 
 fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &bcore::Amount) -> PyResult<Py<PyAny>> {

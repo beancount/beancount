@@ -1,0 +1,114 @@
+==============
+1 orgmode heading
+==============
+
+* Title
+
+---
+(file
+    (section
+        (headline (item))
+    )
+)
+
+==============
+2 orgmode heading
+==============
+
+* Title
+
+* B
+
+---
+(file
+    (section
+        (headline (item))
+    )
+    (section
+        (headline (item))
+    )
+)
+
+==============
+orgmode heading with txn
+==============
+
+* TITLE
+
+2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (section (headline (item))
+        (transaction
+            (date)
+            (txn)
+            (narration)
+            (tags_links (link) (tag))
+                (posting
+                    (account)
+                    (incomplete_amount (number) (currency))
+                )
+                (posting
+                    (account)
+                    (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+                )
+        )
+    )
+)
+
+==============
+orgmode heading in different levels
+==============
+
+* Title
+
+** Title
+
+*** Title
+
+---
+(file
+    (section
+        (headline (item))
+        (section
+            (headline (item))
+            (section
+                (headline (item))
+            )
+        )
+    )
+)
+
+==============
+orgmode subheading with txn
+==============
+
+****** TITLE
+2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (section (headline (item))
+        (transaction
+            (date)
+            (txn)
+            (narration)
+            (tags_links (link) (tag))
+                (posting
+                    (account)
+                    (incomplete_amount (number) (currency))
+                )
+                (posting
+                    (account)
+                    (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+                )
+        )
+    )
+)

@@ -1,0 +1,229 @@
+========================
+arithmetic complex precedence
+========================
+
+2023-01-01 * "Complex arithmetic"
+    Assets:Test1              2 + 3 * 4 USD
+    Assets:Test2              (2 + 3) * 4 USD
+    Assets:Test3              10 / 2 + 3 USD
+    Assets:Test4              10 / (2 + 3) USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (number)
+                        (plus)
+                        (binary_number_expr (number) (asterisk) (number))
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (binary_number_expr (number) (plus) (number))
+                        (asterisk)
+                        (number)
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (binary_number_expr (number) (slash) (number))
+                        (plus)
+                        (number)
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (number)
+                        (slash)
+                        (binary_number_expr (number) (plus) (number))
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+========================
+arithmetic nested parens
+========================
+
+2023-01-01 * "Nested parentheses"
+    Assets:Test1              ((2 + 3) * (4 - 1)) / 5 USD
+    Assets:Test2              (10 + (5 * (2 + 1))) USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (binary_number_expr
+                            (binary_number_expr (number) (plus) (number))
+                            (asterisk)
+                            (binary_number_expr (number) (minus) (number))
+                        )
+                        (slash)
+                        (number)
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (number)
+                        (plus)
+                        (binary_number_expr
+                            (number)
+                            (asterisk)
+                            (binary_number_expr (number) (plus) (number))
+                        )
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+========================
+arithmetic unary operators
+========================
+
+2023-01-01 * "Unary operators"
+    Assets:Test1              -5 + 3 USD
+    Assets:Test2              +10 - 2 USD
+    Assets:Test3              -(5 + 3) USD
+    Assets:Test4              +(10 * 2) USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (unary_number_expr (minus) (number))
+                        (plus)
+                        (number)
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr
+                        (unary_number_expr (plus) (number))
+                        (minus)
+                        (number)
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr
+                        (minus)
+                        (binary_number_expr (number) (plus) (number))
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr
+                        (plus)
+                        (binary_number_expr (number) (asterisk) (number))
+                    )
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+========================
+arithmetic decimal numbers
+========================
+
+2023-01-01 * "Decimal arithmetic"
+    Assets:Test1              1.5 + 2.3 USD
+    Assets:Test2              10.25 * 3.14 USD
+    Assets:Test3              100.00 / 3.33 USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr (number) (plus) (number))
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr (number) (asterisk) (number))
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (binary_number_expr (number) (slash) (number))
+                    (currency)
+                )
+            )
+            (posting
+                (account)
+            )
+    )
+)

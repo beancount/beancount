@@ -1,0 +1,18 @@
+[package]
+name = "beancount-tree-sitter"
+description = "beancount grammar for the tree-sitter parsing library"
+version = "2.4.2"
+keywords = ["incremental", "parsing", "beancount", "tree-sitter"]
+categories = ["parsing", "text-editors"]
+repository = "https://github.com/polarmutex/tree-sitter-beancount"
+edition = "2018"
+license = "MIT"
+build = "./build.rs"
+
+[features]
+
+[dependencies]
+tree-sitter = { version = "~0.26.3" }
+
+[build-dependencies]
+cc = "1.2"

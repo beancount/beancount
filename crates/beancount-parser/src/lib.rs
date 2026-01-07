@@ -16,7 +16,7 @@ pub fn parse_str<'a>(
     let mut parser = tree_sitter::Parser::new();
 
     parser
-        .set_language(&tree_sitter_beancount::language())
+        .set_language(&beancount_tree_sitter::language())
         .map_err(|err| ParseError {
             filename: filename.to_owned(),
             line: 0,

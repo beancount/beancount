@@ -1,6 +1,6 @@
+use beancount_tree_sitter::NodeKind;
 use smallvec::SmallVec;
 use tree_sitter::Node;
-use tree_sitter_beancount::NodeKind;
 
 use crate::ast::*;
 

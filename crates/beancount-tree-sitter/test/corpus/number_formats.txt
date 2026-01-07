@@ -1,0 +1,169 @@
+==========================
+number with comma thousands
+==========================
+
+2023-01-01 * "Large amount"
+    Assets:Bank               1,000.00 USD
+    Assets:Investment        10,000.50 USD
+    Assets:Savings          100,000.75 USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+==========================
+number decimal variations
+==========================
+
+2023-01-01 * "Decimal variations"
+    Assets:Account1           123 USD
+    Assets:Account2           123. USD
+    Assets:Account3           123.0 USD
+    Assets:Account4           123.00 USD
+    Assets:Account5           123.000 USD
+    Assets:Account6           123.1234 USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+==========================
+number zero variations
+==========================
+
+2023-01-01 * "Zero amounts"
+    Assets:Account1           0 USD
+    Assets:Account2           0.0 USD
+    Assets:Account3           0.00 USD
+    Assets:Account4          -0 USD
+    Assets:Account5          -0.00 USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+            (posting
+                (account)
+            )
+    )
+)
+
+==========================
+number small fractions
+==========================
+
+2023-01-01 * "Small fractions"
+    Assets:Account1           0.01 USD
+    Assets:Account2           0.001 USD
+    Assets:Account3           0.0001 USD
+    Assets:Account4           0.00001 USD
+    Equity:Opening-Balances
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+            )
+    )
+)

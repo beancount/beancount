@@ -1,0 +1,25 @@
+===
+chinese characters in accounts
+===
+
+2010-01-01 * "payee" "narration"
+  Liabilities:Bank:工行:Credit:AMEX:1111                -89.00 CNY
+  Expenses:Restaurant
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (payee)
+        (narration)
+        (posting
+            (account)
+            (incomplete_amount
+            (unary_number_expr
+              (minus)
+              (number))
+            (currency)))
+        (posting
+          (account))))

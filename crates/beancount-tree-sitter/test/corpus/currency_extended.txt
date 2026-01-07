@@ -1,0 +1,79 @@
+========================
+currency special characters
+========================
+
+2023-01-01 open Assets:Stocks APPLE.NASDAQ
+2023-01-01 open Assets:Points AIRMILE'S
+2023-01-01 open Assets:Crypto BTC_USD
+2023-01-01 open Assets:Foreign USD-EUR
+
+---
+
+(file
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+)
+
+========================
+currency long names
+========================
+
+2023-01-01 open Assets:Commodity VERYLONGCURRENCYNAME123
+2023-01-01 open Assets:Test ABCDEFGHIJKLMNOPQRSTUVWX
+
+---
+
+(file
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+)
+
+========================
+currency with numbers
+========================
+
+2023-01-01 open Assets:Funds FUND2023
+2023-01-01 open Assets:Bonds BOND123A
+2023-01-01 open Assets:Stocks STOCK1
+
+---
+
+(file
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+)
+
+========================
+currency mixed characters
+========================
+
+2023-01-01 open Assets:Complex A.B'C_D-E123
+2023-01-01 open Assets:Multi X'Y.Z_123
+
+---
+
+(file
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+)
+
+========================
+currency short and standard
+========================
+
+2023-01-01 open Assets:Currency1 A
+2023-01-01 open Assets:Currency2 AB
+2023-01-01 open Assets:Currency3 USD
+2023-01-01 open Assets:Currency4 GOLD
+
+---
+
+(file
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+    (open (date) (account) (currency))
+)

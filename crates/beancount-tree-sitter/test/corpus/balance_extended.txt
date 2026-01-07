@@ -1,0 +1,118 @@
+========================
+balance with metadata
+========================
+
+2023-01-01 balance Assets:Checking  1000.00 USD
+    description: "Monthly balance check"
+    source: "bank statement"
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (number) (currency))
+            (key_value (key) (value (string)))
+            (key_value (key) (value (string)))
+    )
+)
+
+========================
+balance with high tolerance
+========================
+
+2023-01-01 balance Assets:Checking  1000.00 ~ 50.00 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (number) (number) (currency))
+    )
+)
+
+========================
+balance with tiny tolerance
+========================
+
+2023-01-01 balance Assets:Checking  1000.00 ~ 0.01 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (number) (number) (currency))
+    )
+)
+
+========================
+balance zero amount
+========================
+
+2023-01-01 balance Assets:Closed  0.00 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (number) (currency))
+    )
+)
+
+========================
+balance negative amount
+========================
+
+2023-01-01 balance Liabilities:CreditCard  -500.00 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (unary_number_expr (minus) (number)) (currency))
+    )
+)
+
+========================
+balance arithmetic
+========================
+
+2023-01-01 balance Assets:Checking  1000.00 + 50.00 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance
+            (binary_number_expr (number) (plus) (number))
+            (currency)
+        )
+    )
+)
+
+========================
+balance large numbers
+========================
+
+2023-01-01 balance Assets:Investment  1,000,000.00 USD
+
+---
+
+(file
+    (balance
+        (date)
+        (account)
+        (amount_tolerance (number) (currency))
+    )
+)

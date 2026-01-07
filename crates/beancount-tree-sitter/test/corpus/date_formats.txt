@@ -1,0 +1,97 @@
+============================
+date format standard ISO
+============================
+
+2023-12-31 * "New Year's Eve"
+    Expenses:Party              100 USD
+    Assets:Cash                -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+============================
+date format alternative
+============================
+
+2023/12/31 * "Alternative date format"
+    Expenses:Party              100 USD
+    Assets:Cash                -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+============================
+date leap year
+============================
+
+2024-02-29 * "Leap year date"
+    Expenses:Special            100 USD
+    Assets:Cash                -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+============================
+date range boundaries
+============================
+
+1900-01-01 open Assets:Historical
+2099-12-31 close Assets:Historical
+
+---
+
+(file
+    (open
+        (date)
+        (account)
+    )
+    (close
+        (date)
+        (account)
+    )
+)

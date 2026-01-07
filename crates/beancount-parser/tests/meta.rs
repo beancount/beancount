@@ -12,7 +12,7 @@ fn meta_is_attached_to_each_directive() -> Result<()> {
 
     let mut parser = Parser::new();
     parser
-        .set_language(&tree_sitter_beancount::language())
+        .set_language(&beancount_tree_sitter::language())
         .context("Failed to load beancount grammar")?;
     let tree = parser.parse(input, None).context("Failed to parse input")?;
     let root = tree.root_node();

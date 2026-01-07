@@ -1,0 +1,156 @@
+========================
+string with escaped quotes
+========================
+
+2023-01-01 * "String with \"escaped quotes\" inside"
+    Expenses:Test             100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+string with unicode
+========================
+
+2023-01-01 * "Unicode: café 中文 🍕 ñoño"
+    Expenses:International    100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+string empty
+========================
+
+2023-01-01 * ""
+    Expenses:Empty            100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+string very long
+========================
+
+2023-01-01 * "This is a very long string that contains a lot of text to test how the parser handles longer strings with multiple words and various characters including numbers 123 and symbols !@#$%^&*()"
+    Expenses:LongDescription  100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+string with special chars
+========================
+
+2023-01-01 * "Special: !@#$%^&*()_+-=[]{}|;:,.<>?"
+    Expenses:Special          100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+payee and narration strings
+========================
+
+2023-01-01 * "Merchant \"Special\" Store" "Purchase with \"quotes\" and symbols !@#"
+    Expenses:Shopping         100 USD
+    Assets:Cash              -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (payee)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)

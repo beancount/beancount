@@ -1,0 +1,417 @@
+===========
+cost empty
+===========
+
+2014-01-01 *
+    Assets:Invest:AAPL   20 AAPL {}
+    Assets:Invest:Cash  -20 AAPL
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec)
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr (minus) (number))
+                    (currency)
+                )
+            )
+    )
+)
+
+===========
+cost amount
+============
+
+2014-01-01 *
+    Assets:Invest:AAPL      20 AAPL {45.23 USD}
+    Assets:Invest:Cash  -90.46 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount
+                    (number)
+                    (currency)
+                )
+                (cost_spec
+                        (cost_comp
+                            (compound_amount
+                                (number)
+                                (currency)
+                            )
+                        )
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr
+                        (minus) (number)
+                    )
+                    (currency)
+                )
+            )
+    )
+)
+
+==========
+cost date
+==========
+
+2014-01-01 *
+    Assets:Invest:AAPL   20 AAPL {2014-12-26}
+    Assets:Invest:Cash  -20 AAPL
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                    (cost_comp (date))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr (minus) (number))
+                    (currency)
+                )
+            )
+    )
+)
+
+===========
+cost label
+===========
+
+2014-01-01 *
+    Assets:Invest:AAPL   20 AAPL {"d82d55a0dbe8"}
+    Assets:Invest:Cash  -20 AAPL
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                    (cost_comp (string))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr (minus) (number))
+                    (currency)
+                )
+            )
+    )
+)
+
+===========
+cost merge
+===========
+
+2014-01-01 *
+    Assets:Invest:AAPL   20 AAPL {*}
+    Assets:Invest:Cash  -20 AAPL
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec (cost_comp))
+            )
+            (posting
+                (account)
+                (incomplete_amount
+                    (unary_number_expr (minus) (number))
+                    (currency)
+                )
+            )
+    )
+)
+
+===================
+cost two component
+===================
+
+2014-01-01 *
+    Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26}
+    Assets:Invest:AAPL    1 AAPL {2014-12-26, 45.23 USD}
+    Assets:Invest:AAPL    1 AAPL {45.23 USD, "d82d55a0dbe8"}
+    Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD}
+    Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8"}
+    Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26}
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (date))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (date))
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (string))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (string))
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (date))
+                        (cost_comp (string))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (string))
+                        (cost_comp (date))
+                )
+            )
+    )
+)
+
+=====================
+cost three component
+=====================
+
+2014-01-01 *
+    Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, "d82d55a0dbe8"}
+    Assets:Invest:AAPL    1 AAPL {2014-12-26, 45.23 USD, "d82d55a0dbe8"}
+    Assets:Invest:AAPL    1 AAPL {45.23 USD, "d82d55a0dbe8", 2014-12-26}
+    Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8", 45.23 USD}
+    Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD, 2014-12-26}
+    Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26, 45.23 USD}
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (date))
+                        (cost_comp (string))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (date))
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (string))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (string))
+                        (cost_comp (date))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (date))
+                        (cost_comp (string))
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (string))
+                        (cost_comp (compound_amount (number) (currency)))
+                        (cost_comp (date))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (string))
+                        (cost_comp (date))
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+    )
+)
+
+================
+cost both costs
+================
+
+2014-01-01 *
+    Assets:Invest:AAPL       10 AAPL {45.23 # 9.95 USD}
+    Assets:Invest:Cash  -110.36 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+================
+cost total cost
+================
+
+2014-01-01 *
+    Assets:Invest:AAPL      10 AAPL {# 9.95 USD}
+    Assets:Invest:Cash  -19.90 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+=======================
+cost total empty total
+=======================
+
+2014-01-01 *
+    Assets:Invest:AAPL      20 AAPL {45.23 # USD}
+    Assets:Invest:Cash  -45.23 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+==============
+cost negative
+==============
+
+2013-05-18 * ""
+    Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
+    Assets:Investments:Cash  2000.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+                (cost_spec
+                        (cost_comp (compound_amount (unary_number_expr (minus) (number)) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+    )
+)

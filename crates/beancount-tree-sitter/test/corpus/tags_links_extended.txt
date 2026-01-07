@@ -1,0 +1,166 @@
+========================
+tags with special characters
+========================
+
+2023-01-01 * "Tags with special chars" #food-delivery #tax_deductible #2023-expenses
+    Expenses:Food             25.00 USD
+    Assets:Cash              -25.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+        (tags_links (tag) (tag) (tag))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+links with special characters
+========================
+
+2023-01-01 * "Links with special chars" ^receipt-123 ^document_2023 ^file.pdf
+    Expenses:Office           50.00 USD
+    Assets:Cash              -50.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+        (tags_links (link) (link) (link))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+mixed tags and links long
+========================
+
+2023-01-01 * "Many tags and links" #business #travel #conference ^receipt123 #meal ^expense-report #2023-q1 ^attachment.pdf #reimbursable ^backup-doc
+    Expenses:Travel          150.00 USD
+    Assets:Cash             -150.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+        (tags_links (tag) (tag) (tag) (link) (tag) (link) (tag) (link) (tag) (link))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+tags with numbers and dots
+========================
+
+2023-01-01 * "Tags with numbers" #project.2023 #phase.1.alpha #version.1.2.3
+    Expenses:Software         100.00 USD
+    Assets:Cash              -100.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+        (tags_links (tag) (tag) (tag))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+links with paths
+========================
+
+2023-01-01 * "File path links" ^documents/2023/receipts/grocery.pdf ^/home/user/files/receipt.jpg
+    Expenses:Groceries        75.00 USD
+    Assets:Cash              -75.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+        (tags_links (link) (link))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+tags and links on posting lines
+========================
+
+2023-01-01 * "Tags and links on postings"
+    #main-expense ^primary-receipt
+    Expenses:Mixed            200.00 USD
+    #secondary-tag
+    Assets:Cash              -200.00 USD
+    ^final-link
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (tags_links (tag) (link))
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (tags_links (tag))
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+            (tags_links (link))
+    )
+)

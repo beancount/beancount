@@ -1,0 +1,53 @@
+==============
+3 markdown headings
+==============
+
+# Title
+## Sub-title
+### Section
+
+2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+    (section
+        (headline (item))
+        (section
+            (headline (item))
+            (section
+                (headline (item))
+                (transaction
+                    (date)
+                    (txn)
+                    (narration)
+                    (tags_links (link) (tag))
+                        (posting
+                            (account)
+                            (incomplete_amount (number) (currency))
+                        )
+                        (posting
+                            (account)
+                            (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+                        )
+                )
+            )
+        )
+    )
+)
+
+==============
+2 markdown headings
+==============
+
+# First
+# Second
+
+---
+
+(file
+    (section (headline (item)))
+    (section (headline (item)))
+)

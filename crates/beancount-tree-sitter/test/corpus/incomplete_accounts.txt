@@ -1,0 +1,77 @@
+==================
+Incomplete uppercase account
+==================
+
+2023-10-01 * "payee" "narration"
+  A
+
+---
+
+(file
+  (transaction
+    date: (date)
+    txn: (txn)
+    payee: (payee)
+    narration: (narration))
+  (ERROR
+    (identifier)))
+
+==================
+Incomplete lowercase account
+==================
+
+2023-10-01 * "payee" "narration"
+  a
+
+---
+
+(file
+  (transaction
+    date: (date)
+    txn: (txn)
+    payee: (payee)
+    narration: (narration))
+  (ERROR
+    (identifier)))
+
+==================
+Incomplete mixed case account
+==================
+
+2023-10-01 * "payee" "narration"
+  As
+
+---
+
+(file
+  (transaction
+    date: (date)
+    txn: (txn)
+    payee: (payee)
+    narration: (narration))
+  (ERROR
+    (identifier)))
+
+==================
+Multiple incomplete accounts
+==================
+
+2023-10-01 * "payee" "narration"
+  A
+  Asset
+  Expenses
+
+---
+
+(file
+  (transaction
+    date: (date)
+    txn: (txn)
+    payee: (payee)
+    narration: (narration))
+  (ERROR
+    (identifier))
+  (ERROR
+    (identifier))
+  (ERROR
+    (identifier)))

@@ -54,12 +54,12 @@ name = "beancount-parser"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "beancount-tree-sitter",
  "ropey",
  "serde_json",
  "similar",
  "smallvec",
  "tree-sitter",
- "tree-sitter-beancount",
 ]
 
 [[package]]
@@ -78,6 +78,14 @@ dependencies = [
  "serde_json",
  "similar",
  "smallvec",
+]
+
+[[package]]
+name = "beancount-tree-sitter"
+version = "2.4.2"
+dependencies = [
+ "cc",
+ "tree-sitter",
 ]
 
 [[package]]
@@ -911,15 +919,6 @@ dependencies = [
  "serde_json",
  "streaming-iterator",
  "tree-sitter-language",
-]
-
-[[package]]
-name = "tree-sitter-beancount"
-version = "2.4.2"
-source = "git+https://github.com/trim21/tree-sitter-beancount?branch=fix%2Faccount#ff8004d29c738fdb7d2b95cc33e2e06fa2564154"
-dependencies = [
- "cc",
- "tree-sitter",
 ]
 
 [[package]]

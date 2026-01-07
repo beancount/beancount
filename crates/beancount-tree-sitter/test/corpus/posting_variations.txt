@@ -1,0 +1,179 @@
+========================
+posting with flags
+========================
+
+2023-01-01 * "Transaction with posting flags"
+    ! Assets:Checking         100 USD
+    * Expenses:Food          -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (optflag (flag))
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (optflag)
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+posting mixed flags
+========================
+
+2023-01-01 * "Mixed posting flags"
+    ! Assets:Checking         100 USD
+    # Expenses:Food           -50 USD
+    * Assets:Savings          -50 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (optflag (flag))
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (optflag)
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+            (posting
+                (optflag)
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+posting empty amounts
+========================
+
+2023-01-01 * "Posting with empty amounts"
+    Assets:Checking
+    Expenses:Food              100 USD
+    Assets:Savings            -100 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+            )
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+posting with cost and price
+========================
+
+2023-01-01 * "Posting with both cost and price"
+    Assets:Stocks             10 AAPL {150.00 USD} @ 155.00 USD
+    Assets:Cash           -1550.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                    (cost_comp (compound_amount (number) (currency)))
+                )
+                (at)
+                (price_annotation (incomplete_amount (number) (currency)))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+posting with double at
+========================
+
+2023-01-01 * "Posting with total price"
+    Assets:Stocks             10 AAPL @@ 1550.00 USD
+    Assets:Cash           -1550.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (atat)
+                (price_annotation (incomplete_amount (number) (currency)))
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)
+
+========================
+posting double cost spec
+========================
+
+2023-01-01 * "Double cost specification"
+    Assets:Stocks             10 AAPL {{150.00 USD}}
+    Assets:Cash           -1500.00 USD
+
+---
+
+(file
+    (transaction
+        (date)
+        (txn)
+        (narration)
+            (posting
+                (account)
+                (incomplete_amount (number) (currency))
+                (cost_spec
+                    (cost_comp (compound_amount (number) (currency)))
+                )
+            )
+            (posting
+                (account)
+                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
+            )
+    )
+)

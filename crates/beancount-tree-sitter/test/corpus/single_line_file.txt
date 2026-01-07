@@ -1,0 +1,66 @@
+==================
+Single line open directive without trailing newline
+==================
+
+2024-01-01 open Assets:Cash
+
+---
+
+(file
+  (open
+    date: (date)
+    account: (account)))
+
+==================
+Single line transaction without trailing newline
+==================
+
+2024-01-01 * "Test"
+
+---
+
+(file
+  (transaction
+    date: (date)
+    txn: (txn)
+    narration: (narration)))
+
+==================
+Single line balance without trailing newline
+==================
+
+2024-01-01 balance Assets:Cash 100.00 USD
+
+---
+
+(file
+  (balance
+    date: (date)
+    account: (account)
+    amount: (amount_tolerance
+      (number)
+      (currency))))
+
+==================
+Single line option without trailing newline
+==================
+
+option "title" "Test"
+
+---
+
+(file
+  (option
+    key: (string)
+    value: (string)))
+
+==================
+Single line plugin without trailing newline
+==================
+
+plugin "beancount.plugins.auto_accounts"
+
+---
+
+(file
+  (plugin (string)))
