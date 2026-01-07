@@ -984,7 +984,9 @@ fn parse_source(
     }
 
     apply_display_context_options(py, &options_map)?;
-    let dcontext = options_map.get_item("dcontext")?.unwrap();
+    let dcontext = options_map
+        .get_item("dcontext")?
+        .ok_or_else(|| PyValueError::new_err("dcontext option missing from defaults"))?;
     let entries = convert_directives(py, filtered, &dcontext)?;
     let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
     Ok((entries, errors, options_map.unbind().into()))
@@ -1128,7 +1130,9 @@ fn eval_number_expr(expr: &str) -> PyResult<String> {
                 if top == '(' || precedence(top) < precedence(op) {
                     break;
                 }
-                let top = ops.pop().unwrap();
+                let top = ops
+                    .pop()
+                    .ok_or_else(|| PyValueError::new_err("missing operator"))?;
                 let rhs = vals
                     .pop()
                     .ok_or_else(|| PyValueError::new_err("missing operand"))?;
