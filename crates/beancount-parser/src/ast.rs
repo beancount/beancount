@@ -129,6 +129,7 @@ pub struct Transaction<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyValueValue<'a> {
     String(&'a str),
+    UnquotedString(&'a str),
     Bool(bool),
     Raw(&'a str),
 }
@@ -136,7 +137,9 @@ pub enum KeyValueValue<'a> {
 impl<'a> KeyValueValue<'a> {
     pub fn as_str(&self) -> std::borrow::Cow<'a, str> {
         match self {
-            KeyValueValue::String(s) | KeyValueValue::Raw(s) => std::borrow::Cow::Borrowed(*s),
+            KeyValueValue::String(s)
+            | KeyValueValue::UnquotedString(s)
+            | KeyValueValue::Raw(s) => std::borrow::Cow::Borrowed(*s),
             KeyValueValue::Bool(val) => std::borrow::Cow::Owned(val.to_string()),
         }
     }

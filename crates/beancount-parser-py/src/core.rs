@@ -255,6 +255,7 @@ pub(crate) struct KeyValue {
 #[derive(Debug, Clone)]
 pub(crate) enum KeyValueValue {
     String(String),
+    UnquotedString(String),
     Bool(bool),
     Raw(String),
 }
@@ -728,13 +729,10 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
         let value = kv
             .value
             .map(|v| match v {
-                ast::KeyValueValue::String(raw) => {
-                    if raw.starts_with('"') && raw.ends_with('"') {
-                        unquote_json(raw, &kv.meta, "metadata value")
-                            .map(KeyValueValue::String)
-                    } else {
-                        Ok(KeyValueValue::String(raw.to_string()))
-                    }
+                ast::KeyValueValue::String(raw) => unquote_json(raw, &kv.meta, "metadata value")
+                    .map(KeyValueValue::String),
+                ast::KeyValueValue::UnquotedString(raw) => {
+                    Ok(KeyValueValue::UnquotedString(raw.to_string()))
                 }
                 ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
                 ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),

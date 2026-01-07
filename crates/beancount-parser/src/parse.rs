@@ -634,8 +634,10 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
                     }
                 }
 
-                let parsed = if let Some(str_node) = string_child.or(unquoted_string_child) {
+                let parsed = if let Some(str_node) = string_child {
                     KeyValueValue::String(slice(str_node, source))
+                } else if let Some(unquoted_node) = unquoted_string_child {
+                    KeyValueValue::UnquotedString(slice(unquoted_node, source))
                 } else if let Some(b_node) = bool_child {
                     let raw = slice(b_node, source).trim();
                     let val = raw.eq_ignore_ascii_case("true");

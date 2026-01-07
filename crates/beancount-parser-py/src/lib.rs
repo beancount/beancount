@@ -446,9 +446,10 @@ fn meta_extra<'py>(
         match &item.value {
             None => kv.set_item(item.key.as_str(), py.None())?,
             Some(v) => match v {
-                bcore::KeyValueValue::String(s) => kv.set_item(item.key.as_str(), s.as_str())?,
+                bcore::KeyValueValue::String(s)
+                | bcore::KeyValueValue::UnquotedString(s)
+                | bcore::KeyValueValue::Raw(s) => kv.set_item(item.key.as_str(), s.as_str())?,
                 bcore::KeyValueValue::Bool(b) => kv.set_item(item.key.as_str(), *b)?,
-                bcore::KeyValueValue::Raw(v) => kv.set_item(item.key.as_str(), v.as_str())?,
             },
         }
     }

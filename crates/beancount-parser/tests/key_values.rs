@@ -64,7 +64,7 @@ fn parses_unquoted_string_value() {
             assert_eq!(note.key_values[0].key, "key");
             assert_eq!(
                 note.key_values[0].value,
-                Some(beancount_parser::ast::KeyValueValue::String("value"))
+                Some(beancount_parser::ast::KeyValueValue::UnquotedString("value"))
             );
         }
         other => panic!("expected note, got {other:?}"),

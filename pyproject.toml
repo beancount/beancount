@@ -138,6 +138,9 @@ package = false
 
 [dependency-groups]
 dev = [
+    "mypy>=1.4.0",
     "pytest>=8.4.2",
     "rich>=14.2.0",
+    "types-python-dateutil>=2.9.0.20251115",
+    "types-regex>=2025.11.3.20251106",
 ]
