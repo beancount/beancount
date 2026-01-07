@@ -33,7 +33,6 @@ def auto_insert_open(entries, unused_options_map):
     for index, (account, date_first_used) in enumerate(sorted(accounts_first.items())):
         if account not in opened_accounts:
             meta = data.new_metadata("<auto_accounts>", index)
-            # Match parser-generated opens: empty list means no currency restriction.
             new_entries.append(data.Open(meta, date_first_used, account, [], None))
 
     if new_entries:

@@ -478,12 +478,7 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
                 Some(NodeKind::Bool) => CustomValueKind::Bool,
                 Some(NodeKind::Amount) => CustomValueKind::Amount,
                 Some(NodeKind::Account) => CustomValueKind::Account,
-                Some(k)
-                    if matches!(
-                        k,
-                        NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number
-                    ) =>
-                {
+                Some(NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number) => {
                     CustomValueKind::Number
                 }
                 _ => CustomValueKind::String,
@@ -904,11 +899,13 @@ fn parse_amount_node<'a>(amount_node: Node, source: &'a str, filename: &str) -> 
         .transpose()?;
     let mut currency = currency_node.map(|n| slice(n, source));
 
-    if number.is_none() && currency.is_none()
-        && let Some((num, curr)) = parse_amount_tokens(raw) {
-            number = Some(NumberExpr::Literal(num));
-            currency = Some(curr);
-        }
+    if number.is_none()
+        && currency.is_none()
+        && let Some((num, curr)) = parse_amount_tokens(raw)
+    {
+        number = Some(NumberExpr::Literal(num));
+        currency = Some(curr);
+    }
 
     let number = number.unwrap_or(NumberExpr::Missing);
     let currency = currency;

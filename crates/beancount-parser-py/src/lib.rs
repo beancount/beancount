@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::large_enum_variant)]
 mod core;
 
 use crate::core as bcore;
@@ -316,24 +317,25 @@ fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>
     }
 
     if let Some(display_precision) = options_map.get_item("display_precision")?
-        && display_precision.is_instance_of::<PyDict>() {
-            let display_precision = display_precision.cast::<PyDict>()?;
-            let mut items: Vec<(String, Py<PyAny>)> = Vec::new();
-            for (currency_obj, example) in display_precision {
-                let currency: String = currency_obj.extract()?;
-                items.push((currency, example.unbind()));
-            }
-
-            items.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-            for (currency, example) in items {
-                let example = example.bind(py);
-                let tuple = example.call_method0("as_tuple")?;
-                let exponent: i32 = tuple.getattr("exponent")?.extract()?;
-                let precision = -exponent;
-                dcontext.call_method1("set_fixed_precision", (currency.as_str(), precision))?;
-            }
+        && display_precision.is_instance_of::<PyDict>()
+    {
+        let display_precision = display_precision.cast::<PyDict>()?;
+        let mut items: Vec<(String, Py<PyAny>)> = Vec::new();
+        for (currency_obj, example) in display_precision {
+            let currency: String = currency_obj.extract()?;
+            items.push((currency, example.unbind()));
         }
+
+        items.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
+        for (currency, example) in items {
+            let example = example.bind(py);
+            let tuple = example.call_method0("as_tuple")?;
+            let exponent: i32 = tuple.getattr("exponent")?.extract()?;
+            let precision = -exponent;
+            dcontext.call_method1("set_fixed_precision", (currency.as_str(), precision))?;
+        }
+    }
 
     Ok(())
 }
@@ -653,14 +655,15 @@ fn convert_posting(
         .as_ref()
         .map(|cost| {
             if let Some(amount) = &cost.amount
-                && let Some(curr) = amount.currency.as_deref() {
-                    if let Some(per) = amount.per.as_ref() {
-                        update_dcontext(py, cache, dcontext, per, Some(curr))?;
-                    }
-                    if let Some(total) = amount.total.as_ref() {
-                        update_dcontext(py, cache, dcontext, total, Some(curr))?;
-                    }
+                && let Some(curr) = amount.currency.as_deref()
+            {
+                if let Some(per) = amount.per.as_ref() {
+                    update_dcontext(py, cache, dcontext, per, Some(curr))?;
                 }
+                if let Some(total) = amount.total.as_ref() {
+                    update_dcontext(py, cache, dcontext, total, Some(curr))?;
+                }
+            }
             cost_spec_to_py(py, cache, cost)
         })
         .transpose()?;
