@@ -77,31 +77,63 @@ struct OptionDescriptor {
 }
 
 struct DataCache {
+    // beancount.core.number module.
     number_mod: Py<PyAny>,
+    // beancount.core.amount module.
     amount_mod: Py<PyAny>,
+    // copy.deepcopy function.
+    deepcopy_fn: Py<PyAny>,
+    // beancount.core.number.D constructor.
+    number_d_ctor: Py<PyAny>,
+    // beancount.core.amount.Amount constructor.
+    amount_ctor: Py<PyAny>,
+    // beancount.core.data.new_metadata callable.
     new_metadata: Py<PyAny>,
+    // beancount.core.data.Booking enum.
     booking_enum: Py<PyAny>,
+    // beancount.core.data.Open class.
     open_cls: Py<PyAny>,
+    // beancount.core.data.Close class.
     close_cls: Py<PyAny>,
+    // beancount.core.data.Balance class.
     balance_cls: Py<PyAny>,
+    // beancount.core.data.Pad class.
     pad_cls: Py<PyAny>,
+    // beancount.core.data.Transaction class.
     transaction_cls: Py<PyAny>,
+    // beancount.core.data.Posting class.
     posting_cls: Py<PyAny>,
+    // beancount.core.data.Commodity class.
     commodity_cls: Py<PyAny>,
+    // beancount.core.data.Price class.
     price_cls: Py<PyAny>,
+    // beancount.core.data.Event class.
     event_cls: Py<PyAny>,
+    // beancount.core.data.Query class.
     query_cls: Py<PyAny>,
+    // beancount.core.data.Note class.
     note_cls: Py<PyAny>,
+    // beancount.core.data.Document class.
     document_cls: Py<PyAny>,
+    // beancount.core.data.Custom class.
     custom_cls: Py<PyAny>,
+    // beancount.core.position.CostSpec class.
     cost_spec_cls: Py<PyAny>,
+    // beancount.parser.grammar.ValueType class.
     value_type_cls: Py<PyAny>,
+    // beancount.core.account.TYPE token.
     account_type_token: Py<PyAny>,
+    // beancount.parser.options.OPTIONS_DEFAULTS mapping.
     options_defaults: Py<PyAny>,
+    // beancount.parser.options.OPTIONS mapping.
     options_defs: Py<PyAny>,
+    // parsed option descriptors derived from OPTIONS.
     option_descriptors: HashMap<String, OptionDescriptor>,
+    // beancount.parser.options.READ_ONLY_OPTIONS set.
     read_only_options: Py<PyAny>,
+    // beancount.core.number.MISSING sentinel.
     missing: Py<PyAny>,
+    // beancount.core.number.ZERO sentinel.
     zero: Py<PyAny>,
 }
 
@@ -114,12 +146,16 @@ impl DataCache {
         let position_mod = py.import("beancount.core.position")?;
         let options_mod = py.import("beancount.parser.options")?;
         let grammar_mod = py.import("beancount.parser.grammar")?;
+        let copy_mod = py.import("copy")?;
 
         let missing = number_mod.getattr("MISSING")?.unbind();
         let zero = number_mod.getattr("ZERO")?.unbind();
         let cost_spec_cls = position_mod.getattr("CostSpec")?.unbind();
         let options_defs = options_mod.getattr("OPTIONS")?.unbind();
         let option_descriptors = parse_option_descriptors(py, &options_defs)?;
+        let deepcopy_fn = copy_mod.getattr("deepcopy")?.unbind();
+        let number_d_ctor = number_mod.getattr("D")?.unbind();
+        let amount_ctor = amount_mod.getattr("Amount")?.unbind();
 
         Ok(Self {
             new_metadata: data_mod.getattr("new_metadata")?.unbind(),
@@ -137,8 +173,11 @@ impl DataCache {
             note_cls: data_mod.getattr("Note")?.unbind(),
             document_cls: data_mod.getattr("Document")?.unbind(),
             custom_cls: data_mod.getattr("Custom")?.unbind(),
+            number_d_ctor,
+            amount_ctor,
             number_mod: number_mod.into(),
             amount_mod: amount_mod.into(),
+            deepcopy_fn,
             cost_spec_cls,
             value_type_cls: grammar_mod.getattr("ValueType")?.unbind(),
             account_type_token: account_mod.getattr("TYPE")?.unbind(),
@@ -209,10 +248,9 @@ fn build_options_map(py: Python<'_>, filename: Option<&str>) -> PyResult<Py<PyAn
 
 fn default_options_map(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
     let cache = cache(py)?;
-    let copy_mod = py.import("copy")?;
     let defaults = cache.options_defaults.clone_ref(py);
-    let copied = copy_mod.getattr("deepcopy")?.call1((defaults,))?;
-    let copied = copied.into_bound().cast_into::<PyDict>()?;
+    let copied = cache.deepcopy_fn.call1(py, (defaults,))?;
+    let copied = copied.into_bound(py).cast_into::<PyDict>()?;
     Ok(copied)
 }
 
@@ -1159,8 +1197,7 @@ fn py_decimal(
     let parsed = number_expr_to_decimal_string(number)?;
 
     cache
-        .number_mod
-        .getattr(py, "D")?
+        .number_d_ctor
         .call1(py, (parsed.as_str(),))
 }
 
@@ -1171,8 +1208,7 @@ fn py_amount(
     currency: Py<PyAny>,
 ) -> PyResult<Py<PyAny>> {
     cache
-        .amount_mod
-        .getattr(py, "Amount")?
+        .amount_ctor
         .call1(py, (number, currency))
 }
 

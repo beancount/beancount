@@ -2,7 +2,7 @@ use beancount_parser::{ast::Directive, parse_str};
 
 #[test]
 fn parses_posting_cost_spec() {
-    let input = vec![
+    let input = [
         "2014-01-01 open Assets:Investing",
         "2014-01-01 open Assets:Other",
         "",

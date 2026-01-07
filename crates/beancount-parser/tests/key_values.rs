@@ -2,7 +2,7 @@ use beancount_parser::{ast::Directive, parse_str};
 
 #[test]
 fn collects_key_values_on_note_and_document() {
-    let input = vec![
+    let input = [
         "2013-01-01 note Assets:Cash \"hello\"",
         "  key: \"value\"",
         "  num: 42",
@@ -48,7 +48,7 @@ fn collects_key_values_on_note_and_document() {
 
 #[test]
 fn parses_unquoted_string_value() {
-    let input = vec!["2013-01-01 note Assets:Cash \"hello\"", "  key: value", ""].join("\n");
+    let input = ["2013-01-01 note Assets:Cash \"hello\"", "  key: value", ""].join("\n");
 
     let directives = parse_str(&input, "meta.bean").expect("parse failed");
     assert_eq!(directives.len(), 1);

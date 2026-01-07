@@ -5,7 +5,7 @@ use beancount_parser::{
 
 #[test]
 fn parses_transaction_with_inline_link_and_postings() {
-    let input = vec![
+    let input = [
         "2013-06-22 * \"La Colombe\" \"Buying coffee\"  ^ee89ada94a39",
         "  Expenses:Coffee         5 USD",
         "  Assets:US:Cash",
@@ -13,7 +13,7 @@ fn parses_transaction_with_inline_link_and_postings() {
     ]
     .join("\n");
 
-    let directives = parse_str(&input.as_str(), "input.bean").expect("parse failed");
+    let directives = parse_str(input.as_str(), "input.bean").expect("parse failed");
     assert_eq!(directives.len(), 1);
 
     let txn = match &directives[0] {
@@ -28,8 +28,8 @@ fn parses_transaction_with_inline_link_and_postings() {
 
     assert_eq!(txn.date, "2013-06-22");
     assert_eq!(txn.txn, Some("*"));
-    assert_eq!(txn.payee.as_deref(), Some("\"La Colombe\""));
-    assert_eq!(txn.narration.as_deref(), Some("\"Buying coffee\""));
+    assert_eq!(txn.payee, Some("\"La Colombe\""));
+    assert_eq!(txn.narration, Some("\"Buying coffee\""));
     assert_eq!(txn.tags_links, Some("^ee89ada94a39"));
     assert!(txn.tags.is_empty());
     assert_eq!(txn.links.to_vec(), vec!["ee89ada94a39"]);
@@ -79,7 +79,7 @@ fn parses_transaction_with_inline_link_and_postings() {
 
 #[test]
 fn parses_and_sorts_tags_and_links() {
-    let input = vec![
+    let input = [
         "2013-06-22 * \"Payee\" \"Narr\"  #b ^z #a ^a #b",
         "  Assets:Cash 1 USD",
         "",
@@ -94,8 +94,8 @@ fn parses_and_sorts_tags_and_links() {
         other => panic!("expected transaction, got {other:?}"),
     };
 
-    assert_eq!(txn.payee.as_deref(), Some("\"Payee\""));
-    assert_eq!(txn.narration.as_deref(), Some("\"Narr\""));
+    assert_eq!(txn.payee, Some("\"Payee\""));
+    assert_eq!(txn.narration, Some("\"Narr\""));
     assert_eq!(txn.tags.to_vec(), vec!["a", "b"]);
     assert_eq!(txn.links.to_vec(), vec!["a", "z"]);
     assert_eq!(txn.tags_links_lines.to_vec(), vec!["#b ^z #a ^a #b"]);

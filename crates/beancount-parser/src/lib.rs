@@ -2,8 +2,10 @@
 #![allow(clippy::large_enum_variant)]
 
 pub mod ast;
+pub mod core;
 pub mod parse;
 
+pub use core::{CoreDirective, normalize_directives};
 pub use parse::{ParseError, parse_amount_tokens, parse_directives};
 
 /// Parse a beancount source string into typed directives.
