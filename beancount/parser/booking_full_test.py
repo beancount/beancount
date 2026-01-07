@@ -104,6 +104,7 @@ def indexes(groups):
 @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
 class TestCategorizeCurrencyGroup(unittest.TestCase):
     "Tests of per-currency categorization of postings."
+
     @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__unambiguous(self, entries, _, options_map):
@@ -1549,9 +1550,9 @@ class _BookingTestBase(unittest.TestCase):
         # Check that the 'apply' entry has a single posting only.
         # assert len(entry_apply.postings) == 1, (
         #     "Internal error: 'apply' entry has more than one posting")
-        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
-            "Accounts don't match for 'apply' entry"
-        )
+        assert (
+            len(set(posting.account for posting in entry_apply.postings)) == 1
+        ), "Accounts don't match for 'apply' entry"
         account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 

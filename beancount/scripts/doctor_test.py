@@ -7,6 +7,8 @@ import textwrap
 import unittest
 from os import path
 
+import pytest
+
 from beancount.parser import cmptest
 from beancount.scripts import directories_test
 from beancount.scripts.doctor import doctor
@@ -14,6 +16,7 @@ from beancount.utils import test_utils
 
 
 class TestScriptDoctor(test_utils.ClickTestCase):
+    @pytest.mark.skip(reason="require old c parser")
     @test_utils.docfile
     def test_dump_lexer(self, filename):
         """
@@ -52,6 +55,7 @@ class TestScriptDoctor(test_utils.ClickTestCase):
         """
         self.assertLines(expected_output, result.stdout)
 
+    @pytest.mark.skip(reason="require old c parser")
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""

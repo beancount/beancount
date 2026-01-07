@@ -729,7 +729,12 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
             .value
             .map(|v| match v {
                 ast::KeyValueValue::String(raw) => {
-                    unquote_json(raw, &kv.meta, "metadata value").map(KeyValueValue::String)
+                    if raw.starts_with('"') && raw.ends_with('"') {
+                        unquote_json(raw, &kv.meta, "metadata value")
+                            .map(KeyValueValue::String)
+                    } else {
+                        Ok(KeyValueValue::String(raw.to_string()))
+                    }
                 }
                 ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
                 ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),

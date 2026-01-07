@@ -6,8 +6,9 @@ __copyright__ = "Copyright (C) 2014-2017, 2019-2020, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from beancount.core import account_types
 from beancount.core import display_context
@@ -260,7 +261,9 @@ class TestToleranceOptions(unittest.TestCase):
 
 
 class TestDeprecatedOptions(unittest.TestCase):
-    @pytest.mark.skip(reason="deprecated plugin option handling not implemented in rust parser yet")
+    @pytest.mark.skip(
+        reason="deprecated plugin option handling not implemented in rust parser yet"
+    )
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
         """

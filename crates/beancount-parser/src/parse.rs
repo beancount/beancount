@@ -622,17 +622,19 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
             NodeKind::Value => {
                 let mut inner = child.walk();
                 let mut string_child = None;
+                let mut unquoted_string_child = None;
                 let mut bool_child = None;
 
                 for n in child.named_children(&mut inner) {
                     match NodeKind::from(n.kind()) {
                         NodeKind::String => string_child = Some(n),
+                        NodeKind::UnquotedString => unquoted_string_child = Some(n),
                         NodeKind::Bool => bool_child = Some(n),
                         _ => {}
                     }
                 }
 
-                let parsed = if let Some(str_node) = string_child {
+                let parsed = if let Some(str_node) = string_child.or(unquoted_string_child) {
                     KeyValueValue::String(slice(str_node, source))
                 } else if let Some(b_node) = bool_child {
                     let raw = slice(b_node, source).trim();
