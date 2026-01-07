@@ -447,6 +447,7 @@ fn meta_extra<'py>(
             None => kv.set_item(item.key.as_str(), py.None())?,
             Some(v) => match v {
                 bcore::KeyValueValue::String(s) => kv.set_item(item.key.as_str(), s.as_str())?,
+                bcore::KeyValueValue::Bool(b) => kv.set_item(item.key.as_str(), *b)?,
                 bcore::KeyValueValue::Raw(v) => kv.set_item(item.key.as_str(), v.as_str())?,
             },
         }
@@ -489,12 +490,15 @@ fn convert_balance(
         py,
         cache,
         dcontext,
-        balance.amount.number.as_str(),
-        Some(balance.amount.currency.as_str()),
+        &balance.amount.number,
+        balance.amount.currency.as_deref(),
     )?;
     let amount = amount_to_py(py, cache, &balance.amount)?;
     let tolerance = match balance.tolerance.as_deref() {
-        Some(raw) => py_decimal(py, cache, raw)?,
+        Some(raw) => {
+            let expr = bcore::NumberExpr::Literal(raw.to_string());
+            py_decimal(py, cache, &expr)?
+        }
         None => py.None(),
     };
     cls.call1(
@@ -579,19 +583,19 @@ fn cost_spec_to_py(
         }
 
         if cost_spec.is_total {
-            if let Some(total_raw) = amount.total.as_deref() {
-                number_total = py_decimal(py, cache, total_raw.trim())?;
+            if let Some(total_raw) = amount.total.as_ref() {
+                number_total = py_decimal(py, cache, total_raw)?;
                 number_per = cache.zero.clone_ref(py);
-            } else if let Some(per_raw) = amount.per.as_deref() {
-                number_total = py_decimal(py, cache, per_raw.trim())?;
+            } else if let Some(per_raw) = amount.per.as_ref() {
+                number_total = py_decimal(py, cache, per_raw)?;
                 number_per = cache.zero.clone_ref(py);
             }
         } else {
-            if let Some(per_raw) = amount.per.as_deref() {
-                number_per = py_decimal(py, cache, per_raw.trim())?;
+            if let Some(per_raw) = amount.per.as_ref() {
+                number_per = py_decimal(py, cache, per_raw)?;
             }
-            if let Some(total_raw) = amount.total.as_deref() {
-                number_total = py_decimal(py, cache, total_raw.trim())?;
+            if let Some(total_raw) = amount.total.as_ref() {
+                number_total = py_decimal(py, cache, total_raw)?;
             }
         }
     }
@@ -628,7 +632,7 @@ fn convert_posting(
 ) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.posting_cls;
-    let meta = make_metadata(py, &posting.meta, None)?;
+    let meta = make_metadata(py, &posting.meta, meta_extra(py, &posting.key_values)?)?;
     let units = posting
         .amount
         .as_ref()
@@ -637,8 +641,8 @@ fn convert_posting(
                 py,
                 cache,
                 dcontext,
-                amount.number.as_str(),
-                Some(amount.currency.as_str()),
+                &amount.number,
+                amount.currency.as_deref(),
             )?;
             amount_to_py(py, cache, amount)
         })
@@ -648,14 +652,14 @@ fn convert_posting(
         .cost_spec
         .as_ref()
         .map(|cost| {
-            if let Some(amount) = &cost.amount
-                && let Some(curr) = amount.currency.as_deref()
-            {
-                if let Some(per) = amount.per.as_deref() {
-                    update_dcontext(py, cache, dcontext, per, Some(curr))?;
-                }
-                if let Some(total) = amount.total.as_deref() {
-                    update_dcontext(py, cache, dcontext, total, Some(curr))?;
+            if let Some(amount) = &cost.amount {
+                if let Some(curr) = amount.currency.as_deref() {
+                    if let Some(per) = amount.per.as_ref() {
+                        update_dcontext(py, cache, dcontext, per, Some(curr))?;
+                    }
+                    if let Some(total) = amount.total.as_ref() {
+                        update_dcontext(py, cache, dcontext, total, Some(curr))?;
+                    }
                 }
             }
             cost_spec_to_py(py, cache, cost)
@@ -677,21 +681,20 @@ fn convert_posting(
         };
 
         if let Some(per_unit) = override_number {
-            update_dcontext(
-                py,
-                cache,
-                dcontext,
-                &per_unit,
-                Some(price_ast.currency.as_str()),
-            )?;
-            amount_from_number_and_currency(py, cache, &per_unit, price_ast.currency.as_str())?
+            let expr = bcore::NumberExpr::Literal(per_unit.clone());
+            update_dcontext(py, cache, dcontext, &expr, price_ast.currency.as_deref())?;
+            let curr = price_ast
+                .currency
+                .as_deref()
+                .ok_or_else(|| PyValueError::new_err("missing currency in price annotation"))?;
+            amount_from_number_and_currency(py, cache, &per_unit, curr)?
         } else {
             update_dcontext(
                 py,
                 cache,
                 dcontext,
-                price_ast.number.as_str(),
-                Some(price_ast.currency.as_str()),
+                &price_ast.number,
+                price_ast.currency.as_deref(),
             )?;
             amount_to_py(py, cache, price_ast)?
         }
@@ -731,8 +734,8 @@ fn convert_price(
         py,
         cache,
         dcontext,
-        price.amount.number.as_str(),
-        Some(price.amount.currency.as_str()),
+        &price.amount.number,
+        price.amount.currency.as_deref(),
     )?;
     let amount = amount_to_py(py, cache, &price.amount)?;
     cls.call1(py, (meta, date, price.currency.as_str(), amount))
@@ -742,9 +745,13 @@ fn update_dcontext(
     py: Python<'_>,
     cache: &DataCache,
     dcontext: &Bound<'_, PyAny>,
-    number: &str,
+    number: &bcore::NumberExpr,
     currency: Option<&str>,
 ) -> PyResult<()> {
+    if matches!(number, bcore::NumberExpr::Missing) {
+        return Ok(());
+    }
+
     if let Some(curr) = currency {
         let dec = py_decimal(py, cache, number)?;
         dcontext.call_method1("update", (dec, curr))?;
@@ -857,7 +864,14 @@ fn convert_custom_value(
             (amount, dtype)
         }
         ast::CustomValueKind::Number => {
-            let decimal = py_decimal(py, cache, value.raw.trim())?;
+            let trimmed = value.raw.trim();
+            let expr = if contains_expression_ops(trimmed) {
+                let evaluated = eval_number_expr(trimmed)?;
+                bcore::NumberExpr::Literal(evaluated)
+            } else {
+                bcore::NumberExpr::Literal(trimmed.to_string())
+            };
+            let decimal = py_decimal(py, cache, &expr)?;
             let dtype = decimal.bind(py).get_type().unbind().into();
             (decimal, dtype)
         }
@@ -953,15 +967,206 @@ fn py_date(py: Python<'_>, date: &str) -> PyResult<Py<PyAny>> {
     Ok(pydate)
 }
 
-fn py_decimal(py: Python<'_>, cache: &DataCache, number: &str) -> PyResult<Py<PyAny>> {
-    cache.number_mod.getattr(py, "D")?.call1(py, (number,))
+fn apply_op(op: char, lhs: Decimal, rhs: Decimal) -> PyResult<Decimal> {
+    match op {
+        '+' => Ok(lhs + rhs),
+        '-' => Ok(lhs - rhs),
+        '*' => Ok(lhs * rhs),
+        '/' => Ok(lhs / rhs),
+        _ => Err(PyValueError::new_err(format!("invalid operator `{}`", op))),
+    }
+}
+
+fn precedence(op: char) -> i32 {
+    match op {
+        '+' | '-' => 1,
+        '*' | '/' => 2,
+        _ => 0,
+    }
+}
+
+fn parse_number(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> PyResult<Decimal> {
+    let mut buf = String::new();
+    while let Some(&c) = chars.peek() {
+        if c.is_ascii_digit() || c == '.' || c == '_' || c == ',' {
+            buf.push(c);
+            chars.next();
+        } else {
+            break;
+        }
+    }
+
+    if buf.is_empty() {
+        return Err(PyValueError::new_err("expected number"));
+    }
+
+    // Remove thousands separators/spaces to mimic Python D()
+    let cleaned: String = buf.chars().filter(|c| *c != ',' && *c != ' ').collect();
+    Decimal::from_str(&cleaned)
+        .map_err(|err| PyValueError::new_err(format!("invalid number literal `{}`: {err}", buf)))
+}
+
+fn eval_number_expr(expr: &str) -> PyResult<String> {
+    let mut vals: Vec<Decimal> = Vec::new();
+    let mut ops: Vec<char> = Vec::new();
+    let mut chars = expr.chars().peekable();
+    let mut expect_value = true;
+
+    while let Some(&c) = chars.peek() {
+        if c.is_whitespace() {
+            chars.next();
+            continue;
+        }
+
+        if c == '(' {
+            ops.push(c);
+            chars.next();
+            expect_value = true;
+            continue;
+        }
+
+        if c == ')' {
+            chars.next();
+            while let Some(op) = ops.pop() {
+                if op == '(' {
+                    break;
+                }
+                let rhs = vals
+                    .pop()
+                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+                let lhs = vals
+                    .pop()
+                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+                vals.push(apply_op(op, lhs, rhs)?);
+            }
+            expect_value = false;
+            continue;
+        }
+
+        if (c == '+' || c == '-') && expect_value {
+            // unary sign
+            let sign = if c == '-' {
+                -Decimal::ONE
+            } else {
+                Decimal::ONE
+            };
+            chars.next();
+            // allow whitespace after unary sign
+            while let Some(&ws) = chars.peek() {
+                if ws.is_whitespace() {
+                    chars.next();
+                } else {
+                    break;
+                }
+            }
+            let num = parse_number(&mut chars)?;
+            vals.push(sign * num);
+            expect_value = false;
+            continue;
+        }
+
+        if c == '+' || c == '-' || c == '*' || c == '/' {
+            let op = c;
+            chars.next();
+            while let Some(&top) = ops.last() {
+                if top == '(' || precedence(top) < precedence(op) {
+                    break;
+                }
+                let top = ops.pop().unwrap();
+                let rhs = vals
+                    .pop()
+                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+                let lhs = vals
+                    .pop()
+                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+                vals.push(apply_op(top, lhs, rhs)?);
+            }
+            ops.push(op);
+            expect_value = true;
+            continue;
+        }
+
+        // number literal
+        let num = parse_number(&mut chars)?;
+        vals.push(num);
+        expect_value = false;
+    }
+
+    while let Some(op) = ops.pop() {
+        let rhs = vals
+            .pop()
+            .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+        let lhs = vals
+            .pop()
+            .ok_or_else(|| PyValueError::new_err("missing operand"))?;
+        vals.push(apply_op(op, lhs, rhs)?);
+    }
+
+    let result = vals
+        .pop()
+        .ok_or_else(|| PyValueError::new_err("empty expression"))?;
+    Ok(result.normalize().to_string())
+}
+
+fn contains_expression_ops(num: &str) -> bool {
+    let trimmed = num.trim();
+    let mut chars = trimmed.chars();
+    let _ = chars.next(); // skip potential leading sign/digit
+    trimmed.contains('*')
+        || trimmed.contains('/')
+        || trimmed.contains('(')
+        || trimmed.contains(')')
+        || chars.any(|c| matches!(c, '+' | '-'))
+}
+
+fn number_expr_to_decimal(num: &bcore::NumberExpr) -> PyResult<Decimal> {
+    match num {
+        bcore::NumberExpr::Missing => Err(PyValueError::new_err("missing number expression")),
+        bcore::NumberExpr::Literal(raw) => Decimal::from_str(raw.trim())
+            .map_err(|err| PyValueError::new_err(format!("invalid number `{}`: {}", raw, err))),
+        bcore::NumberExpr::Binary { left, op, right } => {
+            let lhs = number_expr_to_decimal(left)?;
+            let rhs = number_expr_to_decimal(right)?;
+            let result = match op {
+                bcore::BinaryOp::Add => lhs + rhs,
+                bcore::BinaryOp::Sub => lhs - rhs,
+                bcore::BinaryOp::Mul => lhs * rhs,
+                bcore::BinaryOp::Div => lhs / rhs,
+            };
+            Ok(result)
+        }
+    }
+}
+
+fn number_expr_to_decimal_string(num: &bcore::NumberExpr) -> PyResult<String> {
+    match num {
+        bcore::NumberExpr::Missing => Ok(String::new()),
+        bcore::NumberExpr::Literal(raw) => Ok(raw.trim().to_string()),
+        _ => Ok(number_expr_to_decimal(num)?.to_string()),
+    }
+}
+
+fn py_decimal(
+    py: Python<'_>,
+    cache: &DataCache,
+    number: &bcore::NumberExpr,
+) -> PyResult<Py<PyAny>> {
+    if matches!(number, bcore::NumberExpr::Missing) {
+        return Ok(cache.missing.clone_ref(py));
+    }
+    let parsed = number_expr_to_decimal_string(number)?;
+
+    cache
+        .number_mod
+        .getattr(py, "D")?
+        .call1(py, (parsed.as_str(),))
 }
 
 fn py_amount(
     py: Python<'_>,
     cache: &DataCache,
     number: Py<PyAny>,
-    currency: &str,
+    currency: Py<PyAny>,
 ) -> PyResult<Py<PyAny>> {
     cache
         .amount_mod
@@ -970,8 +1175,19 @@ fn py_amount(
 }
 
 fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &bcore::Amount) -> PyResult<Py<PyAny>> {
-    let d = py_decimal(py, cache, amount.number.as_str())?;
-    py_amount(py, cache, d, amount.currency.as_str())
+    let number = if matches!(amount.number, bcore::NumberExpr::Missing) {
+        cache.missing.clone_ref(py)
+    } else {
+        py_decimal(py, cache, &amount.number)?
+    };
+
+    let currency: Py<PyAny> = amount
+        .currency
+        .as_deref()
+        .map(|c| PyString::new(py, c).unbind().into())
+        .unwrap_or_else(|| cache.missing.clone_ref(py));
+
+    py_amount(py, cache, number, currency)
 }
 
 fn amount_from_number_and_currency(
@@ -980,13 +1196,15 @@ fn amount_from_number_and_currency(
     number: &str,
     currency: &str,
 ) -> PyResult<Py<PyAny>> {
-    let d = py_decimal(py, cache, number)?;
-    py_amount(py, cache, d, currency)
+    let num_expr = bcore::NumberExpr::Literal(number.to_string());
+    let d = py_decimal(py, cache, &num_expr)?;
+    let currency_obj: Py<PyAny> = PyString::new(py, currency).unbind().into();
+    py_amount(py, cache, d, currency_obj)
 }
 
 fn per_unit_price_from_total(price: &bcore::Amount, units: &bcore::Amount) -> Option<String> {
-    let total = Decimal::from_str(price.number.as_str()).ok()?;
-    let qty = Decimal::from_str(units.number.as_str()).ok()?;
+    let total = number_expr_to_decimal(&price.number).ok()?;
+    let qty = number_expr_to_decimal(&units.number).ok()?;
     if qty.is_zero() {
         return None;
     }

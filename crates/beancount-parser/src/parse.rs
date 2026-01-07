@@ -61,6 +61,57 @@ pub fn parse_amount_tokens(raw: &str) -> Option<(&str, &str)> {
     Some((number, currency))
 }
 
+fn looks_like_number(raw: &str) -> bool {
+    let trimmed = raw.trim();
+    !trimmed.is_empty()
+        && trimmed
+            .bytes()
+            .all(|c| c.is_ascii_digit() || c == b'.' || c == b'-' || c == b'+')
+}
+
+fn parse_number_expr<'a>(node: Node, source: &'a str, filename: &str) -> Result<NumberExpr<'a>> {
+    match NodeKind::from(node.kind()) {
+        NodeKind::BinaryNumberExpr => {
+            let mut cursor = node.walk();
+            let mut iter = node.named_children(&mut cursor);
+
+            let first = iter
+                .next()
+                .ok_or_else(|| parse_error(node, filename, "missing lhs in number expression"))?;
+            let mut expr = parse_number_expr(first, source, filename)?;
+
+            while let Some(op_node) = iter.next() {
+                let op = match NodeKind::from(op_node.kind()) {
+                    NodeKind::Plus => BinaryOp::Add,
+                    NodeKind::Minus => BinaryOp::Sub,
+                    NodeKind::Asterisk => BinaryOp::Mul,
+                    NodeKind::Slash => BinaryOp::Div,
+                    _ => {
+                        return Err(parse_error(
+                            op_node,
+                            filename,
+                            "invalid operator in number expression",
+                        ));
+                    }
+                };
+
+                let rhs_node = iter.next().ok_or_else(|| {
+                    parse_error(op_node, filename, "missing rhs in number expression")
+                })?;
+                let rhs = parse_number_expr(rhs_node, source, filename)?;
+                expr = NumberExpr::Binary {
+                    left: Box::new(expr),
+                    op,
+                    right: Box::new(rhs),
+                };
+            }
+
+            Ok(expr)
+        }
+        _ => Ok(NumberExpr::Literal(slice(node, source).trim())),
+    }
+}
+
 fn collect_key_values<'a>(
     node: Node,
     source: &'a str,
@@ -148,9 +199,41 @@ pub fn parse_directives<'a>(
     }
 
     let mut cursor = root.walk();
-    root.named_children(&mut cursor)
-        .map(|node| parse_top_level(node, source, &filename))
-        .collect::<Result<Vec<_>>>()
+    let mut directives = Vec::new();
+
+    for node in root.named_children(&mut cursor) {
+        collect_directives(node, source, &filename, &mut directives)?;
+    }
+
+    Ok(directives)
+}
+
+fn collect_directives<'a>(
+    node: Node,
+    source: &'a str,
+    filename: &str,
+    directives: &mut Vec<Directive<'a>>,
+) -> Result<()> {
+    match node.kind().into() {
+        // Org/Markdown style sections can wrap real declarations; flatten them.
+        NodeKind::Section => {
+            let mut cursor = node.walk();
+            for child in node.named_children(&mut cursor) {
+                match child.kind().into() {
+                    NodeKind::Headline => continue,
+                    NodeKind::Section => {
+                        collect_directives(child, source, filename, directives)?
+                    }
+                    _ => directives.push(parse_top_level(child, source, filename)?),
+                }
+            }
+            Ok(())
+        }
+        _ => {
+            directives.push(parse_top_level(node, source, filename)?);
+            Ok(())
+        }
+    }
 }
 
 fn parse_top_level<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
@@ -181,11 +264,7 @@ fn parse_top_level<'a>(node: Node, source: &'a str, filename: &str) -> Result<Di
         // Known non-directive top-level nodes.
         NodeKind::Section | NodeKind::Comment => Ok(raw(node, source, filename)),
 
-        _ => Err(parse_error(
-            node,
-            filename,
-            format!("unknown directive node kind `{}`", node.kind()),
-        )),
+        _ => Ok(raw(node, source, filename)),
     }
 }
 
@@ -402,7 +481,10 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
                 Some(NodeKind::Amount) => CustomValueKind::Amount,
                 Some(NodeKind::Account) => CustomValueKind::Account,
                 Some(k)
-                    if matches!(k, NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number) =>
+                    if matches!(
+                        k,
+                        NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number
+                    ) =>
                 {
                     CustomValueKind::Number
                 }
@@ -539,12 +621,23 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
             NodeKind::Key => key = Some(slice(child, source)),
             NodeKind::Value => {
                 let mut inner = child.walk();
-                let string_child = child
-                    .named_children(&mut inner)
-                    .find(|n| *n == NodeKind::String);
+                let mut string_child = None;
+                let mut bool_child = None;
+
+                for n in child.named_children(&mut inner) {
+                    match NodeKind::from(n.kind()) {
+                        NodeKind::String => string_child = Some(n),
+                        NodeKind::Bool => bool_child = Some(n),
+                        _ => {}
+                    }
+                }
 
                 let parsed = if let Some(str_node) = string_child {
                     KeyValueValue::String(slice(str_node, source))
+                } else if let Some(b_node) = bool_child {
+                    let raw = slice(b_node, source).trim();
+                    let val = raw.eq_ignore_ascii_case("true");
+                    KeyValueValue::Bool(val)
                 } else {
                     KeyValueValue::Raw(slice(child, source))
                 };
@@ -563,15 +656,25 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
     })
 }
 
-fn parse_compound_amount<'a>(node: Node, source: &'a str) -> CostAmount<'a> {
-    CostAmount {
-        per: field_text(node, "per", source).map(|t| t.trim()),
-        total: field_text(node, "total", source).map(|t| t.trim()),
+fn parse_compound_amount<'a>(
+    node: Node,
+    source: &'a str,
+    filename: &str,
+) -> Result<CostAmount<'a>> {
+    Ok(CostAmount {
+        per: node
+            .child_by_field_name("per")
+            .map(|n| parse_number_expr(n, source, filename))
+            .transpose()?,
+        total: node
+            .child_by_field_name("total")
+            .map(|n| parse_number_expr(n, source, filename))
+            .transpose()?,
         currency: field_text(node, "currency", source).map(|t| t.trim()),
-    }
+    })
 }
 
-fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<CostSpec<'a>> {
+fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<CostSpec<'a>> {
     let raw = slice(node, source);
     let is_total = raw.trim_start().starts_with("{{");
 
@@ -596,7 +699,7 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<C
 
             match kind {
                 "compound_amount" if amount.is_none() => {
-                    amount = Some(parse_compound_amount(comp, source));
+                    amount = Some(parse_compound_amount(comp, source, filename)?);
                 }
                 "date" if date.is_none() => {
                     date = Some(slice(comp, source));
@@ -654,12 +757,7 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, _filename: &str) -> Result<C
 }
 
 fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Posting<'a>> {
-    let amount_raw = field_text(node, "amount", source).or_else(|| {
-        let mut cursor = node.walk();
-        node.named_children(&mut cursor)
-            .find(|n| *n == NodeKind::IncompleteAmount)
-            .map(|n| slice(n, source))
-    });
+    let amount_node = node.child_by_field_name("amount");
 
     let price_operator = {
         let mut cursor = node.walk();
@@ -668,12 +766,26 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
             .map(|n| slice(n, source))
     };
 
-    let price_annotation = field_text(node, "price_annotation", source)
-        .map(|raw| parse_amount_value(raw, node, filename))
+    let price_annotation = node
+        .child_by_field_name("price_annotation")
+        .map(|n| parse_amount_node(n, source, filename))
         .transpose()?;
-    let amount = amount_raw
-        .map(|raw| parse_amount_value(raw, node, filename))
-        .transpose()?;
+
+    let amount = if let Some(amount_node) = amount_node {
+        match parse_amount_node(amount_node, source, filename) {
+            Ok(val) => Some(val),
+            Err(err) => {
+                let raw = slice(amount_node, source);
+                if looks_like_number(raw) {
+                    None
+                } else {
+                    return Err(err);
+                }
+            }
+        }
+    } else {
+        None
+    };
 
     let cost_spec = node
         .child_by_field_name("cost_spec")
@@ -690,6 +802,7 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
         price_operator,
         price_annotation,
         comment: field_text(node, "comment", source),
+        key_values: SmallVec::new(),
     })
 }
 
@@ -738,12 +851,72 @@ fn parse_balance_amount<'a>(
     let amount_raw = slice(amount_node, source);
     let amount = Amount {
         raw: amount_raw,
-        number: slice(number_node, source).trim(),
-        currency: slice(currency_node, source),
+        number: parse_number_expr(number_node, source, filename)?,
+        currency: Some(slice(currency_node, source)),
     };
     let tolerance = tolerance_node.map(|n| slice(n, source).trim());
 
     Ok(ParsedBalanceAmount { amount, tolerance })
+}
+
+fn parse_amount_node<'a>(amount_node: Node, source: &'a str, filename: &str) -> Result<Amount<'a>> {
+    let raw = slice(amount_node, source);
+
+    // Accept bare currency or bare number nodes (e.g. price annotations like "@ CAD" or
+    // tolerances such as "~ 1.00"). Those nodes won't have children, so handle them up front.
+    match NodeKind::from(amount_node.kind()) {
+        NodeKind::Currency => {
+            return Ok(Amount {
+                raw,
+                number: NumberExpr::Missing,
+                currency: Some(raw),
+            });
+        }
+        NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number => {
+            return Ok(Amount {
+                raw,
+                number: parse_number_expr(amount_node, source, filename)?,
+                currency: None,
+            });
+        }
+        _ => {}
+    }
+
+    let mut cursor = amount_node.walk();
+
+    let mut number_node = None;
+    let mut currency_node = None;
+
+    for child in amount_node.named_children(&mut cursor) {
+        match NodeKind::from(child.kind()) {
+            NodeKind::Currency => currency_node = Some(child),
+            NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number => {
+                number_node = Some(child)
+            }
+            _ => {}
+        }
+    }
+
+    let mut number = number_node
+        .map(|n| parse_number_expr(n, source, filename))
+        .transpose()?;
+    let mut currency = currency_node.map(|n| slice(n, source));
+
+    if number.is_none() && currency.is_none() {
+        if let Some((num, curr)) = parse_amount_tokens(raw) {
+            number = Some(NumberExpr::Literal(num));
+            currency = Some(curr);
+        }
+    }
+
+    let number = number.unwrap_or(NumberExpr::Missing);
+    let currency = currency;
+
+    Ok(Amount {
+        raw,
+        number,
+        currency,
+    })
 }
 
 fn parse_amount_field<'a>(
@@ -752,20 +925,11 @@ fn parse_amount_field<'a>(
     source: &'a str,
     filename: &str,
 ) -> Result<Amount<'a>> {
-    let raw = required_field_text(node, field, source, filename)?;
-    parse_amount_value(raw, node, filename)
-}
+    let amount_node = node
+        .child_by_field_name(field)
+        .ok_or_else(|| parse_error(node, filename, format!("missing field `{}`", field)))?;
 
-fn parse_amount_value<'a>(raw: &'a str, node: Node, filename: &str) -> Result<Amount<'a>> {
-    if let Some((number, currency)) = parse_amount_tokens(raw) {
-        Ok(Amount {
-            raw,
-            number,
-            currency,
-        })
-    } else {
-        Err(parse_error(node, filename, "invalid amount"))
-    }
+    parse_amount_node(amount_node, source, filename)
 }
 
 fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
@@ -834,8 +998,17 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
             match child.kind().into() {
                 NodeKind::TagsLinks => tags_links_lines.push(slice(child, source)),
                 NodeKind::Comment => comments.push(slice(child, source)),
-                NodeKind::KeyValue => key_values.push(parse_key_value(child, source, filename)?),
-                NodeKind::Posting => postings.push(parse_posting(child, source, filename)?),
+                NodeKind::KeyValue => {
+                    let kv = parse_key_value(child, source, filename)?;
+                    if let Some(posting) = postings.last_mut() {
+                        posting.key_values.push(kv);
+                    } else {
+                        key_values.push(kv);
+                    }
+                }
+                NodeKind::Posting => {
+                    postings.push(parse_posting(child, source, filename)?);
+                }
                 _ => {}
             }
         }

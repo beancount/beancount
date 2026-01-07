@@ -9,6 +9,7 @@ module.exports = grammar({
     word: ($) => $.identifier,
 
     inline: ($) => [
+        $.currency_key_value,
     ],
 
     conflicts: ($) => [
@@ -39,6 +40,7 @@ module.exports = grammar({
         ),
 
         _nl: _ => choice('\n', '\r'),
+        _eol: $ => choice('\n', '\r', $._eof),
         _any: $ => /[^\r\n]*/,
 
 
@@ -81,11 +83,13 @@ module.exports = grammar({
         date: $ => token(/([12]\d{3}[-\/](0[1-9]|1[0-2])[-\/](0[1-9]|[12]\d|3[01]))/),
         // Account names: Assets|Liabilities|Equity|Income|Expenses followed by colon-separated components
         // Components can contain Unicode letters/numbers including CJK characters
+        // account: $ => $.identifier, // token(/[^\s\\ \n\r]/),
+
         account: $ =>
             token(
                 seq(
-                    /Assets|Liabilities|Equity|Income|Expenses/,
-                    repeat1(
+                    /[A-Z][\p{L}\p{N}\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uac00-\ud7a3]*/,
+                    repeat(
                         seq(
                             ":",
                             /[\p{Lu}\p{N}\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uac00-\ud7a3][\p{L}\p{N}\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\uac00-\ud7a3\-]*/,
@@ -95,6 +99,7 @@ module.exports = grammar({
             ),
         currency: $ => token(/[A-Z]([A-Z0-9\'\._\-]{0,22}[A-Z0-9])?/),
         string: $ => token(/"([^"]|\\")*"/),
+        unquoted_string: $ => token(prec(-1, /[^\r\n]+/)),
         number: $ => token(/([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)?/),
         tag: $ => token(/#[A-Za-z0-9\-_/.]+/),
         link: $ => token(/\^[A-Za-z0-9\-_/.]+/),
@@ -218,17 +223,11 @@ module.exports = grammar({
                 $.flag,
             ),
 
-        price_annotation: $ => $.incomplete_amount,
-        //choice(
-        //    seq(
-        //        $.atat,
-        //        $.incomplete_amount
-        //    ),
-        //    seq(
-        //        $.at,
-        //        $.incomplete_amount
-        //    )
-        //),
+        price_annotation: $ =>
+            choice(
+                $.incomplete_amount,
+                $.currency
+            ),
 
         posting: $ =>
             seq(
@@ -249,25 +248,49 @@ module.exports = grammar({
 
         key: $ => token(/[a-z][a-zA-Z0-9\-_]+/),
 
+        currency_key_value: $ =>
+            prec.left(seq(
+                alias("currency", $.key),
+                ":",
+                optional(
+                    seq(
+                        repeat(/ /),
+                        field("value", alias($.value_currency, $.value)),
+                    )
+                ),
+            )),
+
         value: $ =>
-            choice(
+            prec.left(choice(
                 $.string,
-                $.account,
                 $.date,
                 $.currency,
+                $.account,
                 $.tag,
                 $.bool,
                 $._none,
                 $._number_expr,
-                $.amount
-            ),
+                $.amount,
+                $.string,
+                $.unquoted_string,
+            )),
+
+        value_currency: $ => seq($.currency),
 
         key_value: $ =>
-            prec.left(seq(
-                $.key,
-                ":",
-                $.value,
-            )),
+            choice(
+                $.currency_key_value,
+                prec.left(seq(
+                    $.key,
+                    ":",
+                    optional(
+                        seq(
+                            repeat(/ /),
+                            $.value,
+                        ),
+                    ),
+                )),
+            ),
 
         _key_value_line: $ => seq(
             $._indent,

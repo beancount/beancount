@@ -111,6 +111,7 @@ pub(crate) struct Posting {
     pub price_operator: Option<String>,
     pub price_annotation: Option<Amount>,
     pub comment: Option<String>,
+    pub key_values: SmallKeyValues,
 }
 
 #[derive(Debug, Clone)]
@@ -254,13 +255,58 @@ pub(crate) struct KeyValue {
 #[derive(Debug, Clone)]
 pub(crate) enum KeyValueValue {
     String(String),
+    Bool(bool),
     Raw(String),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum NumberExpr {
+    Missing,
+    Literal(String),
+    Binary {
+        left: Box<NumberExpr>,
+        op: BinaryOp,
+        right: Box<NumberExpr>,
+    },
+}
+
+impl From<ast::BinaryOp> for BinaryOp {
+    fn from(op: ast::BinaryOp) -> Self {
+        match op {
+            ast::BinaryOp::Add => BinaryOp::Add,
+            ast::BinaryOp::Sub => BinaryOp::Sub,
+            ast::BinaryOp::Mul => BinaryOp::Mul,
+            ast::BinaryOp::Div => BinaryOp::Div,
+        }
+    }
+}
+
+impl From<ast::NumberExpr<'_>> for NumberExpr {
+    fn from(num: ast::NumberExpr<'_>) -> Self {
+        match num {
+            ast::NumberExpr::Missing => NumberExpr::Missing,
+            ast::NumberExpr::Literal(s) => NumberExpr::Literal(s.to_string()),
+            ast::NumberExpr::Binary { left, op, right } => NumberExpr::Binary {
+                left: Box::new(NumberExpr::from(*left)),
+                op: BinaryOp::from(op),
+                right: Box::new(NumberExpr::from(*right)),
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct CostAmount {
-    pub per: Option<String>,
-    pub total: Option<String>,
+    pub per: Option<NumberExpr>,
+    pub total: Option<NumberExpr>,
     pub currency: Option<String>,
 }
 
@@ -277,8 +323,8 @@ pub(crate) struct CostSpec {
 #[derive(Debug, Clone)]
 pub(crate) struct Amount {
     pub raw: String,
-    pub number: String,
-    pub currency: String,
+    pub number: NumberExpr,
+    pub currency: Option<String>,
 }
 
 pub(crate) fn normalize_directives<'a>(
@@ -610,14 +656,31 @@ impl<'a> TryFrom<ast::Plugin<'a>> for Plugin {
     type Error = ParseError;
 
     fn try_from(plugin: ast::Plugin<'a>) -> Result<Self, Self::Error> {
+        let config = if let Some(raw) = plugin.config {
+            match unquote_json(raw, &plugin.meta, "plugin config") {
+                Ok(val) => Some(val),
+                Err(_) => {
+                    // Fall back to a lenient stripping of surrounding quotes so
+                    // that plugins still receive their config string even when it
+                    // is not valid JSON (e.g. single-quoted Python dicts).
+                    let trimmed = raw.trim();
+                    let stripped = trimmed
+                        .strip_prefix('"')
+                        .and_then(|s| s.strip_suffix('"'))
+                        .unwrap_or(trimmed)
+                        .to_string();
+                    Some(stripped)
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             meta: plugin.meta.clone(),
             span: plugin.span,
             name: unquote_json(plugin.name, &plugin.meta, "plugin name")?,
-            config: plugin
-                .config
-                .map(|c| unquote_json(c, &plugin.meta, "plugin config"))
-                .transpose()?,
+            config,
         })
     }
 }
@@ -668,6 +731,7 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
                 ast::KeyValueValue::String(raw) => {
                     unquote_json(raw, &kv.meta, "metadata value").map(KeyValueValue::String)
                 }
+                ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
                 ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
             })
             .transpose()?;
@@ -705,8 +769,8 @@ impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
 
     fn try_from(amount: ast::CostAmount<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
-            per: amount.per.map(ToString::to_string),
-            total: amount.total.map(ToString::to_string),
+            per: amount.per.map(NumberExpr::from),
+            total: amount.total.map(NumberExpr::from),
             currency: amount.currency.map(ToString::to_string),
         })
     }
@@ -731,6 +795,11 @@ impl<'a> TryFrom<ast::Posting<'a>> for Posting {
             price_operator: posting.price_operator.map(ToString::to_string),
             price_annotation: posting.price_annotation.map(Amount::try_from).transpose()?,
             comment: posting.comment.map(ToString::to_string),
+            key_values: posting
+                .key_values
+                .into_iter()
+                .map(KeyValue::try_from)
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -795,19 +864,56 @@ impl<'a> TryFrom<ast::Amount<'a>> for Amount {
     fn try_from(amount: ast::Amount<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
             raw: amount.raw.to_string(),
-            number: amount.number.to_string(),
-            currency: amount.currency.to_string(),
+            number: NumberExpr::from(amount.number),
+            currency: amount.currency.map(ToString::to_string),
         })
     }
 }
 
 fn unquote_json(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<String, ParseError> {
-    parse_json::<String>(raw).map_err(|err| ParseError {
-        filename: meta.filename.clone(),
-        line: meta.line,
-        column: meta.column,
-        message: format!("invalid {}: {}", ctx, err),
-    })
+    match parse_json::<String>(raw) {
+        Ok(value) => Ok(value),
+        Err(err) => {
+            // Allow literal newlines inside quoted strings (e.g. multi-line queries) by
+            // falling back to a lenient unescaper when JSON parsing rejects control chars.
+            if raw.starts_with('"') && raw.ends_with('"') {
+                let inner = &raw[1..raw.len() - 1];
+                let mut out = String::with_capacity(inner.len());
+                let mut chars = inner.chars().peekable();
+
+                while let Some(ch) = chars.next() {
+                    if ch == '\\' {
+                        if let Some(next) = chars.next() {
+                            match next {
+                                '"' => out.push('"'),
+                                '\\' => out.push('\\'),
+                                'n' => out.push('\n'),
+                                'r' => out.push('\r'),
+                                't' => out.push('\t'),
+                                other => {
+                                    out.push('\\');
+                                    out.push(other);
+                                }
+                            }
+                        } else {
+                            out.push('\\');
+                        }
+                    } else {
+                        out.push(ch);
+                    }
+                }
+
+                return Ok(out);
+            }
+
+            Err(ParseError {
+                filename: meta.filename.clone(),
+                line: meta.line,
+                column: meta.column,
+                message: format!("invalid {}: {}", ctx, err),
+            })
+        }
+    }
 }
 
 fn resolve_path(base_filename: &str, filename: &str) -> String {

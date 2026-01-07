@@ -129,6 +129,7 @@ pub struct Transaction<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyValueValue<'a> {
     String(&'a str),
+    Bool(bool),
     Raw(&'a str),
 }
 
@@ -136,8 +137,28 @@ impl<'a> KeyValueValue<'a> {
     pub fn as_str(&self) -> std::borrow::Cow<'a, str> {
         match self {
             KeyValueValue::String(s) | KeyValueValue::Raw(s) => std::borrow::Cow::Borrowed(*s),
+            KeyValueValue::Bool(val) => std::borrow::Cow::Owned(val.to_string()),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberExpr<'a> {
+    Missing,
+    Literal(&'a str),
+    Binary {
+        left: Box<NumberExpr<'a>>,
+        op: BinaryOp,
+        right: Box<NumberExpr<'a>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -150,8 +171,8 @@ pub struct KeyValue<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CostAmount<'a> {
-    pub per: Option<&'a str>,
-    pub total: Option<&'a str>,
+    pub per: Option<NumberExpr<'a>>,
+    pub total: Option<NumberExpr<'a>>,
     pub currency: Option<&'a str>,
 }
 
@@ -176,6 +197,7 @@ pub struct Posting<'a> {
     pub price_operator: Option<&'a str>,
     pub price_annotation: Option<Amount<'a>>,
     pub comment: Option<&'a str>,
+    pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -277,8 +299,8 @@ pub struct CustomValue<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Amount<'a> {
     pub raw: &'a str,
-    pub number: &'a str,
-    pub currency: &'a str,
+    pub number: NumberExpr<'a>,
+    pub currency: Option<&'a str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

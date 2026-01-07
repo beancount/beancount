@@ -30,11 +30,17 @@ fn parses_posting_cost_spec() {
     assert_eq!(p1.account, "Assets:Investing");
     let amt1 = p1.amount.as_ref().expect("amount");
     assert_eq!(amt1.raw, "30 HOOL");
-    assert_eq!(amt1.number, "30");
-    assert_eq!(amt1.currency, "HOOL");
+    assert_eq!(
+        amt1.number,
+        beancount_parser::ast::NumberExpr::Literal("30")
+    );
+    assert_eq!(amt1.currency, Some("HOOL"));
     let cost1 = p1.cost_spec.as_ref().expect("cost_spec");
     let cost_amount = cost1.amount.as_ref().expect("cost amount");
-    assert_eq!(cost_amount.per, Some("40"));
+    assert_eq!(
+        cost_amount.per,
+        Some(beancount_parser::ast::NumberExpr::Literal("40"))
+    );
     assert_eq!(cost_amount.total, None);
     assert_eq!(cost_amount.currency, Some("USD"));
     assert!(!cost1.merge);
@@ -58,11 +64,17 @@ fn parses_posting_cost_spec() {
     let p2 = &txn2.postings[0];
     let amt2 = p2.amount.as_ref().expect("amount");
     assert_eq!(amt2.raw, "-20 HOOL");
-    assert_eq!(amt2.number, "-20");
-    assert_eq!(amt2.currency, "HOOL");
+    assert_eq!(
+        amt2.number,
+        beancount_parser::ast::NumberExpr::Literal("-20")
+    );
+    assert_eq!(amt2.currency, Some("HOOL"));
     let cost2 = p2.cost_spec.as_ref().expect("cost_spec");
     let cost_amount = cost2.amount.as_ref().expect("cost amount");
-    assert_eq!(cost_amount.per, Some("40"));
+    assert_eq!(
+        cost_amount.per,
+        Some(beancount_parser::ast::NumberExpr::Literal("40"))
+    );
     assert_eq!(cost_amount.total, None);
     assert_eq!(cost_amount.currency, Some("USD"));
     assert!(!cost2.merge);

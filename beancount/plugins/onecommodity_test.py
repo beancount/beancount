@@ -3,6 +3,8 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
+import pytest
+
 from beancount import loader
 
 

@@ -228,10 +228,10 @@
         "members": [
           {
             "type": "PATTERN",
-            "value": "Assets|Liabilities|Equity|Income|Expenses"
+            "value": "[A-Z][\\p{L}\\p{N}\\u3040-\\u309f\\u30a0-\\u30ff\\u4e00-\\u9fff\\uac00-\\ud7a3]*"
           },
           {
-            "type": "REPEAT1",
+            "type": "REPEAT",
             "content": {
               "type": "SEQ",
               "members": [
@@ -261,6 +261,17 @@
       "content": {
         "type": "PATTERN",
         "value": "\"([^\"]|\\\\\")*\""
+      }
+    },
+    "unquoted_string": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": -1,
+        "content": {
+          "type": "PATTERN",
+          "value": "[^\\r\\n]+"
+        }
       }
     },
     "number": {
@@ -698,8 +709,17 @@
       ]
     },
     "price_annotation": {
-      "type": "SYMBOL",
-      "name": "incomplete_amount"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "incomplete_amount"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "currency"
+        }
+      ]
     },
     "posting": {
       "type": "SEQ",
@@ -835,67 +855,172 @@
         "value": "[a-z][a-zA-Z0-9\\-_]+"
       }
     },
-    "value": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "string"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "account"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "date"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "currency"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "tag"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "bool"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_none"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_number_expr"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "amount"
-        }
-      ]
-    },
-    "key_value": {
+    "currency_key_value": {
       "type": "PREC_LEFT",
       "value": 0,
       "content": {
         "type": "SEQ",
         "members": [
           {
-            "type": "SYMBOL",
-            "name": "key"
+            "type": "ALIAS",
+            "content": {
+              "type": "STRING",
+              "value": "currency"
+            },
+            "named": true,
+            "value": "key"
           },
           {
             "type": "STRING",
             "value": ":"
           },
           {
-            "type": "SYMBOL",
-            "name": "value"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "PATTERN",
+                      "value": " "
+                    }
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "value",
+                    "content": {
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "value_currency"
+                      },
+                      "named": true,
+                      "value": "value"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
           }
         ]
       }
+    },
+    "value": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "string"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "date"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "currency"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "account"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "tag"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "bool"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_none"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_number_expr"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "amount"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "string"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "unquoted_string"
+          }
+        ]
+      }
+    },
+    "value_currency": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "currency"
+        }
+      ]
+    },
+    "key_value": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "currency_key_value"
+        },
+        {
+          "type": "PREC_LEFT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "key"
+              },
+              {
+                "type": "STRING",
+                "value": ":"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "REPEAT",
+                        "content": {
+                          "type": "PATTERN",
+                          "value": " "
+                        }
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     "_key_value_line": {
       "type": "SEQ",
@@ -2417,7 +2542,9 @@
       "name": "_eof"
     }
   ],
-  "inline": [],
+  "inline": [
+    "currency_key_value"
+  ],
   "supertypes": [
     "_entry",
     "_directive"

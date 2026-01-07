@@ -28,8 +28,8 @@ fn parses_transaction_with_inline_link_and_postings() {
 
     assert_eq!(txn.date, "2013-06-22");
     assert_eq!(txn.txn, Some("*"));
-    assert_eq!(txn.payee.as_deref(), Some("La Colombe"));
-    assert_eq!(txn.narration.as_deref(), Some("Buying coffee"));
+    assert_eq!(txn.payee.as_deref(), Some("\"La Colombe\""));
+    assert_eq!(txn.narration.as_deref(), Some("\"Buying coffee\""));
     assert_eq!(txn.tags_links, Some("^ee89ada94a39"));
     assert!(txn.tags.is_empty());
     assert_eq!(txn.links.to_vec(), vec!["ee89ada94a39"]);
@@ -51,8 +51,11 @@ fn parses_transaction_with_inline_link_and_postings() {
     assert_eq!(p1.account, "Expenses:Coffee");
     let p1_amount = p1.amount.as_ref().expect("p1 amount");
     assert_eq!(p1_amount.raw, "5 USD");
-    assert_eq!(p1_amount.number, "5");
-    assert_eq!(p1_amount.currency, "USD");
+    assert_eq!(
+        p1_amount.number,
+        beancount_parser::ast::NumberExpr::Literal("5")
+    );
+    assert_eq!(p1_amount.currency, Some("USD"));
     assert_eq!(p1.cost_spec, None);
     assert_eq!(p1.price_operator, None);
     assert_eq!(p1.price_annotation, None);
@@ -91,8 +94,8 @@ fn parses_and_sorts_tags_and_links() {
         other => panic!("expected transaction, got {other:?}"),
     };
 
-    assert_eq!(txn.payee.as_deref(), Some("Payee"));
-    assert_eq!(txn.narration.as_deref(), Some("Narr"));
+    assert_eq!(txn.payee.as_deref(), Some("\"Payee\""));
+    assert_eq!(txn.narration.as_deref(), Some("\"Narr\""));
     assert_eq!(txn.tags.to_vec(), vec!["a", "b"]);
     assert_eq!(txn.links.to_vec(), vec!["a", "z"]);
     assert_eq!(txn.tags_links_lines.to_vec(), vec!["#b ^z #a ^a #b"]);

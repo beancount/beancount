@@ -773,7 +773,18 @@
   {
     "type": "key_value",
     "named": true,
-    "fields": {},
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "value",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
@@ -1217,6 +1228,10 @@
       "required": true,
       "types": [
         {
+          "type": "currency",
+          "named": true
+        },
+        {
           "type": "incomplete_amount",
           "named": true
         }
@@ -1553,6 +1568,10 @@
         {
           "type": "unary_number_expr",
           "named": true
+        },
+        {
+          "type": "unquoted_string",
+          "named": true
         }
       ]
     }
@@ -1744,6 +1763,10 @@
   {
     "type": "txn",
     "named": false
+  },
+  {
+    "type": "unquoted_string",
+    "named": true
   },
   {
     "type": "{",
