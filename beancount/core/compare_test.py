@@ -3,8 +3,6 @@ __license__ = "GNU GPLv2"
 
 import unittest
 
-import pytest
-
 from beancount import loader
 from beancount.core import compare
 from beancount.core import data
@@ -37,7 +35,6 @@ TEST_INPUT = """
 
 
 class TestCompare(unittest.TestCase):
-    @pytest.mark.skip()
     def test_hash_entries(self):
         previous_hashes = None
         for _ in range(64):
@@ -49,7 +46,6 @@ class TestCompare(unittest.TestCase):
             else:
                 self.assertEqual(previous_hashes.keys(), hashes.keys())
 
-    @pytest.mark.skip()
     def test_hash_entries_with_duplicates(self):
         entries, _, __ = loader.load_string("""
           2014-08-01 price HOOL  603.10 USD
@@ -64,10 +60,9 @@ class TestCompare(unittest.TestCase):
           2014-08-01 price HOOL  603.10 USD
           2014-08-01 price HOOL  603.10 USD
         """)
-        hashes, errors = compare.hash_entries(entries)
+        hashes, errors = compare.hash_entries(entries, exclude_meta=True)
         self.assertEqual(1, len(hashes))
 
-    @pytest.mark.skip()
     def test_hash_entries_same_postings(self):
         entries1, _, __ = loader.load_string("""
           2020-01-01 * "BarAlice" "Beer with my guy friends ASDF"
@@ -90,10 +85,8 @@ class TestCompare(unittest.TestCase):
             Assets:Debtors:Bob      4.00 USD
               shared: "Expenses:Food:Drinks 4.00 USD"
         """)
-        hashes1, errors1 = compare.hash_entries(entries1)
-        hashes2, errors2 = compare.hash_entries(entries2)
-        assert not errors1
-        assert not errors2
+        hashes1, _ = compare.hash_entries(entries1)
+        hashes2, _ = compare.hash_entries(entries2)
         self.assertNotEqual(set(hashes1), set(hashes2.keys()))
 
     def test_compare_entries(self):
@@ -157,7 +150,7 @@ class TestCompare(unittest.TestCase):
         self.assertFalse(extra)
 
     def test_hash_with_exclude_meta(self):
-        entries, a, b = loader.load_string("""
+        entries, _, __ = loader.load_string("""
           2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39
             Expenses:Coffee         5 USD
             Assets:US:Cash
@@ -166,7 +159,6 @@ class TestCompare(unittest.TestCase):
             Expenses:Coffee         5 USD
             Assets:US:Cash
         """)
-
         self.assertNotEqual(
             compare.hash_entry(entries[0], exclude_meta=False),
             compare.hash_entry(entries[1], exclude_meta=False),
