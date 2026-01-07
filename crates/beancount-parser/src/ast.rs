@@ -126,6 +126,14 @@ pub struct Transaction<'a> {
     pub postings: SmallVec<[Posting<'a>; 4]>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PriceOperator {
+    /// `@` price operator (per-unit price).
+    PerUnit,
+    /// `@@` price operator (total price).
+    Total,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyValueValue<'a> {
     String(&'a str),
@@ -197,7 +205,7 @@ pub struct Posting<'a> {
     pub account: &'a str,
     pub amount: Option<Amount<'a>>,
     pub cost_spec: Option<CostSpec<'a>>,
-    pub price_operator: Option<&'a str>,
+    pub price_operator: Option<PriceOperator>,
     pub price_annotation: Option<Amount<'a>>,
     pub comment: Option<&'a str>,
     pub key_values: SmallVec<[KeyValue<'a>; 4]>,

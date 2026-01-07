@@ -108,7 +108,7 @@ pub struct Posting {
     pub account: String,
     pub amount: Option<Amount>,
     pub cost_spec: Option<CostSpec>,
-    pub price_operator: Option<String>,
+    pub price_operator: Option<ast::PriceOperator>,
     pub price_annotation: Option<Amount>,
     pub comment: Option<String>,
     pub key_values: SmallKeyValues,
@@ -796,7 +796,7 @@ impl<'a> TryFrom<ast::Posting<'a>> for Posting {
             account: posting.account.to_string(),
             amount: posting.amount.map(Amount::try_from).transpose()?,
             cost_spec,
-            price_operator: posting.price_operator.map(ToString::to_string),
+            price_operator: posting.price_operator,
             price_annotation: posting.price_annotation.map(Amount::try_from).transpose()?,
             comment: posting.comment.map(ToString::to_string),
             key_values: posting

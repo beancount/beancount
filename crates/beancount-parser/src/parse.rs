@@ -759,8 +759,11 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
     let price_operator = {
         let mut cursor = node.walk();
         node.named_children(&mut cursor)
-            .find(|n| *n == NodeKind::At || *n == NodeKind::Atat)
-            .map(|n| slice(n, source))
+            .find_map(|n| match NodeKind::from(n.kind()) {
+                NodeKind::At => Some(PriceOperator::PerUnit),
+                NodeKind::Atat => Some(PriceOperator::Total),
+                _ => None,
+            })
     };
 
     let price_annotation = node

@@ -1,15 +1,13 @@
 #![allow(dead_code)]
 #![allow(clippy::large_enum_variant)]
-mod core;
 
-use crate::core as bcore;
-
-use bcore::CoreDirective;
-use bcore::normalize_directives;
 use beancount_parser::ParseError;
 use beancount_parser::ast;
+use beancount_parser::core;
 use beancount_parser::parse_amount_tokens;
 use beancount_parser::parse_str;
+use core::CoreDirective;
+use core::normalize_directives;
 use pyo3::IntoPyObject;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -76,8 +74,9 @@ struct OptionDescriptor {
 }
 
 struct DataCache {
-    //
+    // True
     py_true: Py<PyAny>,
+    // False
     py_false: Py<PyAny>,
 
     // copy.deepcopy function.
@@ -277,7 +276,7 @@ fn build_parser_error_from_meta(
 fn apply_options(
     py: Python<'_>,
     options_map: &Bound<'_, PyDict>,
-    options: &[bcore::OptionDirective],
+    options: &[core::OptionDirective],
 ) -> PyResult<Vec<Py<PyAny>>> {
     let cache = cache(py)?;
     let option_descriptors = &cache.option_descriptors;
@@ -399,8 +398,8 @@ fn partition_directives(
 ) -> (
     Vec<String>,
     Vec<CoreDirective>,
-    Vec<bcore::OptionDirective>,
-    Vec<bcore::Plugin>,
+    Vec<core::OptionDirective>,
+    Vec<core::Plugin>,
 ) {
     let mut includes = Vec::new();
     let mut filtered = Vec::new();
@@ -475,7 +474,7 @@ fn make_metadata(
 
 fn meta_extra<'py>(
     py: Python<'py>,
-    key_values: &[bcore::KeyValue],
+    key_values: &[core::KeyValue],
 ) -> PyResult<Option<Bound<'py, PyDict>>> {
     if key_values.is_empty() {
         return Ok(None);
@@ -486,10 +485,10 @@ fn meta_extra<'py>(
         match &item.value {
             None => kv.set_item(item.key.as_str(), py.None())?,
             Some(v) => match v {
-                bcore::KeyValueValue::String(s)
-                | bcore::KeyValueValue::UnquotedString(s)
-                | bcore::KeyValueValue::Raw(s) => kv.set_item(item.key.as_str(), s.as_str())?,
-                bcore::KeyValueValue::Bool(b) => kv.set_item(item.key.as_str(), *b)?,
+                core::KeyValueValue::String(s)
+                | core::KeyValueValue::UnquotedString(s)
+                | core::KeyValueValue::Raw(s) => kv.set_item(item.key.as_str(), s.as_str())?,
+                core::KeyValueValue::Bool(b) => kv.set_item(item.key.as_str(), *b)?,
             },
         }
     }
@@ -497,7 +496,7 @@ fn meta_extra<'py>(
     Ok(Some(kv))
 }
 
-fn convert_open(py: Python<'_>, open: &bcore::Open) -> PyResult<Py<PyAny>> {
+fn convert_open(py: Python<'_>, open: &core::Open) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.open_cls;
     let currencies = PyList::new(py, open.currencies.iter().map(|c| c.as_str()))?;
@@ -510,7 +509,7 @@ fn convert_open(py: Python<'_>, open: &bcore::Open) -> PyResult<Py<PyAny>> {
     cls.call1(py, (meta, date, open.account.as_str(), currencies, booking))
 }
 
-fn convert_close(py: Python<'_>, close: &bcore::Close) -> PyResult<Py<PyAny>> {
+fn convert_close(py: Python<'_>, close: &core::Close) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.close_cls;
     let meta = make_metadata(py, &close.meta, meta_extra(py, &close.key_values)?)?;
@@ -520,7 +519,7 @@ fn convert_close(py: Python<'_>, close: &bcore::Close) -> PyResult<Py<PyAny>> {
 
 fn convert_balance(
     py: Python<'_>,
-    balance: &bcore::Balance,
+    balance: &core::Balance,
     dcontext: &Bound<'_, PyAny>,
 ) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
@@ -537,7 +536,7 @@ fn convert_balance(
     let amount = amount_to_py(py, cache, &balance.amount)?;
     let tolerance = match balance.tolerance.as_deref() {
         Some(raw) => {
-            let expr = bcore::NumberExpr::Literal(raw.to_string());
+            let expr = core::NumberExpr::Literal(raw.to_string());
             py_decimal(py, cache, &expr)?
         }
         None => py.None(),
@@ -555,7 +554,7 @@ fn convert_balance(
     )
 }
 
-fn convert_pad(py: Python<'_>, pad: &bcore::Pad) -> PyResult<Py<PyAny>> {
+fn convert_pad(py: Python<'_>, pad: &core::Pad) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.pad_cls;
     let meta = make_metadata(py, &pad.meta, meta_extra(py, &pad.key_values)?)?;
@@ -568,7 +567,7 @@ fn convert_pad(py: Python<'_>, pad: &bcore::Pad) -> PyResult<Py<PyAny>> {
 
 fn convert_transaction(
     py: Python<'_>,
-    txn: &bcore::Transaction,
+    txn: &core::Transaction,
     dcontext: &Bound<'_, PyAny>,
 ) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
@@ -612,7 +611,7 @@ fn convert_transaction(
 fn cost_spec_to_py(
     py: Python<'_>,
     cache: &DataCache,
-    cost_spec: &bcore::CostSpec,
+    cost_spec: &core::CostSpec,
 ) -> PyResult<Py<PyAny>> {
     let mut number_per: Py<PyAny> = cache.missing.clone_ref(py);
     let mut number_total: Py<PyAny> = py.None();
@@ -668,7 +667,7 @@ fn cost_spec_to_py(
 
 fn convert_posting(
     py: Python<'_>,
-    posting: &bcore::Posting,
+    posting: &core::Posting,
     dcontext: &Bound<'_, PyAny>,
 ) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
@@ -708,21 +707,18 @@ fn convert_posting(
         .transpose()?;
     let cost = cost.unwrap_or_else(|| py.None());
     let price = if let Some(price_ast) = posting.price_annotation.as_ref() {
-        let override_number: Option<String> = if let Some(op) = posting.price_operator.as_deref() {
-            if op == "@@" || op == "atat" {
+        let override_number: Option<String> =
+            if posting.price_operator == Some(ast::PriceOperator::Total) {
                 posting
                     .amount
                     .as_ref()
                     .and_then(|units| per_unit_price_from_total(price_ast, units))
             } else {
                 None
-            }
-        } else {
-            None
-        };
+            };
 
         if let Some(per_unit) = override_number {
-            let expr = bcore::NumberExpr::Literal(per_unit.clone());
+            let expr = core::NumberExpr::Literal(per_unit.clone());
             update_dcontext(py, cache, dcontext, &expr, price_ast.currency.as_deref())?;
             let curr = price_ast
                 .currency
@@ -754,7 +750,7 @@ fn convert_posting(
     )
 }
 
-fn convert_commodity(py: Python<'_>, commodity: &bcore::Commodity) -> PyResult<Py<PyAny>> {
+fn convert_commodity(py: Python<'_>, commodity: &core::Commodity) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.commodity_cls;
     let meta = make_metadata(py, &commodity.meta, meta_extra(py, &commodity.key_values)?)?;
@@ -764,7 +760,7 @@ fn convert_commodity(py: Python<'_>, commodity: &bcore::Commodity) -> PyResult<P
 
 fn convert_price(
     py: Python<'_>,
-    price: &bcore::Price,
+    price: &core::Price,
     dcontext: &Bound<'_, PyAny>,
 ) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
@@ -786,10 +782,10 @@ fn update_dcontext(
     py: Python<'_>,
     cache: &DataCache,
     dcontext: &Bound<'_, PyAny>,
-    number: &bcore::NumberExpr,
+    number: &core::NumberExpr,
     currency: Option<&str>,
 ) -> PyResult<()> {
-    if matches!(number, bcore::NumberExpr::Missing) {
+    if matches!(number, core::NumberExpr::Missing) {
         return Ok(());
     }
 
@@ -800,7 +796,7 @@ fn update_dcontext(
     Ok(())
 }
 
-fn convert_event(py: Python<'_>, event: &bcore::Event) -> PyResult<Py<PyAny>> {
+fn convert_event(py: Python<'_>, event: &core::Event) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.event_cls;
     let meta = make_metadata(py, &event.meta, meta_extra(py, &event.key_values)?)?;
@@ -811,7 +807,7 @@ fn convert_event(py: Python<'_>, event: &bcore::Event) -> PyResult<Py<PyAny>> {
     )
 }
 
-fn convert_query(py: Python<'_>, query: &bcore::Query) -> PyResult<Py<PyAny>> {
+fn convert_query(py: Python<'_>, query: &core::Query) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.query_cls;
     let meta = make_metadata(py, &query.meta, meta_extra(py, &query.key_values)?)?;
@@ -819,7 +815,7 @@ fn convert_query(py: Python<'_>, query: &bcore::Query) -> PyResult<Py<PyAny>> {
     cls.call1(py, (meta, date, query.name.as_str(), query.query.as_str()))
 }
 
-fn convert_note(py: Python<'_>, note: &bcore::Note) -> PyResult<Py<PyAny>> {
+fn convert_note(py: Python<'_>, note: &core::Note) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.note_cls;
     let meta = make_metadata(py, &note.meta, meta_extra(py, &note.key_values)?)?;
@@ -837,7 +833,7 @@ fn convert_note(py: Python<'_>, note: &bcore::Note) -> PyResult<Py<PyAny>> {
     )
 }
 
-fn convert_document(py: Python<'_>, doc: &bcore::Document) -> PyResult<Py<PyAny>> {
+fn convert_document(py: Python<'_>, doc: &core::Document) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.document_cls;
     let meta = make_metadata(py, &doc.meta, meta_extra(py, &doc.key_values)?)?;
@@ -857,7 +853,7 @@ fn convert_document(py: Python<'_>, doc: &bcore::Document) -> PyResult<Py<PyAny>
     )
 }
 
-fn convert_custom(py: Python<'_>, custom: &bcore::Custom) -> PyResult<Py<PyAny>> {
+fn convert_custom(py: Python<'_>, custom: &core::Custom) -> PyResult<Py<PyAny>> {
     let cache = cache(py)?;
     let cls = &cache.custom_cls;
     let meta = make_metadata(py, &custom.meta, meta_extra(py, &custom.key_values)?)?;
@@ -874,7 +870,7 @@ fn convert_custom(py: Python<'_>, custom: &bcore::Custom) -> PyResult<Py<PyAny>>
 fn convert_custom_value(
     py: Python<'_>,
     cache: &DataCache,
-    value: &bcore::CustomValue,
+    value: &core::CustomValue,
 ) -> PyResult<Py<PyAny>> {
     let (py_value, dtype): (Py<PyAny>, Py<PyAny>) = match value.kind {
         ast::CustomValueKind::String => {
@@ -911,9 +907,9 @@ fn convert_custom_value(
             let trimmed = value.raw.trim();
             let expr = if contains_expression_ops(trimmed) {
                 let evaluated = eval_number_expr(trimmed)?;
-                bcore::NumberExpr::Literal(evaluated)
+                core::NumberExpr::Literal(evaluated)
             } else {
-                bcore::NumberExpr::Literal(trimmed.to_string())
+                core::NumberExpr::Literal(trimmed.to_string())
             };
             let decimal = py_decimal(py, cache, &expr)?;
             let dtype = decimal.bind(py).get_type().unbind().into();
@@ -1189,30 +1185,26 @@ fn parse_decimal_literal(raw: &str) -> PyResult<Decimal> {
         .map_err(|err| PyValueError::new_err(format!("invalid number `{}`: {}", raw, err)))
 }
 
-fn number_expr_to_decimal(num: &bcore::NumberExpr) -> PyResult<Decimal> {
+fn number_expr_to_decimal(num: &core::NumberExpr) -> PyResult<Decimal> {
     match num {
-        bcore::NumberExpr::Missing => Err(PyValueError::new_err("missing number expression")),
-        bcore::NumberExpr::Literal(raw) => parse_decimal_literal(raw),
-        bcore::NumberExpr::Binary { left, op, right } => {
+        core::NumberExpr::Missing => Err(PyValueError::new_err("missing number expression")),
+        core::NumberExpr::Literal(raw) => parse_decimal_literal(raw),
+        core::NumberExpr::Binary { left, op, right } => {
             let lhs = number_expr_to_decimal(left)?;
             let rhs = number_expr_to_decimal(right)?;
             let result = match op {
-                bcore::BinaryOp::Add => lhs + rhs,
-                bcore::BinaryOp::Sub => lhs - rhs,
-                bcore::BinaryOp::Mul => lhs * rhs,
-                bcore::BinaryOp::Div => lhs / rhs,
+                core::BinaryOp::Add => lhs + rhs,
+                core::BinaryOp::Sub => lhs - rhs,
+                core::BinaryOp::Mul => lhs * rhs,
+                core::BinaryOp::Div => lhs / rhs,
             };
             Ok(result)
         }
     }
 }
 
-fn py_decimal(
-    py: Python<'_>,
-    cache: &DataCache,
-    number: &bcore::NumberExpr,
-) -> PyResult<Py<PyAny>> {
-    if matches!(number, bcore::NumberExpr::Missing) {
+fn py_decimal(py: Python<'_>, cache: &DataCache, number: &core::NumberExpr) -> PyResult<Py<PyAny>> {
+    if matches!(number, core::NumberExpr::Missing) {
         return Ok(cache.missing.clone_ref(py));
     }
     let parsed = number_expr_to_decimal(number)?;
@@ -1229,8 +1221,8 @@ fn py_amount(
     cache.amount_ctor.call1(py, (number, currency))
 }
 
-fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &bcore::Amount) -> PyResult<Py<PyAny>> {
-    let number = if matches!(amount.number, bcore::NumberExpr::Missing) {
+fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &core::Amount) -> PyResult<Py<PyAny>> {
+    let number = if matches!(amount.number, core::NumberExpr::Missing) {
         cache.missing.clone_ref(py)
     } else {
         py_decimal(py, cache, &amount.number)?
@@ -1251,13 +1243,13 @@ fn amount_from_number_and_currency(
     number: &str,
     currency: &str,
 ) -> PyResult<Py<PyAny>> {
-    let num_expr = bcore::NumberExpr::Literal(number.to_string());
+    let num_expr = core::NumberExpr::Literal(number.to_string());
     let d = py_decimal(py, cache, &num_expr)?;
     let currency_obj: Py<PyAny> = PyString::new(py, currency).unbind().into();
     py_amount(py, cache, d, currency_obj)
 }
 
-fn per_unit_price_from_total(price: &bcore::Amount, units: &bcore::Amount) -> Option<String> {
+fn per_unit_price_from_total(price: &core::Amount, units: &core::Amount) -> Option<String> {
     let total = number_expr_to_decimal(&price.number).ok()?;
     let qty = number_expr_to_decimal(&units.number).ok()?;
     if qty.is_zero() {
