@@ -9,7 +9,7 @@ homepage.workspace = true
 description = "Core beancount formatter logic."
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 beancount-parser = { path = "../beancount-parser/" }
