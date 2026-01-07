@@ -31,7 +31,6 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
         "root/Liabilities/US/Bank/",  # Empty directory.
     ]
 
-    @pytest.mark.skip()
     def test_process_documents(self):
         input_filename = path.join(self.root, "input.beancount")
         with open(input_filename, "w", encoding="utf-8") as f:
@@ -77,7 +76,6 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
         self.assertEqual(0, len(errors))
 
-    @pytest.mark.skip()
     def test_process_documents_trailing_slash(self):
         input_filename = path.join(self.root, "input.beancount")
         with open(input_filename, "w", encoding="utf-8") as f:
