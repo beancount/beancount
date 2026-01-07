@@ -4,8 +4,8 @@
 use beancount_parser::ParseError;
 use beancount_parser::ast;
 use beancount_parser::core;
-use beancount_parser::parse_amount_tokens;
 use beancount_parser::parse_str;
+use chrono::Datelike;
 use core::CoreDirective;
 use core::normalize_directives;
 use pyo3::IntoPyObject;
@@ -15,7 +15,6 @@ use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
-use std::str::FromStr;
 
 #[pymodule]
 fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -119,6 +118,12 @@ struct DataCache {
     value_type_cls: Py<PyAny>,
     // Python bool type object.
     bool_type: Py<PyAny>,
+    // Python str type object.
+    str_type: Py<PyAny>,
+    // datetime.date type.
+    date_type: Py<PyAny>,
+    // decimal.Decimal type.
+    decimal_type: Py<PyAny>,
     // beancount.core.account.TYPE token.
     account_type_token: Py<PyAny>,
     // beancount.parser.options.OPTIONS_DEFAULTS mapping.
@@ -139,6 +144,8 @@ impl DataCache {
     fn init(py: Python<'_>) -> PyResult<Self> {
         let data_mod = py.import("beancount.core.data")?;
         let builtins_mod = py.import("builtins")?;
+        let datetime_mod = py.import("datetime")?;
+        let decimal_mod = py.import("decimal")?;
         let number_mod = py.import("beancount.core.number")?;
         let amount_mod = py.import("beancount.core.amount")?;
         let account_mod = py.import("beancount.core.account")?;
@@ -148,6 +155,9 @@ impl DataCache {
         let copy_mod = py.import("copy")?;
 
         let bool_type: Py<PyAny> = builtins_mod.getattr("bool")?.unbind();
+        let str_type: Py<PyAny> = builtins_mod.getattr("str")?.unbind();
+        let date_type: Py<PyAny> = datetime_mod.getattr("date")?.unbind();
+        let decimal_type: Py<PyAny> = decimal_mod.getattr("Decimal")?.unbind();
 
         let missing = number_mod.getattr("MISSING")?.unbind();
         let zero = number_mod.getattr("ZERO")?.unbind();
@@ -185,6 +195,9 @@ impl DataCache {
             option_descriptors,
             read_only_options: options_mod.getattr("READ_ONLY_OPTIONS")?.unbind(),
             bool_type,
+            str_type,
+            date_type,
+            decimal_type,
             missing,
             zero,
         })
@@ -872,21 +885,21 @@ fn convert_custom_value(
     cache: &DataCache,
     value: &core::CustomValue,
 ) -> PyResult<Py<PyAny>> {
-    let (py_value, dtype): (Py<PyAny>, Py<PyAny>) = match value.kind {
-        ast::CustomValueKind::String => {
-            let raw = value.string.as_deref().unwrap_or(value.raw.as_str());
+    let (py_value, dtype): (Py<PyAny>, Py<PyAny>) = match value {
+        core::CustomValue::String(raw) => {
             let py_value: Py<PyAny> = PyString::new(py, raw).unbind().into();
-            let dtype = py_value.bind(py).get_type().unbind().into();
+            let dtype = cache.str_type.clone_ref(py);
             (py_value, dtype)
         }
-        ast::CustomValueKind::Date => {
-            let py_value = py_date(py, value.raw.as_str())?;
-            let dtype = py_value.bind(py).get_type().unbind().into();
+        core::CustomValue::Date(date) => {
+            let py_value = PyDate::new(py, date.year(), date.month() as u8, date.day() as u8)?
+                .unbind()
+                .into();
+            let dtype = cache.date_type.clone_ref(py);
             (py_value, dtype)
         }
-        ast::CustomValueKind::Bool => {
-            let normalized = value.raw.eq_ignore_ascii_case("TRUE");
-            let py_bool: Py<PyAny> = if normalized {
+        core::CustomValue::Bool(val) => {
+            let py_bool: Py<PyAny> = if *val {
                 cache.py_true.clone_ref(py)
             } else {
                 cache.py_false.clone_ref(py)
@@ -894,29 +907,18 @@ fn convert_custom_value(
             let dtype = cache.bool_type.clone_ref(py);
             (py_bool, dtype)
         }
-        ast::CustomValueKind::Amount => {
-            let raw = value.raw.trim();
-            let (number, currency) = parse_amount_tokens(raw)
-                .ok_or_else(|| PyValueError::new_err(format!("invalid amount `{}`", raw)))?;
-            let amount =
-                amount_from_number_and_currency(py, cache, number.trim(), currency.trim())?;
-            let dtype = amount.bind(py).get_type().unbind().into();
+        core::CustomValue::Amount(amount) => {
+            let amount = amount_to_py(py, cache, amount)?;
+            let dtype = cache.amount_ctor.clone_ref(py);
             (amount, dtype)
         }
-        ast::CustomValueKind::Number => {
-            let trimmed = value.raw.trim();
-            let expr = if contains_expression_ops(trimmed) {
-                let evaluated = eval_number_expr(trimmed)?;
-                core::NumberExpr::Literal(evaluated)
-            } else {
-                core::NumberExpr::Literal(trimmed.to_string())
-            };
-            let decimal = py_decimal(py, cache, &expr)?;
-            let dtype = decimal.bind(py).get_type().unbind().into();
+        core::CustomValue::Number(expr) => {
+            let decimal: Py<PyAny> = py_decimal(py, cache, expr)?;
+            let dtype = cache.decimal_type.clone_ref(py);
             (decimal, dtype)
         }
-        ast::CustomValueKind::Account => {
-            let py_value: Py<PyAny> = PyString::new(py, value.raw.trim()).unbind().into();
+        core::CustomValue::Account(raw) => {
+            let py_value: Py<PyAny> = PyString::new(py, raw.as_str()).unbind().into();
             let dtype = cache.account_type_token.clone_ref(py);
             (py_value, dtype)
         }
@@ -1019,201 +1021,23 @@ fn py_date(py: Python<'_>, date: &str) -> PyResult<Py<PyAny>> {
         .parse::<u8>()
         .map_err(|err| PyValueError::new_err(format!("invalid day `{}`: {}", date, err)))?;
 
-    let pydate: Py<PyAny> = PyDate::new(py, year, month as u8, day as u8)?
+    let pydate: Py<PyAny> = PyDate::new(py, year, month, day)?
         .unbind()
         .into();
     Ok(pydate)
 }
 
-fn apply_op(op: char, lhs: Decimal, rhs: Decimal) -> PyResult<Decimal> {
-    match op {
-        '+' => Ok(lhs + rhs),
-        '-' => Ok(lhs - rhs),
-        '*' => Ok(lhs * rhs),
-        '/' => Ok(lhs / rhs),
-        _ => Err(PyValueError::new_err(format!("invalid operator `{}`", op))),
-    }
-}
-
-fn precedence(op: char) -> i32 {
-    match op {
-        '+' | '-' => 1,
-        '*' | '/' => 2,
-        _ => 0,
-    }
-}
-
-fn parse_number(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> PyResult<Decimal> {
-    let mut buf = String::new();
-    while let Some(&c) = chars.peek() {
-        if c.is_ascii_digit() || c == '.' || c == '_' || c == ',' {
-            buf.push(c);
-            chars.next();
-        } else {
-            break;
-        }
-    }
-
-    if buf.is_empty() {
-        return Err(PyValueError::new_err("expected number"));
-    }
-
-    // Remove thousands separators/spaces to mimic Python D()
-    let cleaned: String = buf.chars().filter(|c| *c != ',' && *c != ' ').collect();
-    Decimal::from_str(&cleaned)
-        .map_err(|err| PyValueError::new_err(format!("invalid number literal `{}`: {err}", buf)))
-}
-
-fn eval_number_expr(expr: &str) -> PyResult<String> {
-    let mut vals: Vec<Decimal> = Vec::new();
-    let mut ops: Vec<char> = Vec::new();
-    let mut chars = expr.chars().peekable();
-    let mut expect_value = true;
-
-    while let Some(&c) = chars.peek() {
-        if c.is_whitespace() {
-            chars.next();
-            continue;
-        }
-
-        if c == '(' {
-            ops.push(c);
-            chars.next();
-            expect_value = true;
-            continue;
-        }
-
-        if c == ')' {
-            chars.next();
-            while let Some(op) = ops.pop() {
-                if op == '(' {
-                    break;
-                }
-                let rhs = vals
-                    .pop()
-                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-                let lhs = vals
-                    .pop()
-                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-                vals.push(apply_op(op, lhs, rhs)?);
-            }
-            expect_value = false;
-            continue;
-        }
-
-        if (c == '+' || c == '-') && expect_value {
-            // unary sign
-            let sign = if c == '-' {
-                -Decimal::ONE
-            } else {
-                Decimal::ONE
-            };
-            chars.next();
-            // allow whitespace after unary sign
-            while let Some(&ws) = chars.peek() {
-                if ws.is_whitespace() {
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
-            let num = parse_number(&mut chars)?;
-            vals.push(sign * num);
-            expect_value = false;
-            continue;
-        }
-
-        if c == '+' || c == '-' || c == '*' || c == '/' {
-            let op = c;
-            chars.next();
-            while let Some(&top) = ops.last() {
-                if top == '(' || precedence(top) < precedence(op) {
-                    break;
-                }
-                let top = ops
-                    .pop()
-                    .ok_or_else(|| PyValueError::new_err("missing operator"))?;
-                let rhs = vals
-                    .pop()
-                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-                let lhs = vals
-                    .pop()
-                    .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-                vals.push(apply_op(top, lhs, rhs)?);
-            }
-            ops.push(op);
-            expect_value = true;
-            continue;
-        }
-
-        // number literal
-        let num = parse_number(&mut chars)?;
-        vals.push(num);
-        expect_value = false;
-    }
-
-    while let Some(op) = ops.pop() {
-        let rhs = vals
-            .pop()
-            .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-        let lhs = vals
-            .pop()
-            .ok_or_else(|| PyValueError::new_err("missing operand"))?;
-        vals.push(apply_op(op, lhs, rhs)?);
-    }
-
-    let result = vals
-        .pop()
-        .ok_or_else(|| PyValueError::new_err("empty expression"))?;
-    Ok(result.normalize().to_string())
-}
-
-fn contains_expression_ops(num: &str) -> bool {
-    let trimmed = num.trim();
-    let mut chars = trimmed.chars();
-    let _ = chars.next(); // skip potential leading sign/digit
-    trimmed.contains('*')
-        || trimmed.contains('/')
-        || trimmed.contains('(')
-        || trimmed.contains(')')
-        || chars.any(|c| matches!(c, '+' | '-'))
-}
-
-fn parse_decimal_literal(raw: &str) -> PyResult<Decimal> {
-    let cleaned: String = raw.chars().filter(|c| *c != ',' && *c != ' ').collect();
-    if cleaned.trim().is_empty() {
-        return Ok(Decimal::ZERO);
-    }
-
-    Decimal::from_str(cleaned.trim())
-        .map_err(|err| PyValueError::new_err(format!("invalid number `{}`: {}", raw, err)))
-}
-
-fn number_expr_to_decimal(num: &core::NumberExpr) -> PyResult<Decimal> {
-    match num {
-        core::NumberExpr::Missing => Err(PyValueError::new_err("missing number expression")),
-        core::NumberExpr::Literal(raw) => parse_decimal_literal(raw),
-        core::NumberExpr::Binary { left, op, right } => {
-            let lhs = number_expr_to_decimal(left)?;
-            let rhs = number_expr_to_decimal(right)?;
-            let result = match op {
-                core::BinaryOp::Add => lhs + rhs,
-                core::BinaryOp::Sub => lhs - rhs,
-                core::BinaryOp::Mul => lhs * rhs,
-                core::BinaryOp::Div => lhs / rhs,
-            };
-            Ok(result)
-        }
-    }
+fn decimal_from_number_expr(num: &core::NumberExpr) -> PyResult<Decimal> {
+    core::number_expr_to_decimal(num).map_err(|err| PyValueError::new_err(err.message))
 }
 
 fn py_decimal(py: Python<'_>, cache: &DataCache, number: &core::NumberExpr) -> PyResult<Py<PyAny>> {
     if matches!(number, core::NumberExpr::Missing) {
         return Ok(cache.missing.clone_ref(py));
     }
-    let parsed = number_expr_to_decimal(number)?;
+    let parsed = decimal_from_number_expr(number)?;
     let py_decimal = parsed.into_pyobject(py)?;
-    Ok(py_decimal.unbind().into())
+    Ok(py_decimal.unbind())
 }
 
 fn py_amount(
@@ -1254,8 +1078,8 @@ fn amount_from_number_and_currency(
 }
 
 fn per_unit_price_from_total(price: &core::Amount, units: &core::Amount) -> Option<String> {
-    let total = number_expr_to_decimal(&price.number).ok()?;
-    let qty = number_expr_to_decimal(&units.number).ok()?;
+    let total = decimal_from_number_expr(&price.number).ok()?;
+    let qty = decimal_from_number_expr(&units.number).ok()?;
     if qty.is_zero() {
         return None;
     }

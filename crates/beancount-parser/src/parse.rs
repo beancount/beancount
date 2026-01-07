@@ -471,25 +471,8 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     let values = node
         .named_children(&mut cursor)
         .filter(|n| *n == NodeKind::CustomValue)
-        .map(|n| {
-            let kind = match n.child(0).map(|c| NodeKind::from(c.kind())) {
-                Some(NodeKind::String) => CustomValueKind::String,
-                Some(NodeKind::Date) => CustomValueKind::Date,
-                Some(NodeKind::Bool) => CustomValueKind::Bool,
-                Some(NodeKind::Amount) => CustomValueKind::Amount,
-                Some(NodeKind::Account) => CustomValueKind::Account,
-                Some(NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number) => {
-                    CustomValueKind::Number
-                }
-                _ => CustomValueKind::String,
-            };
-
-            CustomValue {
-                raw: slice(n, source),
-                kind,
-            }
-        })
-        .collect::<SmallVec<[CustomValue<'a>; 2]>>();
+        .map(|n| parse_custom_value(n, source, filename))
+        .collect::<Result<SmallVec<[CustomValue<'a>; 2]>>>()?;
 
     Ok(Directive::Custom(Custom {
         meta: meta(node, filename),
@@ -500,6 +483,41 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
         comment: field_text(node, "comment", source),
         key_values: collect_key_values(node, source, filename)?,
     }))
+}
+
+fn parse_custom_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<CustomValue<'a>> {
+    let Some(first_child) = node.child(0) else {
+        return Err(parse_error(node, filename, "missing custom value"));
+    };
+
+    let kind = match NodeKind::from(first_child.kind()) {
+        NodeKind::String => CustomValueKind::String,
+        NodeKind::Date => CustomValueKind::Date,
+        NodeKind::Bool => CustomValueKind::Bool,
+        NodeKind::Amount => CustomValueKind::Amount,
+        NodeKind::Account => CustomValueKind::Account,
+        NodeKind::UnaryNumberExpr | NodeKind::BinaryNumberExpr | NodeKind::Number => {
+            CustomValueKind::Number
+        }
+        _ => CustomValueKind::String,
+    };
+
+    let number = match kind {
+        CustomValueKind::Number => Some(parse_number_expr(first_child, source, filename)?),
+        _ => None,
+    };
+
+    let amount = match kind {
+        CustomValueKind::Amount => Some(parse_amount_node(first_child, source, filename)?),
+        _ => None,
+    };
+
+    Ok(CustomValue {
+        raw: slice(node, source),
+        kind,
+        number,
+        amount,
+    })
 }
 
 fn parse_option<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {

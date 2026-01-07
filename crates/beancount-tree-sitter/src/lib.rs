@@ -36,7 +36,7 @@ pub fn language() -> Language {
 /// The content of the [`node-types.json`][] file for this grammar.
 ///
 /// [`node-types.json`]: https://tree-sitter.github.io/tree-sitter/using-parsers#static-node-types
-pub const NODE_TYPES: &'static str = include_str!("./node-types.json");
+pub const NODE_TYPES: &str = include_str!("./node-types.json");
 
 mod node_kind;
 pub use node_kind::LeafNodeKind;

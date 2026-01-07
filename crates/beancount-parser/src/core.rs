@@ -1,8 +1,11 @@
 use crate::{ParseError, ast};
+use chrono::NaiveDate;
+use rust_decimal::Decimal;
 use serde_json::from_str as parse_json;
 use smallvec::SmallVec;
 use std::convert::TryFrom;
 use std::path::Path;
+use std::str::FromStr;
 
 pub type SmallStrVec = SmallVec<[String; 4]>;
 pub type SmallKeyValues = SmallVec<[KeyValue; 4]>;
@@ -194,10 +197,40 @@ pub struct Custom {
 }
 
 #[derive(Debug, Clone)]
-pub struct CustomValue {
-    pub raw: String,
-    pub kind: ast::CustomValueKind,
-    pub string: Option<String>,
+pub enum CustomValue {
+    String(String),
+    Date(NaiveDate),
+    Bool(bool),
+    Amount(Amount),
+    Number(NumberExpr),
+    Account(String),
+}
+
+fn value_error(meta: &ast::Meta, message: impl Into<String>) -> ParseError {
+    ParseError {
+        filename: meta.filename.clone(),
+        line: meta.line,
+        column: meta.column,
+        message: message.into(),
+    }
+}
+
+fn parse_date_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<NaiveDate, ParseError> {
+    let trimmed = raw.trim();
+    NaiveDate::parse_from_str(trimmed, "%Y-%m-%d")
+        .map_err(|err| value_error(meta, format!("invalid {} `{}`: {}", ctx, raw, err)))
+}
+
+fn parse_bool_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<bool, ParseError> {
+    let trimmed = raw.trim();
+    match trimmed.eq_ignore_ascii_case("true") {
+        true => Ok(true),
+        false if trimmed.eq_ignore_ascii_case("false") => Ok(false),
+        _ => Err(value_error(
+            meta,
+            format!("invalid {} `{}`: expected TRUE or FALSE", ctx, raw),
+        )),
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -300,6 +333,54 @@ impl From<ast::NumberExpr<'_>> for NumberExpr {
                 op: BinaryOp::from(op),
                 right: Box::new(NumberExpr::from(*right)),
             },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NumberEvalError {
+    pub message: String,
+}
+
+impl std::fmt::Display for NumberEvalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::error::Error for NumberEvalError {}
+
+fn clean_decimal_literal(raw: &str) -> String {
+    raw.chars().filter(|c| *c != ',' && *c != ' ').collect()
+}
+
+pub fn parse_decimal_literal(raw: &str) -> Result<Decimal, NumberEvalError> {
+    let cleaned = clean_decimal_literal(raw);
+    if cleaned.trim().is_empty() {
+        return Ok(Decimal::ZERO);
+    }
+
+    Decimal::from_str(cleaned.trim()).map_err(|err| NumberEvalError {
+        message: format!("invalid number `{}`: {}", raw, err),
+    })
+}
+
+pub fn number_expr_to_decimal(num: &NumberExpr) -> Result<Decimal, NumberEvalError> {
+    match num {
+        NumberExpr::Missing => Err(NumberEvalError {
+            message: "missing number expression".to_string(),
+        }),
+        NumberExpr::Literal(raw) => parse_decimal_literal(raw),
+        NumberExpr::Binary { left, op, right } => {
+            let lhs = number_expr_to_decimal(left)?;
+            let rhs = number_expr_to_decimal(right)?;
+            let result = match op {
+                BinaryOp::Add => lhs + rhs,
+                BinaryOp::Sub => lhs - rhs,
+                BinaryOp::Mul => lhs * rhs,
+                BinaryOp::Div => lhs / rhs,
+            };
+            Ok(result)
         }
     }
 }
@@ -849,16 +930,35 @@ impl<'a> TryFrom<(ast::CustomValue<'a>, &ast::Meta)> for CustomValue {
 
     fn try_from(val_meta: (ast::CustomValue<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
         let (value, meta) = val_meta;
-        let string = match value.kind {
-            ast::CustomValueKind::String => Some(unquote_json(value.raw, meta, "custom value")?),
-            _ => None,
+        let content = match value.kind {
+            ast::CustomValueKind::String => {
+                let parsed = unquote_json(value.raw, meta, "custom value")?;
+                CustomValue::String(parsed)
+            }
+            ast::CustomValueKind::Date => {
+                let parsed = parse_date_value(value.raw, meta, "custom value date")?;
+                CustomValue::Date(parsed)
+            }
+            ast::CustomValueKind::Bool => {
+                let parsed = parse_bool_value(value.raw, meta, "custom value bool")?;
+                CustomValue::Bool(parsed)
+            }
+            ast::CustomValueKind::Amount => {
+                let amount = value
+                    .amount
+                    .ok_or_else(|| value_error(meta, "invalid amount"))?;
+                CustomValue::Amount(Amount::try_from(amount)?)
+            }
+            ast::CustomValueKind::Number => {
+                let number = value
+                    .number
+                    .ok_or_else(|| value_error(meta, "missing number expression"))?;
+                CustomValue::Number(NumberExpr::from(number))
+            }
+            ast::CustomValueKind::Account => CustomValue::Account(value.raw.trim().to_string()),
         };
 
-        Ok(Self {
-            raw: value.raw.to_string(),
-            kind: value.kind,
-            string,
-        })
+        Ok(content)
     }
 }
 

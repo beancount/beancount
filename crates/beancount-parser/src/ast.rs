@@ -304,6 +304,8 @@ pub enum CustomValueKind {
 pub struct CustomValue<'a> {
     pub raw: &'a str,
     pub kind: CustomValueKind,
+    pub number: Option<NumberExpr<'a>>,
+    pub amount: Option<Amount<'a>>,
 }
 
 /// Parsed amount token with number and currency captured separately.

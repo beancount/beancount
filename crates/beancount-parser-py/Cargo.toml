@@ -16,11 +16,8 @@ beancount-parser = { path = "../beancount-parser/" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { workspace = true }
 chrono = "0.4.38"
-pyo3 = { version = "0.27.2", features = [
-  'extension-module',
-  'rust_decimal',
-  'chrono'
-] }
+pyo3.version = "0.27.2"
+pyo3.features = ["abi3-py39", 'extension-module', 'rust_decimal', 'chrono']
 rust_decimal = "1.36.0"
 rust_decimal_macros = "1.36.0"
 pest_derive = "2.7.14"

@@ -46,25 +46,25 @@ def is_terminal(node: Dict[str, Any]) -> bool:
 impl = """
 impl<'a> PartialEq<NodeKind> for &tree_sitter::Node<'a> {
     fn eq(&self, other: &NodeKind) -> bool {
-        return &NodeKind::from(self.kind()) == other;
+        &NodeKind::from(self.kind()) == other
     }
 }
 
 impl<'a> PartialEq<LeafNodeKind> for &tree_sitter::Node<'a> {
     fn eq(&self, other: &LeafNodeKind) -> bool {
-        return &LeafNodeKind::from(self.kind()) == other;
+        &LeafNodeKind::from(self.kind()) == other
     }
 }
 
 impl<'a> PartialEq<NonTerminalNodeKind> for &tree_sitter::Node<'a> {
     fn eq(&self, other: &NonTerminalNodeKind) -> bool {
-        return &NonTerminalNodeKind::from(self.kind()) == other;
+        &NonTerminalNodeKind::from(self.kind()) == other
     }
 }
 
 impl<'a> PartialEq<NodeKind> for tree_sitter::Node<'a> {
     fn eq(&self, other: &NodeKind) -> bool {
-        return &NodeKind::from(self.kind()) == other;
+        &NodeKind::from(self.kind()) == other
     }
 }
 """
