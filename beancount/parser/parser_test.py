@@ -182,6 +182,9 @@ class TestTestUtils(unittest.TestCase):
 
 
 @unittest.skipUnless(hasattr(sys, "getrefcount"), "requires sys.getrefcount()")
+@unittest.skipIf(
+    sys.version_info >= (3, 14), "sys.getrefcount() semantics changed in Python 3.14+"
+)
 class TestReferenceCounting(unittest.TestCase):
     def test_parser_lex(self):
         # Do not use a string to avoid issues due to string interning.
