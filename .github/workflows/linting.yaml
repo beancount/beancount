@@ -43,5 +43,5 @@ jobs:
         with:
           activate-environment: true
 
-      - run: uv sync --dev --extra types
+      - run: uv sync --dev
       - run: mypy .
