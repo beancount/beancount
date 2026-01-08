@@ -5,13 +5,21 @@ on:
   - workflow_dispatch
 
 jobs:
+
   rust-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # cargo test has horrible output
+      - name: Install cargo-nexte st
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+
       - name: Cargo test
-        run: cargo test
+        run: cargo nextest run
 
   test:
     runs-on: ${{ matrix.os }}-latest
