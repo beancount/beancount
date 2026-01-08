@@ -11,8 +11,6 @@ import textwrap
 import unittest
 from os import path
 
-import pytest
-
 from beancount import loader
 from beancount.core import data
 from beancount.ops import documents

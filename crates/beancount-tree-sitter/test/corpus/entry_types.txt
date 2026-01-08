@@ -386,4 +386,3 @@ entry custom
             (custom_value (number))
     )
 )
-

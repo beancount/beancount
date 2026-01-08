@@ -1021,9 +1021,7 @@ fn py_date(py: Python<'_>, date: &str) -> PyResult<Py<PyAny>> {
         .parse::<u8>()
         .map_err(|err| PyValueError::new_err(format!("invalid day `{}`: {}", date, err)))?;
 
-    let pydate: Py<PyAny> = PyDate::new(py, year, month, day)?
-        .unbind()
-        .into();
+    let pydate: Py<PyAny> = PyDate::new(py, year, month, day)?.unbind().into();
     Ok(pydate)
 }
 

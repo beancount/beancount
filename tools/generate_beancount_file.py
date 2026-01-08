@@ -53,8 +53,8 @@ def parse_size(value: str) -> int:
 def header_lines(commodity: str) -> List[str]:
     return [
         "; Auto-generated for parser benchmarks",
-        f"option \"title\" \"Benchmark Book {commodity}\"",
-        f"option \"operating_currency\" \"{commodity}\"",
+        f'option "title" "Benchmark Book {commodity}"',
+        f'option "operating_currency" "{commodity}"',
         f"commodity {commodity}",
         f"2000-01-01 open Assets:Bank:Checking {commodity}",
         f"2000-01-01 open Assets:Cash:Wallet {commodity}",
@@ -80,14 +80,14 @@ def format_transaction(
 
     if idx % 5 == 0:
         lines = [
-            f"{date.isoformat()} * \"{payee}\" \"{narration}\"",
+            f'{date.isoformat()} * "{payee}" "{narration}"',
             f"  Assets:Bank:Checking  {amount:.2f} {commodity}",
             f"  Income:Salary        -{amount:.2f} {commodity}",
         ]
     else:
         expense = categories[idx % len(categories)]
         lines = [
-            f"{date.isoformat()} * \"{payee}\" \"{narration}\"",
+            f'{date.isoformat()} * "{payee}" "{narration}"',
             f"  Assets:Bank:Checking  -{amount:.2f} {commodity}",
             f"  Expenses:{expense:<12} {amount:.2f} {commodity}",
         ]
@@ -127,12 +127,18 @@ def write_until_size(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate a Beancount file of a target size.")
+    parser = argparse.ArgumentParser(
+        description="Generate a Beancount file of a target size."
+    )
     parser.add_argument("size", type=parse_size, help="target size (e.g. 10m, 512k, 1g)")
     parser.add_argument("output", help="path to write the file")
     parser.add_argument("--commodity", default="USD", help="commodity symbol to use")
-    parser.add_argument("--start-date", default="2010-01-01", help="starting transaction date (YYYY-MM-DD)")
-    parser.add_argument("--seed", type=int, default=1, help="random seed for reproducibility")
+    parser.add_argument(
+        "--start-date", default="2010-01-01", help="starting transaction date (YYYY-MM-DD)"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=1, help="random seed for reproducibility"
+    )
 
     args = parser.parse_args()
 

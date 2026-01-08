@@ -126,9 +126,9 @@ class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", s
         Returns:
           A new instance of Amount, with the negative number of units.
         """
-        assert isinstance(self.number, Decimal), (
-            "Amount's number is not a Decimal instance: {}".format(self.number)
-        )
+        assert isinstance(
+            self.number, Decimal
+        ), "Amount's number is not a Decimal instance: {}".format(self.number)
         return Amount(-self.number, self.currency)
 
     @staticmethod
@@ -177,9 +177,9 @@ def mul(amount: Amount, number: Decimal) -> Amount:
     Returns:
       An Amount, with the same currency, but with 'number' times the units.
     """
-    assert isinstance(amount.number, Decimal), (
-        "Amount's number is not a Decimal instance: {}".format(amount.number)
-    )
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
     assert isinstance(number, Decimal), "Number is not a Decimal instance: {}".format(
         number
     )
@@ -195,9 +195,9 @@ def div(amount: Amount, number: Decimal) -> Amount:
     Returns:
       An Amount, with the same currency, but with amount units divided by 'number'.
     """
-    assert isinstance(amount.number, Decimal), (
-        "Amount's number is not a Decimal instance: {}".format(amount.number)
-    )
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
     assert isinstance(number, Decimal), "Number is not a Decimal instance: {}".format(
         number
     )
@@ -214,12 +214,12 @@ def add(amount1: Amount, amount2: Amount) -> Amount:
       An instance of Amount, with the sum of the two amount's numbers, in the same
       currency.
     """
-    assert isinstance(amount1.number, Decimal), (
-        "Amount1's number is not a Decimal instance: {}".format(amount1.number)
-    )
-    assert isinstance(amount2.number, Decimal), (
-        "Amount2's number is not a Decimal instance: {}".format(amount2.number)
-    )
+    assert isinstance(
+        amount1.number, Decimal
+    ), "Amount1's number is not a Decimal instance: {}".format(amount1.number)
+    assert isinstance(
+        amount2.number, Decimal
+    ), "Amount2's number is not a Decimal instance: {}".format(amount2.number)
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(amount1, amount2)
@@ -237,12 +237,12 @@ def sub(amount1: Amount, amount2: Amount) -> Amount:
       An instance of Amount, with the difference between the two amount's
       numbers, in the same currency.
     """
-    assert isinstance(amount1.number, Decimal), (
-        "Amount1's number is not a Decimal instance: {}".format(amount1.number)
-    )
-    assert isinstance(amount2.number, Decimal), (
-        "Amount2's number is not a Decimal instance: {}".format(amount2.number)
-    )
+    assert isinstance(
+        amount1.number, Decimal
+    ), "Amount1's number is not a Decimal instance: {}".format(amount1.number)
+    assert isinstance(
+        amount2.number, Decimal
+    ), "Amount2's number is not a Decimal instance: {}".format(amount2.number)
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(amount1, amount2)
@@ -258,9 +258,9 @@ def abs(amount: Amount) -> Amount:
     Returns:
       An instance of Amount.
     """
-    assert isinstance(amount.number, Decimal), (
-        "Amount's number is not a Decimal instance: {}".format(amount.number)
-    )
+    assert isinstance(
+        amount.number, Decimal
+    ), "Amount's number is not a Decimal instance: {}".format(amount.number)
     return amount if amount.number >= ZERO else Amount(-amount.number, amount.currency)
 
 

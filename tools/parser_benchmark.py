@@ -17,16 +17,18 @@ import statistics
 import sys
 import time
 from pathlib import Path
-from typing import Callable, Iterable, NamedTuple
+from typing import Callable
+from typing import Iterable
+from typing import NamedTuple
 
+from beancount import loader
 from beancount.core import data
 from beancount.ops import validation
+from beancount.parser import _rust
 from beancount.parser import booking
 from beancount.parser import grammar
 from beancount.parser import options
 from beancount.parser import parser as rust_parser
-from beancount.parser import _rust
-from beancount import loader
 
 LoadTriplet = tuple[data.Directives, list[data.BeancountError], loader.OptionsMap]
 ParseFileFn = Callable[[str, str | None], LoadTriplet]
@@ -154,18 +156,33 @@ def _parse_recursive(
         if is_file:
             filename = os.path.normpath(source)
             if filename in filenames_seen:
-                parse_errors.append(loader.LoadError(data.new_metadata("<load>", 0), f'Duplicate filename parsed: "{filename}"'))
+                parse_errors.append(
+                    loader.LoadError(
+                        data.new_metadata("<load>", 0),
+                        f'Duplicate filename parsed: "{filename}"',
+                    )
+                )
                 continue
             if not os.path.exists(filename):
-                parse_errors.append(loader.LoadError(data.new_metadata("<load>", 0), f'File "{filename}" does not exist'))
+                parse_errors.append(
+                    loader.LoadError(
+                        data.new_metadata("<load>", 0), f'File "{filename}" does not exist'
+                    )
+                )
                 continue
             filenames_seen.add(filename)
-            src_entries, src_errors, src_options_map = backend.parse_file(filename, encoding=encoding)
+            src_entries, src_errors, src_options_map = backend.parse_file(
+                filename, encoding=encoding
+            )
             cwd = os.path.dirname(filename)
         else:
             if encoding:
-                source = source.encode("ascii", "replace") if isinstance(source, str) else source
-            src_entries, src_errors, src_options_map = backend.parse_string(source, source_filename)
+                source = (
+                    source.encode("ascii", "replace") if isinstance(source, str) else source
+                )
+            src_entries, src_errors, src_options_map = backend.parse_string(
+                source, source_filename
+            )
 
         entries.extend(src_entries)
         parse_errors.extend(src_errors)
@@ -220,27 +237,37 @@ def load_with_backend(
     book_start = time.perf_counter()
     entries, balance_errors = booking.book(entries, options_map)
     parse_errors.extend(balance_errors)
-    entries, errors = loader.run_transformations(entries, parse_errors, options_map, log_timings=None)
+    entries, errors = loader.run_transformations(
+        entries, parse_errors, options_map, log_timings=None
+    )
     book_elapsed = time.perf_counter() - book_start
 
     validation_start = time.perf_counter()
-    valid_errors = validation.validate(entries, options_map, log_timings=None, extra_validations=extra_validations)
+    valid_errors = validation.validate(
+        entries, options_map, log_timings=None, extra_validations=extra_validations
+    )
     errors.extend(valid_errors)
     validation_elapsed = time.perf_counter() - validation_start
 
     options_map["input_hash"] = loader.compute_input_hash(options_map["include"])
 
-    return errors, Timings(parse=parse_elapsed, booking=book_elapsed, validation=validation_elapsed)
+    return errors, Timings(
+        parse=parse_elapsed, booking=book_elapsed, validation=validation_elapsed
+    )
 
 
-def run_backend(backend: Backend, ledger: str, iterations: int, warmup: int) -> BackendResult:
+def run_backend(
+    backend: Backend, ledger: str, iterations: int, warmup: int
+) -> BackendResult:
     runs: list[RunResult] = []
 
     for _ in range(warmup):
         load_with_backend(backend, ledger, extra_validations=None, encoding=None)
 
     for _ in range(iterations):
-        errors, timing = load_with_backend(backend, ledger, extra_validations=None, encoding=None)
+        errors, timing = load_with_backend(
+            backend, ledger, extra_validations=None, encoding=None
+        )
         runs.append(RunResult(timings=timing, errors=errors))
 
     return BackendResult(backend=backend.name, runs=runs)
@@ -276,7 +303,9 @@ def render_backend_result(result: BackendResult) -> str:
 
     error_count = sum(len(run.errors) for run in result.runs)
     if error_count:
-        lines.append(f"  errors: {error_count} (first run shows {len(result.runs[0].errors)})")
+        lines.append(
+            f"  errors: {error_count} (first run shows {len(result.runs[0].errors)})"
+        )
     else:
         lines.append("  errors: 0")
 
@@ -323,7 +352,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Ledger file not found: {ledger_path}", file=sys.stderr)
         return 1
 
-    results = [run_backend(backend, str(ledger_path), args.iterations, args.warmup) for backend in available]
+    results = [
+        run_backend(backend, str(ledger_path), args.iterations, args.warmup)
+        for backend in available
+    ]
 
     for result in results:
         print(render_backend_result(result))

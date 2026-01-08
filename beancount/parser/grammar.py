@@ -568,9 +568,9 @@ class Builder(lexer.LexBuilder):
                     )
 
             else:
-                assert isinstance(comp, str), (
-                    "Currency component is not string: '{}'".format(comp)
-                )
+                assert isinstance(
+                    comp, str
+                ), "Currency component is not string: '{}'".format(comp)
                 if label is None:
                     label = comp
                 else:
