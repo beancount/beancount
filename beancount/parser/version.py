@@ -6,6 +6,8 @@ __license__ = "GNU GPLv2"
 import datetime
 import re
 
+import beancount
+
 
 def compute_version_string(version, changeset, timestamp):
     """Compute a version string from the changeset and timestamp baked in the parser.
@@ -38,4 +40,4 @@ def compute_version_string(version, changeset, timestamp):
     return version
 
 
-VERSION = "dev"
+VERSION = beancount.__version__

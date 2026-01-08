@@ -5,7 +5,7 @@ This code is used by the full booking algorithm.
 __copyright__ = "Copyright (C) 2015-2017, 2019-2022, 2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from decimal import Decimal  # noqa: TC003
+from decimal import Decimal
 from typing import NamedTuple
 
 from beancount.core import convert
@@ -17,7 +17,7 @@ from beancount.core.data import Booking
 from beancount.core.data import Directive
 from beancount.core.data import Meta
 from beancount.core.number import ZERO
-from beancount.core.position import Cost  # noqa: TC001
+from beancount.core.position import Cost
 
 
 class AmbiguousMatchError(NamedTuple):
