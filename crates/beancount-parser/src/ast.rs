@@ -138,6 +138,7 @@ pub enum PriceOperator {
 pub enum KeyValueValue<'a> {
     String(&'a str),
     UnquotedString(&'a str),
+    Date(&'a str),
     Bool(bool),
     Raw(&'a str),
 }
@@ -148,6 +149,7 @@ impl<'a> KeyValueValue<'a> {
             KeyValueValue::String(s) | KeyValueValue::UnquotedString(s) | KeyValueValue::Raw(s) => {
                 std::borrow::Cow::Borrowed(*s)
             }
+            KeyValueValue::Date(s) => std::borrow::Cow::Borrowed(*s),
             KeyValueValue::Bool(val) => std::borrow::Cow::Owned(val.to_string()),
         }
     }

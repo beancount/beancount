@@ -1,3 +1,5 @@
+# we have a wrapper there in-case we need to wrap a rust function with some python code
+
 from . import _parser_rust
 
 build_options_map = _parser_rust.build_options_map

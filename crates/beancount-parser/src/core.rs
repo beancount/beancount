@@ -289,6 +289,7 @@ pub struct KeyValue {
 pub enum KeyValueValue {
     String(String),
     UnquotedString(String),
+    Date(String),
     Bool(bool),
     Raw(String),
 }
@@ -628,7 +629,7 @@ impl<'a> TryFrom<ast::Query<'a>> for Query {
             meta: query.meta.clone(),
             span: query.span,
             date: query.date.to_string(),
-            name: query.name.to_string(),
+            name: unquote_json(query.name, &query.meta, "query name")?,
             query: unquote_json(query.query, &query.meta, "query")?,
             comment: query.comment.map(ToString::to_string),
             key_values: query
@@ -692,7 +693,7 @@ impl<'a> TryFrom<ast::Custom<'a>> for Custom {
             meta: custom.meta.clone(),
             span: custom.span,
             date: custom.date.to_string(),
-            name: custom.name.to_string(),
+            name: unquote_json(custom.name, &custom.meta, "custom name")?,
             values: custom
                 .values
                 .into_iter()
@@ -816,6 +817,7 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
                 ast::KeyValueValue::UnquotedString(raw) => {
                     Ok(KeyValueValue::UnquotedString(raw.to_string()))
                 }
+                ast::KeyValueValue::Date(raw) => Ok(KeyValueValue::Date(raw.to_string())),
                 ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
                 ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
             })

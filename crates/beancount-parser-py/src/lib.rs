@@ -501,6 +501,7 @@ fn meta_extra<'py>(
                 core::KeyValueValue::String(s)
                 | core::KeyValueValue::UnquotedString(s)
                 | core::KeyValueValue::Raw(s) => kv.set_item(item.key.as_str(), s.as_str())?,
+                core::KeyValueValue::Date(s) => kv.set_item(item.key.as_str(), py_date(py, s)?)?,
                 core::KeyValueValue::Bool(b) => kv.set_item(item.key.as_str(), *b)?,
             },
         }

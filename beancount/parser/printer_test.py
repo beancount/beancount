@@ -55,7 +55,6 @@ class TestPrinter(unittest.TestCase):
 
 
 class TestEntryPrinter(cmptest.TestCase):
-    @unittest.skip("there are some old Round-trip need diccussion")
     def assertRoundTrip(self, entries1, errors1):
         self.assertFalse(errors1)
 
@@ -80,7 +79,6 @@ class TestEntryPrinter(cmptest.TestCase):
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
 
-    @unittest.skip("there are some old Round-trip need diccussion")
     def assertRoundTripViaRealFile(self, entries1, errors1, test_write_source=True):
         """
         The same as assertRoundTrip, but the 1st time saves ledger in string
@@ -200,7 +198,6 @@ class TestEntryPrinter(cmptest.TestCase):
 
         self.assertEqual(expected_output_ledger, printed)
 
-    @unittest.skip("Transaction round-trip disabled pending parser fixes")
     @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
         """
@@ -304,7 +301,6 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
-    @unittest.skip("there are some old Round-trip need diccussion")
     def test_Document(self):
         # The beancount parser processes escaped characters in all strings,
         # including the file path in the ``document`` directive.  Windows uses
@@ -670,7 +666,6 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
 
-    @unittest.skip("order not preserved")
     def test_metadata(self):
         input_string = textwrap.dedent("""
 
@@ -751,7 +746,6 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entry(txn, file=oss)
 
-    @unittest.skip("TODO: rust parser does not support posting with metadata")
     def test_render_meta_with_None(self):
         # Issue 378. TODO: re-enable once posting key/value metadata is supported by the rust parser.
         input_string = textwrap.dedent("""
