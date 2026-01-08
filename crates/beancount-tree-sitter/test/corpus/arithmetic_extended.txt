@@ -12,59 +12,56 @@ arithmetic complex precedence
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (plus)
-                        (binary_number_expr (number) (asterisk) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr (number) (plus) (number))
-                        (asterisk)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr (number) (slash) (number))
-                        (plus)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (slash)
-                        (binary_number_expr (number) (plus) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number)))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (plus)
+            (number))
+          (asterisk)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (slash)
+            (number))
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (slash)
+          (binary_number_expr
+            (number)
+            (plus)
+            (number)))
+        (currency)))
+    (posting
+      (account))))
 
 ========================
 arithmetic nested parens
@@ -78,45 +75,43 @@ arithmetic nested parens
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr
-                            (binary_number_expr (number) (plus) (number))
-                            (asterisk)
-                            (binary_number_expr (number) (minus) (number))
-                        )
-                        (slash)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (plus)
-                        (binary_number_expr
-                            (number)
-                            (asterisk)
-                            (binary_number_expr (number) (plus) (number))
-                        )
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (binary_number_expr
+              (number)
+              (plus)
+              (number))
+            (asterisk)
+            (binary_number_expr
+              (number)
+              (minus)
+              (number)))
+          (slash)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (binary_number_expr
+              (number)
+              (plus)
+              (number))))
+        (currency)))
+    (posting
+      (account))))
 
 ========================
 arithmetic unary operators
@@ -132,57 +127,52 @@ arithmetic unary operators
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (unary_number_expr (minus) (number))
-                        (plus)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (unary_number_expr (plus) (number))
-                        (minus)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus)
-                        (binary_number_expr (number) (plus) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (plus)
-                        (binary_number_expr (number) (asterisk) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (unary_number_expr
+            (minus)
+            (number))
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (unary_number_expr
+            (plus)
+            (number))
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (binary_number_expr
+            (number)
+            (plus)
+            (number)))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (plus)
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number)))
+        (currency)))
+    (posting
+      (account))))
 
 ========================
 arithmetic decimal numbers
@@ -197,33 +187,33 @@ arithmetic decimal numbers
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (plus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (asterisk) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (slash) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (asterisk)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (slash)
+          (number))
+        (currency)))
+    (posting
+      (account))))

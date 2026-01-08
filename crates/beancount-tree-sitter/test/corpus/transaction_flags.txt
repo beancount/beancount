@@ -9,20 +9,23 @@ transaction flag !
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==================
 transaction flag %
@@ -35,20 +38,23 @@ transaction flag %
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==================
 transaction flag P
@@ -61,20 +67,23 @@ transaction flag P
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==================
 transaction flag &
@@ -87,20 +96,23 @@ transaction flag &
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 transaction flag no desc
@@ -111,11 +123,10 @@ transaction flag no desc
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))))
 
 ============================
 transaction flag with payee
@@ -128,18 +139,21 @@ transaction flag with payee
 ---
 
 (file
-    (transaction
-        (date)
-        (txn (flag))
-        (payee)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn
+      (flag))
+    (payee)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

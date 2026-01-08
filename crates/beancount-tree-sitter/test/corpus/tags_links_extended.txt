@@ -9,21 +9,26 @@ tags with special characters
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (tag) (tag) (tag))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (tag)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 links with special characters
@@ -36,21 +41,26 @@ links with special characters
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (link) (link) (link))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (link)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 mixed tags and links long
@@ -63,21 +73,33 @@ mixed tags and links long
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (tag) (tag) (tag) (link) (tag) (link) (tag) (link) (tag) (link))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (tag)
+      (tag)
+      (link)
+      (tag)
+      (link)
+      (tag)
+      (link)
+      (tag)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 tags with numbers and dots
@@ -90,21 +112,26 @@ tags with numbers and dots
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (tag) (tag) (tag))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (tag)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 links with paths
@@ -117,21 +144,25 @@ links with paths
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (link) (link))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 tags and links on posting lines
@@ -147,20 +178,26 @@ tags and links on posting lines
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (tags_links (tag) (link))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (tags_links (tag))
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-            (tags_links (link))
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (tags_links
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (tags_links
+      (link))))

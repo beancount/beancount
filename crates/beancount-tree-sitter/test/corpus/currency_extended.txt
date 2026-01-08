@@ -10,11 +10,22 @@ currency special characters
 ---
 
 (file
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
 
 ========================
 currency long names
@@ -26,9 +37,14 @@ currency long names
 ---
 
 (file
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
 
 ========================
 currency with numbers
@@ -41,10 +57,18 @@ currency with numbers
 ---
 
 (file
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
 
 ========================
 currency mixed characters
@@ -56,9 +80,14 @@ currency mixed characters
 ---
 
 (file
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
 
 ========================
 currency short and standard
@@ -72,8 +101,19 @@ currency short and standard
 ---
 
 (file
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-    (open (date) (account) (currency))
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))

@@ -9,22 +9,25 @@ posting with flags
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (optflag (flag))
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (optflag)
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (optflag
+        (flag))
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (optflag)
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 posting mixed flags
@@ -38,27 +41,33 @@ posting mixed flags
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (optflag (flag))
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (optflag)
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-            (posting
-                (optflag)
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (optflag
+        (flag))
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (optflag)
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (optflag)
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 posting empty amounts
@@ -72,23 +81,24 @@ posting empty amounts
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 posting with cost and price
@@ -101,25 +111,32 @@ posting with cost and price
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (cost_spec
-                    (cost_comp (compound_amount (number) (currency)))
-                )
-                (at)
-                (price_annotation (incomplete_amount (number) (currency)))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency))))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 posting with double at
@@ -132,22 +149,27 @@ posting with double at
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (atat)
-                (price_annotation (incomplete_amount (number) (currency)))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ========================
 posting double cost spec
@@ -160,20 +182,24 @@ posting double cost spec
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (cost_spec
-                    (cost_comp (compound_amount (number) (currency)))
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency)))))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

@@ -1,6 +1,6 @@
 ====
 Multiple Lines
-===============
+====
 
 2014-07-11 * "Hello one line
 and yet another,
@@ -11,17 +11,19 @@ and why not another!"
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

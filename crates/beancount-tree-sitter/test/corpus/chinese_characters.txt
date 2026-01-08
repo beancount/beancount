@@ -9,17 +9,17 @@ chinese characters in accounts
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (payee)
-        (narration)
-        (posting
-            (account)
-            (incomplete_amount
-            (unary_number_expr
-              (minus)
-              (number))
-            (currency)))
-        (posting
-          (account))))
+  (transaction
+    (date)
+    (txn)
+    (payee)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account))))

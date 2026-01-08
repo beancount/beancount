@@ -11,27 +11,27 @@ number with comma thousands
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
 
 ==========================
 number decimal variations
@@ -49,39 +49,42 @@ number decimal variations
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account))))
 
 ==========================
 number zero variations
@@ -98,35 +101,41 @@ number zero variations
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account))))
 
 ==========================
 number small fractions
@@ -142,28 +151,29 @@ number small fractions
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account))))

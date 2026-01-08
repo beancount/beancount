@@ -12,13 +12,11 @@ extra whitespace
 ---
 
 (file
-    (note
-        (date)
-        (account)
-        (string)
-    )
-    (comment)
-)
+  (note
+    (date)
+    (account)
+    (string))
+  (comment))
 
 =============================
 extra whitespace transaction
@@ -33,23 +31,18 @@ extra whitespace transaction
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-            )
-    )
-    (comment)
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)))
+  (comment))
 
 ===========================
 embedded quotes in strings
@@ -66,26 +59,25 @@ embedded quotes in strings
 ---
 
 (file
-    (note
-        (date)
-        (account)
-        (string)
-    )
-    (transaction
-        (date)
-        (txn)
-        (payee)
-        (narration)
-        (key_value
-            (key)
-            (value
-                (string)))
-        (posting
-            (account)
-            (incomplete_amount
-                (unary_number_expr
-                    (minus)
-                    (number))
-                (currency)))
-        (posting
-            (account))))
+  (note
+    (date)
+    (account)
+    (string))
+  (transaction
+    (date)
+    (txn)
+    (payee)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account))))

@@ -21,6 +21,18 @@ jobs:
       - name: Cargo test
         run: cargo nextest run
 
+  tree-sitter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # maybe we need a better way to manager the versio of tree-sitter-cli
+      - run: npm install -g tree-sitter-cli
+
+      - name: Run tree-sitter grammar tests
+        working-directory: crates/beancount-tree-sitter
+        run: tree-sitter test
+
   test:
     runs-on: ${{ matrix.os }}-latest
     strategy:

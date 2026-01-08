@@ -12,9 +12,9 @@ Incomplete uppercase account
     date: (date)
     txn: (txn)
     payee: (payee)
-    narration: (narration))
-  (ERROR
-    (identifier)))
+    narration: (narration)
+    (posting
+      account: (account))))
 
 ==================
 Incomplete lowercase account
@@ -48,9 +48,9 @@ Incomplete mixed case account
     date: (date)
     txn: (txn)
     payee: (payee)
-    narration: (narration))
-  (ERROR
-    (identifier)))
+    narration: (narration)
+    (posting
+      account: (account))))
 
 ==================
 Multiple incomplete accounts
@@ -68,10 +68,10 @@ Multiple incomplete accounts
     date: (date)
     txn: (txn)
     payee: (payee)
-    narration: (narration))
-  (ERROR
-    (identifier))
-  (ERROR
-    (identifier))
-  (ERROR
-    (identifier)))
+    narration: (narration)
+    (posting
+      account: (account))
+    (posting
+      account: (account))
+    (posting
+      account: (account))))

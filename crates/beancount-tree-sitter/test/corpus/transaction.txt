@@ -9,19 +9,21 @@ no narration
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==============
 tag then link
@@ -34,21 +36,25 @@ tag then link
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (link) (tag))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==============
 link then tag
@@ -61,22 +67,25 @@ link then tag
 ----
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (tag) (link))
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-)
-
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ============
 zero prices
@@ -90,30 +99,71 @@ zero prices
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (at)
-                (price_annotation (incomplete_amount (number) (currency)))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (at)
-                (price_annotation (incomplete_amount (number) (currency)))
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (at)
-                (price_annotation (incomplete_amount (number) (currency)))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))))
+
+=================================
+price annotation without explicit price
+=================================
+
+2011-05-17 * ""
+    Expenses:Restaurant   1.00 USD @ CAD
+    Assets:Other         -1.00 CAD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ===========
 zero units
@@ -126,23 +176,25 @@ zero units
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (cost_spec
-                        (cost_comp (compound_amount (number) (currency)))
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency)))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))
 
 ===========
 zero costs
@@ -155,23 +207,25 @@ zero costs
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (posting
-            (account)
-            (incomplete_amount (number) (currency))
-            (cost_spec
-                    (cost_comp (compound_amount (number) (currency)))
-            )
-        )
-        (posting
-            (account)
-            (incomplete_amount (number) (currency))
-        )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency)))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))
 
 ============
 no postings
@@ -182,13 +236,12 @@ no postings
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (link))
-    )
- )
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link))))
 
 ======================
 tags after first line
@@ -207,18 +260,38 @@ tags after first line
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-        (tags_links (tag) (link))
-            (tags_links (tag) (tag))
-            (tags_links (link) (tag))
-            (tags_links (tag) (link))
-            (tags_links (link) (link))
-            (tags_links (tag))
-            (tags_links (link))
-            (posting (account) (incomplete_amount (number) (currency)))
-            (posting (account) (incomplete_amount (unary_number_expr (minus) (number)) (currency)))
-    )
- )
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (link))
+    (tags_links
+      (tag)
+      (tag))
+    (tags_links
+      (link)
+      (tag))
+    (tags_links
+      (tag)
+      (link))
+    (tags_links
+      (link)
+      (link))
+    (tags_links
+      (tag))
+    (tags_links
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

@@ -10,11 +10,18 @@ account names with numbers
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names with dashes
@@ -28,11 +35,18 @@ account names with dashes
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names deep hierarchy
@@ -45,10 +59,15 @@ account names deep hierarchy
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names unicode latin
@@ -61,10 +80,15 @@ account names unicode latin
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names japanese
@@ -77,10 +101,15 @@ account names japanese
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names korean
@@ -93,10 +122,15 @@ account names korean
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
 
 ========================
 account names mixed
@@ -109,7 +143,112 @@ account names mixed
 ---
 
 (file
-    (open (date) (account))
-    (open (date) (account))
-    (open (date) (account))
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
+
+===================================
+account names non-standard prefixes
+===================================
+
+2023-01-01 open Custom:Trading:Stocks
+2023-01-01 open Virtual:Budget:Monthly
+2023-01-01 open Trading:Forex:EUR:USD
+2023-01-01 open Budget:Personal:Food
+2023-01-01 open Portfolio:Retirement:401k
+
+---
+
+(file
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)))
+
+======================================
+transactions with non-standard accounts
+======================================
+
+2023-01-01 * "Transfer to trading account"
+  Trading:Crypto:Bitcoin  1.5 BTC
+  Custom:Wallet:Main     -1.5 BTC
+
+2023-01-02 * "Budget allocation"
+  Virtual:Budget:Groceries  500.00 USD
+  Budget:Monthly:Available -500.00 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency))))
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+=====================================
+balance with non-standard account
+=====================================
+
+2023-01-01 balance Trading:Stocks:AAPL 100 AAPL
+2023-01-02 balance Portfolio:Bonds:Total 50000.00 USD
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency)))
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))))

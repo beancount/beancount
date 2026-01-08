@@ -10,27 +10,22 @@ parse currencies
 ---
 
 (file
-    (open
-        (date)
-        (account)
-        (currency)
-    )
-    (open
-        (date)
-        (account)
-        (currency)
-    )
-    (open
-        (date)
-        (account)
-        (currency)
-    )
-    (open
-        (date)
-        (account)
-        (currency)
-    )
-)
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
 
 ================================
 different cost and price currency
@@ -43,24 +38,29 @@ different cost and price currency
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-                (cost_spec
-                        (cost_comp (compound_amount (number) (currency)))
-                )
-                (at)
-                (price_annotation
-                    (incomplete_amount (number) (currency))
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency))))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))

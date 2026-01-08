@@ -9,30 +9,30 @@ expr add
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (plus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (plus) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (number))
+        (currency)))))
 
 ==========
 expr sub
-=========
+==========
 
 2013-05-18 * "Test"
     Assets:Something    12 - 3 USD
@@ -41,26 +41,26 @@ expr sub
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (minus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (minus) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (minus)
+          (number))
+        (currency)))))
 
 ==========
 expr mult
@@ -73,30 +73,30 @@ expr mult
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (asterisk) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (asterisk) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (asterisk)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (asterisk)
+          (number))
+        (currency)))))
 
 =========
 expr div
-========
+=========
 
 2013-05-18 * "Test"
     Assets:Something    12 / 3 USD
@@ -105,30 +105,30 @@ expr div
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (slash) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr (number) (slash) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (slash)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (slash)
+          (number))
+        (currency)))))
 
 =========
 expr neg
-========
+=========
 
 2013-05-18 * "Test"
     Assets:Something    -12 USD
@@ -138,37 +138,35 @@ expr neg
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (minus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (minus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (minus) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 =========
 expr pos
-========
+=========
 
 2013-05-18 * "Test"
     Assets:Something    +12 USD
@@ -177,30 +175,28 @@ expr pos
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (plus) (number))
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (minus) (number))
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==============
 expr predence
-=============
+==============
 
 2013-05-18 * "Test"
     Assets:Something   2 * 3 + 4 USD
@@ -211,56 +207,58 @@ expr predence
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr (number) (asterisk) (number))
-                        (plus)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (plus)
-                        (binary_number_expr (number) (asterisk) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (plus)
-                        (binary_number_expr (unary_number_expr (minus) (number)) (asterisk) (number))
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr (number) (plus) (unary_number_expr (minus) (number)))
-                        (asterisk)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number))
+          (plus)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number)))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (plus)
+          (binary_number_expr
+            (unary_number_expr
+              (minus)
+              (number))
+            (asterisk)
+            (number)))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (plus)
+            (unary_number_expr
+              (minus)
+              (number)))
+          (asterisk)
+          (number))
+        (currency)))))
 
 ============
 expr groups
@@ -273,34 +271,36 @@ expr groups
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (binary_number_expr (number) (plus) (unary_number_expr (minus) (number)))
-                        (asterisk)
-                        (number)
-                    )
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (binary_number_expr
-                        (number)
-                        (asterisk)
-                        (binary_number_expr (number) (plus) (unary_number_expr (minus) (number)))
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (plus)
+            (unary_number_expr
+              (minus)
+              (number)))
+          (asterisk)
+          (number))
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (binary_number_expr
+          (number)
+          (asterisk)
+          (binary_number_expr
+            (number)
+            (plus)
+            (unary_number_expr
+              (minus)
+              (number))))
+        (currency)))))
 
 ======================
 expr different places
@@ -316,58 +316,63 @@ expr different places
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr (minus) (binary_number_expr (number) (asterisk) (number)))
-                    (currency)
-                )
-                (cost_spec
-                        (cost_comp
-                            (compound_amount
-                                (binary_number_expr (number) (asterisk) (number))
-                                (currency)
-                            )
-                        )
-                )
-                (at)
-                (price_annotation
-                    (incomplete_amount
-                        (binary_number_expr (number) (asterisk) (number))
-                        (currency)
-                    )
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-                (comment)
-            )
-    )
-    (balance
-        (date)
-        (account)
-        (amount_tolerance
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number)))
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
             (binary_number_expr
-                (binary_number_expr
-                    (binary_number_expr (number) (asterisk) (number))
-                    (asterisk)
-                    (number)
-                )
-                (asterisk)
-                (number)
-            )
-            (currency)
-        )
-            (key_value
-                (key)
-                (value
-                    (unary_number_expr (minus) (binary_number_expr (number) (plus) (number)))
-                )
-            )
-    )
-)
+              (number)
+              (asterisk)
+              (number))
+            (currency))))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number))
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (comment)))
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (binary_number_expr
+        (binary_number_expr
+          (binary_number_expr
+            (number)
+            (asterisk)
+            (number))
+          (asterisk)
+          (number))
+        (asterisk)
+        (number))
+      (currency))
+    (key_value
+      (key)
+      (value
+        (unary_number_expr
+          (minus)
+          (binary_number_expr
+            (number)
+            (plus)
+            (number)))))))

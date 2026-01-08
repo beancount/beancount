@@ -9,28 +9,22 @@ entry transaction one string
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 =============================
 entry transaction two string
@@ -43,29 +37,23 @@ entry transaction two string
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (payee)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (payee)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ===================================
 entry transaction with txn keyword
@@ -78,28 +66,22 @@ entry transaction with txn keyword
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==============
 entry balance
@@ -110,15 +92,12 @@ entry balance
 ---
 
 (file
-    (balance
-        (date)
-        (account)
-        (amount_tolerance
-            (number)
-            (currency)
-        )
-    )
-)
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))))
 
 ===============
 entry balnce 2
@@ -129,16 +108,13 @@ entry balnce 2
 ---
 
 (file
-    (balance
-        (date)
-        (account)
-        (amount_tolerance
-            (number)
-            (number)
-            (currency)
-        )
-    )
-)
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (number)
+      (currency))))
 
 ===========
 entry open
@@ -149,11 +125,9 @@ entry open
 ---
 
 (file
-    (open
-        (date)
-        (account)
-    )
-)
+  (open
+    (date)
+    (account)))
 
 =============
 entry open 2
@@ -164,12 +138,10 @@ entry open 2
 ---
 
 (file
-    (open
-        (date)
-        (account)
-            (currency)
-    )
-)
+  (open
+    (date)
+    (account)
+    (currency)))
 
 =============
 entry open 3
@@ -180,14 +152,12 @@ entry open 3
 ---
 
 (file
-    (open
-        (date)
-        (account)
-            (currency)
-            (currency)
-            (currency)
-    )
-)
+  (open
+    (date)
+    (account)
+    (currency)
+    (currency)
+    (currency)))
 
 =============
 entry open 4
@@ -198,13 +168,12 @@ entry open 4
 ---
 
 (file
-    (open
-        (date)
-        (account)
-            (currency)
-        (opt_booking (string))
-    )
-)
+  (open
+    (date)
+    (account)
+    (currency)
+    (opt_booking
+      (string))))
 
 =============
 entry open 5
@@ -215,12 +184,11 @@ entry open 5
 ---
 
 (file
-    (open
-        (date)
-        (account)
-        (opt_booking (string))
-    )
-)
+  (open
+    (date)
+    (account)
+    (opt_booking
+      (string))))
 
 ============
 entry close
@@ -231,11 +199,9 @@ entry close
 ---
 
 (file
-    (close
-        (date)
-        (account)
-    )
-)
+  (close
+    (date)
+    (account)))
 
 ================
 entry commodity
@@ -246,11 +212,9 @@ entry commodity
 ---
 
 (file
-    (commodity
-        (date)
-        (currency)
-    )
-)
+  (commodity
+    (date)
+    (currency)))
 
 ==========
 entry pad
@@ -261,12 +225,10 @@ entry pad
 ---
 
 (file
-    (pad
-        (date)
-        (account)
-        (account)
-    )
-)
+  (pad
+    (date)
+    (account)
+    (account)))
 
 ============
 entry event
@@ -277,12 +239,10 @@ entry event
 ---
 
 (file
-    (event
-        (date)
-        (string)
-        (string)
-    )
-)
+  (event
+    (date)
+    (string)
+    (string)))
 
 ==================
 entry event empty
@@ -293,12 +253,10 @@ entry event empty
 ---
 
 (file
-    (event
-        (date)
-        (string)
-        (string)
-    )
-)
+  (event
+    (date)
+    (string)
+    (string)))
 
 ============
 entry query
@@ -309,12 +267,10 @@ entry query
 ---
 
 (file
-    (query
-        (date)
-        (string)
-        (string)
-    )
-)
+  (query
+    (date)
+    (string)
+    (string)))
 
 ===========
 entry note
@@ -325,12 +281,10 @@ entry note
 ---
 
 (file
-    (note
-        (date)
-        (account)
-        (string)
-    )
-)
+  (note
+    (date)
+    (account)
+    (string)))
 
 ===============
 entry document
@@ -341,12 +295,11 @@ entry document
 ---
 
 (file
-    (document
-        (date)
-        (account)
-        (filename (string))
-    )
-)
+  (document
+    (date)
+    (account)
+    (filename
+      (string))))
 
 ============
 entry price
@@ -357,15 +310,12 @@ entry price
 ---
 
 (file
-    (price
-        (date)
-        (currency)
-        (amount
-            (number)
-            (currency)
-        )
-    )
-)
+  (price
+    (date)
+    (currency)
+    (amount
+      (number)
+      (currency))))
 
 =============
 entry custom
@@ -376,13 +326,18 @@ entry custom
 ---
 
 (file
-    (custom
-        (date)
-        (string)
-            (custom_value (string))
-            (custom_value (date))
-            (custom_value (bool))
-            (custom_value (amount (number) (currency)))
-            (custom_value (number))
-    )
-)
+  (custom
+    (date)
+    (string)
+    (custom_value
+      (string))
+    (custom_value
+      (date))
+    (custom_value
+      (bool))
+    (custom_value
+      (number))
+    (custom_value
+      (account))
+    (custom_value
+      (number))))

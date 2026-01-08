@@ -13,21 +13,26 @@ popmeta location:
 ---
 
 (file
-    (pushmeta
-        (key_value (key) (value (string)))
-    )
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount (number) (currency))
-            )
-            (posting
-                (account)
-                (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-            )
-    )
-    (popmeta (key))
-)
+  (pushmeta
+    (key_value
+      (key)
+      (value
+        (string))))
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency))))
+  (popmeta
+    (key)))

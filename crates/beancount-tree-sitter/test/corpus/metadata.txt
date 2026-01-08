@@ -10,39 +10,31 @@ metadata begin
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (key_value
-                (key)
-                (value (string))
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-                (atat)
-                (price_annotation
-                    (incomplete_amount
-                        (number)
-                        (currency)
-                    )
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ================
 metadata middle
@@ -56,39 +48,31 @@ metadata middle
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-                (atat)
-                (price_annotation
-                    (incomplete_amount
-                        (number)
-                        (currency)
-                    )
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 =============
 metadata end
@@ -102,39 +86,31 @@ metadata end
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-                (atat)
-                (price_annotation
-                    (incomplete_amount
-                        (number)
-                        (currency)
-                    )
-                )
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (key_value
+      (key)
+      (value
+        (string)))))
 
 ==============
 metadata many
@@ -152,59 +128,51 @@ metadata many
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (key_value
-                (key)
-                (value (string))
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-                (atat)
-                (price_annotation
-                    (incomplete_amount
-                        (number)
-                        (currency)
-                    )
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))
 
 ==================
 metadata indented
-=================
+==================
 
 2013-05-18 * ""
         test1: "Something"
@@ -219,60 +187,55 @@ metadata indented
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (key_value (key) (value (string)))
-            (posting
-                (account)
-                (incomplete_amount
-                    (number)
-                    (currency)
-                )
-                (atat)
-                (price_annotation
-                    (incomplete_amount
-                        (number)
-                        (currency)
-                    )
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (posting
-                (account)
-                (incomplete_amount
-                    (unary_number_expr
-                        (minus) (number)
-                    )
-                    (currency)
-                )
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-            (key_value
-                (key)
-                (value (string))
-            )
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (atat)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))
 
 ===============
 metadata other
-==============
+===============
 
 2013-01-01 open Equity:Other
 2013-01-01 open Assets:Investments
@@ -296,64 +259,80 @@ metadata other
 ---
 
 (file
-    (open
-        (date)
-        (account)
-    )
-    (open
-        (date)
-        (account)
-            (key_value (key) (value (string)))
-            (key_value (key) (value (string)))
-    )
-    (close
-        (date)
-        (account)
-            (key_value (key) (value (string)))
-    )
-    (note
-        (date)
-        (account)
-        (string)
-            (key_value (key) (value (string)))
-    )
-    (pad
-        (date)
-        (account)
-        (account)
-            (key_value (key) (value (string)))
-    )
-    (balance
-        (date)
-        (account)
-        (amount_tolerance
-            (number)
-            (currency)
-        )
-            (key_value (key) (value (string)))
-    )
-    (event
-        (date)
-        (string)
-        (string)
-            (key_value (key) (value (string)))
-    )
-    (document
-        (date)
-        (account)
-        (filename (string))
-            (key_value (key) (value (string)))
-    )
-    (price
-        (date)
-        (currency)
-        (amount
-            (number)
-            (currency)
-        )
-            (key_value (key) (value (string)))
-    )
-)
+  (open
+    (date)
+    (account))
+  (open
+    (date)
+    (account)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string))))
+  (close
+    (date)
+    (account)
+    (key_value
+      (key)
+      (value
+        (string))))
+  (note
+    (date)
+    (account)
+    (string)
+    (key_value
+      (key)
+      (value
+        (string))))
+  (pad
+    (date)
+    (account)
+    (account)
+    (key_value
+      (key)
+      (value
+        (string))))
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))
+    (key_value
+      (key)
+      (value
+        (string))))
+  (event
+    (date)
+    (string)
+    (string)
+    (key_value
+      (key)
+      (value
+        (string))))
+  (document
+    (date)
+    (account)
+    (filename
+      (string))
+    (key_value
+      (key)
+      (value
+        (string))))
+  (price
+    (date)
+    (currency)
+    (amount
+      (number)
+      (currency))
+    (key_value
+      (key)
+      (value
+        (string)))))
 
 ===================
 metadata datatypes
@@ -369,25 +348,55 @@ metadata datatypes
     amount: 345.67 USD
     boolt: TRUE
     boolf: FALSE
+    key_without_value:
 
 ----
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (key_value (key) (value (string)))
-            (key_value (key) (value (account)))
-            (key_value (key) (value (date)))
-            (key_value (key) (value (currency)))
-            (key_value (key) (value (tag)))
-            (key_value (key) (value (number)))
-            (key_value (key) (value (amount (number) (currency))))
-            (key_value (key) (value (bool)))
-            (key_value (key) (value (bool)))
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (account)))
+    (key_value
+      (key)
+      (value
+        (date)))
+    (key_value
+      (key)
+      (value
+        (currency)))
+    (key_value
+      (key)
+      (value
+        (tag)))
+    (key_value
+      (key)
+      (value
+        (number)))
+    (key_value
+      (key)
+      (value
+        (amount
+          (number)
+          (currency))))
+    (key_value
+      (key)
+      (value
+        (bool)))
+    (key_value
+      (key)
+      (value
+        (bool)))
+    (key_value
+      (key))))
 
 ====================
 metadata key syntax
@@ -402,13 +411,23 @@ metadata key syntax
 ---
 
 (file
-    (transaction
-        (date)
-        (txn)
-        (narration)
-            (key_value (key) (value (string)))
-            (key_value (key) (value (string)))
-            (key_value (key) (value (string)))
-            (key_value (key) (value (string)))
-    )
-)
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))

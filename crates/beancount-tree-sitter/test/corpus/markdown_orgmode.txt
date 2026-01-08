@@ -13,30 +13,34 @@
 ---
 
 (file
+  (section
+    (headline
+      (item))
     (section
-        (headline (item))
-        (section
-            (headline (item))
-            (section
-                (headline (item))
-                (transaction
-                    (date)
-                    (txn)
-                    (narration)
-                    (tags_links (link) (tag))
-                        (posting
-                            (account)
-                            (incomplete_amount (number) (currency))
-                        )
-                        (posting
-                            (account)
-                            (incomplete_amount (unary_number_expr (minus) (number)) (currency))
-                        )
-                )
-            )
-        )
-    )
-)
+      (headline
+        (item))
+      (section
+        (headline
+          (item))
+        (transaction
+          (date)
+          (txn)
+          (narration)
+          (tags_links
+            (link)
+            (tag))
+          (posting
+            (account)
+            (incomplete_amount
+              (number)
+              (currency)))
+          (posting
+            (account)
+            (incomplete_amount
+              (unary_number_expr
+                (minus)
+                (number))
+              (currency))))))))
 
 ==============
 2 markdown headings
@@ -48,6 +52,9 @@
 ---
 
 (file
-    (section (headline (item)))
-    (section (headline (item)))
-)
+  (section
+    (headline
+      (item)))
+  (section
+    (headline
+      (item))))
