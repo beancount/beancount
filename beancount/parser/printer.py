@@ -13,6 +13,7 @@ import re
 import sys
 import textwrap
 from decimal import Decimal
+from typing import Iterator
 from typing import Optional
 
 from beancount.core import account
@@ -339,25 +340,28 @@ class EntryPrinter:
         )
         self.write_metadata(entry.meta, oss)
 
+    def __write_tags_and_links(
+        self,
+        oss: io.TextIOBase,
+        tags: None | Iterator[str],
+        links: None | Iterator[str],
+    ):
+        for tag in sorted(tags or []):
+            oss.write(" ")
+            oss.write("#{}".format(tag))
+        for link in sorted(links or []):
+            oss.write(" ")
+            oss.write("^{}".format(link))
+
     def Note(self, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"'.format(e=entry))
-        if entry.tags or entry.links:
-            oss.write(" ")
-            for tag in sorted(entry.tags):
-                oss.write("#{}".format(tag))
-            for link in sorted(entry.links):
-                oss.write("^{}".format(link))
+        self.__write_tags_and_links(oss, entry.tags, entry.links)
         oss.write("\n")
         self.write_metadata(entry.meta, oss)
 
     def Document(self, entry, oss):
         oss.write('{e.date} document {e.account} "{e.filename}"'.format(e=entry))
-        if entry.tags or entry.links:
-            oss.write(" ")
-            for tag in sorted(entry.tags):
-                oss.write("#{}".format(tag))
-            for link in sorted(entry.links):
-                oss.write("^{}".format(link))
+        self.__write_tags_and_links(oss, entry.tags, entry.links)
         oss.write("\n")
         self.write_metadata(entry.meta, oss)
 
