@@ -426,9 +426,9 @@ def iterate_with_balance(txn_postings):
             entry = txn_posting
 
         if entry.date != prev_date:
-            assert prev_date is None or entry.date > prev_date, (
-                "Invalid date order for postings: {} > {}".format(prev_date, entry.date)
-            )
+            assert (
+                prev_date is None or entry.date > prev_date
+            ), "Invalid date order for postings: {} > {}".format(prev_date, entry.date)
             prev_date = entry.date
 
             # Flush the dated entries.

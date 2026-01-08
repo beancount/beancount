@@ -23,7 +23,7 @@ authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
 license = { text = "GPL-2.0-only" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
@@ -54,7 +54,7 @@ donations = "https://www.paypal.com/paypalme/misislavski"
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
 exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
 check_untyped_defs = false
-python_version = '3.9'
+python_version = '3.10'
 cache_dir = ".venv/.mypy_cache"
 
 [[tool.mypy.overrides]]
