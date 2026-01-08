@@ -16,7 +16,7 @@ from beancount.core.data import new_metadata
 try:  # Prefer the Rust parser; lexer support remains C-only.
     from beancount.parser import _parser  # type: ignore
 except ImportError:  # pragma: no cover - triggered when C extension is absent
-    _parser = None
+    _parser = None  # type: ignore
 
 if TYPE_CHECKING:
     from beancount.core.data import BeancountError
