@@ -7,7 +7,9 @@ ledger and identify all the types of transactions to discuss in the cookbook.
 __copyright__ = "Copyright (C) 2013-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import collections
+import logging
 import random
 
 from beancount import loader
@@ -32,9 +34,6 @@ def rename_accounts(entry, rename_map):
 
 
 def main():
-    import argparse
-    import logging
-
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
