@@ -11,10 +11,36 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - uses: astral-sh/setup-uv@v5
-      - run: pip install ruff
-      - run: make lint
+          python-version: "3.13"
+
+      - name: Get Current Python Version
+        shell: python
+        id: py
+        run: |
+          import os
+          import sys
+          import hashlib
+
+          v = hashlib.sha3_224(sys.version.encode()).hexdigest()
+
+          with open(os.environ["GITHUB_OUTPUT"], 'a+', encoding="utf-8") as f:
+              env = f.write(f"\nPY={v}\n")
+
+      - uses: actions/cache@v5
+        id: cache
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3-${{ steps.py.outputs.PY }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-3-${{ steps.py.outputs.PY }}-
+
+      - run: pipx run pre-commit run --all-files --show-diff-on-failure --color=always
+
+      - name: Run this action with only post
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: gacts/run-and-post-run@v1
+        with:
+          post: pipx run pre-commit gc
 
   mypy:
     runs-on: ubuntu-latest
@@ -22,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       # pip doesn't support this
       - uses: astral-sh/setup-uv@v5
