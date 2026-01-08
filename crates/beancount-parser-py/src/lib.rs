@@ -21,8 +21,6 @@ fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     DATA_CACHE.get_or_try_init(py, || DataCache::init(py))?;
     m.add_function(wrap_pyfunction!(load_file, m)?)?;
     m.add_function(wrap_pyfunction!(parse_string, m)?)?;
-    m.add_function(wrap_pyfunction!(build_options_map, m)?)?;
-    m.add_function(wrap_pyfunction!(py_date, m)?)?;
     m.add_class::<PyParserError>()?;
     Ok(())
 }
@@ -247,16 +245,6 @@ pub fn parse_string(
 ) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
     let filename = filename.unwrap_or("<string>");
     parse_source(py, filename, content)
-}
-
-#[pyfunction]
-#[pyo3(signature = (filename = "<string>"))]
-fn build_options_map(py: Python<'_>, filename: Option<&str>) -> PyResult<Py<PyAny>> {
-    let filename = filename.unwrap_or("<string>");
-    let options = default_options_map(py)?;
-    options.set_item("filename", filename)?;
-    options.set_item("include", PyList::new(py, [filename])?)?;
-    Ok(options.unbind().into())
 }
 
 fn default_options_map(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
@@ -996,7 +984,6 @@ fn parse_source(
 }
 
 /// Convert `YYYY-MM-DD` text to `datetime.date`.
-#[pyfunction]
 fn py_date(py: Python<'_>, date: &str) -> PyResult<Py<PyAny>> {
     let trimmed = date.trim();
     // Fast manual parse: expect YYYY-MM-DD, all ASCII digits except separators.

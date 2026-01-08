@@ -1,10 +1,19 @@
 # we have a wrapper there in-case we need to wrap a rust function with some python code
 
-from . import _parser_rust
+import copy
 
-build_options_map = _parser_rust.build_options_map
+from . import _parser_rust
+from . import options as _options
+
+
+def build_options_map(filename: str):
+    opts = copy.deepcopy(_options.OPTIONS_DEFAULTS)
+    opts["filename"] = filename
+    opts["include"] = [filename]
+    return opts
+
+
 load_file = _parser_rust.load_file
 parse_string = _parser_rust.parse_string
-py_date = _parser_rust.py_date
 
-__all__ = ["build_options_map", "load_file", "parse_string", "py_date"]
+__all__ = ["build_options_map", "load_file", "parse_string"]
