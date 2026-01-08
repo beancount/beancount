@@ -23,14 +23,14 @@ use tree_sitter::Language;
 pub use tree_sitter;
 
 unsafe extern "C" {
-    fn tree_sitter_beancount() -> Language;
+  fn tree_sitter_beancount() -> Language;
 }
 
 /// Get the tree-sitter [Language][] for this grammar.
 ///
 /// [Language]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Language.html
 pub fn language() -> Language {
-    unsafe { tree_sitter_beancount() }
+  unsafe { tree_sitter_beancount() }
 }
 
 /// The content of the [`node-types.json`][] file for this grammar.
@@ -52,22 +52,22 @@ pub use node_kind::NonTerminalNodeKind;
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn test_can_load_grammar() {
-        let mut parser = super::tree_sitter::Parser::new();
-        parser
-            .set_language(&super::language())
-            .expect("Error loading beancount language");
-    }
+  #[test]
+  fn test_can_load_grammar() {
+    let mut parser = super::tree_sitter::Parser::new();
+    parser
+      .set_language(&super::language())
+      .expect("Error loading beancount language");
+  }
 
-    #[test]
-    fn test_leaf_node_kind_from_str() {
-        use super::LeafNodeKind;
+  #[test]
+  fn test_leaf_node_kind_from_str() {
+    use super::LeafNodeKind;
 
-        assert_eq!(LeafNodeKind::from("account"), LeafNodeKind::Account);
-        assert_eq!(LeafNodeKind::from("string"), LeafNodeKind::String);
-        assert_eq!(LeafNodeKind::from("number"), LeafNodeKind::Number);
-        assert_eq!(LeafNodeKind::from("flag"), LeafNodeKind::Flag);
-        assert_eq!(LeafNodeKind::from("does_not_exist"), LeafNodeKind::Unknown);
-    }
+    assert_eq!(LeafNodeKind::from("account"), LeafNodeKind::Account);
+    assert_eq!(LeafNodeKind::from("string"), LeafNodeKind::String);
+    assert_eq!(LeafNodeKind::from("number"), LeafNodeKind::Number);
+    assert_eq!(LeafNodeKind::from("flag"), LeafNodeKind::Flag);
+    assert_eq!(LeafNodeKind::from("does_not_exist"), LeafNodeKind::Unknown);
+  }
 }

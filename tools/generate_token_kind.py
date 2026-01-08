@@ -45,27 +45,27 @@ def is_terminal(node: Dict[str, Any]) -> bool:
 
 impl = """
 impl<'a> PartialEq<NodeKind> for &tree_sitter::Node<'a> {
-    fn eq(&self, other: &NodeKind) -> bool {
-        &NodeKind::from(self.kind()) == other
-    }
+  fn eq(&self, other: &NodeKind) -> bool {
+    &NodeKind::from(self.kind()) == other
+  }
 }
 
 impl<'a> PartialEq<LeafNodeKind> for &tree_sitter::Node<'a> {
-    fn eq(&self, other: &LeafNodeKind) -> bool {
-        &LeafNodeKind::from(self.kind()) == other
-    }
+  fn eq(&self, other: &LeafNodeKind) -> bool {
+    &LeafNodeKind::from(self.kind()) == other
+  }
 }
 
 impl<'a> PartialEq<NonTerminalNodeKind> for &tree_sitter::Node<'a> {
-    fn eq(&self, other: &NonTerminalNodeKind) -> bool {
-        &NonTerminalNodeKind::from(self.kind()) == other
-    }
+  fn eq(&self, other: &NonTerminalNodeKind) -> bool {
+    &NonTerminalNodeKind::from(self.kind()) == other
+  }
 }
 
 impl<'a> PartialEq<NodeKind> for tree_sitter::Node<'a> {
-    fn eq(&self, other: &NodeKind) -> bool {
-        &NodeKind::from(self.kind()) == other
-    }
+  fn eq(&self, other: &NodeKind) -> bool {
+    &NodeKind::from(self.kind()) == other
+  }
 }
 """
 
@@ -77,32 +77,32 @@ def generate_enum(enum_name: str, names: list[str]) -> list[str]:
         "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]",
         f"pub enum {enum_name} {{",
     ]
-    lines += [f"    {v}," for v in variants]
-    lines.append("    Unknown,")
+    lines += [f"  {v}," for v in variants]
+    lines.append("  Unknown,")
     lines.append("}")
     lines.append("")
     lines.append(f"impl From<&str> for {enum_name} {{")
-    lines.append("    fn from(name: &str) -> Self {")
-    lines.append("        match name {")
+    lines.append("  fn from(name: &str) -> Self {")
+    lines.append("    match name {")
     lines += [
-        f'            "{name}" => {enum_name}::{variant},'
+        f'      "{name}" => {enum_name}::{variant},'
         for name, variant in zip(names, variants)
     ]
-    lines.append(f"            _ => {enum_name}::Unknown,")
-    lines.append("        }")
-    lines.append("    }")
+    lines.append(f"      _ => {enum_name}::Unknown,")
+    lines.append("     }")
+    lines.append("  }")
     lines.append("}")
     lines.append("")
     lines.append(f"impl {enum_name} {{")
-    lines.append("    pub fn name(&self) -> &'static str {")
-    lines.append("        match self {")
+    lines.append("  pub fn name(&self) -> &'static str {")
+    lines.append("    match self {")
     lines += [
-        f'            {enum_name}::{variant} => "{name}",'
+        f'      {enum_name}::{variant} => "{name}",'
         for name, variant in zip(names, variants)
     ]
-    lines.append(f'            {enum_name}::Unknown => "<unknown>",')
-    lines.append("        }")
+    lines.append(f'      {enum_name}::Unknown => "<unknown>",')
     lines.append("    }")
+    lines.append("  }")
     lines.append("}")
     lines.append("")
 

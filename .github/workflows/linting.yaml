@@ -5,17 +5,6 @@ on:
   - workflow_dispatch
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - uses: astral-sh/setup-uv@v5
-      - run: pip install ruff
-      - run: make lint
-
   rust-lints:
     runs-on: ubuntu-latest
     steps:
@@ -27,8 +16,17 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Cargo clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: Cargo test
-        run: cargo test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v5
+      - run: pip install ruff
+      - run: make lint
 
   mypy:
     runs-on: ubuntu-latest

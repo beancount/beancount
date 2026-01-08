@@ -5,6 +5,14 @@ on:
   - workflow_dispatch
 
 jobs:
+  rust-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Cargo test
+        run: cargo test
+
   test:
     runs-on: ${{ matrix.os }}-latest
     strategy:
