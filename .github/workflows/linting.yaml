@@ -39,7 +39,9 @@ jobs:
           python-version: '3.13'
 
       # pip doesn't support this
-      - uses: astral-sh/setup-uv@v5
-      - run: uv pip install -r ./pyproject.toml --extra types --system
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
 
-      - run: uv run --with mypy --with types-python-dateutil --with types-regex mypy .
+      - run: uv sync --dev --extra types
+      - run: mypy .
