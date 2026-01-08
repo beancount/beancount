@@ -24,7 +24,7 @@ repos:
         additional_dependencies: [ "validate-pyproject-schema-store[all]==2024.11.25" ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # when we update this version, need also update schema-store to match it.
+    # when we update this version, need also update schema-store and version of ruff inside Makefile to match it.
     rev: 'v0.14.10'
     hooks:
       - id: ruff
