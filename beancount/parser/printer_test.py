@@ -10,8 +10,6 @@ import unittest
 from datetime import date
 from decimal import Decimal
 
-import pytest
-
 from beancount import loader
 from beancount.core import data
 from beancount.core.amount import Amount
@@ -57,8 +55,8 @@ class TestPrinter(unittest.TestCase):
 
 
 class TestEntryPrinter(cmptest.TestCase):
+    @unittest.skip("there are some old Round-trip need diccussion")
     def assertRoundTrip(self, entries1, errors1):
-        pytest.skip("Round-trip assertion disabled pending parser fixes")
         self.assertFalse(errors1)
 
         # Print out the entries and parse them back in.
@@ -82,6 +80,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
 
+    @unittest.skip("there are some old Round-trip need diccussion")
     def assertRoundTripViaRealFile(self, entries1, errors1, test_write_source=True):
         """
         The same as assertRoundTrip, but the 1st time saves ledger in string
@@ -94,7 +93,6 @@ class TestEntryPrinter(cmptest.TestCase):
             which activates printing of the source file and line number for
             every transaction
         """
-        pytest.skip("Round-trip assertion disabled pending parser fixes")
         self.assertFalse(errors1)
 
         # Not using context manager to make this test compatible with Windows
@@ -202,7 +200,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         self.assertEqual(expected_output_ledger, printed)
 
-    @pytest.mark.skip(reason="Transaction round-trip disabled pending parser fixes")
+    @unittest.skip("Transaction round-trip disabled pending parser fixes")
     @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
         """
@@ -306,6 +304,7 @@ class TestEntryPrinter(cmptest.TestCase):
         with self.subTest("RoundTrip test via real file"):
             self.assertRoundTripViaRealFile(entries, errors)
 
+    @unittest.skip("there are some old Round-trip need diccussion")
     def test_Document(self):
         # The beancount parser processes escaped characters in all strings,
         # including the file path in the ``document`` directive.  Windows uses
@@ -324,7 +323,6 @@ class TestEntryPrinter(cmptest.TestCase):
         # forward slashes as path separators, therefore, the solution is to
         # craft the test to use absolute paths with forward slashes on all
         # platforms.
-        pytest.skip("assertRoundTrip roundtrip for document to be fixed later")
         path = os.path.join(os.path.dirname(__file__), "document.pdf").replace("\\", "/")
 
         ledger = textwrap.dedent("""\
@@ -672,7 +670,7 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
 
-    @pytest.mark.skip(reason="order not preserved")
+    @unittest.skip("order not preserved")
     def test_metadata(self):
         input_string = textwrap.dedent("""
 
@@ -717,9 +715,7 @@ class TestPrinterMisc(test_utils.TestCase):
         printer.print_entries(entries, file=oss)
         self.assertLines(input_string, oss.getvalue())
 
-    @pytest.mark.skip(
-        reason="TODO: rust parser number rendering differs for very small prices"
-    )
+    @unittest.skip("TODO: rust parser number rendering differs for very small prices")
     def test_very_small_number(self):
         # We want to make sure we never render with scientific notation.
         input_string = textwrap.dedent("""
@@ -755,7 +751,7 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entry(txn, file=oss)
 
-    @pytest.mark.skip(reason="TODO: rust parser does not support posting with metadata")
+    @unittest.skip("TODO: rust parser does not support posting with metadata")
     def test_render_meta_with_None(self):
         # Issue 378. TODO: re-enable once posting key/value metadata is supported by the rust parser.
         input_string = textwrap.dedent("""

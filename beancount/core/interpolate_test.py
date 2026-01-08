@@ -5,8 +5,6 @@ import datetime
 import textwrap
 import unittest
 
-import pytest
-
 from beancount import loader
 from beancount.core import convert
 from beancount.core import data
@@ -21,6 +19,8 @@ from beancount.core.number import D
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.utils import defdict
+
+SKIP_RUST_PARSER = "Disabled while rust parser parity is incomplete"
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {
@@ -579,7 +579,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertFalse(errors)
 
     @loader.load_doc()
-    @pytest.mark.skip()
+    @unittest.skip(SKIP_RUST_PARSER)
     def test_tolerances__missing_units_only(self, entries, errors, options_map):
         """
         2017-01-01 open Assets:Checking USD

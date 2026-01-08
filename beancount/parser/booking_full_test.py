@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 __copyright__ = "Copyright (C) 2015-2024  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -37,6 +35,9 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.utils import test_utils
 
+SKIP_RUST_PARSER = "Disabled while rust parser parity is incomplete"
+SKIP_ALLOW_INCOMPLETE = "allow_incomplete parsing unsupported"
+
 
 def _gen_missing_combinations(template, args):
     """Generate all possible expansions of args in template.
@@ -52,7 +53,7 @@ def _gen_missing_combinations(template, args):
         yield template.format(*actual_args)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestAllInterpolationCombinations(cmptest.TestCase):
     def test_all_currency_interpolations(self):
         template = textwrap.dedent("""
@@ -101,11 +102,11 @@ def indexes(groups):
     return {currency: {refer[0] for refer in refers} for currency, refers in groups}
 
 
-@pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+@unittest.skip(SKIP_ALLOW_INCOMPLETE)
 class TestCategorizeCurrencyGroup(unittest.TestCase):
     "Tests of per-currency categorization of postings."
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__unambiguous(self, entries, _, options_map):
         """
@@ -122,7 +123,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
             self.assertFalse(errors)
             self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__ambiguous(self, entries, _, options_map):
         """
@@ -150,7 +151,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertRegex(errors[0].message, "Failed to categorize posting")
         self.assertEqual({}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__unambiguous(self, entries, _, options_map):
         """
@@ -176,7 +177,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertRegex(errors[0].message, "Could not resolve units currency")
         self.assertEqual({"CAD": {0, 1}}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__ambiguous(self, entries, _, options_map):
         """
@@ -219,7 +220,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
             self.assertRegex(errors[0].message, "Failed to categorize posting")
             self.assertEqual({}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__unambiguous(self, entries, _, options_map):
         """
@@ -245,7 +246,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertRegex(errors[0].message, "Could not resolve units currency")
         self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__ambiguous(self, entries, _, options_map):
         """
@@ -293,7 +294,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
             self.assertRegex(errors[0].message, "Failed to categorize posting")
             self.assertEqual({}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__unambiguous(self, entries, _, options_map):
         """
@@ -332,7 +333,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
             self.assertRegex(errors[0].message, "Could not resolve units currency")
             self.assertEqual({"USD": {0, 1}}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__ambiguous(self, entries, _, options_map):
         """
@@ -386,7 +387,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual({"USD": {0, 2}, "CAD": {1, 2}}, indexes(groups))
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__redundant_auto_postings(self, entries, _, options_map):
         """
@@ -399,7 +400,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertTrue(errors)
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__two_unknown_postings(self, entries, _, options_map):
         """
@@ -434,7 +435,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertRegex(errors[0].message, "Failed to categorize posting")
 
 
-@pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+@unittest.skip(SKIP_ALLOW_INCOMPLETE)
 class TestReplaceCurrenciesInGroup(unittest.TestCase):
     "Tests the replacement of currencies inferred in the categorization step."
 
@@ -606,7 +607,7 @@ def normalize_postings(postings):
     ]
 
 
-@pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+@unittest.skip(SKIP_ALLOW_INCOMPLETE)
 class TestInterpolateCurrencyGroup(unittest.TestCase):
     "Tests the replacement of currencies inferred in the categorization step."
 
@@ -692,7 +693,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             {"USD": (False, None, ["Too many missing numbers for currency group"])},
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_twomiss_diff_cost_and_units(
         self, entries, _, options_map
@@ -1001,7 +1002,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             },
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_multiple_groups(self, entries, _, options_map):
         """
@@ -1146,7 +1147,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         )
         # FIXME: This ought to return a "Superfluous posting" error for Account3 only.
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__superfluous_needed_one_side(self, entries, errors, _):
         """
@@ -1414,7 +1415,7 @@ def book_test(method):
     "A decorator factory for all booking tests. This calls _book() below."
 
     def decorator(func):
-        @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+        @unittest.skip(SKIP_ALLOW_INCOMPLETE)
         @parser.parse_doc(allow_incomplete=True)
         @functools.wraps(func)
         def wrapper(self, entries, unused_errors, options_map):
@@ -1550,9 +1551,9 @@ class _BookingTestBase(unittest.TestCase):
         # Check that the 'apply' entry has a single posting only.
         # assert len(entry_apply.postings) == 1, (
         #     "Internal error: 'apply' entry has more than one posting")
-        assert (
-            len(set(posting.account for posting in entry_apply.postings)) == 1
-        ), "Accounts don't match for 'apply' entry"
+        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
+            "Accounts don't match for 'apply' entry"
+        )
         account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 
@@ -3253,7 +3254,7 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_label(self, entries, _, __):
         """
@@ -3411,7 +3412,7 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_currency(self, entries, _, __):
         """
@@ -3440,7 +3441,7 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_date(self, entries, _, __):
         """
@@ -3469,7 +3470,7 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
-    @pytest.mark.skip(reason="allow_incomplete parsing unsupported")
+    @unittest.skip(SKIP_ALLOW_INCOMPLETE)
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_label(self, entries, _, __):
         """

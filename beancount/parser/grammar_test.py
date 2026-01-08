@@ -13,8 +13,6 @@ import unittest
 from decimal import Decimal
 from unittest import mock
 
-import pytest
-
 from beancount.core import amount
 from beancount.core import data
 from beancount.core.amount import Amount
@@ -28,6 +26,8 @@ from beancount.parser import grammar
 from beancount.parser import lexer
 from beancount.parser import parser
 from beancount.utils import test_utils
+
+SKIP_RUST_PARSER = "this test if for old c parser"
 
 
 def check_list(test, objlist, explist):
@@ -62,7 +62,7 @@ def raise_exception(*args, **kwargs):
     raise ValueError("Patched exception in parser")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
@@ -237,7 +237,7 @@ class TestParserEntryTypes(unittest.TestCase):
         )
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestWhitespace(unittest.TestCase):
     """Tests for handling of whitespace and indent."""
 
@@ -285,7 +285,7 @@ class TestParserComplete(unittest.TestCase):
         self.assertEqual(1, len(entry.postings))
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
@@ -375,7 +375,7 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual([], errors)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestComment(unittest.TestCase):
     @parser.parse_doc()
     def test_comment_before_transaction(self, entries, errors, _):
@@ -436,7 +436,7 @@ class TestComment(unittest.TestCase):
         self.assertEqual(0, len(errors))
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestPushPopTag(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_tag_left_unclosed(self, entries, errors, _):
@@ -455,7 +455,7 @@ class TestPushPopTag(unittest.TestCase):
         self.assertRegex(errors[0].message, "absent tag")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestPushPopMeta(unittest.TestCase):
     @parser.parse_doc()
     def test_pushmeta_normal(self, entries, errors, _):
@@ -529,7 +529,7 @@ class TestPushPopMeta(unittest.TestCase):
         self.assertRegex(errors[0].message, "Unbalanced metadata key")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestMultipleLines(unittest.TestCase):
     @parser.parse_doc()
     def test_multiline_narration(self, entries, errors, _):
@@ -547,7 +547,7 @@ class TestMultipleLines(unittest.TestCase):
         self.assertEqual(expected_narration, entries[0].narration)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestSyntaxErrors(unittest.TestCase):
     """Test syntax errors that occur within the parser.
     One of our goals is to recover and report without ever
@@ -594,7 +594,7 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertEqual(2, len(entries[0].postings))
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestParserOptions(unittest.TestCase):
     @parser.parse_doc()
     def test_option_single_value(self, entries, errors, options_map):
@@ -635,7 +635,7 @@ class TestParserOptions(unittest.TestCase):
         self.assertNotEqual("filename", "gniagniagniagniagnia")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestParserInclude(unittest.TestCase):
     def test_parse_nonexist(self):
         with self.assertRaises(OSError):
@@ -666,7 +666,7 @@ class TestParserInclude(unittest.TestCase):
         self.assertEqual(["some/relative/filename.beancount"], options_map["include"])
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestParserPlugin(unittest.TestCase):
     @parser.parse_doc()
     def test_plugin(self, entries, errors, options_map):
@@ -696,7 +696,7 @@ class TestParserPlugin(unittest.TestCase):
         self.assertEqual([], options_map["plugin"])
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestDisplayContextOptions(unittest.TestCase):
     @parser.parse_doc()
     def test_render_commas_no(self, _, __, options_map):
@@ -720,7 +720,7 @@ class TestDisplayContextOptions(unittest.TestCase):
         self.assertEqual(True, options_map["render_commas"])
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestMiscOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=False)
     def test_plugin_processing_mode__default(self, _, __, options_map):
@@ -746,7 +746,7 @@ class TestMiscOptions(unittest.TestCase):
         self.assertEqual("default", options_map["plugin_processing_mode"])
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestToleranceOptions(unittest.TestCase):
     @parser.parse_doc()
     def test_tolerance_defaults(self, _, __, options_map):
@@ -766,7 +766,7 @@ class TestToleranceOptions(unittest.TestCase):
         )
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestDeprecatedOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
@@ -799,7 +799,7 @@ class TestParserLinks(unittest.TestCase):
         self.assertEqual(entries[0].links, set(["38784734873"]))
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestTransactions(unittest.TestCase):
     @parser.parse_doc()
     def test_simple_1(self, entries, errors, _):
@@ -1016,7 +1016,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual({"baselink"}, entries[0].links)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestParseLots(unittest.TestCase):
     maxDiff = None
 
@@ -1235,7 +1235,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(0, len(entries))
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestCurrencies(unittest.TestCase):
     @parser.parse_doc()
     def test_parse_currencies(self, entries, errors, _):
@@ -1257,7 +1257,7 @@ class TestCurrencies(unittest.TestCase):
         """
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestTotalsAndSigns(unittest.TestCase):
     @parser.parse_doc(expect_errors=False)
     def test_zero_amount(self, entries, errors, _):
@@ -1386,7 +1386,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertRegex(errors[0].message, "Total price on a posting")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestBalance(unittest.TestCase):
     @parser.parse_doc()
     def test_total_price(self, entries, errors, _):
@@ -1418,7 +1418,7 @@ class TestBalance(unittest.TestCase):
             self.assertEqual(None, posting.price)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestMetaData(unittest.TestCase):
     @staticmethod
     def strip_meta(meta):
@@ -1632,7 +1632,7 @@ class TestMetaData(unittest.TestCase):
         )
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestArithmetic(unittest.TestCase):
     maxDiff = None
 
@@ -1755,7 +1755,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(D("-5684.53"), entries[1].meta["number"])
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestLexerAndParserErrors(cmptest.TestCase):
     """There are a number of different paths where errors may occur. This test case
     intends to exercise them all. This docstring explains how it all works (it's
@@ -2246,7 +2246,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         self.check_entries_errors(entries, errors)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestIncompleteInputs(cmptest.TestCase):
     #
     # Units
@@ -2551,7 +2551,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         )
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestMisc(cmptest.TestCase):
     @parser.parse_doc(expect_errors=False)
     def test_comment_in_postings(self, entries, errors, options_map):
@@ -2575,7 +2575,7 @@ class TestMisc(cmptest.TestCase):
         self.assertRegex(errors[0].message, "unexpected INDENT")
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestDocument(unittest.TestCase):
     @parser.parse_doc()
     def test_document_no_tags_links(self, entries, _, __):
@@ -2603,7 +2603,7 @@ class TestDocument(unittest.TestCase):
         self.assertEqual({"something"}, entries[0].links)
 
 
-@pytest.mark.skip()
+@unittest.skip(SKIP_RUST_PARSER)
 class TestMethodsSignature(unittest.TestCase):
     def test_signatures(self):
         # Enforce that all "public" methods of the Builder class have

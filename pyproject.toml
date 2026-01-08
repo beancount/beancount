@@ -129,7 +129,7 @@ dev = [
     "mypy>=1.19.1",
     # somehow mypy will raised a error in deps tree
     # so we need to set pytest<9
-    "pytest<9",
+    "pytest",
     "rich>=14.2.0",
     "types-python-dateutil>=2.9.0.20251115",
     "types-regex>=2025.11.3.20251106",

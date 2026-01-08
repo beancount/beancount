@@ -35,7 +35,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = ">=1.19.1" },
-    { name = "pytest", specifier = "<9" },
+    { name = "pytest" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20251115" },
     { name = "types-regex", specifier = ">=2025.11.3.20251106" },

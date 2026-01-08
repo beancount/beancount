@@ -8,8 +8,6 @@ __license__ = "GNU GPLv2"
 import unittest
 from decimal import Decimal
 
-import pytest
-
 from beancount.core import account_types
 from beancount.core import display_context
 from beancount.parser import options
@@ -47,7 +45,7 @@ class TestOptions(unittest.TestCase):
 
 
 class TestAccountTypeOptions(unittest.TestCase):
-    @pytest.mark.skip(reason="custom account root names not parsed yet in rust parser")
+    @unittest.skip("custom account root names not parsed yet in rust parser")
     @parser.parse_doc()
     def test_custom_account_names__success(self, entries, errors, options_map):
         """
@@ -86,7 +84,7 @@ class TestAccountTypeOptions(unittest.TestCase):
             "Error for option 'account_previous_balances': Invalid leaf account name: 'invalid'",
         )
 
-    @pytest.mark.skip(reason="custom account root names not parsed yet in rust parser")
+    @unittest.skip("custom account root names not parsed yet in rust parser")
     @parser.parse_doc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):
         """
@@ -99,7 +97,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
 
-    @pytest.mark.skip(reason="unicode account names now accepted; test expects errors")
+    @unittest.skip("unicode account names now accepted; test expects errors")
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__basic_fail(self, entries, errors, options_map):
         """
@@ -111,7 +109,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         for error in errors:
             self.assertRegex(error.message, "Invalid account name")
 
-    @pytest.mark.skip(reason="unicode account names now accepted; test expects errors")
+    @unittest.skip("unicode account names now accepted; test expects errors")
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
         """
@@ -123,7 +121,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "Invalid account name")
 
-    @pytest.mark.skip(reason="unicode account names now accepted; test expects errors")
+    @unittest.skip("unicode account names now accepted; test expects errors")
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_other(self, entries, errors, options_map):
         """
@@ -261,9 +259,7 @@ class TestToleranceOptions(unittest.TestCase):
 
 
 class TestDeprecatedOptions(unittest.TestCase):
-    @pytest.mark.skip(
-        reason="deprecated plugin option handling not implemented in rust parser yet"
-    )
+    @unittest.skip("deprecated plugin option handling not implemented in rust parser yet")
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
         """
@@ -272,7 +268,7 @@ class TestDeprecatedOptions(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "may not be set")
 
-    @pytest.mark.skip()
+    @unittest.skip("deprecated option handling not implemented in rust parser yet")
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_option(self, _, errors, options_map):
         """
