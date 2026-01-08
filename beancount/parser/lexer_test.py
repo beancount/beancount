@@ -272,7 +272,11 @@ class TestLexer(unittest.TestCase):
             tokens,
         )
         self.assertTrue(errors)
-        self.assertRegex(errors[0].message, "out of range|month must be|day must be in")
+        self.assertRegex(
+            errors[0].message,
+            # Python 3.14 changed the ValueError wording to include the day number.
+            r"out of range|month must be|day .*must be in",
+        )
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):
