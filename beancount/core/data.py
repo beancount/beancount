@@ -23,9 +23,6 @@ from beancount.core.amount import Amount
 from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
-
-# this is a example thay we can implement core data with rust, old class still here
-from beancount.parser._rust import Open
 from beancount.utils.bisect_key import bisect_left_with_key
 
 # Type declarations.
@@ -93,7 +90,7 @@ class Booking(enum.Enum):
 #     shows up in the file is used as a secondary sort key beyond the date.
 
 
-class Open1(NamedTuple):
+class Open(NamedTuple):
     """
     An "open account" directive.
 
