@@ -17,12 +17,11 @@ use rust_decimal::Decimal;
 use std::collections::HashMap;
 
 mod data;
-use data::{Booking, PyOpen};
+use data::Booking;
 
 #[pymodule]
 fn _parser_rust(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
   m.add_class::<Booking>()?;
-  m.add_class::<PyOpen>()?;
   m.add_function(wrap_pyfunction!(load_file, m)?)?;
   m.add_function(wrap_pyfunction!(parse_string, m)?)?;
   m.add_class::<PyParserError>()?;
@@ -86,6 +85,8 @@ struct DataCache {
   amount_ctor: Py<PyAny>,
   // beancount.core.data.new_metadata callable.
   new_metadata: Py<PyAny>,
+  // beancount.core.data.Open class.
+  open_cls: Py<PyAny>,
   // beancount.core.data.Close class.
   close_cls: Py<PyAny>,
   // beancount.core.data.Balance class.
@@ -173,6 +174,7 @@ impl DataCache {
     let option_descriptors = parse_option_descriptors(py, &options_defs)?;
     let deepcopy_fn = copy_mod.getattr("deepcopy")?.unbind();
     let amount_ctor = amount_mod.getattr("Amount")?.unbind();
+    let open_cls = data_mod.getattr("Open")?.unbind();
     let booking_cls = data_mod.getattr("Booking")?.unbind();
     let booking_cls_bound = booking_cls.bind(py);
     let booking_strict = booking_cls_bound.getattr("STRICT")?.unbind();
@@ -187,6 +189,7 @@ impl DataCache {
       py_true: builtins_mod.getattr("True")?.unbind(),
       py_false: builtins_mod.getattr("False")?.unbind(),
       new_metadata: data_mod.getattr("new_metadata")?.unbind(),
+      open_cls,
       close_cls: data_mod.getattr("Close")?.unbind(),
       balance_cls: data_mod.getattr("Balance")?.unbind(),
       pad_cls: data_mod.getattr("Pad")?.unbind(),
@@ -245,6 +248,20 @@ fn booking_to_native(booking: Option<&str>) -> PyResult<Option<Booking>> {
     ))),
     None => Ok(None),
   }
+}
+
+fn booking_to_py(py: Python<'_>, cache: &DataCache, booking: Option<&str>) -> PyResult<Py<PyAny>> {
+  let booking = booking_to_native(booking)?;
+  Ok(match booking {
+    Some(Booking::STRICT) => cache.booking_strict.clone_ref(py),
+    Some(Booking::STRICT_WITH_SIZE) => cache.booking_strict_with_size.clone_ref(py),
+    Some(Booking::None) => cache.booking_none.clone_ref(py),
+    Some(Booking::AVERAGE) => cache.booking_average.clone_ref(py),
+    Some(Booking::FIFO) => cache.booking_fifo.clone_ref(py),
+    Some(Booking::LIFO) => cache.booking_lifo.clone_ref(py),
+    Some(Booking::HIFO) => cache.booking_hifo.clone_ref(py),
+    None => py.None(),
+  })
 }
 
 fn parse_option_descriptors(
@@ -540,17 +557,14 @@ fn meta_extra<'py>(
 }
 
 fn convert_open(py: Python<'_>, open: &core::Open) -> PyResult<Py<PyAny>> {
+  let cache = cache(py)?;
   let meta = make_metadata(py, &open.meta, meta_extra(py, &open.key_values)?)?;
-  let date_native = parse_naive_date_fast(open.date.as_str())?;
-  let booking_native = booking_to_native(open.opt_booking.as_deref())?;
-  PyOpen::from_core_parts(
-    py,
-    meta,
-    date_native,
-    open.account.as_str(),
-    &open.currencies,
-    booking_native,
-  )
+  let date = py_date(py, open.date.as_str())?;
+  let currencies = PyList::new(py, open.currencies.iter().map(|c| c.as_str()))?;
+  let booking = booking_to_py(py, cache, open.opt_booking.as_deref())?;
+  cache
+    .open_cls
+    .call1(py, (meta, date, open.account.as_str(), currencies, booking))
 }
 
 fn parse_naive_date_fast(date: &str) -> PyResult<NaiveDate> {
