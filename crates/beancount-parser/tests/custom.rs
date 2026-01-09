@@ -1,6 +1,6 @@
 mod common;
-use beancount_parser::core::{CoreDirective, CustomValue, NumberExpr};
-use common::{collect_ops, lines, parse_core};
+use beancount_parser::core::{Custom, CustomValue, NumberExpr};
+use common::{collect_ops, lines, parse_as};
 
 #[test]
 fn custom_directive_all_value_kinds() {
@@ -8,11 +8,7 @@ fn custom_directive_all_value_kinds() {
     r#"2010-11-01 custom "all_kinds" "string" 2010-12-01 FALSE 5.00 USD 1+2-3*4/5 Assets:Custom"#,
   ]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Custom(custom)] = slice else {
-    panic!("unexpected directives: {slice:?}");
-  };
+  let custom: Custom = parse_as(&input, "book.bean");
 
   assert_eq!(custom.name, "all_kinds");
   assert_eq!(custom.values.len(), 7);

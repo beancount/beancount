@@ -1,31 +1,35 @@
 mod common;
-use beancount_parser::core::{CoreDirective, KeyValueValue};
-use common::{lines, parse_core};
+use beancount_parser::core::{KeyValue, KeyValueValue, Note, PopMeta, PushMeta};
+use common::{lines, parse_as};
 
 #[test]
 fn pushmeta_directive() {
   let input = lines(&[r#"pushmeta meta: "yes""#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Pushmeta(pm)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let pm: PushMeta = parse_as(&input, "book.bean");
+
+  let expected = PushMeta {
+    meta: pm.meta.clone(),
+    span: pm.span,
+    key_value: "meta: \"yes\"".into(),
   };
 
-  assert_eq!(pm.key_value, "meta: \"yes\"");
+  assert_eq!(pm, expected);
 }
 
 #[test]
 fn popmeta_directive() {
   let input = lines(&[r#"popmeta meta:"#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Popmeta(pm)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let pm: PopMeta = parse_as(&input, "book.bean");
+
+  let expected = PopMeta {
+    meta: pm.meta.clone(),
+    span: pm.span,
+    key: "meta".into(),
   };
 
-  assert_eq!(pm.key, "meta");
+  assert_eq!(pm, expected);
 }
 
 #[test]
@@ -35,15 +39,27 @@ fn note_directive_with_metadata() {
     r#"  desc: "quoted desc""#,
   ]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Note(note)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let note: Note = parse_as(&input, "book.bean");
+
+  let [kv] = note.key_values.as_slice() else {
+    panic!("unexpected key values: {:?}", note.key_values);
   };
 
-  assert_eq!(note.note, "note text");
-  assert_eq!(note.key_values.len(), 1);
-  assert!(
-    matches!(note.key_values[0].value, Some(KeyValueValue::String(ref s)) if s == "quoted desc")
-  );
+  let mut key_values = note.key_values.clone();
+  key_values[0] = KeyValue {
+    value: Some(KeyValueValue::String("quoted desc".into())),
+    ..kv.clone()
+  };
+
+  let expected = Note {
+    meta: note.meta.clone(),
+    span: note.span,
+    date: "2010-09-01".into(),
+    account: "Assets:Cash".into(),
+    note: "note text".into(),
+    comment: None,
+    key_values,
+  };
+
+  assert_eq!(note, expected);
 }

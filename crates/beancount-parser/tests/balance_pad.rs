@@ -1,31 +1,47 @@
 mod common;
-use beancount_parser::core::CoreDirective;
-use common::{lines, parse_core};
+use beancount_parser::core::{Amount, Balance, NumberExpr, Pad};
+use common::{lines, parse_as};
+use smallvec::smallvec;
 
 #[test]
 fn balance_directive_no_tolerance() {
   let input = lines(&[r#"2010-02-01 balance Assets:Cash 100 USD"#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Balance(balance)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let balance: Balance = parse_as(&input, "book.bean");
+
+  let expected = Balance {
+    meta: balance.meta.clone(),
+    span: balance.span,
+    date: "2010-02-01".into(),
+    account: "Assets:Cash".into(),
+    amount: Amount {
+      raw: "100 USD".into(),
+      number: NumberExpr::Literal("100".into()),
+      currency: Some("USD".into()),
+    },
+    tolerance: None,
+    comment: None,
+    key_values: smallvec![],
   };
 
-  assert_eq!(balance.amount.currency.as_deref(), Some("USD"));
-  assert!(balance.tolerance.is_none());
+  assert_eq!(balance, expected);
 }
 
 #[test]
 fn pad_directive() {
   let input = lines(&[r#"2010-03-01 pad Assets:Cash Equity:Pad"#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Pad(pad)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let pad: Pad = parse_as(&input, "book.bean");
+
+  let expected = Pad {
+    meta: pad.meta.clone(),
+    span: pad.span,
+    date: "2010-03-01".into(),
+    account: "Assets:Cash".into(),
+    from_account: "Equity:Pad".into(),
+    comment: None,
+    key_values: smallvec![],
   };
 
-  assert_eq!(pad.account, "Assets:Cash");
-  assert_eq!(pad.from_account, "Equity:Pad");
+  assert_eq!(pad, expected);
 }

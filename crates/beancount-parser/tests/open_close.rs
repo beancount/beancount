@@ -1,6 +1,7 @@
 mod common;
-use beancount_parser::core::{CoreDirective, KeyValueValue};
-use common::{lines, parse_core};
+use beancount_parser::core::{Close, KeyValue, KeyValueValue, Open};
+use common::{lines, parse_as};
+use smallvec::smallvec;
 
 #[test]
 fn open_directive_with_metadata() {
@@ -11,37 +12,50 @@ fn open_directive_with_metadata() {
     r#"  note: "opened account""#,
   ]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Open(open)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let open: Open = parse_as(&input, "book.bean");
+
+  let mut key_values = open.key_values.clone();
+  key_values[0] = KeyValue {
+    value: Some(KeyValueValue::Bool(true)),
+    ..key_values[0].clone()
+  };
+  key_values[1] = KeyValue {
+    value: Some(KeyValueValue::Date("2010-01-01".into())),
+    ..key_values[1].clone()
+  };
+  key_values[2] = KeyValue {
+    value: Some(KeyValueValue::String("opened account".into())),
+    ..key_values[2].clone()
   };
 
-  assert_eq!(open.account, "Assets:Cash");
-  assert_eq!(open.currencies.as_slice(), &["USD"]);
-  assert_eq!(open.opt_booking.as_deref(), Some("FIFO"));
-  assert_eq!(open.key_values.len(), 3);
-  assert!(matches!(
-    open.key_values[0].value,
-    Some(KeyValueValue::Bool(true))
-  ));
-  assert!(
-    matches!(open.key_values[1].value, Some(KeyValueValue::Date(ref d)) if d == "2010-01-01")
-  );
-  assert!(
-    matches!(open.key_values[2].value, Some(KeyValueValue::String(ref s)) if s == "opened account")
-  );
+  let expected = Open {
+    date: "2010-01-01".into(),
+    account: "Assets:Cash".into(),
+    currencies: smallvec!["USD".into()],
+    meta: open.meta.clone(),
+    span: open.span,
+    opt_booking: Some("FIFO".into()),
+    comment: None,
+    key_values,
+  };
+
+  assert_eq!(open, expected);
 }
 
 #[test]
 fn close_directive() {
   let input = lines(&[r#"2010-04-01 close Assets:Cash"#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Close(close)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let close: Close = parse_as(&input, "book.bean");
+
+  let expected = Close {
+    date: "2010-04-01".into(),
+    account: "Assets:Cash".into(),
+    meta: close.meta.clone(),
+    span: close.span,
+    comment: None,
+    key_values: smallvec![],
   };
 
-  assert_eq!(close.account, "Assets:Cash");
+  assert_eq!(close, expected);
 }

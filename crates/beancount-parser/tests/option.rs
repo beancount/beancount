@@ -1,17 +1,19 @@
 mod common;
-use beancount_parser::core::CoreDirective;
-use common::{lines, parse_core};
+use beancount_parser::core::OptionDirective;
+use common::{lines, parse_as};
 
 #[test]
 fn option_directive() {
   let input = lines(&[r#"option "title" "Example Book""#]);
 
-  let directives = parse_core(&input, "books/main.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Option(opt)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let opt: OptionDirective = parse_as(&input, "books/main.bean");
+
+  let expected = OptionDirective {
+    meta: opt.meta.clone(),
+    span: opt.span,
+    key: "title".into(),
+    value: "Example Book".into(),
   };
 
-  assert_eq!(opt.key, "title");
-  assert_eq!(opt.value, "Example Book");
+  assert_eq!(opt, expected);
 }

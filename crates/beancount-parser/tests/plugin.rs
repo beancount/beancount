@@ -1,17 +1,19 @@
 mod common;
-use beancount_parser::core::CoreDirective;
-use common::{lines, parse_core};
+use beancount_parser::core::Plugin;
+use common::{lines, parse_as};
 
 #[test]
 fn plugin_directive() {
   let input = lines(&[r#"plugin "beancount.plugins.module" "{'k':1}""#]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Plugin(plugin)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let plugin: Plugin = parse_as(&input, "book.bean");
+
+  let expected = Plugin {
+    meta: plugin.meta.clone(),
+    span: plugin.span,
+    name: "beancount.plugins.module".into(),
+    config: Some("{'k':1}".into()),
   };
 
-  assert_eq!(plugin.name, "beancount.plugins.module");
-  assert_eq!(plugin.config.as_deref(), Some("{'k':1}"));
+  assert_eq!(plugin, expected);
 }

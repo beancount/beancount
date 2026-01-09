@@ -12,7 +12,7 @@ pub type SmallKeyValues = SmallVec<[KeyValue; 4]>;
 pub type SmallPostings = SmallVec<[Posting; 4]>;
 pub type SmallCustomValues = SmallVec<[CustomValue; 2]>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CoreDirective {
   Open(Open),
   Close(Close),
@@ -36,7 +36,7 @@ pub enum CoreDirective {
   Raw(Raw),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Raw {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -44,7 +44,7 @@ pub struct Raw {
   pub text: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Open {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -56,7 +56,7 @@ pub struct Open {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Close {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -66,7 +66,7 @@ pub struct Close {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Balance {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -78,7 +78,7 @@ pub struct Balance {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pad {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -89,7 +89,7 @@ pub struct Pad {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -103,7 +103,7 @@ pub struct Transaction {
   pub postings: SmallPostings,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Posting {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -117,7 +117,7 @@ pub struct Posting {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Commodity {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -127,7 +127,7 @@ pub struct Commodity {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Price {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -138,7 +138,7 @@ pub struct Price {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Event {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -149,7 +149,7 @@ pub struct Event {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Query {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -160,7 +160,7 @@ pub struct Query {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Note {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -171,7 +171,7 @@ pub struct Note {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Document {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -185,7 +185,7 @@ pub struct Document {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Custom {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -196,7 +196,7 @@ pub struct Custom {
   pub key_values: SmallKeyValues,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CustomValue {
   String(String),
   Date(NaiveDate),
@@ -233,7 +233,7 @@ fn parse_bool_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<bool, Pars
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OptionDirective {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -241,14 +241,14 @@ pub struct OptionDirective {
   pub value: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Include {
   pub meta: ast::Meta,
   pub span: ast::Span,
   pub filename: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Plugin {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -256,28 +256,28 @@ pub struct Plugin {
   pub config: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagDirective {
   pub meta: ast::Meta,
   pub span: ast::Span,
   pub tag: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushMeta {
   pub meta: ast::Meta,
   pub span: ast::Span,
   pub key_value: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PopMeta {
   pub meta: ast::Meta,
   pub span: ast::Span,
   pub key: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyValue {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -285,7 +285,7 @@ pub struct KeyValue {
   pub value: Option<KeyValueValue>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyValueValue {
   String(String),
   UnquotedString(String),
@@ -294,7 +294,7 @@ pub enum KeyValueValue {
   Raw(String),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOp {
   Add,
   Sub,
@@ -302,7 +302,7 @@ pub enum BinaryOp {
   Div,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NumberExpr {
   Missing,
   Literal(String),
@@ -338,7 +338,7 @@ impl From<ast::NumberExpr<'_>> for NumberExpr {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NumberEvalError {
   pub message: String,
 }
@@ -386,14 +386,14 @@ pub fn number_expr_to_decimal(num: &NumberExpr) -> Result<Decimal, NumberEvalErr
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CostAmount {
   pub per: Option<NumberExpr>,
   pub total: Option<NumberExpr>,
   pub currency: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CostSpec {
   pub raw: String,
   pub amount: Option<CostAmount>,
@@ -403,7 +403,7 @@ pub struct CostSpec {
   pub is_total: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Amount {
   pub raw: String,
   pub number: NumberExpr,

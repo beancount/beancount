@@ -5,20 +5,24 @@ use beancount_parser::ParseError;
 use beancount_parser::ast;
 use beancount_parser::core;
 use beancount_parser::parse_str;
-use chrono::Datelike;
+use chrono::{Datelike, NaiveDate};
 use core::CoreDirective;
 use core::normalize_directives;
 use pyo3::IntoPyObject;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
-use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyString, PyTuple};
+use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyModule, PyString, PyTuple};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 
+mod data;
+use data::{Booking, PyOpen};
+
 #[pymodule]
-fn _parser_rust(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
-  DATA_CACHE.get_or_try_init(py, || DataCache::init(py))?;
+fn _parser_rust(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
+  m.add_class::<Booking>()?;
+  m.add_class::<PyOpen>()?;
   m.add_function(wrap_pyfunction!(load_file, m)?)?;
   m.add_function(wrap_pyfunction!(parse_string, m)?)?;
   m.add_class::<PyParserError>()?;
@@ -82,10 +86,6 @@ struct DataCache {
   amount_ctor: Py<PyAny>,
   // beancount.core.data.new_metadata callable.
   new_metadata: Py<PyAny>,
-  // beancount.core.data.Booking enum.
-  booking_enum: Py<PyAny>,
-  // beancount.core.data.Open class.
-  open_cls: Py<PyAny>,
   // beancount.core.data.Close class.
   close_cls: Py<PyAny>,
   // beancount.core.data.Balance class.
@@ -110,6 +110,15 @@ struct DataCache {
   document_cls: Py<PyAny>,
   // beancount.core.data.Custom class.
   custom_cls: Py<PyAny>,
+  // beancount.core.data.Booking class and cached enum instances.
+  booking_cls: Py<PyAny>,
+  booking_strict: Py<PyAny>,
+  booking_strict_with_size: Py<PyAny>,
+  booking_none: Py<PyAny>,
+  booking_average: Py<PyAny>,
+  booking_fifo: Py<PyAny>,
+  booking_lifo: Py<PyAny>,
+  booking_hifo: Py<PyAny>,
   // beancount.core.position.CostSpec class.
   cost_spec_cls: Py<PyAny>,
   // beancount.parser.grammar.ValueType class.
@@ -164,13 +173,20 @@ impl DataCache {
     let option_descriptors = parse_option_descriptors(py, &options_defs)?;
     let deepcopy_fn = copy_mod.getattr("deepcopy")?.unbind();
     let amount_ctor = amount_mod.getattr("Amount")?.unbind();
+    let booking_cls = data_mod.getattr("Booking")?.unbind();
+    let booking_cls_bound = booking_cls.bind(py);
+    let booking_strict = booking_cls_bound.getattr("STRICT")?.unbind();
+    let booking_strict_with_size = booking_cls_bound.getattr("STRICT_WITH_SIZE")?.unbind();
+    let booking_none = booking_cls_bound.getattr("NONE")?.unbind();
+    let booking_average = booking_cls_bound.getattr("AVERAGE")?.unbind();
+    let booking_fifo = booking_cls_bound.getattr("FIFO")?.unbind();
+    let booking_lifo = booking_cls_bound.getattr("LIFO")?.unbind();
+    let booking_hifo = booking_cls_bound.getattr("HIFO")?.unbind();
 
     Ok(Self {
       py_true: builtins_mod.getattr("True")?.unbind(),
       py_false: builtins_mod.getattr("False")?.unbind(),
       new_metadata: data_mod.getattr("new_metadata")?.unbind(),
-      booking_enum: data_mod.getattr("Booking")?.unbind(),
-      open_cls: data_mod.getattr("Open")?.unbind(),
       close_cls: data_mod.getattr("Close")?.unbind(),
       balance_cls: data_mod.getattr("Balance")?.unbind(),
       pad_cls: data_mod.getattr("Pad")?.unbind(),
@@ -183,6 +199,14 @@ impl DataCache {
       note_cls: data_mod.getattr("Note")?.unbind(),
       document_cls: data_mod.getattr("Document")?.unbind(),
       custom_cls: data_mod.getattr("Custom")?.unbind(),
+      booking_cls,
+      booking_strict,
+      booking_strict_with_size,
+      booking_none,
+      booking_average,
+      booking_fifo,
+      booking_lifo,
+      booking_hifo,
       amount_ctor,
       deepcopy_fn,
       cost_spec_cls,
@@ -204,6 +228,23 @@ impl DataCache {
 
 fn cache(py: Python<'_>) -> PyResult<&'static DataCache> {
   DATA_CACHE.get_or_try_init(py, || DataCache::init(py))
+}
+
+fn booking_to_native(booking: Option<&str>) -> PyResult<Option<Booking>> {
+  match booking {
+    Some("STRICT") => Ok(Some(Booking::STRICT)),
+    Some("STRICT_WITH_SIZE") => Ok(Some(Booking::STRICT_WITH_SIZE)),
+    Some("NONE") | Some("None") => Ok(Some(Booking::None)),
+    Some("AVERAGE") => Ok(Some(Booking::AVERAGE)),
+    Some("FIFO") => Ok(Some(Booking::FIFO)),
+    Some("LIFO") => Ok(Some(Booking::LIFO)),
+    Some("HIFO") => Ok(Some(Booking::HIFO)),
+    Some(other) => Err(PyValueError::new_err(format!(
+      "Invalid booking type: {}",
+      other
+    ))),
+    None => Ok(None),
+  }
 }
 
 fn parse_option_descriptors(
@@ -499,16 +540,45 @@ fn meta_extra<'py>(
 }
 
 fn convert_open(py: Python<'_>, open: &core::Open) -> PyResult<Py<PyAny>> {
-  let cache = cache(py)?;
-  let cls = &cache.open_cls;
-  let currencies = PyList::new(py, open.currencies.iter().map(|c| c.as_str()))?;
-  let booking = match open.opt_booking {
-    Some(ref name) => cache.booking_enum.getattr(py, name.as_str())?,
-    None => py.None(),
-  };
   let meta = make_metadata(py, &open.meta, meta_extra(py, &open.key_values)?)?;
-  let date = py_date(py, open.date.as_str())?;
-  cls.call1(py, (meta, date, open.account.as_str(), currencies, booking))
+  let date_native = parse_naive_date_fast(open.date.as_str())?;
+  let booking_native = booking_to_native(open.opt_booking.as_deref())?;
+  PyOpen::from_core_parts(
+    py,
+    meta,
+    date_native,
+    open.account.as_str(),
+    &open.currencies,
+    booking_native,
+  )
+}
+
+fn parse_naive_date_fast(date: &str) -> PyResult<NaiveDate> {
+  let trimmed = date.trim();
+  if trimmed.len() != 10
+    || trimmed.as_bytes()[4] != b'-'
+    || trimmed.as_bytes()[7] != b'-'
+    || !trimmed
+      .as_bytes()
+      .iter()
+      .enumerate()
+      .all(|(i, b)| (i == 4 || i == 7) || b.is_ascii_digit())
+  {
+    return Err(PyValueError::new_err(format!("invalid date `{}`", date)));
+  }
+
+  let year: i32 = trimmed[0..4]
+    .parse()
+    .map_err(|err| PyValueError::new_err(format!("invalid year `{}`: {}", date, err)))?;
+  let month: u32 = trimmed[5..7]
+    .parse()
+    .map_err(|err| PyValueError::new_err(format!("invalid month `{}`: {}", date, err)))?;
+  let day: u32 = trimmed[8..10]
+    .parse()
+    .map_err(|err| PyValueError::new_err(format!("invalid day `{}`: {}", date, err)))?;
+
+  NaiveDate::from_ymd_opt(year, month, day)
+    .ok_or_else(|| PyValueError::new_err(format!("invalid date `{}`", date)))
 }
 
 fn convert_close(py: Python<'_>, close: &core::Close) -> PyResult<Py<PyAny>> {

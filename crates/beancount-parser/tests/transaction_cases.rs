@@ -1,7 +1,7 @@
 mod common;
 use beancount_parser::ast::PriceOperator;
-use beancount_parser::core::{CoreDirective, KeyValueValue, NumberExpr};
-use common::{lines, parse_core};
+use beancount_parser::core::{KeyValueValue, NumberExpr, Transaction};
+use common::{lines, parse_as};
 
 #[test]
 fn transaction_directive_with_postings() {
@@ -14,11 +14,7 @@ fn transaction_directive_with_postings() {
     r#"    status: pending"#,
   ]);
 
-  let directives = parse_core(&input, "book.bean");
-  let slice = directives.as_slice();
-  let [CoreDirective::Transaction(txn)] = slice else {
-    panic!("unexpected directives: {slice:?}");
-  };
+  let txn: Transaction = parse_as(&input, "book.bean");
 
   assert_eq!(txn.txn.as_deref(), Some("*"));
   assert_eq!(txn.payee.as_deref(), Some("Payee"));

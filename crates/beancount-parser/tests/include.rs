@@ -1,6 +1,6 @@
 mod common;
-use beancount_parser::core::CoreDirective;
-use common::{lines, parse_core};
+use beancount_parser::core::Include;
+use common::{lines, parse_as};
 use std::path::PathBuf;
 
 #[test]
@@ -9,11 +9,13 @@ fn include_directive_resolves_path() {
   let expected = PathBuf::from("books").join("includes/extra.bean");
   let input = lines(&[r#"include "includes/extra.bean""#]);
 
-  let directives = parse_core(&input, filename);
-  let slice = directives.as_slice();
-  let [CoreDirective::Include(include)] = slice else {
-    panic!("unexpected directives: {slice:?}");
+  let include: Include = parse_as(&input, filename);
+
+  let expected = Include {
+    meta: include.meta.clone(),
+    span: include.span,
+    filename: expected.to_string_lossy().into_owned(),
   };
 
-  assert_eq!(include.filename, expected.to_string_lossy());
+  assert_eq!(include, expected);
 }

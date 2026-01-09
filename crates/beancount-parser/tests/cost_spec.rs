@@ -1,4 +1,7 @@
-use beancount_parser::{ast::Directive, parse_str};
+use beancount_parser::{
+  ast::{Amount, CostAmount, CostSpec, Directive, NumberExpr, Posting, Transaction},
+  parse_str,
+};
 
 #[test]
 fn parses_posting_cost_spec() {
@@ -20,67 +23,87 @@ fn parses_posting_cost_spec() {
   let directives = parse_str(&input, "input.bean").expect("parse failed");
   assert_eq!(directives.len(), 4);
 
-  // First transaction
-  let txn1 = match &directives[2] {
-    Directive::Transaction(t) => t,
-    other => panic!("expected transaction, got {other:?}"),
+  let Directive::Transaction(txn1) = directives[2].clone() else {
+    panic!("expected transaction, got {:?}", directives[2]);
   };
-  assert_eq!(txn1.postings.len(), 2);
-  let p1 = &txn1.postings[0];
-  assert_eq!(p1.account, "Assets:Investing");
-  let amt1 = p1.amount.as_ref().expect("amount");
-  assert_eq!(amt1.raw, "30 HOOL");
-  assert_eq!(
-    amt1.number,
-    beancount_parser::ast::NumberExpr::Literal("30")
-  );
-  assert_eq!(amt1.currency, Some("HOOL"));
-  let cost1 = p1.cost_spec.as_ref().expect("cost_spec");
-  let cost_amount = cost1.amount.as_ref().expect("cost amount");
-  assert_eq!(
-    cost_amount.per,
-    Some(beancount_parser::ast::NumberExpr::Literal("40"))
-  );
-  assert_eq!(cost_amount.total, None);
-  assert_eq!(cost_amount.currency, Some("USD"));
-  assert!(!cost1.merge);
-  assert!(!cost1.is_total);
-  assert_eq!(cost1.date, None);
-  assert_eq!(cost1.label, None);
-  assert_eq!(p1.price_operator, None);
-  assert_eq!(p1.price_annotation, None);
 
-  let p1b = &txn1.postings[1];
-  assert_eq!(p1b.account, "Assets:Other");
-  assert!(p1b.amount.is_none());
-  assert_eq!(p1b.cost_spec, None);
-
-  // Second transaction
-  let txn2 = match &directives[3] {
-    Directive::Transaction(t) => t,
-    other => panic!("expected transaction, got {other:?}"),
+  let mut postings1 = txn1.postings.clone();
+  postings1[0] = Posting {
+    account: "Assets:Investing",
+    amount: Some(Amount {
+      raw: "30 HOOL",
+      number: NumberExpr::Literal("30"),
+      currency: Some("HOOL"),
+    }),
+    cost_spec: Some(CostSpec {
+      raw: "{40 USD}",
+      amount: Some(CostAmount {
+        per: Some(NumberExpr::Literal("40")),
+        total: None,
+        currency: Some("USD"),
+      }),
+      date: None,
+      label: None,
+      merge: false,
+      is_total: false,
+    }),
+    price_operator: None,
+    price_annotation: None,
+    ..postings1[0].clone()
   };
-  assert_eq!(txn2.postings.len(), 2);
-  let p2 = &txn2.postings[0];
-  let amt2 = p2.amount.as_ref().expect("amount");
-  assert_eq!(amt2.raw, "-20 HOOL");
-  assert_eq!(
-    amt2.number,
-    beancount_parser::ast::NumberExpr::Literal("-20")
-  );
-  assert_eq!(amt2.currency, Some("HOOL"));
-  let cost2 = p2.cost_spec.as_ref().expect("cost_spec");
-  let cost_amount = cost2.amount.as_ref().expect("cost amount");
-  assert_eq!(
-    cost_amount.per,
-    Some(beancount_parser::ast::NumberExpr::Literal("40"))
-  );
-  assert_eq!(cost_amount.total, None);
-  assert_eq!(cost_amount.currency, Some("USD"));
-  assert!(!cost2.merge);
-  assert!(!cost2.is_total);
-  assert_eq!(cost2.date, None);
-  assert_eq!(cost2.label, None);
-  assert_eq!(p2.price_operator, None);
-  assert_eq!(p2.price_annotation, None);
+  postings1[1] = Posting {
+    account: "Assets:Other",
+    amount: None,
+    cost_spec: None,
+    ..postings1[1].clone()
+  };
+
+  let expected_txn1 = Directive::Transaction(Transaction {
+    postings: postings1,
+    ..txn1.clone()
+  });
+
+  assert_eq!(directives[2], expected_txn1);
+
+  let Directive::Transaction(txn2) = directives[3].clone() else {
+    panic!("expected transaction, got {:?}", directives[3]);
+  };
+
+  let mut postings2 = txn2.postings.clone();
+  postings2[0] = Posting {
+    account: "Assets:Investing",
+    amount: Some(Amount {
+      raw: "-20 HOOL",
+      number: NumberExpr::Literal("-20"),
+      currency: Some("HOOL"),
+    }),
+    cost_spec: Some(CostSpec {
+      raw: "{40 USD}",
+      amount: Some(CostAmount {
+        per: Some(NumberExpr::Literal("40")),
+        total: None,
+        currency: Some("USD"),
+      }),
+      date: None,
+      label: None,
+      merge: false,
+      is_total: false,
+    }),
+    price_operator: None,
+    price_annotation: None,
+    ..postings2[0].clone()
+  };
+  postings2[1] = Posting {
+    account: "Assets:Other",
+    amount: None,
+    cost_spec: None,
+    ..postings2[1].clone()
+  };
+
+  let expected_txn2 = Directive::Transaction(Transaction {
+    postings: postings2,
+    ..txn2.clone()
+  });
+
+  assert_eq!(directives[3], expected_txn2);
 }

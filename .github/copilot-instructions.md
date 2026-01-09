@@ -15,4 +15,4 @@ crates:
 ## Something need to notice:
 
 1. rust is a language that need compiling. so when you update rust code and try to check if parser works as expected in python, you should call shell comamnd `maturin develop` first.
-2. our rust native library has a type stubs with it. when you update the signature, you must update type-stub accordingly.
+2. the crate `crates/beancount-parser-py/` will compiled to `beancount/parser/_parser_rust.abi3.so` and will be imported as `beancount/parser/_parser_rust`, when you update the signature, you must update type-stub accordingly.
