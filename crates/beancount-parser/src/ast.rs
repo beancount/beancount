@@ -50,16 +50,8 @@ pub enum Directive<'a> {
   Pushmeta(PushMeta<'a>),
   Popmeta(PopMeta<'a>),
 
-  /// Any entry/directive we don't parse yet.
-  Raw(Raw<'a>),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Raw<'a> {
-  pub meta: Meta,
-  pub kind: &'a str,
-  pub span: Span,
-  pub text: &'a str,
+  /// Line-level comment.
+  Comment(Comment<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -360,4 +352,11 @@ pub struct PopMeta<'a> {
   pub meta: Meta,
   pub span: Span,
   pub key: &'a str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Comment<'a> {
+  pub meta: Meta,
+  pub span: Span,
+  pub text: &'a str,
 }

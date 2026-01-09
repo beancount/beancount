@@ -35,24 +35,6 @@ pub fn parse_str<'a>(
 
   let directives = parse::parse_directives(root, source, filename.to_owned())?;
 
-  let all_raw = directives
-    .iter()
-    .all(|d| matches!(d, crate::ast::Directive::Raw(_)));
-
-  if all_raw && !directives.is_empty() {
-    let meta = match &directives[0] {
-      crate::ast::Directive::Raw(raw) => &raw.meta,
-      _ => unreachable!(),
-    };
-
-    return Err(parse::ParseError {
-      filename: meta.filename.clone(),
-      line: meta.line,
-      column: meta.column,
-      message: "syntax error".to_string(),
-    });
-  }
-
   Ok(directives)
 }
 

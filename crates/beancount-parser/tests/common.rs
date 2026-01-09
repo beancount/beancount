@@ -1,6 +1,5 @@
 use beancount_parser::core::{BinaryOp, CoreDirective, NumberExpr};
 use beancount_parser::{ast, normalize_directives, parse_str};
-use tree_sitter::Parser;
 
 #[cfg(test)]
 #[allow(dead_code)]
@@ -33,7 +32,6 @@ macro_rules! impl_from_core {
   };
 }
 
-impl_from_core!(beancount_parser::core::Raw, Raw);
 impl_from_core!(beancount_parser::core::Open, Open);
 impl_from_core!(beancount_parser::core::Close, Close);
 impl_from_core!(beancount_parser::core::Balance, Balance);
@@ -51,6 +49,7 @@ impl_from_core!(beancount_parser::core::Include, Include);
 impl_from_core!(beancount_parser::core::Plugin, Plugin);
 impl_from_core!(beancount_parser::core::PushMeta, Pushmeta);
 impl_from_core!(beancount_parser::core::PopMeta, Popmeta);
+impl_from_core!(beancount_parser::core::Comment, Comment);
 
 #[cfg(test)]
 #[allow(dead_code)]
@@ -97,29 +96,6 @@ pub(crate) fn parse_as_many<T: FromCore>(input: &str, filename: &str) -> Vec<T> 
     .into_iter()
     .map(|dir| T::from_core(dir).unwrap_or_else(|| panic!("unexpected directive")))
     .collect()
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-pub(crate) fn parse_as_allow_raw<T: FromCore>(input: &str, filename: &str) -> T {
-  let directives = parse_core_allow_all_raw(input, filename);
-  assert_eq!(directives.len(), 1, "expected a single directive");
-  let directive = directives.into_iter().next().expect("directive");
-  T::from_core(directive).unwrap_or_else(|| panic!("unexpected directive"))
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-pub(crate) fn parse_core_allow_all_raw(input: &str, filename: &str) -> Vec<CoreDirective> {
-  let mut parser = Parser::new();
-  parser
-    .set_language(&beancount_tree_sitter::language())
-    .expect("load grammar");
-  let tree = parser.parse(input, None).expect("parse tree");
-  let root = tree.root_node();
-  let ast = beancount_parser::parse::parse_directives(root, input, filename.to_owned())
-    .expect("parse directives");
-  normalize_directives(ast).expect("normalize failed")
 }
 
 #[cfg(test)]

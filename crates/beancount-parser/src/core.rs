@@ -33,15 +33,7 @@ pub enum CoreDirective {
   Poptag(TagDirective),
   Pushmeta(PushMeta),
   Popmeta(PopMeta),
-  Raw(Raw),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Raw {
-  pub meta: ast::Meta,
-  pub span: ast::Span,
-  pub kind: String,
-  pub text: String,
+  Comment(Comment),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -278,6 +270,13 @@ pub struct PopMeta {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Comment {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyValue {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -445,20 +444,19 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
       ast::Directive::Poptag(tag) => Ok(CoreDirective::Poptag(TagDirective::try_from(tag)?)),
       ast::Directive::Pushmeta(pm) => Ok(CoreDirective::Pushmeta(PushMeta::try_from(pm)?)),
       ast::Directive::Popmeta(pm) => Ok(CoreDirective::Popmeta(PopMeta::try_from(pm)?)),
-      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from(raw)?)),
+      ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from(comment)?)),
     }
   }
 }
 
-impl<'a> TryFrom<ast::Raw<'a>> for Raw {
+impl<'a> TryFrom<ast::Comment<'a>> for Comment {
   type Error = ParseError;
 
-  fn try_from(raw: ast::Raw<'a>) -> Result<Self, Self::Error> {
+  fn try_from(comment: ast::Comment<'a>) -> Result<Self, Self::Error> {
     Ok(Self {
-      meta: raw.meta,
-      span: raw.span,
-      kind: raw.kind.to_string(),
-      text: raw.text.to_string(),
+      meta: comment.meta,
+      span: comment.span,
+      text: comment.text.to_string(),
     })
   }
 }

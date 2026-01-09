@@ -1,18 +1,14 @@
 mod common;
-use beancount_parser::core::Raw;
-use common::{lines, parse_as_allow_raw};
+use beancount_parser::core::Comment;
+use common::{FromCore, lines, parse_core};
 
 #[test]
-fn raw_directive_for_comment() {
+fn comments_are_ignored() {
   let input = lines(&[r#"; trailing raw text"#]);
 
-  let raw: Raw = parse_as_allow_raw(&input, "book.bean");
-
-  let expected = Raw {
-    kind: "comment".into(),
-    text: raw.text.clone(),
-    ..raw.clone()
-  };
-
-  assert_eq!(raw, expected);
+  let directives = parse_core(&input, "book.bean");
+  assert_eq!(directives.len(), 1);
+  let comment =
+    Comment::from_core(directives.into_iter().next().unwrap()).expect("comment directive");
+  assert_eq!(comment.text, "; trailing raw text");
 }

@@ -473,24 +473,90 @@ fn partition_directives(
       CoreDirective::Pushtag(_)
       | CoreDirective::Poptag(_)
       | CoreDirective::Pushmeta(_)
-      | CoreDirective::Popmeta(_) => {}
-      CoreDirective::Raw(_) => {}
+      | CoreDirective::Popmeta(_)
+      | CoreDirective::Comment(_) => filtered.push(directive),
       other => filtered.push(other),
     }
   }
   (includes, filtered, options, plugins)
 }
 
+type PyEntriesAndErrors = (Vec<Py<PyAny>>, Vec<Py<PyAny>>);
+
 fn convert_directives(
   py: Python<'_>,
   directives: Vec<CoreDirective>,
+  filename: &str,
   dcontext: &Bound<'_, PyAny>,
-) -> PyResult<Py<PyAny>> {
-  let entries: Vec<Py<PyAny>> = directives
-    .iter()
-    .filter_map(|directive| convert_directive(py, directive, dcontext).transpose())
-    .collect::<PyResult<_>>()?;
-  Ok(PyList::new(py, entries)?.unbind().into())
+) -> PyResult<PyEntriesAndErrors> {
+  use std::collections::BTreeSet;
+
+  let mut entries: Vec<Py<PyAny>> = Vec::new();
+  let mut errors: Vec<Py<PyAny>> = Vec::new();
+  let mut active_tags: BTreeSet<String> = BTreeSet::new();
+
+  for directive in directives {
+    match directive {
+      CoreDirective::Pushtag(tag) => {
+        active_tags.insert(tag.tag.clone());
+      }
+      CoreDirective::Poptag(tag) => {
+        if !active_tags.remove(&tag.tag) {
+          let err = ParseError {
+            filename: tag.meta.filename.clone(),
+            line: tag.meta.line,
+            column: tag.meta.column,
+            message: format!("Attempting to pop absent tag: '{}'", tag.tag),
+          };
+          errors.push(build_parser_error(py, err)?);
+        }
+      }
+      CoreDirective::Transaction(txn) => {
+        if active_tags.is_empty() {
+          entries.push(convert_transaction(py, &txn, dcontext)?);
+        } else {
+          let mut tagged = txn.clone();
+          let mut tag_set: BTreeSet<String> = tagged.tags.iter().cloned().collect();
+          tag_set.extend(active_tags.iter().cloned());
+          tagged.tags = tag_set.into_iter().collect();
+          entries.push(convert_transaction(py, &tagged, dcontext)?);
+        }
+      }
+      CoreDirective::Document(doc) => {
+        if active_tags.is_empty() {
+          entries.push(convert_document(py, &doc)?);
+        } else {
+          let mut tagged = doc.clone();
+          let mut tag_set: BTreeSet<String> = tagged.tags.iter().cloned().collect();
+          tag_set.extend(active_tags.iter().cloned());
+          tagged.tags = tag_set.into_iter().collect();
+          entries.push(convert_document(py, &tagged)?);
+        }
+      }
+      CoreDirective::Comment(_) => {
+        // Ignore comments in Python bindings.
+      }
+      other => {
+        if let Some(entry) = convert_directive(py, &other, dcontext)? {
+          entries.push(entry);
+        }
+      }
+    }
+  }
+
+  if !active_tags.is_empty() {
+    for tag in active_tags {
+      let err = ParseError {
+        filename: filename.to_string(),
+        line: 0,
+        column: 0,
+        message: format!("Unbalanced pushed tag: '{}'", tag),
+      };
+      errors.push(build_parser_error(py, err)?);
+    }
+  }
+
+  Ok((entries, errors))
 }
 
 fn convert_directive(
@@ -1062,8 +1128,11 @@ fn parse_source(
   let dcontext = options_map
     .get_item("dcontext")?
     .ok_or_else(|| PyValueError::new_err("dcontext option missing from defaults"))?;
-  let entries = convert_directives(py, filtered, &dcontext)?;
-  let errors: Py<PyAny> = PyList::new(py, option_errors)?.unbind().into();
+  let (entries_vec, tag_errors) = convert_directives(py, filtered, filename, &dcontext)?;
+  let entries = PyList::new(py, entries_vec)?.unbind().into();
+  let mut all_errors = option_errors;
+  all_errors.extend(tag_errors);
+  let errors: Py<PyAny> = PyList::new(py, all_errors)?.unbind().into();
   Ok((entries, errors, options_map.unbind().into()))
 }
 

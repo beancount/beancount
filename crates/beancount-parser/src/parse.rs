@@ -223,57 +223,73 @@ fn collect_directives<'a>(
         match child.kind().into() {
           NodeKind::Headline => continue,
           NodeKind::Section => collect_directives(child, source, filename, directives)?,
-          _ => directives.push(parse_top_level(child, source, filename)?),
+          _ => {
+            if let Some(directive) = parse_top_level(child, source, filename)? {
+              directives.push(directive);
+            }
+          }
         }
       }
       Ok(())
     }
     _ => {
-      directives.push(parse_top_level(node, source, filename)?);
+      if let Some(directive) = parse_top_level(node, source, filename)? {
+        directives.push(directive);
+      }
       Ok(())
     }
   }
 }
 
-fn parse_top_level<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+fn parse_top_level<'a>(
+  node: Node,
+  source: &'a str,
+  filename: &str,
+) -> Result<Option<Directive<'a>>> {
   match node.kind().into() {
     // entries
-    NodeKind::Open => parse_open(node, source, filename),
-    NodeKind::Close => parse_close(node, source, filename),
-    NodeKind::Balance => parse_balance(node, source, filename),
-    NodeKind::Pad => parse_pad(node, source, filename),
-    NodeKind::Transaction => parse_transaction(node, source, filename),
-    NodeKind::Document => parse_document(node, source, filename),
-    NodeKind::Note => parse_note(node, source, filename),
-    NodeKind::Event => parse_event(node, source, filename),
-    NodeKind::Price => parse_price(node, source, filename),
-    NodeKind::Commodity => parse_commodity(node, source, filename),
-    NodeKind::Query => parse_query(node, source, filename),
-    NodeKind::Custom => parse_custom(node, source, filename),
+    NodeKind::Open => parse_open(node, source, filename).map(Some),
+    NodeKind::Close => parse_close(node, source, filename).map(Some),
+    NodeKind::Balance => parse_balance(node, source, filename).map(Some),
+    NodeKind::Pad => parse_pad(node, source, filename).map(Some),
+    NodeKind::Transaction => parse_transaction(node, source, filename).map(Some),
+    NodeKind::Document => parse_document(node, source, filename).map(Some),
+    NodeKind::Note => parse_note(node, source, filename).map(Some),
+    NodeKind::Event => parse_event(node, source, filename).map(Some),
+    NodeKind::Price => parse_price(node, source, filename).map(Some),
+    NodeKind::Commodity => parse_commodity(node, source, filename).map(Some),
+    NodeKind::Query => parse_query(node, source, filename).map(Some),
+    NodeKind::Custom => parse_custom(node, source, filename).map(Some),
 
     // directives
-    NodeKind::Option => parse_option(node, source, filename),
-    NodeKind::Include => parse_include(node, source, filename),
-    NodeKind::Plugin => parse_plugin(node, source, filename),
-    NodeKind::Pushtag => parse_pushtag(node, source, filename),
-    NodeKind::Poptag => parse_poptag(node, source, filename),
-    NodeKind::Pushmeta => parse_pushmeta(node, source, filename),
-    NodeKind::Popmeta => parse_popmeta(node, source, filename),
+    NodeKind::Option => parse_option(node, source, filename).map(Some),
+    NodeKind::Include => parse_include(node, source, filename).map(Some),
+    NodeKind::Plugin => parse_plugin(node, source, filename).map(Some),
+    NodeKind::Pushtag => parse_pushtag(node, source, filename).map(Some),
+    NodeKind::Poptag => parse_poptag(node, source, filename).map(Some),
+    NodeKind::Pushmeta => parse_pushmeta(node, source, filename).map(Some),
+    NodeKind::Popmeta => parse_popmeta(node, source, filename).map(Some),
 
     // Known non-directive top-level nodes.
-    NodeKind::Section | NodeKind::Comment => Ok(raw(node, source, filename)),
+    NodeKind::Comment => parse_comment(node, source, filename).map(Some),
 
-    _ => Ok(raw(node, source, filename)),
+    // Org-mode headings like "* Options" can produce stray flag tokens; ignore them.
+    NodeKind::Flag => Ok(None),
+
+    _ => Err(parse_error(
+      node,
+      filename,
+      format!("unexpected node `{}`", node.kind()),
+    )),
   }
 }
 
-fn raw<'a>(node: Node, source: &'a str, filename: &str) -> Directive<'a> {
-  Directive::Raw(Raw {
+fn parse_comment<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  Ok(Directive::Comment(Comment {
     meta: meta(node, filename),
-    kind: node.kind(),
     span: span(node),
     text: slice(node, source),
-  })
+  }))
 }
 
 fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
@@ -365,6 +381,7 @@ fn parse_balance<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     amount: parsed_amount.amount,
+
     tolerance: parsed_amount.tolerance,
     comment: field_text(node, "comment", source),
     key_values: collect_key_values(node, source, filename)?,

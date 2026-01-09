@@ -89,7 +89,7 @@ def generate_enum(enum_name: str, names: list[str]) -> list[str]:
         for name, variant in zip(names, variants)
     ]
     lines.append(f"      _ => {enum_name}::Unknown,")
-    lines.append("     }")
+    lines.append("    }")
     lines.append("  }")
     lines.append("}")
     lines.append("")
