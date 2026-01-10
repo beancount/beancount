@@ -6,5 +6,5 @@ infrastructure that you need to write some code to carry them out. This
 directory is intended to contain those as usable scripts or examples.
 """
 
-__copyright__ = "Copyright (C) 2008, 2014, 2016-2017, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2008, 2014, 2016-2017, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"

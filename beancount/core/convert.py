@@ -19,7 +19,7 @@ Functions named ``get_*()`` are used to compute values from postings to their pr
 Functions named ``convert_*()`` are used to convert postings and amounts to any currency.
 """
 
-__copyright__ = "Copyright (C) 2013-2017, 2019-2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2021, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from decimal import Decimal

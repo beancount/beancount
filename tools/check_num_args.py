@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Count the number of arguments used to call a particular function in a codebase."""
 
-__copyright__ = "Copyright (C) 2015-2017, 2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2021, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

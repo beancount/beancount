@@ -1,6 +1,6 @@
 """Compute a hash of the source files in order to warn when the source goes out of date."""
 
-__copyright__ = "Copyright (C) 2015-2017, 2019-2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019-2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

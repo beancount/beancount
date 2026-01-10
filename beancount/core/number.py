@@ -12,7 +12,7 @@ About Decimal usage:
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2015-2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2021, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re

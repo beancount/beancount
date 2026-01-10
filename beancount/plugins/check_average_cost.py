@@ -10,7 +10,7 @@ unmatching bookings without checks. (Note the contrived context here: Ideally
 the "NONE" booking method would simply not exist.)
 """
 
-__copyright__ = "Copyright (C) 2018-2019, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2018-2019, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

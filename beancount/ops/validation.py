@@ -8,7 +8,7 @@ constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
 
-__copyright__ = "Copyright (C) 2013-2017, 2020, 2022-2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2020, 2022-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path

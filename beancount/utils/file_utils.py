@@ -1,6 +1,6 @@
 """File utilities."""
 
-__copyright__ = "Copyright (C) 2014-2018, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import logging

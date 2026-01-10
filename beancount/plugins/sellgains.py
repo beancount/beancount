@@ -57,7 +57,7 @@ income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
 
-__copyright__ = "Copyright (C) 2015-2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2021, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

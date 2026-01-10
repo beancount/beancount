@@ -16,7 +16,7 @@ Note that if a symbol has been ignored in at least one account, it will
 therefore be further in all Price directives and Metadata values.
 """
 
-__copyright__ = "Copyright (C) 2015-2017, 2020-2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2020-2021, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

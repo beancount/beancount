@@ -12,7 +12,7 @@ I'm not certain this will be useful in the long run, so placing it in a
 plugin.
 """
 
-__copyright__ = "Copyright (C) 2014, 2016-2017, 2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016-2017, 2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
