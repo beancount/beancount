@@ -81,6 +81,7 @@ jobs:
     needs:
       - wheels
       - sdist
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

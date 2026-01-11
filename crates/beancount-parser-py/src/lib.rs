@@ -21,6 +21,9 @@ use data::Booking;
 
 #[pymodule]
 fn _parser_rust(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
+  const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+  m.add("__version__", VERSION)?;
   m.add_class::<Booking>()?;
   m.add_function(wrap_pyfunction!(load_file, m)?)?;
   m.add_function(wrap_pyfunction!(parse_string, m)?)?;
@@ -507,23 +510,9 @@ fn convert_directives(
         };
         active_meta.entry(pm.key).or_default().push(kv);
       }
-      CoreDirective::Popmeta(pm) => {
-        match active_meta.get_mut(&pm.key) {
-          Some(stack) => {
-            if stack.pop().is_none() {
-              let err = ParseError {
-                filename: pm.meta.filename.clone(),
-                line: pm.meta.line,
-                column: pm.meta.column,
-                message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
-              };
-              errors.push(build_parser_error(py, err)?);
-            }
-            if stack.is_empty() {
-              active_meta.remove(&pm.key);
-            }
-          }
-          None => {
+      CoreDirective::Popmeta(pm) => match active_meta.get_mut(&pm.key) {
+        Some(stack) => {
+          if stack.pop().is_none() {
             let err = ParseError {
               filename: pm.meta.filename.clone(),
               line: pm.meta.line,
@@ -532,8 +521,20 @@ fn convert_directives(
             };
             errors.push(build_parser_error(py, err)?);
           }
+          if stack.is_empty() {
+            active_meta.remove(&pm.key);
+          }
         }
-      }
+        None => {
+          let err = ParseError {
+            filename: pm.meta.filename.clone(),
+            line: pm.meta.line,
+            column: pm.meta.column,
+            message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
+          };
+          errors.push(build_parser_error(py, err)?);
+        }
+      },
       CoreDirective::Pushtag(tag) => {
         active_tags.insert(tag.tag.clone());
       }

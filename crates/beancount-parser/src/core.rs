@@ -235,9 +235,7 @@ fn parse_key_value_value(
     .map(|v| match v {
       ast::KeyValueValue::String(raw) => match unquote_json(raw, meta, ctx) {
         Ok(val) => Ok(KeyValueValue::String(val)),
-        Err(err) if allow_unquoted_on_error => {
-          Ok(KeyValueValue::UnquotedString(raw.to_string()))
-        }
+        Err(err) if allow_unquoted_on_error => Ok(KeyValueValue::UnquotedString(raw.to_string())),
         Err(err) => Err(err),
       },
       ast::KeyValueValue::UnquotedString(raw) => Ok(KeyValueValue::UnquotedString(raw.to_string())),
