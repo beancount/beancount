@@ -51,7 +51,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "beancount-parser"
-version = "3.3.0"
+version = "3.3.0-alpha.0"
 dependencies = [
  "anyhow",
  "beancount-tree-sitter",
@@ -66,7 +66,7 @@ dependencies = [
 
 [[package]]
 name = "beancount-parser-py"
-version = "3.3.0"
+version = "3.3.0-alpha.0"
 dependencies = [
  "beancount-parser",
  "chrono",
