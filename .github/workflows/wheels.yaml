@@ -4,6 +4,10 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
+  pull_request:
+    # trigger on self change to validation config
+    paths:
+      - .github/workflows/wheels.yaml
 
 jobs:
   sdist:
@@ -33,7 +37,7 @@ jobs:
         platform:
           - runner: ubuntu-24.04
             target: x86_64
-          - runner: ubuntu-24.04
+          - runner: ubuntu-24.04-arm
             target: aarch64
           - runner: macos-14
             target: aarch64
