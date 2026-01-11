@@ -60,14 +60,14 @@ jobs:
       - uses: actions/setup-python@v5
         if: ${{ runner.os != 'Linux' }}
         with:
-          python-version: "3.13"
+          python-version: "3.9"
           architecture: ${{ matrix.platform['py-arch'] || 'x64' }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist
+          args: --release --out dist -i python3.9
           sccache: true
           manylinux: auto
 
