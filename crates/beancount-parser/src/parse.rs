@@ -589,6 +589,7 @@ fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     .find(|n| *n == NodeKind::Tag)
     .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
+  let tag = tag.strip_prefix('#').unwrap_or(tag);
 
   Ok(Directive::Pushtag(TagDirective {
     meta: meta(node, filename),
@@ -604,6 +605,7 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     .find(|n| n == NodeKind::Tag)
     .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
+  let tag = tag.strip_prefix('#').unwrap_or(tag);
 
   Ok(Directive::Poptag(TagDirective {
     meta: meta(node, filename),

@@ -760,10 +760,11 @@ impl<'a> TryFrom<ast::TagDirective<'a>> for TagDirective {
   type Error = ParseError;
 
   fn try_from(tag: ast::TagDirective<'a>) -> Result<Self, Self::Error> {
+    let tag_value = tag.tag.strip_prefix('#').unwrap_or(tag.tag);
     Ok(Self {
       meta: tag.meta,
       span: tag.span,
-      tag: tag.tag.to_string(),
+      tag: tag_value.to_string(),
     })
   }
 }

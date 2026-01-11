@@ -11,7 +11,7 @@ fn pushtag_directive() {
   let expected = TagDirective {
     meta: tag.meta.clone(),
     span: tag.span,
-    tag: "#project".into(),
+    tag: "project".into(),
   };
 
   assert_eq!(tag, expected);
@@ -26,7 +26,7 @@ fn poptag_directive() {
   let expected = TagDirective {
     meta: tag.meta.clone(),
     span: tag.span,
-    tag: "#project".into(),
+    tag: "project".into(),
   };
 
   assert_eq!(tag, expected);
