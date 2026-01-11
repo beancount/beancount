@@ -30,7 +30,7 @@ class TestRustPushPopTags(unittest.TestCase):
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, "Unbalanced pushed tag")
         self.assertEqual(1, len(entries))
-        self.assertIn("#trip", entries[0].tags)
+        self.assertIn("trip", entries[0].tags)
 
     def test_tags_applied_until_popped(self):
         entries, errors, _ = self.parse(
@@ -48,8 +48,8 @@ class TestRustPushPopTags(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
         first, second = entries
-        self.assertIn("#project", first.tags)
-        self.assertNotIn("#project", second.tags)
+        self.assertIn("project", first.tags)
+        self.assertNotIn("project", second.tags)
 
 
 if __name__ == "__main__":

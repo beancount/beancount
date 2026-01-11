@@ -39,7 +39,10 @@ fn transaction_directive_with_postings() {
   let price1 = p1.price_annotation.as_ref().expect("p1 price");
   assert!(matches!(price1.number, NumberExpr::Missing));
   assert_eq!(price1.currency.as_deref(), Some("EUR"));
-  assert!(matches!(p1.key_values[0].value, Some(KeyValueValue::Raw(ref s)) if s == "123"));
+  assert!(matches!(
+    p1.key_values[0].value,
+    Some(KeyValueValue::UnquotedString(ref s)) if s == "123"
+  ));
 
   let p2 = &txn.postings[1];
   assert_eq!(p2.account, "Expenses:Food");

@@ -11,7 +11,41 @@ fn pushmeta_directive() {
   let expected = PushMeta {
     meta: pm.meta.clone(),
     span: pm.span,
-    key_value: "meta: \"yes\"".into(),
+    key: "meta".into(),
+    value: Some(KeyValueValue::String("yes".into())),
+  };
+
+  assert_eq!(pm, expected);
+}
+
+#[test]
+fn pushmeta_directive_with_unquoted_value() {
+  let input = lines(&[r#"pushmeta project: alpha"#]);
+
+  let pm: PushMeta = parse_as(&input, "book.bean");
+
+  let expected = PushMeta {
+    meta: pm.meta.clone(),
+    span: pm.span,
+    key: "project".into(),
+    value: Some(KeyValueValue::UnquotedString("alpha".into())),
+  };
+
+  assert_eq!(pm, expected);
+}
+
+#[test]
+fn pushmeta_directive_with_whitespace() {
+  let input = lines(&[r#"pushmeta   custom-key:   42"#]);
+
+  let pm: PushMeta = parse_as(&input, "book.bean");
+
+  let expected = PushMeta {
+    meta: pm.meta.clone(),
+    span: pm.span,
+    // Parser should normalize key/value into fields while trimming outer whitespace.
+    key: "custom-key".into(),
+    value: Some(KeyValueValue::UnquotedString("42".into())),
   };
 
   assert_eq!(pm, expected);

@@ -589,8 +589,9 @@ fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     .find(|n| *n == NodeKind::Tag)
     .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
+  let tag = tag.strip_prefix('#').unwrap_or(tag);
 
-  Ok(Directive::Pushtag(TagDirective {
+  Ok(Directive::PushTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
     tag,
@@ -604,8 +605,9 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
     .find(|n| n == NodeKind::Tag)
     .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
+  let tag = tag.strip_prefix('#').unwrap_or(tag);
 
-  Ok(Directive::Poptag(TagDirective {
+  Ok(Directive::PopTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
     tag,
@@ -613,11 +615,30 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
 }
 
 fn parse_pushmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
-  Ok(Directive::Pushmeta(PushMeta {
+  let mut cursor = node.walk();
+  let kv_node = node
+    .named_children(&mut cursor)
+    .find(|n| *n == NodeKind::KeyValue)
+    .ok_or_else(|| parse_error(node, filename, "missing key_value"))?;
+
+  let kv = parse_key_value(kv_node, source, filename)?;
+  let value = kv.value.map(|v| match v {
+    KeyValueValue::Raw(raw) => {
+      let trimmed = raw.trim();
+      if trimmed.is_empty() {
+        KeyValueValue::Raw(raw)
+      } else {
+        KeyValueValue::UnquotedString(trimmed)
+      }
+    }
+    other => other,
+  });
+
+  Ok(Directive::PushMeta(PushMeta {
     meta: meta(node, filename),
     span: span(node),
-    key_value: first_named_child_text(node, source)
-      .ok_or_else(|| parse_error(node, filename, "missing key_value"))?,
+    key: kv.key,
+    value,
   }))
 }
 
@@ -630,7 +651,7 @@ fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing key"))?;
 
-  Ok(Directive::Popmeta(PopMeta {
+  Ok(Directive::PopMeta(PopMeta {
     meta: meta(node, filename),
     span: span(node),
     key,
@@ -673,7 +694,8 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
           let val = raw.eq_ignore_ascii_case("true");
           KeyValueValue::Bool(val)
         } else {
-          KeyValueValue::Raw(slice(child, source))
+          let raw = slice(child, source);
+          KeyValueValue::UnquotedString(raw.trim())
         };
 
         value = Some(parsed);

@@ -32,7 +32,7 @@ fn collects_key_values_on_note_and_document() {
         ..kv0
       },
       KeyValue {
-        value: Some(KeyValueValue::Raw("42")),
+        value: Some(KeyValueValue::UnquotedString("42")),
         ..kv1
       },
     ],
