@@ -225,6 +225,29 @@ fn parse_bool_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<bool, Pars
   }
 }
 
+fn parse_key_value_value(
+  value: Option<ast::KeyValueValue<'_>>,
+  meta: &ast::Meta,
+  ctx: &str,
+  allow_unquoted_on_error: bool,
+) -> Result<Option<KeyValueValue>, ParseError> {
+  value
+    .map(|v| match v {
+      ast::KeyValueValue::String(raw) => match unquote_json(raw, meta, ctx) {
+        Ok(val) => Ok(KeyValueValue::String(val)),
+        Err(err) if allow_unquoted_on_error => {
+          Ok(KeyValueValue::UnquotedString(raw.to_string()))
+        }
+        Err(err) => Err(err),
+      },
+      ast::KeyValueValue::UnquotedString(raw) => Ok(KeyValueValue::UnquotedString(raw.to_string())),
+      ast::KeyValueValue::Date(raw) => Ok(KeyValueValue::Date(raw.to_string())),
+      ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
+      ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
+    })
+    .transpose()
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OptionDirective {
   pub meta: ast::Meta,
@@ -259,7 +282,8 @@ pub struct TagDirective {
 pub struct PushMeta {
   pub meta: ast::Meta,
   pub span: ast::Span,
-  pub key_value: String,
+  pub key: String,
+  pub value: Option<KeyValueValue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -440,10 +464,10 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
       ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from(opt)?)),
       ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from(include)?)),
       ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from(plugin)?)),
-      ast::Directive::Pushtag(tag) => Ok(CoreDirective::Pushtag(TagDirective::try_from(tag)?)),
-      ast::Directive::Poptag(tag) => Ok(CoreDirective::Poptag(TagDirective::try_from(tag)?)),
-      ast::Directive::Pushmeta(pm) => Ok(CoreDirective::Pushmeta(PushMeta::try_from(pm)?)),
-      ast::Directive::Popmeta(pm) => Ok(CoreDirective::Popmeta(PopMeta::try_from(pm)?)),
+      ast::Directive::PushTag(tag) => Ok(CoreDirective::Pushtag(TagDirective::try_from(tag)?)),
+      ast::Directive::PopTag(tag) => Ok(CoreDirective::Poptag(TagDirective::try_from(tag)?)),
+      ast::Directive::PushMeta(pm) => Ok(CoreDirective::Pushmeta(PushMeta::try_from(pm)?)),
+      ast::Directive::PopMeta(pm) => Ok(CoreDirective::Popmeta(PopMeta::try_from(pm)?)),
       ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from(comment)?)),
     }
   }
@@ -773,10 +797,13 @@ impl<'a> TryFrom<ast::PushMeta<'a>> for PushMeta {
   type Error = ParseError;
 
   fn try_from(pm: ast::PushMeta<'a>) -> Result<Self, Self::Error> {
+    let meta = pm.meta;
+    let value = parse_key_value_value(pm.value, &meta, "pushmeta value", true)?;
     Ok(Self {
-      meta: pm.meta,
+      meta,
       span: pm.span,
-      key_value: pm.key_value.to_string(),
+      key: pm.key.to_string(),
+      value,
     })
   }
 }
@@ -797,20 +824,7 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
   type Error = ParseError;
 
   fn try_from(kv: ast::KeyValue<'a>) -> Result<Self, Self::Error> {
-    let value = kv
-      .value
-      .map(|v| match v {
-        ast::KeyValueValue::String(raw) => {
-          unquote_json(raw, &kv.meta, "metadata value").map(KeyValueValue::String)
-        }
-        ast::KeyValueValue::UnquotedString(raw) => {
-          Ok(KeyValueValue::UnquotedString(raw.to_string()))
-        }
-        ast::KeyValueValue::Date(raw) => Ok(KeyValueValue::Date(raw.to_string())),
-        ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
-        ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
-      })
-      .transpose()?;
+    let value = parse_key_value_value(kv.value, &kv.meta, "metadata value", false)?;
 
     Ok(Self {
       meta: kv.meta,

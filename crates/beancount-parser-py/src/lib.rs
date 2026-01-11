@@ -14,7 +14,7 @@ use pyo3::prelude::*;
 use pyo3::sync::PyOnceLock;
 use pyo3::types::{PyDate, PyDict, PyFrozenSet, PyList, PyModule, PyString, PyTuple};
 use rust_decimal::Decimal;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 mod data;
 use data::Booking;
@@ -494,9 +494,46 @@ fn convert_directives(
   let mut entries: Vec<Py<PyAny>> = Vec::new();
   let mut errors: Vec<Py<PyAny>> = Vec::new();
   let mut active_tags: BTreeSet<String> = BTreeSet::new();
+  let mut active_meta: BTreeMap<String, Vec<core::KeyValue>> = BTreeMap::new();
 
   for directive in directives {
     match directive {
+      CoreDirective::Pushmeta(pm) => {
+        let kv = core::KeyValue {
+          meta: pm.meta.clone(),
+          span: pm.span,
+          key: pm.key.clone(),
+          value: pm.value.clone(),
+        };
+        active_meta.entry(pm.key).or_default().push(kv);
+      }
+      CoreDirective::Popmeta(pm) => {
+        match active_meta.get_mut(&pm.key) {
+          Some(stack) => {
+            if stack.pop().is_none() {
+              let err = ParseError {
+                filename: pm.meta.filename.clone(),
+                line: pm.meta.line,
+                column: pm.meta.column,
+                message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
+              };
+              errors.push(build_parser_error(py, err)?);
+            }
+            if stack.is_empty() {
+              active_meta.remove(&pm.key);
+            }
+          }
+          None => {
+            let err = ParseError {
+              filename: pm.meta.filename.clone(),
+              line: pm.meta.line,
+              column: pm.meta.column,
+              message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
+            };
+            errors.push(build_parser_error(py, err)?);
+          }
+        }
+      }
       CoreDirective::Pushtag(tag) => {
         active_tags.insert(tag.tag.clone());
       }
@@ -512,10 +549,13 @@ fn convert_directives(
         }
       }
       CoreDirective::Transaction(txn) => {
+        let mut txn = txn.clone();
+        txn.key_values = apply_meta_to_key_values(txn.key_values, &active_meta);
+
         if active_tags.is_empty() {
           entries.push(convert_transaction(py, &txn, dcontext)?);
         } else {
-          let mut tagged = txn.clone();
+          let mut tagged = txn;
           let mut tag_set: BTreeSet<String> = tagged.tags.iter().cloned().collect();
           tag_set.extend(active_tags.iter().cloned());
           tagged.tags = tag_set.into_iter().collect();
@@ -523,10 +563,13 @@ fn convert_directives(
         }
       }
       CoreDirective::Document(doc) => {
+        let mut doc = doc.clone();
+        doc.key_values = apply_meta_to_key_values(doc.key_values, &active_meta);
+
         if active_tags.is_empty() {
           entries.push(convert_document(py, &doc)?);
         } else {
-          let mut tagged = doc.clone();
+          let mut tagged = doc;
           let mut tag_set: BTreeSet<String> = tagged.tags.iter().cloned().collect();
           tag_set.extend(active_tags.iter().cloned());
           tagged.tags = tag_set.into_iter().collect();
@@ -536,7 +579,10 @@ fn convert_directives(
       CoreDirective::Comment(_) => {
         // Ignore comments in Python bindings.
       }
-      other => {
+      mut other => {
+        // Apply pushed metadata to directives that carry key-value metadata.
+        other = apply_meta_to_directive(other, &active_meta);
+
         if let Some(entry) = convert_directive(py, &other, dcontext)? {
           entries.push(entry);
         }
@@ -556,7 +602,96 @@ fn convert_directives(
     }
   }
 
+  if !active_meta.is_empty() {
+    for key in active_meta.keys() {
+      let err = ParseError {
+        filename: filename.to_string(),
+        line: 0,
+        column: 0,
+        message: format!("Unbalanced metadata key: '{}'", key),
+      };
+      errors.push(build_parser_error(py, err)?);
+    }
+  }
+
   Ok((entries, errors))
+}
+
+fn apply_meta_to_key_values(
+  mut key_values: core::SmallKeyValues,
+  active_meta: &BTreeMap<String, Vec<core::KeyValue>>,
+) -> core::SmallKeyValues {
+  use std::collections::BTreeSet;
+
+  let present: BTreeSet<String> = key_values.iter().map(|kv| kv.key.clone()).collect();
+
+  for (key, stack) in active_meta {
+    if present.contains(key) {
+      continue;
+    }
+    if let Some(kv) = stack.last() {
+      key_values.push(kv.clone());
+    }
+  }
+
+  key_values
+}
+
+fn apply_meta_to_directive(
+  directive: CoreDirective,
+  active_meta: &BTreeMap<String, Vec<core::KeyValue>>,
+) -> CoreDirective {
+  match directive {
+    CoreDirective::Open(mut open) => {
+      open.key_values = apply_meta_to_key_values(open.key_values, active_meta);
+      CoreDirective::Open(open)
+    }
+    CoreDirective::Close(mut close) => {
+      close.key_values = apply_meta_to_key_values(close.key_values, active_meta);
+      CoreDirective::Close(close)
+    }
+    CoreDirective::Balance(mut bal) => {
+      bal.key_values = apply_meta_to_key_values(bal.key_values, active_meta);
+      CoreDirective::Balance(bal)
+    }
+    CoreDirective::Pad(mut pad) => {
+      pad.key_values = apply_meta_to_key_values(pad.key_values, active_meta);
+      CoreDirective::Pad(pad)
+    }
+    CoreDirective::Commodity(mut c) => {
+      c.key_values = apply_meta_to_key_values(c.key_values, active_meta);
+      CoreDirective::Commodity(c)
+    }
+    CoreDirective::Price(mut p) => {
+      p.key_values = apply_meta_to_key_values(p.key_values, active_meta);
+      CoreDirective::Price(p)
+    }
+    CoreDirective::Event(mut e) => {
+      e.key_values = apply_meta_to_key_values(e.key_values, active_meta);
+      CoreDirective::Event(e)
+    }
+    CoreDirective::Query(mut q) => {
+      q.key_values = apply_meta_to_key_values(q.key_values, active_meta);
+      CoreDirective::Query(q)
+    }
+    CoreDirective::Note(mut n) => {
+      n.key_values = apply_meta_to_key_values(n.key_values, active_meta);
+      CoreDirective::Note(n)
+    }
+    CoreDirective::Document(mut d) => {
+      d.key_values = apply_meta_to_key_values(d.key_values, active_meta);
+      CoreDirective::Document(d)
+    }
+    CoreDirective::Custom(mut c) => {
+      c.key_values = apply_meta_to_key_values(c.key_values, active_meta);
+      CoreDirective::Custom(c)
+    }
+    CoreDirective::Transaction(mut t) => {
+      t.key_values = apply_meta_to_key_values(t.key_values, active_meta);
+      CoreDirective::Transaction(t)
+    }
+    other => other,
+  }
 }
 
 fn convert_directive(

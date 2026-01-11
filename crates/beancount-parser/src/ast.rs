@@ -45,10 +45,10 @@ pub enum Directive<'a> {
   Option(OptionDirective<'a>),
   Include(Include<'a>),
   Plugin(Plugin<'a>),
-  Pushtag(TagDirective<'a>),
-  Poptag(TagDirective<'a>),
-  Pushmeta(PushMeta<'a>),
-  Popmeta(PopMeta<'a>),
+  PushTag(TagDirective<'a>),
+  PopTag(TagDirective<'a>),
+  PushMeta(PushMeta<'a>),
+  PopMeta(PopMeta<'a>),
 
   /// Line-level comment.
   Comment(Comment<'a>),
@@ -344,7 +344,8 @@ pub struct TagDirective<'a> {
 pub struct PushMeta<'a> {
   pub meta: Meta,
   pub span: Span,
-  pub key_value: &'a str,
+  pub key: &'a str,
+  pub value: Option<KeyValueValue<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
