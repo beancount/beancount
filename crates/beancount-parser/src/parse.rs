@@ -261,8 +261,8 @@ fn parse_top_level<'a>(
     // Known non-directive top-level nodes.
     NodeKind::Comment => parse_comment(node, source, filename).map(Some),
 
-    // Org-mode headings like "* Options" can produce stray flag tokens; ignore them.
-    NodeKind::Flag => Ok(None),
+    // Preserve stray flag tokens as headlines (e.g., org-style headings without full parsing).
+    NodeKind::Flag => parse_flag_headline(node, source, filename).map(Some),
 
     _ => Err(parse_error(
       node,
@@ -281,6 +281,17 @@ fn parse_comment<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
 }
 
 fn parse_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let text = slice(node, source).trim_end_matches(&['\n', '\r'][..]);
+
+  Ok(Directive::Headline(Headline {
+    meta: meta(node, filename),
+    span: span(node),
+    text,
+  }))
+}
+
+fn parse_flag_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  // Treat orphaned flag tokens as minimal headlines so they are preserved for callers.
   let text = slice(node, source).trim_end_matches(&['\n', '\r'][..]);
 
   Ok(Directive::Headline(Headline {
