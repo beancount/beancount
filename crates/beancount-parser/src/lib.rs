@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(clippy::large_enum_variant)]
-#![deny(clippy::unwrap_used)]
+#![deny(clippy::unwrap_used, clippy::expect_used)]
 
 pub mod ast;
 pub mod core;
