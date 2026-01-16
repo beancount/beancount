@@ -474,10 +474,10 @@ fn partition_directives(
       CoreDirective::Include(include) => includes.push(include.filename.clone()),
       CoreDirective::Option(opt) => options.push(opt),
       CoreDirective::Plugin(plugin) => plugins.push(plugin),
-      CoreDirective::Pushtag(_)
-      | CoreDirective::Poptag(_)
-      | CoreDirective::Pushmeta(_)
-      | CoreDirective::Popmeta(_)
+      CoreDirective::PushTag(_)
+      | CoreDirective::PopTag(_)
+      | CoreDirective::PushMeta(_)
+      | CoreDirective::PopMeta(_)
       | CoreDirective::Headline(_)
       | CoreDirective::Comment(_) => filtered.push(directive),
       other => filtered.push(other),
@@ -503,7 +503,7 @@ fn convert_directives(
 
   for directive in directives {
     match directive {
-      CoreDirective::Pushmeta(pm) => {
+      CoreDirective::PushMeta(pm) => {
         let kv = core::KeyValue {
           meta: pm.meta.clone(),
           span: pm.span,
@@ -512,7 +512,7 @@ fn convert_directives(
         };
         active_meta.entry(pm.key).or_default().push(kv);
       }
-      CoreDirective::Popmeta(pm) => match active_meta.get_mut(&pm.key) {
+      CoreDirective::PopMeta(pm) => match active_meta.get_mut(&pm.key) {
         Some(stack) => {
           if stack.pop().is_none() {
             let err = ParseError {
@@ -537,10 +537,10 @@ fn convert_directives(
           errors.push(build_parser_error(py, err)?);
         }
       },
-      CoreDirective::Pushtag(tag) => {
+      CoreDirective::PushTag(tag) => {
         active_tags.insert(tag.tag.clone());
       }
-      CoreDirective::Poptag(tag) => {
+      CoreDirective::PopTag(tag) => {
         if !active_tags.remove(&tag.tag) {
           let err = ParseError {
             filename: tag.meta.filename.clone(),
