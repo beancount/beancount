@@ -15,5 +15,8 @@ build = "./build.rs"
 [dependencies]
 tree-sitter = { workspace = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tree-sitter-language = "0.1.6"
+
 [build-dependencies]
 cc = "1.2"
