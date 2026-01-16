@@ -7,9 +7,8 @@
 ---
 
 (file
-  (section
-    (headline
-      (item))))
+  (headline
+    (item)))
 
 ==============
 2 orgmode heading
@@ -22,12 +21,10 @@
 ---
 
 (file
-  (section
-    (headline
-      (item)))
-  (section
-    (headline
-      (item))))
+  (headline
+    (item))
+  (headline
+    (item)))
 
 ==============
 orgmode heading with txn
@@ -42,28 +39,27 @@ orgmode heading with txn
 ---
 
 (file
-  (section
-    (headline
-      (item))
-    (transaction
-      (date)
-      (txn)
-      (narration)
-      (tags_links
-        (link)
-        (tag))
-      (posting
-        (account)
-        (incomplete_amount
-          (number)
-          (currency)))
-      (posting
-        (account)
-        (incomplete_amount
-          (unary_number_expr
-            (minus)
-            (number))
-          (currency))))))
+  (headline
+    (item))
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
 
 ==============
 orgmode heading in different levels
@@ -78,15 +74,12 @@ orgmode heading in different levels
 ---
 
 (file
-  (section
-    (headline
-      (item))
-    (section
-      (headline
-        (item))
-      (section
-        (headline
-          (item))))))
+  (headline
+    (item))
+  (headline
+    (item))
+  (headline
+    (item)))
 
 ==============
 orgmode subheading with txn
@@ -100,25 +93,24 @@ orgmode subheading with txn
 ---
 
 (file
-  (section
-    (headline
-      (item))
-    (transaction
-      (date)
-      (txn)
-      (narration)
-      (tags_links
-        (link)
-        (tag))
-      (posting
-        (account)
-        (incomplete_amount
-          (number)
-          (currency)))
-      (posting
-        (account)
-        (incomplete_amount
-          (unary_number_expr
-            (minus)
-            (number))
-          (currency))))))
+  (headline
+    (item))
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

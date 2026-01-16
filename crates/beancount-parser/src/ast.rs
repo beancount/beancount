@@ -52,6 +52,8 @@ pub enum Directive<'a> {
 
   /// Line-level comment.
   Comment(Comment<'a>),
+  /// Org/Markdown style headline.
+  Headline(Headline<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -357,6 +359,13 @@ pub struct PopMeta<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Comment<'a> {
+  pub meta: Meta,
+  pub span: Span,
+  pub text: &'a str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Headline<'a> {
   pub meta: Meta,
   pub span: Span,
   pub text: &'a str,

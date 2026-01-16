@@ -33,7 +33,7 @@ module.exports = grammar({
     rules: {
         file: $ => repeat(
             choice(
-                $.section,
+                $.headline,
                 $._declarations,
                 $._nl,
             )

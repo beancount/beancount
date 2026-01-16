@@ -1,5 +1,5 @@
-use crate::{ParseError, ast};
 use crate::path_utils::resolve_path;
+use crate::{ParseError, ast};
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde_json::from_str as parse_json;
@@ -33,6 +33,7 @@ pub enum CoreDirective {
   Poptag(TagDirective),
   Pushmeta(PushMeta),
   Popmeta(PopMeta),
+  Headline(Headline),
   Comment(Comment),
 }
 
@@ -299,6 +300,13 @@ pub struct Comment {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Headline {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyValue {
   pub meta: ast::Meta,
   pub span: ast::Span,
@@ -467,6 +475,9 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
       ast::Directive::PushMeta(pm) => Ok(CoreDirective::Pushmeta(PushMeta::try_from(pm)?)),
       ast::Directive::PopMeta(pm) => Ok(CoreDirective::Popmeta(PopMeta::try_from(pm)?)),
       ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from(comment)?)),
+      ast::Directive::Headline(headline) => {
+        Ok(CoreDirective::Headline(Headline::try_from(headline)?))
+      }
     }
   }
 }
@@ -479,6 +490,30 @@ impl<'a> TryFrom<ast::Comment<'a>> for Comment {
       meta: comment.meta,
       span: comment.span,
       text: comment.text.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<ast::Headline<'a>> for Comment {
+  type Error = ParseError;
+
+  fn try_from(headline: ast::Headline<'a>) -> Result<Self, Self::Error> {
+    Ok(Self {
+      meta: headline.meta,
+      span: headline.span,
+      text: headline.text.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<ast::Headline<'a>> for Headline {
+  type Error = ParseError;
+
+  fn try_from(headline: ast::Headline<'a>) -> Result<Self, Self::Error> {
+    Ok(Self {
+      meta: headline.meta,
+      span: headline.span,
+      text: headline.text.to_string(),
     })
   }
 }

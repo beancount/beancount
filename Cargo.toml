@@ -1,5 +1,9 @@
 [workspace]
-members = ["crates/*"]
+members = [
+  "crates/beancount-tree-sitter",
+  "crates/beancount-parser",
+  "crates/beancount-parser-py",
+]
 resolver = "3"
 
 [workspace.package]

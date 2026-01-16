@@ -10,7 +10,7 @@
         "members": [
           {
             "type": "SYMBOL",
-            "name": "section"
+            "name": "headline"
           },
           {
             "type": "SYMBOL",

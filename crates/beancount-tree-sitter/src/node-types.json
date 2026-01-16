@@ -691,7 +691,7 @@
           "named": true
         },
         {
-          "type": "section",
+          "type": "headline",
           "named": true
         }
       ]
@@ -1319,54 +1319,6 @@
       "types": [
         {
           "type": "key_value",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "section",
-    "named": true,
-    "fields": {
-      "headline": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "headline",
-            "named": true
-          }
-        ]
-      },
-      "subsection": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "section",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "_directive",
-          "named": true
-        },
-        {
-          "type": "_entry",
-          "named": true
-        },
-        {
-          "type": "comment",
-          "named": true
-        },
-        {
-          "type": "flag",
           "named": true
         }
       ]

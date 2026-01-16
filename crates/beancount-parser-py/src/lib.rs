@@ -477,6 +477,7 @@ fn partition_directives(
       | CoreDirective::Poptag(_)
       | CoreDirective::Pushmeta(_)
       | CoreDirective::Popmeta(_)
+      | CoreDirective::Headline(_)
       | CoreDirective::Comment(_) => filtered.push(directive),
       other => filtered.push(other),
     }
@@ -577,7 +578,7 @@ fn convert_directives(
           entries.push(convert_document(py, &tagged)?);
         }
       }
-      CoreDirective::Comment(_) => {
+      CoreDirective::Comment(_) | CoreDirective::Headline(_) => {
         // Ignore comments in Python bindings.
       }
       mut other => {

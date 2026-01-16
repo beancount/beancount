@@ -3,8 +3,8 @@
 
 pub mod ast;
 pub mod core;
-pub mod path_utils;
 pub mod parse;
+pub mod path_utils;
 
 pub use core::{CoreDirective, normalize_directives};
 pub use parse::{ParseError, parse_amount_tokens, parse_directives};

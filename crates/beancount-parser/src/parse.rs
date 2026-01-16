@@ -216,20 +216,8 @@ fn collect_directives<'a>(
   directives: &mut Vec<Directive<'a>>,
 ) -> Result<()> {
   match node.kind().into() {
-    // Org/Markdown style sections can wrap real declarations; flatten them.
-    NodeKind::Section => {
-      let mut cursor = node.walk();
-      for child in node.named_children(&mut cursor) {
-        match child.kind().into() {
-          NodeKind::Headline => continue,
-          NodeKind::Section => collect_directives(child, source, filename, directives)?,
-          _ => {
-            if let Some(directive) = parse_top_level(child, source, filename)? {
-              directives.push(directive);
-            }
-          }
-        }
-      }
+    NodeKind::Headline => {
+      directives.push(parse_headline(node, source, filename)?);
       Ok(())
     }
     _ => {
@@ -289,6 +277,16 @@ fn parse_comment<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
     meta: meta(node, filename),
     span: span(node),
     text: slice(node, source),
+  }))
+}
+
+fn parse_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let text = slice(node, source).trim_end_matches(&['\n', '\r'][..]);
+
+  Ok(Directive::Headline(Headline {
+    meta: meta(node, filename),
+    span: span(node),
+    text,
   }))
 }
 

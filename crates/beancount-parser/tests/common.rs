@@ -50,6 +50,7 @@ impl_from_core!(beancount_parser::core::Plugin, Plugin);
 impl_from_core!(beancount_parser::core::PushMeta, Pushmeta);
 impl_from_core!(beancount_parser::core::PopMeta, Popmeta);
 impl_from_core!(beancount_parser::core::Comment, Comment);
+impl_from_core!(beancount_parser::core::Headline, Headline);
 
 #[cfg(test)]
 #[allow(dead_code)]
