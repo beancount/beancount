@@ -1,0 +1,83 @@
+=================
+extra whitespace
+=================
+
+
+2013-07-11 note Assets:Cash "test"
+
+
+;;
+
+
+---
+
+(file
+  (note
+    (date)
+    (account)
+    (string))
+  (comment))
+
+=============================
+extra whitespace transaction
+=============================
+
+2013-05-18 * "Nice dinner at Mermaid Inn"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash
+
+;; End of file',
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)))
+  (comment))
+
+===========================
+embedded quotes in strings
+===========================
+
+
+2013-07-11 note Assets:Cash "\"test\""
+
+2013-07-11 * "\"Groups\"" "\"Some things\""
+    reference: "\"test\""
+    Assets:Cash  -50 USD
+    Expenses:FIXME
+
+---
+
+(file
+  (note
+    (date)
+    (account)
+    (string))
+  (transaction
+    (date)
+    (txn)
+    (payee)
+    (narration)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (posting
+      (account))))

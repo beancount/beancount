@@ -1,0 +1,343 @@
+=============================
+entry transaction one string
+=============================
+
+2013-05-18 * "Nice dinner at Mermaid Inn"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+=============================
+entry transaction two string
+=============================
+
+2013-05-18 * "Mermaid Inn" "Nice dinner"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (payee)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+===================================
+entry transaction with txn keyword
+===================================
+
+2013-05-18 txn "Nice dinner at Mermaid Inn"
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==============
+entry balance
+==============
+
+2013-05-18 balance Assets:US:BestBank:Checking  200 USD
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))))
+
+===============
+entry balnce 2
+===============
+
+2013-05-18 balance Assets:US:BestBank:Checking  200 ~ 0.002 USD
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (number)
+      (currency))))
+
+===========
+entry open
+===========
+
+2013-05-18 open Assets:US:BestBank:Checking
+
+---
+
+(file
+  (open
+    (date)
+    (account)))
+
+=============
+entry open 2
+=============
+
+2013-05-18 open Assets:US:BestBank:Checking   USD
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency)))
+
+=============
+entry open 3
+=============
+
+2013-05-18 open Assets:Cash   USD,CAD,EUR
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency)
+    (currency)
+    (currency)))
+
+=============
+entry open 4
+=============
+
+2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency)
+    (opt_booking
+      (string))))
+
+=============
+entry open 5
+=============
+
+2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (opt_booking
+      (string))))
+
+============
+entry close
+============
+
+2013-05-18 close Assets:US:BestBank:Checking
+
+---
+
+(file
+  (close
+    (date)
+    (account)))
+
+================
+entry commodity
+================
+
+2013-05-18 commodity MSFT
+
+---
+
+(file
+  (commodity
+    (date)
+    (currency)))
+
+==========
+entry pad
+==========
+
+2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
+
+---
+
+(file
+  (pad
+    (date)
+    (account)
+    (account)))
+
+============
+entry event
+============
+
+2013-05-18 event "location" "New York, USA"
+
+---
+
+(file
+  (event
+    (date)
+    (string)
+    (string)))
+
+==================
+entry event empty
+==================
+
+2013-05-18 event "location" ""
+
+---
+
+(file
+  (event
+    (date)
+    (string)
+    (string)))
+
+============
+entry query
+============
+
+2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+
+---
+
+(file
+  (query
+    (date)
+    (string)
+    (string)))
+
+===========
+entry note
+===========
+
+2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
+
+---
+
+(file
+  (note
+    (date)
+    (account)
+    (string)))
+
+===============
+entry document
+===============
+
+2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
+
+---
+
+(file
+  (document
+    (date)
+    (account)
+    (filename
+      (string))))
+
+============
+entry price
+============
+
+2013-05-18 price USD   1.0290 CAD
+
+---
+
+(file
+  (price
+    (date)
+    (currency)
+    (amount
+      (number)
+      (currency))))
+
+=============
+entry custom
+=============
+
+2013-05-18 custom "budget" "weekly < 1000.00 USD" 2016-02-28 TRUE 43.03 USD 23
+
+---
+
+(file
+  (custom
+    (date)
+    (string)
+    (custom_value
+      (string))
+    (custom_value
+      (date))
+    (custom_value
+      (bool))
+    (custom_value
+      (number))
+    (custom_value
+      (account))
+    (custom_value
+      (number))))

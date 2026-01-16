@@ -5,6 +5,18 @@ on:
   - workflow_dispatch
 
 jobs:
+  rust-lints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+      - name: Cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +37,9 @@ jobs:
           python-version: '3.13'
 
       # pip doesn't support this
-      - uses: astral-sh/setup-uv@v5
-      - run: uv pip install -r ./pyproject.toml --extra types --system
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
 
-      - run: uv run --with mypy --with types-python-dateutil --with types-regex mypy .
+      - run: uv sync --dev
+      - run: mypy .

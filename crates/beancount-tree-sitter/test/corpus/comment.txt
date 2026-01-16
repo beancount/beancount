@@ -1,0 +1,957 @@
+========
+comment
+========
+
+;; 2012-06-01  BEGIN --------------------------------
+;; This is some comment.
+
+---
+
+(file
+  (comment)
+  (comment))
+
+===========================
+comment before transaction
+===========================
+
+; Hi
+2015-06-07 *
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (comment)
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==========================
+comment after transaction
+==========================
+
+2015-06-07 *
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+  ; Hi
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (comment)))
+
+========================
+comment between posting
+========================
+
+2015-06-07 *
+    Assets:Cash   1 USD
+    ; Hi
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (comment)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+======================
+comment after posting
+======================
+
+2015-06-07 *
+    Assets:Cash   1 USD    ; Hi
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (comment))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+================================
+comment after transaction start
+================================
+
+2015-06-07 *     ; Hi
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (comment)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==============================
+comment after balance start
+==============================
+
+1970-01-01 balance Assets:Checking 100 USD ; Blah
+    imported: TRUE
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (bool)))))
+
+====================================
+comment in balance key value list
+====================================
+
+1970-01-01 balance Assets:Checking 100 USD
+    ; Blah
+    imported: TRUE
+    ; Blah
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (bool)))
+    (comment)))
+
+==============================
+comment after close start
+==============================
+
+1970-01-01 close Assets:Checking ; Blah
+    reason: "Migrated"
+
+---
+
+(file
+  (close
+    (date)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in close key value list
+====================================
+
+1970-01-01 close Assets:Checking
+    ; Blah
+    reason: "migrated"
+    ; Blah
+
+---
+
+(file
+  (close
+    (date)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)))
+
+==============================
+comment after commodity start
+==============================
+
+1970-01-01 commodity USD ; Blah
+    precision: 2
+
+---
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (number)))))
+
+====================================
+comment in commodity key value list
+====================================
+
+1970-01-01 commodity USD
+    ; Blah
+    precision: 2
+    ; Blah
+
+---
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (number)))
+    (comment)))
+
+==============================
+comment after open start
+==============================
+
+1970-01-01 open Assets:Checking USD "FIFO" ; Blah
+    account-number: "12345"
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency)
+    (opt_booking
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in open key value list
+====================================
+
+1970-01-01 open Assets:Checking USD "FIFO"
+    ; Blah
+    account-number: "12345"
+    ; Blah
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency)
+    (opt_booking
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)))
+
+========
+comment
+========
+
+;; This is some comment.
+
+---
+
+(file
+  (comment))
+
+===========================
+comment before transaction
+===========================
+
+; Hi
+2015-06-07 *
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (comment)
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==========================
+comment after transaction
+==========================
+
+2015-06-07 *
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+  ; Hi
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))
+    (comment)))
+
+========================
+comment between posting
+========================
+
+2015-06-07 *
+    Assets:Cash   1 USD
+    ; Hi
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (comment)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+======================
+comment after posting
+======================
+
+2015-06-07 *
+    Assets:Cash   1 USD    ; Hi
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (comment))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+================================
+comment after transaction start
+================================
+
+2015-06-07 *     ; Hi
+    Assets:Cash   1 USD
+    Assets:Cash   -1 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (comment)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==============================
+comment after balance start
+==============================
+
+1970-01-01 balance Assets:Checking 100 USD ; Blah
+    imported: TRUE
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (bool)))))
+
+====================================
+comment in balance key value list
+====================================
+
+1970-01-01 balance Assets:Checking 100 USD
+    ; Blah
+    imported: TRUE
+    ; Blah
+
+---
+
+(file
+  (balance
+    (date)
+    (account)
+    (amount_tolerance
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (bool)))
+    (comment)))
+
+==============================
+comment after close start
+==============================
+
+1970-01-01 close Assets:Checking ; Blah
+    reason: "Migrated"
+
+---
+
+(file
+  (close
+    (date)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in close key value list
+====================================
+
+1970-01-01 close Assets:Checking
+    ; Blah
+    reason: "migrated"
+    ; Blah
+
+---
+
+(file
+  (close
+    (date)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)))
+
+==============================
+comment after commodity start
+==============================
+
+1970-01-01 commodity USD ; Blah
+    precision: 2
+
+---
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (number)))))
+
+====================================
+comment in commodity key value list
+====================================
+
+1970-01-01 commodity USD
+    ; Blah
+    precision: 2
+    ; Blah
+
+---
+
+(file
+  (commodity
+    (date)
+    (currency)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (number)))
+    (comment)))
+
+==============================
+comment after custom start
+==============================
+
+1970-01-01 custom "test" Assets:Checking "account number changed due to merger" ; Blah
+    new-account-number: "123456789"
+    old-account-number: "12345"
+
+---
+
+(file
+  (custom
+    (date)
+    (string)
+    (custom_value
+      (account))
+    (custom_value
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in custom key value list
+====================================
+
+1970-01-01 custom "test" Assets:Checking "account number changed due to merger"
+    ; Blah
+    new-account-number: "123456789"
+    ; Blah
+    old-account-number: "12345"
+
+---
+
+(file
+  (custom
+    (date)
+    (string)
+    (custom_value
+      (account))
+    (custom_value
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+==============================
+comment after document start
+==============================
+
+1970-01-01 document Assets:Checking "docs/notice.pdf" ; Blah
+    new-account-number: "123456789"
+    old-account-number: "12345"
+
+---
+
+(file
+  (document
+    (date)
+    (account)
+    (filename
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in document key value list
+====================================
+
+1970-01-01 document Assets:Checking "docs/notice.pdf"
+    ; Blah
+    new-account-number: "123456789"
+    ; Blah
+    old-account-number: "12345"
+
+---
+
+(file
+  (document
+    (date)
+    (account)
+    (filename
+      (string))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+==============================
+comment after event start
+==============================
+
+1970-01-01 event "location" "test" ; Blah
+    reason: "12345"
+
+---
+
+(file
+  (event
+    (date)
+    (string)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in event key value list
+====================================
+
+1970-01-01 event "location" "test"
+    ; Blah
+    reason: "12345"
+    ; Blah
+
+---
+
+(file
+  (event
+    (date)
+    (string)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)))
+
+==============================
+comment after note start
+==============================
+
+1970-01-01 note Assets:Checking "account number changed due to merger" ; Blah
+    new-account-number: "123456789"
+    old-account-number: "12345"
+
+---
+
+(file
+  (note
+    (date)
+    (account)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in note key value list
+====================================
+
+1970-01-01 note Assets:Checking "account number changed due to merger"
+    ; Blah
+    new-account-number: "123456789"
+    ; Blah
+    old-account-number: "12345"
+
+---
+
+(file
+  (note
+    (date)
+    (account)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+==============================
+comment after pad start
+==============================
+
+1970-01-01 pad Assets:Checking Equity:Opening-Balances ; Blah
+    reason: "12345"
+
+---
+
+(file
+  (pad
+    (date)
+    (account)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))))
+
+====================================
+comment in pad key value list
+====================================
+
+1970-01-01 pad Assets:Checking Equity:Opening-Balances
+    ; Blah
+    reason: "12345"
+    ; Blah
+
+---
+
+(file
+  (pad
+    (date)
+    (account)
+    (account)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (string)))
+    (comment)))
+
+==============================
+comment after price start
+==============================
+
+1970-01-01 price EUR 1.10 USD ; Blah
+    import-date: 2023-05-01
+
+---
+
+(file
+  (price
+    (date)
+    (currency)
+    (amount
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (date)))))
+
+====================================
+comment in price key value list
+====================================
+
+1970-01-01 price EUR 1.10 USD
+    ; Blah
+    import-date: 2023-05-01
+    ; Blah
+
+---
+
+(file
+  (price
+    (date)
+    (currency)
+    (amount
+      (number)
+      (currency))
+    (comment)
+    (key_value
+      (key)
+      (value
+        (date)))
+    (comment)))
+
+==============================
+comment after query start
+==============================
+
+1970-01-01 query "balances" "BALANCES" ; Blah
+    last-update: 2023-05-01
+
+---
+
+(file
+  (query
+    (date)
+    (string)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (date)))))
+
+====================================
+comment in query key value list
+====================================
+
+1970-01-01 query "balances" "BALANCES"
+    ; Blah
+    last-update: 2023-05-01
+    ; Blah
+
+---
+
+(file
+  (query
+    (date)
+    (string)
+    (string)
+    (comment)
+    (key_value
+      (key)
+      (value
+        (date)))
+    (comment)))

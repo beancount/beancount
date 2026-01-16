@@ -1,0 +1,297 @@
+=============
+no narration
+=============
+
+2013-05-18 *
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==============
+tag then link
+==============
+
+2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link)
+      (tag))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+==============
+link then tag
+==============
+
+2014-04-20 * "Money from CC" #trip ^610fa7f17e7a
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+----
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+============
+zero prices
+============
+
+2014-04-20 * "Like a conversion entry"
+    Equity:Conversions         100 USD @ 0 XFER
+    Equity:Conversions         101 CAD @ 0 XFER
+    Equity:Conversions         102 AUD @ 0 XFER
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))))
+
+=================================
+price annotation without explicit price
+=================================
+
+2011-05-17 * ""
+    Expenses:Restaurant   1.00 USD @ CAD
+    Assets:Other         -1.00 CAD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (at)
+      (price_annotation
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))
+
+===========
+zero units
+===========
+
+2014-04-20 * "Zero number of units"
+    Assets:Investment         0 HOOL {500.00 USD}
+    Assets:Cash               0 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency)))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))
+
+===========
+zero costs
+===========
+
+2014-04-20 * "Like a conversion entry"
+    Assets:Investment         10 HOOL {0 USD}
+    Assets:Cash                0 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency)))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))
+
+============
+no postings
+============
+
+2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link))))
+
+======================
+tags after first line
+======================
+
+2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+    #tag1 #tag2
+    ^link1 #tag3
+    #tag4 ^link2
+    ^link3 ^link4
+    #tag6
+    ^link5
+    Assets:Checking         100 USD
+    Assets:Checking         -99 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (tag)
+      (link))
+    (tags_links
+      (tag)
+      (tag))
+    (tags_links
+      (link)
+      (tag))
+    (tags_links
+      (tag)
+      (link))
+    (tags_links
+      (link)
+      (link))
+    (tags_links
+      (tag))
+    (tags_links
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

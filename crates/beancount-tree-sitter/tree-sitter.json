@@ -1,0 +1,18 @@
+{
+  "version": "0.25.4",
+  "generator": {
+    "abi": 15
+  },
+  "metadata": {
+    "name": "beancount",
+    "url": "https://github.com/beancount/beancount",
+    "description": "Tree-sitter grammar for Beancount",
+    "version": "2.4.1"
+  },
+  "grammars": [
+    {
+      "name": "beancount",
+      "scope": "source.beancount"
+    }
+  ]
+}

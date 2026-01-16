@@ -1,0 +1,22 @@
+[package]
+name = "beancount-tree-sitter"
+description = "beancount grammar for the tree-sitter parsing library"
+version = "2.4.2"
+keywords = ["incremental", "parsing", "beancount", "tree-sitter"]
+categories = ["parsing", "text-editors"]
+repository = "https://github.com/trim21/beancount"
+edition = { workspace = true }
+# Migrated from https://github.com/polarmutex/tree-sitter-beancount (MIT licensed).
+license = "GPL-2.0-only"
+build = "./build.rs"
+
+[features]
+
+[dependencies]
+tree-sitter = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tree-sitter-language = "0.1.6"
+
+[build-dependencies]
+cc = "1.2"

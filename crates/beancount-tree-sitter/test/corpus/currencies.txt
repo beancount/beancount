@@ -1,0 +1,66 @@
+=================
+parse currencies
+=================
+
+2014-01-19 open Assets:Underscore    DJ_EURO
+2014-01-19 open Assets:Period        DJ.EURO
+2014-01-19 open Assets:Apostrophe    DJ'EURO
+2014-01-19 open Assets:Numbers       EURO123
+
+---
+
+(file
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency))
+  (open
+    (date)
+    (account)
+    (currency)))
+
+================================
+different cost and price currency
+================================
+
+2018-03-21 * "Convert MR to KrisFlyer"
+    Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
+    Assets:Krisflyer            100 KRISFLYER
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency))
+      (cost_spec
+        (cost_comp
+          (compound_amount
+            (number)
+            (currency))))
+      (at)
+      (price_annotation
+        (incomplete_amount
+          (number)
+          (currency))))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))))

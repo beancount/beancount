@@ -352,12 +352,12 @@ class EntryPrinter:
 
     def Document(self, entry, oss):
         oss.write('{e.date} document {e.account} "{e.filename}"'.format(e=entry))
-        if entry.tags or entry.links:
+        for tag in sorted(entry.tags):
             oss.write(" ")
-            for tag in sorted(entry.tags):
-                oss.write("#{}".format(tag))
-            for link in sorted(entry.links):
-                oss.write("^{}".format(link))
+            oss.write("#{}".format(tag))
+        for link in sorted(entry.links):
+            oss.write(" ")
+            oss.write("^{}".format(link))
         oss.write("\n")
         self.write_metadata(entry.meta, oss)
 

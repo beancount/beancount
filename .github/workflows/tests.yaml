@@ -5,6 +5,34 @@ on:
   - workflow_dispatch
 
 jobs:
+
+  rust-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # cargo test has horrible output
+      - name: Install cargo-nexte st
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
+
+      - name: Cargo test
+        run: cargo nextest run
+
+  tree-sitter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # maybe we need a better way to manager the versio of tree-sitter-cli
+      - run: npm install -g tree-sitter-cli
+
+      - name: Run tree-sitter grammar tests
+        working-directory: crates/beancount-tree-sitter
+        run: tree-sitter test
+
   test:
     runs-on: ${{ matrix.os }}-latest
     strategy:
@@ -15,7 +43,6 @@ jobs:
           - windows
           - macos
         python:
-          - '3.9'
           - '3.10'
           - '3.11'
           - '3.12'
@@ -27,23 +54,16 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
-
-      - run: echo "PATH=$env:Path;C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_ENV" -Append
-        if: runner.os == 'Windows'
-      - run: pacman --noconfirm -S bison flex
-        if: runner.os == 'Windows'
-      - uses: bus1/cabuild/action/msdevshell@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: astral-sh/setup-uv@v7
         with:
-          architecture: x64
-        if: runner.os == 'Windows'
+          activate-environment: true
 
-      - run: brew install bison
-        if: runner.os == 'macOS'
-      - run: echo "/opt/homebrew/opt/bison/bin" >> $GITHUB_PATH
-        if: runner.os == 'macOS'
+      - name: Install Python tooling
+        run: uv pip install maturin pytest
 
-      - run: python -m pip install meson-python ninja pytest
-      - run: python -m pip install -v --no-build-isolation -Cbuild-dir=build -Csetup-args=-Dtests=enabled -e .
-      - run: pytest beancount
+      - name: Build extension in develop mode
+        run: maturin develop --locked
 
-      - run: meson test -C build/
+      - name: Run tests
+        run: pytest beancount

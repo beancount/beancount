@@ -1,0 +1,35 @@
+=======
+plugin
+=======
+
+plugin "beancount.plugin.unrealized"
+
+---
+
+(file
+    (plugin (string))
+)
+
+===================
+plugin with config
+===================
+
+plugin "beancount.plugin.unrealized" "Unrealized"
+
+---
+
+(file
+    (plugin (string) (string))
+)
+
+=================
+plugin as option
+=================
+
+option "plugin" "beancount.plugin.unrealized"
+
+---
+
+(file
+    (option (string) (string))
+)

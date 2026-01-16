@@ -386,7 +386,7 @@ class TestBalancePrecision(unittest.TestCase):
 
         2015-05-10 balance Assets:Bank:Checking   23.03 ~ 0.01 USD
         """
-        self.assertEqual(2, len(errors))
+        self.assertEqual(2, len(errors), errors)
         self.assertRegex(errors[0].message, "23.022")
         self.assertRegex(errors[1].message, "23.026")
 

@@ -1,9 +1,6 @@
 [build-system]
-build-backend = "mesonpy"
-requires = [
-    "meson-python >= 0.14.0",
-    "meson >= 1.2.1",
-]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
 
 [project]
 name = "beancount"
@@ -19,23 +16,11 @@ SQL-like query language to filter and aggregate financial data, and a
 web interface which renders those reports to HTML. Finally, it
 provides the scaffolding required to automate the conversion of
 external data into one's input file in Beancount syntax.""" }
-authors = [
-    { name = "Martin Blais", email = "blais@furius.ca" },
-]
+authors = [{ name = "Martin Blais", email = "blais@furius.ca" }]
 license = { text = "GPL-2.0-only" }
 requires-python = ">=3.9"
-dependencies = [
-    "click >=7.0",
-    "python-dateutil >=2.6.0",
-    "regex >=2022.9.13",
-]
+dependencies = ["click >=7.0", "python-dateutil >=2.6.0", "regex >=2022.9.13"]
 dynamic = ["version"]
-
-[project.optional-dependencies]
-types = [
-    "mypy==1.4.0",
-    "types-regex",
-]
 
 [project.scripts]
 bean-check = "beancount.scripts.check:main"
@@ -50,9 +35,22 @@ documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 donations = "https://www.paypal.com/paypalme/misislavski"
 
+[tool.maturin]
+manifest-path = "crates/beancount-parser-py/Cargo.toml"
+module-name = "beancount.parser._parser_rust"
+bindings = "pyo3"
+strip = true
+
 [tool.mypy]
 mypy_path = '$MYPY_CONFIG_FILE_DIR'
-exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
+exclude = [
+    "tools",
+    "experiments",
+    ".venv",
+    ".venv/lib/",
+    "build",
+    "__pycache__"
+]
 check_untyped_defs = false
 python_version = '3.9'
 cache_dir = ".venv/.mypy_cache"
@@ -63,9 +61,9 @@ ignore_errors = true
 
 [tool.black]
 line-length = 92
+
 # Please note: We use 'ruff format' to autoformat buffers.
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
-
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -90,7 +88,6 @@ exclude = [
     "node_modules",
     "venv",
 ]
-
 # Same as Black.
 line-length = 92
 
@@ -110,13 +107,10 @@ ignore = [
     'PLW0603',
     'PLW2901',
 ]
-
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
-
-per-file-ignores = { }
-
+per-file-ignores = {  }
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
@@ -124,6 +118,19 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 force-single-line = true
 
 [tool.ruff.lint.mccabe]
-
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    # somehow mypy will raised a error in deps tree
+    # so we need to set pytest<9
+    "pytest",
+    "rich>=14.2.0",
+    "types-python-dateutil>=2.9.0.20251115",
+    "types-regex>=2025.11.3.20251106",
+]

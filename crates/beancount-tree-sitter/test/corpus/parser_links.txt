@@ -1,0 +1,29 @@
+======
+links
+======
+
+2013-05-18 * "Something something" ^38784734873
+    Expenses:Restaurant         100 USD
+    Assets:US:Cash             -100 USD
+
+---
+
+(file
+  (transaction
+    (date)
+    (txn)
+    (narration)
+    (tags_links
+      (link))
+    (posting
+      (account)
+      (incomplete_amount
+        (number)
+        (currency)))
+    (posting
+      (account)
+      (incomplete_amount
+        (unary_number_expr
+          (minus)
+          (number))
+        (currency)))))

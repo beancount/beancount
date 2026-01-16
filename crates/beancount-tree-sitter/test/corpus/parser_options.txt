@@ -1,0 +1,39 @@
+====================
+option single value
+====================
+
+option "title" "Super Rich"
+
+---
+
+(file
+    (option (string) (string))
+)
+
+==================
+option list value
+==================
+
+option "documents" "/path/docs/a"
+option "documents" "/path/docs/b"
+option "documents" "/path/docs/c"
+
+---
+
+(file
+    (option (string) (string))
+    (option (string) (string))
+    (option (string) (string))
+)
+
+====================
+option with special char
+====================
+
+option "precision" "*.5000"
+
+---
+
+(file
+    (option (string) (string))
+)

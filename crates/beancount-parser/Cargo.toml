@@ -1,0 +1,26 @@
+[package]
+name = "beancount-parser"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Core beancount parsing logic."
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+beancount-tree-sitter = { path = "../beancount-tree-sitter" }
+tree-sitter = { workspace = true }
+ropey = '1.6.1'
+anyhow = "1.0.100"
+serde_json = { workspace = true }
+smallvec = { workspace = true }
+chrono = { version = "0.4.38", default-features = false }
+rust_decimal = "1.36.0"
+path-clean = "1.0.1"
+
+[dev-dependencies]
+similar = { workspace = true }
