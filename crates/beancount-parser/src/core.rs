@@ -1,11 +1,10 @@
 use crate::{ParseError, ast};
+use crate::path_utils::resolve_path;
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde_json::from_str as parse_json;
 use smallvec::SmallVec;
 use std::convert::TryFrom;
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::Path;
 use std::str::FromStr;
 
 pub type SmallStrVec = SmallVec<[String; 4]>;
@@ -1022,47 +1021,4 @@ fn unquote_json(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<String, ParseE
       })
     }
   }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn resolve_path(base_filename: &str, filename: &str) -> String {
-  let path = Path::new(filename);
-  if path.is_absolute() {
-    return filename.to_string();
-  }
-
-  let mut base_dir = Path::new(base_filename)
-    .parent()
-    .unwrap_or_else(|| Path::new(""))
-    .to_path_buf();
-
-  if (base_dir.as_os_str().is_empty() || base_filename.starts_with('<'))
-    && let Ok(cwd) = std::env::current_dir()
-  {
-    base_dir = cwd;
-  }
-
-  base_dir.join(path).to_string_lossy().into_owned()
-}
-
-#[cfg(target_arch = "wasm32")]
-fn resolve_path(base_filename: &str, filename: &str) -> String {
-  if base_filename.is_empty() {
-    return filename.to_string();
-  }
-
-  if filename.is_empty() {
-    return base_filename.to_string();
-  }
-
-  if filename.starts_with('/')
-    || filename.starts_with("./")
-    || filename.starts_with("../")
-    || filename.starts_with('~')
-    || filename.contains(':')
-  {
-    return filename.to_string();
-  }
-
-  format!("{}/{}", base_filename.trim_end_matches('/'), filename)
 }

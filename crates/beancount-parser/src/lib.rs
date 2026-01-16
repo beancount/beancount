@@ -3,6 +3,7 @@
 
 pub mod ast;
 pub mod core;
+pub mod path_utils;
 pub mod parse;
 
 pub use core::{CoreDirective, normalize_directives};

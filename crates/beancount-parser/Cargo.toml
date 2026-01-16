@@ -20,6 +20,7 @@ serde_json = { workspace = true }
 smallvec = { workspace = true }
 chrono = "0.4.38"
 rust_decimal = "1.36.0"
+path-clean = "1.0.1"
 
 [dev-dependencies]
 similar = { workspace = true }
