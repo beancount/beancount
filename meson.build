@@ -1,4 +1,10 @@
-project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>=1.1')
+project(
+    'beancount',
+    'c',
+    version: files('beancount/VERSION'),
+    default_options: ['python.allow_limited_api=false'],
+    meson_version: '>=1.3.0',
+)
 
 bison = find_program('bison', 'win_bison', version: '>=3.8.0')
 flex = find_program('flex', 'win_flex', version: '>=2.6.4')
@@ -234,6 +240,9 @@ grammar_c = bison_gen.process(
     preserve_path_from: meson.current_source_dir(),
 )
 
+limited_api_version = '3.9'
+use_limited_api = host_machine.system() != 'windows' and py.language_version().version_compare('>=3.9')
+
 parser = py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
@@ -243,6 +252,7 @@ parser = py.extension_module(
     grammar_c,
     install: true,
     subdir: 'beancount/parser',
+    limited_api: use_limited_api ? limited_api_version : '',
 )
 
 # Support prehistoric development practices: use ``meson setup build;

@@ -1,7 +1,10 @@
 #include "beancount/parser/tokens.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
 
 #define PY_SSIZE_T_CLEAN
-#include <datetime.h>
 
 #include <assert.h>
 
@@ -179,9 +182,14 @@ void parse_date_from_string(const char* string, int* year, int* month, int* day)
     *day = strtonl(string, n);
 }
 
+static PyObject* datetime_date_class = NULL;
+
 PyObject* pydate_from_civil_day(int year, int month, int day) {
-    assert(PyDateTimeAPI != 0);
-    return PyDate_FromDate(year, month, day);
+    if (!datetime_date_class) {
+        PyErr_SetString(PyExc_RuntimeError, "datetime module not initialized");
+        return NULL;
+    }
+    return PyObject_CallFunction(datetime_date_class, "iii", year, month, day);
 }
 
 PyObject* pydate_from_cstring(const char* string) {
@@ -190,8 +198,22 @@ PyObject* pydate_from_cstring(const char* string) {
     return pydate_from_civil_day(year, month, day);
 }
 
-void initialize_datetime() {
-    /* Note: This needs to be defined in the same file as PyDate* functions are
-     * used due to a variable declared in the header file. */
-    PyDateTime_IMPORT;
+int initialize_datetime() {
+    PyObject* datetime_module = PyImport_ImportModule("datetime");
+    PyObject* date_obj = NULL;
+
+    if (!datetime_module) {
+        return -1;
+    }
+
+    date_obj = PyObject_GetAttrString(datetime_module, "date");
+    Py_DECREF(datetime_module);
+    if (!date_obj) {
+        return -1;
+    }
+
+    PyObject* old = datetime_date_class;
+    datetime_date_class = date_obj;
+    Py_XDECREF(old);
+    return 0;
 }

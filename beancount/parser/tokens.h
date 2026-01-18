@@ -126,7 +126,7 @@ PyObject* pydate_from_cstring(const char* string);
 /**
  * Initialize the local datetime globals.
  */
-void initialize_datetime();
+int initialize_datetime();
 
 #ifdef __cplusplus
 }
