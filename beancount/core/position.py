@@ -81,6 +81,8 @@ def cost_to_str(cost, dformat, detail=True):
     if isinstance(cost, Cost):
         if isinstance(cost.number, Decimal):
             strlist.append(Amount(cost.number, cost.currency).to_string(dformat))
+        elif isinstance(cost.currency, str):
+            strlist.append(cost.currency)
         if detail:
             if cost.date:
                 strlist.append(cost.date.isoformat())

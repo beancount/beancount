@@ -49,7 +49,7 @@ class TestCost(unittest.TestCase):
         self.assertEqual('"f4412439c31b"', position.cost_to_str(cost, self.dformat))
 
         cost = position.Cost(None, "USD", None, "f4412439c31b")
-        self.assertEqual('"f4412439c31b"', position.cost_to_str(cost, self.dformat))
+        self.assertEqual('USD, "f4412439c31b"', position.cost_to_str(cost, self.dformat))
 
     def test_cost_to_str__simple(self):
         cost = position.Cost(D("101.23"), "USD", datetime.date(2015, 9, 6), "f4412439c31b")
@@ -68,7 +68,7 @@ class TestCost(unittest.TestCase):
         self.assertEqual("", position.cost_to_str(cost, self.dformat, False))
 
         cost = position.Cost(None, "USD", None, "f4412439c31b")
-        self.assertEqual("", position.cost_to_str(cost, self.dformat, False))
+        self.assertEqual("USD", position.cost_to_str(cost, self.dformat, False))
 
 
 class TestCostSpec(unittest.TestCase):
