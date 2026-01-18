@@ -154,9 +154,10 @@ constraints dep-constraints: build/beancount.deps
 
 
 # Run the linter on all source code.
+# keep the version in sync with ruff version we have in pre-commit-config.yaml
 ruff lint:
-	NO_COLOR=1 uv tool run ruff check .
-	NO_COLOR=1 uv tool run ruff format .
+	NO_COLOR=1 uv tool run 'ruff==0.14.10' check .
+	NO_COLOR=1 uv tool run 'ruff==0.14.10' format .
 
 mypy typecheck:
 	NO_COLOR=1 uv run --with mypy --with types-python-dateutil --with types-regex mypy .

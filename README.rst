@@ -31,7 +31,7 @@ Documentation can be found at:
   https://beancount.github.io/docs/
 
 Documentation authoring happens on Google Docs, where you can contribute by
-requesting access or commenting on individual documents. 
+requesting access or commenting on individual documents.
 An index of all source documents is available here:
 
   http://furius.ca/beancount/doc/index
