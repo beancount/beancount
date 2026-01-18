@@ -4,7 +4,7 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
-PYTHON ?= python3
+PYTHON ?= uv run python
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')

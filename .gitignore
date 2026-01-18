@@ -25,3 +25,4 @@ experiments/v3/arrow/*.arrow
 .aider*
 .env
 target
+uv.lock
