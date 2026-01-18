@@ -5,6 +5,12 @@ requires = [
     "meson >= 1.2.1",
 ]
 
+[tool.meson-python]
+# these allow meson-python to set wheels with abi3 tags,
+# but we still disable it in meson.build
+# for non-support os and python version
+limited-api = true
+
 [project]
 name = "beancount"
 description = "Command-line Double-Entry Accounting"
