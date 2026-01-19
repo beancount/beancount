@@ -122,6 +122,14 @@ class TestDisplayContext(DisplayContextBaseTest):
         dformat_xyz = dcontext_replace.build(alignment=Align.NATURAL)
         self.assertEqual(dformat_xyz.format(Decimal("1.23456"), "XYZ"), "1.235")
 
+    def test_set_fixed_precision_can_apply_to_update_from(self):
+        dcontext = display_context.DisplayContext()
+        dcontext2 = display_context.DisplayContext()
+
+        dcontext2.set_fixed_precision("A", 1)
+        dcontext.update_from(dcontext2)
+        self.assertIsInstance(dcontext.ccontexts["A"], _FixedPrecisionContext)
+
 
 class TestDisplayContextNatural(DisplayContextBaseTest):
     alignment = Align.NATURAL
