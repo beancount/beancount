@@ -31,10 +31,19 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
+[dependency-groups]
+test = [
+    "pytest",
+]
 types = [
-    "mypy==1.4.0",
+    "mypy",
+    "types-python-dateutil",
     "types-regex",
+]
+# The dev group will automatically be installed by uv when using e.g. `uv sync`
+dev = [
+    { include-group = "test" },
+    { include-group = "types" },
 ]
 
 [project.scripts]
@@ -65,6 +74,9 @@ ignore_errors = true
 line-length = 92
 # Please note: We use 'ruff format' to autoformat buffers.
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
+
+[tool.pytest.ini_options]
+testpaths = ["beancount"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
