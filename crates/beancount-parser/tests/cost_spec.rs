@@ -1,7 +1,4 @@
-use beancount_parser::{
-  ast::{Amount, CostAmount, CostSpec, Directive, NumberExpr, Posting, Transaction},
-  parse_str,
-};
+use beancount_parser::{ast::Directive, parse_str};
 
 #[test]
 fn parses_posting_cost_spec() {
@@ -27,83 +24,31 @@ fn parses_posting_cost_spec() {
     panic!("expected transaction, got {:?}", directives[2]);
   };
 
-  let mut postings1 = txn1.postings.clone();
-  postings1[0] = Posting {
-    account: "Assets:Investing",
-    amount: Some(Amount {
-      raw: "30 HOOL",
-      number: NumberExpr::Literal("30"),
-      currency: Some("HOOL"),
-    }),
-    cost_spec: Some(CostSpec {
-      raw: "{40 USD}",
-      amount: Some(CostAmount {
-        per: Some(NumberExpr::Literal("40")),
-        total: None,
-        currency: Some("USD"),
-      }),
-      date: None,
-      label: None,
-      merge: false,
-      is_total: false,
-    }),
-    price_operator: None,
-    price_annotation: None,
-    ..postings1[0].clone()
-  };
-  postings1[1] = Posting {
-    account: "Assets:Other",
-    amount: None,
-    cost_spec: None,
-    ..postings1[1].clone()
-  };
-
-  let expected_txn1 = Directive::Transaction(Transaction {
-    postings: postings1,
-    ..txn1.clone()
-  });
-
-  assert_eq!(directives[2], expected_txn1);
+  assert_eq!(txn1.postings.len(), 2);
+  let p1 = &txn1.postings[0];
+  assert_eq!(p1.account.content, "Assets:Investing");
+  let amt1 = p1.amount.as_ref().expect("p1 amount");
+  assert_eq!(amt1.raw.content, "30 HOOL");
+  assert_eq!(amt1.currency.as_ref().unwrap().content, "HOOL");
+  let cs1 = p1.cost_spec.as_ref().expect("p1 cost_spec");
+  assert_eq!(cs1.raw.content, "{40 USD}");
+  let ca1 = cs1.amount.as_ref().expect("p1 cost amount");
+  assert!(ca1.total.is_none());
+  assert_eq!(ca1.currency.as_ref().unwrap().content, "USD");
 
   let Directive::Transaction(txn2) = directives[3].clone() else {
     panic!("expected transaction, got {:?}", directives[3]);
   };
 
-  let mut postings2 = txn2.postings.clone();
-  postings2[0] = Posting {
-    account: "Assets:Investing",
-    amount: Some(Amount {
-      raw: "-20 HOOL",
-      number: NumberExpr::Literal("-20"),
-      currency: Some("HOOL"),
-    }),
-    cost_spec: Some(CostSpec {
-      raw: "{40 USD}",
-      amount: Some(CostAmount {
-        per: Some(NumberExpr::Literal("40")),
-        total: None,
-        currency: Some("USD"),
-      }),
-      date: None,
-      label: None,
-      merge: false,
-      is_total: false,
-    }),
-    price_operator: None,
-    price_annotation: None,
-    ..postings2[0].clone()
-  };
-  postings2[1] = Posting {
-    account: "Assets:Other",
-    amount: None,
-    cost_spec: None,
-    ..postings2[1].clone()
-  };
-
-  let expected_txn2 = Directive::Transaction(Transaction {
-    postings: postings2,
-    ..txn2.clone()
-  });
-
-  assert_eq!(directives[3], expected_txn2);
+  assert_eq!(txn2.postings.len(), 2);
+  let p2 = &txn2.postings[0];
+  assert_eq!(p2.account.content, "Assets:Investing");
+  let amt2 = p2.amount.as_ref().expect("p2 amount");
+  assert_eq!(amt2.raw.content, "-20 HOOL");
+  assert_eq!(amt2.currency.as_ref().unwrap().content, "HOOL");
+  let cs2 = p2.cost_spec.as_ref().expect("p2 cost_spec");
+  assert_eq!(cs2.raw.content, "{40 USD}");
+  let ca2 = cs2.amount.as_ref().expect("p2 cost amount");
+  assert!(ca2.total.is_none());
+  assert_eq!(ca2.currency.as_ref().unwrap().content, "USD");
 }

@@ -227,13 +227,13 @@ fn parse_bool_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<bool, Pars
 }
 
 fn parse_key_value_value(
-  value: Option<ast::KeyValueValue<'_>>,
+  value: Option<ast::WithSpan<ast::KeyValueValue<'_>>>,
   meta: &ast::Meta,
   ctx: &str,
   allow_unquoted_on_error: bool,
 ) -> Result<Option<KeyValueValue>, ParseError> {
   value
-    .map(|v| match v {
+    .map(|v| match v.content {
       ast::KeyValueValue::String(raw) => match unquote_json(raw, meta, ctx) {
         Ok(val) => Ok(KeyValueValue::String(val)),
         Err(err) if allow_unquoted_on_error => Ok(KeyValueValue::UnquotedString(raw.to_string())),
@@ -356,11 +356,15 @@ impl From<ast::BinaryOp> for BinaryOp {
 impl From<ast::NumberExpr<'_>> for NumberExpr {
   fn from(num: ast::NumberExpr<'_>) -> Self {
     match num {
-      ast::NumberExpr::Missing => NumberExpr::Missing,
-      ast::NumberExpr::Literal(s) => NumberExpr::Literal(s.to_string()),
-      ast::NumberExpr::Binary { left, op, right } => NumberExpr::Binary {
+      ast::NumberExpr::Missing { .. } => NumberExpr::Missing,
+      ast::NumberExpr::Literal(ast::WithSpan { content, .. }) => {
+        NumberExpr::Literal(content.to_string())
+      }
+      ast::NumberExpr::Binary {
+        left, op, right, ..
+      } => NumberExpr::Binary {
         left: Box::new(NumberExpr::from(*left)),
-        op: BinaryOp::from(op),
+        op: BinaryOp::from(op.content),
         right: Box::new(NumberExpr::from(*right)),
       },
     }
@@ -489,7 +493,7 @@ impl<'a> TryFrom<ast::Comment<'a>> for Comment {
     Ok(Self {
       meta: comment.meta,
       span: comment.span,
-      text: comment.text.to_string(),
+      text: comment.text.content.to_string(),
     })
   }
 }
@@ -501,7 +505,7 @@ impl<'a> TryFrom<ast::Headline<'a>> for Comment {
     Ok(Self {
       meta: headline.meta,
       span: headline.span,
-      text: headline.text.to_string(),
+      text: headline.text.content.to_string(),
     })
   }
 }
@@ -513,7 +517,7 @@ impl<'a> TryFrom<ast::Headline<'a>> for Headline {
     Ok(Self {
       meta: headline.meta,
       span: headline.span,
-      text: headline.text.to_string(),
+      text: headline.text.content.to_string(),
     })
   }
 }
@@ -526,18 +530,18 @@ impl<'a> TryFrom<ast::Open<'a>> for Open {
     Ok(Self {
       meta: meta.clone(),
       span: open.span,
-      date: open.date.to_string(),
-      account: open.account.to_string(),
+      date: open.date.content.to_string(),
+      account: open.account.content.to_string(),
       currencies: open
         .currencies
         .into_iter()
-        .map(ToString::to_string)
+        .map(|c| c.content.to_string())
         .collect(),
       opt_booking: open
         .opt_booking
-        .map(|booking| unquote_json(booking, &meta, "booking method"))
+        .map(|booking| unquote_json(booking.content, &meta, "booking method"))
         .transpose()?,
-      comment: open.comment.map(ToString::to_string),
+      comment: open.comment.map(|c| c.content.to_string()),
       key_values: open
         .key_values
         .into_iter()
@@ -554,9 +558,9 @@ impl<'a> TryFrom<ast::Close<'a>> for Close {
     Ok(Self {
       meta: close.meta,
       span: close.span,
-      date: close.date.to_string(),
-      account: close.account.to_string(),
-      comment: close.comment.map(ToString::to_string),
+      date: close.date.content.to_string(),
+      account: close.account.content.to_string(),
+      comment: close.comment.map(|c| c.content.to_string()),
       key_values: close
         .key_values
         .into_iter()
@@ -573,11 +577,11 @@ impl<'a> TryFrom<ast::Balance<'a>> for Balance {
     Ok(Self {
       meta: balance.meta,
       span: balance.span,
-      date: balance.date.to_string(),
-      account: balance.account.to_string(),
+      date: balance.date.content.to_string(),
+      account: balance.account.content.to_string(),
       amount: Amount::try_from(balance.amount)?,
-      tolerance: balance.tolerance.map(ToString::to_string),
-      comment: balance.comment.map(ToString::to_string),
+      tolerance: balance.tolerance.map(|t| t.content.to_string()),
+      comment: balance.comment.map(|c| c.content.to_string()),
       key_values: balance
         .key_values
         .into_iter()
@@ -594,10 +598,10 @@ impl<'a> TryFrom<ast::Pad<'a>> for Pad {
     Ok(Self {
       meta: pad.meta,
       span: pad.span,
-      date: pad.date.to_string(),
-      account: pad.account.to_string(),
-      from_account: pad.from_account.to_string(),
-      comment: pad.comment.map(ToString::to_string),
+      date: pad.date.content.to_string(),
+      account: pad.account.content.to_string(),
+      from_account: pad.from_account.content.to_string(),
+      comment: pad.comment.map(|c| c.content.to_string()),
       key_values: pad
         .key_values
         .into_iter()
@@ -614,9 +618,9 @@ impl<'a> TryFrom<ast::Commodity<'a>> for Commodity {
     Ok(Self {
       meta: cmdty.meta,
       span: cmdty.span,
-      date: cmdty.date.to_string(),
-      currency: cmdty.currency.to_string(),
-      comment: cmdty.comment.map(ToString::to_string),
+      date: cmdty.date.content.to_string(),
+      currency: cmdty.currency.content.to_string(),
+      comment: cmdty.comment.map(|c| c.content.to_string()),
       key_values: cmdty
         .key_values
         .into_iter()
@@ -633,10 +637,10 @@ impl<'a> TryFrom<ast::Price<'a>> for Price {
     Ok(Self {
       meta: price.meta,
       span: price.span,
-      date: price.date.to_string(),
-      currency: price.currency.to_string(),
+      date: price.date.content.to_string(),
+      currency: price.currency.content.to_string(),
       amount: Amount::try_from(price.amount)?,
-      comment: price.comment.map(ToString::to_string),
+      comment: price.comment.map(|c| c.content.to_string()),
       key_values: price
         .key_values
         .into_iter()
@@ -653,10 +657,10 @@ impl<'a> TryFrom<ast::Event<'a>> for Event {
     Ok(Self {
       meta: event.meta.clone(),
       span: event.span,
-      date: event.date.to_string(),
-      event_type: unquote_json(event.event_type, &event.meta, "event type")?,
-      desc: unquote_json(event.desc, &event.meta, "event description")?,
-      comment: event.comment.map(ToString::to_string),
+      date: event.date.content.to_string(),
+      event_type: unquote_json(event.event_type.content, &event.meta, "event type")?,
+      desc: unquote_json(event.desc.content, &event.meta, "event description")?,
+      comment: event.comment.map(|c| c.content.to_string()),
       key_values: event
         .key_values
         .into_iter()
@@ -673,10 +677,10 @@ impl<'a> TryFrom<ast::Query<'a>> for Query {
     Ok(Self {
       meta: query.meta.clone(),
       span: query.span,
-      date: query.date.to_string(),
-      name: unquote_json(query.name, &query.meta, "query name")?,
-      query: unquote_json(query.query, &query.meta, "query")?,
-      comment: query.comment.map(ToString::to_string),
+      date: query.date.content.to_string(),
+      name: unquote_json(query.name.content, &query.meta, "query name")?,
+      query: unquote_json(query.query.content, &query.meta, "query")?,
+      comment: query.comment.map(|c| c.content.to_string()),
       key_values: query
         .key_values
         .into_iter()
@@ -693,10 +697,10 @@ impl<'a> TryFrom<ast::Note<'a>> for Note {
     Ok(Self {
       meta: note.meta.clone(),
       span: note.span,
-      date: note.date.to_string(),
-      account: note.account.to_string(),
-      note: unquote_json(note.note, &note.meta, "note")?,
-      comment: note.comment.map(ToString::to_string),
+      date: note.date.content.to_string(),
+      account: note.account.content.to_string(),
+      note: unquote_json(note.note.content, &note.meta, "note")?,
+      comment: note.comment.map(|c| c.content.to_string()),
       key_values: note
         .key_values
         .into_iter()
@@ -710,17 +714,25 @@ impl<'a> TryFrom<ast::Document<'a>> for Document {
   type Error = ParseError;
 
   fn try_from(doc: ast::Document<'a>) -> Result<Self, Self::Error> {
-    let filename = unquote_json(doc.filename, &doc.meta, "document filename")?;
+    let filename = unquote_json(doc.filename.content, &doc.meta, "document filename")?;
     Ok(Self {
       meta: doc.meta.clone(),
       span: doc.span,
-      date: doc.date.to_string(),
-      account: doc.account.to_string(),
+      date: doc.date.content.to_string(),
+      account: doc.account.content.to_string(),
       filename: resolve_path(&doc.meta.filename, &filename),
-      tags_links: doc.tags_links.map(ToString::to_string),
-      tags: doc.tags.into_iter().map(ToString::to_string).collect(),
-      links: doc.links.into_iter().map(ToString::to_string).collect(),
-      comment: doc.comment.map(ToString::to_string),
+      tags_links: doc.tags_links.map(|t| t.content.to_string()),
+      tags: doc
+        .tags
+        .into_iter()
+        .map(|t| t.content.to_string())
+        .collect(),
+      links: doc
+        .links
+        .into_iter()
+        .map(|l| l.content.to_string())
+        .collect(),
+      comment: doc.comment.map(|c| c.content.to_string()),
       key_values: doc
         .key_values
         .into_iter()
@@ -737,14 +749,14 @@ impl<'a> TryFrom<ast::Custom<'a>> for Custom {
     Ok(Self {
       meta: custom.meta.clone(),
       span: custom.span,
-      date: custom.date.to_string(),
-      name: unquote_json(custom.name, &custom.meta, "custom name")?,
+      date: custom.date.content.to_string(),
+      name: unquote_json(custom.name.content, &custom.meta, "custom name")?,
       values: custom
         .values
         .into_iter()
         .map(|v| CustomValue::try_from((v, &custom.meta)))
         .collect::<Result<_, _>>()?,
-      comment: custom.comment.map(ToString::to_string),
+      comment: custom.comment.map(|c| c.content.to_string()),
       key_values: custom
         .key_values
         .into_iter()
@@ -761,8 +773,8 @@ impl<'a> TryFrom<ast::OptionDirective<'a>> for OptionDirective {
     Ok(Self {
       meta: opt.meta.clone(),
       span: opt.span,
-      key: unquote_json(opt.key, &opt.meta, "option key")?,
-      value: unquote_json(opt.value, &opt.meta, "option value")?,
+      key: unquote_json(opt.key.content, &opt.meta, "option key")?,
+      value: unquote_json(opt.value.content, &opt.meta, "option value")?,
     })
   }
 }
@@ -771,7 +783,7 @@ impl<'a> TryFrom<ast::Include<'a>> for Include {
   type Error = ParseError;
 
   fn try_from(include: ast::Include<'a>) -> Result<Self, Self::Error> {
-    let fname = unquote_json(include.filename, &include.meta, "include filename")?;
+    let fname = unquote_json(include.filename.content, &include.meta, "include filename")?;
     Ok(Self {
       meta: include.meta.clone(),
       span: include.span,
@@ -785,13 +797,13 @@ impl<'a> TryFrom<ast::Plugin<'a>> for Plugin {
 
   fn try_from(plugin: ast::Plugin<'a>) -> Result<Self, Self::Error> {
     let config = if let Some(raw) = plugin.config {
-      match unquote_json(raw, &plugin.meta, "plugin config") {
+      match unquote_json(raw.content, &plugin.meta, "plugin config") {
         Ok(val) => Some(val),
         Err(_) => {
           // Fall back to a lenient stripping of surrounding quotes so
           // that plugins still receive their config string even when it
           // is not valid JSON (e.g. single-quoted Python dicts).
-          let trimmed = raw.trim();
+          let trimmed = raw.content.trim();
           let stripped = trimmed
             .strip_prefix('"')
             .and_then(|s| s.strip_suffix('"'))
@@ -807,7 +819,7 @@ impl<'a> TryFrom<ast::Plugin<'a>> for Plugin {
     Ok(Self {
       meta: plugin.meta.clone(),
       span: plugin.span,
-      name: unquote_json(plugin.name, &plugin.meta, "plugin name")?,
+      name: unquote_json(plugin.name.content, &plugin.meta, "plugin name")?,
       config,
     })
   }
@@ -817,7 +829,7 @@ impl<'a> TryFrom<ast::TagDirective<'a>> for TagDirective {
   type Error = ParseError;
 
   fn try_from(tag: ast::TagDirective<'a>) -> Result<Self, Self::Error> {
-    let tag_value = tag.tag.strip_prefix('#').unwrap_or(tag.tag);
+    let tag_value = tag.tag.content.strip_prefix('#').unwrap_or(tag.tag.content);
     Ok(Self {
       meta: tag.meta,
       span: tag.span,
@@ -835,7 +847,7 @@ impl<'a> TryFrom<ast::PushMeta<'a>> for PushMeta {
     Ok(Self {
       meta,
       span: pm.span,
-      key: pm.key.to_string(),
+      key: pm.key.content.to_string(),
       value,
     })
   }
@@ -848,7 +860,7 @@ impl<'a> TryFrom<ast::PopMeta<'a>> for PopMeta {
     Ok(Self {
       meta: pm.meta,
       span: pm.span,
-      key: pm.key.to_string(),
+      key: pm.key.content.to_string(),
     })
   }
 }
@@ -862,7 +874,7 @@ impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
     Ok(Self {
       meta: kv.meta,
       span: kv.span,
-      key: kv.key.to_string(),
+      key: kv.key.content.to_string(),
       value,
     })
   }
@@ -874,15 +886,15 @@ impl<'a> TryFrom<(ast::CostSpec<'a>, &ast::Meta)> for CostSpec {
   fn try_from(input: (ast::CostSpec<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
     let (cost, meta) = input;
     Ok(Self {
-      raw: cost.raw.to_string(),
+      raw: cost.raw.content.to_string(),
       amount: cost.amount.map(CostAmount::try_from).transpose()?,
-      date: cost.date.map(ToString::to_string),
+      date: cost.date.map(|d| d.content.to_string()),
       label: cost
         .label
-        .map(|l| unquote_json(l, meta, "cost label"))
+        .map(|l| unquote_json(l.content, meta, "cost label"))
         .transpose()?,
-      merge: cost.merge,
-      is_total: cost.is_total,
+      merge: cost.merge.map(|m| m.content).unwrap_or(false),
+      is_total: cost.is_total.content,
     })
   }
 }
@@ -894,7 +906,7 @@ impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
     Ok(Self {
       per: amount.per.map(NumberExpr::from),
       total: amount.total.map(NumberExpr::from),
-      currency: amount.currency.map(ToString::to_string),
+      currency: amount.currency.map(|c| c.content.to_string()),
     })
   }
 }
@@ -911,13 +923,13 @@ impl<'a> TryFrom<ast::Posting<'a>> for Posting {
     Ok(Self {
       meta,
       span: posting.span,
-      opt_flag: posting.opt_flag.map(ToString::to_string),
-      account: posting.account.to_string(),
+      opt_flag: posting.opt_flag.map(|f| f.content.to_string()),
+      account: posting.account.content.to_string(),
       amount: posting.amount.map(Amount::try_from).transpose()?,
       cost_spec,
-      price_operator: posting.price_operator,
+      price_operator: posting.price_operator.map(|op| op.content),
       price_annotation: posting.price_annotation.map(Amount::try_from).transpose()?,
-      comment: posting.comment.map(ToString::to_string),
+      comment: posting.comment.map(|c| c.content.to_string()),
       key_values: posting
         .key_values
         .into_iter()
@@ -934,21 +946,29 @@ impl<'a> TryFrom<ast::Transaction<'a>> for Transaction {
     let meta = txn.meta;
     let payee = txn
       .payee
-      .map(|p| unquote_json(p, &meta, "payee"))
+      .map(|p| unquote_json(p.content, &meta, "payee"))
       .transpose()?;
     let narration = txn
       .narration
-      .map(|n| unquote_json(n, &meta, "narration"))
+      .map(|n| unquote_json(n.content, &meta, "narration"))
       .transpose()?;
     Ok(Self {
       meta,
       span: txn.span,
-      date: txn.date.to_string(),
-      txn: txn.txn.map(ToString::to_string),
+      date: txn.date.content.to_string(),
+      txn: txn.txn.map(|t| t.content.to_string()),
       payee,
       narration,
-      tags: txn.tags.into_iter().map(ToString::to_string).collect(),
-      links: txn.links.into_iter().map(ToString::to_string).collect(),
+      tags: txn
+        .tags
+        .into_iter()
+        .map(|t| t.content.to_string())
+        .collect(),
+      links: txn
+        .links
+        .into_iter()
+        .map(|l| l.content.to_string())
+        .collect(),
       key_values: txn
         .key_values
         .into_iter()
@@ -970,15 +990,15 @@ impl<'a> TryFrom<(ast::CustomValue<'a>, &ast::Meta)> for CustomValue {
     let (value, meta) = val_meta;
     let content = match value.kind {
       ast::CustomValueKind::String => {
-        let parsed = unquote_json(value.raw, meta, "custom value")?;
+        let parsed = unquote_json(value.raw.content, meta, "custom value")?;
         CustomValue::String(parsed)
       }
       ast::CustomValueKind::Date => {
-        let parsed = parse_date_value(value.raw, meta, "custom value date")?;
+        let parsed = parse_date_value(value.raw.content, meta, "custom value date")?;
         CustomValue::Date(parsed)
       }
       ast::CustomValueKind::Bool => {
-        let parsed = parse_bool_value(value.raw, meta, "custom value bool")?;
+        let parsed = parse_bool_value(value.raw.content, meta, "custom value bool")?;
         CustomValue::Bool(parsed)
       }
       ast::CustomValueKind::Amount => {
@@ -993,7 +1013,7 @@ impl<'a> TryFrom<(ast::CustomValue<'a>, &ast::Meta)> for CustomValue {
           .ok_or_else(|| value_error(meta, "missing number expression"))?;
         CustomValue::Number(NumberExpr::from(number))
       }
-      ast::CustomValueKind::Account => CustomValue::Account(value.raw.trim().to_string()),
+      ast::CustomValueKind::Account => CustomValue::Account(value.raw.content.trim().to_string()),
     };
 
     Ok(content)
@@ -1005,9 +1025,9 @@ impl<'a> TryFrom<ast::Amount<'a>> for Amount {
 
   fn try_from(amount: ast::Amount<'a>) -> Result<Self, Self::Error> {
     Ok(Self {
-      raw: amount.raw.to_string(),
+      raw: amount.raw.content.to_string(),
       number: NumberExpr::from(amount.number),
-      currency: amount.currency.map(ToString::to_string),
+      currency: amount.currency.map(|c| c.content.to_string()),
     })
   }
 }

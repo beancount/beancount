@@ -53,6 +53,10 @@ fn span(node: Node) -> Span {
   Span::from_range(node.start_byte(), node.end_byte())
 }
 
+fn with_span<'a>(node: Node, source: &'a str) -> WithSpan<&'a str> {
+  WithSpan::new(span(node), slice(node, source))
+}
+
 /// Split a basic amount string (`"NUMBER CURRENCY"`) into its components.
 pub fn parse_amount_tokens(raw: &str) -> Option<(&str, &str)> {
   let mut parts = raw.split_whitespace();
@@ -100,15 +104,19 @@ fn parse_number_expr<'a>(node: Node, source: &'a str, filename: &str) -> Result<
           .ok_or_else(|| parse_error(op_node, filename, "missing rhs in number expression"))?;
         let rhs = parse_number_expr(rhs_node, source, filename)?;
         expr = NumberExpr::Binary {
+          span: span(node),
           left: Box::new(expr),
-          op,
+          op: WithSpan::new(span(op_node), op),
           right: Box::new(rhs),
         };
       }
 
       Ok(expr)
     }
-    _ => Ok(NumberExpr::Literal(slice(node, source).trim())),
+    _ => Ok(NumberExpr::Literal(WithSpan::new(
+      span(node),
+      slice(node, source).trim(),
+    ))),
   }
 }
 
@@ -129,33 +137,48 @@ fn collect_key_values<'a>(
   Ok(key_values)
 }
 
-fn parse_tags_links<'a, I>(groups: I) -> (SmallVec<[&'a str; 2]>, SmallVec<[&'a str; 2]>)
+type TagLinkList<'a> = SmallVec<[WithSpan<&'a str>; 2]>;
+
+fn parse_tags_links<'a, I>(groups: I) -> (TagLinkList<'a>, TagLinkList<'a>)
 where
-  I: IntoIterator<Item = &'a str>,
+  I: IntoIterator<Item = WithSpan<&'a str>>,
 {
-  let mut tags: SmallVec<[&'a str; 2]> = SmallVec::new();
-  let mut links: SmallVec<[&'a str; 2]> = SmallVec::new();
+  let mut tags: TagLinkList<'a> = SmallVec::new();
+  let mut links: TagLinkList<'a> = SmallVec::new();
 
   for group in groups {
-    for token in group.split_whitespace() {
+    let base_ptr = group.content.as_ptr() as usize;
+    let group_start = group.span.start;
+
+    for token in group.content.split_whitespace() {
+      let token_ptr = token.as_ptr() as usize;
+      let offset = token_ptr.saturating_sub(base_ptr);
+      let token_start = group_start + offset;
+
       if let Some(tag) = token.strip_prefix('#') {
-        tags.push(tag);
+        let start = token_start + 1;
+        let end = start + tag.len();
+        tags.push(WithSpan::new(Span::from_range(start, end), tag));
       } else if let Some(link) = token.strip_prefix('^') {
-        links.push(link);
+        let start = token_start + 1;
+        let end = start + link.len();
+        links.push(WithSpan::new(Span::from_range(start, end), link));
       }
     }
   }
 
-  tags.sort_unstable();
-  tags.dedup();
-  links.sort_unstable();
-  links.dedup();
+  tags.sort_by(|a, b| a.content.cmp(b.content));
+  tags.dedup_by(|a, b| a.content == b.content);
+  links.sort_by(|a, b| a.content.cmp(b.content));
+  links.dedup_by(|a, b| a.content == b.content);
 
   (tags, links)
 }
 
-fn field_text<'a>(node: Node, field: &str, source: &'a str) -> Option<&'a str> {
-  node.child_by_field_name(field).map(|n| slice(n, source))
+fn field_text<'a>(node: Node, field: &str, source: &'a str) -> Option<WithSpan<&'a str>> {
+  node
+    .child_by_field_name(field)
+    .map(|n| with_span(n, source))
 }
 
 fn required_field_text<'a>(
@@ -163,7 +186,7 @@ fn required_field_text<'a>(
   field: &str,
   source: &'a str,
   filename: &str,
-) -> Result<&'a str> {
+) -> Result<WithSpan<&'a str>> {
   field_text(node, field, source).ok_or_else(|| {
     parse_error(
       node,
@@ -173,12 +196,12 @@ fn required_field_text<'a>(
   })
 }
 
-fn first_named_child_text<'a>(node: Node, source: &'a str) -> Option<&'a str> {
+fn first_named_child_text<'a>(node: Node, source: &'a str) -> Option<WithSpan<&'a str>> {
   let mut cursor = node.walk();
   node
     .named_children(&mut cursor)
     .next()
-    .map(|n| slice(n, source))
+    .map(|n| with_span(n, source))
 }
 
 pub fn parse_directives<'a>(
@@ -216,8 +239,20 @@ fn collect_directives<'a>(
   directives: &mut Vec<Directive<'a>>,
 ) -> Result<()> {
   match node.kind().into() {
-    NodeKind::Headline => {
-      directives.push(parse_headline(node, source, filename)?);
+    // Org/Markdown style sections can wrap real declarations; flatten them.
+    NodeKind::Section => {
+      let mut cursor = node.walk();
+      for child in node.named_children(&mut cursor) {
+        match child.kind().into() {
+          NodeKind::Headline => continue,
+          NodeKind::Section => collect_directives(child, source, filename, directives)?,
+          _ => {
+            if let Some(directive) = parse_top_level(child, source, filename)? {
+              directives.push(directive);
+            }
+          }
+        }
+      }
       Ok(())
     }
     _ => {
@@ -260,9 +295,10 @@ fn parse_top_level<'a>(
 
     // Known non-directive top-level nodes.
     NodeKind::Comment => parse_comment(node, source, filename).map(Some),
+    NodeKind::Headline => parse_headline(node, source, filename).map(Some),
 
-    // Preserve stray flag tokens as headlines (e.g., org-style headings without full parsing).
-    NodeKind::Flag => parse_flag_headline(node, source, filename).map(Some),
+    // Org-mode headings like "* Options" can produce stray flag tokens; ignore them.
+    NodeKind::Flag => Ok(None),
 
     _ => Err(parse_error(
       node,
@@ -276,28 +312,15 @@ fn parse_comment<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
   Ok(Directive::Comment(Comment {
     meta: meta(node, filename),
     span: span(node),
-    text: slice(node, source),
+    text: with_span(node, source),
   }))
 }
 
 fn parse_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
-  let text = slice(node, source).trim_end_matches(&['\n', '\r'][..]);
-
   Ok(Directive::Headline(Headline {
     meta: meta(node, filename),
     span: span(node),
-    text,
-  }))
-}
-
-fn parse_flag_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
-  // Treat orphaned flag tokens as minimal headlines so they are preserved for callers.
-  let text = slice(node, source).trim_end_matches(&['\n', '\r'][..]);
-
-  Ok(Directive::Headline(Headline {
-    meta: meta(node, filename),
-    span: span(node),
-    text,
+    text: with_span(node, source),
   }))
 }
 
@@ -315,7 +338,7 @@ fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
   let currencies = node
     .named_children(&mut cursor)
     .filter(|child| *child == NodeKind::Currency)
-    .map(|child| slice(child, source))
+    .map(|child| with_span(child, source))
     .collect();
 
   Ok(Directive::Open(Open {
@@ -471,7 +494,8 @@ fn parse_note<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
 fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
   let tags_links = field_text(node, "tags_links", source);
   let (tags, links) = tags_links
-    .map(|group| parse_tags_links([group]))
+    .as_ref()
+    .map(|group| parse_tags_links([group.clone()]))
     .unwrap_or_else(|| (SmallVec::new(), SmallVec::new()));
 
   Ok(Directive::Document(Document {
@@ -537,7 +561,7 @@ fn parse_custom_value<'a>(node: Node, source: &'a str, filename: &str) -> Result
   };
 
   Ok(CustomValue {
-    raw: slice(node, source),
+    raw: with_span(node, source),
     kind,
     number,
     amount,
@@ -557,16 +581,15 @@ fn parse_include<'a>(node: Node, source: &'a str, meta_filename: &str) -> Result
   // include: seq("include", $.string, $._eol)
   // It's not a field, so take the 1st named child (string).
   let mut cursor = node.walk();
-  let filename = node
+  let filename_node = node
     .named_children(&mut cursor)
     .find(|n| *n == NodeKind::String)
-    .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, meta_filename, "missing string"))?;
 
   Ok(Directive::Include(Include {
     meta: meta(node, meta_filename),
     span: span(node),
-    filename,
+    filename: with_span(filename_node, source),
   }))
 }
 
@@ -575,51 +598,66 @@ fn parse_plugin<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
   let mut cursor = node.walk();
   let mut strings = node
     .named_children(&mut cursor)
-    .filter(|n| *n == NodeKind::String)
-    .map(|n| slice(n, source));
+    .filter(|n| *n == NodeKind::String);
 
-  let name = strings
+  let name_node = strings
     .next()
     .ok_or_else(|| parse_error(node, filename, "missing plugin name"))?;
-  let config = strings.next();
+  let config_node = strings.next();
 
   Ok(Directive::Plugin(Plugin {
     meta: meta(node, filename),
     span: span(node),
-    name,
-    config,
+    name: with_span(name_node, source),
+    config: config_node.map(|n| with_span(n, source)),
   }))
 }
 
 fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
   let mut cursor = node.walk();
-  let tag = node
+  let tag_node = node
     .named_children(&mut cursor)
     .find(|n| *n == NodeKind::Tag)
-    .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
-  let tag = tag.strip_prefix('#').unwrap_or(tag);
+  let raw_tag = slice(tag_node, source);
+  let tag = raw_tag.strip_prefix('#').unwrap_or(raw_tag);
+  let tag_span = {
+    let s = span(tag_node);
+    if raw_tag.starts_with('#') {
+      Span::from_range(s.start + 1, s.end)
+    } else {
+      s
+    }
+  };
 
   Ok(Directive::PushTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
-    tag,
+    tag: WithSpan::new(tag_span, tag),
   }))
 }
 
 fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
   let mut cursor = node.walk();
-  let tag = node
+  let tag_node = node
     .named_children(&mut cursor)
     .find(|n| n == NodeKind::Tag)
-    .map(|n| slice(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing tag"))?;
-  let tag = tag.strip_prefix('#').unwrap_or(tag);
+  let raw_tag = slice(tag_node, source);
+  let tag = raw_tag.strip_prefix('#').unwrap_or(raw_tag);
+  let tag_span = {
+    let s = span(tag_node);
+    if raw_tag.starts_with('#') {
+      Span::from_range(s.start + 1, s.end)
+    } else {
+      s
+    }
+  };
 
   Ok(Directive::PopTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
-    tag,
+    tag: WithSpan::new(tag_span, tag),
   }))
 }
 
@@ -631,16 +669,18 @@ fn parse_pushmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
     .ok_or_else(|| parse_error(node, filename, "missing key_value"))?;
 
   let kv = parse_key_value(kv_node, source, filename)?;
-  let value = kv.value.map(|v| match v {
-    KeyValueValue::Raw(raw) => {
-      let trimmed = raw.trim();
-      if trimmed.is_empty() {
-        KeyValueValue::Raw(raw)
-      } else {
-        KeyValueValue::UnquotedString(trimmed)
+  let value = kv.value.map(|v| {
+    v.map(|inner| match inner {
+      KeyValueValue::Raw(raw) => {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+          KeyValueValue::Raw(raw)
+        } else {
+          KeyValueValue::UnquotedString(trimmed)
+        }
       }
-    }
-    other => other,
+      other => other,
+    })
   });
 
   Ok(Directive::PushMeta(PushMeta {
@@ -657,7 +697,7 @@ fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
   let key = node
     .named_children(&mut cursor)
     .find(|n| *n == NodeKind::Key)
-    .map(|n| slice(n, source))
+    .map(|n| with_span(n, source))
     .ok_or_else(|| parse_error(node, filename, "missing key"))?;
 
   Ok(Directive::PopMeta(PopMeta {
@@ -674,7 +714,7 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
 
   for child in node.named_children(&mut cursor) {
     match NodeKind::from(child.kind()) {
-      NodeKind::Key => key = Some(slice(child, source)),
+      NodeKind::Key => key = Some(with_span(child, source)),
       NodeKind::Value => {
         let mut inner = child.walk();
         let mut string_child = None;
@@ -693,18 +733,27 @@ fn parse_key_value<'a>(node: Node, source: &'a str, filename: &str) -> Result<Ke
         }
 
         let parsed = if let Some(str_node) = string_child {
-          KeyValueValue::String(slice(str_node, source))
+          WithSpan::new(
+            span(str_node),
+            KeyValueValue::String(slice(str_node, source)),
+          )
         } else if let Some(unquoted_node) = unquoted_string_child {
-          KeyValueValue::UnquotedString(slice(unquoted_node, source))
+          WithSpan::new(
+            span(unquoted_node),
+            KeyValueValue::UnquotedString(slice(unquoted_node, source)),
+          )
         } else if let Some(date_node) = date_child {
-          KeyValueValue::Date(slice(date_node, source))
+          WithSpan::new(
+            span(date_node),
+            KeyValueValue::Date(slice(date_node, source)),
+          )
         } else if let Some(b_node) = bool_child {
           let raw = slice(b_node, source).trim();
           let val = raw.eq_ignore_ascii_case("true");
-          KeyValueValue::Bool(val)
+          WithSpan::new(span(b_node), KeyValueValue::Bool(val))
         } else {
           let raw = slice(child, source);
-          KeyValueValue::UnquotedString(raw.trim())
+          WithSpan::new(span(child), KeyValueValue::UnquotedString(raw.trim()))
         };
 
         value = Some(parsed);
@@ -735,18 +784,19 @@ fn parse_compound_amount<'a>(
       .child_by_field_name("total")
       .map(|n| parse_number_expr(n, source, filename))
       .transpose()?,
-    currency: field_text(node, "currency", source).map(|t| t.trim()),
+    currency: field_text(node, "currency", source).map(|t| t.map(|s| s.trim())),
   })
 }
 
 fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<CostSpec<'a>> {
-  let raw = slice(node, source);
-  let is_total = raw.trim_start().starts_with("{{");
+  let raw = with_span(node, source);
+  let is_total = raw.content.trim_start().starts_with("{{");
+  let raw_span = raw.span;
 
   let mut amount = None;
-  let mut date = None;
-  let mut label = None;
-  let mut merge = false;
+  let mut date: Option<WithSpan<&'a str>> = None;
+  let mut label: Option<WithSpan<&'a str>> = None;
+  let mut merge: Option<WithSpan<bool>> = None;
 
   if let Some(list_node) = node.child_by_field_name("cost_comp_list") {
     let mut stack = vec![list_node];
@@ -758,7 +808,7 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
       }
 
       if kind == "*" || kind == "asterisk" {
-        merge = true;
+        merge = Some(WithSpan::new(span(comp), true));
         continue;
       }
 
@@ -767,10 +817,10 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
           amount = Some(parse_compound_amount(comp, source, filename)?);
         }
         "date" if date.is_none() => {
-          date = Some(slice(comp, source));
+          date = Some(with_span(comp, source));
         }
         "string" if label.is_none() => {
-          label = Some(slice(comp, source));
+          label = Some(with_span(comp, source));
         }
         _ => {}
       }
@@ -786,12 +836,12 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
   // components (e.g. because the leaf is unnamed), attempt a lightweight
   // scan of the raw text to extract an ISO date literal.
   if date.is_none() {
-    let bytes = raw.as_bytes();
+    let bytes = raw.content.as_bytes();
     for i in 0..bytes.len() {
       if i + 10 > bytes.len() {
         break;
       }
-      let slice = &raw[i..i + 10];
+      let slice = &raw.content[i..i + 10];
       let b = slice.as_bytes();
       let is_digit = |c: u8| c.is_ascii_digit();
       let looks_like_date = matches!(b.get(4), Some(b'-'))
@@ -805,7 +855,9 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
         && b.get(8).is_some_and(|c| is_digit(*c))
         && b.get(9).is_some_and(|c| is_digit(*c));
       if looks_like_date {
-        date = Some(slice);
+        let start = raw.span.start + i;
+        let end = start + 10;
+        date = Some(WithSpan::new(Span::from_range(start, end), slice));
         break;
       }
     }
@@ -817,7 +869,7 @@ fn parse_cost_spec<'a>(node: Node, source: &'a str, filename: &str) -> Result<Co
     date,
     label,
     merge,
-    is_total,
+    is_total: WithSpan::new(raw_span, is_total),
   })
 }
 
@@ -829,8 +881,8 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
     node
       .named_children(&mut cursor)
       .find_map(|n| match NodeKind::from(n.kind()) {
-        NodeKind::At => Some(PriceOperator::PerUnit),
-        NodeKind::Atat => Some(PriceOperator::Total),
+        NodeKind::At => Some(WithSpan::new(span(n), PriceOperator::PerUnit)),
+        NodeKind::Atat => Some(WithSpan::new(span(n), PriceOperator::Total)),
         _ => None,
       })
   };
@@ -877,7 +929,7 @@ fn parse_posting<'a>(node: Node, source: &'a str, filename: &str) -> Result<Post
 
 struct ParsedBalanceAmount<'a> {
   amount: Amount<'a>,
-  tolerance: Option<&'a str>,
+  tolerance: Option<WithSpan<&'a str>>,
 }
 
 fn parse_balance_amount<'a>(
@@ -917,27 +969,27 @@ fn parse_balance_amount<'a>(
     ));
   }
 
-  let amount_raw = slice(amount_node, source);
+  let amount_raw = with_span(amount_node, source);
   let amount = Amount {
     raw: amount_raw,
     number: parse_number_expr(number_node, source, filename)?,
-    currency: Some(slice(currency_node, source)),
+    currency: Some(with_span(currency_node, source)),
   };
-  let tolerance = tolerance_node.map(|n| slice(n, source).trim());
+  let tolerance = tolerance_node.map(|n| WithSpan::new(span(n), slice(n, source).trim()));
 
   Ok(ParsedBalanceAmount { amount, tolerance })
 }
 
 fn parse_amount_node<'a>(amount_node: Node, source: &'a str, filename: &str) -> Result<Amount<'a>> {
-  let raw = slice(amount_node, source);
+  let raw = with_span(amount_node, source);
 
   // Accept bare currency or bare number nodes (e.g. price annotations like "@ CAD" or
   // tolerances such as "~ 1.00"). Those nodes won't have children, so handle them up front.
   match NodeKind::from(amount_node.kind()) {
     NodeKind::Currency => {
       return Ok(Amount {
-        raw,
-        number: NumberExpr::Missing,
+        raw: raw.clone(),
+        number: NumberExpr::Missing { span: raw.span },
         currency: Some(raw),
       });
     }
@@ -969,17 +1021,17 @@ fn parse_amount_node<'a>(amount_node: Node, source: &'a str, filename: &str) -> 
   let mut number = number_node
     .map(|n| parse_number_expr(n, source, filename))
     .transpose()?;
-  let mut currency = currency_node.map(|n| slice(n, source));
+  let mut currency = currency_node.map(|n| with_span(n, source));
 
   if number.is_none()
     && currency.is_none()
-    && let Some((num, curr)) = parse_amount_tokens(raw)
+    && let Some((num, curr)) = parse_amount_tokens(raw.content)
   {
-    number = Some(NumberExpr::Literal(num));
-    currency = Some(curr);
+    number = Some(NumberExpr::Literal(WithSpan::new(raw.span, num)));
+    currency = Some(WithSpan::new(raw.span, curr));
   }
 
-  let number = number.unwrap_or(NumberExpr::Missing);
+  let number = number.unwrap_or(NumberExpr::Missing { span: raw.span });
   let currency = currency;
 
   Ok(Amount {
@@ -1012,7 +1064,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
       node
         .named_children(&mut cursor)
         .find(|n| *n == NodeKind::Date)
-        .map(|n| slice(n, source))
+        .map(|n| with_span(n, source))
     })
     .ok_or_else(|| parse_error(node, filename, "missing date"))?;
 
@@ -1023,7 +1075,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
       node
         .named_children(&mut cursor)
         .find(|n| *n == NodeKind::Txn)
-        .map(|n| slice(n, source))
+        .map(|n| with_span(n, source))
     });
 
   let payee_raw = field_text(node, "payee", source);
@@ -1038,7 +1090,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
       let mut strings = node
         .named_children(&mut cursor)
         .filter(|n| *n == NodeKind::String)
-        .map(|n| slice(n, source));
+        .map(|n| with_span(n, source));
       let first = strings.next();
       let second = strings.next();
       match (first, second) {
@@ -1059,8 +1111,8 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
   let payee = payee_raw;
   let narration = narration_raw;
 
-  let mut tags_links_lines: SmallVec<[&'a str; 8]> = SmallVec::new();
-  let mut comments: SmallVec<[&'a str; 8]> = SmallVec::new();
+  let mut tags_links_lines: SmallVec<[WithSpan<&'a str>; 8]> = SmallVec::new();
+  let mut comments: SmallVec<[WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut key_values: SmallVec<[KeyValue<'a>; 4]> = SmallVec::new();
   let mut postings: SmallVec<[Posting<'a>; 4]> = SmallVec::new();
 
@@ -1068,8 +1120,8 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
       match child.kind().into() {
-        NodeKind::TagsLinks => tags_links_lines.push(slice(child, source)),
-        NodeKind::Comment => comments.push(slice(child, source)),
+        NodeKind::TagsLinks => tags_links_lines.push(with_span(child, source)),
+        NodeKind::Comment => comments.push(with_span(child, source)),
         NodeKind::KeyValue => {
           let kv = parse_key_value(child, source, filename)?;
           if let Some(posting) = postings.last_mut() {
@@ -1087,8 +1139,8 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
   }
   let tags_links_inline = field_text(node, "tags_links", source);
   let mut tags_links_sources = tags_links_lines.clone();
-  if let Some(inline) = tags_links_inline {
-    tags_links_sources.push(inline);
+  if let Some(ref inline) = tags_links_inline {
+    tags_links_sources.push(inline.clone());
   }
 
   let (tags, links) = parse_tags_links(tags_links_sources);

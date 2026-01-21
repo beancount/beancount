@@ -1,7 +1,6 @@
 mod common;
 use beancount_parser::core::Include;
 use common::{lines, parse_as};
-use std::path::PathBuf;
 
 #[test]
 fn include_directive_resolves_path() {

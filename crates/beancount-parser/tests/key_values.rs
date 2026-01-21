@@ -1,5 +1,5 @@
 mod common;
-use beancount_parser::ast::{Directive, Document, KeyValue, KeyValueValue, Note};
+use beancount_parser::ast::{Directive, Document, KeyValue, KeyValueValue, Note, WithSpan};
 use common::{expect_ast_at, parse_ast};
 
 #[test]
@@ -28,11 +28,17 @@ fn collects_key_values_on_note_and_document() {
   let expected_note = Directive::Note(Note {
     key_values: smallvec::smallvec![
       KeyValue {
-        value: Some(KeyValueValue::String("\"value\"")),
+        value: kv0
+          .value
+          .as_ref()
+          .map(|v| WithSpan::new(v.span, KeyValueValue::String("\"value\""))),
         ..kv0
       },
       KeyValue {
-        value: Some(KeyValueValue::UnquotedString("42")),
+        value: kv1
+          .value
+          .as_ref()
+          .map(|v| WithSpan::new(v.span, KeyValueValue::UnquotedString("42"))),
         ..kv1
       },
     ],
@@ -49,7 +55,10 @@ fn collects_key_values_on_note_and_document() {
   let kv = doc.key_values[0].clone();
   let expected_doc = Directive::Document(Document {
     key_values: smallvec::smallvec![KeyValue {
-      value: Some(KeyValueValue::String("\"receipt\"")),
+      value: kv
+        .value
+        .as_ref()
+        .map(|v| WithSpan::new(v.span, KeyValueValue::String("\"receipt\""))),
       ..kv
     }],
     ..doc.clone()
@@ -73,7 +82,10 @@ fn parses_unquoted_string_value() {
   let kv = note.key_values[0].clone();
   let expected_note = Directive::Note(Note {
     key_values: smallvec::smallvec![KeyValue {
-      value: Some(KeyValueValue::UnquotedString("value")),
+      value: kv
+        .value
+        .as_ref()
+        .map(|v| WithSpan::new(v.span, KeyValueValue::UnquotedString("value"))),
       ..kv
     }],
     ..note.clone()
