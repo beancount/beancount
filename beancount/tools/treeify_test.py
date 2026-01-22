@@ -90,6 +90,7 @@ class TestTreeify(TestTreeifyBase):
     def test_simple(self):
         self.treeify_equal(
             """\
+          2014-10-19 Assets:Home:123ForestLane                    450,000.00 USD
           2014-12-25 Assets:US:BofA:Checking                        5,545.01 USD
           2014-11-11 Assets:US:Federal:PreTax401k
           2014-10-04 Assets:US:Hooli:Vacation                         332.64 VACHR
@@ -109,6 +110,8 @@ class TestTreeify(TestTreeifyBase):
         """,
             """\
                      |-- Assets
+                     |   |-- Home
+          2014-10-19 |   |   `-- 123ForestLane                    450,000.00 USD
                      |   `-- US
                      |       |-- BofA
           2014-12-25 |       |   `-- Checking                       5,545.01 USD
