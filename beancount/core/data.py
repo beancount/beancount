@@ -229,11 +229,11 @@ class Posting(NamedTuple):
     """
 
     account: Account
-    units: Optional[Amount]
-    cost: Optional[Union[Cost, CostSpec]]
-    price: Optional[Amount]
-    flag: Optional[Flag]
-    meta: Optional[Meta]
+    units: Optional[Amount] = None
+    cost: Optional[Union[Cost, CostSpec]] = None
+    price: Optional[Amount] = None
+    flag: Optional[Flag] = None
+    meta: Optional[Meta] = None
 
 
 class Transaction(NamedTuple):
