@@ -13,7 +13,7 @@ from beancount.core import getters
 __plugins__ = ("auto_insert_open",)
 
 
-def auto_insert_open(entries, unused_options_map):
+def auto_insert_open(entries, options_map):
     """Insert Open directives for accounts not opened.
 
     Open directives are inserted at the date of the first entry. Open directives
@@ -37,7 +37,9 @@ def auto_insert_open(entries, unused_options_map):
 
     if new_entries:
         new_entries.extend(entries)
-        new_entries.sort(key=data.entry_sortkey)
+        from zoneinfo import ZoneInfo
+        tz_info = ZoneInfo(options_map["default_timezone"])
+        new_entries.sort(key=lambda entry: data.entry_sortkey(entry, tz_info))
     else:
         new_entries = entries
 
