@@ -1,6 +1,9 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
+    'flex-bin ; sys_platform == "linux" or sys_platform == "darwin"',
+    'bison-bin ; sys_platform == "linux" or sys_platform == "darwin"',
+    'winflexbison-bin>=2.5.25.1 ; sys_platform == "win32"',
     "meson-python >= 0.14.0",
     "meson >= 1.2.1",
 ]
