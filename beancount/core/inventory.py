@@ -399,6 +399,16 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
     # Methods to build an Inventory instance.
     #
 
+    def discard(self, currency: str) -> None:
+        """Discard all positions with the given currency.
+
+        Args:
+          currency: A string, the currency to remove.
+        """
+        for key in list(self.keys()):
+            if key[0] == currency:
+                del self[key]
+
     def add_amount(
         self, units: Amount, cost: Cost | None = None
     ) -> tuple[Position | None, MatchResult]:

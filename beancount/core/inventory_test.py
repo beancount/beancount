@@ -532,6 +532,21 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(I("100.00 USD, 101.00 CAD, 100 HOOL"), inv_units)
 
 
+    def test_discard(self):
+        inv = I("100.00 USD, 101.00 CAD, 100 HOOL {300.00 USD}")
+        inv.discard("USD")
+        self.assertEqual(I("101.00 CAD, 100 HOOL {300.00 USD}"), inv)
+
+        inv.discard("HOOL")
+        self.assertEqual(I("101.00 CAD"), inv)
+
+        inv.discard("CAD")
+        self.assertEqual(I(""), inv)
+
+        # Discarding a currency not in inventory should be a no-op
+        inv.discard("EUR")
+        self.assertEqual(I(""), inv)
+
 if __name__ == "__main__":
     if not hasattr(inventory, "__copyright__"):
         del TestInventory

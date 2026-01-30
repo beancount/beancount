@@ -30,7 +30,7 @@ beancount: TODO
 
 ** For API
 
-- Inventory: Add a function to discard by currency.
+
 - Inventory: Make it easier to reduce & convert to a single currency.
 
 
