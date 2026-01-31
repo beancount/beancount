@@ -12,7 +12,7 @@ description = "Core beancount parsing logic."
 crate-type = ["lib"]
 
 [dependencies]
-beancount-tree-sitter = { path = "../beancount-tree-sitter" }
+beancount-tree-sitter = { path = "../tree-sitter" }
 tree-sitter = { workspace = true }
 ropey = '1.6.1'
 anyhow = "1.0.100"

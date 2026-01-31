@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "crates/beancount-tree-sitter",
-  "crates/beancount-parser",
-  "crates/beancount-parser-py",
+  "crates/tree-sitter",
+  "crates/parser",
+  "crates/parser-py",
 ]
 resolver = "3"
 

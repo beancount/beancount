@@ -12,7 +12,7 @@ description = "Core beancount formatter logic."
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-beancount-parser = { path = "../beancount-parser/" }
+beancount-parser = { path = "../parser/" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { workspace = true }
 chrono = "0.4.38"
