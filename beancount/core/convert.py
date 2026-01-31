@@ -152,7 +152,9 @@ def get_value(pos, price_map, date=None, output_date_prices=None):
         if price_number is not None:
             return Amount(units.number * price_number, value_currency)
 
-    # We failed to infer a conversion rate; return the units.
+    # We failed to infer a conversion rate; return the cost if available, else units.
+    if isinstance(cost, Cost) and isinstance(cost.number, Decimal):
+        return Amount(cost.number * units.number, cost.currency)
     return units
 
 
