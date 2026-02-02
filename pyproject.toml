@@ -36,7 +36,7 @@ repository = "https://github.com/beancount/beancount"
 donations = "https://www.paypal.com/paypalme/misislavski"
 
 [tool.maturin]
-manifest-path = "crates/beancount-parser-py/Cargo.toml"
+manifest-path = "crates/parser-py/Cargo.toml"
 module-name = "beancount.parser._parser_rust"
 bindings = "pyo3"
 strip = true
