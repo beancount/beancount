@@ -479,7 +479,8 @@ fn partition_directives(
       | CoreDirective::PushMeta(_)
       | CoreDirective::PopMeta(_)
       | CoreDirective::Headline(_)
-      | CoreDirective::Comment(_) => filtered.push(directive),
+      | CoreDirective::Comment(_)
+      | CoreDirective::Raw(_) => filtered.push(directive),
       other => filtered.push(other),
     }
   }
@@ -581,6 +582,15 @@ fn convert_directives(
       }
       CoreDirective::Comment(_) | CoreDirective::Headline(_) => {
         // Ignore comments in Python bindings.
+      }
+      CoreDirective::Raw(raw) => {
+        let err = ParseError {
+          filename: raw.meta.filename.clone(),
+          line: raw.meta.line,
+          column: raw.meta.column,
+          message: format!("Unrecognized directive: {}", raw.text),
+        };
+        errors.push(build_parser_error(py, err)?);
       }
       mut other => {
         // Apply pushed metadata to directives that carry key-value metadata.

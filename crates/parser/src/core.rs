@@ -35,6 +35,14 @@ pub enum CoreDirective {
   PopMeta(PopMeta),
   Headline(Headline),
   Comment(Comment),
+  Raw(Raw),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Raw {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -482,7 +490,20 @@ impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
       ast::Directive::Headline(headline) => {
         Ok(CoreDirective::Headline(Headline::try_from(headline)?))
       }
+      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from(raw)?)),
     }
+  }
+}
+
+impl<'a> TryFrom<ast::Raw<'a>> for Raw {
+  type Error = ParseError;
+
+  fn try_from(raw: ast::Raw<'a>) -> Result<Self, Self::Error> {
+    Ok(Self {
+      meta: raw.meta,
+      span: raw.span,
+      text: raw.text.to_string(),
+    })
   }
 }
 

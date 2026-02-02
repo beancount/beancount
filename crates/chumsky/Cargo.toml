@@ -1,0 +1,17 @@
+[package]
+name = "beancount-chumsky"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Chumsky-based Beancount parser."
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+beancount-parser = { path = "../parser" }
+chumsky = "0.12.0"
+smallvec = { workspace = true }

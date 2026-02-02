@@ -24,3 +24,9 @@ path-clean = "1.0.1"
 
 [dev-dependencies]
 similar = { workspace = true }
+beancount-chumsky = { path = "../chumsky" }
+criterion = "0.5.1"
+
+[[bench]]
+name = "transaction"
+harness = false

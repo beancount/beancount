@@ -73,6 +73,8 @@ pub enum Directive<'a> {
   Comment(Comment<'a>),
   /// Org/Markdown style headline.
   Headline(Headline<'a>),
+  /// Unparsed directive line.
+  Raw(Raw<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -401,4 +403,11 @@ pub struct Headline<'a> {
   pub meta: Meta,
   pub span: Span,
   pub text: WithSpan<&'a str>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Raw<'a> {
+  pub meta: Meta,
+  pub span: Span,
+  pub text: &'a str,
 }
