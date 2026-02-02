@@ -452,10 +452,11 @@ pub struct Amount {
 }
 
 pub fn normalize_directives<'a>(
-  directives: Vec<ast::Directive<'a>>,
+  directives: &[ast::Directive<'a>],
 ) -> Result<Vec<CoreDirective>, ParseError> {
   directives
-    .into_iter()
+    .iter()
+    .cloned()
     .map(CoreDirective::try_from)
     .collect()
 }

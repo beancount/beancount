@@ -3,7 +3,7 @@ use beancount_parser::core::OptionDirective;
 
 fn parse_option(input: &str, filename: &str) -> OptionDirective {
   let ast = parse_chumsky(input, filename).expect("chumsky parse failed");
-  let core = beancount_parser::normalize_directives(ast).expect("chumsky normalize failed");
+  let core = beancount_parser::normalize_directives(&ast).expect("chumsky normalize failed");
   assert_eq!(core.len(), 1, "expected a single directive");
   match core.into_iter().next().expect("directive") {
     beancount_parser::core::CoreDirective::Option(opt) => opt,

@@ -1236,7 +1236,7 @@ fn parse_source(
     }
   };
 
-  let normalized = match normalize_directives(directives) {
+  let normalized = match normalize_directives(&directives) {
     Ok(normalized) => normalized,
     Err(err) => {
       options_map.set_item("include", PyList::empty(py))?;

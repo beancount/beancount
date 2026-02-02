@@ -12,7 +12,7 @@ pub(crate) fn lines(parts: &[&str]) -> String {
 #[allow(dead_code)]
 pub(crate) fn parse_core(input: &str, filename: &str) -> Vec<CoreDirective> {
   let ast = parse_str(input, filename).expect("parse failed");
-  normalize_directives(ast).expect("normalize failed")
+  normalize_directives(&ast).expect("normalize failed")
 }
 
 #[cfg(test)]
