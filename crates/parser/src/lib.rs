@@ -102,7 +102,7 @@ pub fn parse_str<'a>(source: &'a str, filename: &str) -> Result<Vec<ast::Directi
         let mut parts = trimmed.split_whitespace();
         let date = parts.next().unwrap_or("");
         let flag = parts.next().unwrap_or("");
-        if looks_like_date(date) && (flag == "*" || flag == "!") {
+        if looks_like_date(date) && (flag == "*" || flag == "!" || flag == "txn") {
           is_txn_header = true;
         }
       }
@@ -1574,7 +1574,7 @@ fn parse_transaction_header<'a>(
   let mut parts = trimmed.split_whitespace();
   let date = parts.next()?;
   let flag = parts.next()?;
-  if flag != "*" && flag != "!" {
+  if flag != "*" && flag != "!" && flag != "txn" {
     return None;
   }
   let after_flag = trimmed

@@ -30,6 +30,21 @@ fn chumsky_parses_transaction_postings() {
 }
 
 #[test]
+fn chumsky_parses_txn_keyword() {
+  let input = "2013-05-02 txn \"Testing!\"\n";
+  let raw = parse_str(input, "input.beancount").unwrap();
+  let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
+  assert_eq!(chumsky.len(), 1);
+  match &chumsky[0] {
+    beancount_parser::core::CoreDirective::Transaction(txn) => {
+      assert_eq!(txn.txn.as_deref(), Some("txn"));
+      assert_eq!(txn.narration.as_deref(), Some("Testing!"));
+    }
+    other => panic!("expected transaction, got {other:?}"),
+  }
+}
+
+#[test]
 fn chumsky_parses_posting_metadata() {
   let input =
     "2020-01-01 * \"Lunch\"\n  Assets:Cash  -10 USD\n    category: Food\n  Expenses:Food 10 USD\n";
