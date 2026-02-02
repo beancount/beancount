@@ -1,17 +1,14 @@
-use beancount_chumsky::parse_str as parse_chumsky;
-use beancount_parser::parse_str as parse_tree_sitter;
+use beancount_parser::parse_str;
 
-fn assert_same_directives(source: &str) {
-  let chumsky = parse_chumsky(source, "input.beancount").unwrap();
-  let chumsky = beancount_parser::normalize_directives(&chumsky).unwrap();
-  let tree_sitter = parse_tree_sitter(source, "input.beancount").unwrap();
-  let tree_sitter = beancount_parser::normalize_directives(&tree_sitter).unwrap();
-  assert_eq!(chumsky, tree_sitter);
+fn assert_parses(source: &str) {
+  let directives = parse_str(source, "input.beancount").unwrap();
+  let normalized = beancount_parser::normalize_directives(&directives).unwrap();
+  assert!(!normalized.is_empty());
 }
 
 #[test]
 fn chumsky_parses_simple_directives() {
-  assert_same_directives(
+  assert_parses(
     "2020-01-01 open Assets:Cash\n\
 2020-01-02 balance Assets:Cash 100 USD\n\
 2020-01-03 close Assets:Cash\n",
@@ -21,7 +18,7 @@ fn chumsky_parses_simple_directives() {
 #[test]
 fn chumsky_parses_transaction_postings() {
   let input = "2020-01-01 * \"Lunch\"\n  Assets:Cash  -10 USD\n  Expenses:Food 10 USD\n";
-  let raw = parse_chumsky(input, "input.beancount").unwrap();
+  let raw = parse_str(input, "input.beancount").unwrap();
   let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
   assert_eq!(chumsky.len(), 1);
   match &chumsky[0] {
@@ -36,7 +33,7 @@ fn chumsky_parses_transaction_postings() {
 fn chumsky_parses_posting_metadata() {
   let input =
     "2020-01-01 * \"Lunch\"\n  Assets:Cash  -10 USD\n    category: Food\n  Expenses:Food 10 USD\n";
-  let raw = parse_chumsky(input, "input.beancount").unwrap();
+  let raw = parse_str(input, "input.beancount").unwrap();
   let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
   assert_eq!(chumsky.len(), 1);
   match &chumsky[0] {
@@ -51,7 +48,7 @@ fn chumsky_parses_posting_metadata() {
 #[test]
 fn chumsky_parses_raw_directive() {
   let input = "2020-01-01 unknown Assets:Cash\n";
-  let raw = parse_chumsky(input, "input.beancount").unwrap();
+  let raw = parse_str(input, "input.beancount").unwrap();
   let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
   assert_eq!(chumsky.len(), 1);
   match &chumsky[0] {
@@ -66,7 +63,7 @@ fn chumsky_parses_raw_directive() {
 #[test]
 fn chumsky_parses_multiline_with_raw() {
   let input = "2020-01-01 unknown Assets:Cash\n  meta: 1";
-  let raw = parse_chumsky(input, "input.beancount").unwrap();
+  let raw = parse_str(input, "input.beancount").unwrap();
   let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
   assert_eq!(chumsky.len(), 1);
   match &chumsky[0] {
@@ -81,7 +78,7 @@ fn chumsky_parses_multiline_with_raw() {
 #[test]
 fn chumsky_raw_after_blank_line() {
   let input = "2020-01-01 balance Assets:Cash 1 USD\n  meta: 1\n\n  meta: 2";
-  let raw = parse_chumsky(input, "input.beancount").unwrap();
+  let raw = parse_str(input, "input.beancount").unwrap();
   let chumsky = beancount_parser::normalize_directives(&raw).expect("chumsky normalize failed");
   assert_eq!(chumsky.len(), 2);
   match &chumsky[0] {

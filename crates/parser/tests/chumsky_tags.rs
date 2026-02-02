@@ -1,4 +1,4 @@
-use beancount_chumsky::parse_str as parse_chumsky;
+use beancount_parser::parse_str as parse_chumsky;
 use beancount_parser::core::TagDirective;
 
 fn parse_tag(input: &str, filename: &str) -> TagDirective {

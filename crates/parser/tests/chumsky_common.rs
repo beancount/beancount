@@ -1,4 +1,4 @@
-use beancount_chumsky::parse_str;
+use beancount_parser::parse_str;
 use beancount_parser::core::{BinaryOp, CoreDirective, NumberExpr};
 use beancount_parser::{ast, normalize_directives};
 

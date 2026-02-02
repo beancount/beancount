@@ -81,9 +81,10 @@ pub enum Directive<'a> {
 pub struct Open<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
-  pub currencies: SmallVec<[WithSpan<&'a str>; 8]>,
+  pub currencies: SmallVec<[WithSpan<&'a str>; 2]>,
   pub opt_booking: Option<WithSpan<&'a str>>,
   pub comment: Option<WithSpan<&'a str>>,
   pub key_values: SmallVec<[KeyValue<'a>; 4]>,
@@ -93,6 +94,7 @@ pub struct Open<'a> {
 pub struct Close<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
   pub comment: Option<WithSpan<&'a str>>,
@@ -103,6 +105,7 @@ pub struct Close<'a> {
 pub struct Balance<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
   pub amount: Amount<'a>,
@@ -115,6 +118,7 @@ pub struct Balance<'a> {
 pub struct Pad<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
   pub from_account: WithSpan<&'a str>,
@@ -192,12 +196,12 @@ pub enum NumberExpr<'a> {
   },
 }
 
-impl<'a> NumberExpr<'a> {
+impl NumberExpr<'_> {
   pub fn span(&self) -> Span {
     match self {
-      NumberExpr::Missing { span }
-      | NumberExpr::Literal(WithSpan { span, .. })
-      | NumberExpr::Binary { span, .. } => *span,
+      NumberExpr::Missing { span } => *span,
+      NumberExpr::Literal(value) => value.span,
+      NumberExpr::Binary { span, .. } => *span,
     }
   }
 }
@@ -245,6 +249,7 @@ pub struct Posting<'a> {
 pub struct Commodity<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub currency: WithSpan<&'a str>,
   pub comment: Option<WithSpan<&'a str>>,
@@ -255,6 +260,7 @@ pub struct Commodity<'a> {
 pub struct Price<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub currency: WithSpan<&'a str>,
   pub amount: Amount<'a>,
@@ -266,6 +272,7 @@ pub struct Price<'a> {
 pub struct Event<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub event_type: WithSpan<&'a str>,
   pub desc: WithSpan<&'a str>,
@@ -277,6 +284,7 @@ pub struct Event<'a> {
 pub struct Query<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub name: WithSpan<&'a str>,
   pub query: WithSpan<&'a str>,
@@ -288,6 +296,7 @@ pub struct Query<'a> {
 pub struct Note<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
   pub note: WithSpan<&'a str>,
@@ -299,6 +308,7 @@ pub struct Note<'a> {
 pub struct Document<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub account: WithSpan<&'a str>,
   pub filename: WithSpan<&'a str>,
@@ -313,6 +323,7 @@ pub struct Document<'a> {
 pub struct Custom<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub date: WithSpan<&'a str>,
   pub name: WithSpan<&'a str>,
   pub values: SmallVec<[CustomValue<'a>; 2]>,
@@ -320,7 +331,7 @@ pub struct Custom<'a> {
   pub key_values: SmallVec<[KeyValue<'a>; 4]>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CustomValueKind {
   String,
   Date,
@@ -350,45 +361,57 @@ pub struct Amount<'a> {
 pub struct OptionDirective<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub key: WithSpan<&'a str>,
   pub value: WithSpan<&'a str>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Include<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub filename: WithSpan<&'a str>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Plugin<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub name: WithSpan<&'a str>,
   pub config: Option<WithSpan<&'a str>>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagDirective<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub tag: WithSpan<&'a str>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushMeta<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub key: WithSpan<&'a str>,
   pub value: Option<WithSpan<KeyValueValue<'a>>>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PopMeta<'a> {
   pub meta: Meta,
   pub span: Span,
+  pub keyword: Span,
   pub key: WithSpan<&'a str>,
+  pub comment: Option<WithSpan<&'a str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -3,7 +3,6 @@ members = [
   "crates/tree-sitter",
   "crates/parser",
   "crates/parser-py",
-  "crates/chumsky",
 ]
 resolver = "3"
 

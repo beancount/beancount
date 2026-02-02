@@ -1,4 +1,4 @@
-use beancount_chumsky::parse_str;
+use beancount_parser::parse_str;
 use beancount_parser::ast::Directive;
 
 #[test]

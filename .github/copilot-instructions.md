@@ -4,12 +4,12 @@ it's original use a c parser and I'm replacing it with a rust parser.
 
 It should export same python api and just replace the parser.
 
-It's based on a tree-sitter parser that generated from `crates/tree-sitter/grammar.js`, `crates/tree-sitter/src/grammar.json` and `crates/tree-sitter/src/node-types.json` which you can find from project root directory.
+It's based on a Chumsky parser implemented in `crates/chumsky/`.
 
 crates:
 
-- `crates/tree-sitter/`: this crate contains tree-sitter parser.
-- `crates/parser/`: the parser that parse string into tree-sitter Node and convert them to our internal AST and core rust type `CoreDirective`.
+- `crates/chumsky/`: this crate contains the Chumsky parser and shared AST types.
+- `crates/parser/`: the core types and normalization logic; `parse_str` is powered by the Chumsky parser.
 - `crates/parser-py/`: this create convert `CoreDirective` to beancount.core python types defined in the python file `beancount/core/data.py`. you do not add any rust tests to this crate because it require a linkage to python to run these tests. if you want to test this crate, write test code in python.
 
 ## Something need to notice:

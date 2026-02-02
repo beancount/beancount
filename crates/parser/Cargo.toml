@@ -12,19 +12,16 @@ description = "Core beancount parsing logic."
 crate-type = ["lib"]
 
 [dependencies]
-beancount-tree-sitter = { path = "../tree-sitter" }
-tree-sitter = { workspace = true }
-ropey = '1.6.1'
 anyhow = "1.0.100"
 serde_json = { workspace = true }
 smallvec = { workspace = true }
 chrono = { version = "0.4.38", default-features = false }
 rust_decimal = "1.36.0"
 path-clean = "1.0.1"
+chumsky = "0.12.0"
 
 [dev-dependencies]
 similar = { workspace = true }
-beancount-chumsky = { path = "../chumsky" }
 criterion = "0.5.1"
 
 [[bench]]

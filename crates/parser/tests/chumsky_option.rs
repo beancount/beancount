@@ -1,4 +1,4 @@
-use beancount_chumsky::parse_str as parse_chumsky;
+use beancount_parser::parse_str as parse_chumsky;
 use beancount_parser::core::OptionDirective;
 
 fn parse_option(input: &str, filename: &str) -> OptionDirective {

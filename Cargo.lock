@@ -77,30 +77,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "beancount-chumsky"
-version = "3.3.0-alpha.0"
-dependencies = [
- "beancount-parser",
- "chumsky",
- "smallvec",
-]
-
-[[package]]
 name = "beancount-parser"
 version = "3.3.0-alpha.0"
 dependencies = [
  "anyhow",
- "beancount-chumsky",
- "beancount-tree-sitter",
  "chrono",
+ "chumsky",
  "criterion",
  "path-clean",
- "ropey",
  "rust_decimal",
  "serde_json",
  "similar",
  "smallvec",
- "tree-sitter",
 ]
 
 [[package]]
@@ -1023,16 +1011,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ropey"
-version = "1.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93411e420bcd1a75ddd1dc3caf18c23155eda2c090631a85af21ba19e97093b5"
-dependencies = [
- "smallvec",
- "str_indices",
-]
-
-[[package]]
 name = "rust_decimal"
 version = "1.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1174,12 +1152,6 @@ dependencies = [
  "psm",
  "windows-sys",
 ]
-
-[[package]]
-name = "str_indices"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d08889ec5408683408db66ad89e0e1f93dff55c73a4ccc71c427d5b277ee47e6"
 
 [[package]]
 name = "streaming-iterator"

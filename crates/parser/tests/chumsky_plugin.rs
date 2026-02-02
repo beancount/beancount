@@ -1,4 +1,4 @@
-use beancount_chumsky::parse_str as parse_chumsky;
+use beancount_parser::parse_str as parse_chumsky;
 use beancount_parser::core::Plugin;
 
 fn parse_plugin(input: &str, filename: &str) -> Plugin {

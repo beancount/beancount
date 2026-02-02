@@ -1,5 +1,5 @@
-use beancount_chumsky::parse_str as parse_chumsky;
 use beancount_parser::core::{Custom, CustomValue, NumberExpr};
+use beancount_parser::parse_str as parse_chumsky;
 
 fn parse_custom(input: &str, filename: &str) -> Custom {
   let ast = parse_chumsky(input, filename).expect("chumsky parse failed");

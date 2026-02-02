@@ -4,7 +4,7 @@ This project is replacing the original C parser with a Rust-based parser while m
 
 ## Overview
 
-Beancount is a double-entry accounting system that uses text files as input. This fork replaces the C parser with a Rust implementation based on tree-sitter.
+Beancount is a double-entry accounting system that uses text files as input. This fork replaces the C parser with a Rust implementation based on Chumsky.
 
 ## Project Structure
 
@@ -25,15 +25,14 @@ Beancount is a double-entry accounting system that uses text files as input. Thi
 
 The Rust code is organized as a Cargo workspace with four crates:
 
-1. **`crates/tree-sitter/`** - Tree-sitter grammar for Beancount
-   - Contains the grammar definition (grammar.js) and generated files
-   - Provides low-level parsing into tree-sitter syntax tree
-   - Published as `beancount-tree-sitter` crate
+1. **`crates/chumsky/`** - Chumsky-based parser implementation
+   - Produces the internal AST used by the Rust core
+   - Depends on `chumsky` and shared AST types
 
-2. **`crates/parser/`** - Core parsing logic
-   - Converts tree-sitter nodes to internal AST
+2. **`crates/parser/`** - Core parsing logic and shared data types
    - Defines `CoreDirective` types (Rust equivalents of Python data structures)
-   - Dependencies: `beancount-tree-sitter`, `tree-sitter`, `chrono`, `rust_decimal`, `ropey`
+   - Exposes `parse_str()` powered by the Chumsky parser
+   - Dependencies: `chumsky`, `chrono`, `rust_decimal`
 
 3. **`crates/parser-py/`** - Python bindings
    - Uses PyO3 to expose Rust parser to Python
@@ -41,9 +40,9 @@ The Rust code is organized as a Cargo workspace with four crates:
    - Compiled to `beancount.parser._parser_rust`
    - **Do not add Rust tests here** - test through Python instead
 
-4. **`crates/chumsky/`** - Experimental Chumsky-based parser
-   - Alternative parser implementation using the Chumsky parser combinator library
-   - Depends on `beancount-parser`
+4. **`crates/tree-sitter/`** - Legacy tree-sitter grammar (not used by the current parser)
+   - Contains the grammar definition (grammar.js) and generated files
+   - Published as `beancount-tree-sitter` crate
 
 ## Development Workflow
 
@@ -79,7 +78,7 @@ When updating function signatures in `crates/parser-py/`, you **must** update th
 
 - `Cargo.toml` - Workspace configuration
 - `pyproject.toml` - Python project configuration, dependencies, and tool settings
-- `crates/tree-sitter/grammar.js` - Beancount grammar definition
+- `crates/chumsky/src/lib.rs` - Chumsky parser implementation
 - `beancount/core/data.py` - Python data structures that must match Rust `CoreDirective`
 
 ## Important Notes
