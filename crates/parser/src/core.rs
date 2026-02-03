@@ -15,24 +15,25 @@ pub type SmallPostings = SmallVec<[Posting; 4]>;
 pub type SmallCustomValues = SmallVec<[CustomValue; 2]>;
 
 #[derive(Debug, Clone)]
-pub struct MetaAt {
+pub struct MetaAt<'a> {
   filename: Arc<String>,
-  rope: Rope,
+  rope: &'a Rope,
 }
 
-impl MetaAt {
-  pub fn new(filename: &str, source: &str) -> Self {
+impl<'a> MetaAt<'a> {
+  pub fn from_rope(filename: &str, rope: &'a Rope) -> Self {
     Self {
       filename: Arc::new(filename.to_string()),
-      rope: Rope::from_str(source),
+      rope,
     }
   }
 
   pub fn at(&self, offset: usize) -> ast::Meta {
-    let char_idx = self.rope.byte_to_char(offset);
-    let line_idx = self.rope.char_to_line(char_idx);
-    let line_start_char = self.rope.line_to_char(line_idx);
-    let line_start_byte = self.rope.char_to_byte(line_start_char);
+    let rope = self.rope;
+    let char_idx = rope.byte_to_char(offset);
+    let line_idx = rope.char_to_line(char_idx);
+    let line_start_char = rope.line_to_char(line_idx);
+    let line_start_byte = rope.char_to_byte(line_start_char);
     ast::Meta {
       filename: self.filename.clone(),
       line: line_idx + 1,
@@ -486,8 +487,22 @@ pub fn normalize_directives<'a>(
   filename: &str,
   source: &str,
 ) -> Result<Vec<CoreDirective>, ParseError> {
-  let meta_at = MetaAt::new(filename, source);
+  let rope = Rope::from_str(source);
+  normalize_directives_with_meta(directives, MetaAt::from_rope(filename, &rope))
+}
 
+pub fn normalize_directives_with_rope<'a>(
+  directives: &[ast::Directive<'a>],
+  filename: &str,
+  rope: &Rope,
+) -> Result<Vec<CoreDirective>, ParseError> {
+  normalize_directives_with_meta(directives, MetaAt::from_rope(filename, rope))
+}
+
+fn normalize_directives_with_meta<'a>(
+  directives: &[ast::Directive<'a>],
+  meta_at: MetaAt<'_>,
+) -> Result<Vec<CoreDirective>, ParseError> {
   directives
     .iter()
     .cloned()
@@ -495,7 +510,7 @@ pub fn normalize_directives<'a>(
     .collect()
 }
 
-impl<'a> TryFrom<(ast::Directive<'a>, &MetaAt)> for CoreDirective {
+impl<'a> TryFrom<(ast::Directive<'a>, &MetaAt<'_>)> for CoreDirective {
   type Error = ParseError;
 
   fn try_from(input: (ast::Directive<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -554,7 +569,7 @@ impl<'a> TryFrom<(ast::Directive<'a>, &MetaAt)> for CoreDirective {
   }
 }
 
-impl<'a> TryFrom<(ast::Raw<'a>, &MetaAt)> for Raw {
+impl<'a> TryFrom<(ast::Raw<'a>, &MetaAt<'_>)> for Raw {
   type Error = ParseError;
 
   fn try_from(input: (ast::Raw<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -567,7 +582,7 @@ impl<'a> TryFrom<(ast::Raw<'a>, &MetaAt)> for Raw {
   }
 }
 
-impl<'a> TryFrom<(ast::Comment<'a>, &MetaAt)> for Comment {
+impl<'a> TryFrom<(ast::Comment<'a>, &MetaAt<'_>)> for Comment {
   type Error = ParseError;
 
   fn try_from(input: (ast::Comment<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -580,7 +595,7 @@ impl<'a> TryFrom<(ast::Comment<'a>, &MetaAt)> for Comment {
   }
 }
 
-impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Comment {
+impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt<'_>)> for Comment {
   type Error = ParseError;
 
   fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -593,7 +608,7 @@ impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Comment {
   }
 }
 
-impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Headline {
+impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt<'_>)> for Headline {
   type Error = ParseError;
 
   fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -606,7 +621,7 @@ impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Headline {
   }
 }
 
-impl<'a> TryFrom<(ast::Open<'a>, &MetaAt)> for Open {
+impl<'a> TryFrom<(ast::Open<'a>, &MetaAt<'_>)> for Open {
   type Error = ParseError;
 
   fn try_from(input: (ast::Open<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -637,7 +652,7 @@ impl<'a> TryFrom<(ast::Open<'a>, &MetaAt)> for Open {
   }
 }
 
-impl<'a> TryFrom<(ast::Close<'a>, &MetaAt)> for Close {
+impl<'a> TryFrom<(ast::Close<'a>, &MetaAt<'_>)> for Close {
   type Error = ParseError;
 
   fn try_from(input: (ast::Close<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -659,7 +674,7 @@ impl<'a> TryFrom<(ast::Close<'a>, &MetaAt)> for Close {
   }
 }
 
-impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt)> for Balance {
+impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt<'_>)> for Balance {
   type Error = ParseError;
 
   fn try_from(input: (ast::Balance<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -683,7 +698,7 @@ impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt)> for Balance {
   }
 }
 
-impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt)> for Pad {
+impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt<'_>)> for Pad {
   type Error = ParseError;
 
   fn try_from(input: (ast::Pad<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -706,7 +721,7 @@ impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt)> for Pad {
   }
 }
 
-impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt)> for Commodity {
+impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt<'_>)> for Commodity {
   type Error = ParseError;
 
   fn try_from(input: (ast::Commodity<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -728,7 +743,7 @@ impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt)> for Commodity {
   }
 }
 
-impl<'a> TryFrom<(ast::Price<'a>, &MetaAt)> for Price {
+impl<'a> TryFrom<(ast::Price<'a>, &MetaAt<'_>)> for Price {
   type Error = ParseError;
 
   fn try_from(input: (ast::Price<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -751,7 +766,7 @@ impl<'a> TryFrom<(ast::Price<'a>, &MetaAt)> for Price {
   }
 }
 
-impl<'a> TryFrom<(ast::Event<'a>, &MetaAt)> for Event {
+impl<'a> TryFrom<(ast::Event<'a>, &MetaAt<'_>)> for Event {
   type Error = ParseError;
 
   fn try_from(input: (ast::Event<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -776,7 +791,7 @@ impl<'a> TryFrom<(ast::Event<'a>, &MetaAt)> for Event {
   }
 }
 
-impl<'a> TryFrom<(ast::Query<'a>, &MetaAt)> for Query {
+impl<'a> TryFrom<(ast::Query<'a>, &MetaAt<'_>)> for Query {
   type Error = ParseError;
 
   fn try_from(input: (ast::Query<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -801,7 +816,7 @@ impl<'a> TryFrom<(ast::Query<'a>, &MetaAt)> for Query {
   }
 }
 
-impl<'a> TryFrom<(ast::Note<'a>, &MetaAt)> for Note {
+impl<'a> TryFrom<(ast::Note<'a>, &MetaAt<'_>)> for Note {
   type Error = ParseError;
 
   fn try_from(input: (ast::Note<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -825,7 +840,7 @@ impl<'a> TryFrom<(ast::Note<'a>, &MetaAt)> for Note {
   }
 }
 
-impl<'a> TryFrom<(ast::Document<'a>, &MetaAt)> for Document {
+impl<'a> TryFrom<(ast::Document<'a>, &MetaAt<'_>)> for Document {
   type Error = ParseError;
 
   fn try_from(input: (ast::Document<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -861,7 +876,7 @@ impl<'a> TryFrom<(ast::Document<'a>, &MetaAt)> for Document {
   }
 }
 
-impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt)> for Custom {
+impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt<'_>)> for Custom {
   type Error = ParseError;
 
   fn try_from(input: (ast::Custom<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -890,7 +905,7 @@ impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt)> for Custom {
   }
 }
 
-impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt)> for OptionDirective {
+impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt<'_>)> for OptionDirective {
   type Error = ParseError;
 
   fn try_from(input: (ast::OptionDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -907,7 +922,7 @@ impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt)> for OptionDirective {
   }
 }
 
-impl<'a> TryFrom<(ast::Include<'a>, &MetaAt)> for Include {
+impl<'a> TryFrom<(ast::Include<'a>, &MetaAt<'_>)> for Include {
   type Error = ParseError;
 
   fn try_from(input: (ast::Include<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -923,7 +938,7 @@ impl<'a> TryFrom<(ast::Include<'a>, &MetaAt)> for Include {
   }
 }
 
-impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt)> for Plugin {
+impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt<'_>)> for Plugin {
   type Error = ParseError;
 
   fn try_from(input: (ast::Plugin<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -960,7 +975,7 @@ impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt)> for Plugin {
   }
 }
 
-impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt)> for TagDirective {
+impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt<'_>)> for TagDirective {
   type Error = ParseError;
 
   fn try_from(input: (ast::TagDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -975,7 +990,7 @@ impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt)> for TagDirective {
   }
 }
 
-impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt)> for PushMeta {
+impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt<'_>)> for PushMeta {
   type Error = ParseError;
 
   fn try_from(input: (ast::PushMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -991,7 +1006,7 @@ impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt)> for PushMeta {
   }
 }
 
-impl<'a> TryFrom<(ast::PopMeta<'a>, &MetaAt)> for PopMeta {
+impl<'a> TryFrom<(ast::PopMeta<'a>, &MetaAt<'_>)> for PopMeta {
   type Error = ParseError;
 
   fn try_from(input: (ast::PopMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -1050,7 +1065,7 @@ impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
   }
 }
 
-impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt)> for Posting {
+impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt<'_>)> for Posting {
   type Error = ParseError;
 
   fn try_from(input: (ast::Posting<'a>, &MetaAt)) -> Result<Self, Self::Error> {
@@ -1080,7 +1095,7 @@ impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt)> for Posting {
   }
 }
 
-impl<'a> TryFrom<(ast::Transaction<'a>, &MetaAt)> for Transaction {
+impl<'a> TryFrom<(ast::Transaction<'a>, &MetaAt<'_>)> for Transaction {
   type Error = ParseError;
 
   fn try_from(input: (ast::Transaction<'a>, &MetaAt)) -> Result<Self, Self::Error> {

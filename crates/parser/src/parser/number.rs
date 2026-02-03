@@ -67,9 +67,7 @@ fn pop_value<'a>(values: &mut Vec<ast::NumberExpr<'a>>) -> ast::NumberExpr<'a> {
     .unwrap_or_else(|| unreachable!("number expression stack underflow"))
 }
 
-fn pop_op(
-  ops: &mut Vec<ast::WithSpan<ast::BinaryOp>>,
-) -> ast::WithSpan<ast::BinaryOp> {
+fn pop_op(ops: &mut Vec<ast::WithSpan<ast::BinaryOp>>) -> ast::WithSpan<ast::BinaryOp> {
   ops
     .pop()
     .unwrap_or_else(|| unreachable!("operator stack should not be empty here"))

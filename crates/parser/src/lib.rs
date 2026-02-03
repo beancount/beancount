@@ -9,7 +9,7 @@ pub mod path_utils;
 mod parser;
 mod utils;
 
-pub use core::{CoreDirective, normalize_directives};
+pub use core::{CoreDirective, normalize_directives, normalize_directives_with_rope};
 pub use parser::parse_str;
 
 use chumsky::prelude::*;

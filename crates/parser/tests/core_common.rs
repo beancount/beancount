@@ -1,5 +1,6 @@
 use beancount_parser::core::{BinaryOp, CoreDirective, NumberExpr};
-use beancount_parser::{ast, normalize_directives, parse_str};
+use beancount_parser::{ast, normalize_directives, normalize_directives_with_rope, parse_str};
+use ropey::Rope;
 
 #[cfg(test)]
 #[allow(dead_code)]
@@ -137,4 +138,18 @@ pub(crate) fn collect_ops(expr: &NumberExpr) -> [bool; 4] {
   }
   walk(expr, &mut seen);
   seen
+}
+
+#[test]
+fn normalize_directives_with_rope_matches_string_version() {
+  let input = "2000-01-01 open Assets:Cash USD";
+  let filename = "input.beancount";
+  let directives = parse_str(input, filename).expect("parse failed");
+
+  let expected = normalize_directives(&directives, filename, input).expect("normalize failed");
+  let rope = Rope::from_str(input);
+  let actual = normalize_directives_with_rope(&directives, filename, &rope)
+    .expect("normalize with rope failed");
+
+  assert_eq!(actual, expected);
 }
