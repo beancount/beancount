@@ -1,5 +1,5 @@
-use beancount_parser::parse_str;
 use beancount_parser::ast::{Directive, Span};
+use beancount_parser::parse_str;
 
 #[test]
 fn parses_transaction_with_inline_link_and_postings() {

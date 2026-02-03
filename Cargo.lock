@@ -81,6 +81,7 @@ name = "beancount-parser"
 version = "3.3.0-alpha.0"
 dependencies = [
  "anyhow",
+ "beancount-tree-sitter",
  "chrono",
  "chumsky",
  "criterion",
@@ -89,6 +90,7 @@ dependencies = [
  "serde_json",
  "similar",
  "smallvec",
+ "tree-sitter",
 ]
 
 [[package]]

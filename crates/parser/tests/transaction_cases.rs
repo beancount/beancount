@@ -60,3 +60,19 @@ fn transaction_directive_with_postings() {
     matches!(p2.key_values[0].value, Some(KeyValueValue::UnquotedString(ref s)) if s == "pending")
   );
 }
+
+#[test]
+fn transaction_with_custom_flag() {
+  let input = lines(&[
+    r#"2015-01-01 P "Padding""#,
+    r#"  Assets:Cash           1 USD"#,
+    r#"  Equity:Other         -1 USD"#,
+  ]);
+
+  let txn: Transaction = parse_as(&input, "book.bean");
+
+  assert_eq!(txn.txn.as_deref(), Some("P"));
+  assert_eq!(txn.postings.len(), 2);
+  assert_eq!(txn.postings[0].account, "Assets:Cash");
+  assert_eq!(txn.postings[1].account, "Equity:Other");
+}

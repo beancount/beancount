@@ -393,7 +393,10 @@ impl std::fmt::Display for NumberEvalError {
 impl std::error::Error for NumberEvalError {}
 
 fn clean_decimal_literal(raw: &str) -> String {
-  raw.chars().filter(|c| *c != ',' && *c != ' ').collect()
+  raw
+    .chars()
+    .filter(|c| *c != ',' && *c != ' ' && *c != '_')
+    .collect()
 }
 
 pub fn parse_decimal_literal(raw: &str) -> Result<Decimal, NumberEvalError> {
@@ -1060,7 +1063,7 @@ fn unquote_json(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<String, ParseE
     Err(err) => {
       // Allow literal newlines inside quoted strings (e.g. multi-line queries) by
       // falling back to a lenient unescaper when JSON parsing rejects control chars.
-      if raw.starts_with('"') && raw.ends_with('"') {
+      if raw.starts_with('"') && raw.ends_with('"') && raw.len() >= 2 {
         let inner = &raw[1..raw.len() - 1];
         let mut out = String::with_capacity(inner.len());
         let mut chars = inner.chars().peekable();

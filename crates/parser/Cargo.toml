@@ -12,6 +12,8 @@ description = "Core beancount parsing logic."
 crate-type = ["lib"]
 
 [dependencies]
+tree-sitter = {version = "0.26", optional = true}
+beancount-tree-sitter = {path = "../tree-sitter/",optional = true}
 anyhow = "1.0.100"
 serde_json = { workspace = true }
 smallvec = { workspace = true }
@@ -19,6 +21,11 @@ chrono = { version = "0.4.38", default-features = false }
 rust_decimal = "1.36.0"
 path-clean = "1.0.1"
 chumsky = "0.12.0"
+
+[features]
+default = ["file-parser"]
+file-parser = []
+tree-sitter = ["dep:beancount-tree-sitter","dep:tree-sitter"]
 
 [dev-dependencies]
 similar = { workspace = true }

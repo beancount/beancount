@@ -1,5 +1,5 @@
-use beancount_parser::parse_str as parse_chumsky;
 use beancount_parser::core::Include;
+use beancount_parser::parse_str as parse_chumsky;
 
 fn parse_include(input: &str, filename: &str) -> Include {
   let ast = parse_chumsky(input, filename).expect("chumsky parse failed");

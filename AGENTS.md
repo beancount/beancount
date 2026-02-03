@@ -6,6 +6,14 @@ This project is replacing the original C parser with a Rust-based parser while m
 
 Beancount is a double-entry accounting system that uses text files as input. This fork replaces the C parser with a Rust implementation based on Chumsky.
 
+### Instruction highlights (from .github/copilot-instructions.md)
+
+- Keep the Python API identical to upstream while swapping the parser implementation to Rust.
+- The Chumsky-based parser lives in `crates/parser/` and drives `parse_str`.
+- `crates/parser-py/` converts `CoreDirective` into Python types from `beancount/core/data.py`; add tests in Python (not Rust) because it links to Python.
+- After Rust changes, run `maturin develop` before testing in Python.
+- When updating `crates/parser-py/` signatures, update the stubs `beancount/parser/_rust.pyi` and `beancount/parser/_parser.pyi`.
+
 ## Project Structure
 
 ### Python Package (`beancount/`)
@@ -23,24 +31,22 @@ Beancount is a double-entry accounting system that uses text files as input. Thi
 
 ### Rust Workspace (`crates/`)
 
-The Rust code is organized as a Cargo workspace with four crates:
+The Rust code is organized as a Cargo workspace with three crates:
 
-1. **`crates/chumsky/`** - Chumsky-based parser implementation
+1. **`crates/parser/`** - Hosts the parsing engines and core AST
+   - Provides three Rust parsers: a line-scanning recursive descent parser (`parser.rs`), a full-file Chumsky parser (`file_parser.rs`, used when the `file-parser` feature is on), and a tree-sitter-driven parser (`tree_sitter_parser.rs`, behind the `tree-sitter` feature)
    - Produces the internal AST used by the Rust core
-   - Depends on `chumsky` and shared AST types
-
-2. **`crates/parser/`** - Core parsing logic and shared data types
    - Defines `CoreDirective` types (Rust equivalents of Python data structures)
-   - Exposes `parse_str()` powered by the Chumsky parser
+   - Exposes `parse_str()` routed to the active parser based on enabled features
    - Dependencies: `chumsky`, `chrono`, `rust_decimal`
 
-3. **`crates/parser-py/`** - Python bindings
+2. **`crates/parser-py/`** - Python bindings
    - Uses PyO3 to expose Rust parser to Python
    - Converts `CoreDirective` to Python objects defined in `beancount/core/data.py`
    - Compiled to `beancount.parser._parser_rust`
    - **Do not add Rust tests here** - test through Python instead
 
-4. **`crates/tree-sitter/`** - Legacy tree-sitter grammar (not used by the current parser)
+3. **`crates/tree-sitter/`** - Legacy tree-sitter grammar (not used by the current parser by default)
    - Contains the grammar definition (grammar.js) and generated files
    - Published as `beancount-tree-sitter` crate
 
@@ -51,7 +57,7 @@ The Rust code is organized as a Cargo workspace with four crates:
 Since Rust is a compiled language, you must rebuild after any Rust code changes:
 
 ```bash
-maturin develop
+maturin develop --uv
 ```
 
 This compiles the `crates/parser-py/` crate and installs it as `beancount.parser._parser_rust`.

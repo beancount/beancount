@@ -45,3 +45,14 @@ fn pad_directive() {
 
   assert_eq!(pad, expected);
 }
+
+#[test]
+fn balance_directive_with_tolerance() {
+  let input = lines(&[r#"2015-05-02 balance Assets:Bank:Checking   23.022 ~ 0.001 USD"#]);
+
+  let balance: Balance = parse_as(&input, "book.bean");
+
+  assert_eq!(balance.account, "Assets:Bank:Checking");
+  assert_eq!(balance.amount.currency.as_deref(), Some("USD"));
+  assert_eq!(balance.tolerance.as_deref(), Some("0.001"));
+}

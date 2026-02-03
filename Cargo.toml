@@ -22,7 +22,7 @@ tree-sitter = "0.26.3"
 similar = { version = "2.7.0", features = ["unicode"] }
 
 [profile.release]
-opt-level = 3
+opt-level = 2
 debug = false
 lto = true
 debug-assertions = false

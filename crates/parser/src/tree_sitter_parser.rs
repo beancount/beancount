@@ -57,6 +57,21 @@ fn with_span<'a>(node: Node, source: &'a str) -> WithSpan<&'a str> {
   WithSpan::new(span(node), slice(node, source))
 }
 
+fn keyword_span(node: Node, keyword_kind: NodeKind, filename: &str) -> Result<Span> {
+  let mut cursor = node.walk();
+  for child in node.children(&mut cursor) {
+    if NodeKind::from(child.kind()) == keyword_kind {
+      return Ok(span(child));
+    }
+  }
+
+  Err(parse_error(
+    node,
+    filename,
+    format!("missing keyword `{}`", keyword_kind.name()),
+  ))
+}
+
 /// Split a basic amount string (`"NUMBER CURRENCY"`) into its components.
 pub fn parse_amount_tokens(raw: &str) -> Option<(&str, &str)> {
   let mut parts = raw.split_whitespace();
@@ -300,11 +315,7 @@ fn parse_top_level<'a>(
     // Org-mode headings like "* Options" can produce stray flag tokens; ignore them.
     NodeKind::Flag => Ok(None),
 
-    _ => Err(parse_error(
-      node,
-      filename,
-      format!("unexpected node `{}`", node.kind()),
-    )),
+    _ => Ok(Some(parse_raw(node, source, filename))),
   }
 }
 
@@ -324,7 +335,16 @@ fn parse_headline<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
   }))
 }
 
+fn parse_raw<'a>(node: Node, source: &'a str, filename: &str) -> Directive<'a> {
+  Directive::Raw(Raw {
+    meta: meta(node, filename),
+    span: span(node),
+    text: slice(node, source),
+  })
+}
+
 fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Open, filename)?;
   let date = required_field_text(node, "date", source, filename)?;
   let account = required_field_text(node, "account", source, filename)?;
 
@@ -344,6 +364,7 @@ fn parse_open<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
   Ok(Directive::Open(Open {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date,
     account,
     currencies,
@@ -394,9 +415,11 @@ fn parse_currencies_from_text<'a>(text: &'a str) -> SmallVec<[&'a str; 8]> {
 }
 
 fn parse_close<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Close, filename)?;
   Ok(Directive::Close(Close {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     comment: field_text(node, "comment", source),
@@ -405,11 +428,13 @@ fn parse_close<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direct
 }
 
 fn parse_balance<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Balance, filename)?;
   let parsed_amount = parse_balance_amount(node, source, filename)?;
 
   Ok(Directive::Balance(Balance {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     amount: parsed_amount.amount,
@@ -421,9 +446,11 @@ fn parse_balance<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
 }
 
 fn parse_pad<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Pad, filename)?;
   Ok(Directive::Pad(Pad {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     from_account: required_field_text(node, "from_account", source, filename)?,
@@ -433,9 +460,11 @@ fn parse_pad<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directiv
 }
 
 fn parse_commodity<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Commodity, filename)?;
   Ok(Directive::Commodity(Commodity {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     currency: required_field_text(node, "currency", source, filename)?,
     comment: field_text(node, "comment", source),
@@ -444,9 +473,11 @@ fn parse_commodity<'a>(node: Node, source: &'a str, filename: &str) -> Result<Di
 }
 
 fn parse_price<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Price, filename)?;
   Ok(Directive::Price(Price {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     currency: required_field_text(node, "currency", source, filename)?,
     amount: parse_amount_field(node, "amount", source, filename)?,
@@ -456,9 +487,11 @@ fn parse_price<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direct
 }
 
 fn parse_event<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Event, filename)?;
   Ok(Directive::Event(Event {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     event_type: required_field_text(node, "type", source, filename)?,
     desc: required_field_text(node, "desc", source, filename)?,
@@ -468,9 +501,11 @@ fn parse_event<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direct
 }
 
 fn parse_query<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Query, filename)?;
   Ok(Directive::Query(Query {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     name: required_field_text(node, "name", source, filename)?,
     query: required_field_text(node, "query", source, filename)?,
@@ -480,9 +515,11 @@ fn parse_query<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direct
 }
 
 fn parse_note<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Note, filename)?;
   Ok(Directive::Note(Note {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     note: required_field_text(node, "note", source, filename)?,
@@ -492,6 +529,7 @@ fn parse_note<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
 }
 
 fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Document, filename)?;
   let tags_links = field_text(node, "tags_links", source);
   let (tags, links) = tags_links
     .as_ref()
@@ -501,6 +539,7 @@ fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
   Ok(Directive::Document(Document {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     account: required_field_text(node, "account", source, filename)?,
     filename: required_field_text(node, "filename", source, filename)?,
@@ -513,6 +552,7 @@ fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
 }
 
 fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Custom, filename)?;
   // `custom_value_list` is modeled as repeat1(custom_value) in the grammar.
   // Collect all `custom_value` named children.
   let mut cursor = node.walk();
@@ -525,6 +565,7 @@ fn parse_custom<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
   Ok(Directive::Custom(Custom {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     date: required_field_text(node, "date", source, filename)?,
     name: required_field_text(node, "name", source, filename)?,
     values,
@@ -569,15 +610,19 @@ fn parse_custom_value<'a>(node: Node, source: &'a str, filename: &str) -> Result
 }
 
 fn parse_option<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Option, filename)?;
   Ok(Directive::Option(OptionDirective {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     key: required_field_text(node, "key", source, filename)?,
     value: required_field_text(node, "value", source, filename)?,
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_include<'a>(node: Node, source: &'a str, meta_filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Include, meta_filename)?;
   // include: seq("include", $.string, $._eol)
   // It's not a field, so take the 1st named child (string).
   let mut cursor = node.walk();
@@ -589,11 +634,14 @@ fn parse_include<'a>(node: Node, source: &'a str, meta_filename: &str) -> Result
   Ok(Directive::Include(Include {
     meta: meta(node, meta_filename),
     span: span(node),
+    keyword,
     filename: with_span(filename_node, source),
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_plugin<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Plugin, filename)?;
   // plugin: seq("plugin", $.string, $._eol) | seq("plugin", $.string, $.string, $._eol)
   let mut cursor = node.walk();
   let mut strings = node
@@ -608,12 +656,15 @@ fn parse_plugin<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
   Ok(Directive::Plugin(Plugin {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     name: with_span(name_node, source),
     config: config_node.map(|n| with_span(n, source)),
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Pushtag, filename)?;
   let mut cursor = node.walk();
   let tag_node = node
     .named_children(&mut cursor)
@@ -633,11 +684,14 @@ fn parse_pushtag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
   Ok(Directive::PushTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     tag: WithSpan::new(tag_span, tag),
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Poptag, filename)?;
   let mut cursor = node.walk();
   let tag_node = node
     .named_children(&mut cursor)
@@ -657,11 +711,14 @@ fn parse_poptag<'a>(node: Node, source: &'a str, filename: &str) -> Result<Direc
   Ok(Directive::PopTag(TagDirective {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     tag: WithSpan::new(tag_span, tag),
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_pushmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Pushmeta, filename)?;
   let mut cursor = node.walk();
   let kv_node = node
     .named_children(&mut cursor)
@@ -686,12 +743,15 @@ fn parse_pushmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dir
   Ok(Directive::PushMeta(PushMeta {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     key: kv.key,
     value,
+    comment: field_text(node, "comment", source),
   }))
 }
 
 fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
+  let keyword = keyword_span(node, NodeKind::Popmeta, filename)?;
   // popmeta: seq("popmeta", $.key, ":", $._eol)
   let mut cursor = node.walk();
   let key = node
@@ -703,7 +763,9 @@ fn parse_popmeta<'a>(node: Node, source: &'a str, filename: &str) -> Result<Dire
   Ok(Directive::PopMeta(PopMeta {
     meta: meta(node, filename),
     span: span(node),
+    keyword,
     key,
+    comment: field_text(node, "comment", source),
   }))
 }
 

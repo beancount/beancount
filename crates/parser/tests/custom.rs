@@ -1,8 +1,5 @@
 mod common;
-use beancount_parser::{
-  ast,
-  core::{Custom, CustomValue, NumberExpr},
-};
+use beancount_parser::core::{Custom, CustomValue};
 use common::{collect_ops, lines, parse_as};
 
 #[test]

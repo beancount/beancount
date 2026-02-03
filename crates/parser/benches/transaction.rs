@@ -10,12 +10,6 @@ const BEAN_EXAMPLE: &str = include_str!("../../../examples/example.beancount");
 fn bench_transaction(c: &mut Criterion) {
   let mut group = c.benchmark_group("transaction_parse");
 
-  group.bench_function("tree_sitter", |b| {
-    b.iter(|| {
-      parse_tree_sitter(black_box(TRANSACTION), "bench.bean").unwrap();
-    })
-  });
-
   group.bench_function("chumsky", |b| {
     b.iter(|| {
       parse_chumsky(black_box(TRANSACTION), "bench.bean").unwrap();
@@ -27,12 +21,6 @@ fn bench_transaction(c: &mut Criterion) {
 
 fn bench_example(c: &mut Criterion) {
   let mut group = c.benchmark_group("bean_example_parse");
-
-  group.bench_function("tree_sitter", |b| {
-    b.iter(|| {
-      parse_tree_sitter(black_box(BEAN_EXAMPLE), "bench.bean").unwrap();
-    })
-  });
 
   group.bench_function("chumsky", |b| {
     b.iter(|| {

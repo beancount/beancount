@@ -1,5 +1,5 @@
-use beancount_parser::parse_str as parse_chumsky;
 use beancount_parser::core::TagDirective;
+use beancount_parser::parse_str as parse_chumsky;
 
 fn parse_tag(input: &str, filename: &str) -> TagDirective {
   let ast = parse_chumsky(input, filename).expect("chumsky parse failed");
