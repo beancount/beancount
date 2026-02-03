@@ -5,13 +5,27 @@ use crate::{Error, ast};
 
 use super::common::{
   date_parser, inline_comment_parser, key_value_block_parser, keyword_span_parser,
-  rest_trimmed_parser, spanned_token_parser, ws0_parser, ws1_parser,
+  spanned_token_parser, ws0_parser, ws1_parser,
 };
 
 pub(super) fn note_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
-  let note = rest_trimmed_parser();
+  let note = any()
+    .filter(|c: &char| *c != '\n' && *c != ';')
+    .repeated()
+    .to_slice()
+    .map_with(|value: &str, e| {
+      let span: SimpleSpan = e.span();
+      let start = span.start;
+      let trimmed = value.trim();
+      if trimmed.is_empty() {
+        return ast::WithSpan::new(ast::Span::from_range(start, start), trimmed);
+      }
+      let offset = value.find(trimmed).unwrap_or(0);
+      let span = ast::Span::from_range(start + offset, start + offset + trimmed.len());
+      ast::WithSpan::new(span, trimmed)
+    });
 
   let header = date
     .then_ignore(ws1_parser())

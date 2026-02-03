@@ -1,12 +1,12 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::utils::{looks_like_currency, parse_tags_links};
+use crate::utils::{looks_like_currency, parse_tags_links, split_tags_links_group};
 use crate::{Error, ast};
 
 use super::common::{
-  currency_token_parser, date_parser, indented_key_value_parser, line_end, spanned_token_parser,
-  tags_links_line_parser, ws0_parser, ws1_parser,
+  currency_token_parser, date_parser, indented_key_value_parser, line_end, quoted_string_parser,
+  rest_trimmed_parser, spanned_token_parser, ws0_parser, ws1_parser,
 };
 use super::number::number_expr_parser;
 
@@ -16,14 +16,13 @@ struct TransactionHeader<'a> {
   flag: ast::WithSpan<&'a str>,
   payee: Option<ast::WithSpan<&'a str>>,
   narration: Option<ast::WithSpan<&'a str>>,
-  tags_links: Option<ast::WithSpan<&'a str>>,
+  tags_links: Option<Vec<ast::WithSpan<&'a str>>>,
 }
 
 #[derive(Debug, Clone)]
 enum TxnBodyLine<'a> {
   Posting(ast::Posting<'a>),
   KeyValue(ast::KeyValue<'a>),
-  TagsLinks(ast::WithSpan<&'a str>),
   Comment(ast::WithSpan<&'a str>),
 }
 
@@ -52,21 +51,41 @@ fn transaction_header_parser<'src>()
     value.content == "txn" || is_single_flag
   });
 
+  // Optional quoted strings: two => payee + narration, one => narration only.
+  let payee_narration = ws1_parser()
+    .ignore_then(quoted_string_parser())
+    .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
+    .or_not();
+
+  // Optional inline tags/links (stop at inline comment ';').
+  let inline_tags_links = ws1_parser()
+    .ignore_then(rest_trimmed_parser())
+    .filter(|rest| rest.content.starts_with('#') || rest.content.starts_with('^'))
+    .map(|group| split_tags_links_group(group))
+    .or_not();
+
   date_parser()
     .then_ignore(ws1_parser())
     .then(flag)
-    .then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
-    .map_with(|_, e| {
+    .then(payee_narration)
+    .then(inline_tags_links)
+    .map_with(|(((date, flag), payee_narration), tags_links), e| {
       let span: SimpleSpan = e.span();
-      let header = parse_transaction_header_line(e.slice(), span.start);
       let span = ast::Span::from_range(span.start, span.end);
+
+      let (payee, narration) = match payee_narration {
+        Some((payee, Some(narration))) => (Some(payee), Some(narration)),
+        Some((narration, None)) => (None, Some(narration)),
+        None => (None, None),
+      };
+
       ast::Transaction {
         span,
-        date: header.date,
-        txn: Some(header.flag),
-        payee: header.payee,
-        narration: header.narration,
-        tags_links: header.tags_links,
+        date,
+        txn: Some(flag),
+        payee,
+        narration,
+        tags_links,
         tags: SmallVec::new(),
         links: SmallVec::new(),
         comment: None,
@@ -83,7 +102,6 @@ fn transaction_body_line_parser<'src>()
   choice((
     posting_line_parser(),
     transaction_key_value_line_parser(),
-    transaction_tags_links_line_parser(),
     transaction_comment_line_parser(),
   ))
 }
@@ -113,23 +131,21 @@ fn transaction_key_value_line_parser<'src>()
     })
 }
 
-fn transaction_tags_links_line_parser<'src>()
--> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
-  tags_links_line_parser()
-    .then_ignore(line_end())
-    .map(TxnBodyLine::TagsLinks)
-}
-
 fn transaction_comment_line_parser<'src>()
 -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
-  super::comment::comment_directive_parser()
-    .then_ignore(line_end())
-    .map(|directive| {
-      let ast::Directive::Comment(ast::Comment { text, .. }) = directive else {
-        unreachable!("comment_directive_parser only builds comments");
-      };
-      TxnBodyLine::Comment(text)
+  // Only semicolon-led comments are allowed inside transaction bodies; lines starting with '#' would be parsed as tags/links and are invalid here.
+  ws0_parser()
+    .ignore_then(just(';'))
+    .ignore_then(any().filter(|c: &char| *c != '\n').repeated())
+    .to_slice()
+    .map_with(|text: &str, e| {
+      let span: SimpleSpan = e.span();
+      TxnBodyLine::Comment(ast::WithSpan::new(
+        ast::Span::from_range(span.start, span.end),
+        text,
+      ))
     })
+    .then_ignore(line_end())
 }
 
 fn finalize_transaction<'a>(
@@ -137,7 +153,7 @@ fn finalize_transaction<'a>(
   body: Vec<TxnBodyLine<'a>>,
   span: ast::Span,
 ) -> ast::Transaction<'a> {
-  let mut tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
+  let tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut comments: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
   let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
@@ -152,7 +168,6 @@ fn finalize_transaction<'a>(
           key_values.push(kv);
         }
       }
-      TxnBodyLine::TagsLinks(tags_links) => tags_links_lines.push(tags_links),
       TxnBodyLine::Comment(comment) => comments.push(comment),
     }
   }
@@ -163,17 +178,21 @@ fn finalize_transaction<'a>(
   txn.comments = comments;
 
   let mut tags_links_lines = tags_links_lines;
-  if let Some(inline) = txn.tags_links.clone() {
-    tags_links_lines.insert(0, inline);
+  if let Some(inline_groups) = txn.tags_links.clone() {
+    for inline in inline_groups.into_iter().rev() {
+      tags_links_lines.insert(0, inline);
+    }
   }
+
+  let tags_links = txn.tags_links.clone().or_else(|| {
+    (!tags_links_lines.is_empty()).then(|| tags_links_lines.iter().cloned().collect::<Vec<_>>())
+  });
+
   let (tags, links) = parse_tags_links(tags_links_lines.clone());
   txn.tags = tags;
   txn.links = links;
   txn.tags_links_lines = tags_links_lines;
-  txn.tags_links = txn
-    .tags_links
-    .clone()
-    .or_else(|| txn.tags_links_lines.first().cloned());
+  txn.tags_links = tags_links;
   txn.comment = txn
     .comment
     .clone()
@@ -446,87 +465,4 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       is_total: ast::WithSpan::new(raw_span, is_total),
     }
   })
-}
-
-fn parse_transaction_header_line<'a>(line: &'a str, line_start: usize) -> TransactionHeader<'a> {
-  let trimmed = line.trim_start();
-  let mut parts = trimmed.split_whitespace();
-  let date = parts.next().unwrap_or("");
-  let flag = parts.next().unwrap_or("");
-  let after_flag = trimmed
-    .find(flag)
-    .map(|idx| &trimmed[idx + flag.len()..])
-    .unwrap_or("");
-  let remaining = after_flag;
-  let (payee, narration, trailing) =
-    if let Some((first_token, rest)) = parse_quoted_token(line, remaining, line_start) {
-      if let Some((second_token, trailing)) = parse_quoted_token(line, rest, line_start) {
-        (Some(first_token), Some(second_token), Some(trailing))
-      } else {
-        (None, Some(first_token), Some(rest))
-      }
-    } else {
-      (None, None, Some(remaining))
-    };
-
-  let inline_tags_links = trailing.and_then(|rest| {
-    let idx = rest.find(['#', '^'])?;
-    let content = rest[idx..].trim_start();
-    if content.is_empty() {
-      return None;
-    }
-    let start = line.find(content).map(|pos| line_start + pos)?;
-    let end = start + content.len();
-    Some(ast::WithSpan::new(
-      ast::Span::from_range(start, end),
-      content,
-    ))
-  });
-
-  TransactionHeader {
-    date: span_for_token(line, line_start, date),
-    flag: span_for_token(line, line_start, flag),
-    payee,
-    narration,
-    tags_links: inline_tags_links,
-  }
-}
-
-fn parse_quoted_token<'a>(
-  line: &'a str,
-  remaining: &'a str,
-  line_start: usize,
-) -> Option<(ast::WithSpan<&'a str>, &'a str)> {
-  let s = remaining.trim_start();
-  if !s.starts_with('"') {
-    return None;
-  }
-  let end = s[1..].find('"')? + 2;
-  let token = &s[..end];
-  let base_ptr = line.as_ptr() as usize;
-  let token_ptr = token.as_ptr() as usize;
-  let start = if token_ptr >= base_ptr && token_ptr + token.len() <= base_ptr + line.len() {
-    line_start + (token_ptr - base_ptr)
-  } else {
-    let offset = line.find(token).unwrap_or(0);
-    line_start + offset
-  };
-  let span = ast::Span::from_range(start, start + token.len());
-  Some((ast::WithSpan::new(span, token), &s[end..]))
-}
-
-fn span_for_token<'a>(line: &'a str, line_start: usize, token: &'a str) -> ast::WithSpan<&'a str> {
-  if token.is_empty() {
-    return ast::WithSpan::new(ast::Span::from_range(line_start, line_start), token);
-  }
-  let base_ptr = line.as_ptr() as usize;
-  let token_ptr = token.as_ptr() as usize;
-  let start = if token_ptr >= base_ptr && token_ptr + token.len() <= base_ptr + line.len() {
-    line_start + (token_ptr - base_ptr)
-  } else {
-    let rel = line.find(token).unwrap_or(0);
-    line_start + rel
-  };
-  let end = start + token.len();
-  ast::WithSpan::new(ast::Span::from_range(start, end), token)
 }

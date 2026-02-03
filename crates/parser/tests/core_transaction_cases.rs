@@ -77,3 +77,15 @@ fn transaction_with_custom_flag() {
   assert_eq!(txn.postings[0].account, "Assets:Cash");
   assert_eq!(txn.postings[1].account, "Equity:Other");
 }
+
+#[test]
+fn transaction_tags_and_links_content() {
+  let input = lines(&[
+    r#"2013-06-22 * "Payee" "Narr"  #b ^link1"#,
+    r#"  Assets:Cash 1 USD"#,
+    r#"  #c ^link2 #a"#,
+  ]);
+
+  beancount_parser::parse_str(&input, "book.bean")
+    .expect_err("tags/links must be inline on the transaction header line");
+}

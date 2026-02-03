@@ -1,7 +1,7 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::utils::parse_tags_links;
+use crate::utils::{parse_tags_links, split_tags_links_group};
 use crate::{Error, ast};
 
 use super::common::{
@@ -33,9 +33,13 @@ pub(super) fn document_directive_parser<'src>()
       |((((((date, keyword), account), filename), tags_links), comment), key_values), e| {
         let span = ast::Span::from_simple_span(e.span());
         let key_values = key_values.unwrap_or_else(SmallVec::new);
-        let (tags, links) = match tags_links.clone() {
-          Some(value) => parse_tags_links([value]),
-          None => (SmallVec::new(), SmallVec::new()),
+        let (tags_links, tags, links) = match tags_links {
+          Some(group) => {
+            let tokens = split_tags_links_group(group);
+            let (tags, links) = parse_tags_links(tokens.clone());
+            (Some(tokens), tags, links)
+          }
+          None => (None, SmallVec::new(), SmallVec::new()),
         };
 
         ast::Directive::Document(ast::Document {

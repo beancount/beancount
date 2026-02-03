@@ -19,7 +19,7 @@ fn spans_cover_single_line_directives_and_children() {
   let close = "2010-01-02 close Assets:Cash";
   let balance = "2010-01-03 balance Assets:Cash 10 USD";
   let pad = "2010-01-04 pad Assets:Cash Equity:Pad";
-  let note = "2010-01-05 note Assets:Cash \"hello\"";
+  let note = "2010-01-05 note Assets:Cash \"hello\"  ; 1";
   let document = "2010-01-06 document Assets:Cash \"doc.pdf\"";
 
   let input = [open, close, balance, pad, note, document, ""].join("\n");
@@ -133,6 +133,7 @@ fn spans_cover_single_line_directives_and_children() {
         dir.account.span,
         span_in_line(note_span.start, &note_line, "Assets:Cash")
       );
+      assert_eq!(dir.note.content, "\"hello\"");
       assert_eq!(
         dir.note.span,
         span_in_line(note_span.start, &note_line, "\"hello\"")

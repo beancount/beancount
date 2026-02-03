@@ -859,7 +859,13 @@ impl<'a> TryFrom<(ast::Document<'a>, &MetaAt<'_>)> for Document {
       date: doc.date.content.to_string(),
       account: doc.account.content.to_string(),
       filename: resolved_filename,
-      tags_links: doc.tags_links.map(|t| t.content.to_string()),
+      tags_links: doc.tags_links.as_ref().map(|groups| {
+        groups
+          .iter()
+          .map(|t| t.content)
+          .collect::<Vec<_>>()
+          .join(" ")
+      }),
       tags: doc
         .tags
         .into_iter()

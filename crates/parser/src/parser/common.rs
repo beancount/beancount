@@ -87,7 +87,7 @@ pub(super) fn date_parser<'src>()
 pub(super) fn rest_trimmed_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   any()
-    .filter(|c: &char| *c != '\n')
+    .filter(|c: &char| *c != '\n' && *c != ';')
     .repeated()
     .to_slice()
     .map_with(|value: &str, e| {

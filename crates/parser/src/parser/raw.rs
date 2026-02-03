@@ -10,7 +10,11 @@ pub(super) fn raw_block_parser<'src>()
     .filter(|c: &char| *c != '\n')
     .repeated()
     .at_least(1)
-    .to_slice();
+    .to_slice()
+    .filter(|line: &&str| {
+      let trimmed = line.trim_start();
+      !(trimmed.starts_with('#') || trimmed.starts_with('^'))
+    });
 
   raw_line
     .then(line_end().ignore_then(raw_line).repeated())

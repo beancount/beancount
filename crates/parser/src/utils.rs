@@ -77,6 +77,31 @@ type TagLinkBuckets<'a> = (
   SmallVec<[ast::WithSpan<&'a str>; 2]>,
 );
 
+pub(crate) fn split_tags_links_group(group: ast::WithSpan<&str>) -> Vec<ast::WithSpan<&str>> {
+  let mut tokens = Vec::new();
+  let mut start: Option<usize> = None;
+
+  for (idx, ch) in group.content.char_indices() {
+    if ch.is_whitespace() {
+      if let Some(s) = start.take() {
+        let end = idx;
+        let span = ast::Span::from_range(group.span.start + s, group.span.start + end);
+        tokens.push(ast::WithSpan::new(span, &group.content[s..end]));
+      }
+    } else if start.is_none() {
+      start = Some(idx);
+    }
+  }
+
+  if let Some(s) = start {
+    let end = group.content.len();
+    let span = ast::Span::from_range(group.span.start + s, group.span.start + end);
+    tokens.push(ast::WithSpan::new(span, &group.content[s..end]));
+  }
+
+  tokens
+}
+
 pub(crate) fn parse_tags_links<'a>(
   groups: impl IntoIterator<Item = ast::WithSpan<&'a str>>,
 ) -> TagLinkBuckets<'a> {
@@ -101,11 +126,6 @@ pub(crate) fn parse_tags_links<'a>(
       }
     }
   }
-
-  tags.sort_by(|a, b| a.content.cmp(b.content));
-  tags.dedup_by(|a, b| a.content == b.content);
-  links.sort_by(|a, b| a.content.cmp(b.content));
-  links.dedup_by(|a, b| a.content == b.content);
 
   (tags, links)
 }

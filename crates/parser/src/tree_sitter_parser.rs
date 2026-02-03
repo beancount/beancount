@@ -3,6 +3,7 @@ use smallvec::SmallVec;
 use tree_sitter::Node;
 
 use crate::ast::*;
+use crate::utils::{parse_tags_links, split_tags_links_group};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError {
@@ -144,44 +145,6 @@ fn collect_key_values<'a>(
   }
 
   Ok(key_values)
-}
-
-type TagLinkList<'a> = SmallVec<[WithSpan<&'a str>; 2]>;
-
-fn parse_tags_links<'a, I>(groups: I) -> (TagLinkList<'a>, TagLinkList<'a>)
-where
-  I: IntoIterator<Item = WithSpan<&'a str>>,
-{
-  let mut tags: TagLinkList<'a> = SmallVec::new();
-  let mut links: TagLinkList<'a> = SmallVec::new();
-
-  for group in groups {
-    let base_ptr = group.content.as_ptr() as usize;
-    let group_start = group.span.start;
-
-    for token in group.content.split_whitespace() {
-      let token_ptr = token.as_ptr() as usize;
-      let offset = token_ptr.saturating_sub(base_ptr);
-      let token_start = group_start + offset;
-
-      if let Some(tag) = token.strip_prefix('#') {
-        let start = token_start + 1;
-        let end = start + tag.len();
-        tags.push(WithSpan::new(Span::from_range(start, end), tag));
-      } else if let Some(link) = token.strip_prefix('^') {
-        let start = token_start + 1;
-        let end = start + link.len();
-        links.push(WithSpan::new(Span::from_range(start, end), link));
-      }
-    }
-  }
-
-  tags.sort_by(|a, b| a.content.cmp(b.content));
-  tags.dedup_by(|a, b| a.content == b.content);
-  links.sort_by(|a, b| a.content.cmp(b.content));
-  links.dedup_by(|a, b| a.content == b.content);
-
-  (tags, links)
 }
 
 fn field_text<'a>(node: Node, field: &str, source: &'a str) -> Option<WithSpan<&'a str>> {
@@ -523,10 +486,11 @@ fn parse_note<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directi
 
 fn parse_document<'a>(node: Node, source: &'a str, filename: &str) -> Result<Directive<'a>> {
   let keyword = keyword_span(node, NodeKind::Document, filename)?;
-  let tags_links = field_text(node, "tags_links", source);
+  let tags_links = field_text(node, "tags_links", source)
+    .map(|group| split_tags_links_group(group).into());
   let (tags, links) = tags_links
     .as_ref()
-    .map(|group| parse_tags_links([group.clone()]))
+    .map(|groups| parse_tags_links(groups.clone()))
     .unwrap_or_else(|| (SmallVec::new(), SmallVec::new()));
 
   Ok(Directive::Document(Document {
@@ -1175,7 +1139,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
       match child.kind().into() {
-        NodeKind::TagsLinks => tags_links_lines.push(with_span(child, source)),
+        NodeKind::TagsLinks => tags_links_lines.extend(split_tags_links_group(with_span(child, source))),
         NodeKind::Comment => comments.push(with_span(child, source)),
         NodeKind::KeyValue => {
           let kv = parse_key_value(child, source, filename)?;
@@ -1192,13 +1156,17 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
       }
     }
   }
-  let tags_links_inline = field_text(node, "tags_links", source);
+  let tags_links_inline = field_text(node, "tags_links", source)
+    .map(|group| split_tags_links_group(group));
   let mut tags_links_sources = tags_links_lines.clone();
-  if let Some(ref inline) = tags_links_inline {
-    tags_links_sources.push(inline.clone());
+  if let Some(ref inline_tokens) = tags_links_inline {
+    tags_links_sources.extend(inline_tokens.clone());
   }
 
-  let (tags, links) = parse_tags_links(tags_links_sources);
+  let (tags, links) = parse_tags_links(tags_links_sources.clone());
+  let tags_links = tags_links_inline
+    .or_else(|| tags_links_lines.first().cloned().map(|first| vec![first]));
+  let tags_links_lines = tags_links_sources;
 
   Ok(Directive::Transaction(Transaction {
     meta: meta(node, filename),
@@ -1207,7 +1175,7 @@ fn parse_transaction<'a>(node: Node, source: &'a str, filename: &str) -> Result<
     txn,
     payee,
     narration,
-    tags_links: tags_links_inline.or_else(|| tags_links_lines.first().cloned()),
+    tags_links,
     tags,
     links,
     comment: field_text(node, "comment", source).or_else(|| comments.first().cloned()),

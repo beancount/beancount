@@ -32,8 +32,11 @@ fn parses_transaction_with_inline_link_and_postings() {
     Some("\"Buying coffee\"")
   );
   assert_eq!(
-    txn.tags_links.as_ref().map(|w| w.content),
-    Some("^ee89ada94a39")
+    txn
+      .tags_links
+      .as_ref()
+      .map(|vals| vals.iter().map(|v| v.content).collect::<Vec<_>>()),
+    Some(vec!["^ee89ada94a39"])
   );
   assert!(txn.tags.is_empty());
   assert_eq!(
@@ -111,11 +114,11 @@ fn parses_and_sorts_tags_and_links() {
   assert_eq!(txn.narration.as_ref().map(|w| w.content), Some("\"Narr\""));
   assert_eq!(
     txn.tags.iter().map(|w| w.content).collect::<Vec<_>>(),
-    vec!["a", "b"]
+    vec!["b", "a", "b"]
   );
   assert_eq!(
     txn.links.iter().map(|w| w.content).collect::<Vec<_>>(),
-    vec!["a", "z"]
+    vec!["z", "a"]
   );
   assert_eq!(
     txn
@@ -123,6 +126,13 @@ fn parses_and_sorts_tags_and_links() {
       .iter()
       .map(|w| w.content)
       .collect::<Vec<_>>(),
-    vec!["#b ^z #a ^a #b"]
+    vec!["#b", "^z", "#a", "^a", "#b"]
+  );
+  assert_eq!(
+    txn
+      .tags_links
+      .as_ref()
+      .map(|vals| vals.iter().map(|v| v.content).collect::<Vec<_>>()),
+    Some(vec!["#b", "^z", "#a", "^a", "#b"])
   );
 }

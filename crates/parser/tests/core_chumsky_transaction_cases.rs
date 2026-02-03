@@ -61,3 +61,15 @@ fn transaction_directive_with_postings() {
     matches!(p2.key_values[0].value, Some(KeyValueValue::UnquotedString(ref s)) if s == "pending")
   );
 }
+
+#[test]
+fn transaction_tags_and_links_content() {
+  let input = lines(&[
+    r#"2013-06-22 * "Payee" "Narr"  #b ^link1"#,
+    r#"  Assets:Cash 1 USD"#,
+    r#"  #c ^link2 #a"#,
+  ]);
+
+  beancount_parser::parse_str(&input, "book.bean")
+    .expect_err("tags/links must be inline on the transaction header line");
+}
