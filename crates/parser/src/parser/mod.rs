@@ -2,13 +2,13 @@ use chumsky::prelude::*;
 use ropey::Rope;
 use std::sync::Arc;
 
-use crate::{ast, MetaAt, ParseCtx, ParseError};
 use crate::Error;
+use crate::{MetaAt, ParseCtx, ParseError, ast};
 
 mod balance;
 mod close;
-mod commodity;
 mod comment;
+mod commodity;
 mod common;
 mod custom;
 mod document;
@@ -38,7 +38,8 @@ fn skipped_line_parser<'src>()
   ))
 }
 
-fn directive_parser<'src>() -> impl Parser<'src, &'src str, Box<ast::Directive<'src>>, Error<'src>> + 'src {
+fn directive_parser<'src>()
+-> impl Parser<'src, &'src str, Box<ast::Directive<'src>>, Error<'src>> + 'src {
   choice((
     include::include_directive_parser().then_ignore(common::line_end()),
     plugin::plugin_directive_parser().then_ignore(common::line_end()),

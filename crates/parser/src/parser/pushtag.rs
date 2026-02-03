@@ -1,8 +1,8 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
-use super::common::{keyword_span_parser, ws0_parser, ws1_parser};
+use super::common::{inline_comment_parser, keyword_span_parser, ws0_parser, ws1_parser};
 
 pub(super) fn pushtag_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
@@ -22,14 +22,15 @@ pub(super) fn pushtag_directive_parser<'src>()
   keyword_span_parser("pushtag")
     .then_ignore(ws1_parser())
     .then(tag_token)
-    .map_with(|(keyword, tag), e| {
+    .then_ignore(ws0_parser())
+    .then(inline_comment_parser().or_not())
+    .map_with(|((keyword, tag), comment), e| {
       let span: SimpleSpan = e.span();
       ast::Directive::PushTag(ast::TagDirective {
         span: ast::Span::from_range(span.start, span.end),
         keyword,
         tag,
-        comment: None,
+        comment,
       })
     })
-    .then_ignore(ws0_parser())
 }

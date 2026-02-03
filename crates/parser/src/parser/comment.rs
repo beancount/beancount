@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
 use super::common::ws0_parser;
 

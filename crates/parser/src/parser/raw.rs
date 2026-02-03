@@ -1,10 +1,11 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
 use super::common::line_end;
 
-pub(super) fn raw_block_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
+pub(super) fn raw_block_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
   let raw_line = any()
     .filter(|c: &char| *c != '\n')
     .repeated()

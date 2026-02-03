@@ -1,10 +1,13 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::{ast, Error};
 use crate::utils::{looks_like_currency, parse_tags_links};
+use crate::{Error, ast};
 
-use super::common::{currency_token_parser, date_parser, indented_key_value_parser, line_end, spanned_token_parser, tags_links_line_parser, ws0_parser, ws1_parser};
+use super::common::{
+  currency_token_parser, date_parser, indented_key_value_parser, line_end, spanned_token_parser,
+  tags_links_line_parser, ws0_parser, ws1_parser,
+};
 use super::number::number_expr_parser;
 
 #[derive(Debug, Clone)]
@@ -28,7 +31,11 @@ pub(super) fn transaction_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
   transaction_header_parser()
     .then_ignore(line_end())
-    .then(transaction_body_line_parser().repeated().collect::<Vec<_>>())
+    .then(
+      transaction_body_line_parser()
+        .repeated()
+        .collect::<Vec<_>>(),
+    )
     .map_with(move |(directive, body), e| {
       let span: SimpleSpan = e.span();
       let span = ast::Span::from_range(span.start, span.end);
@@ -81,7 +88,8 @@ fn transaction_body_line_parser<'src>()
   ))
 }
 
-fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
+fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src
+{
   indented_posting_parser()
     .then_ignore(line_end())
     .map_with(move |mut posting, e| {
@@ -174,7 +182,8 @@ fn finalize_transaction<'a>(
   txn
 }
 
-fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<'src>, Error<'src>> {
+fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<'src>, Error<'src>>
+{
   let optflag = any()
     .filter(|c: &char| "*!#&?%PSTCURM".contains(*c))
     .repeated()
@@ -188,7 +197,11 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
   let account = super::common::bare_string_parser().filter(|value| {
     value.content.contains(':')
       && !value.content.ends_with(':')
-      && value.content.chars().next().is_some_and(|c| c.is_ascii_uppercase())
+      && value
+        .content
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_uppercase())
   });
 
   let currency_for_amount = currency_token_parser();
@@ -310,13 +323,11 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       currency: Some(currency),
     });
 
-  let amount_total_no_currency = number_expr
-    .clone()
-    .map(|total| ast::CostAmount {
-      per: None,
-      total: Some(total),
-      currency: None,
-    });
+  let amount_total_no_currency = number_expr.clone().map(|total| ast::CostAmount {
+    per: None,
+    total: Some(total),
+    currency: None,
+  });
 
   let cost_amount = choice((amount_total, amount, amount_total_no_currency));
 
@@ -325,9 +336,19 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
     .repeated()
     .exactly(4)
     .then_ignore(just('-'))
-    .then(any().filter(|c: &char| c.is_ascii_digit()).repeated().exactly(2))
+    .then(
+      any()
+        .filter(|c: &char| c.is_ascii_digit())
+        .repeated()
+        .exactly(2),
+    )
     .then_ignore(just('-'))
-    .then(any().filter(|c: &char| c.is_ascii_digit()).repeated().exactly(2))
+    .then(
+      any()
+        .filter(|c: &char| c.is_ascii_digit())
+        .repeated()
+        .exactly(2),
+    )
     .to_slice()
     .map_with(|value: &str, e| {
       let span: SimpleSpan = e.span();

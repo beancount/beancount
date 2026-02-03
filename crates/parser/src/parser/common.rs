@@ -128,8 +128,8 @@ pub(super) fn tags_links_line_parser<'src>()
     .map(|value| value.unwrap())
 }
 
-pub(super) fn inline_comment_parser<'src>(
-) -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
+pub(super) fn inline_comment_parser<'src>()
+-> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   ws0_parser()
     .ignore_then(just(';'))
     .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
@@ -139,12 +139,8 @@ pub(super) fn inline_comment_parser<'src>(
     })
 }
 
-pub(super) fn key_value_parser<'src>() -> impl Parser<
-  'src,
-  &'src str,
-  ast::KeyValue<'src>,
-  Error<'src>,
-> {
+pub(super) fn key_value_parser<'src>()
+-> impl Parser<'src, &'src str, ast::KeyValue<'src>, Error<'src>> {
   let key = any()
     .filter(|c: &char| !c.is_whitespace() && *c != ':')
     .repeated()

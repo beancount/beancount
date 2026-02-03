@@ -1,10 +1,12 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::{ast, Error};
 use crate::utils::looks_like_currency;
+use crate::{Error, ast};
 
-use super::common::{key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser, inline_comment_parser};
+use super::common::{
+  inline_comment_parser, key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser,
+};
 use super::number::number_literal_parser;
 
 pub(super) fn balance_directive_parser<'src>()

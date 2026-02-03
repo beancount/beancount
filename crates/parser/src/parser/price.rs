@@ -1,9 +1,12 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
-use super::common::{date_parser, keyword_span_parser, key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::common::{
+  date_parser, key_value_block_parser, keyword_span_parser, spanned_token_parser, ws0_parser,
+  ws1_parser,
+};
 
 pub(super) fn price_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
@@ -44,18 +47,20 @@ pub(super) fn price_directive_parser<'src>()
     .then(comment)
     .then_ignore(super::common::line_end())
     .then(key_value_block_parser().or_not())
-    .map_with(|(((((date, keyword), currency), amount), comment), key_values), e| {
-      let span = ast::Span::from_simple_span(e.span());
-      let key_values = key_values.unwrap_or_else(SmallVec::new);
+    .map_with(
+      |(((((date, keyword), currency), amount), comment), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
 
-      ast::Directive::Price(ast::Price {
-        span,
-        keyword,
-        date,
-        currency,
-        amount,
-        comment,
-        key_values,
-      })
-    })
+        ast::Directive::Price(ast::Price {
+          span,
+          keyword,
+          date,
+          currency,
+          amount,
+          comment,
+          key_values,
+        })
+      },
+    )
 }

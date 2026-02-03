@@ -1,9 +1,12 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
 use crate::utils::looks_like_date;
+use crate::{Error, ast};
 
-use super::common::{bare_string_parser, keyword_span_parser, quoted_string_parser, ws0_parser, ws1_parser};
+use super::common::{
+  bare_string_parser, inline_comment_parser, keyword_span_parser, quoted_string_parser, ws0_parser,
+  ws1_parser,
+};
 
 pub(super) fn pushmeta_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
@@ -39,15 +42,16 @@ pub(super) fn pushmeta_directive_parser<'src>()
     .then_ignore(just(':'))
     .then_ignore(ws0_parser())
     .then(pushmeta_value)
-    .map_with(|((keyword, key), value), e| {
+    .then_ignore(ws0_parser())
+    .then(inline_comment_parser().or_not())
+    .map_with(|(((keyword, key), value), comment), e| {
       let span: SimpleSpan = e.span();
       ast::Directive::PushMeta(ast::PushMeta {
         span: ast::Span::from_range(span.start, span.end),
         keyword,
         key,
         value,
-        comment: None,
+        comment,
       })
     })
-    .then_ignore(ws0_parser())
 }

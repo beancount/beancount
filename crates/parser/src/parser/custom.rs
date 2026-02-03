@@ -1,10 +1,13 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::{ast, Error};
 use crate::utils::{looks_like_currency, looks_like_date};
+use crate::{Error, ast};
 
-use super::common::{bare_string_parser, date_parser, keyword_span_parser, key_value_block_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::common::{
+  bare_string_parser, date_parser, inline_comment_parser, key_value_block_parser,
+  keyword_span_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser,
+};
 use super::number::{number_expr_parser, number_literal_parser};
 
 pub(super) fn custom_directive_parser<'src>()
@@ -25,25 +28,29 @@ pub(super) fn custom_directive_parser<'src>()
     .then_ignore(ws0_parser());
 
   header
+    .then(inline_comment_parser().or_not())
     .then_ignore(super::common::line_end())
     .then(key_value_block_parser().or_not())
-    .map_with(|((((date, keyword), name), values), key_values), e| {
-      let span = ast::Span::from_simple_span(e.span());
-      let key_values = key_values.unwrap_or_else(SmallVec::new);
+    .map_with(
+      |(((((date, keyword), name), values), comment), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
 
-      ast::Directive::Custom(ast::Custom {
-        span,
-        keyword,
-        date,
-        name,
-        values: values.into_iter().collect(),
-        comment: None,
-        key_values,
-      })
-    })
+        ast::Directive::Custom(ast::Custom {
+          span,
+          keyword,
+          date,
+          name,
+          values: values.into_iter().collect(),
+          comment,
+          key_values,
+        })
+      },
+    )
 }
 
-fn custom_value_parser<'src>() -> impl Parser<'src, &'src str, ast::CustomValue<'src>, Error<'src>> {
+fn custom_value_parser<'src>() -> impl Parser<'src, &'src str, ast::CustomValue<'src>, Error<'src>>
+{
   let bool_value = bare_string_parser().filter(|value| {
     value.content.eq_ignore_ascii_case("true") || value.content.eq_ignore_ascii_case("false")
   });

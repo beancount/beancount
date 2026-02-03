@@ -1,8 +1,8 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
-use super::common::{keyword_span_parser, ws0_parser, ws1_parser};
+use super::common::{inline_comment_parser, keyword_span_parser, ws0_parser, ws1_parser};
 
 pub(super) fn popmeta_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
@@ -20,14 +20,15 @@ pub(super) fn popmeta_directive_parser<'src>()
     .then_ignore(ws1_parser())
     .then(popmeta_key)
     .then_ignore(just(':').or_not())
-    .map_with(|(keyword, key), e| {
+    .then_ignore(ws0_parser())
+    .then(inline_comment_parser().or_not())
+    .map_with(|((keyword, key), comment), e| {
       let span: SimpleSpan = e.span();
       ast::Directive::PopMeta(ast::PopMeta {
         span: ast::Span::from_range(span.start, span.end),
         keyword,
         key,
-        comment: None,
+        comment,
       })
     })
-    .then_ignore(ws0_parser())
 }
