@@ -5,21 +5,56 @@
 pub mod ast;
 pub mod core;
 pub mod path_utils;
-#[cfg(feature = "tree-sitter")]
-pub mod tree_sitter_parser;
 
-mod file_parser;
 mod parser;
 mod utils;
 
 pub use core::{CoreDirective, normalize_directives};
-pub use file_parser::parse_str_chumsky;
-#[cfg(feature = "file-parser")]
-pub use file_parser::parse_str_chumsky as parse_str;
-#[cfg(not(feature = "file-parser"))]
 pub use parser::parse_str;
 
 use chumsky::prelude::*;
+use ropey::Rope;
+use std::sync::Arc;
+
+#[derive(Debug, Clone)]
+pub(crate) struct ParseCtx {
+  pub(crate) filename: Arc<String>,
+  pub(crate) rope: Rope,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct MetaAt {
+  filename: Arc<String>,
+  rope: Rope,
+}
+
+impl MetaAt {
+  pub(crate) fn at(&self, offset: usize) -> ast::Meta {
+    meta_from_rope(&self.filename, &self.rope, offset)
+  }
+}
+
+impl From<&ParseCtx> for MetaAt {
+  fn from(ctx: &ParseCtx) -> Self {
+    MetaAt {
+      filename: ctx.filename.clone(),
+      rope: ctx.rope.clone(),
+    }
+  }
+}
+
+fn meta_from_rope(filename: &Arc<String>, rope: &Rope, offset: usize) -> ast::Meta {
+  let char_idx = rope.byte_to_char(offset);
+  let line_idx = rope.char_to_line(char_idx);
+  let line_start_char = rope.line_to_char(line_idx);
+  let line_start_byte = rope.char_to_byte(line_start_char);
+
+  ast::Meta {
+    filename: filename.clone(),
+    line: line_idx + 1,
+    column: offset.saturating_sub(line_start_byte) + 1,
+  }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError {

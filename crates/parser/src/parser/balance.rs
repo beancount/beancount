@@ -1,0 +1,75 @@
+use chumsky::prelude::*;
+use smallvec::SmallVec;
+
+use crate::{ast, Error};
+use crate::utils::looks_like_currency;
+
+use super::common::{key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::number::number_literal_parser;
+
+pub(super) fn balance_directive_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
+  let date = super::common::date_parser();
+
+  let currency = || spanned_token_parser().filter(|value| looks_like_currency(value.content));
+
+  let tolerance = ws0_parser()
+    .ignore_then(just('~'))
+    .ignore_then(ws0_parser())
+    .ignore_then(number_literal_parser())
+    .or_not();
+
+  let amount = number_literal_parser()
+    .then(tolerance)
+    .then(ws1_parser().ignore_then(currency()))
+    .map_with(|((number, tolerance), currency), e| {
+      let span: SimpleSpan = e.span();
+      let raw_span = ast::Span::from_range(span.start, span.end);
+      let raw: &str = e.slice();
+      let trimmed = raw.trim();
+      let offset = raw.find(trimmed).unwrap_or(0);
+      let raw_span = ast::Span::from_range(
+        raw_span.start + offset,
+        raw_span.start + offset + trimmed.len(),
+      );
+      (
+        ast::Amount {
+          raw: ast::WithSpan::new(raw_span, trimmed),
+          number: ast::NumberExpr::Literal(number),
+          currency: Some(currency),
+        },
+        tolerance,
+      )
+    });
+
+  let header = date
+    .then_ignore(ws1_parser())
+    .then(super::common::keyword_span_parser("balance"))
+    .then_ignore(ws1_parser())
+    .then(spanned_token_parser())
+    .then_ignore(ws1_parser())
+    .then(amount)
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(super::common::line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(
+      |((((date, keyword), account), (amount, tolerance)), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+        ast::Directive::Balance(ast::Balance {
+          span,
+          keyword,
+          date,
+          account,
+          amount,
+          tolerance,
+          comment: None,
+          key_values,
+        })
+      },
+    )
+    .boxed()
+}

@@ -31,10 +31,10 @@ Beancount is a double-entry accounting system that uses text files as input. Thi
 
 ### Rust Workspace (`crates/`)
 
-The Rust code is organized as a Cargo workspace with three crates:
+The Rust code is organized as a Cargo workspace with two crates:
 
 1. **`crates/parser/`** - Hosts the parsing engines and core AST
-   - Provides three Rust parsers: a line-scanning recursive descent parser (`parser.rs`), a full-file Chumsky parser (`file_parser.rs`, used when the `file-parser` feature is on), and a tree-sitter-driven parser (`tree_sitter_parser.rs`, behind the `tree-sitter` feature)
+   - Provides two Rust parsers: a line-scanning recursive descent parser (`parser.rs`) and a full-file Chumsky parser (`file_parser.rs`, used when the `file-parser` feature is on)
    - Produces the internal AST used by the Rust core
    - Defines `CoreDirective` types (Rust equivalents of Python data structures)
    - Exposes `parse_str()` routed to the active parser based on enabled features
@@ -45,10 +45,6 @@ The Rust code is organized as a Cargo workspace with three crates:
    - Converts `CoreDirective` to Python objects defined in `beancount/core/data.py`
    - Compiled to `beancount.parser._parser_rust`
    - **Do not add Rust tests here** - test through Python instead
-
-3. **`crates/tree-sitter/`** - Legacy tree-sitter grammar (not used by the current parser by default)
-   - Contains the grammar definition (grammar.js) and generated files
-   - Published as `beancount-tree-sitter` crate
 
 ## Development Workflow
 
