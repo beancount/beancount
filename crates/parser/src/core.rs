@@ -1,16 +1,45 @@
 use crate::path_utils::resolve_path;
 use crate::{ParseError, ast};
 use chrono::NaiveDate;
+use ropey::Rope;
 use rust_decimal::Decimal;
 use serde_json::from_str as parse_json;
 use smallvec::SmallVec;
 use std::convert::TryFrom;
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub type SmallStrVec = SmallVec<[String; 4]>;
 pub type SmallKeyValues = SmallVec<[KeyValue; 4]>;
 pub type SmallPostings = SmallVec<[Posting; 4]>;
 pub type SmallCustomValues = SmallVec<[CustomValue; 2]>;
+
+#[derive(Debug, Clone)]
+pub struct MetaAt {
+  filename: Arc<String>,
+  rope: Rope,
+}
+
+impl MetaAt {
+  pub fn new(filename: &str, source: &str) -> Self {
+    Self {
+      filename: Arc::new(filename.to_string()),
+      rope: Rope::from_str(source),
+    }
+  }
+
+  pub fn at(&self, offset: usize) -> ast::Meta {
+    let char_idx = self.rope.byte_to_char(offset);
+    let line_idx = self.rope.char_to_line(char_idx);
+    let line_start_char = self.rope.line_to_char(line_idx);
+    let line_start_byte = self.rope.char_to_byte(line_start_char);
+    ast::Meta {
+      filename: self.filename.clone(),
+      line: line_idx + 1,
+      column: offset.saturating_sub(line_start_byte) + 1,
+    }
+  }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CoreDirective {
@@ -209,7 +238,6 @@ pub enum CustomValue {
 
 fn value_error(meta: &ast::Meta, message: impl Into<String>) -> ParseError {
   ParseError {
-    filename: meta.filename.clone(),
     line: meta.line,
     column: meta.column,
     message: message.into(),
@@ -316,7 +344,6 @@ pub struct Headline {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyValue {
-  pub meta: ast::Meta,
   pub span: ast::Span,
   pub key: String,
   pub value: Option<KeyValueValue>,
@@ -456,102 +483,140 @@ pub struct Amount {
 
 pub fn normalize_directives<'a>(
   directives: &[ast::Directive<'a>],
+  filename: &str,
+  source: &str,
 ) -> Result<Vec<CoreDirective>, ParseError> {
+  let meta_at = MetaAt::new(filename, source);
+
   directives
     .iter()
     .cloned()
-    .map(CoreDirective::try_from)
+    .map(|directive| CoreDirective::try_from((directive, &meta_at)))
     .collect()
 }
 
-impl<'a> TryFrom<ast::Directive<'a>> for CoreDirective {
+impl<'a> TryFrom<(ast::Directive<'a>, &MetaAt)> for CoreDirective {
   type Error = ParseError;
 
-  fn try_from(directive: ast::Directive<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Directive<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (directive, meta_at) = input;
+
     match directive {
-      ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from(open)?)),
-      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from(close)?)),
-      ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from(balance)?)),
-      ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from(pad)?)),
-      ast::Directive::Transaction(txn) => {
-        Ok(CoreDirective::Transaction(Transaction::try_from(txn)?))
+      ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from((open, meta_at))?)),
+      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((close, meta_at))?)),
+      ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from((
+        balance, meta_at,
+      ))?)),
+      ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from((pad, meta_at))?)),
+      ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(Transaction::try_from((
+        txn, meta_at,
+      ))?)),
+      ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from((
+        cmdty, meta_at,
+      ))?)),
+      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((price, meta_at))?)),
+      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((event, meta_at))?)),
+      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((query, meta_at))?)),
+      ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from((note, meta_at))?)),
+      ast::Directive::Document(doc) => {
+        Ok(CoreDirective::Document(Document::try_from((doc, meta_at))?))
       }
-      ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from(cmdty)?)),
-      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from(price)?)),
-      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from(event)?)),
-      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from(query)?)),
-      ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from(note)?)),
-      ast::Directive::Document(doc) => Ok(CoreDirective::Document(Document::try_from(doc)?)),
-      ast::Directive::Custom(custom) => Ok(CoreDirective::Custom(Custom::try_from(custom)?)),
-      ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from(opt)?)),
-      ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from(include)?)),
-      ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from(plugin)?)),
-      ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from(tag)?)),
-      ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from(tag)?)),
-      ast::Directive::PushMeta(pm) => Ok(CoreDirective::PushMeta(PushMeta::try_from(pm)?)),
-      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from(pm)?)),
-      ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from(comment)?)),
-      ast::Directive::Headline(headline) => {
-        Ok(CoreDirective::Headline(Headline::try_from(headline)?))
+      ast::Directive::Custom(custom) => {
+        Ok(CoreDirective::Custom(Custom::try_from((custom, meta_at))?))
       }
-      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from(raw)?)),
+      ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from((
+        opt, meta_at,
+      ))?)),
+      ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from((
+        include, meta_at,
+      ))?)),
+      ast::Directive::Plugin(plugin) => {
+        Ok(CoreDirective::Plugin(Plugin::try_from((plugin, meta_at))?))
+      }
+      ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from((
+        tag, meta_at,
+      ))?)),
+      ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from((
+        tag, meta_at,
+      ))?)),
+      ast::Directive::PushMeta(pm) => {
+        Ok(CoreDirective::PushMeta(PushMeta::try_from((pm, meta_at))?))
+      }
+      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((pm, meta_at))?)),
+      ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from((
+        comment, meta_at,
+      ))?)),
+      ast::Directive::Headline(headline) => Ok(CoreDirective::Headline(Headline::try_from((
+        headline, meta_at,
+      ))?)),
+      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from((raw, meta_at))?)),
     }
   }
 }
 
-impl<'a> TryFrom<ast::Raw<'a>> for Raw {
+impl<'a> TryFrom<(ast::Raw<'a>, &MetaAt)> for Raw {
   type Error = ParseError;
 
-  fn try_from(raw: ast::Raw<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Raw<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (raw, meta_at) = input;
     Ok(Self {
-      meta: raw.meta,
+      meta: meta_at.at(raw.span.start),
       span: raw.span,
       text: raw.text.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::Comment<'a>> for Comment {
+impl<'a> TryFrom<(ast::Comment<'a>, &MetaAt)> for Comment {
   type Error = ParseError;
 
-  fn try_from(comment: ast::Comment<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Comment<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (comment, meta_at) = input;
     Ok(Self {
-      meta: comment.meta,
+      meta: meta_at.at(comment.span.start),
       span: comment.span,
       text: comment.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::Headline<'a>> for Comment {
+impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Comment {
   type Error = ParseError;
 
-  fn try_from(headline: ast::Headline<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (headline, meta_at) = input;
     Ok(Self {
-      meta: headline.meta,
+      meta: meta_at.at(headline.span.start),
       span: headline.span,
       text: headline.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::Headline<'a>> for Headline {
+impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt)> for Headline {
   type Error = ParseError;
 
-  fn try_from(headline: ast::Headline<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (headline, meta_at) = input;
     Ok(Self {
-      meta: headline.meta,
+      meta: meta_at.at(headline.span.start),
       span: headline.span,
       text: headline.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::Open<'a>> for Open {
+impl<'a> TryFrom<(ast::Open<'a>, &MetaAt)> for Open {
   type Error = ParseError;
 
-  fn try_from(open: ast::Open<'a>) -> Result<Self, Self::Error> {
-    let meta = open.meta.clone();
+  fn try_from(input: (ast::Open<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (open, meta_at) = input;
+    let meta = meta_at.at(open.span.start);
+    let key_values = open
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
       meta: meta.clone(),
       span: open.span,
@@ -567,185 +632,218 @@ impl<'a> TryFrom<ast::Open<'a>> for Open {
         .map(|booking| unquote_json(booking.content, &meta, "booking method"))
         .transpose()?,
       comment: open.comment.map(|c| c.content.to_string()),
-      key_values: open
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Close<'a>> for Close {
+impl<'a> TryFrom<(ast::Close<'a>, &MetaAt)> for Close {
   type Error = ParseError;
 
-  fn try_from(close: ast::Close<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Close<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (close, meta_at) = input;
+    let meta = meta_at.at(close.span.start);
+    let key_values = close
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
-      meta: close.meta,
+      meta,
       span: close.span,
       date: close.date.content.to_string(),
       account: close.account.content.to_string(),
       comment: close.comment.map(|c| c.content.to_string()),
-      key_values: close
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Balance<'a>> for Balance {
+impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt)> for Balance {
   type Error = ParseError;
 
-  fn try_from(balance: ast::Balance<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Balance<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (balance, meta_at) = input;
+    let meta = meta_at.at(balance.span.start);
+    let key_values = balance
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
-      meta: balance.meta,
+      meta,
       span: balance.span,
       date: balance.date.content.to_string(),
       account: balance.account.content.to_string(),
       amount: Amount::try_from(balance.amount)?,
       tolerance: balance.tolerance.map(|t| t.content.to_string()),
       comment: balance.comment.map(|c| c.content.to_string()),
-      key_values: balance
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Pad<'a>> for Pad {
+impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt)> for Pad {
   type Error = ParseError;
 
-  fn try_from(pad: ast::Pad<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Pad<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (pad, meta_at) = input;
+    let meta = meta_at.at(pad.span.start);
+    let key_values = pad
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
-      meta: pad.meta,
+      meta,
       span: pad.span,
       date: pad.date.content.to_string(),
       account: pad.account.content.to_string(),
       from_account: pad.from_account.content.to_string(),
       comment: pad.comment.map(|c| c.content.to_string()),
-      key_values: pad
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Commodity<'a>> for Commodity {
+impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt)> for Commodity {
   type Error = ParseError;
 
-  fn try_from(cmdty: ast::Commodity<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Commodity<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (cmdty, meta_at) = input;
+    let meta = meta_at.at(cmdty.span.start);
+    let key_values = cmdty
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
-      meta: cmdty.meta,
+      meta,
       span: cmdty.span,
       date: cmdty.date.content.to_string(),
       currency: cmdty.currency.content.to_string(),
       comment: cmdty.comment.map(|c| c.content.to_string()),
-      key_values: cmdty
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Price<'a>> for Price {
+impl<'a> TryFrom<(ast::Price<'a>, &MetaAt)> for Price {
   type Error = ParseError;
 
-  fn try_from(price: ast::Price<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Price<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (price, meta_at) = input;
+    let meta = meta_at.at(price.span.start);
+    let key_values = price
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
-      meta: price.meta,
+      meta,
       span: price.span,
       date: price.date.content.to_string(),
       currency: price.currency.content.to_string(),
       amount: Amount::try_from(price.amount)?,
       comment: price.comment.map(|c| c.content.to_string()),
-      key_values: price
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Event<'a>> for Event {
+impl<'a> TryFrom<(ast::Event<'a>, &MetaAt)> for Event {
   type Error = ParseError;
 
-  fn try_from(event: ast::Event<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Event<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (event, meta_at) = input;
+    let meta = meta_at.at(event.span.start);
+    let key_values = event
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let event_type = unquote_json(event.event_type.content, &meta, "event type")?;
+    let desc = unquote_json(event.desc.content, &meta, "event description")?;
     Ok(Self {
-      meta: event.meta.clone(),
+      meta,
       span: event.span,
       date: event.date.content.to_string(),
-      event_type: unquote_json(event.event_type.content, &event.meta, "event type")?,
-      desc: unquote_json(event.desc.content, &event.meta, "event description")?,
+      event_type,
+      desc,
       comment: event.comment.map(|c| c.content.to_string()),
-      key_values: event
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Query<'a>> for Query {
+impl<'a> TryFrom<(ast::Query<'a>, &MetaAt)> for Query {
   type Error = ParseError;
 
-  fn try_from(query: ast::Query<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Query<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (query, meta_at) = input;
+    let meta = meta_at.at(query.span.start);
+    let key_values = query
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let name = unquote_json(query.name.content, &meta, "query name")?;
+    let query_str = unquote_json(query.query.content, &meta, "query")?;
     Ok(Self {
-      meta: query.meta.clone(),
+      meta,
       span: query.span,
       date: query.date.content.to_string(),
-      name: unquote_json(query.name.content, &query.meta, "query name")?,
-      query: unquote_json(query.query.content, &query.meta, "query")?,
+      name,
+      query: query_str,
       comment: query.comment.map(|c| c.content.to_string()),
-      key_values: query
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Note<'a>> for Note {
+impl<'a> TryFrom<(ast::Note<'a>, &MetaAt)> for Note {
   type Error = ParseError;
 
-  fn try_from(note: ast::Note<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Note<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (note, meta_at) = input;
+    let meta = meta_at.at(note.span.start);
+    let key_values = note
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let note_str = unquote_json(note.note.content, &meta, "note")?;
     Ok(Self {
-      meta: note.meta.clone(),
+      meta,
       span: note.span,
       date: note.date.content.to_string(),
       account: note.account.content.to_string(),
-      note: unquote_json(note.note.content, &note.meta, "note")?,
+      note: note_str,
       comment: note.comment.map(|c| c.content.to_string()),
-      key_values: note
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Document<'a>> for Document {
+impl<'a> TryFrom<(ast::Document<'a>, &MetaAt)> for Document {
   type Error = ParseError;
 
-  fn try_from(doc: ast::Document<'a>) -> Result<Self, Self::Error> {
-    let filename = unquote_json(doc.filename.content, &doc.meta, "document filename")?;
+  fn try_from(input: (ast::Document<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (doc, meta_at) = input;
+    let meta = meta_at.at(doc.span.start);
+    let key_values = doc
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let filename = unquote_json(doc.filename.content, &meta, "document filename")?;
+    let resolved_filename = resolve_path(meta.filename.as_ref(), &filename);
     Ok(Self {
-      meta: doc.meta.clone(),
+      meta,
       span: doc.span,
       date: doc.date.content.to_string(),
       account: doc.account.content.to_string(),
-      filename: resolve_path(&doc.meta.filename, &filename),
+      filename: resolved_filename,
       tags_links: doc.tags_links.map(|t| t.content.to_string()),
       tags: doc
         .tags
@@ -758,71 +856,81 @@ impl<'a> TryFrom<ast::Document<'a>> for Document {
         .map(|l| l.content.to_string())
         .collect(),
       comment: doc.comment.map(|c| c.content.to_string()),
-      key_values: doc
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Custom<'a>> for Custom {
+impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt)> for Custom {
   type Error = ParseError;
 
-  fn try_from(custom: ast::Custom<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Custom<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (custom, meta_at) = input;
+    let meta = meta_at.at(custom.span.start);
+    let key_values = custom
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let values = custom
+      .values
+      .into_iter()
+      .map(|v| CustomValue::try_from((v, &meta)))
+      .collect::<Result<_, _>>()?;
+    let name = unquote_json(custom.name.content, &meta, "custom name")?;
     Ok(Self {
-      meta: custom.meta.clone(),
+      meta,
       span: custom.span,
       date: custom.date.content.to_string(),
-      name: unquote_json(custom.name.content, &custom.meta, "custom name")?,
-      values: custom
-        .values
-        .into_iter()
-        .map(|v| CustomValue::try_from((v, &custom.meta)))
-        .collect::<Result<_, _>>()?,
+      name,
+      values,
       comment: custom.comment.map(|c| c.content.to_string()),
-      key_values: custom
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::OptionDirective<'a>> for OptionDirective {
+impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt)> for OptionDirective {
   type Error = ParseError;
 
-  fn try_from(opt: ast::OptionDirective<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::OptionDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (opt, meta_at) = input;
+    let meta = meta_at.at(opt.span.start);
+    let key = unquote_json(opt.key.content, &meta, "option key")?;
+    let value = unquote_json(opt.value.content, &meta, "option value")?;
     Ok(Self {
-      meta: opt.meta.clone(),
+      meta,
       span: opt.span,
-      key: unquote_json(opt.key.content, &opt.meta, "option key")?,
-      value: unquote_json(opt.value.content, &opt.meta, "option value")?,
+      key,
+      value,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Include<'a>> for Include {
+impl<'a> TryFrom<(ast::Include<'a>, &MetaAt)> for Include {
   type Error = ParseError;
 
-  fn try_from(include: ast::Include<'a>) -> Result<Self, Self::Error> {
-    let fname = unquote_json(include.filename.content, &include.meta, "include filename")?;
+  fn try_from(input: (ast::Include<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (include, meta_at) = input;
+    let meta = meta_at.at(include.span.start);
+    let fname = unquote_json(include.filename.content, &meta, "include filename")?;
+    let resolved = resolve_path(&meta.filename, &fname);
     Ok(Self {
-      meta: include.meta.clone(),
+      meta,
       span: include.span,
-      filename: resolve_path(&include.meta.filename, &fname),
+      filename: resolved,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Plugin<'a>> for Plugin {
+impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt)> for Plugin {
   type Error = ParseError;
 
-  fn try_from(plugin: ast::Plugin<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::Plugin<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (plugin, meta_at) = input;
+    let meta = meta_at.at(plugin.span.start);
     let config = if let Some(raw) = plugin.config {
-      match unquote_json(raw.content, &plugin.meta, "plugin config") {
+      match unquote_json(raw.content, &meta, "plugin config") {
         Ok(val) => Some(val),
         Err(_) => {
           // Fall back to a lenient stripping of surrounding quotes so
@@ -841,33 +949,38 @@ impl<'a> TryFrom<ast::Plugin<'a>> for Plugin {
       None
     };
 
+    let name = unquote_json(plugin.name.content, &meta, "plugin name")?;
+
     Ok(Self {
-      meta: plugin.meta.clone(),
+      meta,
       span: plugin.span,
-      name: unquote_json(plugin.name.content, &plugin.meta, "plugin name")?,
+      name,
       config,
     })
   }
 }
 
-impl<'a> TryFrom<ast::TagDirective<'a>> for TagDirective {
+impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt)> for TagDirective {
   type Error = ParseError;
 
-  fn try_from(tag: ast::TagDirective<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::TagDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (tag, meta_at) = input;
+    let meta = meta_at.at(tag.span.start);
     let tag_value = tag.tag.content.strip_prefix('#').unwrap_or(tag.tag.content);
     Ok(Self {
-      meta: tag.meta,
+      meta,
       span: tag.span,
       tag: tag_value.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::PushMeta<'a>> for PushMeta {
+impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt)> for PushMeta {
   type Error = ParseError;
 
-  fn try_from(pm: ast::PushMeta<'a>) -> Result<Self, Self::Error> {
-    let meta = pm.meta;
+  fn try_from(input: (ast::PushMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (pm, meta_at) = input;
+    let meta = meta_at.at(pm.span.start);
     let value = parse_key_value_value(pm.value, &meta, "pushmeta value", true)?;
     Ok(Self {
       meta,
@@ -878,26 +991,27 @@ impl<'a> TryFrom<ast::PushMeta<'a>> for PushMeta {
   }
 }
 
-impl<'a> TryFrom<ast::PopMeta<'a>> for PopMeta {
+impl<'a> TryFrom<(ast::PopMeta<'a>, &MetaAt)> for PopMeta {
   type Error = ParseError;
 
-  fn try_from(pm: ast::PopMeta<'a>) -> Result<Self, Self::Error> {
+  fn try_from(input: (ast::PopMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (pm, meta_at) = input;
     Ok(Self {
-      meta: pm.meta,
+      meta: meta_at.at(pm.span.start),
       span: pm.span,
       key: pm.key.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<ast::KeyValue<'a>> for KeyValue {
+impl<'a> TryFrom<(ast::KeyValue<'a>, &ast::Meta)> for KeyValue {
   type Error = ParseError;
 
-  fn try_from(kv: ast::KeyValue<'a>) -> Result<Self, Self::Error> {
-    let value = parse_key_value_value(kv.value, &kv.meta, "metadata value", false)?;
+  fn try_from(input: (ast::KeyValue<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
+    let (kv, meta) = input;
+    let value = parse_key_value_value(kv.value, meta, "metadata value", false)?;
 
     Ok(Self {
-      meta: kv.meta,
       span: kv.span,
       key: kv.key.content.to_string(),
       value,
@@ -936,15 +1050,21 @@ impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
   }
 }
 
-impl<'a> TryFrom<ast::Posting<'a>> for Posting {
+impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt)> for Posting {
   type Error = ParseError;
 
-  fn try_from(posting: ast::Posting<'a>) -> Result<Self, Self::Error> {
-    let meta = posting.meta;
+  fn try_from(input: (ast::Posting<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (posting, meta_at) = input;
+    let meta = meta_at.at(posting.span.start);
     let cost_spec = posting
       .cost_spec
       .map(|c| CostSpec::try_from((c, &meta)))
       .transpose()?;
+    let key_values = posting
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
       meta,
       span: posting.span,
@@ -955,20 +1075,17 @@ impl<'a> TryFrom<ast::Posting<'a>> for Posting {
       price_operator: posting.price_operator.map(|op| op.content),
       price_annotation: posting.price_annotation.map(Amount::try_from).transpose()?,
       comment: posting.comment.map(|c| c.content.to_string()),
-      key_values: posting
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
     })
   }
 }
 
-impl<'a> TryFrom<ast::Transaction<'a>> for Transaction {
+impl<'a> TryFrom<(ast::Transaction<'a>, &MetaAt)> for Transaction {
   type Error = ParseError;
 
-  fn try_from(txn: ast::Transaction<'a>) -> Result<Self, Self::Error> {
-    let meta = txn.meta;
+  fn try_from(input: (ast::Transaction<'a>, &MetaAt)) -> Result<Self, Self::Error> {
+    let (txn, meta_at) = input;
+    let meta = meta_at.at(txn.span.start);
     let payee = txn
       .payee
       .map(|p| unquote_json(p.content, &meta, "payee"))
@@ -977,6 +1094,11 @@ impl<'a> TryFrom<ast::Transaction<'a>> for Transaction {
       .narration
       .map(|n| unquote_json(n.content, &meta, "narration"))
       .transpose()?;
+    let key_values = txn
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
     Ok(Self {
       meta,
       span: txn.span,
@@ -994,15 +1116,11 @@ impl<'a> TryFrom<ast::Transaction<'a>> for Transaction {
         .into_iter()
         .map(|l| l.content.to_string())
         .collect(),
-      key_values: txn
-        .key_values
-        .into_iter()
-        .map(KeyValue::try_from)
-        .collect::<Result<_, _>>()?,
+      key_values,
       postings: txn
         .postings
         .into_iter()
-        .map(Posting::try_from)
+        .map(|p| Posting::try_from((p, meta_at)))
         .collect::<Result<_, _>>()?,
     })
   }
@@ -1094,7 +1212,6 @@ fn unquote_json(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<String, ParseE
       }
 
       Err(ParseError {
-        filename: meta.filename.clone(),
         line: meta.line,
         column: meta.column,
         message: format!("invalid {}: {}", ctx, err),

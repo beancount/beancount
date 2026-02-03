@@ -1,453 +1,153 @@
 //! 基于单个巨大 chumsky 组合的整文件解析器（file_parser.rs）。
 //!
 //! 这个模块用一个“巨大的” Chumsky 解析器一次性解析整个文件，
-//! 子解析器直接产出 `ast::Directive`，并在本模块内补齐 meta。
+//! 子解析器直接构建 `ast::Directive` 并在本模块内补齐 meta。
 //! 入口为 `parse_str_chumsky`。
 use chumsky::prelude::*;
+use ropey::Rope;
 use smallvec::SmallVec;
+use std::sync::Arc;
 
-use crate::utils::{
-  attach_key_values, empty_meta, expand_directive_span_to, line_starts, looks_like_currency,
-  looks_like_date, meta_from_offset, parse_tags_links, split_currencies,
-};
+use crate::utils::{looks_like_currency, looks_like_date, parse_tags_links, split_currencies};
 use crate::{Error, ParseError, ast};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FileItem<'a> {
-  pub text: &'a str,
-  pub span: ast::Span,
-  pub kind: FileItemKind<'a>,
+#[derive(Debug, Clone)]
+struct ParseCtx {
+  filename: Arc<String>,
+  rope: Rope,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum FileItemKind<'a> {
-  Directive(ast::Directive<'a>),
+#[derive(Debug, Clone)]
+struct MetaAt {
+  filename: Arc<String>,
+  rope: Rope,
+}
+
+impl MetaAt {
+  fn at(&self, offset: usize) -> ast::Meta {
+    meta_from_rope(&self.filename, &self.rope, offset)
+  }
+}
+
+impl From<&ParseCtx> for MetaAt {
+  fn from(ctx: &ParseCtx) -> Self {
+    MetaAt {
+      filename: ctx.filename.clone(),
+      rope: ctx.rope.clone(),
+    }
+  }
+}
+
+fn key_value_block_parser<'src>()
+-> impl Parser<'src, &'src str, SmallVec<[ast::KeyValue<'src>; 4]>, Error<'src>> + 'src {
+  indented_key_value_parser()
+    .then_ignore(line_end())
+    .map_with(move |mut kv, e| {
+      let span: SimpleSpan = e.span();
+      let span = ast::Span::from_range(span.start, span.end);
+      kv.span = span;
+      kv
+    })
+    .repeated()
+    .collect::<Vec<_>>()
+    .map(SmallVec::from_vec)
+}
+
+#[derive(Debug, Clone)]
+enum TxnBodyLine<'a> {
   Posting(ast::Posting<'a>),
   KeyValue(ast::KeyValue<'a>),
   TagsLinks(ast::WithSpan<&'a str>),
-  Empty,
-  Raw,
+  Comment(ast::WithSpan<&'a str>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct TransactionHeader<'a> {
-  date: ast::WithSpan<&'a str>,
-  flag: ast::WithSpan<&'a str>,
-  payee: Option<ast::WithSpan<&'a str>>,
-  narration: Option<ast::WithSpan<&'a str>>,
-  tags_links: Option<ast::WithSpan<&'a str>>,
+fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src
+{
+  indented_posting_parser()
+    .then_ignore(line_end())
+    .map_with(move |mut posting, e| {
+      let span: SimpleSpan = e.span();
+      let span = ast::Span::from_range(span.start, span.end);
+      posting.span = span;
+      TxnBodyLine::Posting(posting)
+    })
 }
 
-enum DirectiveKind<'a> {
-  Include {
-    keyword: ast::Span,
-    filename: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Plugin {
-    keyword: ast::Span,
-    name: ast::WithSpan<&'a str>,
-    config: Option<ast::WithSpan<&'a str>>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Option {
-    keyword: ast::Span,
-    key: ast::WithSpan<&'a str>,
-    value: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  PushTag {
-    keyword: ast::Span,
-    tag: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  PopTag {
-    keyword: ast::Span,
-    tag: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  PushMeta {
-    keyword: ast::Span,
-    key: ast::WithSpan<&'a str>,
-    value: Option<ast::WithSpan<ast::KeyValueValue<'a>>>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  PopMeta {
-    keyword: ast::Span,
-    key: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Comment {
-    text: ast::WithSpan<&'a str>,
-  },
-  Headline {
-    text: ast::WithSpan<&'a str>,
-  },
-  Open {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    currencies: SmallVec<[ast::WithSpan<&'a str>; 2]>,
-    opt_booking: Option<ast::WithSpan<&'a str>>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Close {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Balance {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    amount: ast::Amount<'a>,
-    tolerance: Option<ast::WithSpan<&'a str>>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Pad {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    from_account: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Commodity {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    currency: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Price {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    currency: ast::WithSpan<&'a str>,
-    amount: ast::Amount<'a>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Event {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    event_type: ast::WithSpan<&'a str>,
-    desc: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Query {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    name: ast::WithSpan<&'a str>,
-    query: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Note {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    note: ast::WithSpan<&'a str>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Document {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    account: ast::WithSpan<&'a str>,
-    filename: ast::WithSpan<&'a str>,
-    tags_links: Option<ast::WithSpan<&'a str>>,
-    tags: SmallVec<[ast::WithSpan<&'a str>; 2]>,
-    links: SmallVec<[ast::WithSpan<&'a str>; 2]>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
-  Custom {
-    keyword: ast::Span,
-    date: ast::WithSpan<&'a str>,
-    name: ast::WithSpan<&'a str>,
-    values: SmallVec<[ast::CustomValue<'a>; 2]>,
-    comment: Option<ast::WithSpan<&'a str>>,
-  },
+fn transaction_key_value_line_parser<'src>()
+-> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
+  indented_key_value_parser()
+    .then_ignore(line_end())
+    .filter(|kv| is_key_token(kv.key.content))
+    .map_with(move |mut kv, e| {
+      let span: SimpleSpan = e.span();
+      let span = ast::Span::from_range(span.start, span.end);
+      kv.span = span;
+      TxnBodyLine::KeyValue(kv)
+    })
 }
 
-pub(crate) fn file_items_parser<'src>()
--> impl Parser<'src, &'src str, Vec<FileItem<'src>>, Error<'src>> {
-  let directive_line = directive_parser().map_with(|directive, e| {
-    let span: SimpleSpan = e.span();
-    FileItem {
-      text: e.slice(),
-      span: ast::Span::from_range(span.start, span.end),
-      kind: FileItemKind::Directive(directive),
-    }
-  });
+fn transaction_tags_links_line_parser<'src>()
+-> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
+  tags_links_line_parser()
+    .then_ignore(line_end())
+    .map(TxnBodyLine::TagsLinks)
+}
 
-  let posting_line = indented_posting_parser().map_with(|posting, e| {
-    let span: SimpleSpan = e.span();
-    FileItem {
-      text: e.slice(),
-      span: ast::Span::from_range(span.start, span.end),
-      kind: FileItemKind::Posting(posting),
-    }
-  });
+fn transaction_comment_line_parser<'src>()
+-> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
+  comment_directive_parser()
+    .then_ignore(line_end())
+    .map(|directive| {
+      let ast::Directive::Comment(ast::Comment { text, .. }) = directive else {
+        unreachable!("comment_directive_parser only builds comments");
+      };
+      TxnBodyLine::Comment(text)
+    })
+}
 
-  let key_value_line = indented_key_value_parser().map_with(|kv, e| {
-    let span: SimpleSpan = e.span();
-    FileItem {
-      text: e.slice(),
-      span: ast::Span::from_range(span.start, span.end),
-      kind: FileItemKind::KeyValue(kv),
-    }
-  });
-
-  let tags_links_line = tags_links_line_parser().map_with(|tags_links, e| {
-    let span: SimpleSpan = e.span();
-    FileItem {
-      text: e.slice(),
-      span: ast::Span::from_range(span.start, span.end),
-      kind: FileItemKind::TagsLinks(tags_links),
-    }
-  });
-
-  // Ensure the empty-line parser consumes at least one character to avoid
-  // zero-length progress inside the repeated() loop.
-  let empty_line = choice((
-    ws0_parser().then_ignore(just('\n')).map_with(|_, e| {
-      let span: SimpleSpan = e.span();
-      FileItem {
-        text: e.slice(),
-        span: ast::Span::from_range(span.start, span.end),
-        kind: FileItemKind::Empty,
-      }
-    }),
-    ws1_parser().then_ignore(end()).map_with(|_, e| {
-      let span: SimpleSpan = e.span();
-      FileItem {
-        text: e.slice(),
-        span: ast::Span::from_range(span.start, span.end),
-        kind: FileItemKind::Empty,
-      }
-    }),
-  ));
-
-  let raw_line = any()
-    .filter(|c: &char| *c != '\n')
-    .repeated()
-    .at_least(1)
-    .to_slice()
-    .map_with(|_: &str, e| {
-      let span: SimpleSpan = e.span();
-      FileItem {
-        text: e.slice(),
-        span: ast::Span::from_range(span.start, span.end),
-        kind: FileItemKind::Raw,
-      }
-    });
-
+fn transaction_body_line_parser<'src>()
+-> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
   choice((
-    directive_line.then_ignore(line_end()),
-    key_value_line.then_ignore(line_end()),
-    posting_line.then_ignore(line_end()),
-    tags_links_line.then_ignore(line_end()),
-    empty_line,
-    raw_line.then_ignore(line_end()),
+    posting_line_parser(),
+    transaction_key_value_line_parser(),
+    transaction_tags_links_line_parser(),
+    transaction_comment_line_parser(),
   ))
-  .boxed()
-  .repeated()
-  .collect::<Vec<_>>()
-  .then_ignore(end())
-  .boxed()
 }
 
-pub fn parse_str_chumsky<'a>(
-  source: &'a str,
-  filename: &str,
-) -> std::result::Result<Vec<ast::Directive<'a>>, ParseError> {
-  let line_starts = line_starts(source);
-  let items = file_items_parser()
-    .parse(source)
-    .into_result()
-    .map_err(|mut errors| match errors.pop() {
-      Some(err) => {
-        let span = err.span();
-        let meta = meta_from_offset(filename, span.start, &line_starts);
-        ParseError {
-          filename: meta.filename,
-          line: meta.line,
-          column: meta.column,
-          message: err.to_string(),
-        }
-      }
-      None => ParseError {
-        filename: filename.to_owned(),
-        line: 1,
-        column: 1,
-        message: "parse error".to_string(),
-      },
-    })?;
-
-  Ok(assemble_directives(items, source, filename, &line_starts))
-}
-
-fn assemble_directives<'a>(
-  items: Vec<FileItem<'a>>,
-  source: &'a str,
-  filename: &str,
-  line_starts: &[usize],
-) -> Vec<ast::Directive<'a>> {
-  let mut directives = Vec::with_capacity(items.len() / 4);
-  let mut index = 0;
-
-  while index < items.len() {
-    let item = &items[index];
-    if matches!(item.kind, FileItemKind::Empty) {
-      index += 1;
-      continue;
-    }
-    match &item.kind {
-      FileItemKind::Directive(directive) => {
-        if let ast::Directive::Transaction(txn) = directive {
-          let txn = assemble_transaction(
-            txn.clone(),
-            &items,
-            &mut index,
-            source,
-            filename,
-            line_starts,
-          );
-          directives.push(ast::Directive::Transaction(txn));
-          continue;
-        }
-
-        let mut directive = directive.clone();
-        let meta = meta_from_offset(filename, item.span.start, line_starts);
-        rewrite_meta(meta, &mut directive);
-
-        let mut end_span = item.span.end;
-        let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
-        let mut lookahead = index + 1;
-        while lookahead < items.len() {
-          let next = &items[lookahead];
-          match &next.kind {
-            FileItemKind::KeyValue(kv) => {
-              let mut kv = kv.clone();
-              kv.meta = meta_from_offset(filename, next.span.start, line_starts);
-              key_values.push(kv);
-              end_span = next.span.end;
-              lookahead += 1;
-            }
-            FileItemKind::Empty => break,
-            _ => break,
-          }
-        }
-
-        attach_key_values(&mut directive, key_values);
-        directive = expand_directive_span_to(directive, item.span.start, end_span, source);
-        directives.push(directive);
-        index = lookahead;
-      }
-      _ => {
-        let (raw, next_index) = raw_block_from(&items, index, source, filename, line_starts);
-        directives.push(ast::Directive::Raw(raw));
-        index = next_index;
-      }
-    }
-  }
-
-  directives
-}
-
-fn raw_block_from<'a>(
-  items: &[FileItem<'a>],
-  mut index: usize,
-  source: &'a str,
-  filename: &str,
-  line_starts: &[usize],
-) -> (ast::Raw<'a>, usize) {
-  let start = items[index].span.start;
-  let mut end = items[index].span.end;
-
-  while index + 1 < items.len() {
-    let next = &items[index + 1];
-    let trimmed = next.text.trim();
-    if trimmed.is_empty() || next.text.starts_with(' ') || next.text.starts_with('\t') {
-      end = next.span.end;
-      index += 1;
-    } else {
-      break;
-    }
-  }
-
-  let meta = meta_from_offset(filename, start, line_starts);
-  let text = &source[start..end];
-  let span = ast::Span::from_range(start, end);
-  (ast::Raw { meta, span, text }, index + 1)
-}
-
-fn assemble_transaction<'a>(
+fn finalize_transaction<'a>(
   mut txn: ast::Transaction<'a>,
-  items: &[FileItem<'a>],
-  index: &mut usize,
-  source: &'a str,
-  filename: &str,
-  line_starts: &[usize],
+  body: Vec<TxnBodyLine<'a>>,
+  span: ast::Span,
 ) -> ast::Transaction<'a> {
-  let item = &items[*index];
-  let mut end_span = item.span.end;
   let mut tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut comments: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
   let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
 
-  *index += 1;
-  while *index < items.len() {
-    let next = &items[*index];
-    match &next.kind {
-      FileItemKind::Empty => {
-        end_span = next.span.end;
-        break;
-      }
-      FileItemKind::Posting(posting) => {
-        let mut posting = posting.clone();
-        posting.meta = meta_from_offset(filename, next.span.start, line_starts);
-        let mut span_end = next.span.end;
-        if span_end < source.len() && source.as_bytes().get(span_end) == Some(&b'\n') {
-          span_end += 1;
-          posting.span = ast::Span::from_range(posting.span.start, span_end);
-        }
-        postings.push(posting);
-        end_span = span_end;
-        *index += 1;
-      }
-      FileItemKind::KeyValue(kv) => {
-        let mut kv = kv.clone();
-        kv.meta = meta_from_offset(filename, next.span.start, line_starts);
+  for line in body {
+    match line {
+      TxnBodyLine::Posting(posting) => postings.push(posting),
+      TxnBodyLine::KeyValue(kv) => {
         if let Some(last) = postings.last_mut() {
           last.key_values.push(kv);
         } else {
           key_values.push(kv);
         }
-        end_span = next.span.end;
-        *index += 1;
       }
-      FileItemKind::TagsLinks(tags_links) => {
-        tags_links_lines.push(tags_links.clone());
-        end_span = next.span.end;
-        *index += 1;
-      }
-      FileItemKind::Directive(ast::Directive::Comment(comment)) => {
-        comments.push(comment.text.clone());
-        end_span = next.span.end;
-        *index += 1;
-      }
-      _ => break,
+      TxnBodyLine::TagsLinks(tags_links) => tags_links_lines.push(tags_links),
+      TxnBodyLine::Comment(comment) => comments.push(comment),
     }
   }
 
-  let meta = meta_from_offset(filename, item.span.start, line_starts);
-  txn.meta = meta.clone();
-  txn.span = item.span;
+  txn.span = span;
   txn.postings = postings;
   txn.key_values = key_values;
   txn.comments = comments;
 
   let mut tags_links_lines = tags_links_lines;
   if let Some(inline) = txn.tags_links.clone() {
-    tags_links_lines.insert(0, inline.clone());
+    tags_links_lines.insert(0, inline);
   }
   let (tags, links) = parse_tags_links(tags_links_lines.clone());
   txn.tags = tags;
@@ -461,57 +161,73 @@ fn assemble_transaction<'a>(
     .comment
     .clone()
     .or_else(|| txn.comments.first().cloned());
-  let mut txn_end = end_span;
-  if txn_end < source.len() && source.as_bytes().get(txn_end) == Some(&b'\n') {
-    txn_end += 1;
-  }
-  txn.span = ast::Span::from_range(item.span.start, txn_end);
 
   txn
 }
 
-fn rewrite_meta(meta: ast::Meta, directive: &mut ast::Directive<'_>) {
-  match directive {
-    ast::Directive::Open(val) => val.meta = meta,
-    ast::Directive::Close(val) => val.meta = meta,
-    ast::Directive::Balance(val) => val.meta = meta,
-    ast::Directive::Pad(val) => val.meta = meta,
-    ast::Directive::Transaction(val) => val.meta = meta,
-    ast::Directive::Commodity(val) => val.meta = meta,
-    ast::Directive::Price(val) => val.meta = meta,
-    ast::Directive::Event(val) => val.meta = meta,
-    ast::Directive::Query(val) => val.meta = meta,
-    ast::Directive::Note(val) => val.meta = meta,
-    ast::Directive::Document(val) => val.meta = meta,
-    ast::Directive::Custom(val) => val.meta = meta,
-    ast::Directive::Option(val) => val.meta = meta,
-    ast::Directive::Include(val) => val.meta = meta,
-    ast::Directive::Plugin(val) => val.meta = meta,
-    ast::Directive::PushTag(val) => val.meta = meta,
-    ast::Directive::PopTag(val) => val.meta = meta,
-    ast::Directive::PushMeta(val) => val.meta = meta,
-    ast::Directive::PopMeta(val) => val.meta = meta,
-    ast::Directive::Comment(val) => val.meta = meta,
-    ast::Directive::Headline(val) => val.meta = meta,
-    ast::Directive::Raw(val) => val.meta = meta,
-  }
+fn transaction_directive_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
+  transaction_header_parser()
+    .then_ignore(line_end())
+    .then(
+      transaction_body_line_parser()
+        .repeated()
+        .collect::<Vec<_>>(),
+    )
+    .map_with(move |(directive, body), e| {
+      let span: SimpleSpan = e.span();
+      let span = ast::Span::from_range(span.start, span.end);
+      ast::Directive::Transaction(finalize_transaction(directive, body, span))
+    })
+    .boxed()
 }
 
-fn directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
-  let includes = choice((
-    include_directive_parser(),
-    plugin_directive_parser(),
-    option_directive_parser(),
+fn raw_block_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src
+{
+  let raw_line = any()
+    .filter(|c: &char| *c != '\n')
+    .repeated()
+    .at_least(1)
+    .to_slice();
+
+  raw_line
+    .then(line_end().ignore_then(raw_line).repeated())
+    .then(just('\n').ignored().or_not())
+    .map_with(move |((_, _), trailing_nl), e| {
+      // Build from the contiguous slice; exclude an optional trailing newline.
+      let span: SimpleSpan = e.span();
+      let consumed_extra = trailing_nl.map(|_| 1).unwrap_or(0);
+      let end = span.end.saturating_sub(consumed_extra);
+      let span = ast::Span::from_range(span.start, end);
+
+      let consumed = e.slice();
+      let text = &consumed[..consumed.len().saturating_sub(consumed_extra)];
+
+      ast::Directive::Raw(ast::Raw { span, text })
+    })
+    .boxed()
+}
+
+fn skipped_line_parser<'src>()
+-> impl Parser<'src, &'src str, Option<Box<ast::Directive<'src>>>, Error<'src>> {
+  choice((
+    ws0_parser().then_ignore(just('\n')).to(None),
+    ws1_parser().then_ignore(end()).to(None),
   ))
-  .boxed();
+}
 
-  let tags = choice((pushtag_directive_parser(), poptag_directive_parser())).boxed();
-
-  let meta = choice((pushmeta_directive_parser(), popmeta_directive_parser())).boxed();
-
-  let comments = choice((comment_directive_parser(), headline_directive_parser())).boxed();
-
-  let accounts = choice((
+fn directive_parser<'src>()
+-> impl Parser<'src, &'src str, Box<ast::Directive<'src>>, Error<'src>> + 'src {
+  choice((
+    include_directive_parser().then_ignore(line_end()),
+    plugin_directive_parser().then_ignore(line_end()),
+    option_directive_parser().then_ignore(line_end()),
+    pushtag_directive_parser().then_ignore(line_end()),
+    poptag_directive_parser().then_ignore(line_end()),
+    pushmeta_directive_parser().then_ignore(line_end()),
+    popmeta_directive_parser().then_ignore(line_end()),
+    comment_directive_parser().then_ignore(line_end()),
+    headline_directive_parser().then_ignore(line_end()),
     open_directive_parser(),
     close_directive_parser(),
     balance_directive_parser(),
@@ -523,290 +239,59 @@ fn directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>
     note_directive_parser(),
     document_directive_parser(),
     custom_directive_parser(),
+    transaction_directive_parser(),
+    raw_block_parser(),
   ))
-  .boxed();
-
-  choice((includes, tags, meta, comments, accounts, transaction_header_parser())).boxed()
+  .map(Box::new)
+  .boxed()
 }
 
-fn build_directive_from_kind<'a>(kind: DirectiveKind<'a>, span: ast::Span) -> ast::Directive<'a> {
-  match kind {
-    DirectiveKind::Include {
-      keyword,
-      filename,
-      comment,
-    } => ast::Directive::Include(ast::Include {
-      meta: empty_meta(),
-      span,
-      keyword,
-      filename,
-      comment,
-    }),
-    DirectiveKind::Plugin {
-      keyword,
-      name,
-      config,
-      comment,
-    } => ast::Directive::Plugin(ast::Plugin {
-      meta: empty_meta(),
-      span,
-      keyword,
-      name,
-      config,
-      comment,
-    }),
-    DirectiveKind::Option {
-      keyword,
-      key,
-      value,
-      comment,
-    } => ast::Directive::Option(ast::OptionDirective {
-      meta: empty_meta(),
-      span,
-      keyword,
-      key,
-      value,
-      comment,
-    }),
-    DirectiveKind::PushTag {
-      keyword,
-      tag,
-      comment,
-    } => ast::Directive::PushTag(ast::TagDirective {
-      meta: empty_meta(),
-      span,
-      keyword,
-      tag,
-      comment,
-    }),
-    DirectiveKind::PopTag {
-      keyword,
-      tag,
-      comment,
-    } => ast::Directive::PopTag(ast::TagDirective {
-      meta: empty_meta(),
-      span,
-      keyword,
-      tag,
-      comment,
-    }),
-    DirectiveKind::PushMeta {
-      keyword,
-      key,
-      value,
-      comment,
-    } => ast::Directive::PushMeta(ast::PushMeta {
-      meta: empty_meta(),
-      span,
-      keyword,
-      key,
-      value,
-      comment,
-    }),
-    DirectiveKind::PopMeta {
-      keyword,
-      key,
-      comment,
-    } => ast::Directive::PopMeta(ast::PopMeta {
-      meta: empty_meta(),
-      span,
-      keyword,
-      key,
-      comment,
-    }),
-    DirectiveKind::Comment { text } => ast::Directive::Comment(ast::Comment {
-      meta: empty_meta(),
-      span,
-      text,
-    }),
-    DirectiveKind::Headline { text } => ast::Directive::Headline(ast::Headline {
-      meta: empty_meta(),
-      span,
-      text,
-    }),
-    DirectiveKind::Open {
-      keyword,
-      date,
-      account,
-      currencies,
-      opt_booking,
-      comment,
-    } => ast::Directive::Open(ast::Open {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      currencies,
-      opt_booking,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Close {
-      keyword,
-      date,
-      account,
-      comment,
-    } => ast::Directive::Close(ast::Close {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Balance {
-      keyword,
-      date,
-      account,
-      amount,
-      tolerance,
-      comment,
-    } => ast::Directive::Balance(ast::Balance {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      amount,
-      tolerance,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Pad {
-      keyword,
-      date,
-      account,
-      from_account,
-      comment,
-    } => ast::Directive::Pad(ast::Pad {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      from_account,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Commodity {
-      keyword,
-      date,
-      currency,
-      comment,
-    } => ast::Directive::Commodity(ast::Commodity {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      currency,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Price {
-      keyword,
-      date,
-      currency,
-      amount,
-      comment,
-    } => ast::Directive::Price(ast::Price {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      currency,
-      amount,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Event {
-      keyword,
-      date,
-      event_type,
-      desc,
-      comment,
-    } => ast::Directive::Event(ast::Event {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      event_type,
-      desc,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Query {
-      keyword,
-      date,
-      name,
-      query,
-      comment,
-    } => ast::Directive::Query(ast::Query {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      name,
-      query,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Note {
-      keyword,
-      date,
-      account,
-      note,
-      comment,
-    } => ast::Directive::Note(ast::Note {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      note,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Document {
-      keyword,
-      date,
-      account,
-      filename,
-      tags_links,
-      tags,
-      links,
-      comment,
-    } => ast::Directive::Document(ast::Document {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      account,
-      filename,
-      tags_links,
-      tags,
-      links,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-    DirectiveKind::Custom {
-      keyword,
-      date,
-      name,
-      values,
-      comment,
-    } => ast::Directive::Custom(ast::Custom {
-      meta: empty_meta(),
-      span,
-      keyword,
-      date,
-      name,
-      values,
-      comment,
-      key_values: SmallVec::new(),
-    }),
-  }
+fn declarations_parser<'src>()
+-> impl Parser<'src, &'src str, Vec<Option<Box<ast::Directive<'src>>>>, Error<'src>> + 'src {
+  choice((directive_parser().map(Some), skipped_line_parser()))
+    .repeated()
+    .collect::<Vec<_>>()
+    .boxed()
+}
+
+pub fn parse_str_chumsky<'a>(
+  source: &'a str,
+  filename: &str,
+) -> std::result::Result<Vec<ast::Directive<'a>>, ParseError> {
+  let ctx = ParseCtx {
+    filename: Arc::new(filename.to_owned()),
+    rope: Rope::from_str(source),
+  };
+  let meta_at = MetaAt::from(&ctx);
+
+  let directives = declarations_parser()
+    .then_ignore(end())
+    .parse(source)
+    .into_result()
+    .map_err(|mut errors| match errors.pop() {
+      Some(err) => {
+        let span = err.span();
+        let meta = meta_at.at(span.start);
+        ParseError {
+          line: meta.line,
+          column: meta.column,
+          message: err.to_string(),
+        }
+      }
+      None => ParseError {
+        line: 1,
+        column: 1,
+        message: "parse error".to_string(),
+      },
+    })?;
+
+  let directives: Vec<_> = directives
+    .into_iter()
+    .flatten()
+    .map(|directive| *directive)
+    .collect();
+
+  Ok(directives)
 }
 
 fn keyword_span_parser<'src>(
@@ -823,14 +308,13 @@ fn include_directive_parser<'src>()
   keyword_span_parser("include")
     .then_ignore(ws1_parser())
     .then(quoted_string_parser())
-    .map(|(keyword, filename)| DirectiveKind::Include {
-      keyword,
-      filename,
-      comment: None,
-    })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+    .map_with(|(keyword, filename), e| {
+      ast::Directive::Include(ast::Include {
+        span: e.span().into(),
+        keyword,
+        filename,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -841,15 +325,15 @@ fn plugin_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directiv
     .then_ignore(ws1_parser())
     .then(quoted_string_parser())
     .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
-    .map(|((keyword, name), config)| DirectiveKind::Plugin {
-      keyword,
-      name,
-      config,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|((keyword, name), config), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::Plugin(ast::Plugin {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        name,
+        config,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -872,14 +356,14 @@ fn pushtag_directive_parser<'src>()
   keyword_span_parser("pushtag")
     .then_ignore(ws1_parser())
     .then(tag_token)
-    .map(|(keyword, tag)| DirectiveKind::PushTag {
-      keyword,
-      tag,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|(keyword, tag), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::PushTag(ast::TagDirective {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        tag,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -902,14 +386,14 @@ fn poptag_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directiv
   keyword_span_parser("poptag")
     .then_ignore(ws1_parser())
     .then(tag_token)
-    .map(|(keyword, tag)| DirectiveKind::PopTag {
-      keyword,
-      tag,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|(keyword, tag), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::PopTag(ast::TagDirective {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        tag,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -948,15 +432,15 @@ fn pushmeta_directive_parser<'src>()
     .then_ignore(just(':'))
     .then_ignore(ws0_parser())
     .then(pushmeta_value)
-    .map(|((keyword, key), value)| DirectiveKind::PushMeta {
-      keyword,
-      key,
-      value,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|((keyword, key), value), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::PushMeta(ast::PushMeta {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        key,
+        value,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -977,14 +461,14 @@ fn popmeta_directive_parser<'src>()
     .then_ignore(ws1_parser())
     .then(popmeta_key)
     .then_ignore(just(':').or_not())
-    .map(|(keyword, key)| DirectiveKind::PopMeta {
-      keyword,
-      key,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|(keyword, key), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::PopMeta(ast::PopMeta {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        key,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -996,15 +480,15 @@ fn option_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directiv
     .then(quoted_string_parser())
     .then_ignore(ws1_parser())
     .then(quoted_string_parser())
-    .map(|((keyword, key), value)| DirectiveKind::Option {
-      keyword,
-      key,
-      value,
-      comment: None,
-    })
-    .map_with(|kind, e| {
+    .map_with(|((keyword, key), value), e| {
       let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      ast::Directive::Option(ast::OptionDirective {
+        span: ast::Span::from_range(span.start, span.end),
+        keyword,
+        key,
+        value,
+        comment: None,
+      })
     })
     .then_ignore(ws0_parser())
 }
@@ -1025,7 +509,7 @@ fn ws1_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
 }
 
 fn line_end<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  just('\n').or_not().ignored()
+  choice((just('\n').ignored(), end()))
 }
 
 fn quoted_string_parser<'src>()
@@ -1109,13 +593,10 @@ fn comment_directive_parser<'src>()
     .to_slice()
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
-      DirectiveKind::Comment {
+      ast::Directive::Comment(ast::Comment {
+        span: ast::Span::from_range(span.start, span.end),
         text: ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text),
-      }
-    })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      })
     })
 }
 
@@ -1128,13 +609,10 @@ fn headline_directive_parser<'src>()
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
       let text = text.trim_start();
-      DirectiveKind::Headline {
+      ast::Directive::Headline(ast::Headline {
+        span: ast::Span::from_range(span.start, span.end),
         text: ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text),
-      }
-    })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+      })
     })
 }
 
@@ -1143,7 +621,7 @@ fn open_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<
   let date = date_parser();
   let open_currency = bare_string_parser().filter(|value| !value.content.starts_with('"'));
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("open"))
     .then_ignore(ws1_parser())
@@ -1155,44 +633,58 @@ fn open_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<
         .collect::<Vec<_>>(),
     )
     .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
-    .map(|((((date, keyword), account), currencies), opt_booking)| {
-      let currencies = currencies.into_iter().flat_map(split_currencies).collect();
-      DirectiveKind::Open {
-        keyword,
-        date,
-        account,
-        currencies,
-        opt_booking,
-        comment: None,
-      }
-    })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(
+      |(((((date, keyword), account), currencies), opt_booking), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let currencies = currencies.into_iter().flat_map(split_currencies).collect();
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+        ast::Directive::Open(ast::Open {
+          span,
+          keyword,
+          date,
+          account,
+          currencies,
+          opt_booking,
+          comment: None,
+          key_values,
+        })
+      },
+    )
 }
 
 fn close_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
 {
   let date = date_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("close"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
-    .map(|((date, keyword), account)| DirectiveKind::Close {
-      keyword,
-      date,
-      account,
-      comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|(((date, keyword), account), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Close(ast::Close {
+        span,
+        keyword,
+        date,
+        account,
+        comment: None,
+        key_values,
+      })
     })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
 }
 
 fn balance_directive_parser<'src>()
@@ -1230,55 +722,69 @@ fn balance_directive_parser<'src>()
       )
     });
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("balance"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
     .then(amount)
-    .map(
-      |(((date, keyword), account), (amount, tolerance))| DirectiveKind::Balance {
-        keyword,
-        date,
-        account,
-        amount,
-        tolerance,
-        comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(
+      |((((date, keyword), account), (amount, tolerance)), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+        ast::Directive::Balance(ast::Balance {
+          span,
+          keyword,
+          date,
+          account,
+          amount,
+          tolerance,
+          comment: None,
+          key_values,
+        })
       },
     )
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
     .boxed()
 }
 
 fn pad_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("pad"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
-    .map(
-      |(((date, keyword), account), from_account)| DirectiveKind::Pad {
-        keyword,
-        date,
-        account,
-        from_account,
-        comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(
+      |((((date, keyword), account), from_account), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+        ast::Directive::Pad(ast::Pad {
+          span,
+          keyword,
+          date,
+          account,
+          from_account,
+          comment: None,
+          key_values,
+        })
       },
     )
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
     .boxed()
 }
 
@@ -1286,22 +792,29 @@ fn commodity_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("commodity"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
-    .map(|((date, keyword), currency)| DirectiveKind::Commodity {
-      keyword,
-      date,
-      currency,
-      comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|(((date, keyword), currency), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Commodity(ast::Commodity {
+        span,
+        keyword,
+        date,
+        currency,
+        comment: None,
+        key_values,
+      })
     })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
 }
 
 fn price_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
@@ -1321,27 +834,32 @@ fn price_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive
       }
     });
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("price"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
     .then(amount)
-    .map(
-      |(((date, keyword), currency), amount)| DirectiveKind::Price {
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|((((date, keyword), currency), amount), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Price(ast::Price {
+        span,
         keyword,
         date,
         currency,
         amount,
         comment: None,
-      },
-    )
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+        key_values,
+      })
     })
-    .then_ignore(ws0_parser())
 }
 
 fn event_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
@@ -1350,27 +868,32 @@ fn event_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive
   let event_string = choice((quoted_string_parser(), spanned_token_parser()));
   let event_string_tail = choice((quoted_string_parser(), spanned_token_parser()));
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("event"))
     .then_ignore(ws1_parser())
     .then(event_string)
     .then_ignore(ws1_parser())
     .then(event_string_tail)
-    .map(
-      |(((date, keyword), event_type), desc)| DirectiveKind::Event {
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|((((date, keyword), event_type), desc), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Event(ast::Event {
+        span,
         keyword,
         date,
         event_type,
         desc,
         comment: None,
-      },
-    )
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
+        key_values,
+      })
     })
-    .then_ignore(ws0_parser())
 }
 
 fn query_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
@@ -1378,25 +901,32 @@ fn query_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive
   let date = date_parser();
   let query_rest = rest_trimmed_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("query"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
     .then(query_rest)
-    .map(|(((date, keyword), name), query)| DirectiveKind::Query {
-      keyword,
-      date,
-      name,
-      query,
-      comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|((((date, keyword), name), query), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Query(ast::Query {
+        span,
+        keyword,
+        date,
+        name,
+        query,
+        comment: None,
+        key_values,
+      })
     })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
 }
 
 fn note_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
@@ -1404,25 +934,32 @@ fn note_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<
   let date = date_parser();
   let note = rest_trimmed_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("note"))
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
     .then(note)
-    .map(|(((date, keyword), account), note)| DirectiveKind::Note {
-      keyword,
-      date,
-      account,
-      note,
-      comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|((((date, keyword), account), note), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Note(ast::Note {
+        span,
+        keyword,
+        date,
+        account,
+        note,
+        comment: None,
+        key_values,
+      })
     })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
 }
 
 fn document_directive_parser<'src>()
@@ -1431,7 +968,7 @@ fn document_directive_parser<'src>()
   let document_filename = choice((quoted_string_parser(), spanned_token_parser()));
   let header_rest = rest_trimmed_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("document"))
     .then_ignore(ws1_parser())
@@ -1439,34 +976,41 @@ fn document_directive_parser<'src>()
     .then_ignore(ws1_parser())
     .then(document_filename)
     .then(ws1_parser().ignore_then(header_rest).or_not())
-    .map(|((((date, keyword), account), filename), tags_links)| {
-      let (tags, links) = match tags_links.clone() {
-        Some(value) => parse_tags_links([value]),
-        None => (SmallVec::new(), SmallVec::new()),
-      };
-      DirectiveKind::Document {
-        keyword,
-        date,
-        account,
-        filename,
-        tags_links,
-        tags,
-        links,
-        comment: None,
-      }
-    })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(
+      |(((((date, keyword), account), filename), tags_links), key_values), e| {
+        let span = ast::Span::from_simple_span(e.span());
+        let key_values = key_values.unwrap_or_else(SmallVec::new);
+        let (tags, links) = match tags_links.clone() {
+          Some(value) => parse_tags_links([value]),
+          None => (SmallVec::new(), SmallVec::new()),
+        };
+
+        ast::Directive::Document(ast::Document {
+          span,
+          keyword,
+          date,
+          account,
+          filename,
+          tags_links,
+          tags,
+          links,
+          comment: None,
+          key_values,
+        })
+      },
+    )
 }
 
 fn custom_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>>
 {
   let date = date_parser();
 
-  date
+  let header = date
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("custom"))
     .then_ignore(ws1_parser())
@@ -1477,22 +1021,38 @@ fn custom_directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directiv
         .repeated()
         .collect::<Vec<_>>(),
     )
-    .map(|(((date, keyword), name), values)| DirectiveKind::Custom {
-      keyword,
-      date,
-      name,
-      values: values.into_iter().collect(),
-      comment: None,
+    .then_ignore(ws0_parser());
+
+  header
+    .then_ignore(line_end())
+    .then(key_value_block_parser().or_not())
+    .map_with(|((((date, keyword), name), values), key_values), e| {
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
+
+      ast::Directive::Custom(ast::Custom {
+        span,
+        keyword,
+        date,
+        name,
+        values: values.into_iter().collect(),
+        comment: None,
+        key_values,
+      })
     })
-    .map_with(|kind, e| {
-      let span: SimpleSpan = e.span();
-      build_directive_from_kind(kind, ast::Span::from_range(span.start, span.end))
-    })
-    .then_ignore(ws0_parser())
+}
+
+#[derive(Debug, Clone)]
+struct TransactionHeader<'a> {
+  date: ast::WithSpan<&'a str>,
+  flag: ast::WithSpan<&'a str>,
+  payee: Option<ast::WithSpan<&'a str>>,
+  narration: Option<ast::WithSpan<&'a str>>,
+  tags_links: Option<ast::WithSpan<&'a str>>,
 }
 
 fn transaction_header_parser<'src>()
--> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
+-> impl Parser<'src, &'src str, ast::Transaction<'src>, Error<'src>> {
   let flag = spanned_token_parser().filter(|value| {
     let chars = value.content.chars().collect::<Vec<_>>();
     let is_single_flag = chars.len() == 1 && !chars[0].is_ascii_digit();
@@ -1507,8 +1067,7 @@ fn transaction_header_parser<'src>()
       let span: SimpleSpan = e.span();
       let header = parse_transaction_header_line(e.slice(), span.start);
       let span = ast::Span::from_range(span.start, span.end);
-      ast::Directive::Transaction(ast::Transaction {
-        meta: empty_meta(),
+      ast::Transaction {
         span,
         date: header.date,
         txn: Some(header.flag),
@@ -1522,7 +1081,7 @@ fn transaction_header_parser<'src>()
         comments: SmallVec::new(),
         key_values: SmallVec::new(),
         postings: SmallVec::new(),
-      })
+      }
     })
 }
 
@@ -1551,17 +1110,9 @@ fn number_expr_parser<'src>() -> impl Parser<'src, &'src str, ast::NumberExpr<'s
     .map(ast::NumberExpr::Literal)
     .boxed();
 
-  let op_mul = choice((
+  let op_token = choice((
     just('*').to(ast::BinaryOp::Mul),
     just('/').to(ast::BinaryOp::Div),
-  ))
-  .map_with(|op, e| {
-    let span: SimpleSpan = e.span();
-    ast::WithSpan::new(ast::Span::from_range(span.start, span.end), op)
-  })
-  .boxed();
-
-  let op_add = choice((
     just('+').to(ast::BinaryOp::Add),
     just('-').to(ast::BinaryOp::Sub),
   ))
@@ -1571,79 +1122,72 @@ fn number_expr_parser<'src>() -> impl Parser<'src, &'src str, ast::NumberExpr<'s
   })
   .boxed();
 
-  let op_any = choice((op_mul.clone(), op_add.clone())).boxed();
-  let op_any_sp = ws0
-    .clone()
-    .ignore_then(op_any)
-    .then_ignore(ws0.clone())
-    .boxed();
+  let op_token_sp = ws0.clone().ignore_then(op_token).then_ignore(ws0.clone());
 
   literal
     .clone()
-    .then(
-      op_any_sp
-        .then(literal.clone())
-        .repeated()
-        .collect::<Vec<_>>(),
+    .then(op_token_sp.then(literal.clone()).repeated().collect::<Vec<_>>())
+    .map(
+      |(first, rest): (
+        ast::NumberExpr<'src>,
+        Vec<(ast::WithSpan<ast::BinaryOp>, ast::NumberExpr<'src>)>,
+      )| build_number_expr(first, rest),
     )
-    .map(|(first, rest): (
-      ast::NumberExpr<'src>,
-      Vec<(ast::WithSpan<ast::BinaryOp>, ast::NumberExpr<'src>)>,
-    )| {
-      // Build AST with precedence: * and / before + and -.
-      let mut nums: Vec<ast::NumberExpr<'src>> = Vec::with_capacity(rest.len() + 1);
-      let mut ops: Vec<ast::WithSpan<ast::BinaryOp>> = Vec::with_capacity(rest.len());
-
-      nums.push(first);
-      for (op, num) in rest {
-        ops.push(op);
-        nums.push(num);
-      }
-
-      // First pass: collapse * and /.
-      let mut collapsed_nums: Vec<ast::NumberExpr<'src>> = Vec::with_capacity(nums.len());
-      let mut collapsed_ops: Vec<ast::WithSpan<ast::BinaryOp>> = Vec::with_capacity(ops.len());
-
-      let mut current = nums.remove(0);
-      for op in ops.into_iter() {
-        let next_num = nums.remove(0);
-        match op.content {
-          ast::BinaryOp::Mul | ast::BinaryOp::Div => {
-            let span = ast::Span::from_range(current.span().start, next_num.span().end);
-            current = ast::NumberExpr::Binary {
-              span,
-              left: Box::new(current),
-              op,
-              right: Box::new(next_num),
-            };
-          }
-          ast::BinaryOp::Add | ast::BinaryOp::Sub => {
-            collapsed_nums.push(current);
-            collapsed_ops.push(op);
-            current = next_num;
-          }
-        }
-      }
-      collapsed_nums.push(current);
-
-      // Second pass: left-assoc add/sub on collapsed lists.
-      let mut iter_nums = collapsed_nums.into_iter();
-      let mut result = iter_nums
-        .next()
-        .expect("number expression requires at least one literal");
-      for (op, right) in collapsed_ops.into_iter().zip(iter_nums) {
-        let span = ast::Span::from_range(result.span().start, right.span().end);
-        result = ast::NumberExpr::Binary {
-          span,
-          left: Box::new(result),
-          op,
-          right: Box::new(right),
-        };
-      }
-
-      result
-    })
     .boxed()
+}
+
+fn build_number_expr<'a>(
+  first: ast::NumberExpr<'a>,
+  rest: Vec<(ast::WithSpan<ast::BinaryOp>, ast::NumberExpr<'a>)>,
+) -> ast::NumberExpr<'a> {
+  // Hand-written shunting-yard style to avoid deep recursion when expressions are long.
+  let mut values: Vec<ast::NumberExpr<'a>> = Vec::with_capacity(rest.len() + 1);
+  let mut ops: Vec<ast::WithSpan<ast::BinaryOp>> = Vec::with_capacity(rest.len());
+
+  values.push(first);
+  for (op, rhs) in rest {
+    while let Some(prev_op) = ops.last() {
+      if precedence(prev_op.content) >= precedence(op.content) {
+        let op_top = ops.pop().expect("ops not empty");
+        let right = values.pop().expect("value exists");
+        let left = values.pop().expect("value exists");
+        let span = ast::Span::from_range(left.span().start, right.span().end);
+        values.push(ast::NumberExpr::Binary {
+          span,
+          left: Box::new(left),
+          op: op_top,
+          right: Box::new(right),
+        });
+      } else {
+        break;
+      }
+    }
+    ops.push(op);
+    values.push(rhs);
+  }
+
+  while let Some(op) = ops.pop() {
+    let right = values.pop().expect("value exists");
+    let left = values.pop().expect("value exists");
+    let span = ast::Span::from_range(left.span().start, right.span().end);
+    values.push(ast::NumberExpr::Binary {
+      span,
+      left: Box::new(left),
+      op,
+      right: Box::new(right),
+    });
+  }
+
+  values
+    .pop()
+    .expect("number expression requires at least one literal")
+}
+
+fn precedence(op: ast::BinaryOp) -> u8 {
+  match op {
+    ast::BinaryOp::Mul | ast::BinaryOp::Div => 2,
+    ast::BinaryOp::Add | ast::BinaryOp::Sub => 1,
+  }
 }
 
 fn custom_value_parser<'src>() -> impl Parser<'src, &'src str, ast::CustomValue<'src>, Error<'src>>
@@ -1758,7 +1302,6 @@ fn key_value_parser<'src>() -> impl Parser<'src, &'src str, ast::KeyValue<'src>,
     .map_with(|(key, value), e| {
       let span: SimpleSpan = e.span();
       ast::KeyValue {
-        meta: empty_meta(),
         span: ast::Span::from_range(span.start, span.end),
         key,
         value,
@@ -1855,7 +1398,6 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
       let ((((opt_flag, account), amount), cost_spec), price) = left;
       let (price_operator, price_annotation) = price;
       ast::Posting {
-        meta: empty_meta(),
         span: ast::Span::from_range(span.start, span.end),
         opt_flag,
         account,
@@ -2062,20 +1604,6 @@ fn is_key_token(raw: &str) -> bool {
     return false;
   }
   chars.all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-}
-
-fn looks_like_transaction_header(line: &str) -> bool {
-  let trimmed = line.trim_start();
-  if trimmed.is_empty() {
-    return false;
-  }
-  let mut parts = trimmed.split_whitespace();
-  let date = parts.next().unwrap_or("");
-  let flag = parts.next().unwrap_or("");
-  let mut chars = flag.chars();
-  let first = chars.next();
-  let is_single_flag = first.is_some() && chars.next().is_none() && !first.unwrap().is_ascii_digit();
-  looks_like_date(date) && (flag == "txn" || is_single_flag)
 }
 
 fn parse_transaction_header_line<'a>(line: &'a str, line_start: usize) -> TransactionHeader<'a> {

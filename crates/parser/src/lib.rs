@@ -23,7 +23,6 @@ use chumsky::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError {
-  pub filename: String,
   pub line: usize,
   pub column: usize,
   pub message: String,
@@ -31,11 +30,7 @@ pub struct ParseError {
 
 impl std::fmt::Display for ParseError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}: {}",
-      self.filename, self.line, self.column, self.message
-    )
+    write!(f, "{}:{}: {}", self.line, self.column, self.message)
   }
 }
 

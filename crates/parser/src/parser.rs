@@ -5,7 +5,7 @@ use chumsky::prelude::*;
 use smallvec::SmallVec;
 
 use crate::utils::{
-  attach_key_values, empty_meta, expand_directive_span_to, looks_like_currency, looks_like_date,
+  attach_key_values, expand_directive_span_to, looks_like_currency, looks_like_date,
   parse_tags_links, split_currencies,
 };
 use crate::{Error, Result, ast};
@@ -202,100 +202,95 @@ pub fn parse_str<'a>(source: &'a str, filename: &str) -> Result<Vec<ast::Directi
       }
     }
 
-    let line_meta = meta_from_line(filename, line);
+    if is_txn_header
+      && let Some(mut txn) = parse_transaction_header(line, filename, source) {
+        let mut end_span = line.span.end;
+        let mut tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
+        let mut comments: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
+        let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
+        let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
 
-    if is_txn_header && let Some(mut txn) = parse_transaction_header(line, filename, source) {
-      let mut end_span = line.span.end;
-      let mut tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
-      let mut comments: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
-      let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
-      let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
-
-      index += 1;
-      while index < lines.len() {
-        let next = &lines[index];
-        if next.trimmed.is_empty() {
+        index += 1;
+        while index < lines.len() {
+          let next = &lines[index];
+          if next.trimmed.is_empty() {
+            break;
+          }
+          end_span = next.span.end;
+          if next.trimmed.starts_with(';') {
+            if let Some(comment) = trimmed_with_span(next) {
+              comments.push(comment);
+            }
+            index += 1;
+            continue;
+          }
+          if let Some(kv) = parse_key_value_line(next, filename, source, &parsers.key_value) {
+            if let Some(posting) = postings.last_mut() {
+              posting.key_values.push(kv);
+            } else {
+              key_values.push(kv);
+            }
+            index += 1;
+            continue;
+          }
+          if let Some(posting) = parse_posting_line_loose(next, filename, source, &parsers.posting)
+          {
+            postings.push(posting);
+            index += 1;
+            continue;
+          }
+          if let Some(tags_line) = tags_links_line(next) {
+            tags_links_lines.push(tags_line);
+            index += 1;
+            continue;
+          }
           break;
         }
-        end_span = next.span.end;
-        if next.trimmed.starts_with(';') {
-          if let Some(comment) = trimmed_with_span(next) {
-            comments.push(comment);
-          }
-          index += 1;
-          continue;
+
+        txn.postings = postings;
+        txn.key_values = key_values;
+        txn.comments = comments;
+
+        let mut tags_links_lines = tags_links_lines;
+        if let Some(inline) = txn.tags_links.clone() {
+          tags_links_lines.insert(0, inline.clone());
         }
-        if let Some(kv) = parse_key_value_line(next, filename, source, &parsers.key_value) {
-          if let Some(posting) = postings.last_mut() {
-            posting.key_values.push(kv);
-          } else {
-            key_values.push(kv);
-          }
-          index += 1;
-          continue;
-        }
-        if let Some(posting) = parse_posting_line_loose(next, filename, source, &parsers.posting) {
-          postings.push(posting);
-          index += 1;
-          continue;
-        }
-        if let Some(tags_line) = tags_links_line(next) {
-          tags_links_lines.push(tags_line);
-          index += 1;
-          continue;
-        }
-        break;
+        let (tags, links) = parse_tags_links(tags_links_lines.clone());
+        txn.tags = tags;
+        txn.links = links;
+        txn.tags_links_lines = tags_links_lines;
+        txn.tags_links = txn
+          .tags_links
+          .clone()
+          .or_else(|| txn.tags_links_lines.first().cloned());
+        txn.comment = txn
+          .comment
+          .clone()
+          .or_else(|| txn.comments.first().cloned());
+        let txn_end = end_span + if end_span < source.len() { 1 } else { 0 };
+        txn.span = ast::Span::from_range(line.span.start, txn_end);
+
+        directives.push(ast::Directive::Transaction(txn));
+        continue;
       }
-
-      txn.postings = postings;
-      txn.key_values = key_values;
-      txn.comments = comments;
-
-      let mut tags_links_lines = tags_links_lines;
-      if let Some(inline) = txn.tags_links.clone() {
-        tags_links_lines.insert(0, inline.clone());
-      }
-      let (tags, links) = parse_tags_links(tags_links_lines.clone());
-      txn.tags = tags;
-      txn.links = links;
-      txn.tags_links_lines = tags_links_lines;
-      txn.tags_links = txn
-        .tags_links
-        .clone()
-        .or_else(|| txn.tags_links_lines.first().cloned());
-      txn.comment = txn
-        .comment
-        .clone()
-        .or_else(|| txn.comments.first().cloned());
-      txn.meta = line_meta.clone();
-      let txn_end = end_span + if end_span < source.len() { 1 } else { 0 };
-      txn.span = ast::Span::from_range(line.span.start, txn_end);
-
-      directives.push(ast::Directive::Transaction(txn));
-      continue;
-    }
-
-    if let Some((directive, next_index)) = parse_multiline_plugin(
-      &lines,
-      index,
-      source,
-      &parsers.directives.plugin,
-      &line_meta,
-    ) {
-      directives.push(directive);
-      index = next_index;
-      continue;
-    }
 
     if let Some((directive, next_index)) =
-      parse_multiline_query(&lines, index, source, &parsers.directives.query, &line_meta)
+      parse_multiline_plugin(&lines, index, source, &parsers.directives.plugin)
     {
       directives.push(directive);
       index = next_index;
       continue;
     }
 
-    match parse_line_directive(line, &parsers.directives, &line_meta) {
+    if let Some((directive, next_index)) =
+      parse_multiline_query(&lines, index, source, &parsers.directives.query)
+    {
+      directives.push(directive);
+      index = next_index;
+      continue;
+    }
+
+    match parse_line_directive(line, &parsers.directives) {
       LineDirectiveOutcome::Parsed(mut directive) => {
         let mut end_span = line.span.end;
         let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
@@ -321,7 +316,7 @@ pub fn parse_str<'a>(source: &'a str, filename: &str) -> Result<Vec<ast::Directi
         continue;
       }
       LineDirectiveOutcome::Error => {
-        let (raw, next_index) = raw_block_from(&lines, index, source, line_meta);
+        let (raw, next_index) = raw_block_from(&lines, index, source);
         directives.push(ast::Directive::Raw(raw));
         index = next_index;
         continue;
@@ -329,7 +324,7 @@ pub fn parse_str<'a>(source: &'a str, filename: &str) -> Result<Vec<ast::Directi
       LineDirectiveOutcome::NotDirective => {}
     }
 
-    let (raw, next_index) = raw_block_from(&lines, index, source, line_meta);
+    let (raw, next_index) = raw_block_from(&lines, index, source);
     directives.push(ast::Directive::Raw(raw));
     index = next_index;
   }
@@ -368,7 +363,6 @@ fn raw_block_from<'a>(
   lines: &[Line<'a>],
   mut index: usize,
   source: &'a str,
-  meta: ast::Meta,
 ) -> (ast::Raw<'a>, usize) {
   let start = lines[index].span.start;
   let mut end = lines[index].span.end;
@@ -384,7 +378,7 @@ fn raw_block_from<'a>(
 
   let text = &source[start..end];
   let span = ast::Span::from_range(start, end);
-  (ast::Raw { meta, span, text }, index + 1)
+  (ast::Raw { span, text }, index + 1)
 }
 
 fn parse_multiline_plugin<'a, P>(
@@ -392,7 +386,6 @@ fn parse_multiline_plugin<'a, P>(
   start_index: usize,
   source: &'a str,
   parser: &P,
-  meta: &ast::Meta,
 ) -> Option<(ast::Directive<'a>, usize)>
 where
   P: Parser<'a, &'a str, DirectiveKind<'a>, Error<'a>>,
@@ -404,12 +397,12 @@ where
 
   let mut end_index = start_index;
   let mut quote_count = line.content.matches('"').count();
-  while quote_count % 2 != 0 && end_index + 1 < lines.len() {
+  while !quote_count.is_multiple_of(2) && end_index + 1 < lines.len() {
     end_index += 1;
     quote_count += lines[end_index].content.matches('"').count();
   }
 
-  if quote_count % 2 == 0 && end_index == start_index {
+  if quote_count.is_multiple_of(2) && end_index == start_index {
     return None;
   }
 
@@ -419,11 +412,7 @@ where
 
   let parsed = parser.parse(text).into_result().ok()?;
   let span = ast::Span::from_range(block_start, block_end);
-  let directive = build_directive_from_kind(
-    offset_directive_kind(parsed, block_start),
-    meta.clone(),
-    span,
-  );
+  let directive = build_directive_from_kind(offset_directive_kind(parsed, block_start), span);
 
   Some((directive, end_index + 1))
 }
@@ -433,7 +422,6 @@ fn parse_multiline_query<'a, P>(
   start_index: usize,
   source: &'a str,
   parser: &P,
-  meta: &ast::Meta,
 ) -> Option<(ast::Directive<'a>, usize)>
 where
   P: Parser<'a, &'a str, DirectiveKind<'a>, Error<'a>>,
@@ -448,12 +436,12 @@ where
 
   let mut end_index = start_index;
   let mut quote_count = line.content.matches('"').count();
-  while quote_count % 2 != 0 && end_index + 1 < lines.len() {
+  while !quote_count.is_multiple_of(2) && end_index + 1 < lines.len() {
     end_index += 1;
     quote_count += lines[end_index].content.matches('"').count();
   }
 
-  if quote_count % 2 == 0 && end_index == start_index {
+  if quote_count.is_multiple_of(2) && end_index == start_index {
     return None;
   }
 
@@ -463,18 +451,14 @@ where
 
   let parsed = parser.parse(text).into_result().ok()?;
   let span = ast::Span::from_range(block_start, block_end);
-  let directive = build_directive_from_kind(
-    offset_directive_kind(parsed, block_start),
-    meta.clone(),
-    span,
-  );
+  let directive = build_directive_from_kind(offset_directive_kind(parsed, block_start), span);
 
   Some((directive, end_index + 1))
 }
 
 fn parse_posting_line_loose<'a>(
   line: &Line<'a>,
-  filename: &str,
+  _filename: &str,
   source: &'a str,
   parser: &impl Parser<'a, &'a str, ast::Posting<'a>, Error<'a>>,
 ) -> Option<ast::Posting<'a>> {
@@ -484,7 +468,6 @@ fn parse_posting_line_loose<'a>(
 
   let parsed = parser.parse(line.content).into_result().ok()?;
   let mut posting = offset_posting(parsed, line.span.start);
-  posting.meta = meta_from_line(filename, line);
   let posting_end = line.span.end + if line.span.end < source.len() { 1 } else { 0 };
   posting.span = ast::Span::from_range(line.span.start, posting_end);
   Some(posting)
@@ -492,7 +475,7 @@ fn parse_posting_line_loose<'a>(
 
 fn parse_key_value_line<'a>(
   line: &Line<'a>,
-  filename: &str,
+  _filename: &str,
   _source: &'a str,
   parser: &impl Parser<'a, &'a str, ast::KeyValue<'a>, Error<'a>>,
 ) -> Option<ast::KeyValue<'a>> {
@@ -506,8 +489,7 @@ fn parse_key_value_line<'a>(
   if !is_key_token(parsed.key.content) {
     return None;
   }
-  let mut kv = offset_key_value(parsed, line.span.start);
-  kv.meta = meta_from_line(filename, line);
+  let kv = offset_key_value(parsed, line.span.start);
   Some(kv)
 }
 
@@ -548,28 +530,20 @@ fn trimmed_with_span<'a>(line: &Line<'a>) -> Option<ast::WithSpan<&'a str>> {
   ))
 }
 
-fn meta_from_line(filename: &str, line: &Line<'_>) -> ast::Meta {
-  ast::Meta {
-    filename: filename.to_owned(),
-    line: line.line_no,
-    column: 1,
-  }
-}
-
 enum LineDirectiveOutcome<'a> {
   Parsed(ast::Directive<'a>),
   NotDirective,
   Error,
 }
 
-fn parse_line_with<'a, P>(parser: &P, line: &Line<'a>, meta: &ast::Meta) -> LineDirectiveOutcome<'a>
+fn parse_line_with<'a, P>(parser: &P, line: &Line<'a>) -> LineDirectiveOutcome<'a>
 where
   P: Parser<'a, &'a str, DirectiveKind<'a>, Error<'a>>,
 {
   match parser.parse(line.content).into_result() {
     Ok(parsed) => {
       let kind = offset_directive_kind(parsed, line.span.start);
-      let directive = build_directive_from_kind(kind, meta.clone(), line.span);
+      let directive = build_directive_from_kind(kind, line.span);
       LineDirectiveOutcome::Parsed(directive)
     }
     Err(_) => LineDirectiveOutcome::Error,
@@ -622,7 +596,6 @@ fn parse_line_directive<
     PDocument,
     PCustom,
   >,
-  meta: &ast::Meta,
 ) -> LineDirectiveOutcome<'a>
 where
   PInclude: Parser<'a, &'a str, DirectiveKind<'a>, Error<'a>>,
@@ -660,13 +633,13 @@ where
   };
   let token = trimmed.split_whitespace().next().unwrap_or("");
   if first == ';' {
-    return parse_line_with(&parsers.comment, line, meta);
+    return parse_line_with(&parsers.comment, line);
   }
   if first == '#' {
-    return parse_line_with(&parsers.comment, line, meta);
+    return parse_line_with(&parsers.comment, line);
   }
   if first == '*' {
-    return parse_line_with(&parsers.headline, line, meta);
+    return parse_line_with(&parsers.headline, line);
   }
   if first.is_ascii_digit() {
     if !looks_like_date(token) {
@@ -680,30 +653,30 @@ where
       return LineDirectiveOutcome::Error;
     };
     return match second {
-      "open" => parse_line_with(&parsers.open, line, meta),
-      "close" => parse_line_with(&parsers.close, line, meta),
-      "balance" => parse_line_with(&parsers.balance, line, meta),
-      "pad" => parse_line_with(&parsers.pad, line, meta),
-      "commodity" => parse_line_with(&parsers.commodity, line, meta),
-      "price" => parse_line_with(&parsers.price, line, meta),
-      "event" => parse_line_with(&parsers.event, line, meta),
-      "query" => parse_line_with(&parsers.query, line, meta),
-      "note" => parse_line_with(&parsers.note, line, meta),
-      "document" => parse_line_with(&parsers.document, line, meta),
-      "custom" => parse_line_with(&parsers.custom, line, meta),
+      "open" => parse_line_with(&parsers.open, line),
+      "close" => parse_line_with(&parsers.close, line),
+      "balance" => parse_line_with(&parsers.balance, line),
+      "pad" => parse_line_with(&parsers.pad, line),
+      "commodity" => parse_line_with(&parsers.commodity, line),
+      "price" => parse_line_with(&parsers.price, line),
+      "event" => parse_line_with(&parsers.event, line),
+      "query" => parse_line_with(&parsers.query, line),
+      "note" => parse_line_with(&parsers.note, line),
+      "document" => parse_line_with(&parsers.document, line),
+      "custom" => parse_line_with(&parsers.custom, line),
       "*" | "!" => LineDirectiveOutcome::NotDirective,
       _ => LineDirectiveOutcome::NotDirective,
     };
   }
   if first.is_ascii_alphabetic() {
     return match token {
-      "plugin" => parse_line_with(&parsers.plugin, line, meta),
-      "include" => parse_line_with(&parsers.include, line, meta),
-      "pushtag" => parse_line_with(&parsers.pushtag, line, meta),
-      "poptag" => parse_line_with(&parsers.poptag, line, meta),
-      "pushmeta" => parse_line_with(&parsers.pushmeta, line, meta),
-      "popmeta" => parse_line_with(&parsers.popmeta, line, meta),
-      "option" => parse_line_with(&parsers.option, line, meta),
+      "plugin" => parse_line_with(&parsers.plugin, line),
+      "include" => parse_line_with(&parsers.include, line),
+      "pushtag" => parse_line_with(&parsers.pushtag, line),
+      "poptag" => parse_line_with(&parsers.poptag, line),
+      "pushmeta" => parse_line_with(&parsers.pushmeta, line),
+      "popmeta" => parse_line_with(&parsers.popmeta, line),
+      "option" => parse_line_with(&parsers.option, line),
       _ => LineDirectiveOutcome::NotDirective,
     };
   }
@@ -857,7 +830,6 @@ fn parse_transaction_header<'a>(
   });
 
   Some(ast::Transaction {
-    meta: empty_meta(),
     span: line.span,
     date: span_for_token(line, date),
     txn: Some(span_for_token(line, flag)),
@@ -912,18 +884,13 @@ fn span_for_token<'a>(line: &Line<'a>, token: &'a str) -> ast::WithSpan<&'a str>
   ast::WithSpan::new(ast::Span::from_range(start, end), token)
 }
 
-fn build_directive_from_kind<'a>(
-  kind: DirectiveKind<'a>,
-  meta: ast::Meta,
-  span: ast::Span,
-) -> ast::Directive<'a> {
+fn build_directive_from_kind<'a>(kind: DirectiveKind<'a>, span: ast::Span) -> ast::Directive<'a> {
   match kind {
     DirectiveKind::Include {
       keyword,
       filename,
       comment,
     } => ast::Directive::Include(ast::Include {
-      meta,
       span,
       keyword,
       filename,
@@ -935,7 +902,6 @@ fn build_directive_from_kind<'a>(
       config,
       comment,
     } => ast::Directive::Plugin(ast::Plugin {
-      meta,
       span,
       keyword,
       name,
@@ -948,7 +914,6 @@ fn build_directive_from_kind<'a>(
       value,
       comment,
     } => ast::Directive::Option(ast::OptionDirective {
-      meta,
       span,
       keyword,
       key,
@@ -960,7 +925,6 @@ fn build_directive_from_kind<'a>(
       tag,
       comment,
     } => ast::Directive::PushTag(ast::TagDirective {
-      meta,
       span,
       keyword,
       tag,
@@ -971,7 +935,6 @@ fn build_directive_from_kind<'a>(
       tag,
       comment,
     } => ast::Directive::PopTag(ast::TagDirective {
-      meta,
       span,
       keyword,
       tag,
@@ -983,7 +946,6 @@ fn build_directive_from_kind<'a>(
       value,
       comment,
     } => ast::Directive::PushMeta(ast::PushMeta {
-      meta,
       span,
       keyword,
       key,
@@ -995,16 +957,13 @@ fn build_directive_from_kind<'a>(
       key,
       comment,
     } => ast::Directive::PopMeta(ast::PopMeta {
-      meta,
       span,
       keyword,
       key,
       comment,
     }),
-    DirectiveKind::Comment { text } => ast::Directive::Comment(ast::Comment { meta, span, text }),
-    DirectiveKind::Headline { text } => {
-      ast::Directive::Headline(ast::Headline { meta, span, text })
-    }
+    DirectiveKind::Comment { text } => ast::Directive::Comment(ast::Comment { span, text }),
+    DirectiveKind::Headline { text } => ast::Directive::Headline(ast::Headline { span, text }),
     DirectiveKind::Open {
       keyword,
       date,
@@ -1013,7 +972,6 @@ fn build_directive_from_kind<'a>(
       opt_booking,
       comment,
     } => ast::Directive::Open(ast::Open {
-      meta,
       span,
       keyword,
       date,
@@ -1029,7 +987,6 @@ fn build_directive_from_kind<'a>(
       account,
       comment,
     } => ast::Directive::Close(ast::Close {
-      meta,
       span,
       keyword,
       date,
@@ -1045,7 +1002,6 @@ fn build_directive_from_kind<'a>(
       tolerance,
       comment,
     } => ast::Directive::Balance(ast::Balance {
-      meta,
       span,
       keyword,
       date,
@@ -1062,7 +1018,6 @@ fn build_directive_from_kind<'a>(
       from_account,
       comment,
     } => ast::Directive::Pad(ast::Pad {
-      meta,
       span,
       keyword,
       date,
@@ -1077,7 +1032,6 @@ fn build_directive_from_kind<'a>(
       currency,
       comment,
     } => ast::Directive::Commodity(ast::Commodity {
-      meta,
       span,
       keyword,
       date,
@@ -1092,7 +1046,6 @@ fn build_directive_from_kind<'a>(
       amount,
       comment,
     } => ast::Directive::Price(ast::Price {
-      meta,
       span,
       keyword,
       date,
@@ -1108,7 +1061,6 @@ fn build_directive_from_kind<'a>(
       desc,
       comment,
     } => ast::Directive::Event(ast::Event {
-      meta,
       span,
       keyword,
       date,
@@ -1124,7 +1076,6 @@ fn build_directive_from_kind<'a>(
       query,
       comment,
     } => ast::Directive::Query(ast::Query {
-      meta,
       span,
       keyword,
       date,
@@ -1140,7 +1091,6 @@ fn build_directive_from_kind<'a>(
       note,
       comment,
     } => ast::Directive::Note(ast::Note {
-      meta,
       span,
       keyword,
       date,
@@ -1159,7 +1109,6 @@ fn build_directive_from_kind<'a>(
       links,
       comment,
     } => ast::Directive::Document(ast::Document {
-      meta,
       span,
       keyword,
       date,
@@ -1178,7 +1127,6 @@ fn build_directive_from_kind<'a>(
       values,
       comment,
     } => ast::Directive::Custom(ast::Custom {
-      meta,
       span,
       keyword,
       date,
@@ -1228,7 +1176,6 @@ fn offset_amount<'a>(amount: ast::Amount<'a>, offset: usize) -> ast::Amount<'a> 
 
 fn offset_key_value<'a>(kv: ast::KeyValue<'a>, offset: usize) -> ast::KeyValue<'a> {
   ast::KeyValue {
-    meta: kv.meta,
     span: offset_span(kv.span, offset),
     key: offset_with_span(kv.key, offset),
     value: kv.value.map(|value| offset_with_span(value, offset)),
@@ -1265,7 +1212,6 @@ fn offset_cost_spec<'a>(cost: ast::CostSpec<'a>, offset: usize) -> ast::CostSpec
 
 fn offset_posting<'a>(posting: ast::Posting<'a>, offset: usize) -> ast::Posting<'a> {
   ast::Posting {
-    meta: posting.meta,
     span: offset_span(posting.span, offset),
     opt_flag: posting
       .opt_flag
@@ -2190,7 +2136,7 @@ fn number_literal_parser<'src>()
     .filter(|c: &char| c.is_ascii_digit() || *c == ',' || *c == '_')
     .repeated()
     .at_least(1);
-  let frac = just('.').then(digits_or_sep.clone()).or_not();
+  let frac = just('.').then(digits_or_sep).or_not();
   sign
     .then(digits_or_sep)
     .then(frac)
@@ -2407,7 +2353,6 @@ pub(crate) fn key_value_parser<'src>()
     .map_with(|(key, value), e| {
       let span: SimpleSpan = e.span();
       ast::KeyValue {
-        meta: empty_meta(),
         span: ast::Span::from_range(span.start, span.end),
         key,
         value,
@@ -2506,7 +2451,6 @@ pub(crate) fn posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Postin
       let ((((opt_flag, account), amount), cost_spec), price) = left;
       let (price_operator, price_annotation) = price;
       ast::Posting {
-        meta: empty_meta(),
         span: ast::Span::from_range(span.start, span.end),
         opt_flag,
         account,

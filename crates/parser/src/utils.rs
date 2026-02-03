@@ -231,40 +231,9 @@ pub(crate) fn expand_directive_span_to<'a>(
   }
 }
 
-pub(crate) fn line_starts(source: &str) -> Vec<usize> {
-  let mut starts = Vec::new();
-  starts.push(0);
-  for (idx, ch) in source.char_indices() {
-    if ch == '\n' {
-      starts.push(idx + 1);
-    }
-  }
-  starts
-}
-
-pub(crate) fn meta_from_offset(filename: &str, offset: usize, line_starts: &[usize]) -> ast::Meta {
-  let mut lo = 0usize;
-  let mut hi = line_starts.len();
-  while lo < hi {
-    let mid = (lo + hi) / 2;
-    if line_starts[mid] <= offset {
-      lo = mid + 1;
-    } else {
-      hi = mid;
-    }
-  }
-  let line_idx = lo.saturating_sub(1);
-  let line_start = line_starts.get(line_idx).copied().unwrap_or(0);
-  ast::Meta {
-    filename: filename.to_owned(),
-    line: line_idx + 1,
-    column: offset.saturating_sub(line_start) + 1,
-  }
-}
-
 pub(crate) fn empty_meta() -> ast::Meta {
   ast::Meta {
-    filename: String::new(),
+    filename: std::sync::Arc::new(String::new()),
     line: 0,
     column: 0,
   }

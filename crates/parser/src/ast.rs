@@ -1,4 +1,6 @@
+use chumsky::span::SimpleSpan;
 use smallvec::SmallVec;
+use std::sync::Arc;
 /// Byte offsets in the original source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span {
@@ -6,7 +8,23 @@ pub struct Span {
   pub end: usize,
 }
 
+impl From<SimpleSpan> for Span {
+  fn from(value: SimpleSpan) -> Self {
+    Span::from_simple_span(value)
+  }
+}
+
+impl From<&SimpleSpan> for Span {
+  fn from(value: &SimpleSpan) -> Self {
+    Span::from_range(value.start, value.end)
+  }
+}
+
 impl Span {
+  pub fn from_simple_span(e: SimpleSpan) -> Self {
+    Self::from_range(e.start, e.end)
+  }
+
   pub fn from_range(start: usize, end: usize) -> Self {
     Self { start, end }
   }
@@ -34,7 +52,7 @@ impl<T> WithSpan<T> {
 /// Source location info attached to each top-level directive.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Meta {
-  pub filename: String,
+  pub filename: Arc<String>,
   /// 1-based line number.
   pub line: usize,
   /// 1-based column number.
@@ -79,7 +97,6 @@ pub enum Directive<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Open<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -92,7 +109,6 @@ pub struct Open<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Close<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -103,7 +119,6 @@ pub struct Close<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Balance<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -116,7 +131,6 @@ pub struct Balance<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pad<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -128,7 +142,6 @@ pub struct Pad<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub date: WithSpan<&'a str>,
   /// Transaction flag/token (e.g. `*`, `!`) when present.
@@ -208,7 +221,6 @@ impl NumberExpr<'_> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyValue<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub key: WithSpan<&'a str>,
   pub value: Option<WithSpan<KeyValueValue<'a>>>,
@@ -233,7 +245,6 @@ pub struct CostSpec<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Posting<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub opt_flag: Option<WithSpan<&'a str>>,
   pub account: WithSpan<&'a str>,
@@ -247,7 +258,6 @@ pub struct Posting<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Commodity<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -258,7 +268,6 @@ pub struct Commodity<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Price<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -270,7 +279,6 @@ pub struct Price<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Event<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -282,7 +290,6 @@ pub struct Event<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Query<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -294,7 +301,6 @@ pub struct Query<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Note<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -306,7 +312,6 @@ pub struct Note<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Document<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -321,7 +326,6 @@ pub struct Document<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Custom<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub date: WithSpan<&'a str>,
@@ -359,7 +363,6 @@ pub struct Amount<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OptionDirective<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub key: WithSpan<&'a str>,
@@ -369,7 +372,6 @@ pub struct OptionDirective<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Include<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub filename: WithSpan<&'a str>,
@@ -378,7 +380,6 @@ pub struct Include<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Plugin<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub name: WithSpan<&'a str>,
@@ -388,7 +389,6 @@ pub struct Plugin<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagDirective<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub tag: WithSpan<&'a str>,
@@ -397,7 +397,6 @@ pub struct TagDirective<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushMeta<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub key: WithSpan<&'a str>,
@@ -407,7 +406,6 @@ pub struct PushMeta<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PopMeta<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub keyword: Span,
   pub key: WithSpan<&'a str>,
@@ -416,21 +414,18 @@ pub struct PopMeta<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Comment<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub text: WithSpan<&'a str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Headline<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub text: WithSpan<&'a str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Raw<'a> {
-  pub meta: Meta,
   pub span: Span,
   pub text: &'a str,
 }

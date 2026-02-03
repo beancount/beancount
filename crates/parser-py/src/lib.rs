@@ -327,7 +327,7 @@ fn build_parser_error_from_meta(
   kv.set_item("column", meta.column)?;
   let source = cache
     .new_metadata
-    .call1(py, (meta.filename.clone(), meta.line, kv))?;
+    .call1(py, (meta.filename.as_ref(), meta.line, kv))?;
   let py_err = PyParserError {
     source: source.clone_ref(py),
     message,
@@ -441,13 +441,11 @@ fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>
   Ok(())
 }
 
-fn build_parser_error(py: Python<'_>, err: ParseError) -> PyResult<Py<PyAny>> {
+fn build_parser_error(py: Python<'_>, err: ParseError, filename: &str) -> PyResult<Py<PyAny>> {
   let cache = cache(py)?;
   let kv = PyDict::new(py);
   kv.set_item("column", err.column)?;
-  let meta = cache
-    .new_metadata
-    .call1(py, (err.filename.clone(), err.line, kv))?;
+  let meta = cache.new_metadata.call1(py, (filename, err.line, kv))?;
   let py_err = PyParserError {
     source: meta.clone_ref(py),
     message: err.message,
@@ -506,7 +504,6 @@ fn convert_directives(
     match directive {
       CoreDirective::PushMeta(pm) => {
         let kv = core::KeyValue {
-          meta: pm.meta.clone(),
           span: pm.span,
           key: pm.key.clone(),
           value: pm.value.clone(),
@@ -517,12 +514,11 @@ fn convert_directives(
         Some(stack) => {
           if stack.pop().is_none() {
             let err = ParseError {
-              filename: pm.meta.filename.clone(),
               line: pm.meta.line,
               column: pm.meta.column,
               message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
             };
-            errors.push(build_parser_error(py, err)?);
+            errors.push(build_parser_error(py, err, filename)?);
           }
           if stack.is_empty() {
             active_meta.remove(&pm.key);
@@ -530,12 +526,11 @@ fn convert_directives(
         }
         None => {
           let err = ParseError {
-            filename: pm.meta.filename.clone(),
             line: pm.meta.line,
             column: pm.meta.column,
             message: format!("Attempting to pop absent metadata key: '{}'", pm.key),
           };
-          errors.push(build_parser_error(py, err)?);
+          errors.push(build_parser_error(py, err, filename)?);
         }
       },
       CoreDirective::PushTag(tag) => {
@@ -544,12 +539,11 @@ fn convert_directives(
       CoreDirective::PopTag(tag) => {
         if !active_tags.remove(&tag.tag) {
           let err = ParseError {
-            filename: tag.meta.filename.clone(),
             line: tag.meta.line,
             column: tag.meta.column,
             message: format!("Attempting to pop absent tag: '{}'", tag.tag),
           };
-          errors.push(build_parser_error(py, err)?);
+          errors.push(build_parser_error(py, err, filename)?);
         }
       }
       CoreDirective::Transaction(txn) => {
@@ -585,12 +579,11 @@ fn convert_directives(
       }
       CoreDirective::Raw(raw) => {
         let err = ParseError {
-          filename: raw.meta.filename.clone(),
           line: raw.meta.line,
           column: raw.meta.column,
           message: format!("Unrecognized directive: {}", raw.text),
         };
-        errors.push(build_parser_error(py, err)?);
+        errors.push(build_parser_error(py, err, filename)?);
       }
       mut other => {
         // Apply pushed metadata to directives that carry key-value metadata.
@@ -606,24 +599,22 @@ fn convert_directives(
   if !active_tags.is_empty() {
     for tag in active_tags {
       let err = ParseError {
-        filename: filename.to_string(),
         line: 0,
         column: 0,
         message: format!("Unbalanced pushed tag: '{}'", tag),
       };
-      errors.push(build_parser_error(py, err)?);
+      errors.push(build_parser_error(py, err, filename)?);
     }
   }
 
   if !active_meta.is_empty() {
     for key in active_meta.keys() {
       let err = ParseError {
-        filename: filename.to_string(),
         line: 0,
         column: 0,
         message: format!("Unbalanced metadata key: '{}'", key),
       };
-      errors.push(build_parser_error(py, err)?);
+      errors.push(build_parser_error(py, err, filename)?);
     }
   }
 
@@ -742,7 +733,7 @@ fn make_metadata(
     PyDict::new(py)
   };
   // kv.set_item("column", meta.column)?;
-  new_metadata.call1(py, (meta.filename.clone(), meta.line, kv))
+  new_metadata.call1(py, (meta.filename.as_ref(), meta.line, kv))
 }
 
 fn meta_extra<'py>(
@@ -1228,7 +1219,7 @@ fn parse_source(
       options_map.set_item("include", PyList::empty(py))?;
       let _ = apply_options(py, &options_map, &[])?;
       apply_display_context_options(py, &options_map)?;
-      let errors = PyList::new(py, [build_parser_error(py, err)?])?
+      let errors = PyList::new(py, [build_parser_error(py, err, filename)?])?
         .unbind()
         .into();
       let entries: Py<PyAny> = PyList::empty(py).unbind().into();
@@ -1236,13 +1227,13 @@ fn parse_source(
     }
   };
 
-  let normalized = match normalize_directives(&directives) {
+  let normalized = match normalize_directives(&directives, filename, content) {
     Ok(normalized) => normalized,
     Err(err) => {
       options_map.set_item("include", PyList::empty(py))?;
       let _ = apply_options(py, &options_map, &[])?;
       apply_display_context_options(py, &options_map)?;
-      let errors = PyList::new(py, [build_parser_error(py, err)?])?
+      let errors = PyList::new(py, [build_parser_error(py, err, filename)?])?
         .unbind()
         .into();
       let entries: Py<PyAny> = PyList::empty(py).unbind().into();

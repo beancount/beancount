@@ -6,7 +6,6 @@ use crate::ast::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError {
-  pub filename: String,
   pub line: usize,
   pub column: usize,
   pub message: String,
@@ -14,11 +13,7 @@ pub struct ParseError {
 
 impl std::fmt::Display for ParseError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}: {}",
-      self.filename, self.line, self.column, self.message
-    )
+    write!(f, "{}:{}: {}", self.line, self.column, self.message)
   }
 }
 
@@ -29,16 +24,15 @@ type Result<T> = std::result::Result<T, ParseError>;
 fn meta(node: Node, filename: &str) -> Meta {
   let p = node.start_position();
   Meta {
-    filename: filename.to_owned(),
+    filename: std::sync::Arc::new(filename.to_owned()),
     line: p.row + 1,
     column: p.column + 1,
   }
 }
 
-fn parse_error(node: Node, filename: &str, message: impl Into<String>) -> ParseError {
+fn parse_error(node: Node, _filename: &str, message: impl Into<String>) -> ParseError {
   let p = node.start_position();
   ParseError {
-    filename: filename.to_owned(),
     line: p.row + 1,
     column: p.column + 1,
     message: message.into(),
@@ -230,7 +224,6 @@ pub fn parse_directives<'a>(
   if root_kind != NodeKind::File {
     let p = root.start_position();
     return Err(ParseError {
-      filename,
       line: p.row + 1,
       column: p.column + 1,
       message: format!("expected root node kind `file`, got `{}`", root.kind()),

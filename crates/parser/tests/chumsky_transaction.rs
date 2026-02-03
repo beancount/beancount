@@ -19,9 +19,6 @@ fn parses_transaction_with_inline_link_and_postings() {
     other => panic!("expected transaction, got {other:?}"),
   };
 
-  assert_eq!(txn.meta.filename, "input.bean");
-  assert_eq!(txn.meta.line, 1);
-  assert_eq!(txn.meta.column, 1);
   assert_eq!(txn.span, Span::from_range(0, input.len()));
 
   assert_eq!(txn.date.content, "2013-06-22");
@@ -61,8 +58,6 @@ fn parses_transaction_with_inline_link_and_postings() {
   let p1_start = input.find(p1_line).expect("p1 start");
   let p1_end = p1_start + p1_line.len();
   let p1 = &txn.postings[0];
-  assert_eq!(p1.meta.line, 2);
-  assert_eq!(p1.meta.column, 1);
   assert_eq!(p1.span, Span::from_range(p1_start, p1_end));
   assert_eq!(p1.opt_flag, None);
   assert_eq!(p1.account.content, "Expenses:Coffee");
@@ -85,8 +80,6 @@ fn parses_transaction_with_inline_link_and_postings() {
   let p2_start = input.find(p2_line).expect("p2 start");
   let p2_end = p2_start + p2_line.len();
   let p2 = &txn.postings[1];
-  assert_eq!(p2.meta.line, 3);
-  assert_eq!(p2.meta.column, 1);
   assert_eq!(p2.span, Span::from_range(p2_start, p2_end));
   assert_eq!(p2.opt_flag, None);
   assert_eq!(p2.account.content, "Assets:US:Cash");
