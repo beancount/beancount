@@ -61,6 +61,20 @@ pub(super) fn number_expr_parser<'src>()
     .boxed()
 }
 
+fn pop_value<'a>(values: &mut Vec<ast::NumberExpr<'a>>) -> ast::NumberExpr<'a> {
+  values
+    .pop()
+    .unwrap_or_else(|| unreachable!("number expression stack underflow"))
+}
+
+fn pop_op(
+  ops: &mut Vec<ast::WithSpan<ast::BinaryOp>>,
+) -> ast::WithSpan<ast::BinaryOp> {
+  ops
+    .pop()
+    .unwrap_or_else(|| unreachable!("operator stack should not be empty here"))
+}
+
 fn build_number_expr<'a>(
   first: ast::NumberExpr<'a>,
   rest: Vec<(ast::WithSpan<ast::BinaryOp>, ast::NumberExpr<'a>)>,
@@ -73,9 +87,9 @@ fn build_number_expr<'a>(
   for (op, rhs) in rest {
     while let Some(prev_op) = ops.last() {
       if precedence(prev_op.content) >= precedence(op.content) {
-        let op_top = ops.pop().expect("ops not empty");
-        let right = values.pop().expect("value exists");
-        let left = values.pop().expect("value exists");
+        let op_top = pop_op(&mut ops);
+        let right = pop_value(&mut values);
+        let left = pop_value(&mut values);
         let span = ast::Span::from_range(left.span().start, right.span().end);
         values.push(ast::NumberExpr::Binary {
           span,
@@ -92,8 +106,8 @@ fn build_number_expr<'a>(
   }
 
   while let Some(op) = ops.pop() {
-    let right = values.pop().expect("value exists");
-    let left = values.pop().expect("value exists");
+    let right = pop_value(&mut values);
+    let left = pop_value(&mut values);
     let span = ast::Span::from_range(left.span().start, right.span().end);
     values.push(ast::NumberExpr::Binary {
       span,
@@ -103,9 +117,7 @@ fn build_number_expr<'a>(
     });
   }
 
-  values
-    .pop()
-    .expect("number expression requires at least one literal")
+  pop_value(&mut values)
 }
 
 fn precedence(op: ast::BinaryOp) -> u8 {

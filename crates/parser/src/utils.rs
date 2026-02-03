@@ -72,12 +72,14 @@ pub(crate) fn split_currencies<'a>(
     })
 }
 
+type TagLinkBuckets<'a> = (
+  SmallVec<[ast::WithSpan<&'a str>; 2]>,
+  SmallVec<[ast::WithSpan<&'a str>; 2]>,
+);
+
 pub(crate) fn parse_tags_links<'a>(
   groups: impl IntoIterator<Item = ast::WithSpan<&'a str>>,
-) -> (
-  SmallVec<[ast::WithSpan<&'a str>; 2]>,
-  SmallVec<[ast::WithSpan<&'a str>; 2]>,
-) {
+) -> TagLinkBuckets<'a> {
   let mut tags: SmallVec<[ast::WithSpan<&'a str>; 2]> = SmallVec::new();
   let mut links: SmallVec<[ast::WithSpan<&'a str>; 2]> = SmallVec::new();
 

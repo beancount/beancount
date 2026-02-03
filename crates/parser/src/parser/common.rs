@@ -110,22 +110,18 @@ pub(super) fn tags_links_line_parser<'src>()
     .repeated()
     .at_least(1)
     .to_slice()
-    .map_with(|line: &str, e| {
+    .filter(|line: &&str| {
       let trimmed = line.trim();
-      if trimmed.is_empty() || (!trimmed.starts_with('#') && !trimmed.starts_with('^')) {
-        return None;
-      }
+      !trimmed.is_empty() && (trimmed.starts_with('#') || trimmed.starts_with('^'))
+    })
+    .map_with(|line, e| {
+      let trimmed = line.trim();
       let span: SimpleSpan = e.span();
       let offset = line.find(trimmed).unwrap_or(0);
       let start = span.start + offset;
       let end = start + trimmed.len();
-      Some(ast::WithSpan::new(
-        ast::Span::from_range(start, end),
-        trimmed,
-      ))
+      ast::WithSpan::new(ast::Span::from_range(start, end), trimmed)
     })
-    .filter(|value| value.is_some())
-    .map(|value| value.unwrap())
 }
 
 pub(super) fn inline_comment_parser<'src>()
