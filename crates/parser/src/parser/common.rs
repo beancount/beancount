@@ -1,20 +1,16 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
+use crate::Error;
 use crate::ast;
 use crate::utils::{looks_like_currency, looks_like_date};
-use crate::Error;
 
 pub(super) fn ws0_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  any()
-    .filter(|c: &char| *c == ' ' || *c == '\t')
-    .repeated()
-    .ignored()
+  choice((just(' '), just('\t'))).repeated().ignored()
 }
 
 pub(super) fn ws1_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  any()
-    .filter(|c: &char| *c == ' ' || *c == '\t')
+  choice((just(' '), just('\t')))
     .repeated()
     .at_least(1)
     .ignored()
@@ -71,7 +67,8 @@ pub(super) fn spanned_token_parser<'src>()
     })
 }
 
-pub(super) fn date_parser<'src>() -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
+pub(super) fn date_parser<'src>()
+-> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   let digit = any().filter(|c: &char| c.is_ascii_digit());
   digit
     .repeated()
@@ -131,7 +128,23 @@ pub(super) fn tags_links_line_parser<'src>()
     .map(|value| value.unwrap())
 }
 
-pub(super) fn key_value_parser<'src>() -> impl Parser<'src, &'src str, ast::KeyValue<'src>, Error<'src>> {
+pub(super) fn inline_comment_parser<'src>(
+) -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
+  ws0_parser()
+    .ignore_then(just(';'))
+    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .map_with(|text: &str, e| {
+      let span: SimpleSpan = e.span();
+      ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)
+    })
+}
+
+pub(super) fn key_value_parser<'src>() -> impl Parser<
+  'src,
+  &'src str,
+  ast::KeyValue<'src>,
+  Error<'src>,
+> {
   let key = any()
     .filter(|c: &char| !c.is_whitespace() && *c != ':')
     .repeated()

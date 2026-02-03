@@ -7,8 +7,10 @@ use super::common::ws0_parser;
 pub(super) fn comment_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   ws0_parser()
-    .then(just(';'))
-    .then(any().repeated())
+    .then(choice((just(';'), just('#'))))
+    // Consume the rest of the line but stop before the newline so we don't
+    // accidentally eat subsequent directives.
+    .then(any().filter(|c: &char| *c != '\n').repeated())
     .to_slice()
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();

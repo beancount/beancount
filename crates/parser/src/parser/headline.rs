@@ -8,7 +8,8 @@ pub(super) fn headline_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   ws0_parser()
     .then(just('*'))
-    .then(any().repeated())
+    // Limit headlines to a single line so following directives still parse.
+    .then(any().filter(|c: &char| *c != '\n').repeated())
     .to_slice()
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();

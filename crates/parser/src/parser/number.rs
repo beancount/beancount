@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{ast, Error};
+use crate::{Error, ast};
 
 use super::common::ws0_parser;
 
@@ -8,7 +8,7 @@ pub(super) fn number_literal_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   let sign = just('+').or(just('-')).or_not();
   let digits = any()
-    .filter(|c: &char| c.is_ascii_digit())
+    .filter(|c: &char| c.is_ascii_digit() || *c == ',')
     .repeated()
     .at_least(1);
   let frac = just('.').then(digits).or_not();

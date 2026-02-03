@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 use crate::{ast, Error};
 use crate::utils::looks_like_currency;
 
-use super::common::{key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::common::{key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser, inline_comment_parser};
 use super::number::number_literal_parser;
 
 pub(super) fn balance_directive_parser<'src>()
@@ -52,24 +52,25 @@ pub(super) fn balance_directive_parser<'src>()
     .then_ignore(ws0_parser());
 
   header
+    .then(inline_comment_parser().or_not())
     .then_ignore(super::common::line_end())
     .then(key_value_block_parser().or_not())
-    .map_with(
-      |((((date, keyword), account), (amount, tolerance)), key_values), e| {
-        let span = ast::Span::from_simple_span(e.span());
-        let key_values = key_values.unwrap_or_else(SmallVec::new);
+    .map_with(|(header_and_comment, key_values), e| {
+      let (header_parts, comment) = header_and_comment;
+      let (((date, keyword), account), (amount, tolerance)) = header_parts;
+      let span = ast::Span::from_simple_span(e.span());
+      let key_values = key_values.unwrap_or_else(SmallVec::new);
 
-        ast::Directive::Balance(ast::Balance {
-          span,
-          keyword,
-          date,
-          account,
-          amount,
-          tolerance,
-          comment: None,
-          key_values,
-        })
-      },
-    )
+      ast::Directive::Balance(ast::Balance {
+        span,
+        keyword,
+        date,
+        account,
+        amount,
+        tolerance,
+        comment,
+        key_values,
+      })
+    })
     .boxed()
 }

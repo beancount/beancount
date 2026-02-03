@@ -4,12 +4,14 @@ use smallvec::SmallVec;
 use crate::{ast, Error};
 use crate::utils::split_currencies;
 
-use super::common::{bare_string_parser, date_parser, keyword_span_parser, key_value_block_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::common::{bare_string_parser, date_parser, keyword_span_parser, key_value_block_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser, inline_comment_parser};
 
 pub(super) fn open_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
-  let open_currency = bare_string_parser().filter(|value| !value.content.starts_with('"'));
+  let open_currency = bare_string_parser().filter(|value| {
+    !value.content.starts_with('"') && !value.content.starts_with(';')
+  });
 
   let header = date
     .then_ignore(ws1_parser())
@@ -26,10 +28,13 @@ pub(super) fn open_directive_parser<'src>()
     .then_ignore(ws0_parser());
 
   header
+    .then(inline_comment_parser().or_not())
     .then_ignore(super::common::line_end())
     .then(key_value_block_parser().or_not())
     .map_with(
-      |(((((date, keyword), account), currencies), opt_booking), key_values), e| {
+      |(header_and_comment, key_values), e| {
+        let (header_parts, comment) = header_and_comment;
+        let ((((date, keyword), account), currencies), opt_booking) = header_parts;
         let span = ast::Span::from_simple_span(e.span());
         let currencies = currencies.into_iter().flat_map(split_currencies).collect();
         let key_values = key_values.unwrap_or_else(SmallVec::new);
@@ -41,7 +46,7 @@ pub(super) fn open_directive_parser<'src>()
           account,
           currencies,
           opt_booking,
-          comment: None,
+          comment,
           key_values,
         })
       },

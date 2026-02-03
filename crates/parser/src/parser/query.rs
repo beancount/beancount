@@ -3,12 +3,12 @@ use smallvec::SmallVec;
 
 use crate::{ast, Error};
 
-use super::common::{date_parser, keyword_span_parser, key_value_block_parser, rest_trimmed_parser, spanned_token_parser, ws0_parser, ws1_parser};
+use super::common::{date_parser, keyword_span_parser, key_value_block_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser};
 
 pub(super) fn query_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
-  let query_rest = rest_trimmed_parser();
+  let query_string = quoted_string_parser();
 
   let header = date
     .then_ignore(ws1_parser())
@@ -16,7 +16,7 @@ pub(super) fn query_directive_parser<'src>()
     .then_ignore(ws1_parser())
     .then(spanned_token_parser())
     .then_ignore(ws1_parser())
-    .then(query_rest)
+    .then(query_string)
     .then_ignore(ws0_parser());
 
   header

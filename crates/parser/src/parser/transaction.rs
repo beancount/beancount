@@ -185,20 +185,23 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), value)
     });
 
-  let account = super::common::bare_string_parser().filter(|value| value.content.contains(':'));
+  let account = super::common::bare_string_parser().filter(|value| {
+    value.content.contains(':')
+      && !value.content.ends_with(':')
+      && value.content.chars().next().is_some_and(|c| c.is_ascii_uppercase())
+  });
 
   let currency_for_amount = currency_token_parser();
 
   let amount = number_expr_parser()
-    .then_ignore(ws1_parser())
-    .then(currency_for_amount)
+    .then(ws1_parser().ignore_then(currency_for_amount).or_not())
     .map_with(|(number, currency), e| {
       let span: SimpleSpan = e.span();
       let raw = ast::WithSpan::new(ast::Span::from_range(span.start, span.end), e.slice());
       ast::Amount {
         raw,
         number,
-        currency: Some(currency),
+        currency,
       }
     })
     .boxed();
@@ -228,16 +231,15 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
   });
 
   let comment = just(';')
-    .then(any().repeated().to_slice())
-    .map_with(|_: (char, &str), e| {
+    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
-      let slice: &str = e.slice();
-      ast::WithSpan::new(ast::Span::from_range(span.start, span.end), slice)
+      ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)
     });
 
   ws1_parser()
     .ignore_then(optflag.or_not())
-    .then(account)
+    .then(ws0_parser().ignore_then(account))
     .then(ws1_parser().ignore_then(amount).or_not())
     .then(ws0_parser().ignore_then(cost_spec_parser()).or_not())
     .then(
@@ -308,7 +310,15 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       currency: Some(currency),
     });
 
-  let cost_amount = choice((amount_total, amount));
+  let amount_total_no_currency = number_expr
+    .clone()
+    .map(|total| ast::CostAmount {
+      per: None,
+      total: Some(total),
+      currency: None,
+    });
+
+  let cost_amount = choice((amount_total, amount, amount_total_no_currency));
 
   let date = any()
     .filter(|c: &char| c.is_ascii_digit())
@@ -339,8 +349,8 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
     .map(|_| CostComp::Ignored);
 
   let cost_comp = choice((
-    cost_amount.map(CostComp::Amount),
     date.map(CostComp::Date),
+    cost_amount.map(CostComp::Amount),
     just('*').map_with(|_, e| {
       let span: SimpleSpan = e.span();
       CostComp::Merge(ast::WithSpan::new(

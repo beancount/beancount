@@ -31,10 +31,20 @@ pub(super) fn price_directive_parser<'src>()
     .then(amount)
     .then_ignore(ws0_parser());
 
+  let comment = ws0_parser()
+    .ignore_then(just(';'))
+    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .map_with(|text: &str, e| {
+      let span: SimpleSpan = e.span();
+      ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)
+    })
+    .or_not();
+
   header
+    .then(comment)
     .then_ignore(super::common::line_end())
     .then(key_value_block_parser().or_not())
-    .map_with(|((((date, keyword), currency), amount), key_values), e| {
+    .map_with(|(((((date, keyword), currency), amount), comment), key_values), e| {
       let span = ast::Span::from_simple_span(e.span());
       let key_values = key_values.unwrap_or_else(SmallVec::new);
 
@@ -44,7 +54,7 @@ pub(super) fn price_directive_parser<'src>()
         date,
         currency,
         amount,
-        comment: None,
+        comment,
         key_values,
       })
     })
