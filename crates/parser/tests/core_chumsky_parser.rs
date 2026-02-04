@@ -187,7 +187,7 @@ pushtag #tag2
 poptag #tag3
 pushmeta foo: TRUE
 popmeta foo:
-2026-02-12 * "Payee" "Narration" #tag ^link
+2026-02-12 * "Payee" broken narration #tag ^link
   Assets:Cash -10 USD { 1 # 2 USD } @ 5 EUR ; line comment
   Expenses:Food 10 USD @@ 20 USD
   key: FALSE

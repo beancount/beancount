@@ -1,6 +1,9 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
+#[cfg(feature = "rich-errors")]
+use chumsky::error::Rich;
+
 use crate::Error;
 use crate::ast;
 use crate::utils::{looks_like_currency, looks_like_date, split_tags_links_group};
@@ -254,7 +257,7 @@ pub(super) fn raw_directive_recovery_parser<'src>()
     .try_map(
       |(consumed, newline): (&str, Option<()>), span: SimpleSpan| {
         if consumed.is_empty() && newline.is_none() {
-          Err(Simple::new(None, span))
+          Err(recovery_error(span))
         } else {
           Ok((consumed, newline))
         }
@@ -283,4 +286,26 @@ pub(super) fn raw_directive_recovery_parser<'src>()
         text,
       })
     })
+}
+
+#[cfg(not(feature = "rich-errors"))]
+fn recovery_error<'src>(span: SimpleSpan) -> Simple<'src, char> {
+  Simple::new(None, span)
+}
+
+#[cfg(feature = "rich-errors")]
+fn recovery_error<'src>(span: SimpleSpan) -> Rich<'src, char> {
+  Rich::custom(span, "expected directive")
+}
+
+pub(super) fn directive_end_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
+  newline()
+    .repeated()
+    .then_ignore(choice((
+      end(),
+      any()
+        .filter(|c: &char| !(*c).is_whitespace())
+        .ignored()
+        .rewind(),
+    )))
 }

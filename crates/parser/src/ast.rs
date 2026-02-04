@@ -146,14 +146,14 @@ pub struct Transaction<'a> {
   pub date: WithSpan<&'a str>,
   /// Transaction flag/token (e.g. `*`, `!`) when present.
   pub txn: Option<WithSpan<&'a str>>,
+  /// quoted
   pub payee: Option<WithSpan<&'a str>>,
+  /// quoted
   pub narration: Option<WithSpan<&'a str>>,
   pub tags_links: Option<Vec<WithSpan<&'a str>>>,
   pub tags: SmallVec<[WithSpan<&'a str>; 2]>,
   pub links: SmallVec<[WithSpan<&'a str>; 2]>,
   pub comment: Option<WithSpan<&'a str>>,
-  pub tags_links_lines: SmallVec<[WithSpan<&'a str>; 8]>,
-  pub comments: SmallVec<[WithSpan<&'a str>; 8]>,
   pub key_values: SmallVec<[KeyValue<'a>; 4]>,
   pub postings: SmallVec<[Posting<'a>; 4]>,
 }

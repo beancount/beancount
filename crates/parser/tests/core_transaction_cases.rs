@@ -88,7 +88,7 @@ fn transaction_tags_and_links_content() {
 
   let directives = beancount_parser::parse_str(&input);
 
-  assert_eq!(directives.len(), 1);
+  assert_eq!(directives.len(), 1, "{:?}", directives);
   match &directives[0] {
     beancount_parser::ast::Directive::Raw(raw) => {
       assert!(raw.text.starts_with("2013-06-22 * \"Payee\""));

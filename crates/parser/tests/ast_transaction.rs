@@ -6,10 +6,10 @@ use beancount_parser::{
 #[test]
 fn parses_transaction_with_inline_link_and_postings() {
   let input = [
-    "2013-06-22 * \"La Colombe\" \"Buying coffee\"  ^ee89ada94a39",
-    "  Expenses:Coffee         5 USD",
-    "  Assets:US:Cash",
-    "",
+    r#"2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39"#,
+    r#"  Expenses:Coffee         5 USD"#,
+    r#"  Assets:US:Cash"#,
+    r#""#,
   ]
   .join("\n");
 
@@ -46,15 +46,6 @@ fn parses_transaction_with_inline_link_and_postings() {
     vec!["ee89ada94a39"]
   );
   assert_eq!(txn.comment, None);
-  assert_eq!(
-    txn
-      .tags_links_lines
-      .iter()
-      .map(|w| w.content)
-      .collect::<Vec<_>>(),
-    vec!["^ee89ada94a39"]
-  );
-  assert!(txn.comments.is_empty());
   assert!(txn.key_values.is_empty());
 
   assert_eq!(txn.postings.len(), 2);
@@ -123,14 +114,6 @@ fn parses_and_sorts_tags_and_links() {
   assert_eq!(
     txn.links.iter().map(|w| w.content).collect::<Vec<_>>(),
     vec!["z", "a"]
-  );
-  assert_eq!(
-    txn
-      .tags_links_lines
-      .iter()
-      .map(|w| w.content)
-      .collect::<Vec<_>>(),
-    vec!["#b", "^z", "#a", "^a", "#b"]
   );
   assert_eq!(
     txn

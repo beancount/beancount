@@ -1,5 +1,5 @@
 use beancount_parser::ast::{Directive, Span};
-use beancount_parser::parse_str;
+use beancount_parser::parse_str_strict;
 
 fn span_in_line(line_start: usize, line: &str, needle: &str) -> Span {
   let rel = line.find(needle).expect("missing needle in line");
@@ -24,7 +24,8 @@ fn spans_cover_single_line_directives_and_children() {
 
   let input = [open, close, balance, pad, note, document, ""].join("\n");
 
-  let directives = parse_str(&input);
+  // Use strict parser to surface errors instead of silently producing Raw.
+  let directives = parse_str_strict(&input).expect("strict parser should succeed");
   assert_eq!(directives.len(), 6);
 
   let open_line = format!("{open}\n");
@@ -170,14 +171,17 @@ fn spans_cover_single_line_directives_and_children() {
 
 #[test]
 fn spans_when_not_first_line() {
-  let txn_block = ["2013-06-22 * \"Payee\" \"Narr\"", "  Assets:Cash 1 USD", ""].join("\n");
+  let input = r#"
 
-  let input = ["", "", txn_block.as_str()].join("\n");
+2013-06-22 * "Payee" "Narr"
+  Assets:Cash 1 USD
+;
+"#;
 
-  let directives = parse_str(&input);
+  let directives = parse_str_strict(&input).expect("strict parser should succeed");
 
-  let start = input.find(&txn_block).expect("missing txn block");
-  let expected_span = Span::from_range(start, start + txn_block.len());
+  let start = input.find("2013-06-22").expect("missing txn block");
+  let expected_span = Span::from_range(start, start + 48);
 
   let txn = directives
     .iter()
@@ -185,7 +189,7 @@ fn spans_when_not_first_line() {
       Directive::Transaction(t) => Some(t),
       _ => None,
     })
-    .expect("missing transaction directive");
+    .expect(format!("missing transaction directive {:?}", directives).as_str());
 
   assert_eq!(txn.span, expected_span);
   assert!(

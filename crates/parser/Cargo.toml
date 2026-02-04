@@ -22,8 +22,8 @@ chumsky = "0.12.0"
 ropey = "1.6.1"
 
 [features]
-default = []
-file-parser = []
+default = ["rich-errors"]
+rich-errors = []
 
 [dev-dependencies]
 similar = { workspace = true }

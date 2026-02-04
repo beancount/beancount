@@ -1,13 +1,14 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
-use crate::utils::{looks_like_currency, parse_tags_links, split_tags_links_group};
+use crate::parser::common::tags_links_line_parser;
+use crate::utils::{looks_like_currency, parse_tags_links};
 use crate::{Error, ast};
 
 use super::common::{
-  currency_token_parser, date_parser, indented_key_value_parser, inline_comment_parser, line_end,
-  not_eol_parser, quoted_string_parser, rest_trimmed_parser, spanned_token_parser, ws0_parser,
-  ws1_parser,
+  currency_token_parser, date_parser, directive_end_parser, indented_key_value_parser,
+  inline_comment_parser, line_end, not_eol_parser, quoted_string_parser, spanned_token_parser,
+  ws0_parser, ws1_parser,
 };
 use super::number::number_expr_parser;
 
@@ -31,121 +32,70 @@ pub(super) fn transaction_directive_parser<'src>()
   let body_line = choice((posting_line_parser(), transaction_key_value_line_parser()));
   let indented = choice((just(' '), just('\t')));
 
-  let body_skip_comment = indented
-    .then_ignore(just(';'))
-    .rewind()
-    .to(Vec::<TxnBodyLine<'src>>::new());
-
-  let body_indented = indented
+  // Require indentation but rewind so the body parsers see the full line, keeping spans intact.
+  let body = indented
+    .ignored()
     .rewind()
     .ignore_then(body_line)
     .repeated()
     .at_least(1)
-    .collect::<Vec<_>>()
-    .then_ignore(indented.not());
-
-  let body = choice((
-    body_skip_comment,
-    body_indented,
-    indented.not().to(Vec::<TxnBodyLine<'src>>::new()),
-  ));
-
-  let txn_start = date_parser()
-    .ignored()
-    .then_ignore(ws1_parser())
-    .then(
-      choice((
-        just("txn").ignored(),
-        any()
-          .filter(|c: &char| "!&?%PSTCURM*#".contains(*c))
-          .ignored(),
-      ))
-      .ignored(),
-    )
-    .rewind();
-
-  let txn = transaction_header_parser()
-    .then_ignore(ws0_parser())
-    .then_ignore(line_end())
-    .then(body)
-    .map_with(move |(directive, body), e| {
-      let span: SimpleSpan = e.span();
-      let span = ast::Span::from_range(span.start, span.end);
-      ast::Directive::Transaction(finalize_transaction(directive, body, span))
-    })
-    .boxed();
-
-  any()
-    .filter(|c: &char| c.is_ascii_digit())
-    .rewind()
-    .ignore_then(txn_start)
-    .ignore_then(txn)
-}
-
-fn transaction_header_parser<'src>()
--> impl Parser<'src, &'src str, ast::Transaction<'src>, Error<'src>> {
-  let flag = spanned_token_parser().filter(|value| {
-    let mut chars = value.content.chars();
-    match (chars.next(), chars.next()) {
-      (Some(ch), None) => "!&?%PSTCURM*#".contains(ch),
-      (None, _) => false,
-      _ => value.content == "txn",
-    }
-  });
-
-  // Optional quoted strings: two => payee + narration, one => narration only.
-  // Consume leading whitespace only if a quote follows; otherwise allow trailing spaces after the flag.
-  let quoted_after_ws = ws1_parser()
-    .then_ignore(just('"').rewind())
-    .ignore_then(quoted_string_parser());
-
-  let payee_narration = quoted_after_ws
-    .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
-    .or_not();
-
-  // Optional inline tags/links (stop at inline comment ';').
-  let inline_tags_links = ws1_parser()
-    .ignore_then(rest_trimmed_parser())
-    .filter(|rest| rest.content.starts_with('#') || rest.content.starts_with('^'))
-    .map(|group| split_tags_links_group(group))
-    .or_not();
-
-  let inline_comment = ws0_parser().ignore_then(inline_comment_parser()).or_not();
+    .collect::<Vec<_>>();
 
   date_parser()
     .then_ignore(ws1_parser())
-    .then(flag)
-    .then(payee_narration)
-    .then(inline_tags_links)
-    .then(inline_comment)
+    .then(spanned_token_parser())
+    .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
+    .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
+    .then(ws1_parser().ignore_then(tags_links_line_parser()).or_not())
+    .then(ws0_parser().ignore_then(inline_comment_parser().or_not()))
     .map_with(
-      |((((date, flag), payee_narration), tags_links), comment), e| {
+      |(((((date, flag), payee_or_narration1), payee_or_narration2), tags_links), comment), e| {
         let span: SimpleSpan = e.span();
         let span = ast::Span::from_range(span.start, span.end);
 
-        let (payee, narration) = match payee_narration {
-          Some((payee, Some(narration))) => (Some(payee), Some(narration)),
-          Some((narration, None)) => (None, Some(narration)),
-          None => (None, None),
+        // payee narration
+        // narration
+        let (payee, narration) = match (payee_or_narration1, payee_or_narration2) {
+          (None, None) => (None, None),
+          (None, Some(narration)) => (None, Some(narration)),
+          (Some(narration), None) => (None, Some(narration)),
+          (Some(payee), Some(narration)) => (Some(payee), Some(narration)),
+        };
+
+        let tags_links = tags_links;
+
+        let (tags, links) = match tags_links.clone() {
+          Some(line) => parse_tags_links(line),
+          None => (SmallVec::new(), SmallVec::new()),
         };
 
         ast::Transaction {
           span,
           date,
           txn: Some(flag),
-          payee,
-          narration,
+          payee: payee,
+          narration: narration,
           tags_links,
           comment,
-          tags: SmallVec::new(),
-          links: SmallVec::new(),
-          tags_links_lines: SmallVec::new(),
-          comments: SmallVec::new(),
+          tags,
+          links,
           key_values: SmallVec::new(),
           postings: SmallVec::new(),
         }
       },
     )
+    .then_ignore(line_end())
+    .then(body.or_not())
+    .then_ignore(directive_end_parser())
+    .map_with(move |(directive, body), e| {
+      let span: SimpleSpan = e.span();
+      let span = ast::Span::from_range(span.start, span.end);
+      ast::Directive::Transaction(finalize_transaction(
+        directive,
+        body.unwrap_or_default(),
+        span,
+      ))
+    })
 }
 
 fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src
@@ -178,7 +128,6 @@ fn finalize_transaction<'a>(
   body: Vec<TxnBodyLine<'a>>,
   span: ast::Span,
 ) -> ast::Transaction<'a> {
-  let tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
   let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
 
@@ -198,28 +147,6 @@ fn finalize_transaction<'a>(
   txn.span = span;
   txn.postings = postings;
   txn.key_values = key_values;
-  txn.comments = SmallVec::new();
-
-  let mut tags_links_lines = tags_links_lines;
-  if let Some(inline_groups) = txn.tags_links.clone() {
-    for inline in inline_groups.into_iter().rev() {
-      tags_links_lines.insert(0, inline);
-    }
-  }
-
-  let tags_links = txn.tags_links.clone().or_else(|| {
-    (!tags_links_lines.is_empty()).then(|| tags_links_lines.iter().cloned().collect::<Vec<_>>())
-  });
-
-  let (tags, links) = parse_tags_links(tags_links_lines.clone());
-  txn.tags = tags;
-  txn.links = links;
-  txn.tags_links_lines = tags_links_lines;
-  txn.tags_links = tags_links;
-  txn.comment = txn
-    .comment
-    .clone()
-    .or_else(|| txn.comments.first().cloned());
 
   txn
 }
@@ -514,4 +441,75 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       is_total: ast::WithSpan::new(raw_span, is_total),
     }
   })
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::ast;
+  use chumsky::Parser;
+
+  #[test]
+  fn parses_transaction_header_with_tags_and_links() {
+    let src = r#"2014-01-01 * "Payee" "Narration" #tag ^link"#;
+
+    let directive = transaction_directive_parser()
+      .parse(src)
+      .into_output()
+      .expect("parser should succeed");
+
+    let txn = match directive {
+      ast::Directive::Transaction(txn) => txn,
+      other => panic!("expected transaction directive, got {other:?}"),
+    };
+
+    assert_eq!(txn.date.content, "2014-01-01");
+    assert_eq!(txn.txn.as_ref().map(|flag| flag.content), Some("*"));
+    assert_eq!(
+      txn.payee.as_ref().map(|payee| payee.content),
+      Some("\"Payee\"")
+    );
+    assert_eq!(
+      txn.narration.as_ref().map(|narration| narration.content),
+      Some("\"Narration\""),
+    );
+    assert_eq!(
+      txn.tags.iter().map(|tag| tag.content).collect::<Vec<_>>(),
+      vec!["tag"],
+    );
+    assert_eq!(
+      txn
+        .links
+        .iter()
+        .map(|link| link.content)
+        .collect::<Vec<_>>(),
+      vec!["link"],
+    );
+  }
+
+  #[test]
+  fn parses_multiline_transaction_postings() {
+    let src = [
+      r#"2014-01-01 * "Payee" "Narr""#,
+      r#"  Expenses:Food 10 USD"#,
+      r#"  Assets:Cash -10 USD"#,
+      r#""#,
+    ]
+    .join("\n");
+
+    let directive = transaction_directive_parser()
+      .then_ignore(end())
+      .parse(&src)
+      .into_result()
+      .unwrap();
+
+    let txn = match directive {
+      ast::Directive::Transaction(txn) => txn,
+      other => panic!("expected transaction directive, got {other:?}"),
+    };
+
+    assert_eq!(txn.postings.len(), 2);
+    assert_eq!(txn.postings[0].account.content, "Expenses:Food");
+    assert_eq!(txn.postings[1].account.content, "Assets:Cash");
+  }
 }

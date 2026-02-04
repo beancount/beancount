@@ -66,22 +66,6 @@ fn transaction_directive_with_postings() {
 }
 
 #[test]
-fn transaction_tags_and_links_content() {
-  let input = lines(&[
-    r#"2013-06-22 * "Payee" "Narr"  #b ^link1"#,
-    r#"  Assets:Cash 1 USD"#,
-    r#"  #c ^link2 #a"#,
-  ]);
-
-  let directives = beancount_parser::parse_str(&input);
-  assert_eq!(directives.len(), 1);
-  match &directives[0] {
-    Directive::Raw(raw) => assert!(raw.text.starts_with("2013-06-22 * \"Payee\"")),
-    other => panic!("expected raw, got {other:?}"),
-  }
-}
-
-#[test]
 fn transaction_body_comment_cannot_be_indented() {
   let input = lines(&[
     r#"2013-06-22 * "Payee" "Narr""#,

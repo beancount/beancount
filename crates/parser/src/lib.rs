@@ -10,10 +10,13 @@ mod parser;
 mod utils;
 
 pub use core::{CoreDirective, normalize_directives, normalize_directives_with_rope};
-pub use parser::{parse_str, parse_str_with_rope};
+pub use parser::{parse_str, parse_str_strict, parse_str_strict_with_rope, parse_str_with_rope};
 
 use chumsky::prelude::*;
 use ropey::Rope;
+
+#[cfg(feature = "rich-errors")]
+use chumsky::error::Rich;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
@@ -50,7 +53,11 @@ impl std::error::Error for ParseError {}
 
 pub type Result<T> = std::result::Result<T, ParseError>;
 
+#[cfg(not(feature = "rich-errors"))]
 pub type Error<'src> = extra::Err<Simple<'src, char>>;
+
+#[cfg(feature = "rich-errors")]
+pub type Error<'src> = extra::Err<Rich<'src, char>>;
 
 #[cfg(test)]
 mod tests {
