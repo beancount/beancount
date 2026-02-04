@@ -27,18 +27,44 @@ enum TxnBodyLine<'a> {
 }
 
 pub(super) fn transaction_directive_parser<'src>()
--> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let body_line = choice((posting_line_parser(), transaction_key_value_line_parser()));
+  let indented = choice((just(' '), just('\t')));
 
-  // Parse one or more body lines when present; allow an empty body only if no input is consumed.
-  let body = body_line
+  let body_skip_comment = indented
+    .then_ignore(just(';'))
+    .rewind()
+    .to(Vec::<TxnBodyLine<'src>>::new());
+
+  let body_indented = indented
+    .rewind()
+    .ignore_then(body_line)
     .repeated()
     .at_least(1)
     .collect::<Vec<_>>()
-    .or_not()
-    .map(|opt| opt.unwrap_or_default());
+    .then_ignore(indented.not());
 
-  transaction_header_parser()
+  let body = choice((
+    body_skip_comment,
+    body_indented,
+    indented.not().to(Vec::<TxnBodyLine<'src>>::new()),
+  ));
+
+  let txn_start = date_parser()
+    .ignored()
+    .then_ignore(ws1_parser())
+    .then(
+      choice((
+        just("txn").ignored(),
+        any()
+          .filter(|c: &char| "!&?%PSTCURM*#".contains(*c))
+          .ignored(),
+      ))
+      .ignored(),
+    )
+    .rewind();
+
+  let txn = transaction_header_parser()
     .then_ignore(ws0_parser())
     .then_ignore(line_end())
     .then(body)
@@ -47,7 +73,13 @@ pub(super) fn transaction_directive_parser<'src>()
       let span = ast::Span::from_range(span.start, span.end);
       ast::Directive::Transaction(finalize_transaction(directive, body, span))
     })
-    .boxed()
+    .boxed();
+
+  any()
+    .filter(|c: &char| c.is_ascii_digit())
+    .rewind()
+    .ignore_then(txn_start)
+    .ignore_then(txn)
 }
 
 fn transaction_header_parser<'src>()
@@ -122,7 +154,7 @@ fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>
     .then_ignore(line_end())
     .map_with(move |mut posting, e| {
       let span: SimpleSpan = e.span();
-      let span = ast::Span::from_range(span.start, span.end);
+      let span = ast::Span::from_range(posting.span.start, span.end);
       posting.span = span;
       TxnBodyLine::Posting(posting)
     })
@@ -260,8 +292,17 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)
     });
 
-  ws1_parser()
-    .ignore_then(optflag.or_not())
+  let indent = choice((just(' '), just('\t')))
+    .repeated()
+    .at_least(1)
+    .to_slice()
+    .map_with(|text: &str, e| {
+      let span: SimpleSpan = e.span();
+      (text, span)
+    });
+
+  let posting_body = optflag
+    .or_not()
     .then(ws0_parser().ignore_then(account))
     .then(ws1_parser().ignore_then(amount).or_not())
     .then(ws0_parser().ignore_then(cost_spec_parser()).or_not())
@@ -274,14 +315,18 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
         .or_not()
         .map(|value| value.unwrap_or((None, None))),
     )
-    .then(ws0_parser().ignore_then(comment).or_not())
-    .map_with(|value, e| {
+    .then(ws0_parser().ignore_then(comment).or_not());
+
+  indent
+    .then(posting_body)
+    .map_with(|((_indent, indent_span), value), e| {
       let span: SimpleSpan = e.span();
+      let start = indent_span.start;
       let (left, comment) = value;
       let ((((opt_flag, account), amount), cost_spec), price) = left;
       let (price_operator, price_annotation) = price;
       ast::Posting {
-        span: ast::Span::from_range(span.start, span.end),
+        span: ast::Span::from_range(start, span.end),
         opt_flag,
         account,
         amount,
@@ -318,28 +363,41 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       currency: Some(currency),
     });
 
-  let amount_total = number_expr
-    .clone()
-    .or_not()
-    .then_ignore(ws0_parser())
-    .then_ignore(just('#'))
-    .then_ignore(ws0_parser())
-    .then(number_expr.clone().or_not())
-    .then_ignore(ws1_parser())
-    .then(currency)
-    .map(|((per, total), currency)| ast::CostAmount {
-      per,
-      total,
-      currency: Some(currency),
-    });
-
   let amount_total_no_currency = number_expr.clone().map(|total| ast::CostAmount {
     per: None,
     total: Some(total),
     currency: None,
   });
 
-  let cost_amount = choice((amount_total, amount, amount_total_no_currency));
+  let amount_total_with_currency = just('#')
+    .ignore_then(ws0_parser())
+    .ignore_then(number_expr.clone())
+    .then(ws1_parser().ignore_then(currency))
+    .map(|(total, currency)| ast::CostAmount {
+      per: None,
+      total: Some(total),
+      currency: Some(currency),
+    });
+
+  let amount_per_and_total = number_expr
+    .clone()
+    .then_ignore(ws0_parser())
+    .then_ignore(just('#'))
+    .then_ignore(ws0_parser())
+    .then(number_expr.clone())
+    .then(ws1_parser().ignore_then(currency).or_not())
+    .map(|((per, total), currency)| ast::CostAmount {
+      per: Some(per),
+      total: Some(total),
+      currency,
+    });
+
+  let cost_amount = choice((
+    amount_per_and_total,
+    amount_total_with_currency,
+    amount,
+    amount_total_no_currency,
+  ));
 
   let date = any()
     .filter(|c: &char| c.is_ascii_digit())

@@ -2,7 +2,7 @@ use beancount_parser::core::TagDirective;
 use beancount_parser::parse_str as parse_chumsky;
 
 fn parse_tag(input: &str, filename: &str) -> TagDirective {
-  let ast = parse_chumsky(input).expect("chumsky parse failed");
+  let ast = parse_chumsky(input);
   let core = beancount_parser::normalize_directives(&ast, filename, input)
     .expect("chumsky normalize failed");
   assert_eq!(core.len(), 1, "expected a single directive");

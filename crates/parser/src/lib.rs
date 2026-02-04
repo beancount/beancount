@@ -68,7 +68,7 @@ mod tests {
     ]
     .join("\r\n");
 
-    let directives = parse_str(&src).expect("CRLF input should parse");
+    let directives = parse_str(&src);
 
     assert_eq!(2, directives.len());
   }
@@ -76,15 +76,27 @@ mod tests {
   #[test]
   fn recovers_to_raw_after_error_line() {
     let src = [
-      "2014-01-01 open Assets:Cash USD",
-      "This is not valid",
-      "2014-01-02 open Assets:Bank USD",
+      "2014-01-01 open Assets:Cash USD",      // 0
+      "This is not valid",                    // 1
+      "2014-01-02 balance Assets:Bank 1 USD", // 2
+      "  b: TRUE",
+      "2014-01-01 broken Assets:Cash USD", // 3 raw
+      "2014-01-01 open Assets:Cash USD",   // 4
+      "2014-01-01 open Assets:Cash USD",   // 5 raw
+      "  broken meta",
+      "2014-01-01 open Assets:Cash USD", // 6
       "",
     ]
     .join("\n");
 
-    let directives = parse_str(&src).expect("parser should recover into Raw");
-    assert_eq!(3, directives.len());
+    let directives = parse_str(&src);
+    assert!(matches!(directives[0], ast::Directive::Open(_)));
     assert!(matches!(directives[1], ast::Directive::Raw(_)));
+    assert!(matches!(directives[2], ast::Directive::Balance(_)));
+    assert!(matches!(directives[3], ast::Directive::Raw(_)));
+    assert!(matches!(directives[4], ast::Directive::Open(_)));
+    assert!(matches!(directives[5], ast::Directive::Raw(_)));
+    assert!(matches!(directives[6], ast::Directive::Open(_)));
+    assert_eq!(directives.len(), 7);
   }
 }

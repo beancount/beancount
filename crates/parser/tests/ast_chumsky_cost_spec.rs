@@ -18,7 +18,7 @@ fn parses_posting_cost_spec() {
   ]
   .join("\n");
 
-  let directives = parse_str(&input).expect("parse failed");
+  let directives = parse_str(&input);
   assert_eq!(directives.len(), 4);
 
   let Directive::Transaction(txn1) = directives[2].clone() else {

@@ -24,7 +24,7 @@ fn spans_cover_single_line_directives_and_children() {
 
   let input = [open, close, balance, pad, note, document, ""].join("\n");
 
-  let directives = parse_str(&input).expect("parse failed");
+  let directives = parse_str(&input);
   assert_eq!(directives.len(), 6);
 
   let open_line = format!("{open}\n");
@@ -174,7 +174,7 @@ fn spans_when_not_first_line() {
 
   let input = ["", "", txn_block.as_str()].join("\n");
 
-  let directives = parse_str(&input).expect("parse failed");
+  let directives = parse_str(&input);
 
   let start = input.find(&txn_block).expect("missing txn block");
   let expected_span = Span::from_range(start, start + txn_block.len());

@@ -11,7 +11,7 @@ pub(crate) fn lines(parts: &[&str]) -> String {
 #[cfg(test)]
 #[allow(dead_code)]
 pub(crate) fn parse_core(input: &str, filename: &str) -> Vec<CoreDirective> {
-  let ast = parse_str(input).expect("parse failed");
+  let ast = parse_str(input);
   normalize_directives(&ast, filename, input).expect("normalize failed")
 }
 
@@ -85,6 +85,9 @@ impl FromCore for PoptagDir {
 #[allow(dead_code)]
 pub(crate) fn parse_as<T: FromCore>(input: &str, filename: &str) -> T {
   let directives = parse_core(input, filename);
+  if directives.len() != 1 {
+    eprintln!("parsed directives: {:?}", directives);
+  }
   assert_eq!(directives.len(), 1, "expected a single directive");
   let directive = directives.into_iter().next().expect("directive");
   T::from_core(directive).unwrap_or_else(|| panic!("unexpected directive"))
@@ -103,7 +106,7 @@ pub(crate) fn parse_as_many<T: FromCore>(input: &str, filename: &str) -> Vec<T> 
 #[cfg(test)]
 #[allow(dead_code)]
 pub(crate) fn parse_ast<'a>(input: &'a str, _filename: &str) -> Vec<ast::Directive<'a>> {
-  parse_str(input).expect("parse failed")
+  parse_str(input)
 }
 
 #[cfg(test)]

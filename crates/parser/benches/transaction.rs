@@ -12,7 +12,7 @@ fn bench_transaction(c: &mut Criterion) {
 
   group.bench_function("chumsky", |b| {
     b.iter(|| {
-      parse_chumsky(black_box(TRANSACTION), "bench.bean").unwrap();
+      parse_chumsky(black_box(TRANSACTION));
     })
   });
 
@@ -24,7 +24,7 @@ fn bench_example(c: &mut Criterion) {
 
   group.bench_function("chumsky", |b| {
     b.iter(|| {
-      parse_chumsky(black_box(BEAN_EXAMPLE), "bench.bean").unwrap();
+      parse_chumsky(black_box(BEAN_EXAMPLE));
     })
   });
 

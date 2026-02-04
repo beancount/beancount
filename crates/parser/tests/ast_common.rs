@@ -3,7 +3,7 @@ use beancount_parser::{ast, parse_str};
 #[cfg(test)]
 #[allow(dead_code)]
 pub(crate) fn parse_ast<'a>(input: &'a str, _filename: &str) -> Vec<ast::Directive<'a>> {
-  parse_str(input).expect("parse failed")
+  parse_str(input)
 }
 
 #[cfg(test)]

@@ -1213,19 +1213,7 @@ fn parse_source(
   let options_map = default_options_map(py)?;
   options_map.set_item("filename", filename)?;
 
-  let directives = match parse_str(content) {
-    Ok(directives) => directives,
-    Err(err) => {
-      options_map.set_item("include", PyList::empty(py))?;
-      let _ = apply_options(py, &options_map, &[])?;
-      apply_display_context_options(py, &options_map)?;
-      let errors = PyList::new(py, [build_parser_error(py, err, filename)?])?
-        .unbind()
-        .into();
-      let entries: Py<PyAny> = PyList::empty(py).unbind().into();
-      return Ok((entries, errors, options_map.unbind().into()));
-    }
-  };
+  let directives = parse_str(content);
 
   let normalized = match normalize_directives(&directives, filename, content) {
     Ok(normalized) => normalized,

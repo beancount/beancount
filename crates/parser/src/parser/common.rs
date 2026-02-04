@@ -3,7 +3,7 @@ use smallvec::SmallVec;
 
 use crate::Error;
 use crate::ast;
-use crate::utils::{looks_like_currency, looks_like_date};
+use crate::utils::{looks_like_currency, looks_like_date, split_tags_links_group};
 
 pub(super) fn ws0_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
   choice((just(' '), just('\t'))).repeated().ignored()
@@ -117,22 +117,25 @@ pub(super) fn rest_trimmed_parser<'src>()
 }
 
 pub(super) fn tags_links_line_parser<'src>()
--> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
-  not_eol_parser()
+-> impl Parser<'src, &'src str, Vec<ast::WithSpan<&'src str>>, Error<'src>> {
+  any()
+    .filter(|c: &char| *c != '\n' && *c != '\r' && *c != ';')
     .repeated()
     .at_least(1)
     .to_slice()
-    .filter(|line: &&str| {
-      let trimmed = line.trim();
-      !trimmed.is_empty() && (trimmed.starts_with('#') || trimmed.starts_with('^'))
-    })
-    .map_with(|line, e| {
-      let trimmed = line.trim();
+    .map_with(|line: &str, e| {
       let span: SimpleSpan = e.span();
+      let start = span.start;
+      let trimmed = line.trim();
       let offset = line.find(trimmed).unwrap_or(0);
-      let start = span.start + offset;
-      let end = start + trimmed.len();
-      ast::WithSpan::new(ast::Span::from_range(start, end), trimmed)
+      let group_span = ast::Span::from_range(start + offset, start + offset + trimmed.len());
+      let group = ast::WithSpan::new(group_span, trimmed);
+      split_tags_links_group(group)
+    })
+    .filter(|tokens: &Vec<_>| {
+      tokens
+        .first()
+        .is_some_and(|t| t.content.starts_with('#') || t.content.starts_with('^'))
     })
 }
 
@@ -207,6 +210,7 @@ pub(super) fn key_value_block_parser<'src>()
       kv
     })
     .repeated()
+    .at_least(1)
     .collect::<Vec<_>>()
     .map(SmallVec::from_vec)
 }
@@ -226,4 +230,57 @@ pub(super) fn is_key_token(raw: &str) -> bool {
 pub(super) fn currency_token_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   bare_string_parser().filter(|value| looks_like_currency(value.content))
+}
+
+pub(super) fn raw_directive_recovery_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
+  let eol = choice((just("\r\n").to(()), just('\n').to(())));
+  let restart = choice((
+    eol
+      .then(any().filter(|c: &char| !matches!(c, ' ' | '\t' | '\n' | '\r')))
+      .to(()),
+    eol.then(ws0_parser()).then(just(';')).to(()),
+    end().to(()),
+  ))
+  .rewind();
+
+  restart
+    .not()
+    .ignore_then(any())
+    .repeated()
+    .at_least(0)
+    .to_slice()
+    .then(eol.or_not())
+    .try_map(
+      |(consumed, newline): (&str, Option<()>), span: SimpleSpan| {
+        if consumed.is_empty() && newline.is_none() {
+          Err(Simple::new(None, span))
+        } else {
+          Ok((consumed, newline))
+        }
+      },
+    )
+    .map_with(move |(_consumed, _newline), e| {
+      let span: SimpleSpan = e.span();
+      let consumed: &str = e.slice();
+
+      let (text, end) = if consumed.ends_with("\r\n") {
+        (
+          &consumed[..consumed.len().saturating_sub(2)],
+          span.end.saturating_sub(2),
+        )
+      } else if consumed.ends_with('\n') {
+        (
+          &consumed[..consumed.len().saturating_sub(1)],
+          span.end.saturating_sub(1),
+        )
+      } else {
+        (consumed, span.end)
+      };
+
+      ast::Directive::Raw(ast::Raw {
+        span: ast::Span::from_range(span.start, end),
+        text,
+      })
+    })
 }

@@ -29,16 +29,20 @@ pub(super) fn open_directive_parser<'src>()
     .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
     .then_ignore(ws0_parser());
 
+  let key_values_block = choice((
+    key_value_block_parser(),
+    ws1_parser().not().to(SmallVec::new()),
+  ));
+
   header
     .then(inline_comment_parser().or_not())
     .then_ignore(super::common::line_end())
-    .then(key_value_block_parser().or_not())
+    .then(key_values_block)
     .map_with(|(header_and_comment, key_values), e| {
       let (header_parts, comment) = header_and_comment;
       let ((((date, keyword), account), currencies), opt_booking) = header_parts;
       let span = ast::Span::from_simple_span(e.span());
       let currencies = currencies.into_iter().flat_map(split_currencies).collect();
-      let key_values = key_values.unwrap_or_else(SmallVec::new);
 
       ast::Directive::Open(ast::Open {
         span,

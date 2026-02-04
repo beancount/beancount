@@ -13,7 +13,7 @@ fn parses_transaction_with_inline_link_and_postings() {
   ]
   .join("\n");
 
-  let directives = parse_str(input.as_str()).expect("parse failed");
+  let directives = parse_str(input.as_str());
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {
@@ -64,6 +64,8 @@ fn parses_transaction_with_inline_link_and_postings() {
   let p1_end = p1_start + p1_line.len();
   let p1 = &txn.postings[0];
   assert_eq!(p1.span, Span::from_range(p1_start, p1_end));
+  let account_start = input.find("Expenses:Coffee").unwrap();
+  assert_eq!(p1.account.span.start, account_start);
   assert_eq!(p1.opt_flag, None);
   assert_eq!(p1.account.content, "Expenses:Coffee");
   let p1_amount = p1.amount.as_ref().expect("p1 amount");
@@ -104,7 +106,7 @@ fn parses_and_sorts_tags_and_links() {
   ]
   .join("\n");
 
-  let directives = parse_str(&input).expect("parse failed");
+  let directives = parse_str(&input);
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {
