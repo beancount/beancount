@@ -54,7 +54,7 @@ pub type Error<'src> = extra::Err<Simple<'src, char>>;
 
 #[cfg(test)]
 mod tests {
-  use super::parse_str;
+  use super::{ast, parse_str};
 
   #[test]
   fn parses_crlf_input() {
@@ -71,5 +71,20 @@ mod tests {
     let directives = parse_str(&src).expect("CRLF input should parse");
 
     assert_eq!(2, directives.len());
+  }
+
+  #[test]
+  fn recovers_to_raw_after_error_line() {
+    let src = [
+      "2014-01-01 open Assets:Cash USD",
+      "This is not valid",
+      "2014-01-02 open Assets:Bank USD",
+      "",
+    ]
+    .join("\n");
+
+    let directives = parse_str(&src).expect("parser should recover into Raw");
+    assert_eq!(3, directives.len());
+    assert!(matches!(directives[1], ast::Directive::Raw(_)));
   }
 }

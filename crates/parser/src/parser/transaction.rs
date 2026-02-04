@@ -5,9 +5,9 @@ use crate::utils::{looks_like_currency, parse_tags_links, split_tags_links_group
 use crate::{Error, ast};
 
 use super::common::{
-  currency_token_parser, date_parser, indented_key_value_parser, line_end, not_eol_parser,
-  inline_comment_parser, quoted_string_parser, rest_trimmed_parser, spanned_token_parser,
-  ws0_parser, ws1_parser,
+  currency_token_parser, date_parser, indented_key_value_parser, inline_comment_parser, line_end,
+  not_eol_parser, quoted_string_parser, rest_trimmed_parser, spanned_token_parser, ws0_parser,
+  ws1_parser,
 };
 use super::number::number_expr_parser;
 
@@ -86,32 +86,34 @@ fn transaction_header_parser<'src>()
     .then(payee_narration)
     .then(inline_tags_links)
     .then(inline_comment)
-    .map_with(|((((date, flag), payee_narration), tags_links), comment), e| {
-      let span: SimpleSpan = e.span();
-      let span = ast::Span::from_range(span.start, span.end);
+    .map_with(
+      |((((date, flag), payee_narration), tags_links), comment), e| {
+        let span: SimpleSpan = e.span();
+        let span = ast::Span::from_range(span.start, span.end);
 
-      let (payee, narration) = match payee_narration {
-        Some((payee, Some(narration))) => (Some(payee), Some(narration)),
-        Some((narration, None)) => (None, Some(narration)),
-        None => (None, None),
-      };
+        let (payee, narration) = match payee_narration {
+          Some((payee, Some(narration))) => (Some(payee), Some(narration)),
+          Some((narration, None)) => (None, Some(narration)),
+          None => (None, None),
+        };
 
-      ast::Transaction {
-        span,
-        date,
-        txn: Some(flag),
-        payee,
-        narration,
-        tags_links,
-        comment,
-        tags: SmallVec::new(),
-        links: SmallVec::new(),
-        tags_links_lines: SmallVec::new(),
-        comments: SmallVec::new(),
-        key_values: SmallVec::new(),
-        postings: SmallVec::new(),
-      }
-    })
+        ast::Transaction {
+          span,
+          date,
+          txn: Some(flag),
+          payee,
+          narration,
+          tags_links,
+          comment,
+          tags: SmallVec::new(),
+          links: SmallVec::new(),
+          tags_links_lines: SmallVec::new(),
+          comments: SmallVec::new(),
+          key_values: SmallVec::new(),
+          postings: SmallVec::new(),
+        }
+      },
+    )
 }
 
 fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src

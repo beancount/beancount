@@ -502,8 +502,12 @@ impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
     let (directive, filename, rope) = input;
 
     match directive {
-      ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from((open, filename, rope))?)),
-      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((close, filename, rope))?)),
+      ast::Directive::Open(open) => {
+        Ok(CoreDirective::Open(Open::try_from((open, filename, rope))?))
+      }
+      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((
+        close, filename, rope,
+      ))?)),
       ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from((
         balance, filename, rope,
       ))?)),
@@ -514,35 +518,45 @@ impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
       ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from((
         cmdty, filename, rope,
       ))?)),
-      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((price, filename, rope))?)),
-      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((event, filename, rope))?)),
-      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((query, filename, rope))?)),
-      ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from((note, filename, rope))?)),
-      ast::Directive::Document(doc) => {
-        Ok(CoreDirective::Document(Document::try_from((doc, filename, rope))?))
+      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((
+        price, filename, rope,
+      ))?)),
+      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((
+        event, filename, rope,
+      ))?)),
+      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((
+        query, filename, rope,
+      ))?)),
+      ast::Directive::Note(note) => {
+        Ok(CoreDirective::Note(Note::try_from((note, filename, rope))?))
       }
-      ast::Directive::Custom(custom) => {
-        Ok(CoreDirective::Custom(Custom::try_from((custom, filename, rope))?))
-      }
+      ast::Directive::Document(doc) => Ok(CoreDirective::Document(Document::try_from((
+        doc, filename, rope,
+      ))?)),
+      ast::Directive::Custom(custom) => Ok(CoreDirective::Custom(Custom::try_from((
+        custom, filename, rope,
+      ))?)),
       ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from((
         opt, filename, rope,
       ))?)),
       ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from((
         include, filename, rope,
       ))?)),
-      ast::Directive::Plugin(plugin) => {
-        Ok(CoreDirective::Plugin(Plugin::try_from((plugin, filename, rope))?))
-      }
+      ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from((
+        plugin, filename, rope,
+      ))?)),
       ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from((
         tag, filename, rope,
       ))?)),
       ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from((
         tag, filename, rope,
       ))?)),
-      ast::Directive::PushMeta(pm) => {
-        Ok(CoreDirective::PushMeta(PushMeta::try_from((pm, filename, rope))?))
-      }
-      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((pm, filename, rope))?)),
+      ast::Directive::PushMeta(pm) => Ok(CoreDirective::PushMeta(PushMeta::try_from((
+        pm, filename, rope,
+      ))?)),
+      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((
+        pm, filename, rope,
+      ))?)),
       ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from((
         comment, filename, rope,
       ))?)),
