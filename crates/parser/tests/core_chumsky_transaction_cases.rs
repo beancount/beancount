@@ -70,7 +70,7 @@ fn transaction_tags_and_links_content() {
     r#"  #c ^link2 #a"#,
   ]);
 
-  beancount_parser::parse_str(&input, "book.bean")
+  beancount_parser::parse_str(&input)
     .expect_err("tags/links must be inline on the transaction header line");
 }
 
@@ -82,7 +82,7 @@ fn transaction_body_comment_cannot_be_indented() {
     r#"  Assets:Cash 1 USD"#,
   ]);
 
-  let directives = beancount_parser::parse_str(&input, "book.bean").expect("parse failed");
+  let directives = beancount_parser::parse_str(&input).expect("parse failed");
   assert_eq!(directives.len(), 3, "{:?}", directives);
 }
 
@@ -96,7 +96,7 @@ fn transaction_stops_before_leaking_comment() {
     r#"  Assets:Cash 2 USD"#,
   ]);
 
-  let directives = beancount_parser::parse_str(&input, "book.bean").expect("parse failed");
+  let directives = beancount_parser::parse_str(&input).expect("parse failed");
   assert_eq!(directives.len(), 3);
 
   assert!(matches!(directives[0], Directive::Transaction(_)));

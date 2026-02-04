@@ -1,9 +1,8 @@
 use chumsky::prelude::*;
 use ropey::Rope;
-use std::sync::Arc;
 
 use crate::Error;
-use crate::{MetaAt, ParseCtx, ParseError, ast};
+use crate::{ParseError, Position, ast, position_from_rope};
 
 mod balance;
 mod close;
@@ -76,15 +75,10 @@ fn declarations_parser<'src>()
     .boxed()
 }
 
-pub fn parse_str<'a>(
+pub fn parse_str_with_rope<'a>(
   source: &'a str,
-  filename: &str,
-) -> std::result::Result<Vec<ast::Directive<'a>>, ParseError> {
-  let ctx = ParseCtx {
-    filename: Arc::new(filename.to_owned()),
-    rope: Rope::from_str(source),
-  };
-  let meta_at = MetaAt::from(&ctx);
+) -> std::result::Result<(Vec<ast::Directive<'a>>, Rope), ParseError> {
+  let rope = Rope::from_str(source);
 
   let directives = declarations_parser()
     .then_ignore(end())
@@ -93,10 +87,10 @@ pub fn parse_str<'a>(
     .map_err(|mut errors| match errors.pop() {
       Some(err) => {
         let span = err.span();
-        let meta = meta_at.at(span.start);
+        let Position { line, column } = position_from_rope(&rope, span.start);
         ParseError {
-          line: meta.line,
-          column: meta.column,
+          line,
+          column,
           message: err.to_string(),
         }
       }
@@ -113,5 +107,11 @@ pub fn parse_str<'a>(
     .map(|directive| *directive)
     .collect();
 
-  Ok(directives)
+  Ok((directives, rope))
+}
+
+pub fn parse_str<'a>(
+  source: &'a str,
+) -> std::result::Result<Vec<ast::Directive<'a>>, ParseError> {
+  parse_str_with_rope(source).map(|(directives, _rope)| directives)
 }

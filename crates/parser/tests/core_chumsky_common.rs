@@ -11,7 +11,7 @@ pub(crate) fn lines(parts: &[&str]) -> String {
 #[cfg(test)]
 #[allow(dead_code)]
 pub(crate) fn parse_core(input: &str, filename: &str) -> Vec<CoreDirective> {
-  let ast = parse_str(input, filename).expect("parse failed");
+  let ast = parse_str(input).expect("parse failed");
   normalize_directives(&ast, filename, input).expect("normalize failed")
 }
 
@@ -102,8 +102,8 @@ pub(crate) fn parse_as_many<T: FromCore>(input: &str, filename: &str) -> Vec<T> 
 
 #[cfg(test)]
 #[allow(dead_code)]
-pub(crate) fn parse_ast<'a>(input: &'a str, filename: &str) -> Vec<ast::Directive<'a>> {
-  parse_str(input, filename).expect("parse failed")
+pub(crate) fn parse_ast<'a>(input: &'a str, _filename: &str) -> Vec<ast::Directive<'a>> {
+  parse_str(input).expect("parse failed")
 }
 
 #[cfg(test)]

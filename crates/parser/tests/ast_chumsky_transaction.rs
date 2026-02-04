@@ -11,7 +11,7 @@ fn parses_transaction_with_inline_link_and_postings() {
   ]
   .join("\n");
 
-  let directives = parse_str(input.as_str(), "input.bean").expect("parse failed");
+  let directives = parse_str(input.as_str()).expect("parse failed");
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {
@@ -102,7 +102,7 @@ fn parses_and_sorts_tags_and_links() {
   ]
   .join("\n");
 
-  let directives = parse_str(&input, "input.bean").expect("parse failed");
+  let directives = parse_str(&input).expect("parse failed");
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {

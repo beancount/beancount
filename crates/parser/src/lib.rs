@@ -10,47 +10,24 @@ mod parser;
 mod utils;
 
 pub use core::{CoreDirective, normalize_directives, normalize_directives_with_rope};
-pub use parser::parse_str;
+pub use parser::{parse_str, parse_str_with_rope};
 
 use chumsky::prelude::*;
 use ropey::Rope;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
-pub(crate) struct ParseCtx {
-  pub(crate) filename: Arc<String>,
-  pub(crate) rope: Rope,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Position {
+  pub line: usize,
+  pub column: usize,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct MetaAt {
-  filename: Arc<String>,
-  rope: Rope,
-}
-
-impl MetaAt {
-  pub(crate) fn at(&self, offset: usize) -> ast::Meta {
-    meta_from_rope(&self.filename, &self.rope, offset)
-  }
-}
-
-impl From<&ParseCtx> for MetaAt {
-  fn from(ctx: &ParseCtx) -> Self {
-    MetaAt {
-      filename: ctx.filename.clone(),
-      rope: ctx.rope.clone(),
-    }
-  }
-}
-
-fn meta_from_rope(filename: &Arc<String>, rope: &Rope, offset: usize) -> ast::Meta {
+pub(crate) fn position_from_rope(rope: &Rope, offset: usize) -> Position {
   let char_idx = rope.byte_to_char(offset);
   let line_idx = rope.char_to_line(char_idx);
   let line_start_char = rope.line_to_char(line_idx);
   let line_start_byte = rope.char_to_byte(line_start_char);
 
-  ast::Meta {
-    filename: filename.clone(),
+  Position {
     line: line_idx + 1,
     column: offset.saturating_sub(line_start_byte) + 1,
   }
@@ -91,7 +68,7 @@ mod tests {
     ]
     .join("\r\n");
 
-    let directives = parse_str(&src, "<string>").expect("CRLF input should parse");
+    let directives = parse_str(&src).expect("CRLF input should parse");
 
     assert_eq!(2, directives.len());
   }

@@ -1,5 +1,5 @@
 use crate::path_utils::resolve_path;
-use crate::{ParseError, ast};
+use crate::{ParseError, Position, ast, position_from_rope};
 use chrono::NaiveDate;
 use ropey::Rope;
 use rust_decimal::Decimal;
@@ -14,31 +14,13 @@ pub type SmallKeyValues = SmallVec<[KeyValue; 4]>;
 pub type SmallPostings = SmallVec<[Posting; 4]>;
 pub type SmallCustomValues = SmallVec<[CustomValue; 2]>;
 
-#[derive(Debug, Clone)]
-pub struct MetaAt<'a> {
-  filename: Arc<String>,
-  rope: &'a Rope,
-}
+fn meta_at(filename: &Arc<String>, rope: &Rope, offset: usize) -> ast::Meta {
+  let Position { line, column } = position_from_rope(rope, offset);
 
-impl<'a> MetaAt<'a> {
-  pub fn from_rope(filename: &str, rope: &'a Rope) -> Self {
-    Self {
-      filename: Arc::new(filename.to_string()),
-      rope,
-    }
-  }
-
-  pub fn at(&self, offset: usize) -> ast::Meta {
-    let rope = self.rope;
-    let char_idx = rope.byte_to_char(offset);
-    let line_idx = rope.char_to_line(char_idx);
-    let line_start_char = rope.line_to_char(line_idx);
-    let line_start_byte = rope.char_to_byte(line_start_char);
-    ast::Meta {
-      filename: self.filename.clone(),
-      line: line_idx + 1,
-      column: offset.saturating_sub(line_start_byte) + 1,
-    }
+  ast::Meta {
+    filename: Arc::clone(filename),
+    line,
+    column,
   }
 }
 
@@ -488,7 +470,8 @@ pub fn normalize_directives<'a>(
   source: &str,
 ) -> Result<Vec<CoreDirective>, ParseError> {
   let rope = Rope::from_str(source);
-  normalize_directives_with_meta(directives, MetaAt::from_rope(filename, &rope))
+  let filename = Arc::new(filename.to_string());
+  normalize_directives_with_meta(directives, &filename, &rope)
 }
 
 pub fn normalize_directives_with_rope<'a>(
@@ -496,137 +479,139 @@ pub fn normalize_directives_with_rope<'a>(
   filename: &str,
   rope: &Rope,
 ) -> Result<Vec<CoreDirective>, ParseError> {
-  normalize_directives_with_meta(directives, MetaAt::from_rope(filename, rope))
+  let filename = Arc::new(filename.to_string());
+  normalize_directives_with_meta(directives, &filename, rope)
 }
 
 fn normalize_directives_with_meta<'a>(
   directives: &[ast::Directive<'a>],
-  meta_at: MetaAt<'_>,
+  filename: &Arc<String>,
+  rope: &Rope,
 ) -> Result<Vec<CoreDirective>, ParseError> {
   directives
     .iter()
     .cloned()
-    .map(|directive| CoreDirective::try_from((directive, &meta_at)))
+    .map(|directive| CoreDirective::try_from((directive, filename, rope)))
     .collect()
 }
 
-impl<'a> TryFrom<(ast::Directive<'a>, &MetaAt<'_>)> for CoreDirective {
+impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Directive<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (directive, meta_at) = input;
+  fn try_from(input: (ast::Directive<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (directive, filename, rope) = input;
 
     match directive {
-      ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from((open, meta_at))?)),
-      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((close, meta_at))?)),
+      ast::Directive::Open(open) => Ok(CoreDirective::Open(Open::try_from((open, filename, rope))?)),
+      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((close, filename, rope))?)),
       ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from((
-        balance, meta_at,
+        balance, filename, rope,
       ))?)),
-      ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from((pad, meta_at))?)),
+      ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from((pad, filename, rope))?)),
       ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(Transaction::try_from((
-        txn, meta_at,
+        txn, filename, rope,
       ))?)),
       ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from((
-        cmdty, meta_at,
+        cmdty, filename, rope,
       ))?)),
-      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((price, meta_at))?)),
-      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((event, meta_at))?)),
-      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((query, meta_at))?)),
-      ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from((note, meta_at))?)),
+      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((price, filename, rope))?)),
+      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((event, filename, rope))?)),
+      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((query, filename, rope))?)),
+      ast::Directive::Note(note) => Ok(CoreDirective::Note(Note::try_from((note, filename, rope))?)),
       ast::Directive::Document(doc) => {
-        Ok(CoreDirective::Document(Document::try_from((doc, meta_at))?))
+        Ok(CoreDirective::Document(Document::try_from((doc, filename, rope))?))
       }
       ast::Directive::Custom(custom) => {
-        Ok(CoreDirective::Custom(Custom::try_from((custom, meta_at))?))
+        Ok(CoreDirective::Custom(Custom::try_from((custom, filename, rope))?))
       }
       ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from((
-        opt, meta_at,
+        opt, filename, rope,
       ))?)),
       ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from((
-        include, meta_at,
+        include, filename, rope,
       ))?)),
       ast::Directive::Plugin(plugin) => {
-        Ok(CoreDirective::Plugin(Plugin::try_from((plugin, meta_at))?))
+        Ok(CoreDirective::Plugin(Plugin::try_from((plugin, filename, rope))?))
       }
       ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from((
-        tag, meta_at,
+        tag, filename, rope,
       ))?)),
       ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from((
-        tag, meta_at,
+        tag, filename, rope,
       ))?)),
       ast::Directive::PushMeta(pm) => {
-        Ok(CoreDirective::PushMeta(PushMeta::try_from((pm, meta_at))?))
+        Ok(CoreDirective::PushMeta(PushMeta::try_from((pm, filename, rope))?))
       }
-      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((pm, meta_at))?)),
+      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((pm, filename, rope))?)),
       ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from((
-        comment, meta_at,
+        comment, filename, rope,
       ))?)),
       ast::Directive::Headline(headline) => Ok(CoreDirective::Headline(Headline::try_from((
-        headline, meta_at,
+        headline, filename, rope,
       ))?)),
-      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from((raw, meta_at))?)),
+      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from((raw, filename, rope))?)),
     }
   }
 }
 
-impl<'a> TryFrom<(ast::Raw<'a>, &MetaAt<'_>)> for Raw {
+impl<'a> TryFrom<(ast::Raw<'a>, &Arc<String>, &Rope)> for Raw {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Raw<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (raw, meta_at) = input;
+  fn try_from(input: (ast::Raw<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (raw, filename, rope) = input;
     Ok(Self {
-      meta: meta_at.at(raw.span.start),
+      meta: meta_at(filename, rope, raw.span.start),
       span: raw.span,
       text: raw.text.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<(ast::Comment<'a>, &MetaAt<'_>)> for Comment {
+impl<'a> TryFrom<(ast::Comment<'a>, &Arc<String>, &Rope)> for Comment {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Comment<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (comment, meta_at) = input;
+  fn try_from(input: (ast::Comment<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (comment, filename, rope) = input;
     Ok(Self {
-      meta: meta_at.at(comment.span.start),
+      meta: meta_at(filename, rope, comment.span.start),
       span: comment.span,
       text: comment.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt<'_>)> for Comment {
+impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Comment {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (headline, meta_at) = input;
+  fn try_from(input: (ast::Headline<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (headline, filename, rope) = input;
     Ok(Self {
-      meta: meta_at.at(headline.span.start),
+      meta: meta_at(filename, rope, headline.span.start),
       span: headline.span,
       text: headline.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<(ast::Headline<'a>, &MetaAt<'_>)> for Headline {
+impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Headline {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Headline<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (headline, meta_at) = input;
+  fn try_from(input: (ast::Headline<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (headline, filename, rope) = input;
     Ok(Self {
-      meta: meta_at.at(headline.span.start),
+      meta: meta_at(filename, rope, headline.span.start),
       span: headline.span,
       text: headline.text.content.to_string(),
     })
   }
 }
 
-impl<'a> TryFrom<(ast::Open<'a>, &MetaAt<'_>)> for Open {
+impl<'a> TryFrom<(ast::Open<'a>, &Arc<String>, &Rope)> for Open {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Open<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (open, meta_at) = input;
-    let meta = meta_at.at(open.span.start);
+  fn try_from(input: (ast::Open<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (open, filename, rope) = input;
+    let meta = meta_at(filename, rope, open.span.start);
     let key_values = open
       .key_values
       .into_iter()
@@ -652,12 +637,12 @@ impl<'a> TryFrom<(ast::Open<'a>, &MetaAt<'_>)> for Open {
   }
 }
 
-impl<'a> TryFrom<(ast::Close<'a>, &MetaAt<'_>)> for Close {
+impl<'a> TryFrom<(ast::Close<'a>, &Arc<String>, &Rope)> for Close {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Close<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (close, meta_at) = input;
-    let meta = meta_at.at(close.span.start);
+  fn try_from(input: (ast::Close<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (close, filename, rope) = input;
+    let meta = meta_at(filename, rope, close.span.start);
     let key_values = close
       .key_values
       .into_iter()
@@ -674,12 +659,12 @@ impl<'a> TryFrom<(ast::Close<'a>, &MetaAt<'_>)> for Close {
   }
 }
 
-impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt<'_>)> for Balance {
+impl<'a> TryFrom<(ast::Balance<'a>, &Arc<String>, &Rope)> for Balance {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Balance<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (balance, meta_at) = input;
-    let meta = meta_at.at(balance.span.start);
+  fn try_from(input: (ast::Balance<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (balance, filename, rope) = input;
+    let meta = meta_at(filename, rope, balance.span.start);
     let key_values = balance
       .key_values
       .into_iter()
@@ -698,12 +683,12 @@ impl<'a> TryFrom<(ast::Balance<'a>, &MetaAt<'_>)> for Balance {
   }
 }
 
-impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt<'_>)> for Pad {
+impl<'a> TryFrom<(ast::Pad<'a>, &Arc<String>, &Rope)> for Pad {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Pad<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (pad, meta_at) = input;
-    let meta = meta_at.at(pad.span.start);
+  fn try_from(input: (ast::Pad<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (pad, filename, rope) = input;
+    let meta = meta_at(filename, rope, pad.span.start);
     let key_values = pad
       .key_values
       .into_iter()
@@ -721,12 +706,12 @@ impl<'a> TryFrom<(ast::Pad<'a>, &MetaAt<'_>)> for Pad {
   }
 }
 
-impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt<'_>)> for Commodity {
+impl<'a> TryFrom<(ast::Commodity<'a>, &Arc<String>, &Rope)> for Commodity {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Commodity<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (cmdty, meta_at) = input;
-    let meta = meta_at.at(cmdty.span.start);
+  fn try_from(input: (ast::Commodity<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (cmdty, filename, rope) = input;
+    let meta = meta_at(filename, rope, cmdty.span.start);
     let key_values = cmdty
       .key_values
       .into_iter()
@@ -743,12 +728,12 @@ impl<'a> TryFrom<(ast::Commodity<'a>, &MetaAt<'_>)> for Commodity {
   }
 }
 
-impl<'a> TryFrom<(ast::Price<'a>, &MetaAt<'_>)> for Price {
+impl<'a> TryFrom<(ast::Price<'a>, &Arc<String>, &Rope)> for Price {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Price<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (price, meta_at) = input;
-    let meta = meta_at.at(price.span.start);
+  fn try_from(input: (ast::Price<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (price, filename, rope) = input;
+    let meta = meta_at(filename, rope, price.span.start);
     let key_values = price
       .key_values
       .into_iter()
@@ -766,12 +751,12 @@ impl<'a> TryFrom<(ast::Price<'a>, &MetaAt<'_>)> for Price {
   }
 }
 
-impl<'a> TryFrom<(ast::Event<'a>, &MetaAt<'_>)> for Event {
+impl<'a> TryFrom<(ast::Event<'a>, &Arc<String>, &Rope)> for Event {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Event<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (event, meta_at) = input;
-    let meta = meta_at.at(event.span.start);
+  fn try_from(input: (ast::Event<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (event, filename, rope) = input;
+    let meta = meta_at(filename, rope, event.span.start);
     let key_values = event
       .key_values
       .into_iter()
@@ -791,12 +776,12 @@ impl<'a> TryFrom<(ast::Event<'a>, &MetaAt<'_>)> for Event {
   }
 }
 
-impl<'a> TryFrom<(ast::Query<'a>, &MetaAt<'_>)> for Query {
+impl<'a> TryFrom<(ast::Query<'a>, &Arc<String>, &Rope)> for Query {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Query<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (query, meta_at) = input;
-    let meta = meta_at.at(query.span.start);
+  fn try_from(input: (ast::Query<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (query, filename, rope) = input;
+    let meta = meta_at(filename, rope, query.span.start);
     let key_values = query
       .key_values
       .into_iter()
@@ -816,12 +801,12 @@ impl<'a> TryFrom<(ast::Query<'a>, &MetaAt<'_>)> for Query {
   }
 }
 
-impl<'a> TryFrom<(ast::Note<'a>, &MetaAt<'_>)> for Note {
+impl<'a> TryFrom<(ast::Note<'a>, &Arc<String>, &Rope)> for Note {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Note<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (note, meta_at) = input;
-    let meta = meta_at.at(note.span.start);
+  fn try_from(input: (ast::Note<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (note, filename, rope) = input;
+    let meta = meta_at(filename, rope, note.span.start);
     let key_values = note
       .key_values
       .into_iter()
@@ -840,12 +825,12 @@ impl<'a> TryFrom<(ast::Note<'a>, &MetaAt<'_>)> for Note {
   }
 }
 
-impl<'a> TryFrom<(ast::Document<'a>, &MetaAt<'_>)> for Document {
+impl<'a> TryFrom<(ast::Document<'a>, &Arc<String>, &Rope)> for Document {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Document<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (doc, meta_at) = input;
-    let meta = meta_at.at(doc.span.start);
+  fn try_from(input: (ast::Document<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (doc, filename, rope) = input;
+    let meta = meta_at(filename, rope, doc.span.start);
     let key_values = doc
       .key_values
       .into_iter()
@@ -882,12 +867,12 @@ impl<'a> TryFrom<(ast::Document<'a>, &MetaAt<'_>)> for Document {
   }
 }
 
-impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt<'_>)> for Custom {
+impl<'a> TryFrom<(ast::Custom<'a>, &Arc<String>, &Rope)> for Custom {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Custom<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (custom, meta_at) = input;
-    let meta = meta_at.at(custom.span.start);
+  fn try_from(input: (ast::Custom<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (custom, filename, rope) = input;
+    let meta = meta_at(filename, rope, custom.span.start);
     let key_values = custom
       .key_values
       .into_iter()
@@ -911,12 +896,12 @@ impl<'a> TryFrom<(ast::Custom<'a>, &MetaAt<'_>)> for Custom {
   }
 }
 
-impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt<'_>)> for OptionDirective {
+impl<'a> TryFrom<(ast::OptionDirective<'a>, &Arc<String>, &Rope)> for OptionDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::OptionDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (opt, meta_at) = input;
-    let meta = meta_at.at(opt.span.start);
+  fn try_from(input: (ast::OptionDirective<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (opt, filename, rope) = input;
+    let meta = meta_at(filename, rope, opt.span.start);
     let key = unquote_json(opt.key.content, &meta, "option key")?;
     let value = unquote_json(opt.value.content, &meta, "option value")?;
     Ok(Self {
@@ -928,12 +913,12 @@ impl<'a> TryFrom<(ast::OptionDirective<'a>, &MetaAt<'_>)> for OptionDirective {
   }
 }
 
-impl<'a> TryFrom<(ast::Include<'a>, &MetaAt<'_>)> for Include {
+impl<'a> TryFrom<(ast::Include<'a>, &Arc<String>, &Rope)> for Include {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Include<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (include, meta_at) = input;
-    let meta = meta_at.at(include.span.start);
+  fn try_from(input: (ast::Include<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (include, filename, rope) = input;
+    let meta = meta_at(filename, rope, include.span.start);
     let fname = unquote_json(include.filename.content, &meta, "include filename")?;
     let resolved = resolve_path(&meta.filename, &fname);
     Ok(Self {
@@ -944,12 +929,12 @@ impl<'a> TryFrom<(ast::Include<'a>, &MetaAt<'_>)> for Include {
   }
 }
 
-impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt<'_>)> for Plugin {
+impl<'a> TryFrom<(ast::Plugin<'a>, &Arc<String>, &Rope)> for Plugin {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Plugin<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (plugin, meta_at) = input;
-    let meta = meta_at.at(plugin.span.start);
+  fn try_from(input: (ast::Plugin<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (plugin, filename, rope) = input;
+    let meta = meta_at(filename, rope, plugin.span.start);
     let config = if let Some(raw) = plugin.config {
       match unquote_json(raw.content, &meta, "plugin config") {
         Ok(val) => Some(val),
@@ -981,12 +966,12 @@ impl<'a> TryFrom<(ast::Plugin<'a>, &MetaAt<'_>)> for Plugin {
   }
 }
 
-impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt<'_>)> for TagDirective {
+impl<'a> TryFrom<(ast::TagDirective<'a>, &Arc<String>, &Rope)> for TagDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::TagDirective<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (tag, meta_at) = input;
-    let meta = meta_at.at(tag.span.start);
+  fn try_from(input: (ast::TagDirective<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (tag, filename, rope) = input;
+    let meta = meta_at(filename, rope, tag.span.start);
     let tag_value = tag.tag.content.strip_prefix('#').unwrap_or(tag.tag.content);
     Ok(Self {
       meta,
@@ -996,12 +981,12 @@ impl<'a> TryFrom<(ast::TagDirective<'a>, &MetaAt<'_>)> for TagDirective {
   }
 }
 
-impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt<'_>)> for PushMeta {
+impl<'a> TryFrom<(ast::PushMeta<'a>, &Arc<String>, &Rope)> for PushMeta {
   type Error = ParseError;
 
-  fn try_from(input: (ast::PushMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (pm, meta_at) = input;
-    let meta = meta_at.at(pm.span.start);
+  fn try_from(input: (ast::PushMeta<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (pm, filename, rope) = input;
+    let meta = meta_at(filename, rope, pm.span.start);
     let value = parse_key_value_value(pm.value, &meta, "pushmeta value", true)?;
     Ok(Self {
       meta,
@@ -1012,13 +997,13 @@ impl<'a> TryFrom<(ast::PushMeta<'a>, &MetaAt<'_>)> for PushMeta {
   }
 }
 
-impl<'a> TryFrom<(ast::PopMeta<'a>, &MetaAt<'_>)> for PopMeta {
+impl<'a> TryFrom<(ast::PopMeta<'a>, &Arc<String>, &Rope)> for PopMeta {
   type Error = ParseError;
 
-  fn try_from(input: (ast::PopMeta<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (pm, meta_at) = input;
+  fn try_from(input: (ast::PopMeta<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (pm, filename, rope) = input;
     Ok(Self {
-      meta: meta_at.at(pm.span.start),
+      meta: meta_at(filename, rope, pm.span.start),
       span: pm.span,
       key: pm.key.content.to_string(),
     })
@@ -1071,12 +1056,12 @@ impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
   }
 }
 
-impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt<'_>)> for Posting {
+impl<'a> TryFrom<(ast::Posting<'a>, &Arc<String>, &Rope)> for Posting {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Posting<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (posting, meta_at) = input;
-    let meta = meta_at.at(posting.span.start);
+  fn try_from(input: (ast::Posting<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (posting, filename, rope) = input;
+    let meta = meta_at(filename, rope, posting.span.start);
     let cost_spec = posting
       .cost_spec
       .map(|c| CostSpec::try_from((c, &meta)))
@@ -1101,12 +1086,12 @@ impl<'a> TryFrom<(ast::Posting<'a>, &MetaAt<'_>)> for Posting {
   }
 }
 
-impl<'a> TryFrom<(ast::Transaction<'a>, &MetaAt<'_>)> for Transaction {
+impl<'a> TryFrom<(ast::Transaction<'a>, &Arc<String>, &Rope)> for Transaction {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Transaction<'a>, &MetaAt)) -> Result<Self, Self::Error> {
-    let (txn, meta_at) = input;
-    let meta = meta_at.at(txn.span.start);
+  fn try_from(input: (ast::Transaction<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (txn, filename, rope) = input;
+    let meta = meta_at(filename, rope, txn.span.start);
     let payee = txn
       .payee
       .map(|p| unquote_json(p.content, &meta, "payee"))
@@ -1141,7 +1126,7 @@ impl<'a> TryFrom<(ast::Transaction<'a>, &MetaAt<'_>)> for Transaction {
       postings: txn
         .postings
         .into_iter()
-        .map(|p| Posting::try_from((p, meta_at)))
+        .map(|p| Posting::try_from((p, filename, rope)))
         .collect::<Result<_, _>>()?,
     })
   }

@@ -86,6 +86,6 @@ fn transaction_tags_and_links_content() {
     r#"  #c ^link2 #a"#,
   ]);
 
-  beancount_parser::parse_str(&input, "book.bean")
+  beancount_parser::parse_str(&input)
     .expect_err("tags/links must be inline on the transaction header line");
 }

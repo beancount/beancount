@@ -1213,7 +1213,7 @@ fn parse_source(
   let options_map = default_options_map(py)?;
   options_map.set_item("filename", filename)?;
 
-  let directives = match parse_str(content, filename) {
+  let directives = match parse_str(content) {
     Ok(directives) => directives,
     Err(err) => {
       options_map.set_item("include", PyList::empty(py))?;
