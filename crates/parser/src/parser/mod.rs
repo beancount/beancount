@@ -33,7 +33,7 @@ mod transaction;
 fn skipped_line_parser<'src>()
 -> impl Parser<'src, &'src str, Option<Box<ast::Directive<'src>>>, Error<'src>> {
   choice((
-    common::ws0_parser().then_ignore(just('\n')).to(None),
+    common::ws0_parser().then_ignore(common::newline()).to(None),
     common::ws1_parser().then_ignore(end()).to(None),
   ))
 }

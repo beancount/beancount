@@ -74,3 +74,25 @@ impl std::error::Error for ParseError {}
 pub type Result<T> = std::result::Result<T, ParseError>;
 
 pub type Error<'src> = extra::Err<Simple<'src, char>>;
+
+#[cfg(test)]
+mod tests {
+  use super::parse_str;
+
+  #[test]
+  fn parses_crlf_input() {
+    let src = [
+      "2014-01-01 open Assets:Cash USD",
+      "",
+      "2014-01-02 * \"Lunch\"",
+      "  Assets:Cash -10 USD",
+      "  Expenses:Food 10 USD",
+      "",
+    ]
+    .join("\r\n");
+
+    let directives = parse_str(&src, "<string>").expect("CRLF input should parse");
+
+    assert_eq!(2, directives.len());
+  }
+}

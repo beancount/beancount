@@ -16,8 +16,12 @@ pub(super) fn ws1_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>
     .ignored()
 }
 
+pub(super) fn newline<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
+  choice((just("\r\n"), just('\n'))).ignored()
+}
+
 pub(super) fn line_end<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  choice((just("\r\n").ignored(), just('\n').ignored(), end()))
+  choice((newline(), end()))
 }
 
 pub(super) fn not_eol_parser<'src>() -> impl Parser<'src, &'src str, char, Error<'src>> {
