@@ -39,10 +39,10 @@ pub(super) fn keyword_span_parser<'src>(
 
 pub(super) fn quoted_string_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
-  // Support only escaped quotes (\") inside strings; other backslashes are taken literally.
+  // Only \" is special; all other characters, including backslashes, are taken literally.
   let escape_quote = just('\\').ignore_then(just('"'));
   // Allow newlines in quoted strings; only an unescaped '"' terminates.
-  let unescaped = any().filter(|c: &char| *c != '"' && *c != '\\');
+  let unescaped = any().filter(|c: &char| *c != '"');
 
   just('"')
     .ignore_then(choice((escape_quote, unescaped)).repeated().to_slice())

@@ -22,3 +22,20 @@ fn include_directive_resolves_path() {
 
   assert_eq!(include, expected);
 }
+
+#[cfg(windows)]
+#[test]
+fn include_directive_handles_windows_escaped_backslashes() {
+  let filename = "C:/ledger/main.bean";
+  let input = lines(&[r#"include "C:\\Users\\alice\\books\\main.bean""#]);
+
+  let include: Include = parse_as(&input, filename);
+
+  let expected = Include {
+    meta: include.meta.clone(),
+    span: include.span,
+    filename: "C:\\Users\\alice\\books\\main.bean".to_string(),
+  };
+
+  assert_eq!(include, expected);
+}
