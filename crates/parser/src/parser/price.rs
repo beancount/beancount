@@ -4,8 +4,8 @@ use smallvec::SmallVec;
 use crate::{Error, ast};
 
 use super::common::{
-  date_parser, key_value_block_parser, keyword_span_parser, spanned_token_parser, ws0_parser,
-  ws1_parser,
+  date_parser, key_value_block_parser, keyword_span_parser, not_eol_parser, spanned_token_parser,
+  ws0_parser, ws1_parser,
 };
 
 pub(super) fn price_directive_parser<'src>()
@@ -36,7 +36,7 @@ pub(super) fn price_directive_parser<'src>()
 
   let comment = ws0_parser()
     .ignore_then(just(';'))
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .ignore_then(not_eol_parser().repeated().to_slice())
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)

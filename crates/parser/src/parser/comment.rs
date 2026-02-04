@@ -2,17 +2,17 @@ use chumsky::prelude::*;
 
 use crate::{Error, ast};
 
-use super::common::ws0_parser;
+use super::common::{not_eol_parser, ws0_parser};
 
 pub(super) fn comment_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let semicolon_comment = ws0_parser()
     .ignore_then(just(';'))
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated())
+    .ignore_then(not_eol_parser().repeated())
     .to_slice();
 
   let hash_comment = just('#')
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated())
+    .ignore_then(not_eol_parser().repeated())
     .to_slice();
 
   choice((semicolon_comment, hash_comment)).map_with(|text: &str, e| {

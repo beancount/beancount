@@ -17,7 +17,11 @@ pub(super) fn ws1_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>
 }
 
 pub(super) fn line_end<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  choice((just('\n').ignored(), end()))
+  choice((just("\r\n").ignored(), just('\n').ignored(), end()))
+}
+
+pub(super) fn not_eol_parser<'src>() -> impl Parser<'src, &'src str, char, Error<'src>> {
+  any().filter(|c: &char| *c != '\n' && *c != '\r')
 }
 
 pub(super) fn keyword_span_parser<'src>(
@@ -31,8 +35,13 @@ pub(super) fn keyword_span_parser<'src>(
 
 pub(super) fn quoted_string_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
+  // Support only escaped quotes (\") inside strings; other backslashes are taken literally.
+  let escape_quote = just('\\').ignore_then(just('"'));
+  // Allow newlines in quoted strings; only an unescaped '"' terminates.
+  let unescaped = any().filter(|c: &char| *c != '"' && *c != '\\');
+
   just('"')
-    .ignore_then(any().filter(|c: &char| *c != '"').repeated().to_slice())
+    .ignore_then(choice((escape_quote, unescaped)).repeated().to_slice())
     .then_ignore(just('"'))
     .map_with(|_: &str, e| {
       let span: SimpleSpan = e.span();
@@ -86,8 +95,8 @@ pub(super) fn date_parser<'src>()
 
 pub(super) fn rest_trimmed_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
-  any()
-    .filter(|c: &char| *c != '\n' && *c != ';')
+  not_eol_parser()
+    .filter(|c: &char| *c != ';')
     .repeated()
     .to_slice()
     .map_with(|value: &str, e| {
@@ -105,8 +114,7 @@ pub(super) fn rest_trimmed_parser<'src>()
 
 pub(super) fn tags_links_line_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
-  any()
-    .filter(|c: &char| *c != '\n')
+  not_eol_parser()
     .repeated()
     .at_least(1)
     .to_slice()
@@ -128,7 +136,7 @@ pub(super) fn inline_comment_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
   ws0_parser()
     .ignore_then(just(';'))
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .ignore_then(not_eol_parser().repeated().to_slice())
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)

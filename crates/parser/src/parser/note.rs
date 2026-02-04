@@ -5,14 +5,14 @@ use crate::{Error, ast};
 
 use super::common::{
   date_parser, inline_comment_parser, key_value_block_parser, keyword_span_parser,
-  spanned_token_parser, ws0_parser, ws1_parser,
+  not_eol_parser, spanned_token_parser, ws0_parser, ws1_parser,
 };
 
 pub(super) fn note_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
-  let note = any()
-    .filter(|c: &char| *c != '\n' && *c != ';')
+  let note = not_eol_parser()
+    .filter(|c: &char| *c != ';')
     .repeated()
     .to_slice()
     .map_with(|value: &str, e| {

@@ -5,8 +5,9 @@ use crate::utils::{looks_like_currency, parse_tags_links, split_tags_links_group
 use crate::{Error, ast};
 
 use super::common::{
-  currency_token_parser, date_parser, indented_key_value_parser, line_end, quoted_string_parser,
-  rest_trimmed_parser, spanned_token_parser, ws0_parser, ws1_parser,
+  currency_token_parser, date_parser, indented_key_value_parser, line_end, not_eol_parser,
+  inline_comment_parser, quoted_string_parser, rest_trimmed_parser, spanned_token_parser,
+  ws0_parser, ws1_parser,
 };
 use super::number::number_expr_parser;
 
@@ -23,18 +24,24 @@ struct TransactionHeader<'a> {
 enum TxnBodyLine<'a> {
   Posting(ast::Posting<'a>),
   KeyValue(ast::KeyValue<'a>),
-  Comment(ast::WithSpan<&'a str>),
 }
 
 pub(super) fn transaction_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
+  let body_line = choice((posting_line_parser(), transaction_key_value_line_parser()));
+
+  // Parse one or more body lines when present; allow an empty body only if no input is consumed.
+  let body = body_line
+    .repeated()
+    .at_least(1)
+    .collect::<Vec<_>>()
+    .or_not()
+    .map(|opt| opt.unwrap_or_default());
+
   transaction_header_parser()
+    .then_ignore(ws0_parser())
     .then_ignore(line_end())
-    .then(
-      transaction_body_line_parser()
-        .repeated()
-        .collect::<Vec<_>>(),
-    )
+    .then(body)
     .map_with(move |(directive, body), e| {
       let span: SimpleSpan = e.span();
       let span = ast::Span::from_range(span.start, span.end);
@@ -46,14 +53,21 @@ pub(super) fn transaction_directive_parser<'src>()
 fn transaction_header_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Transaction<'src>, Error<'src>> {
   let flag = spanned_token_parser().filter(|value| {
-    let chars = value.content.chars().collect::<Vec<_>>();
-    let is_single_flag = chars.len() == 1 && !chars[0].is_ascii_digit();
-    value.content == "txn" || is_single_flag
+    let mut chars = value.content.chars();
+    match (chars.next(), chars.next()) {
+      (Some(ch), None) => "!&?%PSTCURM*#".contains(ch),
+      (None, _) => false,
+      _ => value.content == "txn",
+    }
   });
 
   // Optional quoted strings: two => payee + narration, one => narration only.
-  let payee_narration = ws1_parser()
-    .ignore_then(quoted_string_parser())
+  // Consume leading whitespace only if a quote follows; otherwise allow trailing spaces after the flag.
+  let quoted_after_ws = ws1_parser()
+    .then_ignore(just('"').rewind())
+    .ignore_then(quoted_string_parser());
+
+  let payee_narration = quoted_after_ws
     .then(ws1_parser().ignore_then(quoted_string_parser()).or_not())
     .or_not();
 
@@ -64,12 +78,15 @@ fn transaction_header_parser<'src>()
     .map(|group| split_tags_links_group(group))
     .or_not();
 
+  let inline_comment = ws0_parser().ignore_then(inline_comment_parser()).or_not();
+
   date_parser()
     .then_ignore(ws1_parser())
     .then(flag)
     .then(payee_narration)
     .then(inline_tags_links)
-    .map_with(|(((date, flag), payee_narration), tags_links), e| {
+    .then(inline_comment)
+    .map_with(|((((date, flag), payee_narration), tags_links), comment), e| {
       let span: SimpleSpan = e.span();
       let span = ast::Span::from_range(span.start, span.end);
 
@@ -86,24 +103,15 @@ fn transaction_header_parser<'src>()
         payee,
         narration,
         tags_links,
+        comment,
         tags: SmallVec::new(),
         links: SmallVec::new(),
-        comment: None,
         tags_links_lines: SmallVec::new(),
         comments: SmallVec::new(),
         key_values: SmallVec::new(),
         postings: SmallVec::new(),
       }
     })
-}
-
-fn transaction_body_line_parser<'src>()
--> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
-  choice((
-    posting_line_parser(),
-    transaction_key_value_line_parser(),
-    transaction_comment_line_parser(),
-  ))
 }
 
 fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src
@@ -131,30 +139,12 @@ fn transaction_key_value_line_parser<'src>()
     })
 }
 
-fn transaction_comment_line_parser<'src>()
--> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
-  // Only semicolon-led comments are allowed inside transaction bodies; lines starting with '#' would be parsed as tags/links and are invalid here.
-  ws0_parser()
-    .ignore_then(just(';'))
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated())
-    .to_slice()
-    .map_with(|text: &str, e| {
-      let span: SimpleSpan = e.span();
-      TxnBodyLine::Comment(ast::WithSpan::new(
-        ast::Span::from_range(span.start, span.end),
-        text,
-      ))
-    })
-    .then_ignore(line_end())
-}
-
 fn finalize_transaction<'a>(
   mut txn: ast::Transaction<'a>,
   body: Vec<TxnBodyLine<'a>>,
   span: ast::Span,
 ) -> ast::Transaction<'a> {
   let tags_links_lines: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
-  let mut comments: SmallVec<[ast::WithSpan<&'a str>; 8]> = SmallVec::new();
   let mut key_values: SmallVec<[ast::KeyValue<'a>; 4]> = SmallVec::new();
   let mut postings: SmallVec<[ast::Posting<'a>; 4]> = SmallVec::new();
 
@@ -168,14 +158,13 @@ fn finalize_transaction<'a>(
           key_values.push(kv);
         }
       }
-      TxnBodyLine::Comment(comment) => comments.push(comment),
     }
   }
 
   txn.span = span;
   txn.postings = postings;
   txn.key_values = key_values;
-  txn.comments = comments;
+  txn.comments = SmallVec::new();
 
   let mut tags_links_lines = tags_links_lines;
   if let Some(inline_groups) = txn.tags_links.clone() {
@@ -263,7 +252,7 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
   });
 
   let comment = just(';')
-    .ignore_then(any().filter(|c: &char| *c != '\n').repeated().to_slice())
+    .ignore_then(not_eol_parser().repeated().to_slice())
     .map_with(|text: &str, e| {
       let span: SimpleSpan = e.span();
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), text)
