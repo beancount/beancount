@@ -299,13 +299,11 @@ fn recovery_error<'src>(span: SimpleSpan) -> Rich<'src, char> {
 }
 
 pub(super) fn directive_end_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
-  newline()
-    .repeated()
-    .then_ignore(choice((
-      end(),
-      any()
-        .filter(|c: &char| !(*c).is_whitespace())
-        .ignored()
-        .rewind(),
-    )))
+  newline().repeated().then_ignore(choice((
+    end(),
+    any()
+      .filter(|c: &char| !(*c).is_whitespace())
+      .ignored()
+      .rewind(),
+  )))
 }

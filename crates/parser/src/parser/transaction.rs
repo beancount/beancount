@@ -62,8 +62,6 @@ pub(super) fn transaction_directive_parser<'src>()
           (Some(payee), Some(narration)) => (Some(payee), Some(narration)),
         };
 
-        let tags_links = tags_links;
-
         let (tags, links) = match tags_links.clone() {
           Some(line) => parse_tags_links(line),
           None => (SmallVec::new(), SmallVec::new()),
@@ -73,8 +71,8 @@ pub(super) fn transaction_directive_parser<'src>()
           span,
           date,
           txn: Some(flag),
-          payee: payee,
-          narration: narration,
+          payee,
+          narration,
           tags_links,
           comment,
           tags,

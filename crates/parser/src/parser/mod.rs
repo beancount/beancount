@@ -118,11 +118,12 @@ fn declarations_parser_strict<'src>()
 pub fn parse_str_with_rope<'a>(source: &'a str) -> (Vec<ast::Directive<'a>>, Rope) {
   let rope = Rope::from_str(source);
 
+  #[allow(clippy::expect_used)]
   let directives = declarations_parser()
     .then_ignore(end())
     .parse(source)
     .into_output()
-    .expect("parser should produce directives");
+    .expect("parser should produce directives, the valid parser is expected to be parsed as raw");
 
   let directives: Vec<_> = directives.into_iter().flatten().collect();
 
