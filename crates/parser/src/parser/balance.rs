@@ -15,16 +15,30 @@ pub(super) fn balance_directive_parser<'src>()
 
   let currency = || spanned_token_parser().filter(|value| looks_like_currency(value.content));
 
-  let tolerance = ws0_parser()
-    .ignore_then(just('~'))
-    .ignore_then(ws0_parser())
-    .ignore_then(number_literal_parser())
-    .or_not();
+  let currency_after = || ws1_parser().ignore_then(currency());
+
+  let tolerance = || {
+    ws0_parser()
+      .ignore_then(just('~'))
+      .ignore_then(ws0_parser())
+      .ignore_then(number_literal_parser())
+  };
 
   let amount = number_literal_parser()
-    .then(tolerance)
-    .then(ws1_parser().ignore_then(currency()))
-    .map_with(|((number, tolerance), currency), e| {
+    .then(choice((
+      tolerance()
+        .then(currency_after())
+        .map(|(tolerance, currency)| (Some(tolerance), currency)),
+      currency_after()
+        .then(
+          tolerance()
+            .then(currency_after().or_not())
+            .map(|(tolerance, _)| tolerance)
+            .or_not(),
+        )
+        .map(|(currency, tolerance)| (tolerance, currency)),
+    )))
+    .map_with(|(number, (tolerance, currency)), e| {
       let span: SimpleSpan = e.span();
       let raw_span = ast::Span::from_range(span.start, span.end);
       let raw: &str = e.slice();
