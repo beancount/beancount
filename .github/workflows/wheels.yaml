@@ -66,27 +66,10 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-<<<<<<< HEAD
           target: ${{ matrix.platform.target }}
           args: --release --out dist -i python3.9
           sccache: true
           manylinux: auto
-=======
-          architecture: x64
-        if: runner.os == 'Windows' && matrix.architecture == 'AMD64'
-      - uses: bus1/cabuild/action/msdevshell@v1
-        with:
-          architecture: x86
-        if: runner.os == 'Windows' && matrix.architecture == 'x86'
-
-
-      - run: pip install cibuildwheel~=3.3.0
-
-      - run: cibuildwheel
-        env:
-          CIBW_SKIP: '*-musllinux*'
-          CIBW_ARCHS: ${{ matrix.architecture }}
->>>>>>> eb8be17c (use pypi distributed flex/bison)
 
       - uses: actions/upload-artifact@v4
         with:
