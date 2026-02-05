@@ -4,7 +4,7 @@ unused accounts. This can be used as a convenience for doing demos, or when
 setting up your initial transactions, as an intermediate step.
 """
 
-__copyright__ = "Copyright (C) 2014-2017, 2022, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017, 2022, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import data

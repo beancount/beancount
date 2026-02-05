@@ -2,7 +2,7 @@
 This code is used by the full booking algorithm.
 """
 
-__copyright__ = "Copyright (C) 2015-2017, 2019-2022, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017, 2019-2022, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from decimal import Decimal

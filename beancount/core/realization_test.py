@@ -1,6 +1,6 @@
 """Unit tests for realizations."""
 
-__copyright__ = "Copyright (C) 2013-2017, 2019-2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017, 2019-2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy

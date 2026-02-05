@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the loaded options map."""
 
-__copyright__ = "Copyright (C) 2013, 2021, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013, 2021, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

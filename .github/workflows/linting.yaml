@@ -25,8 +25,18 @@ jobs:
         with:
           python-version: '3.13'
       - uses: astral-sh/setup-uv@v5
-      - run: pip install ruff
       - run: make lint
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v7
+      - run: uv tool install pre-commit --
+      - run: pre-commit run --all-files --show-diff-on-failure --color=always
 
   mypy:
     runs-on: ubuntu-latest
@@ -36,10 +46,5 @@ jobs:
         with:
           python-version: '3.13'
 
-      # pip doesn't support this
-      - uses: astral-sh/setup-uv@v7
-        with:
-          activate-environment: true
-
-      - run: uv sync --dev
-      - run: mypy .
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run --no-dev --group types mypy .

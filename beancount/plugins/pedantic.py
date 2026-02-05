@@ -1,6 +1,6 @@
 """A plugin of plugins which triggers all the pedantic plugins."""
 
-__copyright__ = "Copyright (C) 2017, 2022, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2017, 2022, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount import loader

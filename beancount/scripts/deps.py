@@ -3,7 +3,7 @@
 This is meant to be used as an error diagnostic tool.
 """
 
-__copyright__ = "Copyright (C) 2014-2021, 2023-2024  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2021, 2023-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import sys

@@ -7,7 +7,7 @@ created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
 
-__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

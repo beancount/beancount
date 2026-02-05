@@ -22,6 +22,21 @@ requires-python = ">=3.9"
 dependencies = ["click >=7.0", "python-dateutil >=2.6.0", "regex >=2022.9.13"]
 dynamic = ["version"]
 
+[dependency-groups]
+test = [
+    "pytest",
+]
+types = [
+    "mypy",
+    "types-python-dateutil",
+    "types-regex",
+]
+# The dev group will automatically be installed by uv when using e.g. `uv sync`
+dev = [
+    { include-group = "test" },
+    { include-group = "types" },
+]
+
 [project.scripts]
 bean-check = "beancount.scripts.check:main"
 bean-doctor = "beancount.scripts.doctor:main"
@@ -64,6 +79,10 @@ line-length = 92
 
 # Please note: We use 'ruff format' to autoformat buffers.
 # See 'rust-format.el' and .dir-locals.el at the root of the project.
+
+[tool.pytest.ini_options]
+testpaths = ["beancount"]
+
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -123,14 +142,3 @@ max-complexity = 10
 
 [tool.uv]
 package = false
-
-[dependency-groups]
-dev = [
-    "mypy>=1.19.1",
-    # somehow mypy will raised a error in deps tree
-    # so we need to set pytest<9
-    "pytest",
-    "rich>=14.2.0",
-    "types-python-dateutil>=2.9.0.20251115",
-    "types-regex>=2025.11.3.20251106",
-]

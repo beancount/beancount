@@ -4,7 +4,7 @@ This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
 
-__copyright__ = "Copyright (C) 2014-2022, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2022, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

@@ -5,7 +5,7 @@ See types below for details.
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2013-2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2020, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
@@ -81,6 +81,8 @@ def cost_to_str(cost, dformat, detail=True):
     if isinstance(cost, Cost):
         if isinstance(cost.number, Decimal):
             strlist.append(Amount(cost.number, cost.currency).to_string(dformat))
+        elif isinstance(cost.currency, str):
+            strlist.append(cost.currency)
         if detail:
             if cost.date:
                 strlist.append(cost.date.isoformat())

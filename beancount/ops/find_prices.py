@@ -1,6 +1,6 @@
 """A library of codes create price fetching jobs from strings and files."""
 
-__copyright__ = "Copyright (C) 2015-2020, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import data

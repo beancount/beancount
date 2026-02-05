@@ -4,7 +4,7 @@ from making the mistake of selling a lot without specifying it via its cost
 basis.
 """
 
-__copyright__ = "Copyright (C) 2016-2017, 2024  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

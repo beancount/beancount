@@ -27,6 +27,6 @@ repos:
     # when we update this version, need also update schema-store and version of ruff inside Makefile to match it.
     rev: 'v0.14.10'
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ --fix ]
       - id: ruff-format

@@ -4,7 +4,7 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
-PYTHON ?= python3
+PYTHON ?= uv run python
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
@@ -154,13 +154,13 @@ constraints dep-constraints: build/beancount.deps
 
 
 # Run the linter on all source code.
-# use same version with pre-commit hooks
+# keep the version in sync with ruff version we have in pre-commit-config.yaml
 ruff lint:
 	NO_COLOR=1 uv tool run 'ruff==0.14.10' check .
 	NO_COLOR=1 uv tool run 'ruff==0.14.10' format .
 
 mypy typecheck:
-	NO_COLOR=1 uv run --with mypy --with types-python-dateutil --with types-regex mypy .
+	NO_COLOR=1 uv run mypy .
 
 # Check everything.
 status check: filter-terms missing-tests dep-constraints multi-imports test
