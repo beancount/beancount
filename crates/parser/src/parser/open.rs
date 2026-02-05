@@ -1,12 +1,13 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
+use crate::parser::common::account_parser;
 use crate::utils::split_currencies;
 use crate::{Error, ast};
 
 use super::common::{
   bare_string_parser, date_parser, inline_comment_parser, key_value_block_parser,
-  keyword_span_parser, quoted_string_parser, spanned_token_parser, ws0_parser, ws1_parser,
+  keyword_span_parser, quoted_string_parser, ws0_parser, ws1_parser,
 };
 
 pub(super) fn open_directive_parser<'src>()
@@ -19,7 +20,7 @@ pub(super) fn open_directive_parser<'src>()
     .then_ignore(ws1_parser())
     .then(keyword_span_parser("open"))
     .then_ignore(ws1_parser())
-    .then(spanned_token_parser())
+    .then(account_parser())
     .then(
       ws1_parser()
         .ignore_then(open_currency)

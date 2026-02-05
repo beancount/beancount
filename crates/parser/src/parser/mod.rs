@@ -30,14 +30,14 @@ mod raw;
 mod transaction;
 
 #[cfg(feature = "rich-errors")]
-type StrictError<'src> = chumsky::error::Rich<'src, char>;
+pub type StrictError<'src> = chumsky::error::Rich<'src, char>;
 #[cfg(not(feature = "rich-errors"))]
-type StrictError<'src> = chumsky::error::Simple<'src, char>;
+pub type StrictError<'src> = chumsky::error::Simple<'src, char>;
 
 fn skipped_line_parser<'src>()
 -> impl Parser<'src, &'src str, Option<ast::Directive<'src>>, Error<'src>> {
   choice((
-    common::ws0_parser().then_ignore(common::newline()).to(None),
+    common::ws0_parser().then_ignore(common::eol()).to(None),
     common::ws1_parser().then_ignore(end()).to(None),
   ))
 }
@@ -115,23 +115,20 @@ fn declarations_parser_strict<'src>()
     .boxed()
 }
 
-pub fn parse_str_with_rope<'a>(source: &'a str) -> (Vec<ast::Directive<'a>>, Rope) {
+pub fn parse_lossy_with_rope<'a>(source: &'a str) -> (Vec<ast::Directive<'a>>, Rope) {
   let rope = Rope::from_str(source);
-
-  #[allow(clippy::expect_used)]
-  let directives = declarations_parser()
+  let directives: Vec<ast::Directive<'a>> = declarations_parser()
     .then_ignore(end())
     .parse(source)
     .into_output()
-    .expect("parser should produce directives, the valid parser is expected to be parsed as raw");
-
-  let directives: Vec<_> = directives.into_iter().flatten().collect();
+    .map(|directives| directives.into_iter().flatten().collect())
+    .unwrap_or_else(Vec::new);
 
   (directives, rope)
 }
 
-pub fn parse_str<'a>(source: &'a str) -> Vec<ast::Directive<'a>> {
-  parse_str_with_rope(source).0
+pub fn parse_lossy<'a>(source: &'a str) -> Vec<ast::Directive<'a>> {
+  parse_lossy_with_rope(source).0
 }
 
 /// Parse without falling back to `Raw` on errors, useful for tests and debugging.
@@ -139,12 +136,14 @@ pub fn parse_str_strict_with_rope<'a>(
   source: &'a str,
 ) -> Result<(Vec<ast::Directive<'a>>, Rope), Vec<StrictError<'a>>> {
   let rope = Rope::from_str(source);
-
   declarations_parser_strict()
     .then_ignore(end())
     .parse(source)
     .into_result()
-    .map(|directives| (directives.into_iter().flatten().collect(), rope))
+    .map(|directives| {
+      let directives: Vec<ast::Directive<'a>> = directives.into_iter().flatten().collect();
+      (directives, rope)
+    })
 }
 
 /// Parse without recovery to `Raw`; returns errors instead.

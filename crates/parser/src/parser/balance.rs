@@ -1,6 +1,7 @@
 use chumsky::prelude::*;
 use smallvec::SmallVec;
 
+use crate::parser::common;
 use crate::utils::looks_like_currency;
 use crate::{Error, ast};
 
@@ -60,9 +61,9 @@ pub(super) fn balance_directive_parser<'src>()
 
   let header = date
     .then_ignore(ws1_parser())
-    .then(super::common::keyword_span_parser("balance"))
+    .then(common::keyword_span_parser("balance"))
     .then_ignore(ws1_parser())
-    .then(spanned_token_parser())
+    .then(common::account_parser())
     .then_ignore(ws1_parser())
     .then(amount)
     .then_ignore(ws0_parser());
@@ -88,5 +89,4 @@ pub(super) fn balance_directive_parser<'src>()
         key_values,
       })
     })
-    .boxed()
 }

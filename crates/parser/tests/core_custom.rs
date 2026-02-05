@@ -1,6 +1,6 @@
 #[path = "core_common.rs"]
 mod common;
-use beancount_parser::core::{Custom, CustomValue};
+use beancount_parser::core::{Custom, CustomValue, NumberExpr};
 use common::{collect_ops, lines, parse_as};
 
 #[test]
@@ -17,8 +17,11 @@ fn custom_directive_all_value_kinds() {
   assert!(matches!(custom.values[1], CustomValue::Date(_)));
   assert!(matches!(custom.values[2], CustomValue::Bool(_)));
   match &custom.values[3] {
-    CustomValue::Amount(acct) => assert_eq!(acct.raw, "5.00 USD"),
-    other => panic!("expected currency account, got {other:?}"),
+    CustomValue::Amount(amount) => {
+      assert!(matches!(amount.number, NumberExpr::Literal(ref n) if n == "5.00"));
+      assert_eq!(amount.currency.as_deref(), Some("USD"));
+    }
+    other => panic!("expected amount, got {other:?}"),
   }
   match &custom.values[4] {
     CustomValue::Number(num) => {

@@ -5,7 +5,7 @@
 use beancount_parser::ParseError;
 use beancount_parser::ast;
 use beancount_parser::core;
-use beancount_parser::parse_str;
+use beancount_parser::parse_lossy;
 use chrono::{Datelike, NaiveDate};
 use core::CoreDirective;
 use core::normalize_directives;
@@ -1213,7 +1213,7 @@ fn parse_source(
   let options_map = default_options_map(py)?;
   options_map.set_item("filename", filename)?;
 
-  let directives = parse_str(content);
+  let directives = parse_lossy(content);
 
   let normalized = match normalize_directives(&directives, filename, content) {
     Ok(normalized) => normalized,

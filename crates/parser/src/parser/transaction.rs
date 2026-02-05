@@ -6,7 +6,7 @@ use crate::utils::{looks_like_currency, parse_tags_links};
 use crate::{Error, ast};
 
 use super::common::{
-  currency_token_parser, date_parser, directive_end_parser, indented_key_value_parser,
+  account_parser, currency_token_parser, date_parser, indented_key_value_line_parser,
   inline_comment_parser, line_end, not_eol_parser, quoted_string_parser, spanned_token_parser,
   ws0_parser, ws1_parser,
 };
@@ -84,7 +84,6 @@ pub(super) fn transaction_directive_parser<'src>()
     )
     .then_ignore(line_end())
     .then(body.or_not())
-    .then_ignore(directive_end_parser())
     .map_with(move |(directive, body), e| {
       let span: SimpleSpan = e.span();
       let span = ast::Span::from_range(span.start, span.end);
@@ -110,15 +109,7 @@ fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>
 
 fn transaction_key_value_line_parser<'src>()
 -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
-  indented_key_value_parser()
-    .then_ignore(line_end())
-    .filter(|kv| super::common::is_key_token(kv.key.content))
-    .map_with(move |mut kv, e| {
-      let span: SimpleSpan = e.span();
-      let span = ast::Span::from_range(span.start, span.end);
-      kv.span = span;
-      TxnBodyLine::KeyValue(kv)
-    })
+  indented_key_value_line_parser().map(TxnBodyLine::KeyValue)
 }
 
 fn finalize_transaction<'a>(
@@ -143,6 +134,9 @@ fn finalize_transaction<'a>(
   }
 
   txn.span = span;
+  for posting in postings.iter_mut() {
+    posting.span.end = posting.span.end.min(span.end);
+  }
   txn.postings = postings;
   txn.key_values = key_values;
 
@@ -161,15 +155,7 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
       ast::WithSpan::new(ast::Span::from_range(span.start, span.end), value)
     });
 
-  let account = super::common::bare_string_parser().filter(|value| {
-    value.content.contains(':')
-      && !value.content.ends_with(':')
-      && value
-        .content
-        .chars()
-        .next()
-        .is_some_and(|c| c.is_ascii_uppercase())
-  });
+  let account = account_parser();
 
   let currency_for_amount = currency_token_parser();
 
@@ -497,7 +483,7 @@ mod tests {
 
     let directive = transaction_directive_parser()
       .then_ignore(end())
-      .parse(&src)
+      .parse(src.as_str())
       .into_result()
       .unwrap();
 

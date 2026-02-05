@@ -1,4 +1,4 @@
-use beancount_parser::{ast::Directive, parse_str};
+use beancount_parser::{ast::Directive, parse_lossy};
 
 #[test]
 fn parses_posting_cost_spec() {
@@ -17,7 +17,7 @@ fn parses_posting_cost_spec() {
   ]
   .join("\n");
 
-  let directives = parse_str(&input);
+  let directives = parse_lossy(&input);
   assert_eq!(directives.len(), 4);
 
   let Directive::Transaction(txn1) = directives[2].clone() else {

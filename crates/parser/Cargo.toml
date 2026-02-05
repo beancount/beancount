@@ -22,7 +22,7 @@ chumsky = "0.12.0"
 ropey = "1.6.1"
 
 [features]
-default = []
+default = ['rich-errors']
 rich-errors = []
 
 [dev-dependencies]

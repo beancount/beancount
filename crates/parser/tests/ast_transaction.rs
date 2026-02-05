@@ -1,7 +1,7 @@
-use beancount_parser::{
-  ast::{Directive, Span},
-  parse_str,
-};
+use beancount_parser::{ast::Directive, parse_lossy};
+
+mod span_helpers;
+use span_helpers::span_for;
 
 #[test]
 fn parses_transaction_with_inline_link_and_postings() {
@@ -13,7 +13,7 @@ fn parses_transaction_with_inline_link_and_postings() {
   ]
   .join("\n");
 
-  let directives = parse_str(input.as_str());
+  let directives = parse_lossy(input.as_str());
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {
@@ -21,7 +21,11 @@ fn parses_transaction_with_inline_link_and_postings() {
     other => panic!("expected transaction, got {other:?}"),
   };
 
-  assert_eq!(txn.span, Span::from_range(0, input.len()));
+  let txn_span = span_for(
+    &input,
+    "2013-06-22 * \"La Colombe\" \"Buying coffee\"  ^ee89ada94a39\n  Expenses:Coffee         5 USD\n  Assets:US:Cash\n",
+  );
+  assert_eq!(txn.span, txn_span);
 
   assert_eq!(txn.date.content, "2013-06-22");
   assert_eq!(txn.txn.as_ref().map(|w| w.content), Some("*"));
@@ -50,11 +54,9 @@ fn parses_transaction_with_inline_link_and_postings() {
 
   assert_eq!(txn.postings.len(), 2);
 
-  let p1_line = "  Expenses:Coffee         5 USD\n";
-  let p1_start = input.find(p1_line).expect("p1 start");
-  let p1_end = p1_start + p1_line.len();
+  let p1_span = span_for(&input, "  Expenses:Coffee         5 USD\n");
   let p1 = &txn.postings[0];
-  assert_eq!(p1.span, Span::from_range(p1_start, p1_end));
+  assert_eq!(p1.span, p1_span);
   let account_start = input.find("Expenses:Coffee").unwrap();
   assert_eq!(p1.account.span.start, account_start);
   assert_eq!(p1.opt_flag, None);
@@ -74,11 +76,9 @@ fn parses_transaction_with_inline_link_and_postings() {
   assert_eq!(p1.price_annotation, None);
   assert_eq!(p1.comment, None);
 
-  let p2_line = "  Assets:US:Cash\n";
-  let p2_start = input.find(p2_line).expect("p2 start");
-  let p2_end = p2_start + p2_line.len();
+  let p2_span = span_for(&input, "  Assets:US:Cash\n");
   let p2 = &txn.postings[1];
-  assert_eq!(p2.span, Span::from_range(p2_start, p2_end));
+  assert_eq!(p2.span, p2_span);
   assert_eq!(p2.opt_flag, None);
   assert_eq!(p2.account.content, "Assets:US:Cash");
   assert!(p2.amount.is_none());
@@ -97,7 +97,7 @@ fn parses_and_sorts_tags_and_links() {
   ]
   .join("\n");
 
-  let directives = parse_str(&input);
+  let directives = parse_lossy(&input);
   assert_eq!(directives.len(), 1);
 
   let txn = match &directives[0] {

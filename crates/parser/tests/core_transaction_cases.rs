@@ -1,6 +1,6 @@
 #[path = "core_common.rs"]
 mod common;
-use beancount_parser::ast::PriceOperator;
+use beancount_parser::ast::{Directive, PriceOperator};
 use beancount_parser::core::{KeyValueValue, NumberExpr, Transaction};
 use common::{lines, parse_as};
 
@@ -86,13 +86,79 @@ fn transaction_tags_and_links_content() {
     r#"  #c ^link2 #a"#,
   ]);
 
-  let directives = beancount_parser::parse_str(&input);
+  let directives = beancount_parser::parse_lossy(&input);
 
-  assert_eq!(directives.len(), 1, "{:?}", directives);
-  match &directives[0] {
+  assert_eq!(directives.len(), 2, "{:?}", directives);
+  assert!(matches!(directives[0], beancount_parser::ast::Directive::Transaction(_)));
+  match &directives[1] {
     beancount_parser::ast::Directive::Raw(raw) => {
-      assert!(raw.text.starts_with("2013-06-22 * \"Payee\""));
+      assert_eq!(raw.text, "  #c ^link2 #a");
     }
-    other => panic!("expected raw, got {other:?}"),
+    other => panic!("expected trailing raw meta line, got {other:?}"),
   }
+}
+
+#[test]
+fn transaction_body_comment_cannot_be_indented() {
+  let input = lines(&[
+    r#"2013-06-22 * "Payee" "Narr""#,
+    r#"  ; body comment"#,
+    r#"  Assets:Cash 1 USD"#,
+  ]);
+
+  let directives = beancount_parser::parse_lossy(&input);
+  assert_eq!(directives.len(), 3, "{:?}", directives);
+}
+
+#[test]
+fn transaction_stops_before_leaking_comment() {
+  let input = lines(&[
+    r#"2013-06-22 * "Payee" "Narr""#,
+    r#"  Assets:Cash 1 USD"#,
+    r#"; unrelated top-level comment"#,
+    r#"2013-06-23 * "Next" "Narr2""#,
+    r#"  Assets:Cash 2 USD"#,
+  ]);
+
+  let directives = beancount_parser::parse_lossy(&input);
+  assert_eq!(directives.len(), 3);
+
+  assert!(matches!(directives[0], Directive::Transaction(_)));
+  assert!(matches!(directives[1], Directive::Comment(_)));
+  assert!(matches!(directives[2], Directive::Transaction(_)));
+}
+
+#[test]
+fn transaction_with_tags_and_inline_comments() {
+  let input = lines(&[
+    r#"2010-01-12 *   "Payee"  "Narration"   #tag1  ; headercmt"#,
+    r#"    Assets:Cash   -10   USD    ;comment1"#,
+    r#"        Expenses:Food  10   USD   ;comment2"#,
+  ]);
+
+  let txn: Transaction = parse_as(&input, "book.bean");
+
+  assert_eq!(txn.date, "2010-01-12");
+  assert_eq!(txn.txn.as_deref(), Some("*"));
+  assert_eq!(txn.payee.as_deref(), Some("Payee"));
+  assert_eq!(txn.narration.as_deref(), Some("Narration"));
+  assert_eq!(txn.tags.len(), 1);
+  assert_eq!(txn.tags[0], "tag1");
+  assert_eq!(txn.links.len(), 0);
+
+  assert_eq!(txn.postings.len(), 2);
+
+  let posting1 = &txn.postings[0];
+  assert_eq!(posting1.account, "Assets:Cash");
+  let amount1 = posting1.amount.as_ref().expect("posting1 amount");
+  assert!(matches!(amount1.number, NumberExpr::Literal(ref n) if n == "-10"));
+  assert_eq!(amount1.currency.as_deref(), Some("USD"));
+  assert_eq!(posting1.comment.as_deref(), Some("comment1"));
+
+  let posting2 = &txn.postings[1];
+  assert_eq!(posting2.account, "Expenses:Food");
+  let amount2 = posting2.amount.as_ref().expect("posting2 amount");
+  assert!(matches!(amount2.number, NumberExpr::Literal(ref n) if n == "10"));
+  assert_eq!(amount2.currency.as_deref(), Some("USD"));
+  assert_eq!(posting2.comment.as_deref(), Some("comment2"));
 }

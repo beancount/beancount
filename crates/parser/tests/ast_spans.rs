@@ -1,6 +1,9 @@
 use beancount_parser::ast::{Directive, Span};
 use beancount_parser::parse_str_strict;
 
+mod span_helpers;
+use span_helpers::span_for;
+
 fn span_in_line(line_start: usize, line: &str, needle: &str) -> Span {
   let rel = line.find(needle).expect("missing needle in line");
   let start = line_start + rel;
@@ -180,8 +183,10 @@ fn spans_when_not_first_line() {
 
   let directives = parse_str_strict(&input).expect("strict parser should succeed");
 
-  let start = input.find("2013-06-22").expect("missing txn block");
-  let expected_span = Span::from_range(start, start + 48);
+  let expected_span = span_for(
+    &input,
+    "2013-06-22 * \"Payee\" \"Narr\"\n  Assets:Cash 1 USD\n",
+  );
 
   let txn = directives
     .iter()

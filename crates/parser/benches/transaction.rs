@@ -1,4 +1,4 @@
-use beancount_parser::parse_str as parse_chumsky;
+use beancount_parser::parse_lossy as parse_chumsky;
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 const TRANSACTION: &str = r#"2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39

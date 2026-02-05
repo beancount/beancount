@@ -10,7 +10,19 @@ mod parser;
 mod utils;
 
 pub use core::{CoreDirective, normalize_directives, normalize_directives_with_rope};
-pub use parser::{parse_str, parse_str_strict, parse_str_strict_with_rope, parse_str_with_rope};
+pub use parser::{
+  parse_lossy, parse_lossy_with_rope, parse_str_strict, parse_str_strict_with_rope,
+};
+
+#[deprecated(note = "use parse_lossy instead")]
+pub fn parse_str(input: &str) -> Vec<ast::Directive<'_>> {
+  parse_lossy(input)
+}
+
+#[deprecated(note = "use parse_lossy_with_rope instead")]
+pub fn parse_str_with_rope(source: &str) -> (Vec<ast::Directive<'_>>, Rope) {
+  parse_lossy_with_rope(source)
+}
 
 use chumsky::prelude::*;
 use ropey::Rope;
@@ -61,7 +73,7 @@ pub type Error<'src> = extra::Err<Rich<'src, char>>;
 
 #[cfg(test)]
 mod tests {
-  use super::{ast, parse_str};
+  use super::{ast, parse_lossy};
 
   #[test]
   fn parses_crlf_input() {
@@ -75,9 +87,9 @@ mod tests {
     ]
     .join("\r\n");
 
-    let directives = parse_str(&src);
+    let directives = parse_lossy(&src);
 
-    assert_eq!(2, directives.len());
+    assert_eq!(2, directives.len(), "{:?}", directives);
   }
 
   #[test]
@@ -96,7 +108,7 @@ mod tests {
     ]
     .join("\n");
 
-    let directives = parse_str(&src);
+    let directives = parse_lossy(&src);
     assert!(matches!(directives[0], ast::Directive::Open(_)));
     assert!(matches!(directives[1], ast::Directive::Raw(_)));
     assert!(matches!(directives[2], ast::Directive::Balance(_)));

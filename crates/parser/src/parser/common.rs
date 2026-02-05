@@ -1,4 +1,5 @@
 use chumsky::prelude::*;
+use chumsky::text::whitespace;
 use smallvec::SmallVec;
 
 #[cfg(feature = "rich-errors")]
@@ -19,12 +20,12 @@ pub(super) fn ws1_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>
     .ignored()
 }
 
-pub(super) fn newline<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
+pub(super) fn eol<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
   choice((just("\r\n"), just("\n"))).ignored()
 }
 
 pub(super) fn line_end<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> {
-  choice((newline(), end()))
+  choice((eol(), end()))
 }
 
 pub(super) fn not_eol_parser<'src>() -> impl Parser<'src, &'src str, char, Error<'src>> {
@@ -63,6 +64,33 @@ pub(super) fn bare_string_parser<'src>()
     .filter(|c: &char| !c.is_whitespace())
     .repeated()
     .at_least(1)
+    .to_slice()
+    .map_with(|value: &str, e| {
+      let span: SimpleSpan = e.span();
+      ast::WithSpan::new(ast::Span::from_range(span.start, span.end), value)
+    })
+}
+
+fn is_account_body_char(c: char) -> bool {
+  c.is_alphanumeric() || c == '-'
+}
+
+pub(super) fn account_parser<'src>()
+-> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
+  let first_head = one_of('A'..='Z');
+  let first_tail = any().filter(|c: &char| is_account_body_char(*c)).repeated();
+
+  let next_head = any().filter(|c: &char| c.is_uppercase() || c.is_numeric());
+  let next_tail = any().filter(|c: &char| is_account_body_char(*c)).repeated();
+
+  first_head
+    .then(first_tail)
+    .then(
+      just(':')
+        .ignore_then(next_head.then(next_tail))
+        .repeated()
+        .at_least(1),
+    )
     .to_slice()
     .map_with(|value: &str, e| {
       let span: SimpleSpan = e.span();
@@ -204,6 +232,15 @@ pub(super) fn indented_key_value_parser<'src>()
 
 pub(super) fn key_value_block_parser<'src>()
 -> impl Parser<'src, &'src str, SmallVec<[ast::KeyValue<'src>; 4]>, Error<'src>> + 'src {
+  indented_key_value_line_parser()
+    .repeated()
+    .at_least(1)
+    .collect::<Vec<_>>()
+    .map(SmallVec::from_vec)
+}
+
+pub(super) fn indented_key_value_line_parser<'src>()
+-> impl Parser<'src, &'src str, ast::KeyValue<'src>, Error<'src>> + 'src {
   indented_key_value_parser()
     .then_ignore(line_end())
     .map_with(move |mut kv, e| {
@@ -212,10 +249,6 @@ pub(super) fn key_value_block_parser<'src>()
       kv.span = span;
       kv
     })
-    .repeated()
-    .at_least(1)
-    .collect::<Vec<_>>()
-    .map(SmallVec::from_vec)
 }
 
 pub(super) fn is_key_token(raw: &str) -> bool {
@@ -298,12 +331,24 @@ fn recovery_error<'src>(span: SimpleSpan) -> Rich<'src, char> {
   Rich::custom(span, "expected directive")
 }
 
-pub(super) fn directive_end_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
-  newline().repeated().then_ignore(choice((
+pub(super) fn directive_end_parser2<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src
+{
+  eol().repeated().then_ignore(choice((
     end(),
     any()
       .filter(|c: &char| !(*c).is_whitespace())
       .ignored()
       .rewind(),
   )))
+}
+
+pub(super) fn directive_end_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
+  choice((
+    whitespace().repeated().then(end()).ignored(),
+    eol()
+      .then(any().filter(|c: &char| !(*c).is_whitespace()))
+      .ignored(),
+  ))
+  .ignored()
+  .rewind()
 }
