@@ -32,7 +32,28 @@ A concise reference for the Rust (chumsky) Beancount parser. Useful when adding 
 - Note: `DATE note Account "text" [; comment]` plus optional indented key/value block
 - Document: `DATE document Account Filename [tags/links]? [; comment]` plus optional indented key/value block
 - Custom: `DATE custom "name" <values...> [; comment]` plus optional indented key/value block; values may be account, string, number expression, bool, date, or amount
-- Transactions/Prices/Raw blocks maintain their own internal grammar; see the parser modules for full details.
+- Comment: optional leading `;` or `#` to end of line; parsed as `Comment`
+- Headline: lines starting with `*` (Org-style) are preserved as `Headline` directives
+- Raw (lossy mode only): any line the dispatcher cannot parse is emitted as `Raw`
+- Transaction: see the dedicated section below
+
+
+## Transactions
+- Header: `DATE FLAG ["payee"] ["narration"] [tags/links] [; inline-comment]`
+	- `FLAG` is any single non-whitespace token (commonly `*`, `!`, uppercase letters, or `P` for booking generated transaction).
+	- Payee and narration are optional quoted strings; if only one is present, it is treated as narration.
+	- Tags/links may follow narration: `#tag` and `^link`, any order, space-separated.
+	- Inline comments after the header are allowed and attached to the transaction.
+- Body lines must be indented with at least one space or tab and are either postings or key/value lines.
+	- Posting: `[optflag] Account [Amount] [CostSpec] [PriceAnnotation] [; comment]`
+		- `optflag` is zero or more of `*!#&?%PSTCURM`.
+		- `Account` must start with an uppercase letter and contain at least one `:` segment separator.
+		- `Amount` is a number expression followed by a currency token; number expressions use the same grammar as `NumberExpr` (supporting `+ - * /`).
+		- `CostSpec` uses the Beancount cost forms (e.g., `{amount, label?, *?, date?}` or `{{per # total Currency}}`), parsed by the Rust cost spec parser.
+		- `PriceAnnotation` is `@ amount` (per-unit) or `@@ amount` (total); amounts accept missing numbers with only currency.
+		- An inline comment may follow after optional whitespace with `;` and runs to end of line.
+	- Key/value line: `key: value` with indentation; value may be quoted, unquoted, boolean-like, date-like, or empty. These attach to the preceding posting if present, otherwise to the transaction.
+- Lines that fail the posting or key/value shape (for example, an indented `; comment`) are recovered as `Raw` directives when using lossy parsing; they do not attach to the transaction.
 
 ## Inline comment semantics
 - Inline comments are attached to the directive node and can be surfaced to Python via `_parser_rust` bindings.
