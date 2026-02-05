@@ -1,8 +1,20 @@
 use chumsky::span::SimpleSpan;
 use smallvec::SmallVec;
 use std::sync::Arc;
+
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
+#[cfg(feature = "serde")]
+fn serialize_arc_str<S>(value: &std::sync::Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: serde::Serializer,
+{
+  serializer.serialize_str(value.as_str())
+}
 /// Byte offsets in the original source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Span {
   pub start: usize,
   pub end: usize,
@@ -31,6 +43,7 @@ impl Span {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct WithSpan<T> {
   pub span: Span,
   pub content: T,
@@ -51,7 +64,9 @@ impl<T> WithSpan<T> {
 
 /// Source location info attached to each top-level directive.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Meta {
+  #[cfg_attr(feature = "serde", serde(serialize_with = "serialize_arc_str"))]
   pub filename: Arc<String>,
   /// 1-based line number.
   pub line: usize,
@@ -64,6 +79,8 @@ pub struct Meta {
 /// This is intentionally lossy at first: we keep `span`/`raw` so we can fall back
 /// while we incrementally implement full formatting rules.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum Directive<'a> {
   Open(Open<'a>),
   Close(Close<'a>),
@@ -96,6 +113,7 @@ pub enum Directive<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Open<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -108,6 +126,7 @@ pub struct Open<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Close<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -118,6 +137,7 @@ pub struct Close<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Balance<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -130,6 +150,7 @@ pub struct Balance<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Pad<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -141,6 +162,7 @@ pub struct Pad<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Transaction<'a> {
   pub span: Span,
   pub date: WithSpan<&'a str>,
@@ -159,6 +181,7 @@ pub struct Transaction<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum PriceOperator {
   /// `@` price operator (per-unit price).
   PerUnit,
@@ -167,6 +190,8 @@ pub enum PriceOperator {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type", content = "value"))]
 pub enum KeyValueValue<'a> {
   String(&'a str),
   UnquotedString(&'a str),
@@ -188,6 +213,7 @@ impl<'a> KeyValueValue<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum BinaryOp {
   Add,
   Sub,
@@ -196,6 +222,8 @@ pub enum BinaryOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type", content = "data"))]
 pub enum NumberExpr<'a> {
   Missing {
     span: Span,
@@ -220,6 +248,7 @@ impl NumberExpr<'_> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct KeyValue<'a> {
   pub span: Span,
   pub key: WithSpan<&'a str>,
@@ -227,6 +256,7 @@ pub struct KeyValue<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct CostAmount<'a> {
   pub per: Option<NumberExpr<'a>>,
   pub total: Option<NumberExpr<'a>>,
@@ -234,6 +264,7 @@ pub struct CostAmount<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct CostSpec<'a> {
   pub raw: WithSpan<&'a str>,
   pub amount: Option<CostAmount<'a>>,
@@ -244,6 +275,7 @@ pub struct CostSpec<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Posting<'a> {
   pub span: Span,
   pub opt_flag: Option<WithSpan<&'a str>>,
@@ -257,6 +289,7 @@ pub struct Posting<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Commodity<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -267,6 +300,7 @@ pub struct Commodity<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Price<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -278,6 +312,7 @@ pub struct Price<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Event<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -289,6 +324,7 @@ pub struct Event<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Query<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -300,6 +336,7 @@ pub struct Query<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Note<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -311,6 +348,7 @@ pub struct Note<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Document<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -325,6 +363,7 @@ pub struct Document<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Custom<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -336,6 +375,7 @@ pub struct Custom<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum CustomValueKind {
   String,
   Date,
@@ -346,6 +386,7 @@ pub enum CustomValueKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct CustomValue<'a> {
   pub raw: WithSpan<&'a str>,
   pub kind: CustomValueKind,
@@ -355,6 +396,7 @@ pub struct CustomValue<'a> {
 
 /// Parsed amount token with number and currency captured separately.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Amount<'a> {
   pub raw: WithSpan<&'a str>,
   pub number: NumberExpr<'a>,
@@ -362,6 +404,7 @@ pub struct Amount<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct OptionDirective<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -371,6 +414,7 @@ pub struct OptionDirective<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Include<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -379,6 +423,7 @@ pub struct Include<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Plugin<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -388,6 +433,7 @@ pub struct Plugin<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TagDirective<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -396,6 +442,7 @@ pub struct TagDirective<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct PushMeta<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -405,6 +452,7 @@ pub struct PushMeta<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct PopMeta<'a> {
   pub span: Span,
   pub keyword: Span,
@@ -413,18 +461,21 @@ pub struct PopMeta<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Comment<'a> {
   pub span: Span,
   pub text: WithSpan<&'a str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Headline<'a> {
   pub span: Span,
   pub text: WithSpan<&'a str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Raw<'a> {
   pub span: Span,
   pub text: &'a str,

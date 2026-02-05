@@ -89,7 +89,10 @@ fn transaction_tags_and_links_content() {
   let directives = beancount_parser::parse_lossy(&input);
 
   assert_eq!(directives.len(), 2, "{:?}", directives);
-  assert!(matches!(directives[0], beancount_parser::ast::Directive::Transaction(_)));
+  assert!(matches!(
+    directives[0],
+    beancount_parser::ast::Directive::Transaction(_)
+  ));
   match &directives[1] {
     beancount_parser::ast::Directive::Raw(raw) => {
       assert_eq!(raw.text, "  #c ^link2 #a");

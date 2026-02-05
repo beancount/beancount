@@ -8,7 +8,7 @@ use crate::{Error, ast};
 use super::common::{
   inline_comment_parser, key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser,
 };
-use super::number::number_literal_parser;
+use super::number::{number_expr_parser, number_literal_parser};
 
 pub(super) fn balance_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
@@ -25,7 +25,7 @@ pub(super) fn balance_directive_parser<'src>()
       .ignore_then(number_literal_parser())
   };
 
-  let amount = number_literal_parser()
+  let amount = number_expr_parser()
     .then(choice((
       tolerance()
         .then(currency_after())
@@ -52,7 +52,7 @@ pub(super) fn balance_directive_parser<'src>()
       (
         ast::Amount {
           raw: ast::WithSpan::new(raw_span, trimmed),
-          number: ast::NumberExpr::Literal(number),
+          number,
           currency: Some(currency),
         },
         tolerance,
@@ -89,4 +89,52 @@ pub(super) fn balance_directive_parser<'src>()
         key_values,
       })
     })
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use chumsky::Parser;
+
+  #[test]
+  fn parses_balance_with_expression_amount() {
+    let src = "2026-01-25 balance Assets:Cash 50139.85-600000 CNY";
+
+    let directive = balance_directive_parser()
+      .then_ignore(end())
+      .parse(src)
+      .into_result()
+      .expect("should parse balance");
+
+    let balance = match directive {
+      ast::Directive::Balance(val) => val,
+      other => panic!("expected balance, got {other:?}"),
+    };
+
+    assert_eq!(balance.account.content, "Assets:Cash");
+    assert_eq!(balance.amount.currency.unwrap().content, "CNY");
+
+    let number = balance.amount.number;
+    match number {
+      ast::NumberExpr::Binary {
+        left, op, right, ..
+      } => {
+        assert_eq!(op.content, ast::BinaryOp::Sub);
+        let left_val = match *left {
+          ast::NumberExpr::Literal(ref lit) => lit.content,
+          _ => panic!("expected left literal"),
+        };
+        let right_val = match *right {
+          ast::NumberExpr::Literal(ref lit) => lit.content,
+          _ => panic!("expected right literal"),
+        };
+        assert_eq!(left_val, "50139.85");
+        assert_eq!(right_val, "600000");
+      }
+      _ => panic!("expected binary number expression"),
+    }
+
+    assert!(balance.tolerance.is_none());
+    assert!(balance.comment.is_none());
+  }
 }
