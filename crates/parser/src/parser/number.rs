@@ -140,37 +140,21 @@ fn parse_number_expr_raw<'src>(
 
   let mut rest: Vec<(ast::WithSpan<ast::BinaryOp>, ast::NumberExpr<'src>)> = Vec::new();
 
-  let parse_literal = |idx: &mut usize| -> Result<ast::NumberExpr<'src>, ParserError<'src>> {
-    skip_ws(raw, idx);
-    let lit_start = *idx;
-
-    if *idx >= len {
-      return Err(simple_error(offset + *idx, "expected number literal"));
-    }
-
-    if matches!(raw.as_bytes().get(*idx), Some(b'+') | Some(b'-')) {
-      *idx += 1;
+  let parse_literal =
+    |idx: &mut usize| -> Result<ast::NumberExpr<'src>, ParserError<'src>> {
       skip_ws(raw, idx);
-    }
+      let lit_start = *idx;
 
-    let digits_start = *idx;
-    while let Some(b) = raw.as_bytes().get(*idx) {
-      if b.is_ascii_digit() || *b == b',' {
-        *idx += 1;
-      } else {
-        break;
+      if *idx >= len {
+        return Err(simple_error(offset + *idx, "expected number literal"));
       }
-    }
 
-    if digits_start == *idx {
-      return Err(simple_error(offset + *idx, "expected digits"));
-    }
+      if matches!(raw.as_bytes().get(*idx), Some(b'+') | Some(b'-')) {
+        *idx += 1;
+        skip_ws(raw, idx);
+      }
 
-    if matches!(raw.as_bytes().get(*idx), Some(b'.')) {
-      let dot_pos = *idx;
-      *idx += 1;
-
-      let frac_start = *idx;
+      let digits_start = *idx;
       while let Some(b) = raw.as_bytes().get(*idx) {
         if b.is_ascii_digit() || *b == b',' {
           *idx += 1;
@@ -179,18 +163,35 @@ fn parse_number_expr_raw<'src>(
         }
       }
 
-      if frac_start == *idx {
-        return Err(simple_error(offset + dot_pos, "expected digits after '.'"));
+      if digits_start == *idx {
+        return Err(simple_error(offset + *idx, "expected digits"));
       }
-    }
 
-    let lit_end = *idx;
-    let span = ast::Span::from_range(offset + lit_start, offset + lit_end);
-    Ok(ast::NumberExpr::Literal(ast::WithSpan::new(
-      span,
-      &raw[lit_start..lit_end],
-    )))
-  };
+      if matches!(raw.as_bytes().get(*idx), Some(b'.')) {
+        let dot_pos = *idx;
+        *idx += 1;
+
+        let frac_start = *idx;
+        while let Some(b) = raw.as_bytes().get(*idx) {
+          if b.is_ascii_digit() || *b == b',' {
+            *idx += 1;
+          } else {
+            break;
+          }
+        }
+
+        if frac_start == *idx {
+          return Err(simple_error(offset + dot_pos, "expected digits after '.'"));
+        }
+      }
+
+      let lit_end = *idx;
+      let span = ast::Span::from_range(offset + lit_start, offset + lit_end);
+      Ok(ast::NumberExpr::Literal(ast::WithSpan::new(
+        span,
+        &raw[lit_start..lit_end],
+      )))
+    };
 
   let first = parse_literal(&mut idx)?;
 

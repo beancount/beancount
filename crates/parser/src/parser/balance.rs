@@ -6,7 +6,8 @@ use crate::utils::looks_like_currency;
 use crate::{Error, ast};
 
 use super::common::{
-  inline_comment_parser, key_value_block_parser, spanned_token_parser, ws0_parser, ws1_parser,
+  inline_comment_parser, key_value_block_parser, spanned_token_parser, ws0_parser,
+  ws1_parser,
 };
 use super::number::{number_expr_parser, number_literal_parser};
 
@@ -14,7 +15,8 @@ pub(super) fn balance_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = super::common::date_parser();
 
-  let currency = || spanned_token_parser().filter(|value| looks_like_currency(value.content));
+  let currency =
+    || spanned_token_parser().filter(|value| looks_like_currency(value.content));
 
   let currency_after = || ws1_parser().ignore_then(currency());
 

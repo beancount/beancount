@@ -254,7 +254,11 @@ fn booking_to_native(booking: Option<&str>) -> PyResult<Option<Booking>> {
   }
 }
 
-fn booking_to_py(py: Python<'_>, cache: &DataCache, booking: Option<&str>) -> PyResult<Py<PyAny>> {
+fn booking_to_py(
+  py: Python<'_>,
+  cache: &DataCache,
+  booking: Option<&str>,
+) -> PyResult<Py<PyAny>> {
   let booking = booking_to_native(booking)?;
   Ok(match booking {
     Some(Booking::STRICT) => cache.booking_strict.clone_ref(py),
@@ -292,9 +296,13 @@ fn parse_option_descriptors(
 /// Expose the Rust parser to Python, matching `beancount.loader.load_file`.
 
 #[pyfunction]
-pub fn load_file(py: Python<'_>, filename: &str) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
-  let content = std::fs::read_to_string(filename)
-    .map_err(|err| PyValueError::new_err(format!("failed to read {}: {}", filename, err)))?;
+pub fn load_file(
+  py: Python<'_>,
+  filename: &str,
+) -> PyResult<(Py<PyAny>, Py<PyAny>, Py<PyAny>)> {
+  let content = std::fs::read_to_string(filename).map_err(|err| {
+    PyValueError::new_err(format!("failed to read {}: {}", filename, err))
+  })?;
   parse_source(py, filename, &content)
 }
 
@@ -407,7 +415,10 @@ fn apply_options(
   Ok(option_errors)
 }
 
-fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>) -> PyResult<()> {
+fn apply_display_context_options(
+  py: Python<'_>,
+  options_map: &Bound<'_, PyDict>,
+) -> PyResult<()> {
   let dcontext = options_map
     .get_item("dcontext")?
     .ok_or_else(|| PyValueError::new_err("dcontext option missing from defaults"))?;
@@ -441,7 +452,11 @@ fn apply_display_context_options(py: Python<'_>, options_map: &Bound<'_, PyDict>
   Ok(())
 }
 
-fn build_parser_error(py: Python<'_>, err: ParseError, filename: &str) -> PyResult<Py<PyAny>> {
+fn build_parser_error(
+  py: Python<'_>,
+  err: ParseError,
+  filename: &str,
+) -> PyResult<Py<PyAny>> {
   let cache = cache(py)?;
   let kv = PyDict::new(py);
   kv.set_item("column", err.column)?;
@@ -1297,7 +1312,11 @@ fn decimal_from_number_expr(num: &core::NumberExpr) -> PyResult<Decimal> {
   core::number_expr_to_decimal(num).map_err(|err| PyValueError::new_err(err.message))
 }
 
-fn py_decimal(py: Python<'_>, cache: &DataCache, number: &core::NumberExpr) -> PyResult<Py<PyAny>> {
+fn py_decimal(
+  py: Python<'_>,
+  cache: &DataCache,
+  number: &core::NumberExpr,
+) -> PyResult<Py<PyAny>> {
   if matches!(number, core::NumberExpr::Missing) {
     return Ok(cache.missing.clone_ref(py));
   }
@@ -1315,7 +1334,11 @@ fn py_amount(
   cache.amount_ctor.call1(py, (number, currency))
 }
 
-fn amount_to_py(py: Python<'_>, cache: &DataCache, amount: &core::Amount) -> PyResult<Py<PyAny>> {
+fn amount_to_py(
+  py: Python<'_>,
+  cache: &DataCache,
+  amount: &core::Amount,
+) -> PyResult<Py<PyAny>> {
   let number = if matches!(amount.number, core::NumberExpr::Missing) {
     cache.missing.clone_ref(py)
   } else {

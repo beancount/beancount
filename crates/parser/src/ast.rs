@@ -6,7 +6,10 @@ use std::sync::Arc;
 use serde::Serialize;
 
 #[cfg(feature = "serde")]
-fn serialize_arc_str<S>(value: &std::sync::Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_arc_str<S>(
+  value: &std::sync::Arc<String>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
 where
   S: serde::Serializer,
 {
@@ -203,9 +206,9 @@ pub enum KeyValueValue<'a> {
 impl<'a> KeyValueValue<'a> {
   pub fn as_str(&self) -> std::borrow::Cow<'a, str> {
     match self {
-      KeyValueValue::String(s) | KeyValueValue::UnquotedString(s) | KeyValueValue::Raw(s) => {
-        std::borrow::Cow::Borrowed(*s)
-      }
+      KeyValueValue::String(s)
+      | KeyValueValue::UnquotedString(s)
+      | KeyValueValue::Raw(s) => std::borrow::Cow::Borrowed(*s),
       KeyValueValue::Date(s) => std::borrow::Cow::Borrowed(*s),
       KeyValueValue::Bool(val) => std::borrow::Cow::Owned(val.to_string()),
     }

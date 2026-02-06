@@ -196,7 +196,10 @@ fn booking_cache(py: Python<'_>) -> PyResult<&'static BookingCache> {
   })
 }
 
-fn booking_py_from_native(py: Python<'_>, booking: Option<&Booking>) -> PyResult<Py<PyAny>> {
+fn booking_py_from_native(
+  py: Python<'_>,
+  booking: Option<&Booking>,
+) -> PyResult<Py<PyAny>> {
   let cache = booking_cache(py)?;
   Ok(match booking {
     Some(Booking::STRICT) => cache.strict.clone_ref(py),

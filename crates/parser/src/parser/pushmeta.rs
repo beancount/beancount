@@ -4,8 +4,8 @@ use crate::utils::looks_like_date;
 use crate::{Error, ast};
 
 use super::common::{
-  bare_string_parser, inline_comment_parser, keyword_span_parser, quoted_string_parser, ws0_parser,
-  ws1_parser,
+  bare_string_parser, inline_comment_parser, keyword_span_parser, quoted_string_parser,
+  ws0_parser, ws1_parser,
 };
 
 pub(super) fn pushmeta_directive_parser<'src>()
@@ -21,15 +21,17 @@ pub(super) fn pushmeta_directive_parser<'src>()
     });
 
   let bool_value = bare_string_parser().filter(|value| {
-    value.content.eq_ignore_ascii_case("true") || value.content.eq_ignore_ascii_case("false")
+    value.content.eq_ignore_ascii_case("true")
+      || value.content.eq_ignore_ascii_case("false")
   });
 
   let date_value = bare_string_parser().filter(|value| looks_like_date(value.content));
 
   let pushmeta_value = choice((
     quoted_string_parser().map(|value| value.map(ast::KeyValueValue::String)),
-    bool_value
-      .map(|value| value.map(|raw| ast::KeyValueValue::Bool(raw.eq_ignore_ascii_case("true")))),
+    bool_value.map(|value| {
+      value.map(|raw| ast::KeyValueValue::Bool(raw.eq_ignore_ascii_case("true")))
+    }),
     date_value.map(|value| value.map(ast::KeyValueValue::Date)),
     bare_string_parser().map(|value| value.map(ast::KeyValueValue::UnquotedString)),
   ))

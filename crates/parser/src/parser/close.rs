@@ -4,8 +4,8 @@ use smallvec::SmallVec;
 use crate::{Error, ast, parser::common::account_parser};
 
 use super::common::{
-  date_parser, inline_comment_parser, key_value_block_parser, keyword_span_parser, ws0_parser,
-  ws1_parser,
+  date_parser, inline_comment_parser, key_value_block_parser, keyword_span_parser,
+  ws0_parser, ws1_parser,
 };
 
 pub(super) fn close_directive_parser<'src>()

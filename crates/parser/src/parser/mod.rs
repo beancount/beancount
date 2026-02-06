@@ -42,8 +42,8 @@ fn skipped_line_parser<'src>()
   ))
 }
 
-fn directive_parser<'src>() -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src
-{
+fn directive_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> + 'src {
   choice((
     include::include_directive_parser().then_ignore(common::line_end()),
     plugin::plugin_directive_parser().then_ignore(common::line_end()),

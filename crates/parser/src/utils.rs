@@ -77,7 +77,9 @@ type TagLinkBuckets<'a> = (
   SmallVec<[ast::WithSpan<&'a str>; 2]>,
 );
 
-pub(crate) fn split_tags_links_group(group: ast::WithSpan<&str>) -> Vec<ast::WithSpan<&str>> {
+pub(crate) fn split_tags_links_group(
+  group: ast::WithSpan<&str>,
+) -> Vec<ast::WithSpan<&str>> {
   let mut tokens = Vec::new();
   let mut start: Option<usize> = None;
 

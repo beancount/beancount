@@ -7,8 +7,8 @@ use crate::{Error, ast};
 
 use super::common::{
   account_parser, currency_token_parser, date_parser, indented_key_value_line_parser,
-  inline_comment_parser, line_end, not_eol_parser, quoted_string_parser, spanned_token_parser,
-  ws0_parser, ws1_parser,
+  inline_comment_parser, line_end, not_eol_parser, quoted_string_parser,
+  spanned_token_parser, ws0_parser, ws1_parser,
 };
 use super::number::number_expr_parser;
 
@@ -49,7 +49,11 @@ pub(super) fn transaction_directive_parser<'src>()
     .then(ws1_parser().ignore_then(tags_links_line_parser()).or_not())
     .then(ws0_parser().ignore_then(inline_comment_parser().or_not()))
     .map_with(
-      |(((((date, flag), payee_or_narration1), payee_or_narration2), tags_links), comment), e| {
+      |(
+        ((((date, flag), payee_or_narration1), payee_or_narration2), tags_links),
+        comment,
+      ),
+       e| {
         let span: SimpleSpan = e.span();
         let span = ast::Span::from_range(span.start, span.end);
 
@@ -95,8 +99,8 @@ pub(super) fn transaction_directive_parser<'src>()
     })
 }
 
-fn posting_line_parser<'src>() -> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src
-{
+fn posting_line_parser<'src>()
+-> impl Parser<'src, &'src str, TxnBodyLine<'src>, Error<'src>> + 'src {
   indented_posting_parser()
     .then_ignore(line_end())
     .map_with(move |mut posting, e| {
@@ -143,8 +147,8 @@ fn finalize_transaction<'a>(
   txn
 }
 
-fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<'src>, Error<'src>>
-{
+fn indented_posting_parser<'src>()
+-> impl Parser<'src, &'src str, ast::Posting<'src>, Error<'src>> {
   let optflag = any()
     .filter(|c: &char| "*!#&?%PSTCURM".contains(*c))
     .repeated()
@@ -178,7 +182,8 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
       .filter(|value| looks_like_currency(value.content))
       .map_with(|currency, e| {
         let span: SimpleSpan = e.span();
-        let raw = ast::WithSpan::new(ast::Span::from_range(span.start, span.end), e.slice());
+        let raw =
+          ast::WithSpan::new(ast::Span::from_range(span.start, span.end), e.slice());
         ast::Amount {
           raw: raw.clone(),
           number: ast::NumberExpr::Missing { span: raw.span },
@@ -250,7 +255,8 @@ fn indented_posting_parser<'src>() -> impl Parser<'src, &'src str, ast::Posting<
     })
 }
 
-fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>, Error<'src>> {
+fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>, Error<'src>>
+{
   let currency = any()
     .filter(|c: &char| !c.is_whitespace() && *c != '}' && *c != ',' && *c != '#')
     .repeated()
@@ -382,13 +388,14 @@ fn cost_spec_parser<'src>() -> impl Parser<'src, &'src str, ast::CostSpec<'src>,
       .or_not()
   };
 
-  let single = just('{')
-    .then(comp_list())
-    .then_ignore(just('}'))
-    .map_with(|(_, comps), e| {
-      let span: SimpleSpan = e.span();
-      (comps, false, span, e.slice())
-    });
+  let single =
+    just('{')
+      .then(comp_list())
+      .then_ignore(just('}'))
+      .map_with(|(_, comps), e| {
+        let span: SimpleSpan = e.span();
+        (comps, false, span, e.slice())
+      });
 
   let double = just("{{")
     .then(comp_list())

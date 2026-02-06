@@ -227,7 +227,11 @@ fn value_error(meta: &ast::Meta, message: impl Into<String>) -> ParseError {
   }
 }
 
-fn parse_date_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<NaiveDate, ParseError> {
+fn parse_date_value(
+  raw: &str,
+  meta: &ast::Meta,
+  ctx: &str,
+) -> Result<NaiveDate, ParseError> {
   let trimmed = raw.trim();
   NaiveDate::parse_from_str(trimmed, "%Y-%m-%d")
     .map_err(|err| value_error(meta, format!("invalid {} `{}`: {}", ctx, raw, err)))
@@ -255,10 +259,14 @@ fn parse_key_value_value(
     .map(|v| match v.content {
       ast::KeyValueValue::String(raw) => match unquote_json(raw, meta, ctx) {
         Ok(val) => Ok(KeyValueValue::String(val)),
-        Err(err) if allow_unquoted_on_error => Ok(KeyValueValue::UnquotedString(raw.to_string())),
+        Err(err) if allow_unquoted_on_error => {
+          Ok(KeyValueValue::UnquotedString(raw.to_string()))
+        }
         Err(err) => Err(err),
       },
-      ast::KeyValueValue::UnquotedString(raw) => Ok(KeyValueValue::UnquotedString(raw.to_string())),
+      ast::KeyValueValue::UnquotedString(raw) => {
+        Ok(KeyValueValue::UnquotedString(raw.to_string()))
+      }
       ast::KeyValueValue::Date(raw) => Ok(KeyValueValue::Date(raw.to_string())),
       ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
       ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
@@ -498,7 +506,9 @@ fn normalize_directives_with_meta<'a>(
 impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Directive<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Directive<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (directive, filename, rope) = input;
 
     match directive {
@@ -511,13 +521,15 @@ impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
       ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from((
         balance, filename, rope,
       ))?)),
-      ast::Directive::Pad(pad) => Ok(CoreDirective::Pad(Pad::try_from((pad, filename, rope))?)),
-      ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(Transaction::try_from((
-        txn, filename, rope,
-      ))?)),
-      ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(Commodity::try_from((
-        cmdty, filename, rope,
-      ))?)),
+      ast::Directive::Pad(pad) => {
+        Ok(CoreDirective::Pad(Pad::try_from((pad, filename, rope))?))
+      }
+      ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(
+        Transaction::try_from((txn, filename, rope))?,
+      )),
+      ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(
+        Commodity::try_from((cmdty, filename, rope))?,
+      )),
       ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((
         price, filename, rope,
       ))?)),
@@ -536,18 +548,18 @@ impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
       ast::Directive::Custom(custom) => Ok(CoreDirective::Custom(Custom::try_from((
         custom, filename, rope,
       ))?)),
-      ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from((
-        opt, filename, rope,
-      ))?)),
+      ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from(
+        (opt, filename, rope),
+      )?)),
       ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from((
         include, filename, rope,
       ))?)),
       ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from((
         plugin, filename, rope,
       ))?)),
-      ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from((
-        tag, filename, rope,
-      ))?)),
+      ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from(
+        (tag, filename, rope),
+      )?)),
       ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from((
         tag, filename, rope,
       ))?)),
@@ -560,10 +572,12 @@ impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
       ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from((
         comment, filename, rope,
       ))?)),
-      ast::Directive::Headline(headline) => Ok(CoreDirective::Headline(Headline::try_from((
-        headline, filename, rope,
-      ))?)),
-      ast::Directive::Raw(raw) => Ok(CoreDirective::Raw(Raw::try_from((raw, filename, rope))?)),
+      ast::Directive::Headline(headline) => Ok(CoreDirective::Headline(
+        Headline::try_from((headline, filename, rope))?,
+      )),
+      ast::Directive::Raw(raw) => {
+        Ok(CoreDirective::Raw(Raw::try_from((raw, filename, rope))?))
+      }
     }
   }
 }
@@ -597,7 +611,9 @@ impl<'a> TryFrom<(ast::Comment<'a>, &Arc<String>, &Rope)> for Comment {
 impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Comment {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Headline<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Headline<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (headline, filename, rope) = input;
     Ok(Self {
       meta: meta_at(filename, rope, headline.span.start),
@@ -610,7 +626,9 @@ impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Comment {
 impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Headline {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Headline<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Headline<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (headline, filename, rope) = input;
     Ok(Self {
       meta: meta_at(filename, rope, headline.span.start),
@@ -723,7 +741,9 @@ impl<'a> TryFrom<(ast::Pad<'a>, &Arc<String>, &Rope)> for Pad {
 impl<'a> TryFrom<(ast::Commodity<'a>, &Arc<String>, &Rope)> for Commodity {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Commodity<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Commodity<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (cmdty, filename, rope) = input;
     let meta = meta_at(filename, rope, cmdty.span.start);
     let key_values = cmdty
@@ -842,7 +862,9 @@ impl<'a> TryFrom<(ast::Note<'a>, &Arc<String>, &Rope)> for Note {
 impl<'a> TryFrom<(ast::Document<'a>, &Arc<String>, &Rope)> for Document {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Document<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Document<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (doc, filename, rope) = input;
     let meta = meta_at(filename, rope, doc.span.start);
     let key_values = doc
@@ -913,7 +935,9 @@ impl<'a> TryFrom<(ast::Custom<'a>, &Arc<String>, &Rope)> for Custom {
 impl<'a> TryFrom<(ast::OptionDirective<'a>, &Arc<String>, &Rope)> for OptionDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::OptionDirective<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::OptionDirective<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (opt, filename, rope) = input;
     let meta = meta_at(filename, rope, opt.span.start);
     let key = unquote_json(opt.key.content, &meta, "option key")?;
@@ -983,7 +1007,9 @@ impl<'a> TryFrom<(ast::Plugin<'a>, &Arc<String>, &Rope)> for Plugin {
 impl<'a> TryFrom<(ast::TagDirective<'a>, &Arc<String>, &Rope)> for TagDirective {
   type Error = ParseError;
 
-  fn try_from(input: (ast::TagDirective<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::TagDirective<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (tag, filename, rope) = input;
     let meta = meta_at(filename, rope, tag.span.start);
     let tag_value = tag.tag.content.strip_prefix('#').unwrap_or(tag.tag.content);
@@ -998,7 +1024,9 @@ impl<'a> TryFrom<(ast::TagDirective<'a>, &Arc<String>, &Rope)> for TagDirective 
 impl<'a> TryFrom<(ast::PushMeta<'a>, &Arc<String>, &Rope)> for PushMeta {
   type Error = ParseError;
 
-  fn try_from(input: (ast::PushMeta<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::PushMeta<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (pm, filename, rope) = input;
     let meta = meta_at(filename, rope, pm.span.start);
     let value = parse_key_value_value(pm.value, &meta, "pushmeta value", true)?;
@@ -1103,7 +1131,9 @@ impl<'a> TryFrom<(ast::Posting<'a>, &Arc<String>, &Rope)> for Posting {
 impl<'a> TryFrom<(ast::Transaction<'a>, &Arc<String>, &Rope)> for Transaction {
   type Error = ParseError;
 
-  fn try_from(input: (ast::Transaction<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+  fn try_from(
+    input: (ast::Transaction<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
     let (txn, filename, rope) = input;
     let meta = meta_at(filename, rope, txn.span.start);
     let payee = txn
@@ -1176,7 +1206,9 @@ impl<'a> TryFrom<(ast::CustomValue<'a>, &ast::Meta)> for CustomValue {
           .ok_or_else(|| value_error(meta, "missing number expression"))?;
         CustomValue::Number(NumberExpr::from(number))
       }
-      ast::CustomValueKind::Account => CustomValue::Account(value.raw.content.trim().to_string()),
+      ast::CustomValueKind::Account => {
+        CustomValue::Account(value.raw.content.trim().to_string())
+      }
     };
 
     Ok(content)

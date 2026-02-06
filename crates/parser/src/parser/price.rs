@@ -4,8 +4,8 @@ use smallvec::SmallVec;
 use crate::{Error, ast};
 
 use super::common::{
-  date_parser, key_value_block_parser, keyword_span_parser, not_eol_parser, spanned_token_parser,
-  ws0_parser, ws1_parser,
+  date_parser, key_value_block_parser, keyword_span_parser, not_eol_parser,
+  spanned_token_parser, ws0_parser, ws1_parser,
 };
 use super::number::number_literal_parser;
 

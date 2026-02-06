@@ -159,7 +159,8 @@ pub(super) fn tags_links_line_parser<'src>()
       let start = span.start;
       let trimmed = line.trim();
       let offset = line.find(trimmed).unwrap_or(0);
-      let group_span = ast::Span::from_range(start + offset, start + offset + trimmed.len());
+      let group_span =
+        ast::Span::from_range(start + offset, start + offset + trimmed.len());
       let group = ast::WithSpan::new(group_span, trimmed);
       split_tags_links_group(group)
     })
@@ -194,15 +195,17 @@ pub(super) fn key_value_parser<'src>()
     });
 
   let bool_value = bare_string_parser().filter(|value| {
-    value.content.eq_ignore_ascii_case("true") || value.content.eq_ignore_ascii_case("false")
+    value.content.eq_ignore_ascii_case("true")
+      || value.content.eq_ignore_ascii_case("false")
   });
 
   let date_value = bare_string_parser().filter(|value| looks_like_date(value.content));
 
   let value = choice((
     quoted_string_parser().map(|value| value.map(ast::KeyValueValue::String)),
-    bool_value
-      .map(|value| value.map(|raw| ast::KeyValueValue::Bool(raw.eq_ignore_ascii_case("true")))),
+    bool_value.map(|value| {
+      value.map(|raw| ast::KeyValueValue::Bool(raw.eq_ignore_ascii_case("true")))
+    }),
     date_value.map(|value| value.map(ast::KeyValueValue::Date)),
     bare_string_parser().map(|value| value.map(ast::KeyValueValue::UnquotedString)),
   ));
@@ -331,8 +334,8 @@ fn recovery_error<'src>(span: SimpleSpan) -> Rich<'src, char> {
   Rich::custom(span, "expected directive")
 }
 
-pub(super) fn directive_end_parser2<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src
-{
+pub(super) fn directive_end_parser2<'src>()
+-> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
   eol().repeated().then_ignore(choice((
     end(),
     any()
@@ -342,7 +345,8 @@ pub(super) fn directive_end_parser2<'src>() -> impl Parser<'src, &'src str, (), 
   )))
 }
 
-pub(super) fn directive_end_parser<'src>() -> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
+pub(super) fn directive_end_parser<'src>()
+-> impl Parser<'src, &'src str, (), Error<'src>> + 'src {
   choice((
     whitespace().repeated().then(end()).ignored(),
     eol()

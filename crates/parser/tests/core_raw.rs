@@ -20,7 +20,7 @@ fn org_headline_is_preserved_as_comment() {
 
   let directives = parse_core(&input, "book.bean");
   assert_eq!(directives.len(), 1);
-  let headline =
-    Headline::from_core(directives.into_iter().next().unwrap()).expect("headline directive");
+  let headline = Headline::from_core(directives.into_iter().next().unwrap())
+    .expect("headline directive");
   assert_eq!(headline.text, r"**** C:\Users\Trim21\proj\count\input.bean");
 }

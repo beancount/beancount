@@ -49,15 +49,17 @@ pub(super) fn custom_directive_parser<'src>()
     )
 }
 
-fn custom_value_parser<'src>() -> impl Parser<'src, &'src str, ast::CustomValue<'src>, Error<'src>>
-{
+fn custom_value_parser<'src>()
+-> impl Parser<'src, &'src str, ast::CustomValue<'src>, Error<'src>> {
   let bool_value = bare_string_parser().filter(|value| {
-    value.content.eq_ignore_ascii_case("true") || value.content.eq_ignore_ascii_case("false")
+    value.content.eq_ignore_ascii_case("true")
+      || value.content.eq_ignore_ascii_case("false")
   });
 
   let date_value = bare_string_parser().filter(|value| looks_like_date(value.content));
 
-  let currency_value = bare_string_parser().filter(|value| looks_like_currency(value.content));
+  let currency_value =
+    bare_string_parser().filter(|value| looks_like_currency(value.content));
 
   let amount_value = number_literal_parser()
     .then_ignore(ws1_parser())

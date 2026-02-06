@@ -13,14 +13,14 @@ pub(super) fn include_directive_parser<'src>()
     .then(quoted_string_parser())
     .then_ignore(ws0_parser());
 
-  header
-    .then(inline_comment_parser().or_not())
-    .map_with(|((keyword, filename), comment), e| {
+  header.then(inline_comment_parser().or_not()).map_with(
+    |((keyword, filename), comment), e| {
       ast::Directive::Include(ast::Include {
         span: e.span().into(),
         keyword,
         filename,
         comment,
       })
-    })
+    },
+  )
 }

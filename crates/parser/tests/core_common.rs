@@ -1,5 +1,7 @@
 use beancount_parser::core::{BinaryOp, CoreDirective, NumberExpr};
-use beancount_parser::{ast, normalize_directives, normalize_directives_with_rope, parse_lossy};
+use beancount_parser::{
+  ast, normalize_directives, normalize_directives_with_rope, parse_lossy,
+};
 use ropey::Rope;
 
 #[cfg(test)]
@@ -146,7 +148,8 @@ fn normalize_directives_with_rope_matches_string_version() {
   let filename = "input.beancount";
   let directives = parse_lossy(input);
 
-  let expected = normalize_directives(&directives, filename, input).expect("normalize failed");
+  let expected =
+    normalize_directives(&directives, filename, input).expect("normalize failed");
   let rope = Rope::from_str(input);
   let actual = normalize_directives_with_rope(&directives, filename, &rope)
     .expect("normalize with rope failed");
