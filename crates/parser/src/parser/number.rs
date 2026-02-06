@@ -15,7 +15,7 @@ use super::common::ws0_parser;
 
 pub(super) fn number_literal_parser<'src>()
 -> impl Parser<'src, &'src str, ast::WithSpan<&'src str>, Error<'src>> {
-  let sign = just('+').or(just('-')).or_not();
+  let sign = just('+').or(just('-')).then(ws0_parser()).or_not();
   let digits = any()
     .filter(|c: &char| c.is_ascii_digit() || *c == ',')
     .repeated()
@@ -150,6 +150,7 @@ fn parse_number_expr_raw<'src>(
 
     if matches!(raw.as_bytes().get(*idx), Some(b'+') | Some(b'-')) {
       *idx += 1;
+      skip_ws(raw, idx);
     }
 
     let digits_start = *idx;
@@ -249,6 +250,25 @@ mod tests {
   #[test]
   fn parses_single_literal() {
     let src = "123.45";
+
+    let expr = number_expr_parser()
+      .then_ignore(end())
+      .parse(src)
+      .into_result()
+      .unwrap();
+
+    let literal = match expr {
+      ast::NumberExpr::Literal(value) => value,
+      other => panic!("expected literal, got {other:?}"),
+    };
+
+    assert_eq!(literal.content, src);
+    assert_eq!(literal.span, ast::Span::from_range(0, src.len()));
+  }
+
+  #[test]
+  fn parses_literal_with_space_after_sign() {
+    let src = "- 227000";
 
     let expr = number_expr_parser()
       .then_ignore(end())

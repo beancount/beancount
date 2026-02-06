@@ -7,12 +7,13 @@ use super::common::{
   date_parser, key_value_block_parser, keyword_span_parser, not_eol_parser, spanned_token_parser,
   ws0_parser, ws1_parser,
 };
+use super::number::number_literal_parser;
 
 pub(super) fn price_directive_parser<'src>()
 -> impl Parser<'src, &'src str, ast::Directive<'src>, Error<'src>> {
   let date = date_parser();
 
-  let amount = spanned_token_parser()
+  let amount = number_literal_parser()
     .then(ws1_parser().ignore_then(spanned_token_parser()).or_not())
     .map_with(|(number, currency), e| {
       let span: SimpleSpan = e.span();
@@ -63,4 +64,39 @@ pub(super) fn price_directive_parser<'src>()
         })
       },
     )
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::ast;
+  use chumsky::{Parser, prelude::end};
+
+  #[test]
+  fn parses_price_with_spaced_negative_amount() {
+    let src = "2026-02-06 price BTC - 227000 USD";
+
+    let directive = price_directive_parser()
+      .then_ignore(end())
+      .parse(src)
+      .into_result()
+      .unwrap();
+
+    let price = match directive {
+      ast::Directive::Price(price) => price,
+      other => panic!("expected price directive, got {other:?}"),
+    };
+
+    let number = match price.amount.number {
+      ast::NumberExpr::Literal(ref literal) => literal,
+      ref other => panic!("expected literal amount, got {other:?}"),
+    };
+
+    assert_eq!(price.currency.content, "BTC");
+    assert_eq!(number.content, "- 227000");
+    assert_eq!(
+      price.amount.currency.as_ref().map(|c| c.content),
+      Some("USD")
+    );
+  }
 }

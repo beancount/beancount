@@ -496,4 +496,40 @@ mod tests {
     assert_eq!(txn.postings[0].account.content, "Expenses:Food");
     assert_eq!(txn.postings[1].account.content, "Assets:Cash");
   }
+
+  #[test]
+  fn parses_posting_amount_with_space_after_sign() {
+    let src = [
+      r#"2014-01-01 * "Payee" "Narr""#,
+      r#"  Assets:Receivable - 227000 CNY"#,
+      r#"  Income:Sales 227000 CNY"#,
+      r#""#,
+    ]
+    .join("\n");
+
+    let directive = transaction_directive_parser()
+      .then_ignore(end())
+      .parse(src.as_str())
+      .into_result()
+      .unwrap();
+
+    let txn = match directive {
+      ast::Directive::Transaction(txn) => txn,
+      other => panic!("expected transaction directive, got {other:?}"),
+    };
+
+    let amount = txn
+      .postings
+      .first()
+      .and_then(|posting| posting.amount.as_ref())
+      .expect("first posting should have amount");
+
+    let number = match amount.number {
+      ast::NumberExpr::Literal(ref literal) => literal,
+      ref other => panic!("expected literal amount, got {other:?}"),
+    };
+
+    assert_eq!(number.content, "- 227000");
+    assert_eq!(amount.currency.as_ref().map(|c| c.content), Some("CNY"));
+  }
 }
