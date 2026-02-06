@@ -181,10 +181,10 @@ fn spans_when_not_first_line() {
 ;
 "#;
 
-  let directives = parse_str_strict(&input).expect("strict parser should succeed");
+  let directives = parse_str_strict(input).expect("strict parser should succeed");
 
   let expected_span = span_for(
-    &input,
+    input,
     "2013-06-22 * \"Payee\" \"Narr\"\n  Assets:Cash 1 USD\n",
   );
 
@@ -194,7 +194,7 @@ fn spans_when_not_first_line() {
       Directive::Transaction(t) => Some(t),
       _ => None,
     })
-    .expect(format!("missing transaction directive {:?}", directives).as_str());
+    .unwrap_or_else(|| panic!("missing transaction directive {:?}", directives));
 
   assert_eq!(txn.span, expected_span);
   assert!(

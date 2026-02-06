@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(clippy::large_enum_variant)]
-#![deny(clippy::unwrap_used, clippy::expect_used)]
+// workaround https://github.com/rust-lang/rust-clippy/issues/13981
+#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used))]
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 
 pub mod ast;
 pub mod core;
