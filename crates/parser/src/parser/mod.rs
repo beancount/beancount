@@ -1,5 +1,4 @@
 use chumsky::prelude::*;
-use ropey::Rope;
 
 use crate::Error;
 use crate::ast;
@@ -67,8 +66,7 @@ fn directive_parser<'src>()
     custom::custom_directive_parser(),
     transaction::transaction_directive_parser(),
   ))
-  .recover_with(via_parser(common::raw_directive_recovery_parser().boxed()))
-  .boxed()
+  .recover_with(via_parser(common::raw_directive_recovery_parser()))
 }
 
 fn directive_parser_strict<'src>()
@@ -96,7 +94,6 @@ fn directive_parser_strict<'src>()
     custom::custom_directive_parser(),
     transaction::transaction_directive_parser(),
   ))
-  .boxed()
 }
 
 fn declarations_parser<'src>()
@@ -104,7 +101,6 @@ fn declarations_parser<'src>()
   choice((skipped_line_parser(), directive_parser().map(Some)))
     .repeated()
     .collect::<Vec<_>>()
-    .boxed()
 }
 
 fn declarations_parser_strict<'src>()
@@ -112,43 +108,24 @@ fn declarations_parser_strict<'src>()
   choice((skipped_line_parser(), directive_parser_strict().map(Some)))
     .repeated()
     .collect::<Vec<_>>()
-    .boxed()
 }
 
-pub fn parse_lossy_with_rope<'a>(source: &'a str) -> (Vec<ast::Directive<'a>>, Rope) {
-  let rope = Rope::from_str(source);
-  let directives: Vec<ast::Directive<'a>> = declarations_parser()
+pub fn parse_lossy<'a>(source: &'a str) -> Vec<ast::Directive<'a>> {
+  declarations_parser()
     .then_ignore(end())
     .parse(source)
     .into_output()
     .map(|directives| directives.into_iter().flatten().collect())
-    .unwrap_or_else(Vec::new);
-
-  (directives, rope)
+    .unwrap_or_else(Vec::new)
 }
 
-pub fn parse_lossy<'a>(source: &'a str) -> Vec<ast::Directive<'a>> {
-  parse_lossy_with_rope(source).0
-}
-
-/// Parse without falling back to `Raw` on errors, useful for tests and debugging.
-pub fn parse_str_strict_with_rope<'a>(
+/// Parse without recovery to `Raw`; returns errors instead.
+pub fn parse_strict<'a>(
   source: &'a str,
-) -> Result<(Vec<ast::Directive<'a>>, Rope), Vec<StrictError<'a>>> {
-  let rope = Rope::from_str(source);
+) -> Result<Vec<ast::Directive<'a>>, Vec<StrictError<'a>>> {
   declarations_parser_strict()
     .then_ignore(end())
     .parse(source)
     .into_result()
-    .map(|directives| {
-      let directives: Vec<ast::Directive<'a>> = directives.into_iter().flatten().collect();
-      (directives, rope)
-    })
-}
-
-/// Parse without recovery to `Raw`; returns errors instead.
-pub fn parse_str_strict<'a>(
-  source: &'a str,
-) -> Result<Vec<ast::Directive<'a>>, Vec<StrictError<'a>>> {
-  parse_str_strict_with_rope(source).map(|(directives, _)| directives)
+    .map(|directives| directives.into_iter().flatten().collect())
 }

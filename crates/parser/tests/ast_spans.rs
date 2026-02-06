@@ -1,5 +1,5 @@
 use beancount_parser::ast::{Directive, Span};
-use beancount_parser::parse_str_strict;
+use beancount_parser::parse_strict;
 
 mod span_helpers;
 use span_helpers::span_for;
@@ -28,7 +28,7 @@ fn spans_cover_single_line_directives_and_children() {
   let input = [open, close, balance, pad, note, document, ""].join("\n");
 
   // Use strict parser to surface errors instead of silently producing Raw.
-  let directives = parse_str_strict(&input).expect("strict parser should succeed");
+  let directives = parse_strict(&input).expect("strict parser should succeed");
   assert_eq!(directives.len(), 6);
 
   let open_line = format!("{open}\n");
@@ -181,7 +181,7 @@ fn spans_when_not_first_line() {
 ;
 "#;
 
-  let directives = parse_str_strict(input).expect("strict parser should succeed");
+  let directives = parse_strict(input).expect("strict parser should succeed");
 
   let expected_span = span_for(
     input,

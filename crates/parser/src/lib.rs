@@ -12,18 +12,11 @@ mod parser;
 mod utils;
 
 pub use core::{CoreDirective, normalize_directives, normalize_directives_with_rope};
-pub use parser::{
-  parse_lossy, parse_lossy_with_rope, parse_str_strict, parse_str_strict_with_rope,
-};
+pub use parser::{parse_lossy, parse_strict};
 
 #[deprecated(note = "use parse_lossy instead")]
 pub fn parse_str(input: &str) -> Vec<ast::Directive<'_>> {
   parse_lossy(input)
-}
-
-#[deprecated(note = "use parse_lossy_with_rope instead")]
-pub fn parse_str_with_rope(source: &str) -> (Vec<ast::Directive<'_>>, Rope) {
-  parse_lossy_with_rope(source)
 }
 
 use chumsky::prelude::*;
