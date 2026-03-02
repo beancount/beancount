@@ -440,12 +440,7 @@ class Inventory(dict[tuple[str, Optional[Cost]], Position]):
 
             # Compute the new number of units.
             number = pos.units.number + units.number  # type: ignore[operator]
-            if number == ZERO:
-                # If empty, delete the position.
-                del self[key]
-            else:
-                # Otherwise update it.
-                self[key] = Position(Amount(number, units.currency), cost)
+            self[key] = Position(Amount(number, units.currency), cost)
         else:
             # If not found, create a new one.
             if units.number == ZERO:
