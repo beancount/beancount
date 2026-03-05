@@ -11,8 +11,61 @@ on:
       - .github/workflows/wheels.yaml
 
 jobs:
+
+  verify-wheel-from-sdist:
+    name: Verify wheel build from sdist
+    needs:
+      - sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: source
+          path: dist
+
+      - name: Install GNU flex/bison
+        run: sudo apt-get update && sudo apt-get install -y flex bison
+
+      - name: Build wheel from sdist
+        run: |
+          mkdir -p wheelhouse
+          python -m pip wheel dist/*.tar.gz -w wheelhouse
+
+  verify-wheel-from-root:
+    name: Verify wheel build from repo root
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install GNU flex/bison
+        run: sudo apt-get update && sudo apt-get install -y flex bison
+
+      - name: Verify generated parser files are absent in repo
+        run: |
+          test ! -f beancount/parser/lexer.c
+          test ! -f beancount/parser/lexer.h
+          test ! -f beancount/parser/grammar.c
+          test ! -f beancount/parser/grammar.h
+
+      - name: Build wheel from repository root
+        run: |
+          mkdir -p wheelhouse
+          python -m pip wheel . -w wheelhouse
+
   wheels:
     name: Build wheels
+    needs:
+      - sdist
+      - verify-wheel-from-sdist
+      - verify-wheel-from-root
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,7 +86,10 @@ jobs:
           - os: windows-latest
             architecture: ARM64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: source
+          path: dist
 
       - uses: actions/setup-python@v5
         with:
@@ -49,10 +105,15 @@ jobs:
           architecture: x86
         if: runner.os == 'Windows' && matrix.architecture == 'x86'
 
+        # a dirty fix for bug of cibuildwheel
+      - run: rm -rf 'C:/Program Files/Git/usr/bin/link.EXE'
+        shell: bash
+        if: runner.os == 'Windows'
 
       - run: pip install cibuildwheel~=3.3.0
 
-      - run: cibuildwheel
+      - run: cibuildwheel dist/*.tar.gz
+        shell: bash
         env:
           CIBW_SKIP: '*-musllinux*'
           CIBW_ARCHS: ${{ matrix.architecture }}
@@ -67,8 +128,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y flex bison
       - run: python -m pip install build
       - run: python -m build --sdist
+      - name: Verify generated parser sources in sdist
+        run: |
+          tar -tf dist/*.tar.gz | grep -E '/beancount/parser/lexer\.(c|h)$'
+          tar -tf dist/*.tar.gz | grep -E '/beancount/parser/grammar\.(c|h)$'
       - uses: actions/upload-artifact@v4
         with:
           name: source
