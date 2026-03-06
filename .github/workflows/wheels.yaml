@@ -27,13 +27,8 @@ jobs:
           name: source
           path: dist
 
-      - name: Install GNU flex/bison
-        run: sudo apt-get update && sudo apt-get install -y flex bison
-
       - name: Build wheel from sdist
-        run: |
-          mkdir -p wheelhouse
-          python -m pip wheel dist/*.tar.gz -w wheelhouse
+        run: pipx build dist/*.tar.gz
 
   verify-wheel-from-root:
     name: Verify wheel build from repo root
