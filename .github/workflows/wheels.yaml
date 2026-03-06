@@ -56,9 +56,7 @@ jobs:
           test ! -f beancount/parser/grammar.h
 
       - name: Build wheel from repository root
-        run: |
-          mkdir -p wheelhouse
-          python -m pip wheel . -w wheelhouse
+        run: pipx build .
 
   wheels:
     name: Build wheels
