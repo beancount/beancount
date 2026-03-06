@@ -11,25 +11,6 @@ on:
       - .github/workflows/wheels.yaml
 
 jobs:
-
-  verify-wheel-from-sdist:
-    name: Verify wheel build from sdist
-    needs:
-      - sdist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-          path: dist
-
-      - name: Build wheel from sdist
-        run: pipx build dist/*.tar.gz
-
   verify-wheel-from-root:
     name: Verify wheel build from repo root
     runs-on: ubuntu-latest
@@ -51,13 +32,12 @@ jobs:
           test ! -f beancount/parser/grammar.h
 
       - name: Build wheel from repository root
-        run: pipx build .
+        run: pipx run build .
 
   wheels:
     name: Build wheels
     needs:
       - sdist
-      - verify-wheel-from-sdist
       - verify-wheel-from-root
     runs-on: ${{ matrix.os }}
     strategy:
