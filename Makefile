@@ -59,6 +59,8 @@ CLUSTERS_REGEXPS =							\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
 	beancount/plugins		 	plugins			\
+	beancount/plugins/io/.*_test\.py	 	plugins/io/tests		\
+	beancount/plugins/io		 	plugins/io			\
 	beancount/reports/.*_test\.py	 	reports/tests		\
 	beancount/reports		 	reports			\
 	beancount/scripts/bake.*_test\.py	scripts/bake/tests	\

@@ -71,6 +71,9 @@ py.install_sources(
     beancount/plugins/pedantic.py
     beancount/plugins/sellgains.py
     beancount/plugins/unique_prices.py
+    beancount/plugins/io/__init__.py
+    beancount/plugins/io/encryption.py
+    beancount/plugins/io/literate.py
     beancount/projects/__init__.py
     beancount/projects/export.py
     beancount/scripts/__init__.py
@@ -170,6 +173,7 @@ py.install_sources('''
     beancount/plugins/onecommodity_test.py
     beancount/plugins/pedantic_test.py
     beancount/plugins/sellgains_test.py
+    beancount/plugins/io/literate_test.py
     beancount/plugins/unique_prices_test.py
     beancount/projects/export_test.py
     beancount/scripts/check_examples_test.py

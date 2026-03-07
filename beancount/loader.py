@@ -117,14 +117,16 @@ def load_file(
 
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
-        entries, errors, options_map = load_encrypted_file(
-            filename, log_timings, log_errors, extra_validations, False, encoding
+        # We explicitly call the uncached internal loader `_load` to prevent writing
+        # the decrypted plaintext to the cache directory.
+        entries, errors, options_map = _load(
+            [(filename, True)], log_timings, extra_validations, encoding
         )
     else:
         entries, errors, options_map = _load_file(
             filename, log_timings, extra_validations, encoding
         )
-        _log_errors(errors, log_errors)
+    _log_errors(errors, log_errors)
     return entries, errors, options_map
 
 
@@ -418,9 +420,6 @@ def _parse_recursive(
             if is_file:
                 cwd = path.dirname(source)
                 source_filename = source
-                if encryption.is_encrypted_file(source):
-                    source = encryption.read_encrypted_file(source)
-                    is_file = False
             else:
                 # If we're parsing a string, the CWD is the current process
                 # working directory.

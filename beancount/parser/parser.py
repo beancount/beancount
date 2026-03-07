@@ -113,10 +113,13 @@ __copyright__ = "Copyright (C) 2013-2018, 2020-2022, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
+import configparser
 import contextlib
 import functools
+import importlib
 import inspect
 import io
+import os
 import sys
 import textwrap
 from typing import TYPE_CHECKING
@@ -139,6 +142,47 @@ if TYPE_CHECKING:
 # When importing the module, always check that the compiled source matched the
 # installed source.
 hashsrc.check_parser_source_files(_parser)
+
+
+_io_plugins = None
+_io_plugin_errors = None
+
+def _get_io_plugins(filename=None):
+    """Return a list of I/O plugin functions to run and a list of import errors."""
+    global _io_plugins, _io_plugin_errors
+    if _io_plugins is not None:
+        return _io_plugins, _io_plugin_errors
+
+    _io_plugins = []
+    _io_plugin_errors = []
+    plugin_modules = ["beancount.plugins.io.encryption"]
+
+    if filename and filename != "<string>":
+        dir_path = os.path.dirname(os.path.abspath(filename))
+        beanrc_path = os.path.join(dir_path, ".beanrc")
+        if os.path.isfile(beanrc_path):
+            config = configparser.ConfigParser()
+            try:
+                config.read(beanrc_path)
+                if config.has_section("beancount.plugins.io") and config.has_option("beancount.plugins.io", "plugins"):
+                    plugins_str = config.get("beancount.plugins.io", "plugins")
+                    if plugins_str:
+                        plugin_modules.extend(p.strip() for p in plugins_str.split(","))
+            except configparser.Error as exc:
+                _io_plugin_errors.append(f"Error parsing {beanrc_path}: {exc}")
+
+    for module_name in plugin_modules:
+        if not module_name:
+            continue
+        try:
+            module = importlib.import_module(module_name)
+            if hasattr(module, "__plugins__"):
+                for func_name in module.__plugins__:
+                    _io_plugins.append(getattr(module, func_name))
+        except Exception as exc:
+            _io_plugin_errors.append(f"Error importing I/O plugin {module_name}: {exc}")
+
+    return _io_plugins, _io_plugin_errors
 
 
 def is_posting_incomplete(posting) -> bool:
@@ -219,11 +263,50 @@ def parse_file(
         # readinto() method.
         elif not isinstance(file, io.IOBase):
             file_io = ctx.enter_context(open(file, "rb"))
+            if report_filename is None:
+                report_filename = file
         else:
             file_io = file
+
+        files = [(file_io, report_filename)]
+        io_errors = []
+
+        io_plugins_list, io_plugin_import_errors = _get_io_plugins(report_filename)
+
+        # Track import errors
+        if io_plugin_import_errors:
+            for err_msg in io_plugin_import_errors:
+                io_errors.append(grammar.ParserError(
+                    data.new_metadata(report_filename or "<string>", report_firstline),
+                    err_msg
+                ))
+
+        for plugin_func in io_plugins_list:
+            new_files = []
+            for f_io, f_name in files:
+                for new_f_io, new_f_name, plugin_errors in plugin_func(f_io, f_name):
+                    new_files.append((new_f_io, new_f_name))
+                    if plugin_errors:
+                        if isinstance(plugin_errors, list):
+                            io_errors.extend(plugin_errors)
+                        else:
+                            io_errors.append(plugin_errors)
+            files = new_files
+
         builder = grammar.Builder()
-        parser = _parser.Parser(builder, debug=debug)
-        parser.parse(file_io, filename=report_filename, lineno=report_firstline, **kw)
+        parser_instance = _parser.Parser(builder, debug=debug)
+
+        all_entries = []
+        for f_io, f_name in files:
+            parser_instance.parse(f_io, filename=f_name, lineno=report_firstline, **kw)
+            all_entries.extend(builder.entries)
+
+        builder.entries = all_entries
+
+        # Add IO plugin errors to builder
+        for err in io_errors:
+            builder.errors.append(err)
+
     return builder.finalize()
 
 

@@ -6,7 +6,9 @@ __copyright__ = "Copyright (C) 2013-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import io
+import os
 import sys
+import tempfile
 import textwrap
 import unittest
 
@@ -376,6 +378,71 @@ class TestLineno(unittest.TestCase):
         self.assertEqual(entries[1].meta["lineno"], lineno + 2)
         self.assertEqual(entries[2].meta["lineno"], lineno + 6)
         self.assertEqual(entries[3].meta["lineno"], lineno + 8)
+
+
+class TestIOPlugins(unittest.TestCase):
+    def test_io_plugins(self):
+        # Force parser to reload io plugins
+        parser._io_plugins = None
+        parser._io_plugin_errors = None
+
+        input_str = textwrap.dedent("""
+          # My Doc
+
+          ```beancount
+          2014-01-27 * "UNION MARKET"
+            Assets:Cash   -22.02 USD
+            Expenses:Food:Grocery            22.02 USD
+          ```
+        """)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            beanrc_path = os.path.join(tmpdir, ".beanrc")
+            with open(beanrc_path, "w") as f:
+                f.write("[beancount.plugins.io]\nplugins = beancount.plugins.io.literate\n")
+
+            filename = os.path.join(tmpdir, "doc.md")
+            with open(filename, "w") as f:
+                f.write(input_str)
+
+            try:
+                entries, errors, _ = parser.parse_file(filename)
+
+                # Expect 1 entry, properly loaded through the plugin system's test run.
+                self.assertEqual(1, len(entries))
+                self.assertEqual("Assets:Cash", entries[0].postings[0].account)
+            finally:
+                parser._io_plugins = None
+                parser._io_plugin_errors = None
+
+    def test_io_plugins_import_error(self):
+        # Force parser to reload io plugins
+        parser._io_plugins = None
+        parser._io_plugin_errors = None
+
+        input_str = textwrap.dedent("""
+          2014-01-27 * "UNION MARKET"
+            Assets:Cash   -22.02 USD
+            Expenses:Food:Grocery            22.02 USD
+        """)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            beanrc_path = os.path.join(tmpdir, ".beanrc")
+            with open(beanrc_path, "w") as f:
+                f.write("[beancount.plugins.io]\nplugins = beancount.non_existent_plugin\n")
+
+            filename = os.path.join(tmpdir, "doc.beancount")
+            with open(filename, "w") as f:
+                f.write(input_str)
+
+            try:
+                entries, errors, _ = parser.parse_file(filename)
+
+                self.assertEqual(1, len(entries))
+                self.assertTrue(any("Error importing I/O plugin" in str(e) for e in errors))
+            finally:
+                parser._io_plugins = None
+                parser._io_plugin_errors = None
 
 
 if __name__ == "__main__":
