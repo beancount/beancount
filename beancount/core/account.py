@@ -30,6 +30,10 @@ sep = ":"
 
 
 # Regular expression string that matches valid account name components.
+# These patterns are inspired by UAX #31 (https://www.unicode.org/reports/tr31) to support multilingual account names while respecting beancount conventions.
+# See https://en.wikipedia.org/wiki/Unicode_character_property#General_Category for various General Categories.
+# See UAX #31 for Other_ID_Start, Other_ID_Continue, Pattern_Syntax and Pattern_White_Space.
+# Note: Always use regex.V1 with the following patterns!
 ACC_NAME_Start = (
     r"[\p{L}\p{N}\p{Other_ID_Start}--\p{Pattern_Syntax}\p{Pattern_White_Space}\p{Ll}]"
 )
