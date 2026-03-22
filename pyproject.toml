@@ -47,6 +47,8 @@ types = [
 dev = [
     { include-group = "test" },
     { include-group = "types" },
+    "meson >= 1.2.1",
+    "meson-python >= 0.14.0",
 ]
 
 [project.scripts]
