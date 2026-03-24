@@ -148,7 +148,7 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 * Documentation
 
   I have a number of documents pending to release, some of which for part of the
-  Benacount Cookbook which exists to provide guidance on selecting accounts and
+  Beancount Cookbook which exists to provide guidance on selecting accounts and
   methods to book various things.
 
   Tasks:
@@ -181,7 +181,7 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
     value a profit was made, when you account for all the details you realize
     that the true return is much smaller--even potentially a loss. Part of the
     work here involves ensuring that all the input numbers can be pulled out of
-    Beancount directly, without using a spreadsheet. I think that doig this
+    Beancount directly, without using a spreadsheet. I think that doing this
     might require some custom scripting and I intended for this use case to
     become an example of writing scripts against the Beancount API.
 
@@ -524,7 +524,7 @@ Improve this bit:
       uses its own method for determining the precision should clearly be
       converted to use the DisplayContext instead.
 
-  - In beancount.ingest, in order to redner numbers pulled from imported data
+  - In beancount.ingest, in order to render numbers pulled from imported data
     nicely for user review, I need to create a new rendering type of
     max(MAXIMUM, MOST_COMMON) for the DisplayFormatter. This type will always
     render at least the most common number of fractional digits but if required,
@@ -708,7 +708,7 @@ Improve this bit:
     files, and for many of these features, they can be implemented in
     self-contained plugins with all their codes together! openclose.py, pad.py,
     balance.py, etc. I think even 'event' directives can become those. And maybe
-    a good way to disambiguate between ops adn plugins is just this... maybe ops
+    a good way to disambiguate between ops and plugins is just this... maybe ops
     is non-plugins, e.g. prices, summarize, etc.
 
   - Pad could be a plugin, definitely.
@@ -998,7 +998,7 @@ Improve this bit:
   date of their transaction which will allow us to report on trades correctly,
   including automatically determining short vs. long-term holding periods, and
   finally (3) it introduces syntax to automatically merge lots together in order
-  to deal with average cost booking. These changes will also allow aumatically
+  to deal with average cost booking. These changes will also allow automatically
   resolution of ambiguous lots which will invoke a particular method chosen by
   the user, e.g. FIFO booking.
 
@@ -1129,7 +1129,7 @@ Improve this bit:
 
   - Add an option "merge_lots" whose default value is TRUE, and which can be set
     to FALSE in order to avoid merging augmenting lots in the Inventory. It this
-    is false, there's the possibillity of an inventory owning two lots which
+    is false, there's the possibility of an inventory owning two lots which
     cannot be differentiated, and the only way for the user out of that
     situation would be to insert unique labels (indicate this somehow). Write
     unit tests for this. And try running it over my personal file to see if
@@ -1495,7 +1495,7 @@ Improve this bit:
     opposite sign. This should allow holding short positions yet still retain
     the benefit of the check for data entry errors. It also removes what for
     most people will appear as a limitation from the docs (although with
-    experience you would realize that it is not much of a limitation at atll).
+    experience you would realize that it is not much of a limitation at all).
 
   - Add tests for holding short positions.
   - Add tests for holding long and short positions in different commodities.
@@ -1801,7 +1801,7 @@ Improve this bit:
     concatenation, etc. with these types.
 
   - If you do this, you can make the Custom directive not output pairs of
-    objects for its 'values' attribuet; instead, you'd use the data type of the
+    objects for its 'values' attribute; instead, you'd use the data type of the
     str object itself.
 
 ** Improve Errors
@@ -4140,7 +4140,7 @@ Improve this bit:
     transaction can keep all the original detail while the reduced one only
     appears in the finaly flow.
 
-    Or maybe... this shoule be global and automatic?  Impelment it, and print
+    Or maybe... this should be global and automatic?  Implement it, and print
     out which transactions would be affected to find out.
 
   - `bean-doctor linked` command should render the balances after each
@@ -4148,7 +4148,7 @@ Improve this bit:
     after each. Add an option. This would be nice for debugging.
 
   - `bean-doctor linked`: The account types aren't in the correct order. It
-    shows Assets, Expenses, Liabilities... put all the balance statemnet
+    shows Assets, Expenses, Liabilities... put all the balance statement
     accounts first, then income statement accounts, finally, equity.
 
   - Plugin idea: A plugin that ensures that there is no residual commodity in an
@@ -4552,7 +4552,7 @@ Improve this bit:
     method! Highlight errors
 
   - If I sell my entire position of multiple lots the booking should be able to
-    infer that this is umambiguous
+    infer that this is unambiguous
 
   - Don't allow negative units by default--modify STRICT method to disallow
     that.
