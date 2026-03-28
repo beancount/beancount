@@ -1073,9 +1073,6 @@ Improve this bit:
 
   - Unref the constants in finalizer for module, here: {48414425cf78}.
 
-  - Write a test to ensure that an auto-posting with no effect results in no
-    new posting getting inserted.
-
   - Implement an optional feature that disables the merging of inventory lots
     for all lots except lots without cost. In other words, if there's a cost
     object, don't even compare them or try to merge them together; only lots
@@ -4655,7 +4652,8 @@ Improve this bit:
     trips, should be mirroring tolerances input syntax. Bug with Beancount:
     journal ?Assets:Caroline:Octopus? does not render with correct precision.
 
-  - Remove unused auto-postings, they distract from the reporting.
+  - Document the policy for preserving zero auto-postings on plain unit
+    postings while still pruning zero-valued cost/price interpolations.
 
   - Deal with flattening now (default should be never to flatten, never render
     empty fields on a continuation line for an inventory) and THEN implement CSV
