@@ -105,6 +105,7 @@ py.install_sources(
     beancount/parser/grammar.y
     beancount/parser/decimal.h
     beancount/parser/decimal.c
+    beancount/parser/grammar-callbacks.h
     beancount/parser/macros.h
     beancount/parser/parser.h
     beancount/parser/parser.c
@@ -237,6 +238,7 @@ grammar_c = bison_gen.process(
 parser = py.extension_module(
     '_parser',
     'beancount/parser/decimal.c',
+    'beancount/parser/grammar.c',
     'beancount/parser/parser.c',
     'beancount/parser/tokens.c',
     lexer_c,

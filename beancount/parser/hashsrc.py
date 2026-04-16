@@ -19,6 +19,8 @@ PARSER_SOURCE_FILES = [
     "grammar.y",
     "decimal.h",
     "decimal.c",
+    "grammar.c",
+    "grammar-callbacks.h",
     "macros.h",
     "parser.h",
     "parser.c",

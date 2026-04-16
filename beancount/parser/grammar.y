@@ -59,6 +59,7 @@ const char* token_to_string(int token);
 %{
 
 #include "beancount/parser/macros.h"
+#include "beancount/parser/grammar-callbacks.h"
 #include "beancount/parser/grammar.h"
 #include "beancount/parser/lexer.h"
 
@@ -70,13 +71,22 @@ extern YY_DECL;
  * reduced rule. {05bb0fb60e86}
  */
 #define BUILDY(clean, target, method_name, format, ...)                         \
-  target = PyObject_CallMethod(builder, method_name, "Oi" format,             \
-                               FILENAME, LINENO, ## __VA_ARGS__);             \
+  do {                                                                        \
+      PyObject* _args = Py_BuildValue("Oi" format,                            \
+                                      FILENAME, LINENO, ## __VA_ARGS__);      \
+      if (_args == NULL) {                                                    \
+          clean;                                                              \
+          build_grammar_error_from_exception(&yyloc, builder);                \
+          YYERROR;                                                            \
+      }                                                                       \
+      target = beancount_call_builder_method(method_name, builder, _args);    \
+      Py_DECREF(_args);                                                       \
   clean;                                                                      \
   if (target == NULL) {                                                       \
       build_grammar_error_from_exception(&yyloc, builder);                    \
       YYERROR;                                                                \
-  }
+  }                                                                           \
+  } while (0)
 
 #define MISSING_OBJ (yyget_extra(scanner)->missing_obj)
 

@@ -1,8 +1,10 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <datetime.h>
+#include <string.h>
 
 #include "beancount/parser/decimal.h"
+#include "beancount/parser/grammar-callbacks.h"
 
 static PyObject* g_traceback_format_exception_only;
 static PyObject* g_traceback_extract_tb;
@@ -46,6 +48,8 @@ static PyObject* g_compound_amount_type;
 static PyObject* g_tags_links_type;
 static PyObject* g_merge_cost;
 static PyObject* g_valid_account_regexp;
+
+static PyObject* import_attr(const char* module_name, const char* attr_name);
 
 static int
 cache_grammar_symbols(void)
@@ -1991,6 +1995,201 @@ error_none:
     Py_RETURN_NONE;
 }
 
+typedef PyObject* (*builder_wrapper_fn)(PyObject*, PyObject*);
+
+typedef struct {
+    const char* method_name;
+    builder_wrapper_fn func;
+} builder_dispatch_entry;
+
+static int
+builder_method_is_default(PyObject* builder, const char* method_name)
+{
+    PyObject* cls = PyObject_Type(builder);
+    PyObject* attr = NULL;
+    PyObject* module = NULL;
+    PyObject* name = NULL;
+    int is_default = 0;
+
+    if (cls == NULL) {
+        return 0;
+    }
+    attr = PyObject_GetAttrString(cls, method_name);
+    Py_DECREF(cls);
+    if (attr == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+    if (!PyFunction_Check(attr)) {
+        Py_DECREF(attr);
+        return 0;
+    }
+    module = PyObject_GetAttrString(attr, "__module__");
+    name = PyObject_GetAttrString(attr, "__name__");
+    Py_DECREF(attr);
+    if (module == NULL || name == NULL) {
+        Py_XDECREF(module);
+        Py_XDECREF(name);
+        PyErr_Clear();
+        return 0;
+    }
+    is_default =
+        PyUnicode_Check(module) &&
+        PyUnicode_Check(name) &&
+        PyUnicode_CompareWithASCIIString(module, "beancount.parser.grammar") == 0 &&
+        PyUnicode_CompareWithASCIIString(name, method_name) == 0;
+    Py_DECREF(module);
+    Py_DECREF(name);
+    return is_default;
+}
+
+static PyObject*
+call_wrapper_with_builder(builder_wrapper_fn func, PyObject* builder, PyObject* args)
+{
+    PyObject* full_args;
+    PyObject* result;
+    Py_ssize_t size;
+    Py_ssize_t i;
+
+    size = PyTuple_GET_SIZE(args);
+    full_args = PyTuple_New(size + 1);
+    if (full_args == NULL) {
+        return NULL;
+    }
+    Py_INCREF(builder);
+    PyTuple_SET_ITEM(full_args, 0, builder);
+    for (i = 0; i < size; i++) {
+        PyObject* item = PyTuple_GET_ITEM(args, i);
+        Py_INCREF(item);
+        PyTuple_SET_ITEM(full_args, i + 1, item);
+    }
+    result = func(NULL, full_args);
+    Py_DECREF(full_args);
+    return result;
+}
+
+static PyObject*
+call_python_builder_method(const char* method_name, PyObject* builder, PyObject* args)
+{
+    PyObject* method = PyObject_GetAttrString(builder, method_name);
+    PyObject* result;
+    if (method == NULL) {
+        return NULL;
+    }
+    result = PyObject_CallObject(method, args);
+    Py_DECREF(method);
+    return result;
+}
+
+PyObject*
+beancount_call_builder_method(const char* method_name, PyObject* builder, PyObject* args)
+{
+    static const builder_dispatch_entry entries[] = {
+        {"account", builder_account},
+        {"pipe_deprecated_error", builder_pipe_deprecated_error},
+        {"pushtag", builder_pushtag},
+        {"poptag", builder_poptag},
+        {"pushmeta", builder_pushmeta},
+        {"popmeta", builder_popmeta},
+        {"option", builder_option},
+        {"include", builder_include},
+        {"plugin", builder_plugin},
+        {"amount", builder_amount},
+        {"compound_amount", builder_compound_amount},
+        {"cost_merge", builder_cost_merge},
+        {"cost_spec", builder_cost_spec},
+        {"handle_list", builder_handle_list},
+        {"open", builder_open},
+        {"close", builder_close},
+        {"commodity", builder_commodity},
+        {"pad", builder_pad},
+        {"balance", builder_balance},
+        {"event", builder_event},
+        {"query", builder_query},
+        {"price", builder_price},
+        {"note", builder_note},
+        {"document", builder_document},
+        {"custom", builder_custom},
+        {"custom_value", builder_custom_value},
+        {"key_value", builder_key_value},
+        {"posting", builder_posting},
+        {"tag_link_new", builder_tag_link_new},
+        {"tag_link_TAG", builder_tag_link_tag},
+        {"tag_link_LINK", builder_tag_link_link},
+        {"transaction", builder_transaction},
+        {NULL, NULL},
+    };
+    const builder_dispatch_entry* entry;
+
+    for (entry = entries; entry->method_name != NULL; entry++) {
+        if (strcmp(entry->method_name, method_name) == 0) {
+            if (builder_method_is_default(builder, method_name)) {
+                return call_wrapper_with_builder(entry->func, builder, args);
+            }
+            return call_python_builder_method(method_name, builder, args);
+        }
+    }
+
+    return call_python_builder_method(method_name, builder, args);
+}
+
+int
+beancount_initialize_grammar(void)
+{
+    if (g_new_metadata != NULL) {
+        return 0;
+    }
+
+    PyDateTime_IMPORT;
+    PyDecimal_IMPORT;
+
+    g_traceback_format_exception_only = import_attr("traceback", "format_exception_only");
+    g_traceback_extract_tb = import_attr("traceback", "extract_tb");
+    g_options_defaults = import_attr("beancount.parser.options", "OPTIONS_DEFAULTS");
+    g_options_read_only = import_attr("beancount.parser.options", "READ_ONLY_OPTIONS");
+    g_options_options = import_attr("beancount.parser.options", "OPTIONS");
+    g_display_context_type = import_attr("beancount.core.display_context", "DisplayContext");
+    g_entry_sortkey = import_attr("beancount.core.data", "entry_sortkey");
+    g_new_metadata = import_attr("beancount.core.data", "new_metadata");
+    g_amount_type = import_attr("beancount.core.amount", "Amount");
+    g_empty_set = import_attr("beancount.core.data", "EMPTY_SET");
+    g_balance_type = import_attr("beancount.core.data", "Balance");
+    g_booking_enum = import_attr("beancount.core.data", "Booking");
+    g_close_type = import_attr("beancount.core.data", "Close");
+    g_commodity_type = import_attr("beancount.core.data", "Commodity");
+    g_custom_type = import_attr("beancount.core.data", "Custom");
+    g_document_type = import_attr("beancount.core.data", "Document");
+    g_event_type = import_attr("beancount.core.data", "Event");
+    g_note_type = import_attr("beancount.core.data", "Note");
+    g_open_type = import_attr("beancount.core.data", "Open");
+    g_pad_type = import_attr("beancount.core.data", "Pad");
+    g_posting_type = import_attr("beancount.core.data", "Posting");
+    g_price_type = import_attr("beancount.core.data", "Price");
+    g_query_type = import_attr("beancount.core.data", "Query");
+    g_transaction_type = import_attr("beancount.core.data", "Transaction");
+    g_missing = import_attr("beancount.core.number", "MISSING");
+    g_zero = import_attr("beancount.core.number", "ZERO");
+    g_cost_spec_type = import_attr("beancount.core.position", "CostSpec");
+    g_path_isabs = import_attr("os.path", "isabs");
+    g_path_abspath = import_attr("os.path", "abspath");
+    g_path_join = import_attr("os.path", "join");
+    g_path_dirname = import_attr("os.path", "dirname");
+
+    if (g_options_defaults == NULL || g_options_read_only == NULL || g_options_options == NULL ||
+        g_new_metadata == NULL || g_amount_type == NULL || g_empty_set == NULL ||
+        g_balance_type == NULL || g_booking_enum == NULL || g_close_type == NULL ||
+        g_commodity_type == NULL || g_custom_type == NULL || g_document_type == NULL ||
+        g_event_type == NULL || g_note_type == NULL || g_open_type == NULL ||
+        g_pad_type == NULL || g_posting_type == NULL || g_price_type == NULL ||
+        g_query_type == NULL || g_transaction_type == NULL || g_missing == NULL ||
+        g_zero == NULL || g_cost_spec_type == NULL || g_path_isabs == NULL ||
+        g_path_abspath == NULL || g_path_join == NULL || g_path_dirname == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
 static PyMethodDef module_functions[] = {
     {"account", builder_account, METH_VARARGS, NULL},
     {"pipe_deprecated_error", builder_pipe_deprecated_error, METH_VARARGS, NULL},
@@ -2058,50 +2257,7 @@ PyMODINIT_FUNC
 PyInit__grammar(void)
 {
     PyObject* module;
-    PyDateTime_IMPORT;
-    PyDecimal_IMPORT;
-
-    g_traceback_format_exception_only = import_attr("traceback", "format_exception_only");
-    g_traceback_extract_tb = import_attr("traceback", "extract_tb");
-    g_options_defaults = import_attr("beancount.parser.options", "OPTIONS_DEFAULTS");
-    g_options_read_only = import_attr("beancount.parser.options", "READ_ONLY_OPTIONS");
-    g_options_options = import_attr("beancount.parser.options", "OPTIONS");
-    g_display_context_type = import_attr("beancount.core.display_context", "DisplayContext");
-    g_entry_sortkey = import_attr("beancount.core.data", "entry_sortkey");
-    g_new_metadata = import_attr("beancount.core.data", "new_metadata");
-    g_amount_type = import_attr("beancount.core.amount", "Amount");
-    g_empty_set = import_attr("beancount.core.data", "EMPTY_SET");
-    g_balance_type = import_attr("beancount.core.data", "Balance");
-    g_booking_enum = import_attr("beancount.core.data", "Booking");
-    g_close_type = import_attr("beancount.core.data", "Close");
-    g_commodity_type = import_attr("beancount.core.data", "Commodity");
-    g_custom_type = import_attr("beancount.core.data", "Custom");
-    g_document_type = import_attr("beancount.core.data", "Document");
-    g_event_type = import_attr("beancount.core.data", "Event");
-    g_note_type = import_attr("beancount.core.data", "Note");
-    g_open_type = import_attr("beancount.core.data", "Open");
-    g_pad_type = import_attr("beancount.core.data", "Pad");
-    g_posting_type = import_attr("beancount.core.data", "Posting");
-    g_price_type = import_attr("beancount.core.data", "Price");
-    g_query_type = import_attr("beancount.core.data", "Query");
-    g_transaction_type = import_attr("beancount.core.data", "Transaction");
-    g_missing = import_attr("beancount.core.number", "MISSING");
-    g_zero = import_attr("beancount.core.number", "ZERO");
-    g_cost_spec_type = import_attr("beancount.core.position", "CostSpec");
-    g_path_isabs = import_attr("os.path", "isabs");
-    g_path_abspath = import_attr("os.path", "abspath");
-    g_path_join = import_attr("os.path", "join");
-    g_path_dirname = import_attr("os.path", "dirname");
-
-    if (g_options_defaults == NULL || g_options_read_only == NULL || g_options_options == NULL ||
-        g_new_metadata == NULL || g_amount_type == NULL || g_empty_set == NULL ||
-        g_balance_type == NULL || g_booking_enum == NULL || g_close_type == NULL ||
-        g_commodity_type == NULL || g_custom_type == NULL || g_document_type == NULL ||
-        g_event_type == NULL || g_note_type == NULL || g_open_type == NULL ||
-        g_pad_type == NULL || g_posting_type == NULL || g_price_type == NULL ||
-        g_query_type == NULL || g_transaction_type == NULL || g_missing == NULL ||
-        g_zero == NULL || g_cost_spec_type == NULL || g_path_isabs == NULL ||
-        g_path_abspath == NULL || g_path_join == NULL || g_path_dirname == NULL) {
+    if (beancount_initialize_grammar() < 0) {
         return NULL;
     }
 

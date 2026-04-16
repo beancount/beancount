@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include "beancount/parser/decimal.h"
+#include "beancount/parser/grammar-callbacks.h"
 #include "beancount/parser/macros.h"
 #include "beancount/parser/parser.h"
 #include "beancount/parser/grammar.h"
@@ -291,6 +292,9 @@ PyMODINIT_FUNC PyInit__parser(void)
 
     initialize_datetime();
     PyDecimal_IMPORT;
+    if (beancount_initialize_grammar() < 0) {
+        goto error;
+    }
 
     /* Hash of the this Python extension source code. The hash is used
      * to ensure that the imported extension module is an up-to-date

@@ -6,6 +6,7 @@ TOOLS=./tools
 
 PYTHON ?= uv run python
 GRAPHER = dot
+EDITABLE_BUILD = build/cp312
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
 PYTAG = $(shell python3 -c 'import sys; print(f"cp{sys.version_info.major}{sys.version_info.minor}")')
@@ -19,9 +20,13 @@ clean:
 
 .PHONY: build
 build:
-	meson setup --reconfigure -Dtests=enabled $(MESON_BUILD_DIR)/
-	ninja -C $(MESON_BUILD_DIR)/
-	cp $(MESON_BUILD_DIR)/_parser*.so beancount/parser/
+	meson setup --reconfigure -Dtests=enabled build/
+	ninja -C build/
+	meson setup --reconfigure -Dtests=enabled $(EDITABLE_BUILD)/
+	ninja -C $(EDITABLE_BUILD)/
+	cp build/_parser$(PYMODEXT) beancount/parser/
+	cp $(EDITABLE_BUILD)/_parser$(PYMODEXT) beancount/parser/_parser$(PYMODEXT)
+	cp $(EDITABLE_BUILD)/_grammar$(PYMODEXT) beancount/parser/_grammar$(PYMODEXT)
 
 .PHONY: ctest
 ctest:
