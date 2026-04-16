@@ -245,6 +245,14 @@ parser = py.extension_module(
     subdir: 'beancount/parser',
 )
 
+grammar = py.extension_module(
+    '_grammar',
+    'beancount/parser/decimal.c',
+    'beancount/parser/grammar.c',
+    install: true,
+    subdir: 'beancount/parser',
+)
+
 # Support prehistoric development practices: use ``meson setup build;
 # ninja -C build build_ext`` to obtain the equivalent of ``python
 # setup.by build_ext --inplace``.
