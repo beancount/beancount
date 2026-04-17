@@ -8,6 +8,8 @@ PYTHON ?= uv run python
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
+PYTAG = $(shell python3 -c 'import sys; print(f"cp{sys.version_info.major}{sys.version_info.minor}")')
+MESON_BUILD_DIR = build/$(PYTAG)
 
 all: build
 
@@ -17,14 +19,14 @@ clean:
 
 .PHONY: build
 build:
-	meson setup --reconfigure -Dtests=enabled build/
-	ninja -C build/
-	cp build/_parser$(PYMODEXT) beancount/parser/
+	meson setup --reconfigure -Dtests=enabled $(MESON_BUILD_DIR)/
+	ninja -C $(MESON_BUILD_DIR)/
+	cp $(MESON_BUILD_DIR)/_parser*.so beancount/parser/
 
 .PHONY: ctest
 ctest:
-	meson setup --reconfigure -Dtests=enabled build/
-	meson test -C build/
+	meson setup --reconfigure -Dtests=enabled $(MESON_BUILD_DIR)/
+	meson test -C $(MESON_BUILD_DIR)/
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
@@ -98,16 +100,16 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-vtest vtests verbose-test verbose-tests:
+vtest vtests verbose-test verbose-tests: build
 	$(PYTHON) -m pytest -v -s beancount examples
 
-qtest qtests quiet-test quiet-tests test tests:
+qtest qtests quiet-test quiet-tests test tests: build
 	$(PYTHON) -m pytest beancount
 
-test-last test-last-failed test-failed:
+test-last test-last-failed test-failed: build
 	$(PYTHON) -m pytest --last-failed beancount
 
-test-naked:
+test-naked: build
 	PATH=/bin:/usr/bin PYTHONPATH= $(PYTHON) -m pytest -x beancount
 
 # Run the parser and measure its performance.

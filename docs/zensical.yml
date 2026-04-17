@@ -1,0 +1,129 @@
+site_name: Beancount Documentation
+site_description: Beancount project documentation
+site_url: "https://beancount.github.io/beancount/"
+strict: false
+use_directory_urls: true
+docs_dir: site_docs
+site_dir: site
+
+repo_url: https://github.com/beancount/beancount
+repo_name: beancount/beancount
+
+theme:
+  name: "material"
+  variant: "classic"
+  font:
+    text: Roboto
+    code: Roboto Mono
+  palette:
+    - media: "(prefers-color-scheme)"
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-auto
+        name: "Switch to light mode"
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: "Switch to dark mode"
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: "Switch to system preference"
+  features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - navigation.path
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tracking
+    - toc.follow
+    - announce.dismiss
+  logo: "img/logo.png"
+  favicon: "img/logo.png"
+
+nav:
+  - Index: index.md
+  - Docs Directory: docs.md
+
+extra_css:
+  - css/custom.css
+extra_javascript:
+  - javascripts/shortcuts.js
+  - javascripts/header.js
+
+extra:
+  version:
+    provider: mike
+
+markdown_extensions:
+  - tables
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - toc:
+      permalink: 
+  - pymdownx.details
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.mark
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.tilde
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      pygments_lang_class: true
+  - pymdownx.extra:
+      pymdownx.superfences:
+        custom_fences:
+          - name: mermaid
+            class: mermaid
+            format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - sane_lists
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+plugins:
+  - search
+  - social
+  - glightbox
+  - mike
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_object_full_path: true
+            # 3 because docs are in pages with an H2 just above them
+            heading_level: 3
+            filters:
+              - "!_test$"
+              - "!^_[^_]"
+          inventories:
+            - url: https://docs.python.org/3/objects.inv
+            - url: https://docs.pydantic.dev/latest/objects.inv
+  - redirects:
+      redirect_maps:
+        'g/export/index.md': 'https://docs.google.com/document/d/1mNyE_ONuyEkF_I2l6V_AoAU5HJgI654AOBhHsnNPPqw/'
