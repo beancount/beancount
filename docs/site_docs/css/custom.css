@@ -1,0 +1,58 @@
+/* API reference */
+
+.doc-contents details {
+    margin-bottom: 24px;
+}
+
+/* 
+   Force Theme Colors (#0065a3 and #a6c4da)
+   Targeting Material's specific color scheme attributes to prevent overrides
+*/
+
+:root, [data-md-color-scheme="default"], [data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #0065a3;
+  --md-primary-fg-color--light: #a6c4da;
+  --md-primary-fg-color--dark:  #004b7a;
+  
+  --md-accent-fg-color:         #a6c4da;
+  --md-accent-fg-color--transparent: rgba(166, 196, 218, 0.1);
+}
+
+/* Header and Tabs specific overrides */
+.md-header {
+  background-color: #0065a3 !important;
+}
+
+.md-tabs {
+  background-color: #0065a3 !important;
+}
+
+/* Link and active element colors */
+.md-typeset a {
+  color: #0065a3;
+}
+
+.md-nav__link--active {
+  color: #0065a3 !important;
+}
+
+/* Search bar focus */
+.md-search__input:focus {
+  background-color: #fff;
+}
+
+/* Hide manual TOC links that appear at the beginning of documents. 
+   These are often in blockquotes and contain links to anchors on the same page. */
+.md-typeset blockquote > p > a[href^="#"] {
+  display: none;
+}
+
+/* If they are inside a blockquote without a p tag or just as standalone links in a blockquote */
+.md-typeset blockquote a[href^="#"] {
+  display: none;
+}
+
+/* Hide empty blockquotes that remain after hiding TOC links */
+.md-typeset blockquote:empty {
+  display: none;
+}

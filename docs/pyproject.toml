@@ -1,0 +1,20 @@
+[project]
+name = "beancount-docs-site"
+version = "0.1.0"
+description = "Self-contained Zensical site for Beancount documentation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beancount>=3.2.0",
+    "beautifulsoup4>=4.14.3",
+    "mike>=2.1.4",
+    "mkdocs-glightbox>=0.5.2",
+    "mkdocs-redirects>=1.2.3",
+    "mkdocstrings-python>=2.0.3",
+    "panflute>=2.3.1",
+    "pypandoc>=1.17",
+    "python-docx>=1.2.0",
+    "python-slugify>=8.0.4",
+    "requests>=2.33.1",
+    "zensical>=0.0.31",
+]
