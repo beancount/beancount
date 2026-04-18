@@ -1,6 +1,6 @@
 (function() {
     console.log("Beancount header script loaded");
-    
+
     function applyLinks() {
         const logoLinks = document.querySelectorAll('[data-md-component="logo"]');
         if (logoLinks.length === 0) return false;
@@ -15,7 +15,7 @@
                  break;
             }
         }
-        
+
         // If we can't find it clearly, fallback to a sensible default.
         if (!docRoot) docRoot = window.location.origin + '/docs/';
 
@@ -38,7 +38,7 @@
                 }
             }
         }
-        
+
         // Also update the sidebar title if it exists.
         const navTitle = document.querySelector('.md-nav__title');
         if (navTitle) {

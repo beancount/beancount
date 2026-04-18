@@ -43,7 +43,7 @@ graph TD
     Parser --> Entries[List of Directives (data.py)]
     Entries --> Realization[realization.realize()]
     Realization --> RealAccountTree[Tree of RealAccount objects]
-    
+
     subgraph Core Structures
     RealAccountTree -- contains --> Inventory
     Inventory -- contains --> Position
