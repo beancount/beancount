@@ -12,9 +12,11 @@ import json
 from decimal import Decimal
 from typing import Any
 
+import _duckdb
+import duckdb
+
 from beancount.core.amount import Amount
 from beancount.core.inventory import Inventory
-from beancount.core.number import D
 from beancount.core.position import Cost
 from beancount.core.position import Position
 
@@ -134,41 +136,50 @@ def _bn_str_udf(value: str | None) -> str | None:
     if value is None:
         return None
 
+    result = str(value)
     try:
         data = json.loads(value)
-    except json.JSONDecodeError:
-        return str(value)
+        if isinstance(data, dict):
+            # Dispatch based on the JSON keys
+            if "positions" in data:
+                # It's an Inventory
+                for pos in data["positions"]:
+                    if pos.get("cost") and pos["cost"].get("date"):
+                        pos["cost"]["date"] = datetime.date.fromisoformat(
+                            pos["cost"]["date"]
+                        )
+                    if pos.get("units") and pos["units"].get("number") is not None:
+                        pos["units"]["number"] = Decimal(
+                            str(pos["units"]["number"])
+                        ).normalize()
+                    if pos.get("cost") and pos["cost"].get("number") is not None:
+                        pos["cost"]["number"] = Decimal(
+                            str(pos["cost"]["number"])
+                        ).normalize()
+                result = inventory_from_dict(data).to_string()
+            elif "units" in data:
+                # It's a Position
+                if data.get("cost") and data["cost"].get("date"):
+                    data["cost"]["date"] = datetime.date.fromisoformat(data["cost"]["date"])
+                if data.get("units") and data["units"].get("number") is not None:
+                    data["units"]["number"] = Decimal(
+                        str(data["units"]["number"])
+                    ).normalize()
+                if data.get("cost") and data["cost"].get("number") is not None:
+                    data["cost"]["number"] = Decimal(
+                        str(data["cost"]["number"])
+                    ).normalize()
+                pos = position_from_dict(data)
+                if pos:
+                    result = pos.to_string()
+            elif "number" in data and "currency" in data:
+                # It's an Amount
+                amt = Amount(Decimal(str(data["number"])).normalize(), data["currency"])
+                result = amt.to_string()
+    except (json.JSONDecodeError, ValueError):
+        pass
 
-    if not isinstance(data, dict):
-        return str(value)
-
-    # Dispatch based on the JSON keys
-    if "positions" in data:
-        # It's an Inventory
-        for pos in data["positions"]:
-            if pos.get("cost") and pos["cost"].get("date"):
-                pos["cost"]["date"] = datetime.date.fromisoformat(pos["cost"]["date"])
-            if pos.get("units") and pos["units"].get("number") is not None:
-                pos["units"]["number"] = Decimal(str(pos["units"]["number"])).normalize()
-            if pos.get("cost") and pos["cost"].get("number") is not None:
-                pos["cost"]["number"] = Decimal(str(pos["cost"]["number"])).normalize()
-        return inventory_from_dict(data).to_string()
-    elif "units" in data:
-        # It's a Position
-        if data.get("cost") and data["cost"].get("date"):
-            data["cost"]["date"] = datetime.date.fromisoformat(data["cost"]["date"])
-        if data.get("units") and data["units"].get("number") is not None:
-            data["units"]["number"] = Decimal(str(data["units"]["number"])).normalize()
-        if data.get("cost") and data["cost"].get("number") is not None:
-            data["cost"]["number"] = Decimal(str(data["cost"]["number"])).normalize()
-        pos = position_from_dict(data)
-        return pos.to_string() if pos else None
-    elif "number" in data and "currency" in data:
-        # It's an Amount
-        amt = Amount(Decimal(str(data["number"])).normalize(), data["currency"])
-        return amt.to_string()
-    else:
-        return str(value)
+    return result
 
 
 def _bn_inv_udf(
@@ -184,9 +195,6 @@ def _bn_inv_udf(
 
 def register_duckdb(connection):
     """Register DuckDB Python UDFs and macros for Beancount core types."""
-    import _duckdb
-    import duckdb
-
     null_handling = _duckdb._func.FunctionNullHandling.SPECIAL
     varchar = duckdb.sqltypes.VARCHAR
     date = duckdb.sqltypes.DATE
@@ -273,18 +281,18 @@ def register_duckdb(connection):
     try:
         connection.execute(
             """
-            CREATE OR REPLACE MACRO bnj() AS TABLE 
-            SELECT date, tx_flag AS flag, payee, narration, account, bnstr(units) AS units, bnstr(pos) AS pos 
+            CREATE OR REPLACE MACRO bnj() AS TABLE
+            SELECT date, tx_flag AS flag, payee, narration, account, bnstr(units) AS units, bnstr(pos) AS pos
             FROM postings;
             """
         )
 
         connection.execute(
             """
-            CREATE OR REPLACE MACRO bnb() AS TABLE 
-            SELECT account, bnstr(bnsum(pos)) AS balance 
-            FROM postings 
-            GROUP BY account 
+            CREATE OR REPLACE MACRO bnb() AS TABLE
+            SELECT account, bnstr(bnsum(pos)) AS balance
+            FROM postings
+            GROUP BY account
             ORDER BY account;
             """
         )

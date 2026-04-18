@@ -134,17 +134,8 @@ import:
 sandbox:
 	bean-sandbox $(INPUT)
 
-missing-tests:
-	$(TOOLS)/find_missing_tests.py beancount
-
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' beancount || true
-
-filter-terms:
-	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
-
-multi-imports:
-	(egrep -srn '^(from.*)?import.*,' beancount | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -154,18 +145,11 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	$(TOOLS)/dependency_constraints.py $<
 
-
-# Run the linter on all source code.
-# keep the version in sync with ruff version we have in pre-commit-config.yaml
-ruff lint:
-	NO_COLOR=1 uv tool run 'ruff==0.14.10' check .
-	NO_COLOR=1 uv tool run 'ruff==0.14.10' format .
-
-mypy typecheck:
-	NO_COLOR=1 uv run mypy .
+pc precommit:
+	uvx pre-commit run --all-files
 
 # Check everything.
-status check: filter-terms missing-tests dep-constraints multi-imports test
+status check: precommit dep-constraints test
 
 
 # Experimental docs conversion.
@@ -174,20 +158,6 @@ download-pdf:
 
 download-odt:
 	./tools/download_docs.py odt $(HOME)/p/beancount-downloads/odt
-
-sphinx sphinx_odt2rst:
-	./tools/sphinx_odt2rst.py $(HOME)/p/beancount-downloads/odt $(HOME)/p/beancount-docs
-
-convert_test:
-	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
-
-# This does not work well; import errors just won't go away, it's slow, and it
-# seems you have to pregenerate all .pyi to do anything useful.
-pytype:
-	find $(PWD)/beancount -name '*.py' | parallel -j16  pytype --pythonpath=$(PWD) -o {}i {}
-
-pytype1:
-	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
 
 links bazel-link:
 	rm -f beancount/parser/_parser.so

@@ -6,14 +6,14 @@ import pytest
 
 duckdb = pytest.importorskip("duckdb")
 
-from beancount.core.amount import Amount
-from experiments.duckdb.duckdb_core import inventory_from_dict
-from experiments.duckdb.duckdb_core import position_from_dict
-from experiments.duckdb.duckdb_core import register_duckdb
-from beancount.core.inventory import Inventory
-from beancount.core.number import D
-from beancount.core.position import Cost
-from beancount.core.position import Position
+from beancount.core.amount import Amount  # noqa: E402
+from beancount.core.inventory import Inventory  # noqa: E402
+from beancount.core.number import D  # noqa: E402
+from beancount.core.position import Cost  # noqa: E402
+from beancount.core.position import Position  # noqa: E402
+from experiments.duckdb.duckdb_core import inventory_from_dict  # noqa: E402
+from experiments.duckdb.duckdb_core import position_from_dict  # noqa: E402
+from experiments.duckdb.duckdb_core import register_duckdb  # noqa: E402
 
 
 def test_duckdb_position_round_trip():

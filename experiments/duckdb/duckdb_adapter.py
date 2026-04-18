@@ -8,6 +8,7 @@ from typing import Optional
 
 import click
 import duckdb
+import polars as pl
 
 from beancount import loader
 from beancount.core import amount
@@ -52,21 +53,21 @@ def setup_database(conn: duckdb.DuckDBPyConnection):
             tags VARCHAR[],
             links VARCHAR[],
             tx_meta JSON,
-            
+
             -- Posting Info
             account VARCHAR,
             number DECIMAL(38,18),
             currency VARCHAR,
             posting_flag VARCHAR,
             posting_meta JSON,
-            
+
             -- Rich Objects
             units Amount,
             cost Cost,
             pos BeancountPosition,
             price Amount,
             weight Amount,
-            
+
             -- Context
             filename VARCHAR,
             lineno INTEGER,
@@ -120,9 +121,6 @@ def to_duck_cost(cst: Optional[data.Cost]):
         "date": cst.date,
         "label": cst.label,
     }
-
-
-import polars as pl
 
 
 def to_duck_json(meta: Optional[data.Meta]):
@@ -204,7 +202,7 @@ def insert_postings(conn: duckdb.DuckDBPyConnection, entries: data.Entries):
             )
 
     if rows:
-        df = pl.from_dicts(rows, infer_schema_length=None)
+        df = pl.from_dicts(rows, infer_schema_length=None)  # noqa: F841
         # Use DuckDB's native insertion from DataFrame
         conn.execute("INSERT INTO postings SELECT * FROM df")
 
@@ -250,15 +248,15 @@ def insert_other_tables(conn: duckdb.DuckDBPyConnection, entries: data.Entries):
             )
 
     if price_rows:
-        df_prices = pl.from_dicts(price_rows, infer_schema_length=None)
+        df_prices = pl.from_dicts(price_rows, infer_schema_length=None)  # noqa: F841
         conn.execute("INSERT INTO prices SELECT * FROM df_prices")
 
     if account_rows:
-        df_accounts = pl.from_dicts(list(account_rows.values()), infer_schema_length=None)
+        df_accounts = pl.from_dicts(list(account_rows.values()), infer_schema_length=None)  # noqa: F841
         conn.execute("INSERT INTO accounts SELECT * FROM df_accounts")
 
     if commodity_rows:
-        df_commodities = pl.from_dicts(commodity_rows, infer_schema_length=None)
+        df_commodities = pl.from_dicts(commodity_rows, infer_schema_length=None)  # noqa: F841
         conn.execute("INSERT INTO commodities SELECT * FROM df_commodities")
 
 

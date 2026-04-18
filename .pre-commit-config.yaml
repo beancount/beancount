@@ -9,6 +9,7 @@ repos:
       - id: check-ast
       - id: check-toml
       - id: check-yaml
+        exclude: ^docs/zensical\.yml$
       - id: check-merge-conflict
       - id: debug-statements
       - id: mixed-line-ending
@@ -25,8 +26,36 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # when we update this version, need also update schema-store to match it.
-    rev: 'v0.14.10'
+    rev: 'v0.15.10'
     hooks:
       - id: ruff-check
         args: [ --fix ]
       - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-python-dateutil, types-regex, click]
+        exclude: ^(tools|experiments)/
+
+  - repo: local
+    hooks:
+      - id: missing-tests
+        name: missing-tests
+        entry: bash -c "uv run tools/find_missing_tests.py beancount || true"
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: filter-terms
+        name: filter-terms
+        entry: bash -c "grep -srn 'GOOGL?\b' beancount | grep -v GOOGLE_APIS || true"
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: multi-imports
+        name: multi-imports
+        entry: bash -c "(grep -srn '^(from.*)?import.*,' beancount | grep -v 'from typing') || true"
+        language: system
+        pass_filenames: false
+        always_run: true
