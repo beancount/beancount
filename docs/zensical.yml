@@ -54,7 +54,6 @@ theme:
 
 nav:
   - Index: index.md
-  - Docs Directory: docs.md
 
 extra_css:
   - css/custom.css
