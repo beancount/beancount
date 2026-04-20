@@ -74,6 +74,8 @@ class KeyValue(NamedTuple):
     value: Any
 
 
+# this looks unnecessary, we can use `isinstance(value, T)` to check it's value
+# why dtype here?
 class ValueType(NamedTuple):
     """
     Value-type pairs. This is used to represent custom values where the concrete

@@ -29,6 +29,7 @@ from typing import NamedTuple
 
 from beancount.core import data
 from beancount.ops import validation
+from beancount.parser import _rust
 from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import parser
@@ -343,7 +344,7 @@ def load_string(
     log_timings=None,
     log_errors=None,
     extra_validations: list[Any] | None = None,
-    dedent: bool = False,
+    dedent: bool = True,
     encoding: str | None = None,
 ) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Open a Beancount input string, parse it, run transformations and validate.
@@ -473,7 +474,7 @@ def _parse_recursive(
                 with misc_utils.log_time(
                     "beancount.parser.parser.parse_string", log_timings, indent=2
                 ):
-                    (src_entries, src_errors, src_options_map) = parser.parse_string(
+                    (src_entries, src_errors, src_options_map) = _rust.parse_string(
                         source, source_filename
                     )
 

@@ -60,7 +60,7 @@ class TestCompare(unittest.TestCase):
           2014-08-01 price HOOL  603.10 USD
           2014-08-01 price HOOL  603.10 USD
         """)
-        hashes, errors = compare.hash_entries(entries)
+        hashes, errors = compare.hash_entries(entries, exclude_meta=True)
         self.assertEqual(1, len(hashes))
 
     def test_hash_entries_same_postings(self):

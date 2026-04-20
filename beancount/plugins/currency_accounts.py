@@ -78,7 +78,7 @@ def insert_currency_trading_postings(entries, options_map, config):
     earliest_date = entries[0].date
     open_entries = [
         data.Open(
-            data.new_metadata("<currency_accounts>", index), earliest_date, acc, None, None
+            data.new_metadata("<currency_accounts>", index), earliest_date, acc, [], None
         )
         for index, acc in enumerate(sorted(new_accounts))
     ]

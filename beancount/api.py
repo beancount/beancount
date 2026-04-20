@@ -77,6 +77,7 @@ from .core.realization import realize
 from .loader import load_doc
 from .loader import load_encrypted_file
 from .loader import load_file
+from .parser._rust import __version__
 from .parser.options import get_account_types
 from .parser.printer import format_entry
 from .parser.printer import print_entries
@@ -137,6 +138,7 @@ __all__ = [
     "RealAccount",
     "Transaction",
     "TxnPosting",
+    "__version__",
     "account",
     "amount",
     "build_price_map",

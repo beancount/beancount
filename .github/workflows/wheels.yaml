@@ -2,85 +2,84 @@ name: wheels
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - "[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
-
   pull_request:
     # trigger on self change to validation config
     paths:
       - .github/workflows/wheels.yaml
 
 jobs:
+  sdist:
+    name: Build source distribution
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
   wheels:
     name: Build wheels
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            architecture: x86_64
-          - os: ubuntu-24.04-arm
-            architecture: aarch64
-          - os: macos-15-intel
-            architecture: x86_64
-          - os: macos-15
-            architecture: arm64
-          - os: windows-latest
-            architecture: AMD64
-          - os: windows-latest
-            architecture: x86
-          - os: windows-latest
-            architecture: ARM64
+        platform:
+          - runner: ubuntu-24.04
+            target: x64
+          - runner: ubuntu-24.04-arm
+            target: aarch64
+
+          - runner: macos-15
+            target: aarch64
+          - runner: macos-15-intel
+            target: x64
+
+          - runner: windows-latest
+            target: x64
+          - runner: windows-11-arm
+            target: aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - uses: actions/setup-python@v5
         with:
-          # install a new python so we can use new version of cibuildwheel
-          python-version: '3.14'
+          python-version: "3.x"
 
-      - uses: bus1/cabuild/action/msdevshell@v1
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
         with:
-          architecture: x64
-        if: runner.os == 'Windows' && matrix.architecture == 'AMD64'
-      - uses: bus1/cabuild/action/msdevshell@v1
-        with:
-          architecture: x86
-        if: runner.os == 'Windows' && matrix.architecture == 'x86'
+          target: ${{ matrix.platform.target }}
+          args: "--release --out dist ${{ runner.os == 'Linux' && '--zig' || ''  }}"
+          container: "off"
+          manylinux: auto
 
-
-      - run: pip install cibuildwheel~=3.3.0
-
-      - run: cibuildwheel
-        env:
-          CIBW_SKIP: '*-musllinux*'
-          CIBW_ARCHS: ${{ matrix.architecture }}
+      - run: ls -ahl dist
+        shell: bash
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ runner.os }}-${{ matrix.architecture }}
-          path: wheelhouse/*.whl
-
-  sdist:
-    name: Build source distribution
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: python -m pip install build
-      - run: python -m build --sdist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: source
-          path: dist/*.tar.gz
+          name: wheels-${{ runner.os }}-${{ matrix.platform.target }}
+          path: dist
 
   upload:
     name: Upload to PyPI
-    # only push to pypi on new tag
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs:
       - wheels
       - sdist
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

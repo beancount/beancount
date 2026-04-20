@@ -1,0 +1,9 @@
+{
+  "mesonbuild.configureOnOpen": false,
+  "chat.tools.terminal.autoApprove": {
+    "cargo nextest": true,
+    "cargo flamegraph": true,
+    "cargo hack": true,
+    "lldb": true
+  }
+}
