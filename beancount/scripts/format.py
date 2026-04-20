@@ -37,18 +37,25 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # Find all lines that have a number in them and calculate the maximum length
     # of the stripped prefix and the number.
     match_pairs = []
+    in_multiline_string = False
     for line in contents.splitlines():
-        match = regex.match(
-            rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
-            rf"({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+"
-            rf"((?:{amount.CURRENCY_RE})\b.*)",
-            line,
-        )
-        if match:
-            prefix, number, rest = match.groups()
-            match_pairs.append((prefix, number, rest))
-        else:
+        if in_multiline_string:
             match_pairs.append((line, None, None))
+        else:
+            match = regex.match(
+                rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
+                rf"({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+"
+                rf"((?:{amount.CURRENCY_RE})\b.*)",
+                line,
+            )
+            if match:
+                prefix, number, rest = match.groups()
+                match_pairs.append((prefix, number, rest))
+            else:
+                match_pairs.append((line, None, None))
+
+        if (line.count('"') - line.count('\\"')) % 2 == 1:
+            in_multiline_string = not in_multiline_string
 
     # Normalize whitespace before lines that have some indent and an account
     # name.
