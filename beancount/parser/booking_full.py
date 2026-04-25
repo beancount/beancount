@@ -938,7 +938,9 @@ def interpolate_group(postings, balances, currency, tolerances):
                 tolerances, units.currency, units_number
             )
 
-            if weight != ZERO:
+            # Preserve zero-valued postings for a fully blank balancing leg so
+            # a user-authored placeholder account is not silently dropped.
+            if weight != ZERO or (cost is None and incomplete_posting.price is None):
                 new_pos = Position(Amount(units_number, units.currency), cost)
                 new_posting = incomplete_posting._replace(
                     units=new_pos.units, cost=new_pos.cost
