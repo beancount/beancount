@@ -588,6 +588,25 @@ class TestInferTolerances(cmptest.TestCase):
         """
 
 
+    @loader.load_doc(expect_errors=True)
+    def test_infer_tolerances_modes(self, entries, errors, options_map):
+        """
+        2026-04-28 * "Test"
+          Expenses:Test 4.8 EUR
+          Expenses:Test 2.97 EUR
+          Assets:Test
+        """
+        postings = entries[0].postings
+        
+        # Default (max) mode should pick the loosest tolerance (0.05 from 4.8)
+        tolerances_max = interpolate.infer_tolerances(postings, options_map, mode="max")
+        self.assertEqual(D("0.05"), tolerances_max["EUR"])
+        
+        # Explicit min mode should pick the finest tolerance (0.005 from 2.97)
+        tolerances_min = interpolate.infer_tolerances(postings, options_map, mode="min")
+        self.assertEqual(D("0.005"), tolerances_min["EUR"])
+
+
 class TestQuantize(unittest.TestCase):
     def test_quantize_with_tolerance(self):
         tolerances = defdict.ImmutableDictWithDefault(
