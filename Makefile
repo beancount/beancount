@@ -5,10 +5,12 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= uv run python
+MESON ?= uv run meson
+NINJA ?= ninja
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
-PYTAG = $(shell python3 -c 'import sys; print(f"cp{sys.version_info.major}{sys.version_info.minor}")')
+PYTAG = $(shell $(PYTHON) -c 'import sys; print(f"cp{sys.version_info.major}{sys.version_info.minor}")')
 MESON_BUILD_DIR = build/$(PYTAG)
 
 all: build
@@ -19,14 +21,17 @@ clean:
 
 .PHONY: build
 build:
-	meson setup --reconfigure -Dtests=enabled $(MESON_BUILD_DIR)/
-	ninja -C $(MESON_BUILD_DIR)/
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --reconfigure || \
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --wipe || \
+	(rm -rf $(MESON_BUILD_DIR)/ && $(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled)
+	$(NINJA) -C $(MESON_BUILD_DIR)/
 	cp $(MESON_BUILD_DIR)/_parser*.so beancount/parser/
 
 .PHONY: ctest
 ctest:
-	meson setup --reconfigure -Dtests=enabled $(MESON_BUILD_DIR)/
-	meson test -C $(MESON_BUILD_DIR)/
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --reconfigure || \
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled
+	$(MESON) test -C $(MESON_BUILD_DIR)/
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
