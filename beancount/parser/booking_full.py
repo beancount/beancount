@@ -168,7 +168,12 @@ def _book(entries, options_map, methods, initial_balances=None):
             posting_groups = replace_currencies(entry.postings, refer_groups)
 
             # Get the list of tolerances.
-            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+            tolerances_min = interpolate.infer_tolerances(
+                entry.postings, options_map, mode="min"
+            )
+            tolerances_max = interpolate.infer_tolerances(
+                entry.postings, options_map, mode="max"
+            )
 
             # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
@@ -219,7 +224,7 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # 'inter_postings' consists entirely of postings holding
                 # instances of Cost.
                 (inter_postings, interpolation_errors, interpolated) = interpolate_group(
-                    booked_postings, balances, currency, tolerances
+                    booked_postings, balances, currency, tolerances_min
                 )
 
                 if interpolation_errors:
@@ -228,7 +233,7 @@ def _book(entries, options_map, methods, initial_balances=None):
 
             # Replace postings by interpolated ones.
             meta = entry.meta.copy()
-            meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
+            meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances_max
             entry = entry._replace(postings=repl_postings, meta=meta)
 
             # Update the running balances for each account using the final,
