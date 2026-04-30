@@ -13,11 +13,12 @@ from __future__ import annotations
 __copyright__ = "Copyright (C) 2014-2021, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
+import regex
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 from beancount.core import account
+from beancount.core.account import ACC_COMP_TYPE_RE
 
 if TYPE_CHECKING:
     from beancount.core.account import Account
@@ -78,7 +79,7 @@ def is_account_type(account_type: str, account_name: Account) -> bool:
     Returns:
       A boolean, true if the account is of the given type.
     """
-    return bool(re.match("^{}{}".format(account_type, account.sep), account_name))
+    return bool(regex.match("^{}{}".format(account_type, account.sep), account_name))
 
 
 def is_root_account(account_name: Account) -> bool:
@@ -93,7 +94,9 @@ def is_root_account(account_name: Account) -> bool:
       A boolean, true if the account is a root account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
-    return bool(account_name) and bool(re.match(r"([A-Z][A-Za-z0-9\-]+)$", account_name))
+    return bool(account_name) and bool(
+        regex.match(ACC_COMP_TYPE_RE + "$", account_name, regex.V1)
+    )
 
 
 def is_balance_sheet_account(account_name: Account, account_types: AccountTypes) -> bool:
