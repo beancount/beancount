@@ -38,7 +38,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           # install a new python so we can use new version of cibuildwheel
-          python-version: '3.14'
+          python-version: '3.13'
 
       - uses: bus1/cabuild/action/msdevshell@v1
         with:
@@ -75,13 +75,17 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
-    name: Upload to PyPI
+    name: Upload to PyPI (${{ matrix.pattern }})
     # only push to pypi on new tag
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs:
       - wheels
       - sdist
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pattern: ["macosx*", "manylinux*", "win32*", "win_amd64*", "beancount-*.tar.gz"]
     environment:
       name: pypi
       url: https://pypi.org/p/beancount
@@ -94,3 +98,7 @@ jobs:
           path: dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          glob-pattern: ${{ matrix.pattern }}
+          skip-existing: true

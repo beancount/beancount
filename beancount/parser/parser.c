@@ -299,7 +299,7 @@ PyMODINIT_FUNC PyInit__parser(void)
     PyObject_SetAttrString(module, "SOURCE_HASH", value);
 
     /* Release versions as defined in setup.py. */
-    value = PyUnicode_FromString(STRINGIFY(RELEASE_VERSION));
+    value = PyUnicode_FromString(STRINGIFY(BEANCOUNT_VERSION));
     PyObject_SetAttrString(module, "__version__", value);
 
 #ifdef VC_CHANGESET
