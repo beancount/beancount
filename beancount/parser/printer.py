@@ -296,7 +296,16 @@ class EntryPrinter:
             position_str = ""
 
         if posting.price is not None:
-            position_str += " @ {}".format(posting.price.to_string(self.dformat_max))
+            meta = posting.meta or {}
+            price_total_format = meta.get("__print_price_total_format")
+            if price_total_format is not None:
+                # Calculate the total amount by multiplying the per-unit price
+                # and print using the @@ syntax.
+                total_number = posting.price.number * abs(posting.units.number)
+                total_amount = amount.Amount(total_number, posting.price.currency)
+                position_str += " @@ {}".format(total_amount.to_string(price_total_format))
+            else:
+                position_str += " @ {}".format(posting.price.to_string(self.dformat_max))
 
         return flag_account, position_str, weight_str
 

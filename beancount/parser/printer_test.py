@@ -13,9 +13,11 @@ from decimal import Decimal
 from beancount import loader
 from beancount.core import data
 from beancount.core.amount import Amount
+from beancount.core.number import MISSING
 from beancount.ops.balance import BalanceError
 from beancount.parser import cmptest
 from beancount.parser import printer
+from beancount.core.position import CostSpec
 from beancount.utils import test_utils
 
 META = data.new_metadata("beancount/core/testing.beancount", 12345)
@@ -759,6 +761,55 @@ class TestPrinterMisc(test_utils.TestCase):
         self.assertFalse(errors)
         self.assertIs(entries[-1].postings[-1].meta["foo"], None)
 
+    def test_price_total_format_uses_total_price_syntax(self):
+        # 10 HOOL @ 1.45 USD -> total 14.50 USD, printed with @@ total syntax.
+        lot_date = date(2015, 1, 1)
+        units = Amount(Decimal('10'), 'HOOL')
+        total = Amount(Decimal('14.50'), 'USD')
+        price = Amount(total.number / units.number, 'USD')
+        cost = CostSpec(
+            number_per=MISSING, # inferred from transaction
+            number_total=None,
+            currency='HOOL',
+            date=lot_date,
+            label=None,
+            merge=False,
+        )
+        posting_buy_lot = data.Posting(
+            account='Assets:US:Investments:HOOL',
+            units=units,
+            cost=cost,
+            price=price,
+            flag=None,
+            meta={'__print_price_total_format': "{:.2f}"}
+        )
+        posting_cash = data.Posting(
+            account='Assets:US:Investments:Cash',
+            units=Amount(Decimal('-14.50'), 'USD'),
+            cost=None,
+            price=None,
+            flag=None,
+            meta=None
+        )
+        txn = data.Transaction(
+            meta=None,
+            date=lot_date,
+            flag='*',
+            payee=None,
+            narration='Buy 10 sh. HOOL',
+            tags=frozenset(),
+            links=frozenset(),
+            postings=[posting_buy_lot, posting_cash],
+        )
 
+        out = printer.format_entry(txn)
+
+        expected_str = textwrap.dedent("""\
+            2015-01-01 * "Buy 10 sh. HOOL"
+              Assets:US:Investments:HOOL      10 HOOL {2015-01-01} @@ 14.50 USD
+              Assets:US:Investments:Cash  -14.50 USD
+        """)
+        self.assertEqual(expected_str, out)
+        
 if __name__ == "__main__":
     unittest.main()
