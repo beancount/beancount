@@ -699,6 +699,24 @@ PUBLIC_OPTION_GROUPS = [
     ),
     OptGroup(
         """
+      A boolean, if true, Beancount will use the finest (minimum) inferred
+      tolerance for interpolation of missing amounts, while using the loosest
+      (maximum) inferred tolerance for validation (i.e. checking if the
+      transaction balances). This avoids small rounding inconsistencies that can
+      accumulate over time. If false (the default), Beancount uses the same
+      maximum tolerance for both purposes.
+    """,
+        [
+            Opt(
+                "use_precise_interpolation",
+                False,
+                "TRUE",
+                converter=options_validate_boolean,
+            )
+        ],
+    ),
+    OptGroup(
+        """
       A boolean, if true, prepend the directory name of the top-level file to
       the PYTHONPATH.
     """,

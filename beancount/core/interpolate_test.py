@@ -587,7 +587,6 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Cash     400 CAD
         """
 
-
     @loader.load_doc(expect_errors=True)
     def test_infer_tolerances_modes(self, entries, errors, options_map):
         """
@@ -597,11 +596,11 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Test
         """
         postings = entries[0].postings
-        
+
         # Default (max) mode should pick the loosest tolerance (0.05 from 4.8)
         tolerances_max = interpolate.infer_tolerances(postings, options_map, mode="max")
         self.assertEqual(D("0.05"), tolerances_max["EUR"])
-        
+
         # Explicit min mode should pick the finest tolerance (0.005 from 2.97)
         tolerances_min = interpolate.infer_tolerances(postings, options_map, mode="min")
         self.assertEqual(D("0.005"), tolerances_min["EUR"])
