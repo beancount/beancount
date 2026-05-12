@@ -92,11 +92,14 @@ def cost_to_str(cost, dformat, detail=True):
     elif isinstance(cost, CostSpec):
         if isinstance(cost.number_per, Decimal) or isinstance(cost.number_total, Decimal):
             amountlist = []
-            if isinstance(cost.number_per, Decimal):
-                amountlist.append(dformat.format(cost.number_per))
-            if isinstance(cost.number_total, Decimal):
-                amountlist.append("#")
+            if is_total_cost_spec(cost):
                 amountlist.append(dformat.format(cost.number_total))
+            else:
+                if isinstance(cost.number_per, Decimal):
+                    amountlist.append(dformat.format(cost.number_per))
+                if isinstance(cost.number_total, Decimal):
+                    amountlist.append("#")
+                    amountlist.append(dformat.format(cost.number_total))
             if isinstance(cost.currency, str):
                 amountlist.append(cost.currency)
             strlist.append(" ".join(amountlist))
@@ -109,6 +112,15 @@ def cost_to_str(cost, dformat, detail=True):
                 strlist.append("*")
 
     return ", ".join(strlist)
+
+
+def is_total_cost_spec(cost):
+    """Return true if the cost spec came from total-cost-only syntax."""
+    return (
+        isinstance(cost, CostSpec)
+        and cost.number_per == ZERO
+        and isinstance(cost.number_total, Decimal)
+    )
 
 
 # Lookup for ordering a list of currencies: we want the majors first, then the
@@ -154,7 +166,12 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     """
     pos_str = pos.units.to_string(dformat)
     if pos.cost is not None:
-        pos_str = "{} {{{}}}".format(pos_str, cost_to_str(pos.cost, dformat, detail))
+        cost_str = cost_to_str(pos.cost, dformat, detail)
+        pos_str = (
+            "{} {{{{{}}}}}".format(pos_str, cost_str)
+            if is_total_cost_spec(pos.cost)
+            else "{} {{{}}}".format(pos_str, cost_str)
+        )
     return pos_str
 
 
