@@ -25,11 +25,11 @@ typedef struct {
 PyDoc_STRVAR(parser_doc,
              "Parser(builder)\n"
              "\n"
-             "Class exposing the interface to the Beancout parser C code.\n"
-             "\n"
-             "Construct a new parser object using the builder Builder object to\n"
-             "intantiate and store parsing results. This class is not intended to be\n"
-             "used directly. See the beancount.parser moduel instead.");
+             "Class exposing the interface to the Beancount parser C code.\\n"
+             "\\n"
+             "Construct a new parser object using the builder Builder object to\\n"
+             "instantiate and store parsing results. This class is not intended to be\\n"
+             "used directly. See the beancount.parser module instead.");
 
 /* Allocate a new Parser instance. */
 static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -132,13 +132,13 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(parser_lex_doc,
-             "lex(file, filename=None, lineno=1)\n"
-             "\n"
-             "Run the input file object trough the Beancount tokenizer. filename and\n"
-             "lineno keyword arguments allow to specify the file name and start line\n"
-             "number to be used in error reporting. If filename is not specified or\n"
-             "None, the name attribute of the file object is used, if present. Return \n"
-             "an iterable yielding (token name, string value, sematical value) tuples.");
+             "lex(file, filename=None, lineno=1)\\n"
+             "\\n"
+             "Run the input file object through the Beancount tokenizer. filename and\\n"
+             "lineno keyword arguments allow to specify the file name and start line\\n"
+             "number to be used in error reporting. If filename is not specified or\\n"
+             "None, the name attribute of the file object is used, if present. Return \\n"
+             "an iterable yielding (token name, string value, semantic value) tuples.");
 
 static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {

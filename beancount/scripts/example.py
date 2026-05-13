@@ -1044,7 +1044,7 @@ def generate_outgoing_transfers(
             amount_transfer_neg = -amount_transfer
             new_entries.extend(
                 parse(f"""
-              {date} * "Transfering accumulated savings to other account"
+              {date} * "Transferring accumulated savings to other account"
                 {account}          {amount_transfer_neg:2f} CCY
                 {account_out}      {amount_transfer:2f} CCY
             """)
