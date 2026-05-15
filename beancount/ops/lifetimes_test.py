@@ -341,6 +341,7 @@ class TestLifetimeDateIterators(test_utils.TestCase):
                 (datetime.date(2014, 2, 5), "AAPL", "USD"),
                 (datetime.date(2014, 2, 6), "AAPL", "USD"),
                 (datetime.date(2014, 2, 7), "AAPL", "USD"),
+                (datetime.date(2014, 2, 10), "AAPL", "USD"),
                 (datetime.date(2014, 5, 20), "AAPL", "USD"),
                 (datetime.date(2014, 5, 21), "AAPL", "USD"),
                 (datetime.date(2014, 5, 22), "AAPL", "USD"),
@@ -371,11 +372,32 @@ class TestLifetimeDateIterators(test_utils.TestCase):
                 (datetime.date(2014, 2, 7), "AAPL", "USD"),
                 (datetime.date(2014, 2, 8), "AAPL", "USD"),
                 (datetime.date(2014, 2, 9), "AAPL", "USD"),
+                (datetime.date(2014, 2, 10), "AAPL", "USD"),
                 (datetime.date(2014, 5, 20), "AAPL", "USD"),
                 (datetime.date(2014, 5, 21), "AAPL", "USD"),
                 (datetime.date(2014, 5, 22), "AAPL", "USD"),
                 (datetime.date(2014, 5, 23), "AAPL", "USD"),
+                (datetime.date(2014, 5, 24), "AAPL", "USD"),
             ],
+            required_prices,
+        )
+
+    def test_single_day_interval(self):
+        """Test that a single-day interval returns that day.
+
+        When bean-price --update is run the day after the last known price,
+        the interval is (today, today). This should return one price job,
+        not zero.
+        """
+        lifetimes_map = {
+            ("VTI", "USD"): [(datetime.date(2026, 1, 27), datetime.date(2026, 1, 27))],
+        }
+
+        required_prices = list(
+            lifetimes.required_daily_prices(lifetimes_map, datetime.date(2026, 1, 27), False)
+        )
+        self.assertEqual(
+            [(datetime.date(2026, 1, 27), "VTI", "USD")],
             required_prices,
         )
 

@@ -214,7 +214,7 @@ def required_daily_prices(lifetimes_map, date_last, weekdays_only=False):
             # Iterate over all weekdays.
             if date_end is None:
                 date_end = date_last
-            while date < date_end:
+            while date <= date_end:
                 results.append((date, currency_pair[0], currency_pair[1]))
                 if weekdays_only and date.weekday() == 4:
                     date += 3 * ONEDAY
