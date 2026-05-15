@@ -158,7 +158,7 @@ class TestData(unittest.TestCase):
 
     def test_entry_sortkey(self):
         entries = self.create_sort_data()
-        sorted_entries = sorted(entries, key=data.entry_sortkey)
+        sorted_entries = data.sorted(entries)
         self.check_sorted(sorted_entries)
 
     def test_sort(self):

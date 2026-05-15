@@ -40,7 +40,7 @@ def get_last_price_entries(entries, date):
         if isinstance(entry, Price):
             base_quote = (entry.currency, entry.amount.currency)
             price_entry_map[base_quote] = entry
-    return sorted(price_entry_map.values(), key=data.entry_sortkey)
+    return data.sorted(price_entry_map.values())
 
 
 class PriceMap(dict):
