@@ -30,12 +30,21 @@ sep = ":"
 
 
 # Regular expression string that matches valid account name components.
-# Categories are:
-#   Lu: Uppercase letters.
-#   L: All letters.
-#   Nd: Decimal numbers.
-ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
-ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
+# These patterns are inspired by UAX #31 (https://www.unicode.org/reports/tr31) to support multilingual account names while respecting beancount conventions.
+# See https://en.wikipedia.org/wiki/Unicode_character_property#General_Category for various General Categories.
+# See UAX #31 for Other_ID_Start, Other_ID_Continue, Pattern_Syntax and Pattern_White_Space.
+# Note: Always use regex.V1 with the following patterns!
+ACC_NAME_Start = (
+    r"[\p{L}\p{N}\p{Other_ID_Start}--\p{Pattern_Syntax}\p{Pattern_White_Space}\p{Ll}]"
+)
+ACC_TYPE_Start = (
+    r"[\p{L}\p{Nl}\p{Other_ID_Start}--\p{Pattern_Syntax}\p{Pattern_White_Space}\p{Ll}]"
+)
+ACC_NAME_Continue = r"[[\p{L}\p{N}\p{Other_ID_Start}\p{Mn}\p{Mc}\p{Pc}\p{Other_ID_Continue}--\p{Pattern_Syntax}\p{Pattern_White_Space}]\p{Pd}]"
+
+
+ACC_COMP_TYPE_RE = f"{ACC_TYPE_Start}{ACC_NAME_Continue}*"
+ACC_COMP_NAME_RE = f"{ACC_NAME_Start}{ACC_NAME_Continue}*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
@@ -55,7 +64,9 @@ def is_valid_root(string: Account) -> bool:
     Returns:
       A boolean, true if the string has the form of a root account's name.
     """
-    return isinstance(string, str) and bool(regex.fullmatch(ACC_COMP_TYPE_RE, string))
+    return isinstance(string, str) and bool(
+        regex.fullmatch(ACC_COMP_TYPE_RE, string, regex.V1)
+    )
 
 
 def is_valid_leaf(string: Account) -> bool:
@@ -68,7 +79,7 @@ def is_valid_leaf(string: Account) -> bool:
       A boolean, true if the string has the form of a leaf account's name.
     """
     return isinstance(string, str) and all(
-        regex.fullmatch(ACC_COMP_NAME_RE, p) for p in string.split(":")
+        regex.fullmatch(ACC_COMP_NAME_RE, p, regex.V1) for p in string.split(":")
     )
 
 
@@ -81,7 +92,7 @@ def is_valid(string: Account) -> bool:
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return isinstance(string, str) and bool(regex.fullmatch(ACCOUNT_RE, string))
+    return isinstance(string, str) and bool(regex.fullmatch(ACCOUNT_RE, string, regex.V1))
 
 
 def join(*components: str) -> Account:

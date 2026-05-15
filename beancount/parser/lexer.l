@@ -126,8 +126,8 @@ UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{
 UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
 UTF-8           {ASCII}|{UTF-8-ONLY}
 
-ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
-ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Z\_a-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Z\_a-z0-9\-]|{UTF-8-ONLY})*
 
  /* Characters that may be used as flags. Single-character letters may also be
   * used as flags, but must be prefixed by a quote, as in "'P' for "P". */
