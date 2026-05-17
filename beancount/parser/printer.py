@@ -14,7 +14,6 @@ import sys
 import textwrap
 from decimal import Decimal
 from typing import Iterator
-from typing import Optional
 
 from beancount.core import account
 from beancount.core import amount
@@ -428,7 +427,7 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
 
-def render_flag(inflag: Optional[str]) -> str:
+def render_flag(inflag: str | None) -> str:
     """Render a flag, which can be None, a symbol or a character to a string.
 
     Args:

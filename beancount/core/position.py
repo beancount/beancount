@@ -39,7 +39,7 @@ class Cost(NamedTuple):
     date: datetime.date
 
     # A string for the label of this lot, or None, if there is no label.
-    label: Optional[str]
+    label: str | None
 
 
 class CostSpec(NamedTuple):
@@ -52,18 +52,18 @@ class CostSpec(NamedTuple):
     """
 
     # A Decimal instance, the cost/price per unit, or None if unspecified.
-    number_per: Optional[Decimal]
+    number_per: Decimal | None
     # A Decimal instance, the total cost/price, or None if unspecified.
-    number_total: Optional[Decimal]
+    number_total: Decimal | None
     # A string, the commodity of the amount, or None if unspecified.
-    currency: Optional[str]
+    currency: str | None
     # A datetime.date, or None if unspecified.
-    date: Optional[datetime.date]
+    date: datetime.date | None
     # A string for the label of this lot, or None if unspecified.
-    label: Optional[str]
+    label: str | None
     # True if this specification calls for averaging the units of this lot's currency,
     # False if unspecified.
-    merge: Optional[bool]
+    merge: bool | None
 
 
 def cost_to_str(cost, dformat, detail=True):

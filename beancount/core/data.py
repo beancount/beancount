@@ -13,7 +13,6 @@ from decimal import Decimal
 from typing import Any
 from typing import Iterator
 from typing import NamedTuple
-from typing import Optional
 from typing import Protocol
 from typing import Union
 from typing import overload
@@ -112,7 +111,7 @@ class Open(NamedTuple):
     date: datetime.date
     account: Account
     currencies: list[Currency]
-    booking: Optional[Booking]
+    booking: Booking | None
 
 
 class Close(NamedTuple):
@@ -199,8 +198,8 @@ class Balance(NamedTuple):
     date: datetime.date
     account: Account
     amount: Amount
-    tolerance: Optional[Decimal]
-    diff_amount: Optional[Amount]
+    tolerance: Decimal | None
+    diff_amount: Amount | None
 
 
 class Posting(NamedTuple):
@@ -229,11 +228,11 @@ class Posting(NamedTuple):
     """
 
     account: Account
-    units: Optional[Amount]
-    cost: Optional[Union[Cost, CostSpec]]
-    price: Optional[Amount]
-    flag: Optional[Flag]
-    meta: Optional[Meta]
+    units: Amount | None
+    cost: Union[Cost, CostSpec] | None
+    price: Amount | None
+    flag: Flag | None
+    meta: Meta | None
 
 
 class Transaction(NamedTuple):
@@ -261,9 +260,9 @@ class Transaction(NamedTuple):
 
     meta: Meta
     date: datetime.date
-    flag: Optional[Flag]
-    payee: Optional[str]
-    narration: Optional[str]
+    flag: Flag | None
+    payee: str | None
+    narration: str | None
     tags: frozenset[str]
     links: frozenset[str]
     postings: list[Posting]
@@ -306,8 +305,8 @@ class Note(NamedTuple):
     date: datetime.date
     account: Account
     comment: str
-    tags: Optional[frozenset[str]]
-    links: Optional[frozenset[str]]
+    tags: frozenset[str] | None
+    links: frozenset[str] | None
 
 
 class Event(NamedTuple):
@@ -420,8 +419,8 @@ class Document(NamedTuple):
     date: datetime.date
     account: Account
     filename: str
-    tags: Optional[frozenset[str]]
-    links: Optional[frozenset[str]]
+    tags: frozenset[str] | None
+    links: frozenset[str] | None
 
 
 class Custom(NamedTuple):

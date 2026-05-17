@@ -202,9 +202,9 @@ def insert_postings(conn: duckdb.DuckDBPyConnection, entries: data.Entries):
             )
 
     if rows:
-        df = pl.from_dicts(rows, infer_schema_length=None)  # noqa: F841
+        postings_df = pl.from_dicts(rows, infer_schema_length=None)  # noqa: F841
         # Use DuckDB's native insertion from DataFrame
-        conn.execute("INSERT INTO postings SELECT * FROM df")
+        conn.execute("INSERT INTO postings SELECT * FROM postings_df")
 
 
 def insert_other_tables(conn: duckdb.DuckDBPyConnection, entries: data.Entries):
