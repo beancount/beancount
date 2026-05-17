@@ -37,9 +37,10 @@ dynamic = ["version"]
 [dependency-groups]
 test = [
     "pytest",
+    "pytest-xdist",
 ]
 types = [
-    "mypy",
+    "ty",
     "types-python-dateutil",
     "types-regex",
 ]
@@ -64,16 +65,17 @@ documentation = "https://beancount.github.io/docs/"
 repository = "https://github.com/beancount/beancount"
 donations = "https://www.paypal.com/paypalme/misislavski"
 
-[tool.mypy]
-mypy_path = '$MYPY_CONFIG_FILE_DIR'
-exclude = ["tools", "experiments", ".venv", "build", "__pycache__"]
-check_untyped_defs = false
-python_version = '3.9'
-cache_dir = ".venv/.mypy_cache"
+[tool.ty.environment]
+python-version = "3.9"
 
-[[tool.mypy.overrides]]
-module = "beancount.projects.*"
-ignore_errors = true
+[tool.ty.src]
+exclude = [
+    "**/tools/",
+    "**/experiments/",
+    "**/__pycache__/",
+    ".venv/",
+    "build/",
+]
 
 [tool.black]
 line-length = 92
@@ -91,13 +93,13 @@ exclude = [
     ".eggs",
     ".git",
     ".hg",
-    ".mypy_cache",
     ".nox",
     ".pants.d",
     ".pytype",
     ".ruff_cache",
     ".svn",
     ".tox",
+    ".ty_cache",
     ".venv",
     "__pypackages__",
     "_build",
@@ -112,20 +114,145 @@ exclude = [
 line-length = 92
 
 [tool.ruff.lint]
-# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "PL", "PD", "I", "TC", "RUF022", 'ISC001', 'UP034']
+# Enable all rules.
+select = ["ALL"]
 ignore = [
-    'E501',
-    'E731',
-    'E741',
-    'PD011',
-    'PLR0912',
-    'PLR0913',
-    'PLR0915',
-    'PLR2004',
-    'PLR5501',
-    'PLW0603',
-    'PLW2901',
+    "D",        # Documentation (too noisy)
+    "ANN",      # Type annotations (handled by ty)
+    "COM812",   # Trailing comma (formatter conflict)
+    "ISC001",   # Implicit string concat (formatter conflict)
+    "CPY",      # Copyright notice (handled by local script)
+    "E501",     # Line length (formatter handled)
+    "E731",     # Lambda assignment
+    "E741",     # Ambiguous variable name
+    "PD011",    # pandas-vet (not using pandas heavily)
+    "PLR0912",  # Too many branches
+    "PLR0913",  # Too many arguments
+    "PLR0915",  # Too many statements
+    "PLR2004",  # Magic value comparison
+    "PLR5501",  # Use 'elif' instead of 'else: if'
+    "PLW0603",  # Global statement
+    "PLW2901",  # Outer loop variable overwritten by inner loop
+    "S101",     # Use of assert (extensively used in beancount)
+    "TRY003",   # Long exception messages
+    "PTH",      # Use pathlib (preferring current style for now)
+    # Individual failing rules to be addressed later:
+    "A001", # builtin-variable-shadowing
+    "A002", # builtin-argument-shadowing
+    "A004", # builtin-import-shadowing
+    "ARG001", # unused-function-argument
+    "ARG002", # unused-method-argument
+    "ARG005", # unused-lambda-argument
+    "B007", # unused-loop-control-variable
+    "B008", # function-call-in-default-argument
+    "B011", # assert-false
+    "B017", # assert-raises-exception
+    "B028", # no-explicit-stacklevel
+    "B904", # raise-without-from-inside-except
+    "BLE001", # blind-except
+    "C401", # unnecessary-generator-set
+    "C405", # unnecessary-literal-set
+    "C901", # complex-structure
+    "DTZ005", # call-datetime-now-without-tzinfo
+    "DTZ011", # call-date-today
+    "EM101", # raw-string-in-exception
+    "EM102", # f-string-in-exception
+    "EM103", # dot-format-in-exception
+    "ERA001", # commented-out-code
+    "EXE002", # shebang-missing-executable-file
+    "FA100", # future-rewritable-type-annotation
+    "FBT001", # boolean-type-hint-positional-argument
+    "FBT002", # boolean-default-value-positional-argument
+    "FBT003", # boolean-positional-value-in-call
+    "FIX001", # line-contains-fixme
+    "FIX002", # line-contains-todo
+    "FLY002", # static-join-to-f-string
+    "G004", # logging-f-string
+    "ISC003", # explicit-string-concatenation
+    "LOG015", # root-logger-call
+    "N801", # invalid-class-name
+    "N802", # invalid-function-name
+    "N805", # invalid-first-argument-name-for-method
+    "N806", # non-lowercase-variable-in-function
+    "N812", # lowercase-imported-as-non-lowercase
+    "PERF102", # incorrect-dict-iterator
+    "PERF203", # try-except-in-loop
+    "PERF401", # manual-list-comprehension
+    "PGH003", # blanket-type-ignore
+    "PIE810", # multiple-starts-ends-with
+    "PT009", # pytest-unittest-assertion
+    "PT015", # pytest-assert-always-false
+    "PT018", # pytest-composite-assertion
+    "PT019", # pytest-fixture-param-without-value
+    "PT027", # pytest-unittest-raises-assertion
+    "PYI024", # collections-named-tuple
+    "PYI034", # non-self-return-type
+    "RET503", # implicit-return
+    "RET504", # unnecessary-assign
+    "RUF001", # ambiguous-unicode-character-string
+    "RUF005", # collection-literal-concatenation
+    "RUF012", # mutable-class-default
+    "RUF015", # unnecessary-iterable-allocation-for-first-element
+    "S105", # hardcoded-password-string
+    "S108", # hardcoded-temp-file
+    "S301", # suspicious-pickle-usage
+    "S307", # suspicious-eval-usage
+    "S311", # suspicious-non-cryptographic-random-usage
+    "S324", # hashlib-insecure-hash-function
+    "S602", # subprocess-popen-with-shell-equals-true
+    "S603", # subprocess-without-shell-equals-true
+    "S607", # start-process-with-partial-path
+    "SIM102", # collapsible-if
+    "SIM103", # needless-bool
+    "SIM105", # suppressible-exception
+    "SIM108", # if-else-block-instead-of-if-exp
+    "SIM110", # reimplemented-builtin
+    "SIM115", # open-file-with-context-handler
+    "SIM117", # multiple-with-statements
+    "SIM118", # in-dict-keys
+    "SLF001", # private-member-access
+    "T201", # print
+    "TC003", # typing-only-standard-library-import
+    "TD001", # invalid-todo-tag
+    "TD002", # missing-todo-author
+    "TD003", # missing-todo-link
+    "TD004", # missing-todo-colon
+    "TRY004", # type-check-without-type-error
+    "TRY300", # try-consider-else
+    "TRY301", # raise-within-try
+    "TRY401", # verbose-log-message
+    "UP007", # non-pep604-annotation-union
+    "FURB167", # regex-flag-alias
+    "G001", # logging-string-format
+    "LOG009", # undocumented-warn
+    "RET502", # implicit-return-value
+    "RET505", # superfluous-else-return
+    "RUF021", # parenthesize-chained-operators
+    "RUF023", # unsorted-dunder-slots
+    "SIM300", # yoda-conditions
+    "SIM905", # split-static-string
+    "SIM910", # dict-get-with-none-default
+    "TRY400", # error-instead-of-exception
+    "UP012", # unnecessary-encode-utf8
+    "UP015", # redundant-open-modes
+    "UP030", # format-literals
+    "UP032", # f-string
+    "UP035", # deprecated-import
+    "RUF100", # unused-noqa
+    "B020", # loop-variable-overrides-iterator
+    "FA102", # future-required-type-annotation
+    "INP001", # implicit-namespace-package
+    "N816", # mixed-case-variable-in-global-scope
+    "PD901", # pandas-df-variable-name
+    "RUF013", # implicit-optional
+    "S110", # try-except-pass
+    "S608", # hardcoded-sql-expression
+    "SIM113", # enumerate-for-loop
+    "T203", # p-print
+    "UP024", # os-error-alias
+    "UP028", # yield-in-for-loop
+    "UP031", # printf-string-formatting
+    "W605", # invalid-escape-sequence
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
