@@ -1713,6 +1713,22 @@ class TestArithmetic(unittest.TestCase):
         )
 
     @parser.parse_doc()
+    def test_number_expr__not_lexed_as_date(self, entries, errors, _):
+        """
+        2025-12-06 * "Test"
+          Assets:Something  1000-12-32 USD
+          Assets:Something  1000-13-10 USD
+          Assets:Something  10000-12-32 USD
+          Assets:Something  8+1000-12-32+9 USD
+        """
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        self.assertListEqual(
+            [D("956"), D("977"), D("9956"), D("973")],
+            [posting.units.number for posting in entries[0].postings],
+        )
+
+    @parser.parse_doc()
     def test_number_expr__different_places(self, entries, errors, _):
         """
         2013-05-18 * "Test"
