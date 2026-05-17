@@ -255,7 +255,6 @@ ignore = [
     "FURB116", # f-string-number-format
     "FURB171", # single-item-membership-test
     "RUF059", # unused-unpacked-variable
-    "S102", # exec-builtin
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
