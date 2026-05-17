@@ -251,7 +251,6 @@ ignore = [
     "T203", # p-print
     "UP024", # os-error-alias
     "UP028", # yield-in-for-loop
-    "UP031", # printf-string-formatting
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

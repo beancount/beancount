@@ -112,7 +112,7 @@ def main():
     # Seed randomness for consistency.
     if args.seed is None:
         args.seed = random.randint(0, 2**20)
-        print("seed = %s" % args.seed)
+        print(f"seed = {args.seed}")
     random.seed(args.seed)
 
     # Read the balances.
