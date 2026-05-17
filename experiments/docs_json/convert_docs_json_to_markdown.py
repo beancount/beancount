@@ -226,7 +226,7 @@ def main():
         filenames = [
             path.join(args.fileordir, x)
             for x in os.listdir(args.fileordir)
-            if re.search("\.json$", x)
+            if re.search(r"\.json$", x)
         ]
     for filename in filenames:
         with open(filename, "r") as infile:
