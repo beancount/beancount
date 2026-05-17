@@ -251,6 +251,12 @@ ignore = [
     "T203", # p-print
     "UP024", # os-error-alias
     "UP028", # yield-in-for-loop
+    "A003", # builtin-attribute-shadowing
+    "FURB116", # f-string-number-format
+    "FURB171", # single-item-membership-test
+    "RUF059", # unused-unpacked-variable
+    "S102", # exec-builtin
+    "UP045", # non-pep604-annotation-optional
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
