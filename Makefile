@@ -19,7 +19,7 @@ clean:
 	rm -rf build
 	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
-.PHONY: build
+.PHONY: build pc precommit xtest xtests xvtest xvtests xqtest xqtests
 build:
 	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --reconfigure || \
 	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --wipe || \
@@ -110,6 +110,12 @@ vtest vtests verbose-test verbose-tests: build
 
 qtest qtests quiet-test quiet-tests test tests: build
 	$(PYTHON) -m pytest beancount
+
+xvtest xvtests xverbose-test xverbose-tests: build
+	$(PYTHON) -m pytest -n auto -v -s beancount examples
+
+xqtest xqtests xquiet-test xquiet-tests xtest xtests: build
+	$(PYTHON) -m pytest -n auto beancount
 
 test-last test-last-failed test-failed: build
 	$(PYTHON) -m pytest --last-failed beancount
