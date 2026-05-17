@@ -21,8 +21,8 @@ from decimal import Decimal
 # Constants.
 ZERO = Decimal()
 HALF = Decimal("0.5")
-ONE = Decimal("1")
-TEN = Decimal("10")
+ONE = Decimal(1)
+TEN = Decimal(10)
 
 
 # A constant used to make incomplete data, e.g. missing numbers in the cost spec

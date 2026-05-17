@@ -38,7 +38,7 @@ class TestPrinter(unittest.TestCase):
             META,
             date(2014, 1, 15),
             "Assets:Bank:Checking",
-            Amount(Decimal("0"), "USD"),
+            Amount(Decimal(0), "USD"),
             None,
             None,
         )

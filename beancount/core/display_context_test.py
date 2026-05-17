@@ -53,7 +53,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         dcontext = display_context.DisplayContext()
         dcontext.update(Decimal("1.234"))
         dcontext.update(Decimal("1.23"), "USD")
-        dcontext.update(Decimal("7"), "HOOL")
+        dcontext.update(Decimal(7), "HOOL")
         self.assertRegex(str(dcontext), "sign=")
 
     def test_set_fixed_precision(self):
@@ -65,10 +65,10 @@ class TestDisplayContext(DisplayContextBaseTest):
         # Update with numbers for USD and other currencies.
         dcontext.update(Decimal("123.456"), "USD")
         dcontext.update(Decimal("-987.654321"), "USD")
-        dcontext.update(Decimal("1000"), "USD")
+        dcontext.update(Decimal(1000), "USD")
 
         dcontext.update(Decimal("1.2345"), "EUR")
-        dcontext.update(Decimal("764"), "EUR")
+        dcontext.update(Decimal(764), "EUR")
         dcontext.update(Decimal("0.00000125"), "EUR")
 
         dcontext.update(Decimal("5000.0"), "CAD")
@@ -81,7 +81,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         self.assertEqual(
             dformat_usd_common.format(Decimal("-987.654321"), "USD"), "-987.65"
         )
-        self.assertEqual(dformat_usd_common.format(Decimal("1000"), "USD"), "1000.00")
+        self.assertEqual(dformat_usd_common.format(Decimal(1000), "USD"), "1000.00")
         self.assertEqual(dformat_usd_common.format(Decimal("0.001"), "USD"), "0.00")
 
         # Test USD formatting with fixed precision (MAXIMUM) - should be the
@@ -91,7 +91,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         )
         self.assertEqual(dformat_usd_max.format(Decimal("123.456"), "USD"), "123.46")
         self.assertEqual(dformat_usd_max.format(Decimal("-987.654321"), "USD"), "-987.65")
-        self.assertEqual(dformat_usd_max.format(Decimal("1000"), "USD"), "1000.00")
+        self.assertEqual(dformat_usd_max.format(Decimal(1000), "USD"), "1000.00")
         self.assertEqual(dformat_usd_max.format(Decimal("0.001"), "USD"), "0.00")
 
         # Test EUR formatting (learned precision)

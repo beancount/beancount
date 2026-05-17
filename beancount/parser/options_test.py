@@ -248,7 +248,7 @@ class TestToleranceOptions(unittest.TestCase):
         option "inferred_tolerance_default" "JPY:0.5"
         """
         self.assertEqual(
-            {"*": Decimal("0"), "USD": Decimal("0.05"), "JPY": Decimal("0.5")},
+            {"*": Decimal(0), "USD": Decimal("0.05"), "JPY": Decimal("0.5")},
             options_map["inferred_tolerance_default"],
         )
 

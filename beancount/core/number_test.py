@@ -28,7 +28,7 @@ class TestDecimalPrecision(unittest.TestCase):
 
 class TestToDecimal(unittest.TestCase):
     def test_ZERO(self):
-        self.assertEqual(ZERO, decimal.Decimal("0"))
+        self.assertEqual(ZERO, decimal.Decimal(0))
 
     def test_D(self):
         dec = decimal.Decimal("10.345")
