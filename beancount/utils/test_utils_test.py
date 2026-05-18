@@ -85,7 +85,7 @@ class TestTestUtils(unittest.TestCase):
 
     def test_search_words(self):
         test_utils.search_words("i walrus is", "i am the walrus is not chicago")
-        test_utils.search_words("i walrus is".split(), "i am the walrus is not chicago")
+        test_utils.search_words(["i", "walrus", "is"], "i am the walrus is not chicago")
 
     def test_environ_contextmanager(self):
         with test_utils.environ("PATH", "/unlikely-to-be-your-path"):

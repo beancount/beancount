@@ -1604,7 +1604,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertLessEqual(
-            set("nameoncard nameOnCard name-on-card name_on_card".split()),
+            set(["nameoncard", "nameOnCard", "name-on-card", "name_on_card"]),
             set(entries[0].meta.keys()),
         )
 

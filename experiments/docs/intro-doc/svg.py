@@ -163,7 +163,9 @@ def main():
     random.seed(args.seed + 1)
     group_dict = groupby(balances, lambda item: item[0].split(":", 1)[0])
     group_dict["Equity"].reverse()
-    groups = [group_dict[x] for x in "Assets Liabilities Equity Income Expenses".split()]
+    groups = [
+        group_dict[x] for x in ["Assets", "Liabilities", "Equity", "Income", "Expenses"]
+    ]
     draw_diagram(p, groups, "svg5.html")
 
     random.seed(args.seed + 1)
