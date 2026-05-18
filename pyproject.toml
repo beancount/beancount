@@ -211,7 +211,6 @@ ignore = [
     "SIM110", # reimplemented-builtin
     "SIM115", # open-file-with-context-handler
     "SIM117", # multiple-with-statements
-    "SIM118", # in-dict-keys
     "SLF001", # private-member-access
     "T201", # print
     "TC003", # typing-only-standard-library-import

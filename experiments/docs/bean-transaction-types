@@ -90,9 +90,7 @@ def main():
     # Print all renamed account names.
     print("* Account Names")
     print()
-    for _account in sorted(
-        {_account for accounts in groups.keys() for _account in accounts}
-    ):
+    for _account in sorted({_account for accounts in groups for _account in accounts}):
         print(_account)
     print()
 

@@ -175,7 +175,7 @@ def get_prices_table(entries: data.Entries, main_currency: str) -> Table:
     price_map = prices.build_price_map(entries)
     header = ["currency", "cost_currency", "price_file"]
     rows = []
-    for base_quote in price_map.keys():
+    for base_quote in price_map:
         _, price = prices.get_latest_price(price_map, base_quote)
         if price is None:
             continue
