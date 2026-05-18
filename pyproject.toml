@@ -231,7 +231,6 @@ ignore = [
     "UP035", # deprecated-import
     "RUF100", # unused-noqa
     "B020", # loop-variable-overrides-iterator
-    "FA102", # future-required-type-annotation
     "INP001", # implicit-namespace-package
     "N816", # mixed-case-variable-in-global-scope
     "RUF013", # implicit-optional
