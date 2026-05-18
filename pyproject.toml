@@ -228,7 +228,6 @@ ignore = [
     "LOG009", # undocumented-warn
     "RET502", # implicit-return-value
     "RET505", # superfluous-else-return
-    "RUF021", # parenthesize-chained-operators
     "SIM905", # split-static-string
     "SIM910", # dict-get-with-none-default
     "TRY400", # error-instead-of-exception

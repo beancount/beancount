@@ -69,9 +69,8 @@ def validate_missing_eliminated(entries, unused_options_map):
             for posting in entry.postings:
                 units = posting.units
                 cost = posting.cost
-                if (
-                    MISSING in (units.number, units.currency)
-                    or cost is not None
+                if MISSING in (units.number, units.currency) or (
+                    cost is not None
                     and MISSING in (cost.number, cost.currency, cost.date, cost.label)
                 ):
                     errors.append(
