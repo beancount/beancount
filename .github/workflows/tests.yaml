@@ -27,6 +27,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
+      - uses: astral-sh/setup-uv@v5
 
       - run: echo "PATH=$env:Path;C:\msys64\usr\bin" | Out-File -FilePath "$env:GITHUB_ENV" -Append
         if: runner.os == 'Windows'
@@ -44,6 +45,6 @@ jobs:
 
       - run: python -m pip install meson-python ninja pytest pytest-xdist
       - run: python -m pip install -v --no-build-isolation -Cbuild-dir=build -Csetup-args=-Dtests=enabled -e .
-      - run: make xtest
+      - run: make test
 
       - run: meson test -C build/
