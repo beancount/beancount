@@ -1,7 +1,29 @@
 project('beancount', 'c', version: files('beancount/VERSION'), meson_version: '>=1.1')
 
-bison = find_program('bison', 'win_bison', version: '>=3.8.0')
-flex = find_program('flex', 'win_flex', version: '>=2.6.4')
+fs = import('fs')
+
+parser_codegen_sources = [
+    'beancount/parser/lexer.c',
+    'beancount/parser/lexer.h',
+    'beancount/parser/grammar.c',
+    'beancount/parser/grammar.h',
+]
+
+has_pregenerated_parser = true
+foreach source : parser_codegen_sources
+    if not fs.exists(meson.current_source_dir() / source)
+        has_pregenerated_parser = false
+    endif
+endforeach
+
+bison = disabler()
+flex = disabler()
+has_codegen_tools = false
+if not has_pregenerated_parser
+    bison = find_program('bison', 'win_bison', version: '>=3.8.0')
+    flex = find_program('flex', 'win_flex', version: '>=2.6.4')
+    has_codegen_tools = true
+endif
 
 py = import('python').find_installation(pure: false)
 
@@ -212,27 +234,41 @@ if host_machine.system() == 'windows'
     add_project_arguments('-DYY_NO_UNISTD_H', language: 'c')
 endif
 
-flex_gen = generator(
-    flex,
-    output: ['@BASENAME@.c', '@BASENAME@.h'],
-    arguments: ['--outfile=@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@']
-)
+if has_pregenerated_parser
+    lexer_c = 'beancount/parser/lexer.c'
+    grammar_c = 'beancount/parser/grammar.c'
+else
+    flex_gen = generator(
+        flex,
+        output: ['@BASENAME@.c', '@BASENAME@.h'],
+        arguments: ['--outfile=@OUTPUT0@', '--header-file=@OUTPUT1@', '@INPUT@']
+    )
 
-lexer_c = flex_gen.process(
-    'beancount/parser/lexer.l',
-    preserve_path_from: meson.current_source_dir(),
-)
+    lexer_c = flex_gen.process(
+        'beancount/parser/lexer.l',
+        preserve_path_from: meson.current_source_dir(),
+    )
 
-bison_gen = generator(
-    bison,
-    output: ['@BASENAME@.c', '@BASENAME@.h'],
-    arguments: ['--report=itemset', '--verbose', '-Wall', '-Werror', '-o', '@OUTPUT0@', '@INPUT@']
-)
+    bison_gen = generator(
+        bison,
+        output: ['@BASENAME@.c', '@BASENAME@.h'],
+        arguments: ['--report=itemset', '--verbose', '-Wall', '-Werror', '-o', '@OUTPUT0@', '@INPUT@']
+    )
 
-grammar_c = bison_gen.process(
-    'beancount/parser/grammar.y',
-    preserve_path_from: meson.current_source_dir(),
-)
+    grammar_c = bison_gen.process(
+        'beancount/parser/grammar.y',
+        preserve_path_from: meson.current_source_dir(),
+    )
+endif
+
+if (not has_pregenerated_parser) and has_codegen_tools
+    meson.add_dist_script(
+        py,
+        meson.project_source_root() / 'tools/generate_parser_for_sdist.py',
+        bison.full_path(),
+        flex.full_path(),
+    )
+endif
 
 parser = py.extension_module(
     '_parser',
