@@ -141,13 +141,13 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(
             [
                 ("ACCOUNT", 1, b"Other:Bank", "Other:Bank"),
-                ("ACCOUNT", 1, "Óthяr:Bあnk".encode("utf8"), "Óthяr:Bあnk"),
+                ("ACCOUNT", 1, "Óthяr:Bあnk".encode(), "Óthяr:Bあnk"),
                 ("EOL", 2, b"\n", None),
                 ("KEY", 2, b"abc1", "abc1"),
                 ("COLON", 2, b":", None),
                 ("error", 2, b"abc1", None),
-                ("ACCOUNT", 2, "ΑβγⅠ:ΑβγⅠ".encode("utf8"), "ΑβγⅠ:ΑβγⅠ"),
-                ("ACCOUNT", 2, "ابجا:ابجا".encode("utf8"), "ابجا:ابجا"),
+                ("ACCOUNT", 2, "ΑβγⅠ:ΑβγⅠ".encode(), "ΑβγⅠ:ΑβγⅠ"),
+                ("ACCOUNT", 2, "ابجا:ابجا".encode(), "ابجا:ابجا"),
                 ("EOL", 3, b"\n", None),
             ],
             tokens,

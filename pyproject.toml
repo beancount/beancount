@@ -231,7 +231,6 @@ ignore = [
     "SIM905", # split-static-string
     "SIM910", # dict-get-with-none-default
     "TRY400", # error-instead-of-exception
-    "UP012", # unnecessary-encode-utf8
     "UP030", # format-literals
     "UP032", # f-string
     "UP035", # deprecated-import
