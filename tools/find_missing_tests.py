@@ -52,8 +52,8 @@ def is_complete(filename):
     """
     contents = open(filename, encoding="utf-8").read()
     return not (
-        re.search("^__incomplete__", contents, re.M)
-        or re.search(r"raise \bNotImplementedError\b", contents, re.M)
+        re.search("^__incomplete__", contents, re.MULTILINE)
+        or re.search(r"raise \bNotImplementedError\b", contents, re.MULTILINE)
     )
 
 

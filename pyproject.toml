@@ -223,7 +223,6 @@ ignore = [
     "TRY301", # raise-within-try
     "TRY401", # verbose-log-message
     "UP007", # non-pep604-annotation-union
-    "FURB167", # regex-flag-alias
     "G001", # logging-string-format
     "LOG009", # undocumented-warn
     "RET502", # implicit-return-value
