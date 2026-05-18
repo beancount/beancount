@@ -394,12 +394,12 @@ class TestInferTolerances(cmptest.TestCase):
           option "infer_tolerance_from_cost" "True"
         """)
 
-        entries, errors, options_map = loader.load_string(input_string)
+        _, errors, options_map = loader.load_string(input_string)
         self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "Transaction does not balance:.*0.20000 USD")
 
-        entries, errors, options_map = loader.load_string(input_option + input_string)
+        _, errors, options_map = loader.load_string(input_option + input_string)
         self.assertTrue(options_map["infer_tolerance_from_cost"])
         self.assertFalse(errors)
 

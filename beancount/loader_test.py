@@ -60,9 +60,7 @@ class TestLoader(unittest.TestCase):
         entries, errors, options_map = parser.parse_string(
             'plugin "invalid.module.name"\n\n' + TEST_INPUT
         )
-        trans_entries, trans_errors = loader.run_transformations(
-            entries, errors, options_map, None
-        )
+        _, trans_errors = loader.run_transformations(entries, errors, options_map, None)
         self.assertEqual(1, len(trans_errors))
         self.assertRegex(trans_errors[0].message, "ModuleNotFoundError")
 
@@ -84,9 +82,7 @@ class TestLoader(unittest.TestCase):
             'plugin "failing"\n\n' + TEST_INPUT
         )
         loader.run_transformations(entries, errors, options_map, None)
-        trans_entries, trans_errors = loader.run_transformations(
-            entries, errors, options_map, None
-        )
+        _, trans_errors = loader.run_transformations(entries, errors, options_map, None)
         self.assertEqual(1, len(trans_errors))
         self.assertRegex(trans_errors[0].message, "ValueError")
 
@@ -104,9 +100,7 @@ class TestLoader(unittest.TestCase):
     def test_run_transformations(self):
         # Test success case.
         entries, errors, options_map = parser.parse_string(TEST_INPUT)
-        trans_entries, trans_errors = loader.run_transformations(
-            entries, errors, options_map, None
-        )
+        _, trans_errors = loader.run_transformations(entries, errors, options_map, None)
         self.assertEqual(0, len(trans_errors))
 
     def test_load(self) -> None:
@@ -140,7 +134,7 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(options_map, dict))
 
     def test_load_nonexist(self):
-        entries, errors, options_map = loader.load_file("/some/bullshit/filename.beancount")
+        entries, errors, _ = loader.load_file("/some/bullshit/filename.beancount")
         self.assertEqual([], entries)
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, "does not exist")
@@ -153,7 +147,7 @@ class TestLoader(unittest.TestCase):
     @mock.patch("warnings.warn")
     def test_renamed_plugin_warnings(self, warn):
         with test_utils.capture("stderr"):
-            entries, errors, options_map = loader.load_string(
+            _, errors, _ = loader.load_string(
                 """
               plugin "beancount.ops.auto_accounts"
             """,
@@ -223,16 +217,14 @@ class TestLoadIncludes(unittest.TestCase):
                 """
                 },
             )
-            entries, errors, options_map = loader.load_file(
-                path.join(tmp, "apples.beancount")
-            )
+            _, errors, options_map = loader.load_file(path.join(tmp, "apples.beancount"))
             self.assertEqual(0, len(errors))
             self.assertEqual(
                 ["apples.beancount"], list(map(path.basename, options_map["include"]))
             )
 
     def test_load_file_nonexist(self):
-        entries, errors, options_map = loader.load_file("/bull/bla/root.beancount")
+        _, errors, options_map = loader.load_file("/bull/bla/root.beancount")
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "does not exist")
         self.assertEqual([], list(map(path.basename, options_map["include"])))
@@ -247,9 +239,7 @@ class TestLoadIncludes(unittest.TestCase):
                 """
                 },
             )
-            entries, errors, options_map = loader.load_file(
-                path.join(tmp, "root.beancount")
-            )
+            _, errors, options_map = loader.load_file(path.join(tmp, "root.beancount"))
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, "does not (match any|exist)")
         self.assertEqual(
@@ -562,7 +552,7 @@ class TestLoadCache(unittest.TestCase):
                 },
             )
             top_filename = path.join(tmp, "apples.beancount")
-            entries, errors, options_map = loader.load_file(top_filename)
+            entries, errors, _ = loader.load_file(top_filename)
             self.assertFalse(errors)
             self.assertEqual(3, len(entries))
             self.assertEqual(1, self.num_calls)
@@ -571,23 +561,23 @@ class TestLoadCache(unittest.TestCase):
             self.assertTrue(path.exists(path.join(tmp, ".apples.beancount.picklecache")))
 
             # Load the root file again, make sure the cache is being hit.
-            entries, errors, options_map = loader.load_file(top_filename)
+            entries, errors, _ = loader.load_file(top_filename)
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
             with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
-            entries, errors, options_map = loader.load_file(top_filename)
+            entries, errors, _ = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
             # Load the root file again, make sure the cache is being hit.
-            entries, errors, options_map = loader.load_file(top_filename)
+            entries, errors, _ = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
             with open(top_filename, "a", encoding="utf-8") as file:
                 file.write("\n")
-            entries, errors, options_map = loader.load_file(top_filename)
+            entries, errors, _ = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
 
     def test_load_cache_moved_file(self):
@@ -642,10 +632,10 @@ class TestLoadCache(unittest.TestCase):
                 },
             )
             filename = path.join(tmp, "apples.beancount")
-            entries, errors, options_map = loader.load_file(filename)
+            _, _, _ = loader.load_file(filename)
             with open(filename, "w", encoding="utf-8"):
                 pass
-            entries, errors, options_map = loader.load_file(filename)
+            _, _, _ = loader.load_file(filename)
             self.assertEqual(1, len(warn_mock.mock_calls))
 
     @mock.patch("beancount.loader.PICKLE_CACHE_THRESHOLD", 0.0)
@@ -663,7 +653,7 @@ class TestLoadCache(unittest.TestCase):
                     },
                 )
                 filename = path.join(tmp, "apples.beancount")
-                entries, errors, options_map = loader.load_file(filename)
+                _, _, _ = loader.load_file(filename)
                 self.assertEqual(
                     {"__apples.beancount__", "apples.beancount"}, set(os.listdir(tmp))
                 )
@@ -683,7 +673,7 @@ class TestLoadCache(unittest.TestCase):
                 },
             )
             filename = path.join(tmp, "apples.beancount")
-            entries, errors, options_map = loader.load_file(filename)
+            _, _, _ = loader.load_file(filename)
             self.assertEqual(
                 {"__apples.beancount__", "apples.beancount"}, set(os.listdir(tmp))
             )
@@ -707,7 +697,7 @@ class TestLoadCache(unittest.TestCase):
                     },
                 )
                 filename = path.join(tmp, "apples.beancount")
-                entries, errors, options_map = loader.load_file(filename)
+                _, _, _ = loader.load_file(filename)
                 self.assertEqual({"apples.beancount"}, set(os.listdir(tmp)))
 
 
@@ -731,7 +721,7 @@ class TestOptionsAggregation(unittest.TestCase):
                 },
             )
             top_filename = path.join(tmp, "apples.beancount")
-            entries, errors, options_map = loader.load_file(top_filename)
+            _, _, options_map = loader.load_file(top_filename)
 
             self.assertEqual({"USD", "EUR", "CAD"}, set(options_map["operating_currency"]))
 

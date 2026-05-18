@@ -244,7 +244,7 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(sorted(expected_components), components)
 
     def test_get_commodity_directives(self):
-        entries, _, options_map = loader.load_string(TEST_INPUT)
+        entries, _, _ = loader.load_string(TEST_INPUT)
         commodities = getters.get_commodity_directives(entries)
         self.assertEqual({"HOOL", "PIPA"}, commodities.keys())
         self.assertTrue(
@@ -252,13 +252,13 @@ class TestGetters(unittest.TestCase):
         )
 
     def test_get_values_meta__single(self):
-        entries, _, options_map = loader.load_string(TEST_INPUT)
+        entries, _, _ = loader.load_string(TEST_INPUT)
         commodities = getters.get_commodity_directives(entries)
         values = getters.get_values_meta(commodities, "name", default="BLA")
         self.assertEqual({"PIPA": "Pied Piper", "HOOL": "Hooli Corp."}, values)
 
     def test_get_values_meta__multi(self):
-        entries, _, options_map = loader.load_string(TEST_INPUT)
+        entries, _, _ = loader.load_string(TEST_INPUT)
         commodities = getters.get_commodity_directives(entries)
         values = getters.get_values_meta(commodities, "name", "ticker")
         self.assertEqual(

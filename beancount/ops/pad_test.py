@@ -414,7 +414,7 @@ class TestPadding(cmptest.TestCase):
         pad_balance = inventory.Inventory()
         for txn_posting in txn_postings:
             if isinstance(txn_posting, data.TxnPosting):
-                position_, _ = pad_balance.add_position(txn_posting.posting)
+                _, _ = pad_balance.add_position(txn_posting.posting)
             balances.append((type(txn_posting), pad_balance.get_currency_units("USD")))
 
         self.assertEqual(
@@ -641,7 +641,7 @@ class TestPadding(cmptest.TestCase):
                         return new_entries + entries, []
                     """)
                 )
-            entries, errors, options_map = loader.load_file(ledger_fn)
+            entries, errors, _ = loader.load_file(ledger_fn)
 
         self.assertFalse(errors)
         self.assertEqualEntries(

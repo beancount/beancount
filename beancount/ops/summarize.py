@@ -750,7 +750,7 @@ def get_open_entries(entries: Directives, date: datetime.date) -> list[Open]:
 
         if isinstance(entry, Open):
             try:
-                ex_index, ex_entry = open_entries[entry.account]
+                _, ex_entry = open_entries[entry.account]
                 if entry.date < ex_entry.date:
                     open_entries[entry.account] = (index, entry)
             except KeyError:

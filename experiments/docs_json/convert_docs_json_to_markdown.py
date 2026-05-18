@@ -231,7 +231,7 @@ def main():
     for filename in filenames:
         with open(filename, "r") as infile:
             document = json.load(infile)
-        title, body = parse_Document(document)
+        _, body = parse_Document(document)
 
         for item in body:
             assert len(item) == 2

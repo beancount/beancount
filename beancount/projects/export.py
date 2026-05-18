@@ -334,7 +334,7 @@ def main(
     output_postings,
 ):
     # Load the file contents.
-    entries, errors, options_map = loader.load_file(filename)
+    entries, _, options_map = loader.load_file(filename)
 
     # Initialize main output currency.
     main_currency = currency or options_map["operating_currency"][0]

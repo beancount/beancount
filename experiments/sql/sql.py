@@ -368,7 +368,7 @@ def main(filename, database):
     """
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
-    entries, errors, options_map = loader.load_file(
+    entries, _, _ = loader.load_file(
         filename, log_timings=logging.info, log_errors=sys.stderr
     )
 

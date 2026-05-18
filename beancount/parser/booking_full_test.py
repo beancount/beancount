@@ -64,7 +64,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
             ("10 {:4} {{100.00 {:3}}} @ 120.00 {:3}", ["HOOL", "USD", "USD"]),
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
-                entries, errors, _ = parser.parse_string(string)
+                _, errors, _ = parser.parse_string(string)
                 self.assertFalse(errors)
 
     def test_all_interpolation_combinations(self):
@@ -84,7 +84,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
             ),
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
-                entries, errors, _ = parser.parse_string(string)
+                _, errors, _ = parser.parse_string(string)
                 for error in errors:
                     oss = io.StringIO()
                     printer.print_error(error, oss)
@@ -383,7 +383,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Other
           Assets:Other
         """
-        groups, errors = bf.categorize_by_currency(entries[0], {})
+        _, errors = bf.categorize_by_currency(entries[0], {})
         self.assertTrue(errors)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -1605,7 +1605,7 @@ class _BookingTestBase(unittest.TestCase):
             # Convert the list of expected resolved postings to those returned
             # by handle_ambiguous_matches().
             if entry_resolved:
-                resolved_actual, resolved_matches, resolved_errors = call.return_value
+                resolved_actual, _, _ = call.return_value
                 self.assertPostings(entry_resolved.postings, resolved_actual)
 
     def assertErrors(self, entry, errors):
@@ -3154,11 +3154,11 @@ class TestBook(unittest.TestCase):
         balances = collections.defaultdict(inventory.Inventory)
         methods = collections.defaultdict(lambda: Booking.STRICT)
         for entry in entries:
-            (booked_postings, booked_errors) = bf.book_reductions(
+            (booked_postings, _) = bf.book_reductions(
                 entry, entry.postings, balances, methods
             )
             tolerances = {}
-            (inter_postings, inter_errors, interpolated) = bf.interpolate_group(
+            (inter_postings, _, _) = bf.interpolate_group(
                 booked_postings, balances, currency, tolerances
             )
             for posting in inter_postings:

@@ -69,7 +69,7 @@ def main(
         with misc_utils.log_time("beancount.loader (total)", logging.info):
             # Load up the file, print errors, checking and validation
             # are invoked automatically.
-            entries, errors, _ = loader.load_file(
+            _, errors, _ = loader.load_file(
                 filename,
                 log_timings=logging.info,
                 log_errors=log_errors,

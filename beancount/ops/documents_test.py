@@ -89,7 +89,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
             """).replace("ROOT", self.root.replace("\\", r"\\"))
             )
         entries, _, options_map = loader.load_file(input_filename)
-        entries, errors = documents.process_documents(entries, options_map)
+        entries, _ = documents.process_documents(entries, options_map)
         doc_entries = [entry for entry in entries if isinstance(entry, data.Document)]
         self.assertEqual(1, len(doc_entries))
 
@@ -139,13 +139,13 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
         # Test with a relative directory name, the entries should be the same,
         # as all the filenames attached to document directives are absolute
         # paths.
-        entries2, errors2 = documents.find_documents(
+        entries2, _ = documents.find_documents(
             "root", path.join(self.tempdir, "input.beancount")
         )
         self.assertEqualEntries(entries1, entries2)
 
         # Test it out with dot-dots.
-        entries3, errors3 = documents.find_documents(
+        entries3, _ = documents.find_documents(
             "..", path.join(self.root, "Assets", "input.beancount")
         )
         self.assertEqualEntries(entries1, entries3)
@@ -164,9 +164,7 @@ class TestDocuments(test_utils.TmpFilesTestBase, cmptest.TestCase):
 
         # Test it out with an account restriction.
         accounts = {"Assets:US:Bank:Checking"}
-        entries6, errors6 = documents.find_documents(
-            self.root, "/tmp/input.beancount", accounts
-        )
+        entries6, _ = documents.find_documents(self.root, "/tmp/input.beancount", accounts)
         self.assertEqualEntries(entries1[:1], entries6)
         self.assertEqual([], errors1)
 

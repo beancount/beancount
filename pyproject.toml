@@ -254,7 +254,6 @@ ignore = [
     "A003", # builtin-attribute-shadowing
     "FURB116", # f-string-number-format
     "FURB171", # single-item-membership-test
-    "RUF059", # unused-unpacked-variable
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

@@ -286,7 +286,7 @@ class TestOpenClose(cmptest.TestCase):
         begin_date = datetime.date(2012, 6, 1)
         end_date = datetime.date(2012, 9, 1)
         clear_date = datetime.date(2013, 1, 1)
-        opened_entries, index = self.do_open(
+        opened_entries, _ = self.do_open(
             self.entries,
             begin_date,
             self.account_types,
@@ -296,11 +296,11 @@ class TestOpenClose(cmptest.TestCase):
             "Equity:Conversions:Previous",
         )
 
-        closed_entries, index = self.do_close(
+        closed_entries, _ = self.do_close(
             opened_entries, end_date, "NOTHING", "Equity:Conversions:Current"
         )
 
-        clear_entries, index = self.do_clear(
+        clear_entries, _ = self.do_clear(
             closed_entries, clear_date, self.account_types, "Equity:Earnings:Current"
         )
 
@@ -803,7 +803,7 @@ class TestSummarize(cmptest.TestCase):
     OPENING_ACCOUNT = "Equity:Opening-Balances"
 
     def test_summarize__complete(self):
-        entries, errors, options_map = loader.load_string(INPUT)
+        entries, errors, _ = loader.load_string(INPUT)
         self.assertFalse(errors)
         summarize_date = datetime.date(2011, 1, 1)
         summarized_entries, index = summarize.summarize(
@@ -906,7 +906,7 @@ class TestSummarize(cmptest.TestCase):
           Assets:Invest:Cash
         """
         summarize_date = datetime.date(2016, 3, 1)
-        summarized_entries, index = summarize.summarize(
+        summarized_entries, _ = summarize.summarize(
             entries, summarize_date, self.OPENING_ACCOUNT
         )
         self.assertTrue(misc_utils.is_sorted(summarized_entries, lambda entry: entry.date))

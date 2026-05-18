@@ -317,7 +317,7 @@ class TestLineno(unittest.TestCase):
         builder = lexer.LexBuilder()
         parser = _parser.Parser(builder)
         tokens = list(parser.lex(f))
-        token, lineno, matched, value = tokens[0]
+        _, lineno, _, _ = tokens[0]
         self.assertEqual(lineno, 1)
 
     def test_lex_lineno(self):
@@ -325,7 +325,7 @@ class TestLineno(unittest.TestCase):
         builder = lexer.LexBuilder()
         parser = _parser.Parser(builder)
         tokens = list(parser.lex(f, lineno=42))
-        token, lineno, matched, value = tokens[0]
+        _, lineno, _, _ = tokens[0]
         self.assertEqual(lineno, 42)
 
     def test_parse(self):
@@ -343,11 +343,11 @@ class TestLineno(unittest.TestCase):
         self.assertEqual(builder.entries[0].meta["lineno"], 42)
 
     def test_parse_string(self):
-        entries, errors, options = parser.parse_string(b"2020-07-30 open Assets:Test")
+        entries, _, _ = parser.parse_string(b"2020-07-30 open Assets:Test")
         self.assertEqual(entries[0].meta["lineno"], 1)
 
     def test_parse_string_lineno(self):
-        entries, errors, options = parser.parse_string(
+        entries, _, _ = parser.parse_string(
             b"2020-07-30 open Assets:Test", report_firstline=42
         )
         self.assertEqual(entries[0].meta["lineno"], 42)

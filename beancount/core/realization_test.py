@@ -327,7 +327,7 @@ class TestRealization(unittest.TestCase):
         2014-01-01 close Liabilities:CreditCard
         """
         # 'filename' is because we need an existing filename.
-        entries, errors, _ = loader.load_string(input_string.format(filename=__file__))
+        entries, _, _ = loader.load_string(input_string.format(filename=__file__))
 
         real_account = realization.realize(entries)
         ra0_movie = realization.get(real_account, "Expenses:Movie")

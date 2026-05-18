@@ -226,7 +226,7 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # on augmenting postings. After this interpolation, all
                 # 'inter_postings' consists entirely of postings holding
                 # instances of Cost.
-                (inter_postings, interpolation_errors, interpolated) = interpolate_group(
+                (inter_postings, interpolation_errors, _) = interpolate_group(
                     booked_postings, balances, currency, tolerances_interp
                 )
 
@@ -672,7 +672,7 @@ def book_reductions(entry, group_postings, balances, methods):
                 # TODO(blais): We'll have to change this, as we want to allow
                 # positions crossing from negative to positive and vice-versa in
                 # a simple application. See {d3cbd78f1029}.
-                reduction_postings, matched_postings, ambi_errors = (
+                reduction_postings, _, ambi_errors = (
                     booking_method.handle_ambiguous_matches(entry, posting, matches, method)
                 )
                 if ambi_errors:

@@ -242,7 +242,7 @@ def pickle_cache_function(
                 else:
                     # Check that the latest timestamp has not been written after the
                     # cache file.
-                    entries, errors, options_map = result
+                    _, _, options_map = result
                     if not needs_refresh(options_map):
                         # All timestamps are legit; cache hit.
                         return result

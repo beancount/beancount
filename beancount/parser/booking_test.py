@@ -30,7 +30,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
           Assets:Investments:MSFT      0 MSFT
           Assets:Investments:Cash      0 USD
         """
-        booked_entries, booking_errors = booking.book(entries, options_map)
+        _, booking_errors = booking.book(entries, options_map)
         self.assertEqual(0, len(booking_errors))
 
     @parser.parse_doc()
@@ -40,7 +40,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
           Assets:Investments:MSFT      0 MSFT {200.00 USD}
           Assets:Investments:Cash    1 USD
         """
-        booked_entries, booking_errors = booking.book(entries, options_map)
+        _, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(booking_errors))
         self.assertRegex(booking_errors[0].message, "Amount is zero")
 
@@ -51,7 +51,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
           Assets:Investments:MSFT      -10 MSFT {0.00 USD}
           Assets:Investments:Cash  2000.00 USD
         """
-        booked_entries, booking_errors = booking.book(entries, options_map)
+        _, booking_errors = booking.book(entries, options_map)
         self.assertFalse(booking_errors)
 
     @parser.parse_doc()
@@ -61,7 +61,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
           Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
           Assets:Investments:Cash  2000.00 USD
         """
-        booked_entries, booking_errors = booking.book(entries, options_map)
+        _, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(entries))
         self.assertEqual(1, len(booking_errors))
         self.assertRegex(booking_errors[0].message, "Cost is negative")
@@ -103,7 +103,7 @@ class TestBookingValidation(cmptest.TestCase):
         return booking.validate_inventory_booking(entries, options_map, self.BOOKMETH)
 
     def do_validate_inventory_booking(self, input_str):
-        entries, errors, options_map = parser.parse_string(input_str)
+        entries, _, options_map = parser.parse_string(input_str)
         validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 

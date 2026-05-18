@@ -204,7 +204,7 @@ def convert_spec_to_cost(units, cost_spec):
     cost = cost_spec
     if isinstance(units, amount.Amount):
         if cost_spec is not None:
-            number_per, number_total, cost_currency, date, label, merge = cost_spec
+            number_per, number_total, cost_currency, date, label, _ = cost_spec
 
             # Compute the cost.
             if number_per is not MISSING or number_total is not None:

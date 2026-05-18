@@ -64,7 +64,7 @@ def main():
     opts = parser.parse_args()
 
     # Load the contents.
-    entries, errors, options_map = loader.load(opts.filename)
+    entries, _, _ = loader.load(opts.filename)
 
     # Load the rename map, if specified.
     rename_map = lambda x: x

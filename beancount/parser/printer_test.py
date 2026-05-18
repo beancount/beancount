@@ -686,7 +686,7 @@ class TestPrinterMisc(test_utils.TestCase):
             settlement: 2000-01-05
 
         """)
-        entries, errors, options_map = loader.load_string(input_string)
+        entries, errors, _ = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
@@ -702,7 +702,7 @@ class TestPrinterMisc(test_utils.TestCase):
           Assets:Invest:Options  100 HOOLOPT {0 USD, 2000-01-03}
           Assets:Invest:Cash       0 USD
         """)
-        entries, errors, options_map = loader.load_string(input_string)
+        entries, errors, _ = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
@@ -723,7 +723,7 @@ class TestPrinterMisc(test_utils.TestCase):
               Expenses:Bank:Conversion
               Assets:Current:Bank:SomeBank            -204.17 BGN @@ 775.00 DKK
         """)
-        entries, errors, options_map = loader.load_string(input_string)
+        entries, errors, _ = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
@@ -738,7 +738,7 @@ class TestPrinterMisc(test_utils.TestCase):
             Assets:Martin:Cash
 
         """)
-        entries, errors, options_map = loader.load_string(input_string)
+        _, errors, _ = loader.load_string(input_string)
         txn = errors[0].entry
         oss = io.StringIO()
         printer.print_entry(txn, file=oss)
@@ -751,7 +751,7 @@ class TestPrinterMisc(test_utils.TestCase):
             Assets:Investments:Cash  -20000 USD
 
         """)
-        entries, errors, options_map = parser.parse_string(input_string)
+        entries, errors, _ = parser.parse_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
@@ -770,7 +770,7 @@ class TestPrinterMisc(test_utils.TestCase):
             foo:
 
         """)
-        entries, errors, options_map = loader.load_string(input_string)
+        entries, errors, _ = loader.load_string(input_string)
         self.assertFalse(errors)
         self.assertIs(entries[-1].postings[-1].meta["foo"], None)
 

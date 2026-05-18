@@ -115,7 +115,7 @@ def find_balance_currencies(entries, date=None):
     )
     for cbase in currencies_on_books:
         for base_quote in converted:
-            base, quote = base_quote
+            base, _ = base_quote
             if base == cbase:
                 currencies.add(base_quote)
 

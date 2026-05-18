@@ -16,7 +16,7 @@ class TestScriptExample(test_utils.ClickTestCase):
         rv = self.run_with_args(example.main)
         self.assertTrue(rv.stdout)
 
-        loaded_entries, errors, _ = loader.load_string(
+        _, errors, _ = loader.load_string(
             rv.stdout, extra_validations=validation.HARDCORE_VALIDATIONS
         )
         self.assertFalse(errors)
@@ -27,7 +27,7 @@ class TestScriptExample(test_utils.ClickTestCase):
         rv = self.run_with_args(example.main, "--date-birth", "1988-07-01")
         self.assertTrue(rv.stdout)
 
-        loaded_entries, errors, _ = loader.load_string(
+        _, errors, _ = loader.load_string(
             rv.stdout, extra_validations=validation.HARDCORE_VALIDATIONS
         )
         self.assertFalse(errors)

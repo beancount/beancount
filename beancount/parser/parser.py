@@ -283,7 +283,7 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
           A decorated test function.
         """
         filename = inspect.getfile(fun)
-        lines, lineno = inspect.getsourcelines(fun)
+        _, lineno = inspect.getsourcelines(fun)
 
         # Skip over decorator invocation and function definition. This
         # is imperfect as it assumes that each consumes exactly one

@@ -147,7 +147,7 @@ class BeancountSheet(Sheet):
     ]
 
     def iterload(self):
-        entries, options, errors = bn.load_file(str(self.source))
+        entries, _, _ = bn.load_file(str(self.source))
         approx_num_entries = len(entries) * 2
         for tp in Progress(iter_postings(entries), total=approx_num_entries):
             yield tp

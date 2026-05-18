@@ -133,7 +133,7 @@ class TestEncryptedBase(unittest.TestCase):
 
     def encrypt_as_file(self, string, encrypted_filename):
         # Encrypt the Beancount plaintext file with it.
-        out, err = self.run_gpg(
+        out, _ = self.run_gpg(
             "--recipient",
             "beancount-test",
             "--encrypt",
@@ -201,9 +201,7 @@ class TestLoadIncludesEncrypted(TestEncryptedBase):
 
             # Load the top-level file which includes the encrypted file.
             with test_utils.environ("GNUPGHOME", self.ringdir):
-                entries, errors, options_map = loader.load_file(
-                    path.join(tmpdir, "apples.beancount")
-                )
+                entries, errors, _ = loader.load_file(path.join(tmpdir, "apples.beancount"))
 
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))

@@ -28,7 +28,7 @@ def is_gpg_installed() -> bool:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        out, err = pipe.communicate()
+        out, _ = pipe.communicate()
         version_text = out.decode("utf8")
         return pipe.returncode == 0 and bool(
             re.match(r"gpg \(GnuPG\) (1\.4|2)\.", version_text)

@@ -272,7 +272,7 @@ def main(filename, database):
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
 
     logging.info("Loading beancount file: %s", filename)
-    entries, errors, options_map = loader.load_file(filename)
+    entries, errors, _ = loader.load_file(filename)
     if errors:
         for error in errors:
             logging.error(

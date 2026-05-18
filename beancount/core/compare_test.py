@@ -38,7 +38,7 @@ class TestCompare(unittest.TestCase):
     def test_hash_entries(self):
         previous_hashes = None
         for _ in range(64):
-            entries, errors, options_map = loader.load_string(TEST_INPUT)
+            entries, errors, _ = loader.load_string(TEST_INPUT)
             hashes, errors = compare.hash_entries(entries)
             self.assertFalse(errors)
             if previous_hashes is None:
@@ -50,7 +50,7 @@ class TestCompare(unittest.TestCase):
         entries, _, __ = loader.load_string("""
           2014-08-01 price HOOL  603.10 USD
         """)
-        hashes, errors = compare.hash_entries(entries)
+        hashes, _ = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))
 
         entries, _, __ = loader.load_string("""
@@ -60,7 +60,7 @@ class TestCompare(unittest.TestCase):
           2014-08-01 price HOOL  603.10 USD
           2014-08-01 price HOOL  603.10 USD
         """)
-        hashes, errors = compare.hash_entries(entries)
+        hashes, _ = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))
 
     def test_hash_entries_same_postings(self):

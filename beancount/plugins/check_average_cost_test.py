@@ -42,7 +42,7 @@ class TestMatchAverageCost(unittest.TestCase):
             Income:US:Retirement:Pnl
         """,
         ]:
-            entries, errors, _ = loader.load_string(textwrap.dedent(setup + string))
+            _, errors, _ = loader.load_string(textwrap.dedent(setup + string))
             self.assertEqual([], errors)
 
         for string in [
@@ -59,7 +59,7 @@ class TestMatchAverageCost(unittest.TestCase):
             Income:US:Retirement:Pnl
         """,
         ]:
-            entries, errors, _ = loader.load_string(textwrap.dedent(setup + string))
+            _, errors, _ = loader.load_string(textwrap.dedent(setup + string))
             self.assertEqual(1, len(errors))
 
 

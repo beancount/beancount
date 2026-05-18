@@ -634,7 +634,7 @@ class TestParserInclude(unittest.TestCase):
         """
         include "/some/absolute/filename.beancount"
         """
-        entries, errors, options_map = parser.parse_file(filename)
+        _, errors, options_map = parser.parse_file(filename)
         self.assertFalse(errors)
         self.assertEqual(["/some/absolute/filename.beancount"], options_map["include"])
 
@@ -643,13 +643,13 @@ class TestParserInclude(unittest.TestCase):
         """
         include "some/relative/filename.beancount"
         """
-        entries, errors, options_map = parser.parse_file(filename)
+        _, errors, options_map = parser.parse_file(filename)
         self.assertFalse(errors)
         self.assertEqual(["some/relative/filename.beancount"], options_map["include"])
 
     def test_include_relative_from_string(self):
         input_string = 'include "some/relative/filename.beancount"'
-        entries, errors, options_map = parser.parse_string(input_string)
+        _, errors, options_map = parser.parse_string(input_string)
         self.assertFalse(errors)
         self.assertEqual(["some/relative/filename.beancount"], options_map["include"])
 
