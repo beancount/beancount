@@ -242,7 +242,6 @@ ignore = [
     "S608", # hardcoded-sql-expression
     "SIM113", # enumerate-for-loop
     "T203", # p-print
-    "UP028", # yield-in-for-loop
     "A003", # builtin-attribute-shadowing
 ]
 
