@@ -97,7 +97,7 @@ def get_change_years_git(filename: str, cwd: str) -> list[int]:
         return sorted(years)
 
     except subprocess.CalledProcessError:
-        logging.error(f"Error: Unable to get Git log for {filename}")
+        logging.exception(f"Error: Unable to get Git log for {filename}")
         return []
 
 

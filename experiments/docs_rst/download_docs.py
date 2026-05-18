@@ -45,7 +45,7 @@ def download_doc(
             exported = files.export(fileId=docid, mimeType=mime_type).execute()
             outfile.write(exported)
     except apiclient.errors.HttpError as exc:
-        logging.error("Skipping; Error downloading: %s", exc)
+        logging.exception("Skipping; Error downloading: %s", exc)
         filename = None
     return filename
 
@@ -176,7 +176,7 @@ def main():
                             ]
                         )
                     except subprocess.CalledProcessError as exc:
-                        logging.error("Skipping; error in Pandoc conversion: %s", exc)
+                        logging.exception("Skipping; error in Pandoc conversion: %s", exc)
 
     # Download the JSON API files.
     if args.download_jsons:

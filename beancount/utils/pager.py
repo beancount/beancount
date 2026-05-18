@@ -61,7 +61,7 @@ def create_pager(command, file):
             command, shell=True, stdin=subprocess.PIPE, stdout=file, env=env
         )
     except OSError as exc:
-        logging.error("Invalid pager: {}".format(exc))
+        logging.exception("Invalid pager: {}".format(exc))
     else:
         stdin_wrapper = io.TextIOWrapper(pipe.stdin, "utf-8")
         file = stdin_wrapper

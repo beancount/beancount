@@ -236,7 +236,7 @@ def pickle_cache_function(
                     # exception types.
 
                     # The cache file is corrupted; ignore it and recompute.
-                    logging.error("Cache file is corrupted: %s; recomputing.", exc)
+                    logging.exception("Cache file is corrupted: %s; recomputing.", exc)
                     result = None
 
                 else:
