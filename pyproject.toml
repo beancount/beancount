@@ -229,7 +229,6 @@ ignore = [
     "RET502", # implicit-return-value
     "RET505", # superfluous-else-return
     "RUF021", # parenthesize-chained-operators
-    "RUF023", # unsorted-dunder-slots
     "SIM905", # split-static-string
     "SIM910", # dict-get-with-none-default
     "TRY400", # error-instead-of-exception

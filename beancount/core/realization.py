@@ -52,7 +52,7 @@ class RealAccount(dict):  # noqa: PLW1641
       balance: The final balance of the list of postings associated with this account.
     """
 
-    __slots__ = ("account", "txn_postings", "balance")
+    __slots__ = ("account", "balance", "txn_postings")
 
     def __init__(self, account_name, *args, **kwargs):
         """Create a RealAccount instance.
