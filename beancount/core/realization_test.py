@@ -509,6 +509,7 @@ class TestRealOther(test_utils.TestCase):
                 (data.Close, "Assets:Bank:Checking", None),
             ],
             postings,
+            strict=True,
         ):
             self.assertEqual(exp_type, type(entpost))
             if isinstance(entpost, data.TxnPosting):

@@ -241,7 +241,7 @@ class EntryPrinter:
         )
         if non_trivial_balance:
             for posting, account, position, weight in zip(
-                entry.postings, strs_account, strs_position, strs_weight
+                entry.postings, strs_account, strs_position, strs_weight, strict=True
             ):
                 oss.write(
                     f"{self.prefix}{account:{width_account}}  "
@@ -253,7 +253,7 @@ class EntryPrinter:
                     self.write_metadata(posting.meta, oss, "    ")
         else:
             for posting, account, position in zip(
-                entry.postings, strs_account, strs_position
+                entry.postings, strs_account, strs_position, strict=True
             ):
                 oss.write(
                     f"{self.prefix}{account:{width_account}}  "

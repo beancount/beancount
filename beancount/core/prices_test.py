@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2020, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import itertools
 import unittest
 
 from beancount import loader
@@ -87,7 +88,9 @@ class TestPriceMap(unittest.TestCase):
             (datetime.date(2013, 6, 5), D("1.15")),
             (datetime.date(2013, 6, 6), D("1.16")),
         ]
-        for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
+        for (exp_date, exp_value), (act_date, act_value) in zip(
+            expected, values, strict=True
+        ):
             self.assertEqual(exp_date, act_date)
             self.assertEqual(exp_value, act_value.quantize(D("0.01")))
 
@@ -224,7 +227,9 @@ class TestPriceMap(unittest.TestCase):
 
         values = price_map[("USD", "CAD")]
         expected = [(datetime.date(2013, 6, 2), D("1.11"))]
-        for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
+        for (exp_date, exp_value), (act_date, act_value) in zip(
+            expected, values, strict=True
+        ):
             self.assertEqual(exp_date, act_date)
             self.assertEqual(exp_value, act_value.quantize(D("0.01")))
 
@@ -276,7 +281,7 @@ class TestPriceMap(unittest.TestCase):
 
         # Check that the resulting price mapis sorted.
         for prices_ in new_price_map.values():
-            self.assertTrue(all(x <= y for x, y in zip(prices_[:-1], prices_[1:])))
+            self.assertTrue(all(x <= y for x, y in itertools.pairwise(prices_)))
 
     @loader.load_doc()
     def test_project_missing(self, entries, _, __):

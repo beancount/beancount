@@ -44,7 +44,7 @@ def check_list(test, objlist, explist):
         test.assertEqual(explist, len(objlist))
     elif isinstance(explist, (tuple, list)):
         test.assertEqual(len(explist), len(objlist))
-        for obj, exp in zip(objlist, explist):
+        for obj, exp in zip(objlist, explist, strict=True):
             test.assertIsInstance(obj, exp)
 
 

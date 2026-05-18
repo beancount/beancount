@@ -46,7 +46,7 @@ def stable_hash_namedtuple(
     """
     # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
-    for attr_name, attr_value in zip(objtuple._fields, objtuple):
+    for attr_name, attr_value in zip(objtuple._fields, objtuple, strict=True):
         if attr_name in ignore:
             continue
         if isinstance(attr_value, (list, set, frozenset)):

@@ -1660,7 +1660,9 @@ class _BookingTestBase(unittest.TestCase):
 
         # Compare them while maintaining their order.
         self.assertEqual(len(expected_postings), len(actual_postings))
-        for posting_expected, actual_posting in zip(expected_postings, actual_postings):
+        for posting_expected, actual_posting in zip(
+            expected_postings, actual_postings, strict=True
+        ):
             self.assertEqual(
                 posting_expected,
                 actual_posting,

@@ -16,7 +16,6 @@ import re
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from typing import NamedTuple
-from typing import Optional
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import MISSING
@@ -37,7 +36,7 @@ CURRENCY_RE = "|".join(
 )
 
 
-class Amount(NamedTuple("Amount", [("number", Optional[Decimal]), ("currency", str)])):
+class Amount(NamedTuple("Amount", [("number", Decimal | None), ("currency", str)])):
     """An 'Amount' represents a number of a particular unit of something.
 
     It's essentially a typed number, with corresponding manipulation operations

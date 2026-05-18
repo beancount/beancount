@@ -13,7 +13,6 @@ import datetime
 import re
 from decimal import Decimal
 from typing import NamedTuple
-from typing import Optional
 
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.amount import Amount
@@ -175,7 +174,7 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-class Position(NamedTuple("Position", [("units", Amount), ("cost", Optional[Cost])])):
+class Position(NamedTuple("Position", [("units", Amount), ("cost", Cost | None)])):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 

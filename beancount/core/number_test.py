@@ -69,7 +69,7 @@ class TestInferQuantization(unittest.TestCase):
     def setUp(self):
         rn = [random.uniform(1, 10000) for _ in range(100)]
         self.ir = list(map(int, rn))
-        self.fr = [(x - ix - 0.5) for (x, ix) in zip(rn, self.ir)]
+        self.fr = [(x - ix - 0.5) for (x, ix) in zip(rn, self.ir, strict=True)]
 
     def test_infer_quantization_none(self):
         with decimal.localcontext() as ctx:
@@ -96,13 +96,16 @@ class TestInferQuantization(unittest.TestCase):
             self.assertEqual(-21, exp)
 
     def test_infer_quantization_one(self):
-        xn = [Decimal(ix + fx / 1000) for ix, fx in zip(self.ir, self.fr)]
+        xn = [Decimal(ix + fx / 1000) for ix, fx in zip(self.ir, self.fr, strict=True)]
         qua = number.infer_quantum_from_list(xn)
         self.assertEqual(0, qua)
 
     def test_infer_quantization_normal(self):
         for exp, expected_qua in [(2, D("0.01")), (3, D("0.001")), (5, D("0.00001"))]:
-            xn = [Decimal((ix + fx / 1000) / (10**exp)) for ix, fx in zip(self.ir, self.fr)]
+            xn = [
+                Decimal((ix + fx / 1000) / (10**exp))
+                for ix, fx in zip(self.ir, self.fr, strict=True)
+            ]
             exp = number.infer_quantum_from_list(xn)
             self.assertEqual(expected_qua, number.TEN**exp)
 

@@ -30,7 +30,6 @@ import csv
 import datetime
 import logging
 import re
-import sys
 from decimal import Decimal
 from typing import Any
 from typing import NamedTuple
@@ -258,13 +257,9 @@ def write_table(table: Table, outfile: str):
     writer.writerows(table.rows)
 
 
-# python 3.15 will make utf-8 mode enabled by default
-# so use a locale encoding for backward compatibility
-if sys.version_info < (3, 10):
-    # locale encoding is added in 3.10
-    OUTPUT_ENCODING = None
-else:
-    OUTPUT_ENCODING = "locale"
+# Python 3.15 will enable UTF-8 mode by default, so use a locale encoding
+# for backward compatibility.
+OUTPUT_ENCODING = "locale"
 
 
 @click.command(help=__doc__)

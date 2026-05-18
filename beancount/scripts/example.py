@@ -1030,7 +1030,7 @@ def generate_outgoing_transfers(
     # Create transfers outward where the future allows it.
     new_entries = []
     offset_amount = ZERO
-    for current_amount, (_, txn_posting) in zip(capped_amounts, amounts):
+    for current_amount, (_, txn_posting) in zip(capped_amounts, amounts, strict=False):
         if txn_posting.txn.date >= last_date:
             break
 
@@ -1424,6 +1424,7 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
                 rrule.WEEKLY, byweekday=rrule.FR, dtstart=date_begin, until=date_end
             ),
             price_series(start_price, mu, sigma),
+            strict=False,
         ):
             price = D(price_float).quantize(digits)
             meta = data.new_metadata(generate_prices.__name__, next(counter))
@@ -1613,7 +1614,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     destinations.extend(destinations)
     random.shuffle(destinations)
     for (date_trip_begin, date_trip_end), (destination_name, config) in zip(
-        compute_trip_dates(date_begin, date_end), destinations
+        compute_trip_dates(date_begin, date_end), destinations, strict=False
     ):
         # Compute a suitable tag.
         tag = "trip-{}-{}".format(

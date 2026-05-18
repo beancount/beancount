@@ -185,7 +185,7 @@ def patch(obj, attributes, replacement_type):
 
     yield replacements[0] if single else replacements
 
-    for attribute, saved_attr in zip(attributes, saved):
+    for attribute, saved_attr in zip(attributes, saved, strict=True):
         setattr(obj, attribute, saved_attr)
 
 

@@ -114,7 +114,7 @@ class TestImplicitPrices(cmptest.TestCase):
                 ("HOOL", "USD", "560.00"),
             ]
         ]
-        for expected, price in zip(expected_values, price_entries):
+        for expected, price in zip(expected_values, price_entries, strict=True):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
 

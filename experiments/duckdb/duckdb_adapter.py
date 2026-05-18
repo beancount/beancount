@@ -4,7 +4,6 @@ __license__ = "GNU GPLv2"
 import json
 import logging
 import os
-from typing import Optional
 
 import click
 import duckdb
@@ -106,13 +105,13 @@ def setup_database(conn: duckdb.DuckDBPyConnection):
     """)
 
 
-def to_duck_amount(amt: Optional[amount.Amount]):
+def to_duck_amount(amt: amount.Amount | None):
     if amt is None:
         return None
     return {"number": amt.number, "currency": amt.currency}
 
 
-def to_duck_cost(cst: Optional[data.Cost]):
+def to_duck_cost(cst: data.Cost | None):
     if cst is None:
         return None
     return {
@@ -123,7 +122,7 @@ def to_duck_cost(cst: Optional[data.Cost]):
     }
 
 
-def to_duck_json(meta: Optional[data.Meta]):
+def to_duck_json(meta: data.Meta | None):
     if not meta:
         return None
     # Filter out internal metadata

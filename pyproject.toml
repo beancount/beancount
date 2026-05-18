@@ -26,7 +26,8 @@ authors = [
     { name = "Martin Blais", email = "blais@furius.ca" },
 ]
 license = { text = "GPL-2.0-only" }
-requires-python = ">=3.9"
+# Python 3.9 has reached EOL.
+requires-python = ">=3.10"
 dependencies = [
     "click >=7.0",
     "python-dateutil >=2.6.0",
@@ -67,7 +68,7 @@ repository = "https://github.com/beancount/beancount"
 donations = "https://www.paypal.com/paypalme/misislavski"
 
 [tool.ty.environment]
-python-version = "3.9"
+python-version = "3.14"
 
 [tool.ty.src]
 exclude = [

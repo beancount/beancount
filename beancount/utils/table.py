@@ -177,7 +177,7 @@ def table_to_text(table, column_interspace=" ", formats=None):
     column_formats = []
     if formats:
         default_format = formats.get("*", None)
-    for column, width in zip(table.columns, column_widths):
+    for column, width in zip(table.columns, column_widths, strict=True):
         if column and formats:
             format_ = formats.get(column, default_format)
             if format_:

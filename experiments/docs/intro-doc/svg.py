@@ -290,7 +290,7 @@ def draw_diagram(p, balance_groups, filename, scale_income=None):
             y = y_lines[-1]
 
             assert len(balance_group) == len(y_lines)
-            all_line_pairs.extend(zip(balance_group, y_lines))
+            all_line_pairs.extend(zip(balance_group, y_lines, strict=True))
 
             # Skip rendering postings on the Equity lines.
             if balance_group[0][0].startswith("Equity"):
