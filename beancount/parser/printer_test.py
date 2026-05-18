@@ -107,7 +107,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         oss1.close()
 
-        with open(oss1.name, "r", encoding="utf-8") as file:
+        with open(oss1.name, encoding="utf-8") as file:
             oss1_value = file.read()
 
         # entries2 will contain information about filename and line number in

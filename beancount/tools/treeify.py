@@ -339,7 +339,7 @@ def _main():
         args.split = LOOSE_SPLITTER
 
     # Open input and output files.
-    input_file = open(args.input, "r", encoding="utf-8") if args.input else sys.stdin
+    input_file = open(args.input, encoding="utf-8") if args.input else sys.stdin
     output_file = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
     lines = list(input_file)
 

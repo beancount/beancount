@@ -229,7 +229,7 @@ def main():
             if re.search(r"\.json$", x)
         ]
     for filename in filenames:
-        with open(filename, "r") as infile:
+        with open(filename) as infile:
             document = json.load(infile)
         _, body = parse_Document(document)
 

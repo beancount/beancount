@@ -116,7 +116,7 @@ def main():
     random.seed(args.seed)
 
     # Read the balances.
-    with open(args.balances_filename, "r") as balfile:
+    with open(args.balances_filename) as balfile:
         balfile.readline()
         balances = sorted(
             [
