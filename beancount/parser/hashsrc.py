@@ -61,7 +61,7 @@ def check_parser_source_files(parser_module: types.ModuleType):
     parser_source_hash = hash_parser_source_files()
     if parser_source_hash is None:
         return
-    if parser_module.SOURCE_HASH and parser_module.SOURCE_HASH != parser_source_hash:
+    if parser_module.SOURCE_HASH and parser_source_hash != parser_module.SOURCE_HASH:
         warnings.warn(
             (
                 "The Beancount parser C extension module is out-of-date ('{}' != '{}'). "
