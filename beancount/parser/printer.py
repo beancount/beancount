@@ -74,8 +74,8 @@ def align_position_strings(strings):
     # Compute formatting string.
     max_total = max(max_before + max_after, max_unknown)
     max_after_prime = max_total - max_before
-    fmt = "{{:>{0}}}{{:{1}}}".format(max_before, max_after_prime).format
-    fmt_unknown = "{{:<{0}}}".format(max_total).format
+    fmt = "{{:>{}}}{{:{}}}".format(max_before, max_after_prime).format
+    fmt_unknown = "{{:<{}}}".format(max_total).format
 
     # Align the strings and return them.
 

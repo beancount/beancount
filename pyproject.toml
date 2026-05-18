@@ -229,7 +229,6 @@ ignore = [
     "RET505", # superfluous-else-return
     "SIM910", # dict-get-with-none-default
     "TRY400", # error-instead-of-exception
-    "UP030", # format-literals
     "UP032", # f-string
     "UP035", # deprecated-import
     "RUF100", # unused-noqa
