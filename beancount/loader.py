@@ -672,7 +672,7 @@ def run_transformations(
 
     for plugin_name, plugin_config in plugins_iter:
         # Issue a warning on a renamed module.
-        renamed_name = RENAMED_MODULES.get(plugin_name, None)
+        renamed_name = RENAMED_MODULES.get(plugin_name)
         if renamed_name:
             warnings.warn(
                 "Deprecation notice: Module '{}' has been renamed to '{}'; "

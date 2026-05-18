@@ -93,10 +93,10 @@ def get_accounts_table(entries: data.Entries, attributes: list[str]) -> Table:
             return value
         account_name = account.parent(entry.account)
         if not account_name:
-            return defaults.get(key, None)
-        parent_entry = accounts_map.get(account_name, None)
+            return defaults.get(key)
+        parent_entry = accounts_map.get(account_name)
         if not parent_entry:
-            return defaults.get(key, None)
+            return defaults.get(key)
         return getter(parent_entry, key)
 
     return get_metamap_table(accounts_map, header, getter), accounts_map
@@ -110,7 +110,7 @@ def abbreviate_account(acc: str, accounts_map: dict[str, data.Open]):
     racc = acc
     while racc:
         racc = account.parent(racc)
-        dopen = accounts_map.get(racc, None)
+        dopen = accounts_map.get(racc)
         if dopen and dopen.meta.get("root", False):
             acc = racc
             break

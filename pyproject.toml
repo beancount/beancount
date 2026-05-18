@@ -227,7 +227,6 @@ ignore = [
     "LOG009", # undocumented-warn
     "RET502", # implicit-return-value
     "RET505", # superfluous-else-return
-    "SIM910", # dict-get-with-none-default
     "UP032", # f-string
     "UP035", # deprecated-import
     "RUF100", # unused-noqa

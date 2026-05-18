@@ -722,7 +722,7 @@ def balance_by_account(
         accounts_map = {account: dopen for account, (dopen, _) in oc_map.items()}
 
         for account, balance in balances.items():
-            dopen = accounts_map.get(account, None)
+            dopen = accounts_map.get(account)
             if dopen is not None and dopen.booking is data.Booking.NONE:
                 average_balance = balance.average()
                 balances[account] = inventory.Inventory(pos for pos in average_balance)
