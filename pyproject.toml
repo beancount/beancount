@@ -253,7 +253,6 @@ ignore = [
     "UP028", # yield-in-for-loop
     "A003", # builtin-attribute-shadowing
     "FURB116", # f-string-number-format
-    "FURB171", # single-item-membership-test
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

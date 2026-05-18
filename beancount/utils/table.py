@@ -271,7 +271,7 @@ def render_table(table_, output, output_format, css_id=None, css_class=None):
         text = table_to_text(table_, "  ", formats={"*": ">", "account": "<"})
         output.write(text)
 
-    elif output_format in ("csv",):
+    elif output_format == "csv":
         table_to_csv(table_, file=output)
 
     elif output_format in ("htmldiv", "html"):
