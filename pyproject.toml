@@ -252,7 +252,6 @@ ignore = [
     "UP024", # os-error-alias
     "UP028", # yield-in-for-loop
     "A003", # builtin-attribute-shadowing
-    "FURB116", # f-string-number-format
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.

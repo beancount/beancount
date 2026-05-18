@@ -50,7 +50,7 @@ class BeancountSheet(Sheet):
         Column(
             "txnid",
             type=visidata.str,
-            getter=lambda col, row: hex(id(row.txn))[2:],
+            getter=lambda col, row: f"{id(row.txn):x}",
         ),
         Column(
             "filename",
