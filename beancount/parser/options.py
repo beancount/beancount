@@ -580,7 +580,10 @@ PUBLIC_OPTION_GROUPS = [
         """
       A list of directory roots, relative to the CWD, which should be searched
       for document files. For the document files to be automatically found they
-      must have the following filename format: YYYY-MM-DD.(.*)
+      must have the following filename format: YYYY-MM-DD.(.*). Note that
+      currently, this option can not be specified in a beancount file which is
+      read using the `include` statement, it must be given in the **main**
+      beancount file.
     """,
         [Opt("documents", [], "/path/to/your/documents/archive")],
     ),
