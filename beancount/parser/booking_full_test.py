@@ -1064,9 +1064,10 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                     None,
                 ),
                 "RSPCAD": (
-                    False,
+                    True,
                     """
               1997-03-16 *
+                Assets:CA:Pop:Checking               0 RSPCAD
                 Assets:CA:CRA:PreTaxRSP:Allowed  -2000 RSPCAD
                 Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
             """,
@@ -1076,7 +1077,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         )
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_auto_posting__superfluous_unused(self, entries, errors, _):
+    def test_auto_posting__preserve_zero_two_leg(self, entries, errors, _):
         """
         2000-01-01 open Assets:Account1
         2000-01-01 open Assets:Account2
@@ -1089,19 +1090,19 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             entries[-1],
             {
                 "USD": (
-                    False,
+                    True,
                     """
               2016-04-23 * ""
                 Assets:Account1     0.00 USD
+                Assets:Account2     0.00 USD
             """,
                     None,
                 )
             },
         )
-        # FIXME: This ought to return a "Superfluous posting" error for Account2 only.
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_auto_posting__superfluous_unneeded(self, entries, errors, _):
+    def test_auto_posting__preserve_zero_multi_leg(self, entries, errors, _):
         """
         2000-01-01 open Assets:Account1
         2000-01-01 open Assets:Account2
@@ -1116,20 +1117,22 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             entries[-1],
             {
                 "USD": (
-                    False,
+                    True,
                     """
               2016-04-23 * ""
                 Assets:Account1   100.00 USD
                 Assets:Account2  -100.00 USD
+                Assets:Account3     0.00 USD
             """,
                     None,
                 )
             },
         )
-        # FIXME: This ought to return a "Superfluous posting" error for Account3 only.
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_auto_posting__superfluous_needed_one_side(self, entries, errors, _):
+    def test_auto_posting__preserve_zero_in_one_currency_group(
+        self, entries, errors, _
+    ):
         """
         2000-01-01 open Assets:Account1
         2000-01-01 open Assets:Account2
@@ -1148,11 +1151,12 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             entries[-1],
             {
                 "USD": (
-                    False,
+                    True,
                     """
               2016-04-23 * ""
                 Assets:Account1   100.00 USD
                 Assets:Account2  -100.00 USD
+                Assets:Account5     0.00 USD
             """,
                     None,
                 ),
