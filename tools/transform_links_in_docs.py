@@ -149,7 +149,7 @@ def main():
         "--dry-run",
         "-n",
         action="store_true",
-        help="Only print the existing links and replacments, do not run.",
+        help="Only print the existing links and replacements, do not run.",
     )
     args = parser.parse_args()
 

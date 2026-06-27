@@ -3503,5 +3503,47 @@ class TestBook(unittest.TestCase):
         )
 
 
+class TestInterpolationRounding(cmptest.TestCase):
+    @loader.load_doc()
+    def test_interpolation_uses_finest_tolerance(self, entries, errors, options_map):
+        """
+        option "operating_currency" "EUR"
+        option "use_precise_interpolation" "TRUE"
+
+        2020-04-28 open Assets:Test
+        2020-04-28 open Expenses:Test
+
+        2026-04-28 * "Test"
+          Expenses:Test 4.8 EUR
+          Expenses:Test 2.97 EUR
+          Assets:Test
+        """
+        self.assertFalse(errors)
+        txn = [e for e in entries if isinstance(e, data.Transaction)][0]
+        self.assertEqual(D("-7.77"), txn.postings[2].units.number)
+        self.assertEqual(D("0.05"), txn.meta["__tolerances__"]["EUR"])
+
+    @loader.load_doc()
+    def test_interpolation_uses_loosest_tolerance_by_default(
+        self, entries, errors, options_map
+    ):
+        """
+        option "operating_currency" "EUR"
+
+        2020-04-28 open Assets:Test
+        2020-04-28 open Expenses:Test
+
+        2026-04-28 * "Test"
+          Expenses:Test 4.8 EUR
+          Expenses:Test 2.97 EUR
+          Assets:Test
+        """
+        self.assertFalse(errors)
+        txn = [e for e in entries if isinstance(e, data.Transaction)][0]
+        # 4.8 + 2.97 = 7.77. Rounded to 0.1 (0.05 tolerance) is 7.8.
+        self.assertEqual(D("-7.8"), txn.postings[2].units.number)
+        self.assertEqual(D("0.05"), txn.meta["__tolerances__"]["EUR"])
+
+
 if __name__ == "__main__":
     unittest.main()

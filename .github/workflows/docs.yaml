@@ -1,0 +1,34 @@
+name: Documentation
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv run zensical build --clean --config-file zensical.yml
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/site
+      - uses: actions/deploy-pages@v4
+        id: deployment

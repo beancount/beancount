@@ -5,9 +5,13 @@ DOWNLOADS = $(HOME)/u/Downloads
 TOOLS=./tools
 
 PYTHON ?= uv run python
+MESON ?= uv run meson
+NINJA ?= ninja
 GRAPHER = dot
 
 PYMODEXT = $(shell $(PYTHON) -c 'import importlib.machinery; print(importlib.machinery.EXTENSION_SUFFIXES[0])')
+PYTAG = $(shell $(PYTHON) -c 'import sys; print(f"cp{sys.version_info.major}{sys.version_info.minor}")')
+MESON_BUILD_DIR = build/$(PYTAG)
 
 all: build
 
@@ -17,14 +21,17 @@ clean:
 
 .PHONY: build
 build:
-	meson setup --reconfigure -Dtests=enabled build/
-	ninja -C build/
-	cp build/_parser$(PYMODEXT) beancount/parser/
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --reconfigure || \
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --wipe || \
+	(rm -rf $(MESON_BUILD_DIR)/ && $(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled)
+	$(NINJA) -C $(MESON_BUILD_DIR)/
+	cp $(MESON_BUILD_DIR)/_parser*.so beancount/parser/
 
 .PHONY: ctest
 ctest:
-	meson setup --reconfigure -Dtests=enabled build/
-	meson test -C build/
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled --reconfigure || \
+	$(MESON) setup $(MESON_BUILD_DIR)/ -Dtests=enabled
+	$(MESON) test -C $(MESON_BUILD_DIR)/
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
@@ -98,16 +105,16 @@ showdeps-core: build/beancount-core.pdf
 debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
-vtest vtests verbose-test verbose-tests:
+vtest vtests verbose-test verbose-tests: build
 	$(PYTHON) -m pytest -v -s beancount examples
 
-qtest qtests quiet-test quiet-tests test tests:
+qtest qtests quiet-test quiet-tests test tests: build
 	$(PYTHON) -m pytest beancount
 
-test-last test-last-failed test-failed:
+test-last test-last-failed test-failed: build
 	$(PYTHON) -m pytest --last-failed beancount
 
-test-naked:
+test-naked: build
 	PATH=/bin:/usr/bin PYTHONPATH= $(PYTHON) -m pytest -x beancount
 
 # Run the parser and measure its performance.
@@ -132,17 +139,8 @@ import:
 sandbox:
 	bean-sandbox $(INPUT)
 
-missing-tests:
-	$(TOOLS)/find_missing_tests.py beancount
-
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' beancount || true
-
-filter-terms:
-	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
-
-multi-imports:
-	(egrep -srn '^(from.*)?import.*,' beancount | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -152,18 +150,11 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	$(TOOLS)/dependency_constraints.py $<
 
-
-# Run the linter on all source code.
-# keep the version in sync with ruff version we have in pre-commit-config.yaml
-ruff lint:
-	NO_COLOR=1 uv tool run 'ruff==0.14.10' check .
-	NO_COLOR=1 uv tool run 'ruff==0.14.10' format .
-
-mypy typecheck:
-	NO_COLOR=1 uv run mypy .
+pc precommit:
+	uvx pre-commit run --all-files
 
 # Check everything.
-status check: filter-terms missing-tests dep-constraints multi-imports test
+status check: precommit dep-constraints test
 
 
 # Experimental docs conversion.
@@ -172,20 +163,6 @@ download-pdf:
 
 download-odt:
 	./tools/download_docs.py odt $(HOME)/p/beancount-downloads/odt
-
-sphinx sphinx_odt2rst:
-	./tools/sphinx_odt2rst.py $(HOME)/p/beancount-downloads/odt $(HOME)/p/beancount-docs
-
-convert_test:
-	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
-
-# This does not work well; import errors just won't go away, it's slow, and it
-# seems you have to pregenerate all .pyi to do anything useful.
-pytype:
-	find $(PWD)/beancount -name '*.py' | parallel -j16  pytype --pythonpath=$(PWD) -o {}i {}
-
-pytype1:
-	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
 
 links bazel-link:
 	rm -f beancount/parser/_parser.so

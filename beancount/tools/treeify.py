@@ -280,7 +280,7 @@ def _main():
         default=DEFAULT_DELIMITER,
         help=(
             "Delimiter pattern to detect the end of a column text. "
-            "If your pattens contain strings, you may want to set this "
+            "If your patterns contain strings, you may want to set this "
             "to a longer string, like ' {{2,}}' "
             '(default: "{}")'
         ).format(DEFAULT_DELIMITER),

@@ -349,6 +349,91 @@ class TestLifetimeDateIterators(test_utils.TestCase):
             required_prices,
         )
 
+    def test_iter_weekdays_zero_length_interval(self):
+        lifetimes_map = {
+            ("AAPL", "USD"): [
+                (datetime.date(2024, 1, 5), datetime.date(2024, 1, 5)),
+            ],
+            ("USD", None): [(datetime.date(2024, 1, 1), None)],
+        }
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map, datetime.date(2024, 9, 1), True
+        )
+        self.assertEqual([], required_prices)
+
+    def test_iter_days_zero_length_interval(self):
+        lifetimes_map = {
+            ("AAPL", "USD"): [
+                (datetime.date(2024, 1, 5), datetime.date(2024, 1, 5)),
+            ],
+            ("USD", None): [(datetime.date(2024, 1, 1), None)],
+        }
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map, datetime.date(2024, 9, 1), False
+        )
+        self.assertEqual([], required_prices)
+
+    def test_iter_weekdays_negative_length_interval(self):
+        lifetimes_map = {
+            ("AAPL", "USD"): [
+                (datetime.date(2024, 1, 8), datetime.date(2024, 1, 5)),
+            ],
+            ("USD", None): [(datetime.date(2024, 1, 1), None)],
+        }
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map, datetime.date(2024, 9, 1), True
+        )
+        self.assertEqual([], required_prices)
+
+    def test_iter_weekdays_mixed_valid_and_invalid_intervals(self):
+        lifetimes_map = {
+            ("AAPL", "USD"): [
+                (datetime.date(2024, 1, 5), datetime.date(2024, 1, 5)),
+                (datetime.date(2024, 1, 8), datetime.date(2024, 1, 15)),
+                (datetime.date(2024, 1, 20), datetime.date(2024, 1, 18)),
+            ],
+            ("USD", None): [(datetime.date(2024, 1, 1), None)],
+        }
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map, datetime.date(2024, 9, 1), True
+        )
+        self.assertEqual(
+            [
+                (datetime.date(2024, 1, 8), "AAPL", "USD"),
+                (datetime.date(2024, 1, 9), "AAPL", "USD"),
+                (datetime.date(2024, 1, 10), "AAPL", "USD"),
+                (datetime.date(2024, 1, 11), "AAPL", "USD"),
+                (datetime.date(2024, 1, 12), "AAPL", "USD"),
+            ],
+            required_prices,
+        )
+
+    @loader.load_doc()
+    def test_close_position_on_friday(self, entries, errors, _):
+        """
+        2000-01-01 open Assets:Invest:Cash    USD
+        2000-01-01 open Assets:Invest:AAPL    AAPL
+        2000-01-01 open Income:Invest:PnL
+
+        2024-01-08 * "Buy AAPL on Monday"
+          Assets:Invest:AAPL     10 AAPL {50 USD}
+          Assets:Invest:Cash
+
+        2024-01-12 * "Sell AAPL on Friday"
+          Assets:Invest:AAPL     -10 AAPL {50 USD}
+          Assets:Invest:Cash  600 USD
+          Income:Invest:PnL
+        """
+        self.assertFalse(errors)
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map, datetime.date(2024, 9, 1), True
+        )
+        friday_count = sum(
+            1 for date, _, _ in required_prices if date == datetime.date(2024, 1, 12)
+        )
+        self.assertEqual(1, friday_count)
+
     def test_iter_days(self):
         lifetimes_map = {
             ("AAPL", "USD"): [

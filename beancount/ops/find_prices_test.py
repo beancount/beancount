@@ -19,11 +19,13 @@ class TestFromFile(unittest.TestCase):
         2000-01-10 open Assets:Cash
         2000-01-10 open Assets:External
         2000-01-10 open Expenses:Foreign
+        2015-11-12 open Assets:US:Investments:USDT
 
         2010-01-01 commodity USD
         2010-01-01 commodity QQQ
         2010-01-01 commodity XSP
         2010-01-01 commodity AMTKPTS
+        2015-11-12 commodity USDT
 
         2015-02-06 *
           Assets:Cash                     1505.00 USD
@@ -62,6 +64,11 @@ class TestFromFile(unittest.TestCase):
         2015-10-13 *
           Assets:Cash                        -1000.00 EUR @ 140.004 JPY
           Expenses:Foreign                     140004 JPY
+
+        ;; Zero-balanced commodity
+        2015-11-12 *
+          Assets:US:Investments:USDT          1000.00 USDT
+          Assets:External
         """
         self.entries = entries
 
@@ -123,6 +130,10 @@ class TestFromFile(unittest.TestCase):
             self.entries, datetime.date(2015, 2, 1)
         )
         self.assertEqual(set(), currencies)
+
+    def test_find_unpriced_currencies(self):
+        currencies = find_prices.find_unpriced_currencies(self.entries, None)
+        self.assertEqual({"USDT", "CAD"}, currencies)
 
 
 if __name__ == "__main__":
