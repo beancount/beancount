@@ -290,6 +290,25 @@ class TestLexer(unittest.TestCase):
             ],
             tokens,
         )
+        self.assertTrue(errors)
+
+    @lex_tokens
+    def test_number_expr_not_lexed_as_date(self, tokens, errors):
+        """\
+          1000-12-32
+        """
+        self.assertEqual(
+            [
+                ("NUMBER", 1, b"1000", D("1000")),
+                ("MINUS", 1, b"-", None),
+                ("NUMBER", 1, b"12", D("12")),
+                ("MINUS", 1, b"-", None),
+                ("NUMBER", 1, b"32", D("32")),
+                ("EOL", 2, b"\n", None),
+            ],
+            tokens,
+        )
+        self.assertEqual(0, len(errors))
 
     @lex_tokens
     def test_single_letter_account(self, tokens, errors):

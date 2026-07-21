@@ -264,7 +264,7 @@ plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
  /* Dates. */
-[0-9]{4,}[\-/][0-9]+[\-/][0-9]+ {
+(17|18|19|20)[0-9]{2}[\-/][0-9]+[\-/][0-9]+ {
     return TOKEN(DATE, yytext);
 }
 

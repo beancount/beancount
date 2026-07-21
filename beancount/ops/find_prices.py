@@ -120,3 +120,33 @@ def find_balance_currencies(entries, date=None):
                 currencies.add(base_quote)
 
     return currencies
+
+
+def find_unpriced_currencies(entries, date=None):
+    """Return currencies that have a balance but no price or cost history.
+
+    This identifies commodities on the books that have no cost basis,
+    no price conversions, and no price directives, meaning bean-price
+    currently ignores them.
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance.
+    Returns:
+      A set of base currency strings.
+    """
+    currencies_on_books = set()
+    balances, _ = summarize.balance_by_account(entries, date)
+    for _, balance in balances.items():
+        for pos in balance:
+            if pos.cost is None:
+                # Add regular currencies.
+                currencies_on_books.add(pos.units.currency)
+
+    # Currencies that have a known conversion or price directive
+    converted = find_currencies_converted(entries, date) | find_currencies_priced(
+        entries, date
+    )
+    priced_bases = {base for base, quote in converted}
+
+    return currencies_on_books - priced_bases

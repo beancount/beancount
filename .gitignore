@@ -26,3 +26,5 @@ experiments/v3/arrow/*.arrow
 .env
 target
 uv.lock
+*.duckdb
+.codex

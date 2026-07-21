@@ -94,7 +94,7 @@ def compute_residual(postings):
     return inventory
 
 
-def infer_tolerances(postings, options_map, use_cost=None):
+def infer_tolerances(postings, options_map, use_cost=None, mode="max"):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -130,6 +130,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
     Note that 'M' above is the `tolerance_multiplier` and its default
     value is 0.5.
 
+    The 'mode' parameter can be either "max" or "min", and determines how
+    tolerances from multiple postings are aggregated. Use "min" to get the
+    highest precision seen, and "max" to get the loosest tolerance.
+
     Args:
       postings: A list of Posting instances.
       options_map: A dict of options.
@@ -137,10 +141,14 @@ def infer_tolerances(postings, options_map, use_cost=None):
         digit of the number times the cost or price in order to infer the tolerance.
         If the value is left unspecified (as 'None'), the default value can be
         overridden by setting an option.
+      mode: A string, either "max" or "min".
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
     """
+    assert mode in ("max", "min")
+    agg = max if mode == "max" else min
+
     if use_cost is None:
         use_cost = options_map["infer_tolerance_from_cost"]
 
@@ -183,7 +191,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
             # tolerance has a dual purpose: it's used to infer the resolution
             # for interpolation (where we might want the min()) and also for
             # balance checks (where we favor the looser/larger tolerance).
-            tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
+            if currency in tolerances:
+                tolerances[currency] = agg(tolerance, tolerances[currency])
+            else:
+                tolerances[currency] = tolerance
 
             if not use_cost:
                 continue
@@ -211,7 +222,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 cost_tolerances[price_currency] += price_tolerance
 
     for currency, tolerance in cost_tolerances.items():
-        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
+        if currency in tolerances:
+            tolerances[currency] = agg(tolerance, tolerances[currency])
+        else:
+            tolerances[currency] = tolerance
 
     default = tolerances.pop("*", ZERO)
     return defdict.ImmutableDictWithDefault(tolerances, default=default)

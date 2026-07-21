@@ -115,7 +115,7 @@ def auto_quantized_exponent(number: Decimal, threshold: float) -> int:
             break
         ntuple = norm.scaleb(1).as_tuple()
         norm = Decimal(
-            ntuple._replace(digits=ntuple.digits[ntuple.exponent :])  # type: ignore[arg-type, misc]
+            ntuple._replace(digits=ntuple.digits[ntuple.exponent :])  # type: ignore[arg-type, misc, index]
         )
     return dtuple.exponent - norm.as_tuple().exponent  # type: ignore[operator]
 

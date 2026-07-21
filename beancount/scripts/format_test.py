@@ -313,6 +313,42 @@ class TestScriptFormat(test_utils.ClickTestCase):
             result.stdout,
         )
 
+    @test_utils.docfile
+    def test_multiline_narration_like_account(self, filename):
+        """
+        2023-02-02 * "payee" "multiline
+        1                                                                                   :    1234 TEXT"
+          Assets:BIBEssen:Checking                                                             -39.99 EUR
+          Assets:ZeroSum:Transfers                                                              39.99 EUR
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertEqual(
+            textwrap.dedent("""
+        2023-02-02 * "payee" "multiline
+        1                                                                                   :    1234 TEXT"
+          Assets:BIBEssen:Checking  -39.99 EUR
+          Assets:ZeroSum:Transfers   39.99 EUR
+        """),
+            result.stdout,
+        )
+
+    @test_utils.docfile
+    def test_escaped_quote_in_narration(self, filename):
+        """
+        2023-02-02 * "narration with \\" quote"
+          Assets:Checking                                                             -39.99 EUR
+          Expenses:Test                                                                39.99 EUR
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertEqual(
+            textwrap.dedent("""
+        2023-02-02 * "narration with \\" quote"
+          Assets:Checking  -39.99 EUR
+          Expenses:Test     39.99 EUR
+        """),
+            result.stdout,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

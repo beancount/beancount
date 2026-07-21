@@ -15,6 +15,7 @@ from beancount.core import data
 from beancount.core.amount import Amount
 from beancount.ops.balance import BalanceError
 from beancount.parser import cmptest
+from beancount.parser import parser
 from beancount.parser import printer
 from beancount.utils import test_utils
 
@@ -741,6 +742,20 @@ class TestPrinterMisc(test_utils.TestCase):
         txn = errors[0].entry
         oss = io.StringIO()
         printer.print_entry(txn, file=oss)
+
+    def test_render_total_cost_spec(self):
+        input_string = textwrap.dedent("""
+
+          2013-05-18 * ""
+            Assets:Investments:MSFT  10 MSFT {{2000 USD}}
+            Assets:Investments:Cash  -20000 USD
+
+        """)
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertRegex(oss.getvalue(), r"10 MSFT \{\{2000 USD\}\}")
 
     def test_render_meta_with_None(self):
         # Issue 378.

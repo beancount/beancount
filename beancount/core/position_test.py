@@ -16,6 +16,7 @@ from beancount.core import display_context
 from beancount.core import position
 from beancount.core.amount import A
 from beancount.core.amount import Amount
+from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.number import D
 from beancount.core.position import Cost
@@ -109,6 +110,9 @@ class TestCostSpec(unittest.TestCase):
         cost = position.CostSpec(None, D("202.46"), "USD", None, None, False)
         self.assertEqual("# 202.46 USD", position.cost_to_str(cost, self.dformat))
 
+        cost = position.CostSpec(ZERO, D("202.46"), "USD", None, None, False)
+        self.assertEqual("202.46 USD", position.cost_to_str(cost, self.dformat))
+
         cost = position.CostSpec(D("101.23"), None, "USD", None, "f4412439c31b", True)
         self.assertEqual(
             '101.23 USD, "f4412439c31b", *', position.cost_to_str(cost, self.dformat)
@@ -152,6 +156,9 @@ class TestCostSpec(unittest.TestCase):
 
         cost = position.CostSpec(None, D("202.46"), "USD", None, None, False)
         self.assertEqual("# 202.46 USD", position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(ZERO, D("202.46"), "USD", None, None, False)
+        self.assertEqual("202.46 USD", position.cost_to_str(cost, self.dformat, False))
 
         cost = position.CostSpec(D("101.23"), None, "USD", None, "f4412439c31b", True)
         self.assertEqual("101.23 USD", position.cost_to_str(cost, self.dformat, False))
@@ -220,6 +227,16 @@ class TestPosition(unittest.TestCase):
     def test_to_string_no_detail(self):
         pos = from_string("2.2 HOOL {532.43 USD, 2014-06-15}")
         self.assertEqual(("2.2 HOOL {532.43 USD}"), pos.to_string(detail=False))
+
+    def test_to_string__total_cost_spec(self):
+        cost = position.CostSpec(ZERO, D("202.46"), "USD", None, None, False)
+        pos = Position(A("2 HOOL"), cost)
+        self.assertEqual("2 HOOL {{202.46 USD}}", pos.to_string())
+
+    def test_to_string__missing_per_unit_cost_spec(self):
+        cost = position.CostSpec(MISSING, D("202.46"), "USD", None, None, False)
+        pos = Position(A("2 HOOL"), cost)
+        self.assertEqual("2 HOOL {# 202.46 USD}", pos.to_string())
 
     def test_from_amounts(self):
         pos = from_amounts(A("10.00 USD"))
