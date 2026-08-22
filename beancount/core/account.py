@@ -173,7 +173,7 @@ def has_component(account_name: Account, component: str) -> bool:
       A boolean: true if the component is in the account. Note that a component
       name must be whole, that is ``NY`` is not in ``Expenses:Taxes:StateNY``.
     """
-    return component in account_name.split(sep)
+    return bool(re.search("(^|:){}(:|$)".format(re.escape(component)), account_name))
 
 
 def commonprefix(accounts: Iterable[Account]) -> Account:
