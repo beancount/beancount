@@ -78,6 +78,13 @@ class TestAccount(unittest.TestCase):
         self.assertFalse(account.has_component("Liabilities:US:Credit-Card", "Credit"))
         self.assertFalse(account.has_component("Liabilities:US:Credit-Card", "Card"))
 
+    def test_has_component_special_chars(self):                                                                                                                    
+        """Les caracteres speciaux ne doivent pas casser has_component."""
+        # Avant le fix : crash (unbalanced parenthesis). Apres : False.
+        self.assertFalse(account.has_component("Liabilities:US:Credit-Card", "Foo)("))
+        self.assertFalse(account.has_component("Liabilities:US:Credit-Card", "a.b"))                                                                               
+        self.assertFalse(account.has_component("Liabilities:US:Credit-Card", "a+b"))
+
     def test_commonprefix(self):
         self.assertEqual(
             "Assets:US:TD",
