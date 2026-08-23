@@ -43,13 +43,27 @@ class TestToDecimal(unittest.TestCase):
     def test_round_to(self):
         self.assertEqual(D("135.12"), round_to(D("135.12345"), D("0.01")))
         self.assertEqual(D("135.12"), round_to(D("135.12987"), D("0.01")))
-        self.assertEqual(D("-135.12"), round_to(D("-135.12345"), D("0.01")))
-        self.assertEqual(D("-135.12"), round_to(D("-135.12987"), D("0.01")))
+        self.assertEqual(D("-135.13"), round_to(D("-135.12345"), D("0.01")))
+        self.assertEqual(D("-135.13"), round_to(D("-135.12987"), D("0.01")))
 
         self.assertEqual(D("130"), round_to(D("135.12345"), D("10")))
         self.assertEqual(D("130"), round_to(D("135.12987"), D("10")))
-        self.assertEqual(D("-130"), round_to(D("-135.12345"), D("10")))
-        self.assertEqual(D("-130"), round_to(D("-135.12987"), D("10")))
+        self.assertEqual(D("-140"), round_to(D("-135.12345"), D("10")))
+        self.assertEqual(D("-140"), round_to(D("-135.12987"), D("10")))
+
+    def test_round_to_rounds_down_toward_negative_infinity(self):
+        """The docstring promises rounding *down*: the result is never greater
+        than the input, for either sign."""
+        self.assertEqual(D("-0.13"), round_to(D("-0.125"), D("0.01")))
+        self.assertEqual(D("-1.00"), round_to(D("-1.00"), D("0.01")))
+        self.assertEqual(D("0.12"), round_to(D("0.125"), D("0.01")))
+        self.assertTrue(
+            all(
+                round_to(D(value), D(increment)) <= D(value)
+                for value in ["-3.33", "-0.01", "0", "0.01", "3.33"]
+                for increment in ["0.5", "0.01", "1"]
+            )
+        )
 
     def test_same_sign(self):
         self.assertTrue(same_sign(D("135.12345"), D("234.20")))

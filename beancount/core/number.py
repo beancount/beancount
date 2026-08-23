@@ -16,6 +16,7 @@ __copyright__ = "Copyright (C) 2015-2021, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
+from decimal import ROUND_FLOOR
 from decimal import Decimal
 
 # Constants.
@@ -74,13 +75,16 @@ def D(strord: Decimal | str | None = None) -> Decimal:
 def round_to(number: Decimal, increment: Decimal) -> Decimal:
     """Round a number *down* to a particular increment.
 
+    Rounding is towards negative infinity, per the docstring contract: the
+    result is never greater than `number`, for either sign.
+
     Args:
       number: A Decimal, the number to be rounded.
       increment: A Decimal, the size of the increment.
     Returns:
       A Decimal, the rounded number.
     """
-    return int(number / increment) * increment
+    return (number / increment).to_integral_value(rounding=ROUND_FLOOR) * increment
 
 
 def same_sign(number1: Decimal, number2: Decimal) -> bool:
