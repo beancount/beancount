@@ -144,7 +144,7 @@ class TestPositionConversions(unittest.TestCase):
     def test_value__currency_from_cost(self):
         pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
         self.assertEqual(A("53000.00 USD"), convert.get_value(pos, self.PRICE_MAP_HIT))
-        self.assertEqual(A("100 HOOL"), convert.get_value(pos, self.PRICE_MAP_EMPTY))
+        self.assertEqual(A("51400.00 USD"), convert.get_value(pos, self.PRICE_MAP_EMPTY))
 
     #
     # Conversion to another currency.
@@ -337,7 +337,7 @@ class TestMarketValue(unittest.TestCase):
         market_value = balances.reduce(
             convert.get_value, self.price_map, datetime.date(2013, 6, 6)
         )
-        self.assertEqual(inventory.from_string("2 MSFT"), market_value)
+        self.assertEqual(inventory.from_string("0.02 USD"), market_value)
 
 
 if __name__ == "__main__":
