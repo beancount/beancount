@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = "|".join(
     [
-        r"[A-Z][A-Z0-9\'\.\_\-]*[A-Z0-9]?\b",
+        r"[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?\b",
         r"/[A-Z0-9\'\.\_\-]*[A-Z](?:[A-Z0-9\'\.\_\-]*[A-Z0-9])?",
     ]
 )
