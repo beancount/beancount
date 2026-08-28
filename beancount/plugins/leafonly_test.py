@@ -66,6 +66,23 @@ class TestLeafOnly(unittest.TestCase):
         """
         self.assertEqual(0, len(errors))
 
+    @loader.load_doc(expect_errors=False)
+    def test_leaf_only4(self, _, errors, __):
+        """
+        plugin "beancount.plugins.leafonly"
+
+        2011-01-01 open Expenses:Food
+        2011-01-01 open Expenses:Food:Restaurant
+        2011-01-01 open Assets:Other
+
+        2011-05-17 * "Something"
+          Expenses:Food:Restaurant   1.00 USD
+          Assets:Other              -1.00 USD
+
+        2011-06-01 close Expenses:Food ;; Allowed close directive.
+        """
+        self.assertEqual(0, len(errors))
+
 
 if __name__ == "__main__":
     unittest.main()

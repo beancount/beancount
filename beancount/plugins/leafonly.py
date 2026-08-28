@@ -39,7 +39,7 @@ def validate_leaf_only(entries, unused_options_map):
     for real_account in realization.iter_children(real_root):
         if len(real_account) == 0 or not real_account.txn_postings:
             continue
-        allowed_types = (data.Open, data.Balance)
+        allowed_types = (data.Open, data.Close, data.Balance)
         postings = real_account.txn_postings
         if all(isinstance(post, allowed_types) for post in postings):
             continue
