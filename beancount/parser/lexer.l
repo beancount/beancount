@@ -1,5 +1,5 @@
-/* -*- mode: c -*- */
-/* A flex lexer for Beancount. */
+/* -*- mode: c++ -*- */
+/* A lexer for Beancount. */
 
 /* Options */
 %option noinput
@@ -10,11 +10,45 @@
 %option bison-bridge
 %option bison-locations
 %option reentrant
-%option extra-type="yyextra_t*"
 /* %option nodefault */
 /* %option debug */
 /* %option stack */
 /* %option 8bit */
+%option nostdinit
+%option params="PyObject* builder"
+%option lexer="Lexer"
+
+%class{
+  public:
+    /* The Python file object to read from. */
+    PyObject* pyin;
+
+    /* The filename being tokenized. */
+    PyObject* filename;
+
+    /* The encoding to use for converting strings. */
+    const char* encoding;
+
+    /* A reference to the beancount.core.number.MISSING object */
+    PyObject* missing_obj;
+
+    ~Lexer() {
+        Py_XDECREF(filename);
+        Py_XDECREF(pyin);
+    }
+
+    virtual size_t LexerInput(char *s, size_t n) {
+        if (!this->pyin) {
+            return 0;
+        }
+        return pyfile_read_into(this->pyin, s, n);
+    }
+}
+
+%init{
+    filename = NULL;
+    pyin = NULL;
+}
 
 /* Top code. This is included in the generated header file. */
 %top{
@@ -27,24 +61,20 @@
 #define PyExceptionClass_Name(x) (((PyTypeObject*)(x))->tp_name)
 #endif
 
-typedef struct _yyextra_t yyextra_t;
+#include "beancount/parser/macros.h"
+#include "beancount/parser/grammar.h"
+#include "beancount/parser/tokens.h"
 
-struct _yyextra_t {
-    /* The filename being tokenized. */
-    PyObject* filename;
-
-    /* A reference to the beancount.core.number.MISSING object */
-    PyObject* missing_obj;
-};
-
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
-#endif
 
-/* Lexer interface required by Bison. */
-#define YY_DECL int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param, \
-                          yyscan_t yyscanner, PyObject* builder)
+#define YY_EXTERN_C extern "C"
+
+#define YY_USER_ACTION                          \
+    {                                           \
+        yylloc.file_name = this->filename;      \
+    }
+
+C_BEGIN_DECLS
 
 /**
  * Allocate a new scanner object including private data.
@@ -71,7 +101,19 @@ yyscan_t yylex_free(yyscan_t scanner);
  * is safe to call this multiple times.
  */
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      PyObject* missing_obj, yyscan_t scanner);
+                      PyObject* missing_obj, yyscan_t _scanner);
+
+/**
+ * Read from a io.IOBase Python object into a buffer.
+ */
+size_t pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+
+/**
+ * Return a reference to the "missing object" Python marker object.
+ */
+PyObject* yyget_missing_obj(yyscan_t scanner);
+
+C_END_DECLS
 
 }
 
@@ -88,46 +130,20 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
 /**
  * Build and accumulate an error on the builder object.
  */
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...);
+void build_lexer_error(YYLTYPE& loc, PyObject* builder, const char* format, ...);
 
 /**
  * Build and accumulate an error using the current exception state.
  */
-void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder);
-
-/**
- * Read from a io.BaseIO Python object into a buffer.
- */
-int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
-
-#define YY_INPUT(buf, result, max_size)                         \
-    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
-
-#define YY_USER_ACTION                                        \
-    {                                                         \
-        yylloc->first_line = yylineno;                        \
-        yylloc->last_line = yylloc->first_line;               \
-        yylloc->first_column = yycolumn;                      \
-        yylloc->last_column = yycolumn + yyleng - 1;          \
-        yylloc->file_name = yyget_extra(yyscanner)->filename; \
-        yycolumn += yyleng;                                   \
-    }
+void build_lexer_error_from_exception(YYLTYPE& loc, PyObject* builder);
 
 %}
 
 %x INVALID
 %x IGNORE
 
-ASCII           [\x00-\x7f]
-UTF-8-1         [\x80-\xbf]
-UTF-8-2         [\xc2-\xdf]{UTF-8-1}
-UTF-8-3         \xe0[\xa0-\xbf]{UTF-8-1}|[\xe1-\xec]{UTF-8-1}{UTF-8-1}|\xed[\x80-\x9f]{UTF-8-1}|[\xee-\xef]{UTF-8-1}{UTF-8-1}
-UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{UTF-8-1}|\xf4[\x80-\x8f]{UTF-8-1}{UTF-8-1}
-UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
-UTF-8           {ASCII}|{UTF-8-ONLY}
-
-ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
-ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTTYPE     [\p{Lu}][\p{L}\p{Nd}\-]*
+ACCOUNTNAME     [\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*
 
  /* Characters that may be used as flags. Single-character letters may also be
   * used as flags, but must be prefixed by a quote, as in "'P' for "P". */
@@ -137,7 +153,6 @@ FLAGS           [!&#?%]
 
  /* Newlines matter. */
 \n {
-    yycolumn = 1;
     return EOL;
 }
 
@@ -227,7 +242,7 @@ NULL {
 \:		{ return COLON; }
 
 {FLAGS} {
-    yylval->character = yytext[0];
+    yylval.character = yytext[0];
     return FLAG;
 }
  /* The whitespace lookahead is not necessary to correctly parse valid
@@ -238,7 +253,7 @@ NULL {
   * lexer errors out immediately. The first form would be anyhow
   * rejected by the grammar, but the latter seems preferable. */
 [A-Z]/[ \t\n] {
-    yylval->character = yytext[0];
+    yylval.character = yytext[0];
     return CAPITAL;
 }
 
@@ -275,7 +290,7 @@ include		{ return INCLUDE; }
 
  /* String literals. */
 \"([^\\\"]|\\.)*\" {
-    return TOKEN(STRING, yytext + 1, yyleng - 2);
+    return token(STRING, yytext + 1, yyleng - 2, this->encoding);
 }
 
  /* Numbers. */
@@ -318,11 +333,18 @@ include		{ return INCLUDE; }
 
  /* Ivalid input: skip over to to the next whitespace character. */
 <INVALID>[^ \t\n\r]+ {
-    PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
-    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
+    build_lexer_error(yylloc, builder, "Invalid token: '%s'", yytext);
     BEGIN(INITIAL);
     return YYerror;
 }
+
+ /* Only the `.` pattern matches invalid UTF-8 bytes. */
+<INVALID>. {
+    build_lexer_error(yylloc, builder, "Unicode decode error: byte \\x%x is not valid", yytext[0] & 0xFF);
+    BEGIN(INITIAL);
+    return YYerror;
+}
+
  /* Ignore input till the newline. */
 <IGNORE>.* {
     BEGIN(INITIAL);
@@ -330,52 +352,37 @@ include		{ return INCLUDE; }
 
 %% /* User code. */
 
-yyscan_t yylex_new(void)
+YY_EXTERN_C yyscan_t yylex_new(void)
 {
     yyscan_t scanner;
-    yyextra_t* extra;
+    YYSTYPE lval;
+    YYLTYPE lloc;
 
-    extra = malloc(sizeof(*extra));
-    if (!extra)
-        return NULL;
-
-    extra->filename = NULL;
-
-    yylex_init_extra(extra, &scanner);
+    yylex_init(&scanner);
     if (!scanner) {
-        free(extra);
         return NULL;
     }
+
+    /* Start scanning with a NULL input source assigned to the lexer.
+     * This forces a Martcher obejct to be associated to the Lexer and
+     * then allows to set the scanner initial line number. */
+    yylex(&lval, &lloc, scanner, NULL);
 
     return scanner;
 }
 
-yyscan_t yylex_free(yyscan_t scanner)
+YY_EXTERN_C yyscan_t yylex_free(yyscan_t _scanner)
 {
-    yyextra_t* extra = yyget_extra(scanner);
-
-    Py_XDECREF(extra->filename);
-    free(extra);
-
-    Py_XDECREF(yyget_in(scanner));
-    yylex_destroy(scanner);
+    yylex_destroy(_scanner);
 
     return NULL;
 }
 
-/* yyrestart() does not reset the scanner back to INITIAL state and
- * Flex does not provide a way of doing so outside a scanner
- * rule. This function does just that accessing Flex internals. */
-static void yybegin(yyscan_t scanner)
-{
-    struct yyguts_t* yyg = (struct yyguts_t*)scanner;
-    BEGIN(INITIAL);
-}
-
+YY_EXTERN_C
 void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
-                      PyObject* missing_obj, yyscan_t scanner)
+                      PyObject* missing_obj, yyscan_t _scanner)
 {
-    yyextra_t* extra = yyget_extra(scanner);
+    yyscanner_t* scanner = static_cast<yyscanner_t*>(_scanner);
 
     if (!filename || filename == Py_None) {
         /* If a filename has not been specified, get it from the 'name'
@@ -391,20 +398,21 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
         Py_INCREF(filename);
     }
 
-    Py_XDECREF(extra->filename);
-    extra->filename = filename;
+    Py_XDECREF(scanner->filename);
+    scanner->filename = filename;
 
     extra->missing_obj = missing_obj;
+    scanner->encoding = "utf-8";
 
-    Py_XDECREF(yyget_in(scanner));
+    Py_XDECREF(scanner->pyin);
+    scanner->pyin = file;
     Py_INCREF(file);
-    yyrestart((void *)file, scanner);
-    yybegin(scanner);
 
+    yyrestart("", scanner);
     yyset_lineno(lineno, scanner);
 }
 
-void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
+void build_lexer_error(YYLTYPE& loc, PyObject* builder, const char* format, ...)
 {
     PyObject* error;
     PyObject* rv;
@@ -419,13 +427,13 @@ void build_lexer_error(YYLTYPE* loc, PyObject* builder, const char* format, ...)
     }
 
     rv = PyObject_CallMethod(builder, "build_lexer_error", "OiO",
-                             loc->file_name, loc->first_line, error);
+                             loc.file_name, loc.first_line, error);
 
     Py_XDECREF(rv);
     Py_XDECREF(error);
 }
 
-void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
+void build_lexer_error_from_exception(YYLTYPE& loc, PyObject* builder)
 {
     PyObject* type;
     PyObject* value;
@@ -441,7 +449,7 @@ void build_lexer_error_from_exception(YYLTYPE* loc, PyObject* builder)
     Py_XDECREF(traceback);
 }
 
-int pyfile_read_into(PyObject *file, char *buf, size_t max_size)
+size_t pyfile_read_into(PyObject *file, char *buf, size_t max_size)
 {
     PyObject* dest = NULL;
     PyObject* read = NULL;
@@ -495,4 +503,9 @@ error:
     Py_XDECREF(dest);
     Py_XDECREF(read);
     return ret;
+}
+
+YY_EXTERN_C PyObject* yyget_missing_obj(yyscan_t scanner)
+{
+    return static_cast<yyscanner_t*>(scanner)->missing_obj;
 }
