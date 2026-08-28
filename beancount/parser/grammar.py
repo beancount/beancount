@@ -123,7 +123,8 @@ def valid_account_regexp(options):
     # names allowed under the options configuration. This code is kept in sync
     # with {5672c7270e1e}.
     return regex.compile(
-        "(?:{})(?:{}{})+".format("|".join(names), account.sep, account.ACC_COMP_NAME_RE)
+        "(?:{})(?:{}{})+".format("|".join(names), account.sep, account.ACC_COMP_NAME_RE),
+        regex.V1,
     )
 
 

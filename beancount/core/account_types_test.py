@@ -74,6 +74,8 @@ class TestAccountTypes(unittest.TestCase):
             ("Income:US:ETrade:Dividends-USD", False),
             ("Assets", True),
             ("Liabilities", True),
+            ("Töst", True),
+            ("支出", True),
             ("Equity", True),
             ("Income", True),
             ("Expenses", True),
