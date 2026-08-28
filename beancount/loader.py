@@ -599,7 +599,9 @@ def _load(
         entries, parse_errors, options_map = _parse_recursive(
             sources, log_timings, encoding
         )
-        entries.sort(key=data.entry_sortkey)
+        from zoneinfo import ZoneInfo
+        tz_info = ZoneInfo(options_map["default_timezone"])
+        entries.sort(key=lambda entry: data.entry_sortkey(entry, tz_info))
 
     # Run interpolation on incomplete entries.
     with misc_utils.log_time("booking", log_timings, indent=1):
@@ -737,7 +739,9 @@ def run_transformations(
 
             # Ensure that the entries are sorted. Don't trust the plugins
             # themselves.
-            entries.sort(key=data.entry_sortkey)
+            from zoneinfo import ZoneInfo
+            tz_info = ZoneInfo(options_map["default_timezone"])
+            entries.sort(key=lambda entry: data.entry_sortkey(entry, tz_info))
 
     return entries, errors
 

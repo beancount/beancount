@@ -705,18 +705,72 @@ def get_entry(posting_or_entry: Directive | TxnPosting) -> Directive:
 SORT_ORDER = {Open: -2, Balance: -1, Document: 1, Close: 2}
 
 
-def entry_sortkey(entry: Directive) -> tuple[datetime.date, int, int]:
+def parse_time(time_str: str, entry_date: datetime.date, default_tz) -> datetime.datetime:
+    """
+    Parse an ISO8601 time string that contains only time information and no date.
+    Time zone handling:
+      1. If the string ends with 'Z', treat it as UTC.
+      2. If the string contains an offset (e.g. '+08:00'), use that offset.
+      3. If no timezone info is provided, assume local time and apply default_tz.
+
+    The parsed time is combined with the provided entry_date so that the returned datetime is comparable.
+
+    Args:
+      time_str (str): The ISO8601 time string to parse. If empty or None, a minimal time (00:00:00) is assumed.
+      entry_date (datetime.date): The date component to combine with the time.
+      default_tz: The default timezone to apply if no timezone info is present in the time string.
+
+    Returns:
+      datetime.datetime: The resulting datetime object combining entry_date and the parsed time, or a default minimal datetime with default_tz if time_str is empty.
+    """
+    import datetime
+
+    if not time_str:
+        # Return a default minimal datetime (00:00:00) on entry_date with default_tz
+        return datetime.datetime.combine(entry_date, datetime.time.min).replace(tzinfo=default_tz)
+
+    # If the string ends with 'Z', remove the 'Z' and parse, then attach UTC
+    if time_str.endswith("Z"):
+        try:
+            t = datetime.time.fromisoformat(time_str[:-1])
+        except ValueError as e:
+            raise ValueError(f"Invalid time format: {time_str}") from e
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=datetime.timezone.utc)
+        return datetime.datetime.combine(entry_date, t)
+
+    try:
+        t = datetime.time.fromisoformat(time_str)
+    except ValueError as e:
+        raise ValueError(f"Invalid time format: {time_str}") from e
+
+    # If the parsed time is naive, apply the default_tz
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=default_tz)
+
+    return datetime.datetime.combine(entry_date, t)
+
+
+def entry_sortkey(entry, default_tz):
     """Sort-key for entries. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,
-    in order to balance linearly.
+    in order to balance linearly. We also sort by time if the entry has
+    a time field in the metadata.
 
     Args:
       entry: An entry instance.
     Returns:
-      A tuple of (date, integer, integer), that forms the sort key for the
-      entry.
+      A tuple of (date, integer, datetime.datetime, integer), that forms the
+      sort key for the entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
+    time = parse_time(entry.meta.get("time"), entry.date, default_tz)
+
+    return (
+        entry.date,
+        SORT_ORDER.get(type(entry), 0),
+        time,
+        entry.meta["lineno"],
+    )
 
 
 def sorted(entries: Directives) -> Directives:
@@ -727,7 +781,7 @@ def sorted(entries: Directives) -> Directives:
     Returns:
       A sorted list of directives.
     """
-    return builtins.sorted(entries, key=entry_sortkey)
+    return builtins.sorted(entries, key=lambda entry: entry_sortkey(entry, datetime.timezone.utc))
 
 
 def posting_sortkey(entry: Directive | TxnPosting) -> tuple[datetime.date, int, int]:
