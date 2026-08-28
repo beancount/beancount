@@ -72,6 +72,35 @@ RENAMED_MODULES: dict[str, str] = {}
 
 
 # Filename pattern for the pickle-cache.
+# Stored in the user's cache directory (not alongside the data file) to prevent
+# an attacker who has write access to the data directory from injecting a
+# malicious pickle payload. See CWE-502.
+def _get_default_cache_dir() -> str:
+    """Return a user-specific cache directory that the data-file owner controls."""
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+    elif sys.platform == "darwin":
+        base = os.path.expanduser("~/Library/Caches")
+    else:
+        base = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+    return os.path.join(base, "beancount")
+
+
+def _make_cache_filename(filename: str) -> str:
+    """Return a collision-free cache path for *filename* under the user cache dir.
+
+    Incorporates a hash of the file's absolute directory so that two files with
+    the same basename in different directories map to distinct cache files.
+    """
+    abs_filename = path.abspath(filename)
+    dir_hash = hashlib.sha256(path.dirname(abs_filename).encode()).hexdigest()[:16]
+    cache_name = f".{path.basename(abs_filename)}-{dir_hash}.picklecache"
+    cache_dir = _get_default_cache_dir()
+    os.makedirs(cache_dir, exist_ok=True)
+    return os.path.join(cache_dir, cache_name)
+
+
+# Legacy pattern kept for backwards-compat when explicitly overridden via env var.
 PICKLE_CACHE_FILENAME = ".{filename}.picklecache"
 
 # The runtime threshold below which we don't bother creating a cache file, in
@@ -823,12 +852,14 @@ def initialize(use_cache: bool, cache_filename: str | None = None) -> None:
     global _load_file
 
     # Make a function to compute the cache filename.
-    cache_pattern = (
-        cache_filename
-        or os.getenv("BEANCOUNT_LOAD_CACHE_FILENAME")
-        or PICKLE_CACHE_FILENAME
-    )
-    cache_getter = functools.partial(get_cache_filename, cache_pattern)
+    # Explicit overrides (argument or env var) use the legacy pattern-based path.
+    # The default uses _make_cache_filename which stores caches in the user's
+    # dedicated cache directory rather than alongside the data file (CWE-502).
+    explicit_pattern = cache_filename or os.getenv("BEANCOUNT_LOAD_CACHE_FILENAME")
+    if explicit_pattern:
+        cache_getter = functools.partial(get_cache_filename, explicit_pattern)
+    else:
+        cache_getter = _make_cache_filename
 
     if use_cache:
         _load_file = pickle_cache_function(
