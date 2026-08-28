@@ -263,6 +263,20 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
 
         """
         errors = validation.validate_currency_constraints(entries, options_map)
+        self.assertEqual(
+            4,
+            len(
+                [
+                    entry
+                    for entry in entries
+                    if (
+                        isinstance(entry, data.Transaction)
+                        and entry.tags
+                        and "expected" in entry.tags
+                    )
+                ]
+            ),
+        )
 
         self.assertEqualEntries(
             [

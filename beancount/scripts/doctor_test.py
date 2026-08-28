@@ -14,6 +14,7 @@ from beancount.utils import test_utils
 
 
 class TestScriptDoctor(test_utils.ClickTestCase):
+    @unittest.skip("require old c parser")
     @test_utils.docfile
     def test_dump_lexer(self, filename):
         """
@@ -52,6 +53,7 @@ class TestScriptDoctor(test_utils.ClickTestCase):
         """
         self.assertLines(expected_output, result.stdout)
 
+    @unittest.skip("require old c parser")
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""

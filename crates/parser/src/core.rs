@@ -1,0 +1,1273 @@
+use crate::path_utils::resolve_path;
+use crate::{ParseError, Position, ast, position_from_rope};
+use chrono::NaiveDate;
+use ropey::Rope;
+use rust_decimal::Decimal;
+use serde_json::from_str as parse_json;
+use smallvec::SmallVec;
+use std::convert::TryFrom;
+use std::str::FromStr;
+use std::sync::Arc;
+
+pub type SmallStrVec = SmallVec<[String; 4]>;
+pub type SmallKeyValues = SmallVec<[KeyValue; 4]>;
+pub type SmallPostings = SmallVec<[Posting; 4]>;
+pub type SmallCustomValues = SmallVec<[CustomValue; 2]>;
+
+fn meta_at(filename: &Arc<String>, rope: &Rope, offset: usize) -> ast::Meta {
+  let Position { line, column } = position_from_rope(rope, offset);
+
+  ast::Meta {
+    filename: Arc::clone(filename),
+    line,
+    column,
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CoreDirective {
+  Open(Open),
+  Close(Close),
+  Balance(Balance),
+  Pad(Pad),
+  Transaction(Transaction),
+  Commodity(Commodity),
+  Price(Price),
+  Event(Event),
+  Query(Query),
+  Note(Note),
+  Document(Document),
+  Custom(Custom),
+  Option(OptionDirective),
+  Include(Include),
+  Plugin(Plugin),
+  PushTag(TagDirective),
+  PopTag(TagDirective),
+  PushMeta(PushMeta),
+  PopMeta(PopMeta),
+  Headline(Headline),
+  Comment(Comment),
+  Raw(Raw),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Raw {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Open {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub currencies: SmallStrVec,
+  pub opt_booking: Option<String>,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Close {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Balance {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub amount: Amount,
+  pub tolerance: Option<String>,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pad {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub from_account: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Transaction {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub txn: Option<String>,
+  pub payee: Option<String>,
+  pub narration: Option<String>,
+  pub tags: SmallStrVec,
+  pub links: SmallStrVec,
+  pub key_values: SmallKeyValues,
+  pub postings: SmallPostings,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Posting {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub opt_flag: Option<String>,
+  pub account: String,
+  pub amount: Option<Amount>,
+  pub cost_spec: Option<CostSpec>,
+  pub price_operator: Option<ast::PriceOperator>,
+  pub price_annotation: Option<Amount>,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Commodity {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub currency: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Price {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub currency: String,
+  pub amount: Amount,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Event {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub event_type: String,
+  pub desc: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Query {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub name: String,
+  pub query: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Note {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub note: String,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Document {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub account: String,
+  pub filename: String,
+  pub tags_links: Option<String>,
+  pub tags: SmallStrVec,
+  pub links: SmallStrVec,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Custom {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub date: String,
+  pub name: String,
+  pub values: SmallCustomValues,
+  pub comment: Option<String>,
+  pub key_values: SmallKeyValues,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CustomValue {
+  String(String),
+  Date(NaiveDate),
+  Bool(bool),
+  Amount(Amount),
+  Number(NumberExpr),
+  Account(String),
+}
+
+fn value_error(meta: &ast::Meta, message: impl Into<String>) -> ParseError {
+  ParseError {
+    line: meta.line,
+    column: meta.column,
+    message: message.into(),
+  }
+}
+
+fn parse_date_value(
+  raw: &str,
+  meta: &ast::Meta,
+  ctx: &str,
+) -> Result<NaiveDate, ParseError> {
+  let trimmed = raw.trim();
+  NaiveDate::parse_from_str(trimmed, "%Y-%m-%d")
+    .map_err(|err| value_error(meta, format!("invalid {} `{}`: {}", ctx, raw, err)))
+}
+
+fn parse_bool_value(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<bool, ParseError> {
+  let trimmed = raw.trim();
+  match trimmed.eq_ignore_ascii_case("true") {
+    true => Ok(true),
+    false if trimmed.eq_ignore_ascii_case("false") => Ok(false),
+    _ => Err(value_error(
+      meta,
+      format!("invalid {} `{}`: expected TRUE or FALSE", ctx, raw),
+    )),
+  }
+}
+
+fn parse_key_value_value(
+  value: Option<ast::WithSpan<ast::KeyValueValue<'_>>>,
+  meta: &ast::Meta,
+  ctx: &str,
+  allow_unquoted_on_error: bool,
+) -> Result<Option<KeyValueValue>, ParseError> {
+  value
+    .map(|v| match v.content {
+      ast::KeyValueValue::String(raw) => match unquote_json(raw, meta, ctx) {
+        Ok(val) => Ok(KeyValueValue::String(val)),
+        Err(err) if allow_unquoted_on_error => {
+          Ok(KeyValueValue::UnquotedString(raw.to_string()))
+        }
+        Err(err) => Err(err),
+      },
+      ast::KeyValueValue::UnquotedString(raw) => {
+        Ok(KeyValueValue::UnquotedString(raw.to_string()))
+      }
+      ast::KeyValueValue::Date(raw) => Ok(KeyValueValue::Date(raw.to_string())),
+      ast::KeyValueValue::Bool(val) => Ok(KeyValueValue::Bool(val)),
+      ast::KeyValueValue::Raw(raw) => Ok(KeyValueValue::Raw(raw.to_string())),
+    })
+    .transpose()
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OptionDirective {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub key: String,
+  pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Include {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub filename: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Plugin {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub name: String,
+  pub config: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TagDirective {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub tag: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PushMeta {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub key: String,
+  pub value: Option<KeyValueValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PopMeta {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub key: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Comment {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Headline {
+  pub meta: ast::Meta,
+  pub span: ast::Span,
+  pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeyValue {
+  pub span: ast::Span,
+  pub key: String,
+  pub value: Option<KeyValueValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum KeyValueValue {
+  String(String),
+  UnquotedString(String),
+  Date(String),
+  Bool(bool),
+  Raw(String),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOp {
+  Add,
+  Sub,
+  Mul,
+  Div,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberExpr {
+  Missing,
+  Literal(String),
+  Binary {
+    left: Box<NumberExpr>,
+    op: BinaryOp,
+    right: Box<NumberExpr>,
+  },
+}
+
+impl From<ast::BinaryOp> for BinaryOp {
+  fn from(op: ast::BinaryOp) -> Self {
+    match op {
+      ast::BinaryOp::Add => BinaryOp::Add,
+      ast::BinaryOp::Sub => BinaryOp::Sub,
+      ast::BinaryOp::Mul => BinaryOp::Mul,
+      ast::BinaryOp::Div => BinaryOp::Div,
+    }
+  }
+}
+
+impl From<ast::NumberExpr<'_>> for NumberExpr {
+  fn from(num: ast::NumberExpr<'_>) -> Self {
+    match num {
+      ast::NumberExpr::Missing { .. } => NumberExpr::Missing,
+      ast::NumberExpr::Literal(ast::WithSpan { content, .. }) => {
+        NumberExpr::Literal(content.to_string())
+      }
+      ast::NumberExpr::Binary {
+        left, op, right, ..
+      } => NumberExpr::Binary {
+        left: Box::new(NumberExpr::from(*left)),
+        op: BinaryOp::from(op.content),
+        right: Box::new(NumberExpr::from(*right)),
+      },
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NumberEvalError {
+  pub message: String,
+}
+
+impl std::fmt::Display for NumberEvalError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.message)
+  }
+}
+
+impl std::error::Error for NumberEvalError {}
+
+fn clean_decimal_literal(raw: &str) -> String {
+  raw
+    .chars()
+    .filter(|c| *c != ',' && *c != ' ' && *c != '_')
+    .collect()
+}
+
+pub fn parse_decimal_literal(raw: &str) -> Result<Decimal, NumberEvalError> {
+  let cleaned = clean_decimal_literal(raw);
+  if cleaned.trim().is_empty() {
+    return Ok(Decimal::ZERO);
+  }
+
+  Decimal::from_str(cleaned.trim()).map_err(|err| NumberEvalError {
+    message: format!("invalid number `{}`: {}", raw, err),
+  })
+}
+
+pub fn number_expr_to_decimal(num: &NumberExpr) -> Result<Decimal, NumberEvalError> {
+  match num {
+    NumberExpr::Missing => Err(NumberEvalError {
+      message: "missing number expression".to_string(),
+    }),
+    NumberExpr::Literal(raw) => parse_decimal_literal(raw),
+    NumberExpr::Binary { left, op, right } => {
+      let lhs = number_expr_to_decimal(left)?;
+      let rhs = number_expr_to_decimal(right)?;
+      let result = match op {
+        BinaryOp::Add => lhs + rhs,
+        BinaryOp::Sub => lhs - rhs,
+        BinaryOp::Mul => lhs * rhs,
+        BinaryOp::Div => lhs / rhs,
+      };
+      Ok(result)
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CostAmount {
+  pub per: Option<NumberExpr>,
+  pub total: Option<NumberExpr>,
+  pub currency: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CostSpec {
+  pub raw: String,
+  pub amount: Option<CostAmount>,
+  pub date: Option<String>,
+  pub label: Option<String>,
+  pub merge: bool,
+  pub is_total: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Amount {
+  pub raw: String,
+  pub number: NumberExpr,
+  pub currency: Option<String>,
+}
+
+pub fn normalize_directives<'a>(
+  directives: &[ast::Directive<'a>],
+  filename: &str,
+  source: &str,
+) -> Result<Vec<CoreDirective>, ParseError> {
+  let rope = Rope::from_str(source);
+  let filename = Arc::new(filename.to_string());
+  normalize_directives_with_meta(directives, &filename, &rope)
+}
+
+pub fn normalize_directives_with_rope<'a>(
+  directives: &[ast::Directive<'a>],
+  filename: &str,
+  rope: &Rope,
+) -> Result<Vec<CoreDirective>, ParseError> {
+  let filename = Arc::new(filename.to_string());
+  normalize_directives_with_meta(directives, &filename, rope)
+}
+
+fn normalize_directives_with_meta<'a>(
+  directives: &[ast::Directive<'a>],
+  filename: &Arc<String>,
+  rope: &Rope,
+) -> Result<Vec<CoreDirective>, ParseError> {
+  directives
+    .iter()
+    .cloned()
+    .map(|directive| CoreDirective::try_from((directive, filename, rope)))
+    .collect()
+}
+
+impl<'a> TryFrom<(ast::Directive<'a>, &Arc<String>, &Rope)> for CoreDirective {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Directive<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (directive, filename, rope) = input;
+
+    match directive {
+      ast::Directive::Open(open) => {
+        Ok(CoreDirective::Open(Open::try_from((open, filename, rope))?))
+      }
+      ast::Directive::Close(close) => Ok(CoreDirective::Close(Close::try_from((
+        close, filename, rope,
+      ))?)),
+      ast::Directive::Balance(balance) => Ok(CoreDirective::Balance(Balance::try_from((
+        balance, filename, rope,
+      ))?)),
+      ast::Directive::Pad(pad) => {
+        Ok(CoreDirective::Pad(Pad::try_from((pad, filename, rope))?))
+      }
+      ast::Directive::Transaction(txn) => Ok(CoreDirective::Transaction(
+        Transaction::try_from((txn, filename, rope))?,
+      )),
+      ast::Directive::Commodity(cmdty) => Ok(CoreDirective::Commodity(
+        Commodity::try_from((cmdty, filename, rope))?,
+      )),
+      ast::Directive::Price(price) => Ok(CoreDirective::Price(Price::try_from((
+        price, filename, rope,
+      ))?)),
+      ast::Directive::Event(event) => Ok(CoreDirective::Event(Event::try_from((
+        event, filename, rope,
+      ))?)),
+      ast::Directive::Query(query) => Ok(CoreDirective::Query(Query::try_from((
+        query, filename, rope,
+      ))?)),
+      ast::Directive::Note(note) => {
+        Ok(CoreDirective::Note(Note::try_from((note, filename, rope))?))
+      }
+      ast::Directive::Document(doc) => Ok(CoreDirective::Document(Document::try_from((
+        doc, filename, rope,
+      ))?)),
+      ast::Directive::Custom(custom) => Ok(CoreDirective::Custom(Custom::try_from((
+        custom, filename, rope,
+      ))?)),
+      ast::Directive::Option(opt) => Ok(CoreDirective::Option(OptionDirective::try_from(
+        (opt, filename, rope),
+      )?)),
+      ast::Directive::Include(include) => Ok(CoreDirective::Include(Include::try_from((
+        include, filename, rope,
+      ))?)),
+      ast::Directive::Plugin(plugin) => Ok(CoreDirective::Plugin(Plugin::try_from((
+        plugin, filename, rope,
+      ))?)),
+      ast::Directive::PushTag(tag) => Ok(CoreDirective::PushTag(TagDirective::try_from(
+        (tag, filename, rope),
+      )?)),
+      ast::Directive::PopTag(tag) => Ok(CoreDirective::PopTag(TagDirective::try_from((
+        tag, filename, rope,
+      ))?)),
+      ast::Directive::PushMeta(pm) => Ok(CoreDirective::PushMeta(PushMeta::try_from((
+        pm, filename, rope,
+      ))?)),
+      ast::Directive::PopMeta(pm) => Ok(CoreDirective::PopMeta(PopMeta::try_from((
+        pm, filename, rope,
+      ))?)),
+      ast::Directive::Comment(comment) => Ok(CoreDirective::Comment(Comment::try_from((
+        comment, filename, rope,
+      ))?)),
+      ast::Directive::Headline(headline) => Ok(CoreDirective::Headline(
+        Headline::try_from((headline, filename, rope))?,
+      )),
+      ast::Directive::Raw(raw) => {
+        Ok(CoreDirective::Raw(Raw::try_from((raw, filename, rope))?))
+      }
+    }
+  }
+}
+
+impl<'a> TryFrom<(ast::Raw<'a>, &Arc<String>, &Rope)> for Raw {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Raw<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (raw, filename, rope) = input;
+    Ok(Self {
+      meta: meta_at(filename, rope, raw.span.start),
+      span: raw.span,
+      text: raw.text.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Comment<'a>, &Arc<String>, &Rope)> for Comment {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Comment<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (comment, filename, rope) = input;
+    Ok(Self {
+      meta: meta_at(filename, rope, comment.span.start),
+      span: comment.span,
+      text: comment.text.content.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Comment {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Headline<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (headline, filename, rope) = input;
+    Ok(Self {
+      meta: meta_at(filename, rope, headline.span.start),
+      span: headline.span,
+      text: headline.text.content.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Headline<'a>, &Arc<String>, &Rope)> for Headline {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Headline<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (headline, filename, rope) = input;
+    Ok(Self {
+      meta: meta_at(filename, rope, headline.span.start),
+      span: headline.span,
+      text: headline.text.content.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Open<'a>, &Arc<String>, &Rope)> for Open {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Open<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (open, filename, rope) = input;
+    let meta = meta_at(filename, rope, open.span.start);
+    let key_values = open
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta: meta.clone(),
+      span: open.span,
+      date: open.date.content.to_string(),
+      account: open.account.content.to_string(),
+      currencies: open
+        .currencies
+        .into_iter()
+        .map(|c| c.content.to_string())
+        .collect(),
+      opt_booking: open
+        .opt_booking
+        .map(|booking| unquote_json(booking.content, &meta, "booking method"))
+        .transpose()?,
+      comment: open.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Close<'a>, &Arc<String>, &Rope)> for Close {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Close<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (close, filename, rope) = input;
+    let meta = meta_at(filename, rope, close.span.start);
+    let key_values = close
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: close.span,
+      date: close.date.content.to_string(),
+      account: close.account.content.to_string(),
+      comment: close.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Balance<'a>, &Arc<String>, &Rope)> for Balance {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Balance<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (balance, filename, rope) = input;
+    let meta = meta_at(filename, rope, balance.span.start);
+    let key_values = balance
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: balance.span,
+      date: balance.date.content.to_string(),
+      account: balance.account.content.to_string(),
+      amount: Amount::try_from(balance.amount)?,
+      tolerance: balance.tolerance.map(|t| t.content.to_string()),
+      comment: balance.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Pad<'a>, &Arc<String>, &Rope)> for Pad {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Pad<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (pad, filename, rope) = input;
+    let meta = meta_at(filename, rope, pad.span.start);
+    let key_values = pad
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: pad.span,
+      date: pad.date.content.to_string(),
+      account: pad.account.content.to_string(),
+      from_account: pad.from_account.content.to_string(),
+      comment: pad.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Commodity<'a>, &Arc<String>, &Rope)> for Commodity {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Commodity<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (cmdty, filename, rope) = input;
+    let meta = meta_at(filename, rope, cmdty.span.start);
+    let key_values = cmdty
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: cmdty.span,
+      date: cmdty.date.content.to_string(),
+      currency: cmdty.currency.content.to_string(),
+      comment: cmdty.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Price<'a>, &Arc<String>, &Rope)> for Price {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Price<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (price, filename, rope) = input;
+    let meta = meta_at(filename, rope, price.span.start);
+    let key_values = price
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: price.span,
+      date: price.date.content.to_string(),
+      currency: price.currency.content.to_string(),
+      amount: Amount::try_from(price.amount)?,
+      comment: price.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Event<'a>, &Arc<String>, &Rope)> for Event {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Event<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (event, filename, rope) = input;
+    let meta = meta_at(filename, rope, event.span.start);
+    let key_values = event
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let event_type = unquote_json(event.event_type.content, &meta, "event type")?;
+    let desc = unquote_json(event.desc.content, &meta, "event description")?;
+    Ok(Self {
+      meta,
+      span: event.span,
+      date: event.date.content.to_string(),
+      event_type,
+      desc,
+      comment: event.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Query<'a>, &Arc<String>, &Rope)> for Query {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Query<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (query, filename, rope) = input;
+    let meta = meta_at(filename, rope, query.span.start);
+    let key_values = query
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let name = unquote_json(query.name.content, &meta, "query name")?;
+    let query_str = unquote_json(query.query.content, &meta, "query")?;
+    Ok(Self {
+      meta,
+      span: query.span,
+      date: query.date.content.to_string(),
+      name,
+      query: query_str,
+      comment: query.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Note<'a>, &Arc<String>, &Rope)> for Note {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Note<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (note, filename, rope) = input;
+    let meta = meta_at(filename, rope, note.span.start);
+    let key_values = note
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let note_str = unquote_json(note.note.content, &meta, "note")?;
+    Ok(Self {
+      meta,
+      span: note.span,
+      date: note.date.content.to_string(),
+      account: note.account.content.to_string(),
+      note: note_str,
+      comment: note.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Document<'a>, &Arc<String>, &Rope)> for Document {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Document<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (doc, filename, rope) = input;
+    let meta = meta_at(filename, rope, doc.span.start);
+    let key_values = doc
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let filename = unquote_json(doc.filename.content, &meta, "document filename")?;
+    let resolved_filename = resolve_path(meta.filename.as_ref(), &filename);
+    Ok(Self {
+      meta,
+      span: doc.span,
+      date: doc.date.content.to_string(),
+      account: doc.account.content.to_string(),
+      filename: resolved_filename,
+      tags_links: doc.tags_links.as_ref().map(|groups| {
+        groups
+          .iter()
+          .map(|t| t.content)
+          .collect::<Vec<_>>()
+          .join(" ")
+      }),
+      tags: doc
+        .tags
+        .into_iter()
+        .map(|t| t.content.to_string())
+        .collect(),
+      links: doc
+        .links
+        .into_iter()
+        .map(|l| l.content.to_string())
+        .collect(),
+      comment: doc.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Custom<'a>, &Arc<String>, &Rope)> for Custom {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Custom<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (custom, filename, rope) = input;
+    let meta = meta_at(filename, rope, custom.span.start);
+    let key_values = custom
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    let values = custom
+      .values
+      .into_iter()
+      .map(|v| CustomValue::try_from((v, &meta)))
+      .collect::<Result<_, _>>()?;
+    let name = unquote_json(custom.name.content, &meta, "custom name")?;
+    Ok(Self {
+      meta,
+      span: custom.span,
+      date: custom.date.content.to_string(),
+      name,
+      values,
+      comment: custom.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::OptionDirective<'a>, &Arc<String>, &Rope)> for OptionDirective {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::OptionDirective<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (opt, filename, rope) = input;
+    let meta = meta_at(filename, rope, opt.span.start);
+    let key = unquote_json(opt.key.content, &meta, "option key")?;
+    let value = unquote_json(opt.value.content, &meta, "option value")?;
+    Ok(Self {
+      meta,
+      span: opt.span,
+      key,
+      value,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Include<'a>, &Arc<String>, &Rope)> for Include {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Include<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (include, filename, rope) = input;
+    let meta = meta_at(filename, rope, include.span.start);
+    let fname = unquote_json(include.filename.content, &meta, "include filename")?;
+    let resolved = resolve_path(&meta.filename, &fname);
+    Ok(Self {
+      meta,
+      span: include.span,
+      filename: resolved,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Plugin<'a>, &Arc<String>, &Rope)> for Plugin {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Plugin<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (plugin, filename, rope) = input;
+    let meta = meta_at(filename, rope, plugin.span.start);
+    let config = if let Some(raw) = plugin.config {
+      match unquote_json(raw.content, &meta, "plugin config") {
+        Ok(val) => Some(val),
+        Err(_) => {
+          // Fall back to a lenient stripping of surrounding quotes so
+          // that plugins still receive their config string even when it
+          // is not valid JSON (e.g. single-quoted Python dicts).
+          let trimmed = raw.content.trim();
+          let stripped = trimmed
+            .strip_prefix('"')
+            .and_then(|s| s.strip_suffix('"'))
+            .unwrap_or(trimmed)
+            .to_string();
+          Some(stripped)
+        }
+      }
+    } else {
+      None
+    };
+
+    let name = unquote_json(plugin.name.content, &meta, "plugin name")?;
+
+    Ok(Self {
+      meta,
+      span: plugin.span,
+      name,
+      config,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::TagDirective<'a>, &Arc<String>, &Rope)> for TagDirective {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::TagDirective<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (tag, filename, rope) = input;
+    let meta = meta_at(filename, rope, tag.span.start);
+    let tag_value = tag.tag.content.strip_prefix('#').unwrap_or(tag.tag.content);
+    Ok(Self {
+      meta,
+      span: tag.span,
+      tag: tag_value.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::PushMeta<'a>, &Arc<String>, &Rope)> for PushMeta {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::PushMeta<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (pm, filename, rope) = input;
+    let meta = meta_at(filename, rope, pm.span.start);
+    let value = parse_key_value_value(pm.value, &meta, "pushmeta value", true)?;
+    Ok(Self {
+      meta,
+      span: pm.span,
+      key: pm.key.content.to_string(),
+      value,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::PopMeta<'a>, &Arc<String>, &Rope)> for PopMeta {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::PopMeta<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (pm, filename, rope) = input;
+    Ok(Self {
+      meta: meta_at(filename, rope, pm.span.start),
+      span: pm.span,
+      key: pm.key.content.to_string(),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::KeyValue<'a>, &ast::Meta)> for KeyValue {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::KeyValue<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
+    let (kv, meta) = input;
+    let value = parse_key_value_value(kv.value, meta, "metadata value", false)?;
+
+    Ok(Self {
+      span: kv.span,
+      key: kv.key.content.to_string(),
+      value,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::CostSpec<'a>, &ast::Meta)> for CostSpec {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::CostSpec<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
+    let (cost, meta) = input;
+    Ok(Self {
+      raw: cost.raw.content.to_string(),
+      amount: cost.amount.map(CostAmount::try_from).transpose()?,
+      date: cost.date.map(|d| d.content.to_string()),
+      label: cost
+        .label
+        .map(|l| unquote_json(l.content, meta, "cost label"))
+        .transpose()?,
+      merge: cost.merge.map(|m| m.content).unwrap_or(false),
+      is_total: cost.is_total.content,
+    })
+  }
+}
+
+impl<'a> TryFrom<ast::CostAmount<'a>> for CostAmount {
+  type Error = ParseError;
+
+  fn try_from(amount: ast::CostAmount<'a>) -> Result<Self, Self::Error> {
+    Ok(Self {
+      per: amount.per.map(NumberExpr::from),
+      total: amount.total.map(NumberExpr::from),
+      currency: amount.currency.map(|c| c.content.to_string()),
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Posting<'a>, &Arc<String>, &Rope)> for Posting {
+  type Error = ParseError;
+
+  fn try_from(input: (ast::Posting<'a>, &Arc<String>, &Rope)) -> Result<Self, Self::Error> {
+    let (posting, filename, rope) = input;
+    let meta = meta_at(filename, rope, posting.span.start);
+    let cost_spec = posting
+      .cost_spec
+      .map(|c| CostSpec::try_from((c, &meta)))
+      .transpose()?;
+    let key_values = posting
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: posting.span,
+      opt_flag: posting.opt_flag.map(|f| f.content.to_string()),
+      account: posting.account.content.to_string(),
+      amount: posting.amount.map(Amount::try_from).transpose()?,
+      cost_spec,
+      price_operator: posting.price_operator.map(|op| op.content),
+      price_annotation: posting.price_annotation.map(Amount::try_from).transpose()?,
+      comment: posting.comment.map(|c| c.content.to_string()),
+      key_values,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::Transaction<'a>, &Arc<String>, &Rope)> for Transaction {
+  type Error = ParseError;
+
+  fn try_from(
+    input: (ast::Transaction<'a>, &Arc<String>, &Rope),
+  ) -> Result<Self, Self::Error> {
+    let (txn, filename, rope) = input;
+    let meta = meta_at(filename, rope, txn.span.start);
+    let payee = txn
+      .payee
+      .map(|p| unquote_json(p.content, &meta, "payee"))
+      .transpose()?;
+    let narration = txn
+      .narration
+      .map(|n| unquote_json(n.content, &meta, "narration"))
+      .transpose()?;
+    let key_values = txn
+      .key_values
+      .into_iter()
+      .map(|kv| KeyValue::try_from((kv, &meta)))
+      .collect::<Result<_, _>>()?;
+    Ok(Self {
+      meta,
+      span: txn.span,
+      date: txn.date.content.to_string(),
+      txn: txn.txn.map(|t| t.content.to_string()),
+      payee,
+      narration,
+      tags: txn
+        .tags
+        .into_iter()
+        .map(|t| t.content.to_string())
+        .collect(),
+      links: txn
+        .links
+        .into_iter()
+        .map(|l| l.content.to_string())
+        .collect(),
+      key_values,
+      postings: txn
+        .postings
+        .into_iter()
+        .map(|p| Posting::try_from((p, filename, rope)))
+        .collect::<Result<_, _>>()?,
+    })
+  }
+}
+
+impl<'a> TryFrom<(ast::CustomValue<'a>, &ast::Meta)> for CustomValue {
+  type Error = ParseError;
+
+  fn try_from(val_meta: (ast::CustomValue<'a>, &ast::Meta)) -> Result<Self, Self::Error> {
+    let (value, meta) = val_meta;
+    let content = match value.kind {
+      ast::CustomValueKind::String => {
+        let parsed = unquote_json(value.raw.content, meta, "custom value")?;
+        CustomValue::String(parsed)
+      }
+      ast::CustomValueKind::Date => {
+        let parsed = parse_date_value(value.raw.content, meta, "custom value date")?;
+        CustomValue::Date(parsed)
+      }
+      ast::CustomValueKind::Bool => {
+        let parsed = parse_bool_value(value.raw.content, meta, "custom value bool")?;
+        CustomValue::Bool(parsed)
+      }
+      ast::CustomValueKind::Amount => {
+        let amount = value
+          .amount
+          .ok_or_else(|| value_error(meta, "invalid amount"))?;
+        CustomValue::Amount(Amount::try_from(amount)?)
+      }
+      ast::CustomValueKind::Number => {
+        let number = value
+          .number
+          .ok_or_else(|| value_error(meta, "missing number expression"))?;
+        CustomValue::Number(NumberExpr::from(number))
+      }
+      ast::CustomValueKind::Account => {
+        CustomValue::Account(value.raw.content.trim().to_string())
+      }
+    };
+
+    Ok(content)
+  }
+}
+
+impl<'a> TryFrom<ast::Amount<'a>> for Amount {
+  type Error = ParseError;
+
+  fn try_from(amount: ast::Amount<'a>) -> Result<Self, Self::Error> {
+    Ok(Self {
+      raw: amount.raw.content.to_string(),
+      number: NumberExpr::from(amount.number),
+      currency: amount.currency.map(|c| c.content.to_string()),
+    })
+  }
+}
+
+fn unquote_json(raw: &str, meta: &ast::Meta, ctx: &str) -> Result<String, ParseError> {
+  match parse_json::<String>(raw) {
+    Ok(value) => Ok(value),
+    Err(err) => {
+      // Allow literal newlines inside quoted strings (e.g. multi-line queries) by
+      // falling back to a lenient unescaper when JSON parsing rejects control chars.
+      if raw.starts_with('"') && raw.ends_with('"') && raw.len() >= 2 {
+        let inner = &raw[1..raw.len() - 1];
+        let mut out = String::with_capacity(inner.len());
+        let mut chars = inner.chars().peekable();
+
+        while let Some(ch) = chars.next() {
+          if ch == '\\' {
+            if let Some(next) = chars.next() {
+              match next {
+                '"' => out.push('"'),
+                '\\' => out.push('\\'),
+                'n' => out.push('\n'),
+                'r' => out.push('\r'),
+                't' => out.push('\t'),
+                other => {
+                  out.push('\\');
+                  out.push(other);
+                }
+              }
+            } else {
+              out.push('\\');
+            }
+          } else {
+            out.push(ch);
+          }
+        }
+
+        return Ok(out);
+      }
+
+      Err(ParseError {
+        line: meta.line,
+        column: meta.column,
+        message: format!("invalid {}: {}", ctx, err),
+      })
+    }
+  }
+}

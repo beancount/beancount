@@ -147,8 +147,6 @@ py.install_sources('''
     beancount/parser/cmptest_test.py
     beancount/parser/context_test.py
     beancount/parser/grammar_test.py
-    beancount/parser/hashsrc_test.py
-    beancount/parser/lexer_test.py
     beancount/parser/options_test.py
     beancount/parser/parser_test.py
     beancount/parser/printer_test.py

@@ -1,0 +1,41 @@
+[package]
+name = "beancount-parser"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Core beancount parsing logic."
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+anyhow = "1.0.100"
+serde_json = { workspace = true }
+smallvec = { workspace = true }
+serde = { version = "1", features = ["derive"], optional = true }
+chrono = { version = "0.4.38", default-features = false }
+rust_decimal = "1.36.0"
+path-clean = "1.0.1"
+chumsky = "0.12.0"
+ropey = "1.6.1"
+
+[features]
+default = ['rich-errors']
+rich-errors = []
+serde = ["dep:serde", "smallvec/serde"]
+
+[[bin]]
+name = "ast_json"
+path = "src/bin/ast_json.rs"
+required-features = ["serde"]
+
+[dev-dependencies]
+similar = { workspace = true }
+criterion = "0.5.1"
+
+[[bench]]
+name = "transaction"
+harness = false
