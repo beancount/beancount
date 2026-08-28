@@ -35,7 +35,7 @@ sep = ":"
 #   L: All letters.
 #   Nd: Decimal numbers.
 ACC_COMP_TYPE_RE = r"[\p{Lu}][\p{L}\p{Nd}\-]*"
-ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*"
+ACC_COMP_NAME_RE = r"[\p{Lu}\p{Nd}]\p{Han}][\p{L}\p{Nd}\p{Han}\-]*"
 
 # Regular expression string that matches a valid account. {5672c7270e1e}
 ACCOUNT_RE = r"(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
