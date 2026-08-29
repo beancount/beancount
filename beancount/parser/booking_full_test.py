@@ -1340,6 +1340,52 @@ class TestComputeCostNumber(unittest.TestCase):
             ),
         )
 
+    def test_zero_units_total(self):
+        self.assertIsNone(
+            bf.compute_cost_number(
+                position.CostSpec(None, D("20"), "USD", None, None, False),
+                amount.from_string("0 HOOL"),
+            )
+        )
+
+
+class TestZeroUnitsTotalCost(cmptest.TestCase):
+    @loader.load_doc(expect_errors=True)
+    def test_double_brace_total_cost(self, entries, errors, options_map):
+        """
+        2024-01-01 open Assets:Stock HOOL
+        2024-01-01 open Assets:Cash USD
+
+        2024-02-01 * "zero units, total cost"
+          Assets:Stock      0 HOOL {{20.00 USD}}
+          Assets:Cash     -20.00 USD
+        """
+        self.assertTrue(
+            any(
+                isinstance(error, bf.InterpolationError)
+                and 'Amount is zero: "0 HOOL"' in error.message
+                for error in errors
+            )
+        )
+
+    @loader.load_doc(expect_errors=True)
+    def test_compound_total_cost(self, entries, errors, options_map):
+        """
+        2024-01-01 open Assets:Stock HOOL
+        2024-01-01 open Assets:Cash USD
+
+        2024-02-01 * "zero units, total cost"
+          Assets:Stock      0 HOOL {0 # 20.00 USD}
+          Assets:Cash     -20.00 USD
+        """
+        self.assertTrue(
+            any(
+                isinstance(error, bf.InterpolationError)
+                and 'Amount is zero: "0 HOOL"' in error.message
+                for error in errors
+            )
+        )
+
 
 class TestParseBookingOptions(cmptest.TestCase):
     @loader.load_doc()
