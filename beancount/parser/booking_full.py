@@ -734,6 +734,9 @@ def compute_cost_number(costspec, units):
         # component involved.
         cost_total = number_total
         units_number = abs(units.number)
+        if units_number == ZERO:
+            # Per-unit cost is undefined when there are no units.
+            return None
         if number_per is not None:
             cost_total += number_per * units_number
         unit_cost = cost_total / units_number
@@ -766,7 +769,12 @@ def convert_costspec_to_cost(posting):
                 cost_total = number_total
                 if number_per is not MISSING:
                     cost_total += number_per * units_number
-                unit_cost = cost_total / units_number
+                # Zero units cannot be converted to a per-unit cost; use
+                # zero so interpolation can report the invalid amount.
+                if units_number == ZERO:
+                    unit_cost = ZERO
+                else:
+                    unit_cost = cost_total / units_number
             else:
                 unit_cost = number_per
             new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
