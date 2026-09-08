@@ -1,0 +1,25 @@
+[package]
+name = "beancount-core"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Beancount core data structures and inference helpers."
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+beancount-parser = { path = "../parser" }
+glob = "0.3"
+path-clean = "1.0.1"
+rust_decimal = "1.36.0"
+ropey = "1.6.1"
+serde_json = { workspace = true }
+smallvec = { workspace = true }
+jiff = "0.2.23"
+
+[dev-dependencies]
+tempfile = "3"

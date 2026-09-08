@@ -1,0 +1,69 @@
+name: Build Python Wheels
+
+on:
+  workflow_call:
+
+jobs:
+  sdist:
+    name: Build source distribution
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-sdist
+          path: dist
+
+  wheel:
+    name: Build wheels (${{ matrix.platform.runner }}, ${{ matrix.platform.target }})
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runner: ubuntu-24.04
+            target: x64
+          - runner: ubuntu-24.04-arm
+            target: aarch64
+
+          - runner: macos-15
+            target: aarch64
+          - runner: macos-15-intel
+            target: x64
+
+          - runner: windows-latest
+            target: x64
+          - runner: windows-11-arm
+            target: aarch64
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: trim21/setup-rust@v0.0.1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: "--release --out dist ${{ runner.os == 'Linux' && '--zig' || ''  }}"
+          container: "off"
+          manylinux: auto
+
+      - run: ls -ahl dist
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-wheel-${{ runner.os }}-${{ matrix.platform.target }}
+          path: dist

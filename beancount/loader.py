@@ -29,6 +29,7 @@ from typing import NamedTuple
 
 from beancount.core import data
 from beancount.ops import validation
+from beancount.parser import _rust
 from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import parser
@@ -343,7 +344,7 @@ def load_string(
     log_timings=None,
     log_errors=None,
     extra_validations: list[Any] | None = None,
-    dedent: bool = False,
+    dedent: bool = True,
     encoding: str | None = None,
 ) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Open a Beancount input string, parse it, run transformations and validate.
@@ -473,7 +474,7 @@ def _parse_recursive(
                 with misc_utils.log_time(
                     "beancount.parser.parser.parse_string", log_timings, indent=2
                 ):
-                    (src_entries, src_errors, src_options_map) = parser.parse_string(
+                    (src_entries, src_errors, src_options_map) = _rust.parse_string(
                         source, source_filename
                     )
 
@@ -593,18 +594,37 @@ def _load(
     if hasattr(log_timings, "write"):
         log_timings = log_timings.write
 
+    use_rust_load_and_book = os.environ.get("BEANCOUNT_RUST_LOAD_AND_BOOK") == "1"
+
     # Parse all the files recursively. Ensure that the entries are sorted before
     # running any processes on them.
     with misc_utils.log_time("parse", log_timings, indent=1):
-        entries, parse_errors, options_map = _parse_recursive(
-            sources, log_timings, encoding
-        )
+        if use_rust_load_and_book and len(sources) == 1:
+            source, is_file = sources[0]
+            if is_file and encryption.is_encrypted_file(source):
+                # Keep decryption in Python as requested, but hand the decrypted
+                # content to Rust for recursive include parsing + booking.
+                decrypted = encryption.read_encrypted_file(source)
+                entries, parse_errors, options_map = _rust.load_string_and_book(
+                    decrypted, source
+                )
+            elif is_file:
+                entries, parse_errors, options_map = _rust.load_file_and_book(source)
+            else:
+                entries, parse_errors, options_map = _rust.load_string_and_book(
+                    source, "<string>"
+                )
+        else:
+            entries, parse_errors, options_map = _parse_recursive(
+                sources, log_timings, encoding
+            )
         entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
     with misc_utils.log_time("booking", log_timings, indent=1):
-        entries, balance_errors = booking.book(entries, options_map)
-        parse_errors.extend(balance_errors)
+        if not use_rust_load_and_book:
+            entries, balance_errors = booking.book(entries, options_map)
+            parse_errors.extend(balance_errors)
 
     # Transform the entries.
     with misc_utils.log_time("run_transformations", log_timings, indent=1):

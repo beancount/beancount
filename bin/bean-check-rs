@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+import sys
+
+from beancount.scripts.check_rs import main
+
+sys.exit(main())

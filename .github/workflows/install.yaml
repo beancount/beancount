@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: trim21/setup-rust@v0.0.1
       - uses: actions/setup-python@v5
         with:
           # The oldest supported python version
@@ -23,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: trim21/setup-rust@v0.0.1
       - uses: actions/setup-python@v5
         with:
           # The oldest supported python version

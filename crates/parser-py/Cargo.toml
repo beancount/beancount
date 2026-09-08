@@ -1,0 +1,32 @@
+[package]
+name = "beancount-parser-py"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+description = "Core beancount formatter logic."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+beancount-parser = { path = "../parser/" }
+beancount-core = { path = "../core/" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { workspace = true }
+pyo3.version = "0.29.0"
+pyo3.features = ['abi3-py39', 'rust_decimal', 'jiff-02']
+rust_decimal = "1.36.0"
+rust_decimal_macros = "1.36.0"
+pest_derive = "2.7.14"
+lazy_static = "1.5.0"
+smallvec = { workspace = true }
+jiff = "0.2.23"
+
+[dev-dependencies]
+similar = { workspace = true }
+
+[build-dependencies]
+pyo3-build-config = "0.27.2"
