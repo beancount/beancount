@@ -28,6 +28,19 @@ from beancount.core.position import from_string
 class TestCost(unittest.TestCase):
     dformat = display_context.DisplayContext().build()
 
+    def test_total_cost_does_not_change_lot_identity(self):
+        date_ = datetime.date(2024, 1, 1)
+        cost1 = Cost(D("100"), "USD", date_, None, number_total=D("200"))
+        cost2 = Cost(D("100"), "USD", date_, None, number_total=D("300"))
+        cost_without_total = Cost(D("100"), "USD", date_, None)
+
+        self.assertEqual(cost1, cost2)
+        self.assertEqual(cost1, cost_without_total)
+        self.assertFalse(cost1 != cost2)
+        self.assertFalse(cost1 != cost_without_total)
+        self.assertEqual(hash(cost1), hash(cost2))
+        self.assertEqual(hash(cost1), hash(cost_without_total))
+
     def test_cost_to_str__detail(self):
         cost = position.Cost(D("101.23"), "USD", datetime.date(2015, 9, 6), "f4412439c31b")
         self.assertEqual(

@@ -87,7 +87,17 @@ def get_weight(pos):
 
     # It the object has a cost, use that as the weight, to balance.
     if isinstance(cost, Cost) and isinstance(cost.number, Decimal):
-        weight = Amount(cost.number * pos.units.number, cost.currency)
+        # A total cost can require a non-terminating per-unit decimal. Preserve
+        # and use the exact input total for postings instead of multiplying the
+        # rounded per-unit value back by the number of units.
+        if (
+            not isinstance(pos, Position)
+            and isinstance(cost.number_total, Decimal)
+        ):
+            sign = -1 if pos.units.number < 0 else 1
+            weight = Amount(cost.number_total * sign, cost.currency)
+        else:
+            weight = Amount(cost.number * pos.units.number, cost.currency)
     else:
         # Otherwise use the postings.
         weight = units

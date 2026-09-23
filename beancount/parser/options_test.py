@@ -253,6 +253,20 @@ class TestToleranceOptions(unittest.TestCase):
         )
 
 
+class TestTotalCostLotMatchingOption(unittest.TestCase):
+    @parser.parse_doc()
+    def test_default(self, _, __, options_map):
+        """ """
+        self.assertFalse(options_map["use_total_cost_lot_matching"])
+
+    @parser.parse_doc()
+    def test_enabled(self, _, __, options_map):
+        """
+        option "use_total_cost_lot_matching" "TRUE"
+        """
+        self.assertTrue(options_map["use_total_cost_lot_matching"])
+
+
 class TestDeprecatedOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):

@@ -41,6 +41,28 @@ class Cost(NamedTuple):
     # A string for the label of this lot, or None, if there is no label.
     label: Optional[str]
 
+    # The original total cost from CostSpec, preserved for exact weight
+    # calculation. This is not part of a lot's identity: lots continue to be
+    # keyed by their per-unit cost, currency, date, and label.
+    number_total: Optional[Decimal] = None
+
+    def __eq__(self, other):
+        if not isinstance(other, Cost):
+            return NotImplemented
+        return (
+            self.number == other.number
+            and self.currency == other.currency
+            and self.date == other.date
+            and self.label == other.label
+        )
+
+    def __hash__(self):
+        return hash((self.number, self.currency, self.date, self.label))
+
+    def __ne__(self, other):
+        equal = self.__eq__(other)
+        return NotImplemented if equal is NotImplemented else not equal
+
 
 class CostSpec(NamedTuple):
     """
