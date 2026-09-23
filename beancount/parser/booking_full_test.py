@@ -3587,6 +3587,93 @@ class TestBook(unittest.TestCase):
         )
         self.assertEqual(D("329.50"), postings[0].cost.number_total)
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__total_cost__equidistant_lots__strict_is_ambiguous(
+        self, entries, _, options_map
+    ):
+        """
+        option "use_total_cost_lot_matching" "TRUE"
+
+        2015-06-25 * "Buy older lot"
+          Assets:Account1         250 HOOL {{24999.00 USD}}
+          Assets:Other       -24999.00 USD
+
+        2015-09-24 * "Buy newer lot"
+          Assets:Account1         250 HOOL {{25001.00 USD}}
+          Assets:Other       -25001.00 USD
+
+        2015-10-02 * "Sell one share"
+          Assets:Account1          -1 HOOL {{100.00 USD}}
+          Assets:Other         100.00 USD
+        """
+        methods = collections.defaultdict(lambda: Booking.STRICT)
+        _, errors, balances = bf._book(entries, options_map, methods)
+        self.assertEqual(1, len(errors))
+        self.assertIsInstance(errors[0], bm.AmbiguousMatchError)
+        self.assertRegex(errors[0].message, "Ambiguous matches")
+        self.assertEqual(
+            I(
+                "250 HOOL {99.996 USD, 2015-06-25}, "
+                "250 HOOL {100.004 USD, 2015-09-24}"
+            ),
+            balances["Assets:Account1"],
+        )
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__total_cost__equidistant_lots__fifo_selects_oldest(
+        self, entries, _, options_map
+    ):
+        """
+        option "use_total_cost_lot_matching" "TRUE"
+
+        2015-06-25 * "Buy older lot"
+          Assets:Account1         250 HOOL {{24999.00 USD}}
+          Assets:Other       -24999.00 USD
+
+        2015-09-24 * "Buy newer lot"
+          Assets:Account1         250 HOOL {{25001.00 USD}}
+          Assets:Other       -25001.00 USD
+
+        2015-10-02 * "Sell one share"
+          Assets:Account1          -1 HOOL {{100.00 USD}}
+          Assets:Other         100.00 USD
+        """
+        methods = collections.defaultdict(lambda: Booking.FIFO)
+        booked_entries, errors, balances = bf._book(
+            entries, options_map, methods
+        )
+        self.assertEqual([], errors)
+        self.assertEqual(
+            I(
+                "249 HOOL {99.996 USD, 2015-06-25}, "
+                "250 HOOL {100.004 USD, 2015-09-24}"
+            ),
+            balances["Assets:Account1"],
+        )
+        postings = booked_entries[-1].postings
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(
+                        D("99.996"),
+                        "USD",
+                        datetime.date(2015, 6, 25),
+                        None,
+                        number_total=D("100.00"),
+                    ),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.00 USD"), None, None, None, None),
+            ],
+            postings,
+        )
+        self.assertEqual(D("100.00"), postings[0].cost.number_total)
+
+
 class TestInterpolationRounding(cmptest.TestCase):
     @loader.load_doc()
     def test_interpolation_uses_finest_tolerance(self, entries, errors, options_map):
