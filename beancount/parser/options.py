@@ -717,6 +717,21 @@ PUBLIC_OPTION_GROUPS = [
     ),
     OptGroup(
         """
+      A boolean, if true, match total-cost reductions at the precision of the
+      specified total and use the implied per-unit value to disambiguate nearby
+      lots. If false (the default), reductions retain exact per-unit matching.
+    """,
+        [
+            Opt(
+                "use_total_cost_lot_matching",
+                False,
+                "TRUE",
+                converter=options_validate_boolean,
+            )
+        ],
+    ),
+    OptGroup(
+        """
       A boolean, if true, prepend the directory name of the top-level file to
       the PYTHONPATH.
     """,

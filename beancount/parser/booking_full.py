@@ -213,7 +213,13 @@ def _book(entries, options_map, methods, initial_balances=None):
                 # let the interpolation do its magic on partially incomplete
                 # CostSpec instances below.
                 (booked_postings, booking_errors) = book_reductions(
-                    entry, group_postings, balances, methods
+                    entry,
+                    group_postings,
+                    balances,
+                    methods,
+                    use_total_cost_lot_matching=options_map[
+                        "use_total_cost_lot_matching"
+                    ],
                 )
 
                 # If there were any errors, skip this group of postings.
@@ -561,7 +567,14 @@ def has_self_reduction(postings, methods):
     return False
 
 
-def book_reductions(entry, group_postings, balances, methods):
+def book_reductions(
+    entry,
+    group_postings,
+    balances,
+    methods,
+    *,
+    use_total_cost_lot_matching=False,
+):
     """Book inventory reductions against the ante-balances.
 
     This function accepts a dict of (account, Inventory balance) and for each
@@ -581,6 +594,9 @@ def book_reductions(entry, group_postings, balances, methods):
       balances: A dict of account name to inventory contents.
       methods: A mapping of account name to their corresponding booking
         method enum.
+      use_total_cost_lot_matching: If true, compare total-only costs at the
+        precision of the specified total and use the implied per-unit value to
+        disambiguate nearby lots.
     Returns:
       A pair of
         booked_postings: A list of booked postings, with reducing lots resolved
@@ -643,8 +659,24 @@ def book_reductions(entry, group_postings, balances, methods):
                     # Skip balance positions not held at cost.
                     if position.cost is None:
                         continue
-                    if cost_number is not None and position.cost.number != cost_number:
-                        continue
+                    if cost_number is not None:
+                        if (
+                            use_total_cost_lot_matching
+                            and isinstance(costspec.number_total, Decimal)
+                            and costspec.number_per == ZERO
+                        ):
+                            # Total-only costs are entered at the currency's
+                            # displayed precision. Compare the implied total at
+                            # that precision instead of requiring an exact
+                            # repeating per-unit quotient.
+                            implied_total = position.cost.number * abs(units.number)
+                            quantum = (
+                                Decimal(10) ** costspec.number_total.as_tuple().exponent
+                            )
+                            if implied_total.quantize(quantum) != costspec.number_total:
+                                continue
+                        elif position.cost.number != cost_number:
+                            continue
                     if (
                         isinstance(costspec.currency, str)
                         and position.cost.currency != costspec.currency
@@ -655,6 +687,25 @@ def book_reductions(entry, group_postings, balances, methods):
                     if costspec.label and position.cost.label != costspec.label:
                         continue
                     matches.append(position)
+
+                # A rounded total can match more than one otherwise-identical
+                # lot. Prefer the lot whose per-unit cost is closest to the
+                # per-unit value implied by the specified total.
+                if (
+                    use_total_cost_lot_matching
+                    and len(matches) > 1
+                    and isinstance(costspec.number_total, Decimal)
+                    and isinstance(cost_number, Decimal)
+                ):
+                    target = cost_number
+                    best_distance = min(
+                        abs(match.cost.number - target) for match in matches
+                    )
+                    matches = [
+                        match
+                        for match in matches
+                        if abs(match.cost.number - target) == best_distance
+                    ]
 
                 # Check for ambiguous matches.
                 if len(matches) == 0:
@@ -678,6 +729,33 @@ def book_reductions(entry, group_postings, balances, methods):
                 if ambi_errors:
                     errors.extend(ambi_errors)
                     return [], errors
+
+                # Do not carry an augmentation's total onto a reduction: a
+                # partial reduction has a different total. If the reduction
+                # itself specifies a total and resolves to one posting, retain
+                # that total so its weight remains exact.
+                reduction_postings = [
+                    reduction._replace(
+                        cost=reduction.cost._replace(number_total=None)
+                    )
+                    if isinstance(reduction.cost, Cost)
+                    and reduction.cost.number_total is not None
+                    else reduction
+                    for reduction in reduction_postings
+                ]
+                if (
+                    isinstance(costspec.number_total, Decimal)
+                    and len(reduction_postings) == 1
+                    and isinstance(reduction_postings[0].cost, Cost)
+                ):
+                    reduction = reduction_postings[0]
+                    reduction_postings = [
+                        reduction._replace(
+                            cost=reduction.cost._replace(
+                                number_total=costspec.number_total
+                            )
+                        )
+                    ]
 
                 # Add the reductions to the resulting list of booked postings.
                 booked_postings.extend(reduction_postings)
@@ -759,6 +837,7 @@ def convert_costspec_to_cost(posting):
         if cost is not None:
             number_per = cost.number_per
             number_total = cost.number_total
+            cost_total = None
             if number_total is not None:
                 # Compute the per-unit cost if there is some total cost
                 # component involved.
@@ -769,7 +848,13 @@ def convert_costspec_to_cost(posting):
                 unit_cost = cost_total / units_number
             else:
                 unit_cost = number_per
-            new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
+            new_cost = Cost(
+                unit_cost,
+                cost.currency,
+                cost.date,
+                cost.label,
+                number_total=cost_total,
+            )
             posting = posting._replace(units=posting.units, cost=new_cost)
     return posting
 

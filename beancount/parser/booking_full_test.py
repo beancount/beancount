@@ -3391,6 +3391,60 @@ class TestBook(unittest.TestCase):
         )
 
     @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__total_cost__rounds_dividend_reinvestment_lot(
+        self, entries, _, options_map
+    ):
+        """
+        option "use_total_cost_lot_matching" "TRUE"
+
+        2015-10-01 * "Dividend reinvestment"
+          Assets:Account1      1.234 HOOL {{123.45 USD}}
+          Assets:Other       -123.45 USD
+
+        2015-10-02 * "Sell one share"
+          Assets:Account1         -1 HOOL {{100.04 USD, 2015-10-01}}
+          Assets:Other        100.04 USD
+        """
+        methods = collections.defaultdict(lambda: Booking.STRICT)
+        booked_entries, errors, balances = bf._book(
+            entries, options_map, methods
+        )
+        self.assertEqual([], errors)
+        self.assertEqual(
+            D("123.45"), booked_entries[0].postings[0].cost.number_total
+        )
+        postings = booked_entries[-1].postings
+        expected_per_unit = D("123.45") / D("1.234")
+        self.assertEqual(
+            I(
+                "0.234 HOOL "
+                "{100.0405186385737439222042139 USD, 2015-10-01}"
+            ),
+            balances["Assets:Account1"],
+        )
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(
+                        expected_per_unit,
+                        "USD",
+                        datetime.date(2015, 10, 1),
+                        None,
+                        number_total=D("100.04"),
+                    ),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("100.04 USD"), None, None, None, None),
+            ],
+            postings,
+        )
+        self.assertEqual(D("100.04"), postings[0].cost.number_total)
+
+    @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_currency(self, entries, _, __):
         """
         2015-10-01 * "Held-at-cost, positive"
@@ -3477,6 +3531,61 @@ class TestBook(unittest.TestCase):
             postings,
         )
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__total_cost__disambiguates_rounded_lots(
+        self, entries, _, options_map
+    ):
+        """
+        option "use_total_cost_lot_matching" "TRUE"
+
+        2015-06-25 * "Buy three shares limit order 329.50 USD/share, executed at 329.495 USD/share"
+          Assets:Account1           3 HOOL {{988.49 USD}}
+          Assets:Other        -988.49 USD
+
+        2015-06-25 * "Buy four shares limit order 329.50 USD/share, executed at 329.495 USD/share"
+          Assets:Account1            4 HOOL {{1317.98 USD}}
+          Assets:Other        -1317.98 USD
+
+        2015-10-02 * "Sell one share from the first lot"
+          Assets:Account1          -1 HOOL {{329.50 USD}}
+          Assets:Other         329.50 USD
+        """
+        methods = collections.defaultdict(lambda: Booking.STRICT)
+        booked_entries, errors, balances = bf._book(
+            entries, options_map, methods
+        )
+        self.assertEqual([], errors)
+        expected_first_cost = D("988.49") / D("3")
+        self.assertEqual(
+            I(
+                "2 HOOL "
+                "{329.4966666666666666666666667 USD, 2015-06-25}, "
+                "4 HOOL {329.495 USD, 2015-06-25}"
+            ),
+            balances["Assets:Account1"],
+        )
+        postings = booked_entries[-1].postings
+        self.assertPostingsEqual(
+            [
+                data.Posting(
+                    "Assets:Account1",
+                    A("-1 HOOL"),
+                    Cost(
+                        expected_first_cost,
+                        "USD",
+                        datetime.date(2015, 6, 25),
+                        None,
+                        number_total=D("329.50"),
+                    ),
+                    None,
+                    None,
+                    None,
+                ),
+                data.Posting("Assets:Other", A("329.50 USD"), None, None, None, None),
+            ],
+            postings,
+        )
+        self.assertEqual(D("329.50"), postings[0].cost.number_total)
 
 class TestInterpolationRounding(cmptest.TestCase):
     @loader.load_doc()

@@ -248,6 +248,22 @@ class TestPostingConversions(TestPositionConversions):
             ),
         )
 
+    def test_weight_with_total_cost(self):
+        total = D("179.70")
+        units = D("0.652")
+        cost = Cost(
+            total / units,
+            "USD",
+            datetime.date(2024, 1, 1),
+            None,
+            number_total=total,
+        )
+
+        self.assertEqual(
+            A("-179.70 USD"),
+            convert.get_weight(self._pos(A("-0.652 TEST"), cost)),
+        )
+
     def test_weight_with_only_price(self):
         self.assertEqual(
             A("53000.00 USD"),
