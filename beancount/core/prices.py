@@ -161,8 +161,9 @@ def project(
       projection in the example above will still insert some new price points to
       it.
 
-    - However, projected prices colliding existing ones at the same date will
-      not override them.
+    - Existing prices for a base commodity and target quote currency take
+      precedence on their date. This is the date of the asset price being
+      projected, even when the exchange rate comes from an earlier date.
 
     - Projection will fail to insert a new price if the conversion between to
       and from currencies has no existing prices (e.g. before its first price
@@ -216,13 +217,13 @@ def project(
         # Project over each of the prices.
         new_projected = []
         for date, price in prices:
-            rate_date, rate = get_price(price_map, currency_pair, date)
+            _, rate = get_price(price_map, currency_pair, date)
             if rate is None:
                 # There is no conversion rate at this time; skip projection.
                 # {b2b23353275d}.
                 continue
-            if rate_date in existing_prices:
-                # Skip collisions in date. {97a5703ac517}
+            if date in existing_prices:
+                # Preserve existing prices on the asset's date, not the rate's.
                 continue
 
             # Append the new rate.
