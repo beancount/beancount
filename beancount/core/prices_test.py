@@ -301,20 +301,60 @@ class TestPriceMap(unittest.TestCase):
         2013-06-01 price  USD      1.12 CAD
         2013-06-15 price  HOOL  1000.00 USD
         2013-06-15 price  HOOL  1125.00 CAD
+        2013-06-15 price  MFFT   100.00 USD
+        2013-06-15 price  MFFT   110.00 CAD
+        2013-06-15 price  ZERO   100.00 USD
+        2013-06-15 price  ZERO     0.00 CAD
         """
         price_map = prices.build_price_map(entries)
 
         new_price_map = prices.project(price_map, "USD", "CAD")
 
-        # Check that the original prices in the database were not overridden.
-        # See {97a5703ac517}.
+        # An existing price wins even when it is below the projected price or
+        # zero. Neither direction should gain a second price for the same date.
+        for base in ("HOOL", "MFFT", "ZERO"):
+            with self.subTest(base=base):
+                for pair in ((base, "CAD"), ("CAD", base)):
+                    self.assertEqual(
+                        prices.get_all_prices(price_map, pair),
+                        prices.get_all_prices(new_price_map, pair),
+                    )
+
+    @loader.load_doc()
+    def test_project_existing_price_on_rate_date(self, entries, _, __):
+        """
+        2013-06-01 price  USD      1.12 CAD
+        2013-06-01 price  HOOL  1100.00 CAD
+        2013-06-15 price  HOOL  1000.00 USD
+        """
+        price_map = prices.build_price_map(entries)
+
+        new_price_map = prices.project(price_map, "USD", "CAD")
+
+        # The rate is dated June 1, but the new asset price belongs to June 15.
         self.assertEqual(
             [
+                (datetime.date(2013, 6, 1), D("1100.00")),
                 (datetime.date(2013, 6, 15), D("1120.0000")),
-                (datetime.date(2013, 6, 15), D("1125.00")),
             ],
             prices.get_all_prices(new_price_map, ("HOOL", "CAD")),
         )
+        self.assertEqual(
+            (datetime.date(2013, 6, 15), D("1120.0000")),
+            prices.get_price(new_price_map, ("HOOL", "CAD"), datetime.date(2013, 6, 15)),
+        )
+
+    @loader.load_doc()
+    def test_project_idempotent(self, entries, _, __):
+        """
+        2013-06-01 price  USD      1.12 CAD
+        2013-06-15 price  HOOL  1000.00 USD
+        """
+        price_map = prices.build_price_map(entries)
+        projected = prices.project(price_map, "USD", "CAD", {"HOOL"})
+        reprojected = prices.project(projected, "USD", "CAD", {"HOOL"})
+
+        self.assertEqual(projected, reprojected)
 
 
 if __name__ == "__main__":

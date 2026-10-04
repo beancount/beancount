@@ -232,6 +232,30 @@ class TestPositionConversions(unittest.TestCase):
                 exp_amount, convert.convert_amount(A("100 USD"), "CAD", price_map, date)
             )
 
+    @loader.load_doc()
+    def test_convert_position_projected_prices(self, entries, _, __):
+        """
+        2026-06-01 price USD     1.12 CAD
+        2026-06-01 price MFFT   50.00 CAD
+        2026-06-15 price HOOL  100.00 USD
+        2026-06-15 price HOOL  110.00 CAD
+        2026-06-15 price MFFT   60.00 USD
+        """
+        price_map = prices.project(prices.build_price_map(entries), "USD", "CAD")
+        for units, expected in [
+            # Use the explicit CAD price, even though conversion gives more.
+            (A("100 HOOL"), A("11000.00 CAD")),
+            # Use the new USD price converted to CAD, not the older CAD price.
+            (A("200 MFFT"), A("13440.00 CAD")),
+        ]:
+            with self.subTest(units=units):
+                self.assertEqual(
+                    expected,
+                    convert.convert_position(
+                        self._pos(units), "CAD", price_map, datetime.date(2026, 6, 15)
+                    ),
+                )
+
 
 class TestPostingConversions(TestPositionConversions):
     """Test conversions to units, cost, weight and market-value for Posting objects."""
