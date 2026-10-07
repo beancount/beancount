@@ -6,6 +6,7 @@ import re
 import textwrap
 import unittest
 from os import path
+from unittest import mock
 
 from beancount.parser import cmptest
 from beancount.scripts import directories_test
@@ -68,7 +69,52 @@ class TestScriptDoctor(test_utils.ClickTestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        self.run_with_args(doctor, "roundtrip", filename)
+        with open(filename, encoding="utf-8") as infile:
+            original_contents = infile.read()
+        basename, extension = path.splitext(filename)
+        existing_files = {
+            basename + ".roundtrip1" + extension: "First existing file\n",
+            basename + ".roundtrip2" + extension: "Second existing file\n",
+        }
+        for existing_filename, contents in existing_files.items():
+            with open(existing_filename, "w", encoding="utf-8") as outfile:
+                outfile.write(contents)
+
+        directory = path.dirname(filename)
+        original_files = set(os.listdir(directory))
+        with mock.patch("tempfile.tempdir", directory):
+            self.run_with_args(doctor, "roundtrip", filename)
+
+        existing_files[filename] = original_contents
+        for existing_filename, contents in existing_files.items():
+            with open(existing_filename, encoding="utf-8") as infile:
+                self.assertEqual(infile.read(), contents)
+        self.assertEqual(set(os.listdir(directory)), original_files)
+
+    @test_utils.docfile
+    def test_roundtrip_write_failure(self, filename):
+        """
+        2013-01-01 open Assets:Cash
+        """
+        basename, extension = path.splitext(filename)
+        existing_filename = basename + ".roundtrip1" + extension
+        with open(existing_filename, "w", encoding="utf-8") as outfile:
+            outfile.write("Existing file\n")
+        directory = path.dirname(filename)
+        original_files = set(os.listdir(directory))
+        with (
+            mock.patch("tempfile.tempdir", directory),
+            mock.patch(
+                "beancount.scripts.doctor.printer.print_entries",
+                side_effect=OSError("Write failed"),
+            ),
+            self.assertRaisesRegex(OSError, "Write failed"),
+        ):
+            self.run_with_args(doctor, "roundtrip", filename)
+
+        with open(existing_filename, encoding="utf-8") as infile:
+            self.assertEqual(infile.read(), "Existing file\n")
+        self.assertEqual(set(os.listdir(directory)), original_files)
 
     def test_list_options(self):
         self.run_with_args(doctor, "list_options")

@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import sys
+import tempfile
 
 import click
 
@@ -124,20 +125,17 @@ def roundtrip(filename):
 
     Read transactions from ledger FILENAME, print them out, re-read
     them again and compare them. Both sets of parsed entries should be
-    equal.  Both printed files are output to disk, so you can also run
-    diff on them yourself afterwards.
+    equal. Both printed files are temporary and removed after comparison.
 
     """
-    round1_filename = round2_filename = None
-    try:
+    with tempfile.TemporaryDirectory(prefix="beancount-roundtrip.") as tmpdir:
         logging.basicConfig(level=logging.INFO, format="%(levelname)-8s: %(message)s")
         logging.info("Read the entries")
         entries, errors, options_map = loader.load_file(filename)
         printer.print_errors(errors, file=sys.stderr)
 
         logging.info("Print them out to a file")
-        basename, extension = os.path.splitext(filename)
-        round1_filename = "".join([basename, ".roundtrip1", extension])
+        round1_filename = os.path.join(tmpdir, "roundtrip1.beancount")
         with open(round1_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries, file=outfile)
 
@@ -158,7 +156,7 @@ def roundtrip(filename):
             print("`----------------------------------------------------------------------")
 
         logging.info("Print what you read to yet another file")
-        round2_filename = "".join([basename, ".roundtrip2", extension])
+        round2_filename = os.path.join(tmpdir, "roundtrip2.beancount")
         with open(round2_filename, "w", encoding="utf-8") as outfile:
             printer.print_entries(entries_roundtrip, file=outfile)
 
@@ -182,10 +180,6 @@ def roundtrip(filename):
                 print(compare.hash_entry(entry))
                 print(printer.format_entry(entry))
                 print()
-    finally:
-        for rfilename in (round1_filename, round2_filename):
-            if os.path.exists(rfilename):
-                os.remove(rfilename)
 
 
 @doctor.command()
