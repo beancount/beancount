@@ -4,6 +4,7 @@ __license__ = "GNU GPLv2"
 import textwrap
 import unittest
 
+from beancount.parser import parser
 from beancount.scripts import format
 from beancount.utils import test_utils
 
@@ -86,6 +87,71 @@ class TestScriptFormat(test_utils.ClickTestCase):
         """),
             result.stdout,
         )
+
+    @test_utils.docfile
+    def test_flagged_postings(self, filename):
+        """
+        2024-01-01 * "Flagged postings"
+          ! Expenses:LongName 1.00 USD
+          * Expenses:Test (10.0/2) USD
+          & Expenses:Test 2 USD
+          # Expenses:Test 3 USD
+          ? Expenses:Test 4 USD
+          % Expenses:Test 5 USD
+          A Expenses:Test 6 USD
+          Z Expenses:Test 7 USD
+          Expenses:Test -33.00 USD
+          ! Assets:Cash
+        """
+        with open(filename, encoding="utf-8") as infile:
+            original = infile.read()
+        original_entries, errors, _ = parser.parse_string(original)
+        self.assertFalse(errors)
+        for options in ((), ("-c", "50"), ("-w", "35", "-W", "15")):
+            with self.subTest(options=options):
+                result = self.run_with_args(format.main, *options, filename)
+                columns = {
+                    line.index(" USD")
+                    for line in result.stdout.splitlines()
+                    if " USD" in line
+                }
+                self.assertEqual(len(columns), 1)
+                entries, errors, _ = parser.parse_string(result.stdout)
+                self.assertFalse(errors)
+                self.assertEqual(entries[0].postings, original_entries[0].postings)
+                self.assertEqual(result.stdout.split(), original.split())
+                self.assertEqual(
+                    format.align_beancount(
+                        result.stdout,
+                        prefix_width=35 if "-w" in options else None,
+                        num_width=15 if "-W" in options else None,
+                        currency_column=50 if "-c" in options else None,
+                    ),
+                    result.stdout,
+                )
+
+    @test_utils.docfile
+    def test_flagged_posting_indent(self, filename):
+        """
+        2024-01-01 * "Mixed indentation"
+          Expenses:Test 1 USD
+          Expenses:Test 2 USD
+         ! Assets:Cash
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertIn("\n  ! Assets:Cash\n", result.stdout)
+
+    @test_utils.docfile
+    def test_flagged_posting_in_multiline_narration(self, filename):
+        """
+        2024-01-01 * "Narration
+         ! Expenses:LongName 123 USD
+        ends here"
+          Expenses:Test 1 USD
+          Assets:Cash
+        """
+        result = self.run_with_args(format.main, filename)
+        self.assertIn('"Narration\n ! Expenses:LongName 123 USD\nends here"', result.stdout)
 
     @test_utils.docfile
     def test_open_only_issue80(self, filename):

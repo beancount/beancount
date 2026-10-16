@@ -11,6 +11,8 @@ from beancount.core import account
 from beancount.core import amount
 from beancount.parser.version import VERSION
 
+POSTING_ACCOUNT_RE = rf"(?:[*!&#?%A-Z][ \t]+)?{account.ACCOUNT_RE}"
+
 NUMBER_RE = r"[-+]?\s*[\d,]+(?:\.\d*)?"
 PARENTHESIZED_BINARY_OP_RE = rf"\({NUMBER_RE}\s*[-+*/]\s*{NUMBER_RE}\)"
 
@@ -38,12 +40,14 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
     # of the stripped prefix and the number.
     match_pairs = []
     in_multiline_string = False
-    for line in contents.splitlines():
+    protected_lines = set()
+    for index, line in enumerate(contents.splitlines()):
         if in_multiline_string:
+            protected_lines.add(index)
             match_pairs.append((line, None, None))
         else:
             match = regex.match(
-                rf'(^\d[^";]*?|\s+{account.ACCOUNT_RE})\s+'
+                rf'(^\d[^";]*?|\s+{POSTING_ACCOUNT_RE})\s+'
                 rf"({PARENTHESIZED_BINARY_OP_RE}|{NUMBER_RE})\s+"
                 rf"((?:{amount.CURRENCY_RE})\b.*)",
                 line,
@@ -59,7 +63,7 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
 
     # Normalize whitespace before lines that have some indent and an account
     # name.
-    norm_match_pairs = normalize_indent_whitespace(match_pairs)
+    norm_match_pairs = normalize_indent_whitespace(match_pairs, protected_lines)
 
     if currency_column:
         output = io.StringIO()
@@ -137,29 +141,35 @@ def compute_most_frequent(iterable):
     return counts[-1][1]
 
 
-def normalize_indent_whitespace(match_pairs):
+def normalize_indent_whitespace(match_pairs, protected_lines=()):
     """Normalize whitespace before lines that have some indent and an account name.
 
     Args:
       match_pairs: A list of (prefix, number, rest) tuples.
+      protected_lines: Indices of lines inside multiline strings, whose
+        indentation must not be changed or used to infer posting indentation.
     Returns:
       Another list of (prefix, number, rest) tuples, where prefix may have been
       adjusted with a different whitespace prefix.
     """
     # Compute most frequent account name prefix.
-    match_posting = regex.compile(r"([ \t]+)({}.*)".format(account.ACCOUNT_RE)).match
+    match_posting = regex.compile(r"([ \t]+)({}.*)".format(POSTING_ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
-        for match in (match_posting(prefix) for prefix, _, _ in match_pairs)
+        for match in (
+            match_posting(prefix)
+            for index, (prefix, _, _) in enumerate(match_pairs)
+            if index not in protected_lines
+        )
         if match is not None
     )
     norm_format = " " * (width or 0) + "{}"
 
     # Make the necessary adjustments.
     adjusted_pairs = []
-    for tup in match_pairs:
+    for index, tup in enumerate(match_pairs):
         prefix, number, rest = tup
-        match = match_posting(prefix)
+        match = None if index in protected_lines else match_posting(prefix)
         if match is not None:
             tup = (norm_format.format(match.group(2)), number, rest)
         adjusted_pairs.append(tup)
