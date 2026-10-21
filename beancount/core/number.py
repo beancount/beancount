@@ -72,7 +72,10 @@ def D(strord: Decimal | str | None = None) -> Decimal:
 
 
 def round_to(number: Decimal, increment: Decimal) -> Decimal:
-    """Round a number *down* to a particular increment.
+    """Round a number toward zero to a multiple of an increment.
+
+    The quotient is truncated, so positive numbers are rounded down and negative
+    numbers are rounded up (e.g. -135.129 with an increment of 0.01 gives -135.12).
 
     Args:
       number: A Decimal, the number to be rounded.
