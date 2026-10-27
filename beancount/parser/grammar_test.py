@@ -11,6 +11,10 @@ import re
 import textwrap
 import unittest
 from decimal import Decimal
+from decimal import DivisionByZero
+from decimal import Inexact
+from decimal import InvalidOperation
+from decimal import localcontext
 from unittest import mock
 
 from beancount.core import amount
@@ -1611,6 +1615,79 @@ class TestMetaData(unittest.TestCase):
 
 class TestArithmetic(unittest.TestCase):
     maxDiff = None
+
+    def test_number_expr__division_errors(self):
+        inputs = (
+            "2000-01-01 balance Assets:Something {} USD",
+            '2000-01-01 * "Test"\n  Assets:Something {} USD',
+            "2000-01-01 price EUR {} USD",
+            "2000-01-01 open Assets:Something\n  number: {}",
+        )
+        for expression, exception in (
+            ("1 / 0", DivisionByZero),
+            ("0 / 0", InvalidOperation),
+        ):
+            for source in inputs:
+                with self.subTest(expression=expression, source=source):
+                    entries, errors, _ = parser.parse_string(
+                        source.format(expression),
+                        report_filename="arithmetic.beancount",
+                        report_firstline=42,
+                    )
+                    self.assertFalse(entries)
+                    self.assertEqual(1, len(errors))
+                    self.assertIsInstance(errors[0], grammar.ParserSyntaxError)
+                    self.assertIn(exception.__name__, errors[0].message)
+                    self.assertEqual("arithmetic.beancount", errors[0].source["filename"])
+                    self.assertEqual(source.count("\n") + 42, errors[0].source["lineno"])
+
+    def test_number_expr__trapped_errors(self):
+        for expression in ("1 + 0.01", "1 - 0.01", "3 * 7", "1 / 3", "-1.23"):
+            with self.subTest(expression=expression), localcontext() as context:
+                context.prec = 1
+                context.traps[Inexact] = True
+                entries, errors, _ = parser.parse_string(
+                    f"2000-01-01 balance Assets:Something {expression} USD"
+                )
+                self.assertFalse(entries)
+                self.assertEqual(1, len(errors))
+                self.assertIsInstance(errors[0], grammar.ParserSyntaxError)
+                self.assertIn("Inexact", errors[0].message)
+                self.assertEqual(1, errors[0].source["lineno"])
+
+    def test_number_expr__error_recovery(self):
+        for expression in ("1 / 0", "(1 / 0) + 2", "1 + (1 / 0)", "-(1 / 0)"):
+            with self.subTest(expression=expression):
+                entries, errors, _ = parser.parse_string(
+                    "2000-01-01 open Assets:Before\n"
+                    f"2000-01-02 balance Assets:Something {expression} USD\n"
+                    "2000-01-03 open Assets:After\n",
+                    report_filename="arithmetic.beancount",
+                )
+                self.assertEqual(1, len(errors))
+                self.assertIsInstance(errors[0], grammar.ParserSyntaxError)
+                self.assertIn("DivisionByZero", errors[0].message)
+                self.assertEqual(
+                    {"filename": "arithmetic.beancount", "lineno": 2}, errors[0].source
+                )
+                self.assertEqual(
+                    ["Assets:Before", "Assets:After"], [e.account for e in entries]
+                )
+
+    @parser.parse_doc(expect_errors=True)
+    def test_number_expr__posting_error_recovery(self, entries, errors, _):
+        """
+        2000-01-01 open Assets:Before
+        2000-01-02 * "Test"
+          Assets:Something 2 USD
+          Assets:Something 1 / 0 USD
+          Assets:Something 3 USD
+        2000-01-03 open Assets:After
+        """
+        self.assertEqual(1, len(errors))
+        self.assertIsInstance(errors[0], grammar.ParserSyntaxError)
+        self.assertIn("DivisionByZero", errors[0].message)
+        self.assertEqual(["Assets:Before", "Assets:After"], [e.account for e in entries])
 
     @parser.parse_doc()
     def test_number_expr__add(self, entries, errors, _):

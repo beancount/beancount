@@ -100,12 +100,14 @@ void build_grammar_error_from_exception(YYLTYPE* loc, PyObject* builder)
       /* Build and accumulate a new error object. {27d1d459c5cd} */
       PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "OiOOO",
                                          loc->file_name, loc->first_line,
-                                         pvalue, ptype, ptraceback);
+                                         pvalue, ptype,
+                                         ptraceback ? ptraceback : Py_None);
       if (rv == NULL) {
           /* Note: Leave the internal error trickling up its detail. */
           /* PyErr_SetString(PyExc_RuntimeError, */
           /*                 "Internal error: While building exception"); */
       }
+      Py_XDECREF(rv);
   }
   else {
       PyErr_SetString(PyExc_RuntimeError,
@@ -319,26 +321,46 @@ number_expr:
     {
       $$ = PyNumber_Add($1, $3);
       DECREF($1, $3);
+      if ($$ == NULL) {
+          build_grammar_error_from_exception(&yyloc, builder);
+          YYERROR;
+      }
     }
   | number_expr MINUS number_expr
     {
         $$ = PyNumber_Subtract($1, $3);
         DECREF($1, $3);
+        if ($$ == NULL) {
+            build_grammar_error_from_exception(&yyloc, builder);
+            YYERROR;
+        }
     }
   | number_expr ASTERISK number_expr
     {
         $$ = PyNumber_Multiply($1, $3);
         DECREF($1, $3);
+        if ($$ == NULL) {
+            build_grammar_error_from_exception(&yyloc, builder);
+            YYERROR;
+        }
     }
   | number_expr SLASH number_expr
     {
         $$ = PyNumber_TrueDivide($1, $3);
         DECREF($1, $3);
+        if ($$ == NULL) {
+            build_grammar_error_from_exception(&yyloc, builder);
+            YYERROR;
+        }
     }
   | MINUS number_expr %prec NEGATIVE
     {
         $$ = PyNumber_Negative($2);
         DECREF($2);
+        if ($$ == NULL) {
+            build_grammar_error_from_exception(&yyloc, builder);
+            YYERROR;
+        }
     }
   | PLUS number_expr %prec NEGATIVE
     {
