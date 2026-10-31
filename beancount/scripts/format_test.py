@@ -314,6 +314,33 @@ class TestScriptFormat(test_utils.ClickTestCase):
         )
 
     @test_utils.docfile
+    def test_parenthesized_binary_expressions_wider_than_num_width(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-03 * "" ""
+          Assets:Test -10.0 USD
+          Expenses:Test 10.0 USD
+
+        2016-08-04 balance Assets:Test (1000.00 - 0.10) USD
+        """
+        result = self.run_with_args(format.main, "-w", "65", "-W", "12", filename)
+        self.assertEqual(
+            textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+
+        2016-08-03 * "" ""
+          Assets:Test                                                             -10.0 USD
+          Expenses:Test                                                            10.0 USD
+
+        2016-08-04 balance Assets:Test                                 (1000.00 - 0.10) USD
+        """),
+            result.stdout,
+        )
+
+    @test_utils.docfile
     def test_multiline_narration_like_account(self, filename):
         """
         2023-02-02 * "payee" "multiline

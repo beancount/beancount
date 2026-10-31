@@ -102,7 +102,17 @@ def align_beancount(contents, prefix_width=None, num_width=None, currency_column
         if number is None:
             output.write(prefix)
         else:
-            output.write(line_format.format(prefix.rstrip(), number, rest))
+            prefix = prefix.rstrip()
+            if len(number) > max_num_width:
+                # A number wider than the number column would push its currency
+                # to the right. Take the extra width from the gap before it
+                # instead, keeping at least two spaces, so currencies stay aligned.
+                gap = max(
+                    2, max_prefix_width + 2 + max_num_width - len(prefix) - len(number)
+                )
+                output.write(f"{prefix}{' ' * gap}{number} {rest}")
+            else:
+                output.write(line_format.format(prefix, number, rest))
         output.write("\n")
     formatted_contents = output.getvalue()
 
