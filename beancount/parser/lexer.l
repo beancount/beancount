@@ -366,7 +366,7 @@ yyscan_t yylex_free(yyscan_t scanner)
 /* yyrestart() does not reset the scanner back to INITIAL state and
  * Flex does not provide a way of doing so outside a scanner
  * rule. This function does just that accessing Flex internals. */
-static void yybegin(yyscan_t scanner)
+static void reset_scanner(yyscan_t scanner)
 {
     struct yyguts_t* yyg = (struct yyguts_t*)scanner;
     BEGIN(INITIAL);
@@ -399,7 +399,7 @@ void yylex_initialize(PyObject* file, PyObject* filename, int lineno,
     Py_XDECREF(yyget_in(scanner));
     Py_INCREF(file);
     yyrestart((void *)file, scanner);
-    yybegin(scanner);
+    reset_scanner(scanner);
 
     yyset_lineno(lineno, scanner);
 }
