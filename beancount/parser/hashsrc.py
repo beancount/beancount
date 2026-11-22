@@ -23,6 +23,7 @@ PARSER_SOURCE_FILES = [
     "parser.h",
     "parser.c",
     "tokens.h",
+    "tokens.c",
 ]
 
 

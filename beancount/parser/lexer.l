@@ -319,7 +319,10 @@ include		{ return INCLUDE; }
  /* Ivalid input: skip over to to the next whitespace character. */
 <INVALID>[^ \t\n\r]+ {
     PyObject* input = PyUnicode_Decode(yytext, yyleng, "utf-8", "backslashreplace");
-    build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
+    if (input) {
+        build_lexer_error(yylloc, builder, "Invalid token: '%U'", input);
+        Py_DECREF(input);
+    }
     BEGIN(INITIAL);
     return YYerror;
 }

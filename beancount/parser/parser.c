@@ -25,10 +25,10 @@ typedef struct {
 PyDoc_STRVAR(parser_doc,
              "Parser(builder)\n"
              "\n"
-             "Class exposing the interface to the Beancount parser C code.\\n"
-             "\\n"
-             "Construct a new parser object using the builder Builder object to\\n"
-             "instantiate and store parsing results. This class is not intended to be\\n"
+             "Class exposing the interface to the Beancount parser C code.\n"
+             "\n"
+             "Construct a new parser object using the builder Builder object to\n"
+             "instantiate and store parsing results. This class is not intended to be\n"
              "used directly. See the beancount.parser module instead.");
 
 /* Allocate a new Parser instance. */
@@ -132,13 +132,13 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
 }
 
 PyDoc_STRVAR(parser_lex_doc,
-             "lex(file, filename=None, lineno=1)\\n"
-             "\\n"
-             "Run the input file object through the Beancount tokenizer. filename and\\n"
-             "lineno keyword arguments allow to specify the file name and start line\\n"
-             "number to be used in error reporting. If filename is not specified or\\n"
-             "None, the name attribute of the file object is used, if present. Return \\n"
-             "an iterable yielding (token name, string value, semantic value) tuples.");
+             "lex(file, filename=None, lineno=1)\n"
+             "\n"
+             "Run the input file object through the Beancount tokenizer. filename and\n"
+             "lineno keyword arguments allow to specify the file name and start line\n"
+             "number to be used in error reporting. If filename is not specified or\n"
+             "None, the name attribute of the file object is used, if present. Return\n"
+             "an iterable yielding (token name, line, matched string, semantic value) tuples.");
 
 static PyObject* parser_lex(Parser* self, PyObject* args, PyObject* kwds)
 {
@@ -190,12 +190,20 @@ static PyObject* parser_iternext(Parser* self)
     case KEY:
         obj = yylval.pyobj;
         break;
+    case BOOL:
+    case NONE:
+        Py_XDECREF(yylval.pyobj);
+        Py_INCREF(Py_None);
+        obj = Py_None;
+        break;
     default:
+        Py_INCREF(Py_None);
         obj = Py_None;
     }
 
-    /* Yield a (token name, line, matched string, token value) tuple. */
-    return Py_BuildValue("(siy#O)",
+    /* Yield a (token name, line, matched string, token value) tuple.
+     * Use "N" to steal the reference to obj without leaking yylval.pyobj. */
+    return Py_BuildValue("(siy#N)",
                          token_to_string(token),
                          yylloc.first_line,
                          yyget_text(self->scanner),
@@ -296,24 +304,52 @@ PyMODINIT_FUNC PyInit__parser(void)
      * to ensure that the imported extension module is an up-to-date
      * build of the corresponding source code. */
     value = PyUnicode_FromString(STRINGIFY(PARSER_SOURCE_HASH));
-    PyObject_SetAttrString(module, "SOURCE_HASH", value);
+    if (!value) {
+        goto error;
+    }
+    if (PyObject_SetAttrString(module, "SOURCE_HASH", value) < 0) {
+        Py_DECREF(value);
+        goto error;
+    }
+    Py_DECREF(value);
 
-    /* Release versions as defined in setup.py. */
+    /* Release versions as defined in meson.build. */
     value = PyUnicode_FromString(STRINGIFY(BEANCOUNT_VERSION));
-    PyObject_SetAttrString(module, "__version__", value);
+    if (!value) {
+        goto error;
+    }
+    if (PyObject_SetAttrString(module, "__version__", value) < 0) {
+        Py_DECREF(value);
+        goto error;
+    }
+    Py_DECREF(value);
 
 #ifdef VC_CHANGESET
     /* Git changeset from the build source tree.
      * In the Bazel build, this information is absent. */
     value = PyUnicode_FromString(STRINGIFY(VC_CHANGESET));
-    PyObject_SetAttrString(module, "__vc_changeset__", value);
+    if (!value) {
+        goto error;
+    }
+    if (PyObject_SetAttrString(module, "__vc_changeset__", value) < 0) {
+        Py_DECREF(value);
+        goto error;
+    }
+    Py_DECREF(value);
 #endif
 
 #ifdef VC_TIMESTAMP
     /* Date of the last changeset.
      * In the Bazel build, this information is absent. */
     value = PyLong_FromLong(VC_TIMESTAMP);
-    PyObject_SetAttrString(module, "__vc_timestamp__", value);
+    if (!value) {
+        goto error;
+    }
+    if (PyObject_SetAttrString(module, "__vc_timestamp__", value) < 0) {
+        Py_DECREF(value);
+        goto error;
+    }
+    Py_DECREF(value);
 #endif
 
 #undef SETATTR
@@ -325,6 +361,7 @@ PyMODINIT_FUNC PyInit__parser(void)
     }
 
     missing_obj = PyObject_GetAttrString(beancount_core_number, "MISSING");
+    Py_DECREF(beancount_core_number);
     if (!missing_obj) {
         goto error;
     }

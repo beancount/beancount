@@ -109,6 +109,7 @@ py.install_sources(
     beancount/parser/parser.h
     beancount/parser/parser.c
     beancount/parser/tokens.h
+    beancount/parser/tokens.c
     '''.split(),
     preserve_path: true,
 )

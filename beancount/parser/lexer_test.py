@@ -7,11 +7,13 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import functools
+import sys
 import textwrap
 import unittest
 from decimal import Decimal
 
 from beancount.core.number import D
+from beancount.parser import _parser
 from beancount.parser import lexer
 
 
@@ -767,6 +769,20 @@ class TestLexerMisc(unittest.TestCase):
             ],
             tokens,
         )
+
+    def test_lex_token_refcounts_not_leaked(self):
+        # Verify parser_iternext steals the yylval.pyobj reference instead of
+        # leaking an extra reference on every token value.
+        tokens = list(lexer.lex_iter_string('2025-01-15 "unique_refcount_test" 987654.321\n'))
+        by_type = {tok[0]: tok[3] for tok in tokens}
+        # 1 ref inside `tokens` tuple + 1 in `by_type` + 1 temporary arg to getrefcount == 3.
+        self.assertEqual(3, sys.getrefcount(by_type["DATE"]))
+        self.assertEqual(3, sys.getrefcount(by_type["STRING"]))
+        self.assertEqual(3, sys.getrefcount(by_type["NUMBER"]))
+
+    def test_parser_docstrings_no_escaped_newlines(self):
+        self.assertNotIn("\\n", _parser.Parser.__doc__)
+        self.assertNotIn("\\n", _parser.Parser.lex.__doc__)
 
 
 if __name__ == "__main__":
