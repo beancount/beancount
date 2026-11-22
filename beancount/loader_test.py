@@ -748,6 +748,93 @@ class TestOptionsAggregation(unittest.TestCase):
         with self.assertRaises(ValueError):
             loader.run_transformations([], [], options_map, None)
 
+    @mock.patch("beancount.loader.PICKLE_CACHE_THRESHOLD", 0.0)
+    def test_load_config_isolated_from_global_cache_state(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "ledger.beancount": """
+                  2024-01-01 open Assets:Cash
+                """
+                },
+            )
+            filename = path.join(tmp, "ledger.beancount")
+            before_global = loader._load_file
+
+            # Disable cache via LoadConfig: no cache file created, global unchanged.
+            entries, errors, _ = loader.load_file(
+                filename, config=loader.LoadConfig(use_cache=False)
+            )
+            self.assertEqual([], errors)
+            self.assertEqual(1, len(entries))
+            self.assertEqual({"ledger.beancount"}, set(os.listdir(tmp)))
+            self.assertIs(before_global, loader._load_file)
+
+            # Custom cache filename via LoadConfig.
+            entries, errors, _ = loader.load_file(
+                filename,
+                config=loader.LoadConfig(
+                    use_cache=True, cache_filename=".custom_{filename}.cache"
+                ),
+            )
+            self.assertEqual([], errors)
+            self.assertIn(".custom_ledger.beancount.cache", os.listdir(tmp))
+            self.assertIs(before_global, loader._load_file)
+
+    def test_needs_refresh_detects_new_glob_included_file(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "main.beancount": """
+                  include "sub/*.beancount"
+                """,
+                    "sub/a.beancount": """
+                  2024-01-01 open Assets:Cash
+                """,
+                },
+            )
+            main_file = path.join(tmp, "main.beancount")
+            _, errors, options_map = loader.load_file(
+                main_file, config=loader.LoadConfig(use_cache=False)
+            )
+            self.assertEqual([], errors)
+            self.assertFalse(loader.needs_refresh(options_map))
+
+            # Adding a new file matching `sub/*.beancount` must invalidate the cache.
+            with open(path.join(tmp, "sub", "b.beancount"), "w", encoding="utf-8") as f:
+                f.write("2024-01-02 open Expenses:Food\n")
+            self.assertTrue(loader.needs_refresh(options_map))
+
+    def test_needs_refresh_detects_new_document_file(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(
+                tmp,
+                {
+                    "main.beancount": """
+                  option "documents" "docs"
+                  2024-01-01 open Assets:Cash
+                """,
+                    "docs/Assets/Cash/2024-01-01.stmt.pdf": "",
+                },
+            )
+            main_file = path.join(tmp, "main.beancount")
+            _, errors, options_map = loader.load_file(
+                main_file, config=loader.LoadConfig(use_cache=False)
+            )
+            self.assertEqual([], errors)
+            self.assertFalse(loader.needs_refresh(options_map))
+
+            # Dropping a new PDF into the documents folder must invalidate the cache.
+            with open(
+                path.join(tmp, "docs", "Assets", "Cash", "2024-02-01.stmt.pdf"),
+                "w",
+                encoding="utf-8",
+            ) as f:
+                f.write("")
+            self.assertTrue(loader.needs_refresh(options_map))
+
 
 if __name__ == "__main__":
     unittest.main()

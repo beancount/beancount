@@ -6,6 +6,7 @@ __copyright__ = "Copyright (C) 2013-2022, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
+from dataclasses import dataclass
 import functools
 import glob
 import hashlib
@@ -34,6 +35,7 @@ from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
+from beancount.parser import version
 from beancount.utils import encryption
 from beancount.utils import misc_utils
 
@@ -87,12 +89,23 @@ _load_file: Callable[
 ]
 
 
+@dataclass(frozen=True)
+class LoadConfig:
+    """Immutable loader configuration that avoids mutating module globals."""
+
+    use_cache: bool = True
+    cache_filename: str | None = None
+    extra_validations: tuple[Any, ...] | None = None
+    encoding: str | None = None
+
+
 def load_file(
     filename: str | Path,
     log_timings: Callable[[str], None] | None = None,
     log_errors: Any = None,
     extra_validations: list[Any] | None = None,
     encoding: str | None = None,
+    config: LoadConfig | None = None,
 ) -> tuple[data.Directives, list[data.BeancountError], OptionsMap]:
     """Open a Beancount input file, parse it, run transformations and validate.
 
@@ -106,6 +119,8 @@ def load_file(
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
+      config: Optional immutable LoadConfig. When provided, controls caching,
+        extra_validations, and encoding without mutating module-level state.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the file, "errors" a list of error objects generated
@@ -116,11 +131,34 @@ def load_file(
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
 
+    if config is not None:
+        if extra_validations is None and config.extra_validations is not None:
+            extra_validations = list(config.extra_validations)
+        if encoding is None:
+            encoding = config.encoding
+
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
         entries, errors, options_map = load_encrypted_file(
             filename, log_timings, log_errors, extra_validations, False, encoding
         )
+    elif config is not None:
+        if config.use_cache:
+            cache_pattern = (
+                config.cache_filename
+                or os.getenv("BEANCOUNT_LOAD_CACHE_FILENAME")
+                or PICKLE_CACHE_FILENAME
+            )
+            cache_getter = functools.partial(get_cache_filename, cache_pattern)
+            loader_fn = pickle_cache_function(
+                cache_getter, PICKLE_CACHE_THRESHOLD, _uncached_load_file
+            )
+        else:
+            loader_fn = _uncached_load_file
+        entries, errors, options_map = loader_fn(
+            filename, log_timings, extra_validations, encoding
+        )
+        _log_errors(errors, log_errors)
     else:
         entries, errors, options_map = _load_file(
             filename, log_timings, extra_validations, encoding
@@ -320,6 +358,23 @@ def _uncached_load_file(filename, *args, **kw):
     return _load([(filename, True)], *args, **kw)
 
 
+def _cache_version_tag() -> str:
+    return f"{version.VERSION}:py{sys.version_info.major}.{sys.version_info.minor}"
+
+
+def _resolve_document_dirs(options_map: OptionsMap) -> list[str]:
+    doc_dirs = options_map.get("documents") or ()
+    if not doc_dirs:
+        return []
+    top_filename = options_map.get("filename")
+    base_dir = path.dirname(top_filename) if top_filename else os.getcwd()
+    resolved = []
+    for doc_dir in doc_dirs:
+        full = doc_dir if path.isabs(doc_dir) else path.normpath(path.join(base_dir, doc_dir))
+        resolved.append(full)
+    return resolved
+
+
 def needs_refresh(options_map: OptionsMap) -> bool:
     """Predicate that returns true if at least one of the input files may have changed.
 
@@ -330,25 +385,65 @@ def needs_refresh(options_map: OptionsMap) -> bool:
     """
     if options_map is None:
         return True
-    input_hash = compute_input_hash(options_map["include"])
+    input_hash = compute_input_hash(
+        options_map["include"],
+        include_globs=options_map.get("_cache_include_globs", ()),
+        plugin_files=options_map.get("_cache_plugin_files", ()),
+        document_dirs=_resolve_document_dirs(options_map),
+        version_tag=_cache_version_tag(),
+    )
     return "input_hash" not in options_map or input_hash != options_map["input_hash"]
 
 
-def compute_input_hash(filenames):
-    """Compute a hash of the input data.
+def compute_input_hash(
+    filenames,
+    *,
+    include_globs=(),
+    plugin_files=(),
+    document_dirs=(),
+    version_tag: str | None = None,
+):
+    """Compute a hash of the input data and cache-relevant dependencies.
 
     Args:
       filenames: A list of input files. Order is not relevant.
+      include_globs: Optional sequence of resolved glob patterns from include directives.
+      plugin_files: Optional sequence of loaded plugin module file paths.
+      document_dirs: Optional sequence of resolved document directory paths.
+      version_tag: Optional Beancount/Python version tag string.
     Returns:
       A hexadecimal MD5 hash string of the input files' metadata.
     """
     md5 = hashlib.md5()
+    if version_tag is not None:
+        md5.update(b"ver:")
+        md5.update(version_tag.encode("utf8"))
     for filename in sorted(filenames):
         md5.update(filename.encode("utf8"))
         if not path.exists(filename):
             continue
         stat = os.stat(filename)
         md5.update(struct.pack("QQ", stat.st_mtime_ns, stat.st_size))
+    for pattern in sorted(include_globs):
+        md5.update(b"glob:")
+        md5.update(pattern.encode("utf8"))
+        for matched in sorted(glob.glob(pattern, recursive=True)):
+            md5.update(path.normpath(matched).encode("utf8"))
+    for plugin_file in sorted(plugin_files):
+        md5.update(b"plugin:")
+        md5.update(plugin_file.encode("utf8"))
+        if path.exists(plugin_file):
+            stat = os.stat(plugin_file)
+            md5.update(struct.pack("QQ", stat.st_mtime_ns, stat.st_size))
+    for doc_dir in sorted(document_dirs):
+        md5.update(b"docdir:")
+        md5.update(doc_dir.encode("utf8"))
+        if path.isdir(doc_dir):
+            for dirpath, dirnames, dirfiles in os.walk(doc_dir):
+                dirnames.sort()
+                md5.update(dirpath.encode("utf8"))
+                for fname in sorted(dirfiles):
+                    md5.update(fname.encode("utf8"))
     return md5.hexdigest()
 
 
@@ -422,6 +517,7 @@ def _parse_recursive(
     # A list of absolute filenames that have been parsed in the past, used to
     # detect and avoid duplicates (cycles).
     filenames_seen = set()
+    include_globs: list[str] = []
 
     with misc_utils.log_time("beancount.parser.parser", log_timings, indent=1):
         while source_stack:
@@ -511,6 +607,8 @@ def _parse_recursive(
                 search_path = include_filename
                 if not os.path.isabs(include_filename):
                     search_path = os.path.join(cwd, include_filename)
+                if glob.has_magic(search_path):
+                    include_globs.append(path.normpath(search_path))
                 matched_filenames = glob.glob(search_path, recursive=True)
                 if matched_filenames:
                     include_expanded.extend(matched_filenames)
@@ -535,8 +633,10 @@ def _parse_recursive(
     if options_map is None:
         options_map = options.OPTIONS_DEFAULTS.copy()
 
-    # Save the set of parsed filenames in options_map.
+    # Save the set of parsed filenames and glob patterns in options_map.
     options_map["include"] = sorted(filenames_seen)
+    if include_globs:
+        options_map["_cache_include_globs"] = sorted(set(include_globs))
 
     options_map = aggregate_options_map(options_map, other_options_map)
 
@@ -644,8 +744,14 @@ def _load(
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
-    # Compute the input hash.
-    options_map["input_hash"] = compute_input_hash(options_map["include"])
+    # Compute the input hash including globs, plugin files, document dirs, and version.
+    options_map["input_hash"] = compute_input_hash(
+        options_map["include"],
+        include_globs=options_map.get("_cache_include_globs", ()),
+        plugin_files=options_map.get("_cache_plugin_files", ()),
+        document_dirs=_resolve_document_dirs(options_map),
+        version_tag=_cache_version_tag(),
+    )
 
     return entries, errors, options_map
 
@@ -702,6 +808,11 @@ def run_transformations(
         # import time exceptions fail a run, by choice.
         try:
             module = importlib.import_module(plugin_name)
+            module_file = getattr(module, "__file__", None)
+            if module_file and path.exists(module_file):
+                plugin_files = options_map.setdefault("_cache_plugin_files", [])
+                if module_file not in plugin_files:
+                    plugin_files.append(module_file)
             if not hasattr(module, "__plugins__"):
                 continue
         except ImportError:

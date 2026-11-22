@@ -76,6 +76,7 @@ from .core.realization import realize
 
 # TODO(blais): We should return a namedtuple of all the contents, not the three
 # (entries, options, errors) lists.
+from .loader import LoadConfig
 from .loader import load_doc
 from .loader import load_encrypted_file
 from .loader import load_file
@@ -126,6 +127,7 @@ __all__ = [
     "Event",
     "Flag",
     "Inventory",
+    "LoadConfig",
     "Meta",
     "Note",
     "Open",
