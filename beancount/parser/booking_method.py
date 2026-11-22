@@ -221,8 +221,11 @@ def _booking_method_xifo(entry, posting, matches, sortattr, reverse_order):
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)
+    costed_matches = [p for p in matches if p.cost is not None]
     for match in sorted(
-        matches, key=lambda p: p.cost and getattr(p.cost, sortattr), reverse=reverse_order
+        costed_matches,
+        key=lambda p: getattr(p.cost, sortattr),
+        reverse=reverse_order,
     ):
         if remaining <= ZERO:
             break
@@ -271,7 +274,7 @@ def booking_method_NONE(entry, posting, matches):
     # account with NONE method which happens to match a single position
     # ought to be matched against it. We don't allow it for now.
 
-    return [posting], [], False
+    return [posting], [], [], False
 
 
 def booking_method_AVERAGE(entry, posting, matches):

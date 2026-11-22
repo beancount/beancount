@@ -520,6 +520,16 @@ class TestPushPopMeta(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, "Unbalanced metadata key")
 
+    @parser.parse_doc(expect_errors=True)
+    def test_pushmeta_forgotten_non_string(self, entries, errors, _):
+        """
+        pushmeta count: 42
+        pushmeta active: TRUE
+        """
+        self.assertEqual(2, len(errors))
+        self.assertRegex(errors[0].message, "Unbalanced metadata key")
+        self.assertRegex(errors[1].message, "Unbalanced metadata key")
+
 
 class TestMultipleLines(unittest.TestCase):
     @parser.parse_doc()

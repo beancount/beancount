@@ -735,6 +735,19 @@ class TestOptionsAggregation(unittest.TestCase):
 
             self.assertEqual({"USD", "EUR", "CAD"}, set(options_map["operating_currency"]))
 
+    def test_load_string_with_encoding_preserves_unicode(self):
+        ledger = '2024-01-01 open Assets:Cash\n2024-01-01 open Expenses:Café\n2024-01-02 * "Café résumé 東京"\n  Expenses:Café  10.00 USD\n  Assets:Cash   -10.00 USD\n'
+        entries, errors, _ = loader.load_string(ledger, encoding="utf-8")
+        self.assertEqual([], errors)
+        txns = [e for e in entries if isinstance(e, loader.data.Transaction)]
+        self.assertEqual(1, len(txns))
+        self.assertEqual("Café résumé 東京", txns[0].narration)
+
+    def test_run_transformations_invalid_processing_mode(self):
+        options_map = {"plugin_processing_mode": "invalid_mode", "plugin": []}
+        with self.assertRaises(ValueError):
+            loader.run_transformations([], [], options_map, None)
+
 
 if __name__ == "__main__":
     unittest.main()

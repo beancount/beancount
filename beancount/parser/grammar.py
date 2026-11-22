@@ -198,7 +198,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(
                     meta,
                     ("Unbalanced metadata key '{}'; leftover metadata '{}'").format(
-                        key, ", ".join(value_list)
+                        key, ", ".join(map(str, value_list))
                     ),
                 )
             )

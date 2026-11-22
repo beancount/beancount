@@ -17,6 +17,7 @@ import os
 import pickle
 import struct
 import sys
+import tempfile
 import textwrap
 import time
 import traceback
@@ -261,16 +262,29 @@ def pickle_cache_function(
         result = function(toplevel_filename, *args, **kw)
         time_after = time.time()
 
-        # Overwrite the cache file if the time it takes to compute it
+        # Overwrite the cache file atomically if the time it takes to compute it
         # justifies it.
         if time_after - time_before >= time_threshold:
+            tmp_filename = None
             try:
-                with open(cache_filename, "wb") as file:
+                cache_dir = path.dirname(cache_filename) or "."
+                with tempfile.NamedTemporaryFile(
+                    mode="wb", dir=cache_dir, prefix=".tmp.", delete=False
+                ) as file:
+                    tmp_filename = file.name
                     pickle.dump(result, file)
+                os.replace(tmp_filename, cache_filename)
+                tmp_filename = None
             except Exception as exc:
                 logging.warning(
                     "Could not write to picklecache file %s: %s", cache_filename, exc
                 )
+            finally:
+                if tmp_filename is not None and path.exists(tmp_filename):
+                    try:
+                        os.unlink(tmp_filename)
+                    except OSError:
+                        pass
 
         return result
 
@@ -334,7 +348,7 @@ def compute_input_hash(filenames):
         if not path.exists(filename):
             continue
         stat = os.stat(filename)
-        md5.update(struct.pack("dd", stat.st_mtime_ns, stat.st_size))
+        md5.update(struct.pack("QQ", stat.st_mtime_ns, stat.st_size))
     return md5.hexdigest()
 
 
@@ -463,11 +477,11 @@ def _parse_recursive(
 
                 cwd = path.dirname(filename)
             else:
-                # Encode the contents if necessary.
+                # Encode the contents as UTF-8 if an explicit encoding was given.
                 if encoding:
                     if isinstance(source, bytes):
                         source = source.decode(encoding)
-                    source = source.encode("ascii", "replace")  # type: ignore[assignment]
+                    source = source.encode("utf-8")  # type: ignore[assignment]
 
                 # Parse a string buffer from memory.
                 with misc_utils.log_time(
@@ -666,8 +680,10 @@ def run_transformations(
             PLUGINS_PRE, options_map["plugin"], PLUGINS_AUTO, PLUGINS_POST
         )
     else:
-        assert "Invalid value for plugin_processing_mode: {}".format(
-            options_map["plugin_processing_mode"]
+        raise ValueError(
+            "Invalid value for plugin_processing_mode: {}".format(
+                options_map["plugin_processing_mode"]
+            )
         )
 
     for plugin_name, plugin_config in plugins_iter:
@@ -714,15 +730,12 @@ def run_transformations(
                 # TODO(blais): Make this consistent in v3, not conditional.
                 args = () if plugin_config is None else (plugin_config,)
 
-                # Catch all exceptions raised in running the plugin, except exits.
+                # Catch all exceptions raised in running the plugin (BaseException
+                # subclasses such as SystemExit propagate naturally).
                 try:
                     entries, plugin_errors = callback(entries, options_map, *args)
                     errors.extend(plugin_errors)
-                except Exception as exc:
-                    # Allow the user to exit in a plugin.
-                    if isinstance(exc, SystemExit):
-                        raise
-
+                except Exception:
                     # Upon failure, just issue an error.
                     formatted_traceback = traceback.format_exc().replace("\n", "\n  ")
                     errors.append(
