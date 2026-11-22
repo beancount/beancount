@@ -2734,8 +2734,7 @@ class TestBookCrossover(_BookingTestBase):
         """
 
 
-@unittest.skip("Booking.AVERAGE is disabled.")
-class _TestBookAmbiguousAVERAGE(_BookingTestBase):
+class TestBookAmbiguousAVERAGE(_BookingTestBase):
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__trivial1(self, _, __):
         """
