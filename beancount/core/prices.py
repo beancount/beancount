@@ -11,6 +11,10 @@ __copyright__ = "Copyright (C) 2013-2020, 2024-2026  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import datetime
+from collections.abc import Collection
+from collections.abc import Sequence
+from decimal import Decimal
 from typing import Optional
 
 from beancount.core import data
@@ -390,3 +394,139 @@ def get_price(price_map, base_quote, date=None):
             return price_list[index - 1]
     except KeyError:
         return None, None
+
+
+def get_price_chain(
+    price_map: PriceMap,
+    currencies: Sequence[Currency],
+    date: datetime.date | None = None,
+) -> tuple[datetime.date | None, Decimal | None]:
+    """Compute a conversion rate along an explicit sequence of currency hops.
+
+    For example, ``get_price_chain(price_map, ("VWCE", "EUR", "USD"), date)``
+    multiplies ``get_price(price_map, ("VWCE", "EUR"), date)`` by
+    ``get_price(price_map, ("EUR", "USD"), date)``.
+
+    Args:
+      price_map: A PriceMap as created by build_price_map().
+      currencies: An ordered sequence of currency codes ``(c_0, c_1, ..., c_k)``.
+      date: An optional datetime.date at which to evaluate each hop.
+    Returns:
+      A pair of ``(effective_date, rate)`` where ``effective_date`` is the latest
+      price date among the hops (or None for degenerate/identity chains), or
+      ``(None, None)`` if any hop has no available price on or before ``date``.
+    """
+    if len(currencies) < 2:
+        return (None, ONE)
+
+    combined_rate = ONE
+    hop_dates: list[datetime.date] = []
+    for src, dst in zip(currencies, currencies[1:]):
+        hop_date, hop_rate = get_price(price_map, (src, dst), date)
+        if hop_rate is None:
+            return (None, None)
+        combined_rate *= hop_rate
+        if hop_date is not None:
+            hop_dates.append(hop_date)
+
+    return (max(hop_dates) if hop_dates else None, combined_rate)
+
+
+def get_price_transitive(
+    price_map: PriceMap,
+    base_quote: tuple[Currency, Currency | None] | str,
+    date: datetime.date | None = None,
+    max_hops: int = 3,
+    via: Collection[Currency] | None = None,
+) -> tuple[datetime.date | None, Decimal | None]:
+    """Return a direct or multi-hop transitive price as of ``date``.
+
+    Searches the price graph using breadth-first search up to ``max_hops`` edges
+    for a conversion path from ``base`` to ``quote``. Unlike eager ``project()``,
+    every hop is evaluated as of ``date``, accurately reflecting intermediate FX
+    rate changes between asset price dates.
+
+    Among shortest paths of equal hop count, ties are broken deterministically by:
+      1. Most intermediate currencies present in ``via`` (if provided),
+      2. Most recent bottleneck price date (maximizing ``min(hop_dates)``),
+      3. Lexicographical order of the currency path.
+
+    Args:
+      price_map: A PriceMap as created by build_price_map().
+      base_quote: A ``(base, quote)`` tuple or ``"BASE/QUOTE"`` string.
+      date: An optional datetime.date at which to evaluate each hop.
+      max_hops: Maximum number of conversion hops to traverse (must be >= 1).
+      via: Optional collection of preferred intermediate currencies (e.g.
+        ``options_map["operating_currency"]``).
+    Returns:
+      A pair of ``(effective_date, rate)``, or ``(None, None)`` if no path exists
+      within ``max_hops``.
+    """
+    base, quote = normalize_base_quote(base_quote)
+    if quote is None or base == quote:
+        return (None, ONE)
+    if max_hops < 1:
+        return (None, None)
+
+    # Fast path: 1-hop direct (or inverse) lookup.
+    direct_date, direct_rate = get_price(price_map, (base, quote), date)
+    if direct_rate is not None or max_hops == 1:
+        return (direct_date, direct_rate)
+
+    # Build adjacency list of currencies with available edges.
+    neighbors: dict[Currency, list[Currency]] = collections.defaultdict(list)
+    for src, dst in price_map:
+        if src != dst:
+            neighbors[src].append(dst)
+
+    if base not in neighbors:
+        return (None, None)
+
+    via_set = set(via) if via else set()
+
+    # Level-by-level BFS so we stop at the minimum valid hop depth.
+    # Each state is (path_tuple, combined_rate, hop_dates_tuple).
+    frontier: list[tuple[tuple[Currency, ...], Decimal, tuple[datetime.date, ...]]] = [
+        ((base,), ONE, ())
+    ]
+
+    for _hop in range(max_hops):
+        next_frontier = []
+        solutions: list[
+            tuple[tuple[Currency, ...], Decimal, tuple[datetime.date, ...]]
+        ] = []
+
+        for path, acc_rate, acc_dates in frontier:
+            current = path[-1]
+            for nxt in neighbors.get(current, ()):
+                if nxt in path:
+                    continue
+                hop_date, hop_rate = get_price(price_map, (current, nxt), date)
+                if hop_rate is None:
+                    continue
+                new_path = path + (nxt,)
+                new_rate = acc_rate * hop_rate
+                new_dates = acc_dates + ((hop_date,) if hop_date is not None else ())
+                if nxt == quote:
+                    solutions.append((new_path, new_rate, new_dates))
+                else:
+                    next_frontier.append((new_path, new_rate, new_dates))
+
+        if solutions:
+            # Prefer: (1) more intermediate currencies in `via`, (2) freshest
+            # bottleneck date (highest min date), (3) lexicographically smallest path.
+            best_path, best_rate, best_dates = min(
+                solutions,
+                key=lambda sol: (
+                    -sum(1 for c in sol[0][1:-1] if c in via_set),
+                    -(min(sol[2]).toordinal() if sol[2] else 0),
+                    sol[0],
+                ),
+            )
+            return (max(best_dates) if best_dates else None, best_rate)
+
+        frontier = next_frontier
+        if not frontier:
+            break
+
+    return (None, None)

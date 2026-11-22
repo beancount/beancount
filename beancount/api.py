@@ -69,6 +69,8 @@ from .core.prices import PriceMap
 from .core.prices import build_price_map
 from .core.prices import get_latest_price
 from .core.prices import get_price
+from .core.prices import get_price_chain
+from .core.prices import get_price_transitive
 from .core.realization import RealAccount
 from .core.realization import realize
 
@@ -154,6 +156,8 @@ __all__ = [
     "get_cost",
     "get_latest_price",
     "get_price",
+    "get_price_chain",
+    "get_price_transitive",
     "get_units",
     "get_value",
     "get_weight",

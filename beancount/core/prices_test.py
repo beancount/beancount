@@ -335,6 +335,103 @@ class TestPriceMap(unittest.TestCase):
         )
         self.assertTrue(hasattr(new_price_map, "forward_pairs"))
 
+    @loader.load_doc()
+    def test_get_price_chain(self, entries, _, __):
+        """
+        2024-01-01 price VWCE   100.00 EUR
+        2024-01-01 price EUR      1.10 USD
+        2024-01-01 price USD      1.35 CAD
+        2024-01-15 price EUR      1.20 USD
+        """
+        price_map = prices.build_price_map(entries)
+
+        # 2-hop chain at initial date.
+        self.assertEqual(
+            (datetime.date(2024, 1, 1), D("110.0000")),
+            prices.get_price_chain(
+                price_map, ("VWCE", "EUR", "USD"), datetime.date(2024, 1, 10)
+            ),
+        )
+        # Intermediate FX rate change on 2024-01-15 is reflected even without a new VWCE price.
+        self.assertEqual(
+            (datetime.date(2024, 1, 15), D("120.0000")),
+            prices.get_price_chain(
+                price_map, ("VWCE", "EUR", "USD"), datetime.date(2024, 1, 20)
+            ),
+        )
+        # 3-hop chain.
+        self.assertEqual(
+            (datetime.date(2024, 1, 15), D("162.000000")),
+            prices.get_price_chain(
+                price_map, ("VWCE", "EUR", "USD", "CAD"), datetime.date(2024, 1, 20)
+            ),
+        )
+        # Missing hop returns (None, None).
+        self.assertEqual(
+            (None, None),
+            prices.get_price_chain(
+                price_map, ("VWCE", "GBP", "USD"), datetime.date(2024, 1, 20)
+            ),
+        )
+
+    @loader.load_doc()
+    def test_get_price_transitive(self, entries, _, __):
+        """
+        2024-01-01 price VWCE   100.00 EUR
+        2024-01-01 price EUR      1.10 USD
+        2024-01-01 price USD      1.35 CAD
+        2024-01-15 price EUR      1.20 USD
+        """
+        price_map = prices.build_price_map(entries)
+
+        # 2-hop transitive lookup using slash notation.
+        self.assertEqual(
+            (datetime.date(2024, 1, 15), D("120.0000")),
+            prices.get_price_transitive(price_map, "VWCE/USD", datetime.date(2024, 1, 20)),
+        )
+        # 3-hop transitive lookup succeeds with default max_hops=3, fails with max_hops=2.
+        self.assertEqual(
+            (datetime.date(2024, 1, 15), D("162.000000")),
+            prices.get_price_transitive(
+                price_map, ("VWCE", "CAD"), datetime.date(2024, 1, 20), max_hops=3
+            ),
+        )
+        self.assertEqual(
+            (None, None),
+            prices.get_price_transitive(
+                price_map, ("VWCE", "CAD"), datetime.date(2024, 1, 20), max_hops=2
+            ),
+        )
+        # Degenerate same currency.
+        self.assertEqual(
+            (None, D("1")),
+            prices.get_price_transitive(price_map, ("USD", "USD")),
+        )
+
+    @loader.load_doc()
+    def test_get_price_transitive_tiebreaking_via_and_freshness(self, entries, _, __):
+        """
+        ;; Two 2-hop paths from AAA to ZZZ: via BBB (older) and via CCC (fresher).
+        2024-01-01 price AAA   10.00 BBB
+        2024-01-01 price BBB    2.00 ZZZ
+        2024-02-01 price AAA   10.00 CCC
+        2024-02-01 price CCC    3.00 ZZZ
+        """
+        price_map = prices.build_price_map(entries)
+
+        # Without `via`, fresher bottleneck date (CCC, 2024-02-01) wins over BBB (2024-01-01).
+        self.assertEqual(
+            (datetime.date(2024, 2, 1), D("30.0000")),
+            prices.get_price_transitive(price_map, ("AAA", "ZZZ"), datetime.date(2024, 3, 1)),
+        )
+        # With `via={"BBB"}`, preferred intermediate currency wins.
+        self.assertEqual(
+            (datetime.date(2024, 1, 1), D("20.0000")),
+            prices.get_price_transitive(
+                price_map, ("AAA", "ZZZ"), datetime.date(2024, 3, 1), via={"BBB"}
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
