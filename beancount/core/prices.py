@@ -90,24 +90,24 @@ def build_price_map(entries):
         base_quote = (price.currency, price.amount.currency)
         price_map[base_quote].append((price.date, price.amount.number))
 
-    # Find pairs of inversed units.
+    # Find pairs of inversed units, recording each unordered pair only once.
     inversed_units = []
-    for base_quote, values in price_map.items():
+    seen_pairs = set()
+    for base_quote in price_map:
         base, quote = base_quote
-        if (quote, base) in price_map:
+        if (quote, base) in price_map and (quote, base) not in seen_pairs:
+            seen_pairs.add(base_quote)
             inversed_units.append(base_quote)
 
-    # Find pairs of inversed units, and swallow the conversion with the smaller
-    # number of rates into the other one.
+    # Swallow the conversion with the smaller number of rates into the other one.
     for base, quote in inversed_units:
         bq_prices = price_map[(base, quote)]
         qb_prices = price_map[(quote, base)]
         remove = (base, quote) if len(bq_prices) < len(qb_prices) else (quote, base)
         base, quote = remove
 
-        remove_list = price_map[remove]
+        remove_list = price_map.pop(remove)
         insert_list = price_map[(quote, base)]
-        del price_map[remove]
 
         inverted_list = [(date, ONE / rate) for (date, rate) in remove_list if rate != ZERO]
         insert_list.extend(inverted_list)
@@ -192,6 +192,8 @@ def project(
 
     # Avoid mutating the input map.
     price_map = PriceMap({key: list(value) for key, value in orig_price_map.items()})
+    forward_pairs = list(getattr(orig_price_map, "forward_pairs", ()))
+    forward_pairs_set = set(forward_pairs)
 
     # Process the entire database (it's not indexed by quote currency).
     currency_pair = (from_currency, to_currency)
@@ -216,13 +218,13 @@ def project(
         # Project over each of the prices.
         new_projected = []
         for date, price in prices:
+            if date in existing_prices:
+                # Skip collisions in date. {97a5703ac517}
+                continue
             rate_date, rate = get_price(price_map, currency_pair, date)
             if rate is None:
                 # There is no conversion rate at this time; skip projection.
                 # {b2b23353275d}.
-                continue
-            if rate_date in existing_prices:
-                # Skip collisions in date. {97a5703ac517}
                 continue
 
             # Append the new rate.
@@ -241,6 +243,14 @@ def project(
             )
             inverted.sort()
 
+            if (base, to_currency) not in forward_pairs_set and (
+                to_currency,
+                base,
+            ) not in forward_pairs_set:
+                forward_pairs.append((base, to_currency))
+                forward_pairs_set.add((base, to_currency))
+
+    price_map.forward_pairs = forward_pairs
     return price_map
 
 

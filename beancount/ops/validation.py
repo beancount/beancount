@@ -420,9 +420,9 @@ def validate(entries, options_map, log_timings=None, extra_validations=None):
     Returns:
       A list of new errors, if any were found.
     """
-    validation_tests = VALIDATIONS
+    validation_tests = list(VALIDATIONS)
     if extra_validations:
-        validation_tests += extra_validations
+        validation_tests.extend(extra_validations)
 
     # Run various validation routines define above.
     errors = []

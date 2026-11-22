@@ -306,15 +306,34 @@ class TestPriceMap(unittest.TestCase):
 
         new_price_map = prices.project(price_map, "USD", "CAD")
 
-        # Check that the original prices in the database were not overridden.
-        # See {97a5703ac517}.
+        # Check that the original prices in the database were not overridden
+        # and no duplicate date entry was inserted. See {97a5703ac517}.
         self.assertEqual(
             [
-                (datetime.date(2013, 6, 15), D("1120.0000")),
                 (datetime.date(2013, 6, 15), D("1125.00")),
             ],
             prices.get_all_prices(new_price_map, ("HOOL", "CAD")),
         )
+        self.assertIn(("HOOL", "CAD"), new_price_map.forward_pairs)
+
+    @loader.load_doc()
+    def test_project_does_not_skip_when_only_rate_date_exists(self, entries, _, __):
+        """
+        2013-06-01 price  USD      1.12 CAD
+        2013-06-01 price  HOOL  1100.00 CAD
+        2013-06-15 price  HOOL  1000.00 USD
+        """
+        price_map = prices.build_price_map(entries)
+        new_price_map = prices.project(price_map, "USD", "CAD")
+
+        self.assertEqual(
+            [
+                (datetime.date(2013, 6, 1), D("1100.00")),
+                (datetime.date(2013, 6, 15), D("1120.0000")),
+            ],
+            prices.get_all_prices(new_price_map, ("HOOL", "CAD")),
+        )
+        self.assertTrue(hasattr(new_price_map, "forward_pairs"))
 
 
 if __name__ == "__main__":

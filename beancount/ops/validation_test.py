@@ -376,6 +376,24 @@ class TestValidate(cmptest.TestCase):
         self.assertEqual(1, len(validation_errors))
         self.assertRegex(validation_errors[0].message, "Invalid currency")
 
+    def test_validate_does_not_mutate_global_validations(self):
+        before_validations = list(validation.VALIDATIONS)
+        before_basic = list(validation.BASIC_VALIDATIONS)
+        calls = []
+
+        def custom_validation(entries, options_map):
+            calls.append(True)
+            return []
+
+        validation.validate([], {}, extra_validations=[custom_validation])
+        self.assertEqual(before_validations, validation.VALIDATIONS)
+        self.assertEqual(before_basic, validation.BASIC_VALIDATIONS)
+        self.assertEqual(1, len(calls))
+
+        # A subsequent call without extra_validations must not run custom_validation.
+        validation.validate([], {})
+        self.assertEqual(1, len(calls))
+
 
 class TestValidateTolerances(cmptest.TestCase):
     @loader.load_doc()
