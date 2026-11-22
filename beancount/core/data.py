@@ -548,8 +548,6 @@ def create_simple_posting(
       An instance of Posting, and as a side-effect the entry has had its list of
       postings modified with the new Posting instance.
     """
-    if isinstance(account, str):
-        pass
     if number is None or currency is None:
         units = None
     else:

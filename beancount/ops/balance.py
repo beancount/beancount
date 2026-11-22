@@ -1,4 +1,4 @@
-"""Automatic padding of gaps between entries."""
+"""Check balance assertion directives."""
 
 __copyright__ = "Copyright (C) 2013-2017, 2020-2021, 2024-2025  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -126,8 +126,8 @@ def check(entries, options_map):
                 check_errors.append(
                     BalanceError(
                         entry.meta,
-                        "Invalid currency '{}' for Balance directive: ".format(
-                            expected_amount.currency
+                        "Invalid currency '{}' for Balance directive on '{}'".format(
+                            expected_amount.currency, entry.account
                         ),
                         entry,
                     )

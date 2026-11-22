@@ -19,8 +19,16 @@ Description
 ===========
 
 A double-entry bookkeeping computer language that lets you define financial
-transaction records in a text file, read them in memory, generate a variety of
-reports from them, and provides a web interface.
+transaction records in a text file, parse and book them in memory, and validate
+accounting invariants.
+
+In Version 3, querying, importing, price fetching, and web reporting live in
+dedicated companion projects:
+
+- `beanquery <https://github.com/beancount/beanquery>`_ — SQL-like query language (BQL)
+- `beangulp <https://github.com/beancount/beangulp>`_ — Importer framework for bank/brokerage statements
+- `beanprice <https://github.com/beancount/beanprice>`_ — Historical market price fetcher
+- `fava <https://github.com/beancount/fava>`_ — Web interface for Beancount ledgers
 
 
 Documentation
