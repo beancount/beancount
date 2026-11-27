@@ -356,6 +356,26 @@ class TestTreeify(TestTreeifyBase):
             False,
         )
 
+    def test_parent_after_children(self):
+        # Check when a parent comes around again after its children (the
+        # column values aren't sorted properly).
+        self.treeify_equal(
+            """\
+          Assets:US                          100.00 USD
+          Assets:US:Vanguard                 101.00 USD
+          Assets:US                          102.00 USD
+          Assets:CA                          103.00 USD
+        """,
+            """\
+          `-- Assets
+              |-- US                           100.00 USD
+              |   `-- Vanguard                 101.00 USD
+              |-- US                           102.00 USD
+              `-- CA                           103.00 USD
+        """,
+            False,
+        )
+
     def test_consecutive(self):
         self.treeify_equal(
             """\
