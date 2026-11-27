@@ -137,9 +137,17 @@ def create_tree(column_matches, regexp_split):
     for no, name in column_matches:
         parts = re.split(regexp_split, name)
         node = root
-        for part in parts:
+        last_index = len(parts) - 1
+        for index, part in enumerate(parts):
             last_node = node[-1] if node else None
-            if last_node is None or last_node.name != part:
+            # A row that names a node which already has children cannot be
+            # rendered at that node without moving it before those children's
+            # rows, so it starts a new occurrence of that node instead.
+            if (
+                last_node is None
+                or last_node.name != part
+                or (index == last_index and len(last_node) > 0)
+            ):
                 last_node = Node(part)
                 node.append(last_node)
             node = last_node
